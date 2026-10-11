@@ -10,6 +10,13 @@
 //! `--idle`, until no peer has been attached for that long. There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
+//! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
+//! `SIGHUP` are recorded by the lease's handler and polled here: the loop gives attached
+//! peers `shared::STOP_PEER_GRACE` to leave, runs `SharedServer::stop_within` —
+//! sessions and episodes closed, listeners closed, the lease released only if it is still
+//! this process's — and `serve` returns 0. A second signal, or an ordered stop that has not
+//! finished within `lease::STOP_BOUND`, still ends the process.
+//!
 //! # `status`, `ensure`, `stop`
 //!
 //! Three subcommands make the server's lifecycle something a person or a hook can converge
@@ -30,6 +37,8 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
@@ -69,6 +78,8 @@ pub fn run(args: ServeArgs) -> Result<u8> {
 
 /// Become the server, or say who already is.
 fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
+    // the declared lease timings, read before the election reads them (I2129)
+    let _ = crate::policy::LoadedPolicy::load(repo);
     let elected = lease::elect(repo);
     // Whatever the election decided, the process `ensure` started to hold it has now
     // decided: the claim it was started under is spent, and the next `ensure` reads the
@@ -118,13 +129,32 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         lease,
         Some(app.share.dir()),
     )?;
-    if stdin_is_a_pipe() {
+    // this loop answers a stop signal itself, so that the process ends by its own return
+    shared.take_stop_requests();
+    let asked = if stdin_is_a_pipe() {
         tracing::info!(
             "stdin is a pipe; the server stops when it closes and the last peer has left"
         );
-        let mut sink = Vec::new();
-        let _ = std::io::stdin().lock().read_to_end(&mut sink);
-        tracing::info!("stdin closed; stopping");
+        // read on a thread of its own, so that this loop can also answer a stop signal
+        let closed = Arc::new(AtomicBool::new(false));
+        {
+            let closed = Arc::clone(&closed);
+            std::thread::spawn(move || {
+                let mut sink = Vec::new();
+                let _ = std::io::stdin().lock().read_to_end(&mut sink);
+                closed.store(true, Ordering::SeqCst);
+            });
+        }
+        loop {
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if closed.load(Ordering::SeqCst) {
+                tracing::info!("stdin closed; stopping");
+                break None;
+            }
+            std::thread::sleep(STOP_POLL);
+        }
     } else if args.idle > 0 {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
@@ -133,29 +163,80 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             args.idle
         );
         let mut idle_since = Instant::now();
+        let mut counted = Instant::now();
         loop {
-            std::thread::sleep(Duration::from_secs(1));
-            if shared.peers_attached() > 0 {
+            std::thread::sleep(STOP_POLL);
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if counted.elapsed() < Duration::from_secs(1) {
+                continue;
+            }
+            counted = Instant::now();
+            if superseded_and_alone(&shared) {
+                break None;
+            }
+            // in use: an MCP session attached, a request answered within the last second, or a
+            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
+            if shared.peers_attached() > 0
+                || crate::http::server::used_within(Duration::from_secs(1))
+            {
                 idle_since = Instant::now();
             } else if idle_since.elapsed() >= idle {
                 tracing::info!(
                     "no peer for {} second(s); stopping",
                     idle_since.elapsed().as_secs()
                 );
-                break;
+                break None;
             }
         }
     } else {
         tracing::info!("stdin is not a pipe; the server runs until the process is stopped");
+        let mut reaped = Instant::now();
         loop {
-            std::thread::sleep(Duration::from_secs(1));
-            shared.endpoint().reap();
+            std::thread::sleep(STOP_POLL);
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if reaped.elapsed() >= Duration::from_secs(1) {
+                reaped = Instant::now();
+                shared.endpoint().reap();
+                if superseded_and_alone(&shared) {
+                    break None;
+                }
+            }
+        }
+    };
+    match asked {
+        Some(signal) => {
+            tracing::info!(
+                signal,
+                "asked to stop by signal {signal}; stopping in order"
+            );
+            shared.stop_within(crate::shared::STOP_PEER_GRACE);
+        }
+        // the owner's end: wait for the peers, which a stop signal cuts short
+        None => {
+            shared.wait_until_peers_leave();
+            shared.stop();
         }
     }
-    shared.wait_until_peers_leave();
-    shared.stop();
     Ok(0)
 }
+
+/// A server whose lease another process took, once its last session has been handed on, has
+/// nothing left to serve and ends (I2127).
+fn superseded_and_alone(shared: &crate::shared::SharedServer) -> bool {
+    let alone = lease::was_lost() && shared.peers_attached() == 0;
+    if alone {
+        tracing::info!("this server lost the lease and its last session was handed on; stopping");
+    }
+    alone
+}
+
+/// How often the serve loop looks for a stop signal: well inside the
+/// [`crate::shared::STOP_PEER_GRACE`] it then gives the peers.
+const STOP_POLL: Duration = Duration::from_millis(100);
 
 /// `serve status`: the projection of `server.status`, asked of the running server when
 /// there is one — so that the answer carries the lease that process holds — and answered
@@ -325,10 +406,13 @@ fn spawn_claim_path(repo: &Repository) -> PathBuf {
 
 /// The longest a started process can legitimately take between being started and removing
 /// its claim: the election is bounded by [`lease::JOIN_TIMEOUT`], and a lease may be
-/// binding for [`lease::BIND_GRACE`] before anybody may count it as abandoned. A claim older
-/// than both no longer describes a process that is about to decide.
-const SPAWN_CLAIM_BOUND: Duration =
-    Duration::from_secs(lease::JOIN_TIMEOUT.as_secs() + lease::BIND_GRACE.as_secs());
+/// binding for the bind grace before anybody may count it as abandoned — both as the policy
+/// declares them ([`lease::timings`]). A claim older than both no longer describes a process
+/// that is about to decide.
+fn spawn_claim_bound() -> Duration {
+    let timings = lease::timings();
+    timings.join_timeout + timings.bind_grace
+}
 
 /// What an existing start claim says about the process it names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -349,13 +433,13 @@ enum SpawnClaim {
 /// can be reused by an unrelated process and an age bound is what keeps that from holding
 /// every later start off for good.
 fn spawn_claim_standing(content: &str, age: Duration, alive: impl Fn(u32) -> bool) -> SpawnClaim {
-    if age > SPAWN_CLAIM_BOUND {
+    if age > spawn_claim_bound() {
         return SpawnClaim::Abandoned;
     }
     match content.trim().parse::<u32>() {
         Ok(pid) if pid > 0 && alive(pid) => SpawnClaim::Pending,
         Ok(_) => SpawnClaim::Abandoned,
-        Err(_) if age > lease::BIND_GRACE => SpawnClaim::Abandoned,
+        Err(_) if age > lease::timings().bind_grace => SpawnClaim::Abandoned,
         Err(_) => SpawnClaim::Pending,
     }
 }
@@ -552,13 +636,21 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             }
             ServerStanding::Absent | ServerStanding::Stale => {}
             ServerStanding::Outdated => {
-                let takes_over = doc
+                // this executable replaces the server when it is the file the server was
+                // started from, rebuilt since, or a newer release than the server's: the
+                // election the started process runs reaches the same verdict (I2163)
+                let rebuilt = doc
                     .as_ref()
                     .and_then(|d| d.executable.as_ref())
                     .is_some_and(|e| {
                         e.replaced().is_some()
                             && std::env::current_exe().ok().as_deref() == Some(e.path.as_path())
                     });
+                let newer = doc.as_ref().is_some_and(|d| {
+                    lease::version_verdict(d.version.as_deref(), crate::VERSION)
+                        == lease::VersionVerdict::ServerOlder
+                });
+                let takes_over = rebuilt || newer;
                 if takes_over && !started {
                     spawn_server(repo, port, idle, &log, None)?;
                     started = true;
@@ -889,7 +981,7 @@ fn exited_by(pid: u32, deadline: Instant) -> bool {
 #[cfg(unix)]
 fn signal_stop(pid: u32) -> Result<()> {
     // SAFETY: kill(2) with a pid this process read from the lease of its own checkout and
-    // the signal the server removes its lease on; no memory is touched.
+    // the signal the server answers with its ordered stop; no memory is touched.
     let rc = unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM) };
     if rc != 0 {
         return Err(Error::Lease {
@@ -961,7 +1053,11 @@ mod tests {
             SpawnClaim::Pending
         );
         assert_eq!(
-            spawn_claim_standing("", lease::BIND_GRACE + Duration::from_secs(1), |_| true),
+            spawn_claim_standing(
+                "",
+                lease::timings().bind_grace + Duration::from_secs(1),
+                |_| true
+            ),
             SpawnClaim::Abandoned
         );
     }
@@ -970,7 +1066,9 @@ mod tests {
     fn a_live_pid_does_not_hold_a_start_off_past_the_bound() {
         // a pid reused by an unrelated process must not block every later start for good
         assert_eq!(
-            spawn_claim_standing("4242", SPAWN_CLAIM_BOUND + Duration::from_secs(1), |_| true),
+            spawn_claim_standing("4242", spawn_claim_bound() + Duration::from_secs(1), |_| {
+                true
+            }),
             SpawnClaim::Abandoned
         );
     }

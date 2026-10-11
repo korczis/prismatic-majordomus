@@ -1,0 +1,607 @@
+/* The UI's stylesheet, in source form: `majordomus ui`, the product (ADR 0135).
+   `scripts/cockpit-assets` compiles it to share/ui/ui.css with the Tailwind CLI, beside the
+   Cockpit's, and the compiled file is committed and drift-checked like every other
+   generated artifact.
+
+   The composition follows the owner's references
+   (campaigns/majordomus-ui-complete-opus-fable-v3-20261011/references/):
+   - a navy sidebar of about 15rem with the brand, icon navigation and a version card;
+   - a slim top bar with a wide search and the other surfaces;
+   - every screen opening on a hero band (glyph, title, tagline, lead, the brand mark
+     glowing behind it, and a divided group of KPI tiles);
+   - then a grid of panels with charts, timelines and tables.
+
+   Every colour is a role, a status or a tone of share/design/tokens.yaml: no literal colour
+   and no bracketed size, because the design gate refuses both. The markup names what a
+   thing is and never a utility class, because this file compiles only what is written in
+   it (source(none)). */
+
+@import "tailwindcss" source(none);
+@import "flowbite/src/themes/default";
+@import "../../design/theme.css";
+@import "../../design/surface.css";
+@import "../../design/status.css";
+@import "../../design/base.css";
+@import "../../design/primitives.css";
+@import "../../design/kit.css";
+@plugin "flowbite/plugin";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    background: var(--mj-bg);
+  }
+  body {
+    background: var(--mj-bg);
+    color: var(--mj-body);
+    @apply font-sans text-sm antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    color: var(--mj-fg);
+  }
+}
+
+@layer components {
+  .mj-body {
+    @apply min-h-screen;
+  }
+  .mj-sr-only {
+    @apply sr-only;
+  }
+  .mj-skip {
+    @apply absolute left-2 top-2 z-50 -translate-y-16 rounded-md px-3 py-2 focus:translate-y-0;
+    background: var(--mj-raised);
+    color: var(--mj-fg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-icon {
+    @apply h-5 w-5 shrink-0;
+  }
+  .mj-ui-label {
+    @apply truncate;
+  }
+  .mj-ui-mono {
+    @apply font-mono;
+  }
+  .mj-ui-dim {
+    color: var(--mj-muted);
+  }
+  .mj-ui-link {
+    color: var(--mj-accent);
+    @apply font-medium hover:underline;
+  }
+
+  /* ---------------------------------------------------------------- the frame */
+
+  .mj-ui-menu-toggle {
+    @apply sr-only;
+  }
+  .mj-ui-frame {
+    @apply flex min-h-screen w-full min-w-0;
+  }
+  .mj-ui-sidebar {
+    @apply fixed inset-y-0 left-0 z-40 hidden w-64 flex-col gap-6 overflow-y-auto px-4 py-5;
+    @apply lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:shrink-0;
+    background: var(--mj-raised);
+    border-right: 1px solid var(--mj-line);
+  }
+  /* a narrow screen opens the sidebar from the menu button, with no script */
+  .mj-ui-menu-toggle:checked ~ .mj-ui-frame .mj-ui-sidebar {
+    @apply flex;
+  }
+  .mj-ui-menu-toggle:focus-visible ~ .mj-ui-frame .mj-ui-menu-button {
+    outline: 2px solid var(--mj-accent);
+    outline-offset: 2px;
+  }
+  .mj-ui-brand {
+    @apply flex items-center gap-3 px-1 no-underline;
+    color: var(--mj-fg);
+  }
+  .mj-ui-mark {
+    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1.5;
+    color: var(--mj-accent);
+    background: var(--mj-accent-soft);
+    border: 1px solid var(--mj-accent-line);
+  }
+  .mj-ui-mark > svg {
+    @apply h-full w-full;
+  }
+  .mj-ui-brand-text {
+    @apply flex min-w-0 flex-col leading-tight;
+  }
+  .mj-ui-brand-name {
+    @apply text-lg font-semibold tracking-tight;
+  }
+  .mj-ui-brand-sub {
+    @apply font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-nav-list {
+    @apply m-0 grid list-none gap-1 p-0;
+  }
+  .mj-ui-nav-item {
+    @apply flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium no-underline;
+    color: var(--mj-body);
+  }
+  .mj-ui-nav-item:hover {
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+  }
+  .mj-ui-nav-item[aria-current="page"] {
+    color: var(--mj-on-accent);
+    background: var(--mj-accent-fill);
+  }
+  .mj-ui-version-card {
+    @apply mt-auto grid gap-1 rounded-xl p-3;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-version-head {
+    @apply flex items-center justify-between gap-2;
+  }
+  .mj-ui-version {
+    @apply font-mono text-base font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-version-note,
+  .mj-ui-version-line {
+    @apply text-xs;
+    color: var(--mj-muted);
+  }
+
+  .mj-ui-body {
+    @apply flex min-w-0 flex-1 flex-col;
+  }
+  .mj-ui-topbar {
+    @apply sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:px-6;
+    background: var(--mj-bg);
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-ui-menu-button {
+    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg lg:hidden;
+    color: var(--mj-fg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-search {
+    @apply flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 sm:max-w-2xl;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  .mj-ui-search:focus-within {
+    border-color: var(--mj-accent);
+  }
+  .mj-ui-search input {
+    @apply min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm focus:ring-0;
+    color: var(--mj-fg);
+  }
+  .mj-ui-tools {
+    @apply ml-auto flex shrink-0 items-center gap-1 xl:ml-0;
+  }
+  .mj-ui-fresh {
+    @apply ml-auto hidden items-center gap-2 whitespace-nowrap font-mono text-xs xl:flex;
+    color: var(--mj-muted);
+  }
+  .mj-ui-fresh-dot {
+    @apply h-2 w-2 rounded-full;
+    background: var(--mj-ok);
+    box-shadow: 0 0 0 3px var(--mj-ok-bg);
+  }
+  .mj-ui-tool {
+    @apply inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium no-underline;
+    color: var(--mj-body);
+  }
+  .mj-ui-tool:hover {
+    color: var(--mj-fg);
+    background: var(--mj-raised);
+  }
+  .mj-ui-tool > .mj-ui-label {
+    @apply hidden md:inline;
+  }
+
+  .mj-ui-main {
+    @apply mx-auto flex w-full min-w-0 max-w-[var(--mj-cockpit)] flex-col gap-6 px-4 py-6 lg:px-6;
+  }
+  .mj-ui-stack {
+    @apply flex min-w-0 flex-col gap-6;
+  }
+
+  /* ---------------------------------------------------------------- the hero */
+
+  /* the text on the left, the lit mark on the right, the KPI tiles as one row beneath:
+     a screen may have four tiles or six, and the text never shares a row with them */
+  .mj-ui-hero {
+    @apply relative grid min-w-0 gap-6 overflow-hidden rounded-2xl p-6 lg:p-8;
+    background:
+      radial-gradient(60% 120% at 70% 0%, var(--mj-accent-soft), transparent 70%),
+      linear-gradient(180deg, var(--mj-raised), var(--mj-bg));
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-hero-text {
+    @apply relative z-10 flex min-w-0 flex-col gap-2 lg:pr-56;
+  }
+  .mj-ui-hero-heading {
+    @apply flex min-w-0 items-center gap-3;
+  }
+  .mj-ui-hero-glyph {
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+    color: var(--mj-tone-fg, var(--mj-accent));
+    background: var(--mj-tone-bg, var(--mj-accent-soft));
+    border: 1px solid var(--mj-tone-line, var(--mj-accent-line));
+  }
+  .mj-ui-hero-glyph > .mj-ui-icon {
+    @apply h-6 w-6;
+  }
+  .mj-ui-title {
+    @apply text-3xl font-bold tracking-tight sm:text-4xl;
+  }
+  .mj-ui-tagline {
+    @apply text-lg font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-ui-lead {
+    @apply max-w-3xl text-sm;
+    color: var(--mj-muted);
+    overflow-wrap: anywhere;
+  }
+  /* the brand mark, large and lit, behind the hero: decoration, hidden from assistive
+     technology, and gone below xl where the KPIs need the room */
+  .mj-ui-hero-art {
+    @apply pointer-events-none absolute right-10 top-6 hidden h-36 w-36 opacity-70 lg:block;
+    color: var(--mj-accent);
+    filter: drop-shadow(0 0 2rem var(--mj-accent));
+  }
+  .mj-ui-hero-art > svg {
+    @apply h-full w-full;
+  }
+  .mj-ui-hero-kpis {
+    @apply relative z-10 m-0 grid list-none gap-px overflow-hidden rounded-xl p-0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+    background: var(--mj-line);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-kpi-item {
+    @apply flex min-w-0;
+    background: var(--mj-raised);
+  }
+  .mj-ui-kpi {
+    @apply flex w-full min-w-0 flex-col gap-1 px-4 py-3;
+  }
+  .mj-ui-kpi-anchor {
+    @apply flex w-full min-w-0 no-underline;
+    color: inherit;
+  }
+  .mj-ui-kpi-anchor:hover {
+    background: var(--mj-sunken);
+  }
+  .mj-ui-kpi-anchor:hover .mj-ui-kpi-label {
+    color: var(--mj-accent);
+  }
+  .mj-ui-kpi-label {
+    @apply truncate text-xs font-medium;
+    color: var(--mj-muted);
+  }
+  .mj-ui-kpi-value {
+    @apply truncate text-2xl font-semibold leading-tight;
+    color: var(--mj-fg);
+  }
+  .mj-ui-kpi-source {
+    @apply truncate font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-strip {
+    @apply m-0 grid list-none gap-px overflow-hidden rounded-xl p-0;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+    background: var(--mj-line);
+    border: 1px solid var(--mj-line);
+  }
+
+  /* ---------------------------------------------------------------- panels */
+
+  .mj-ui-grid {
+    @apply grid min-w-0 gap-6 xl:grid-cols-2;
+  }
+  .mj-ui-span {
+    @apply min-w-0 xl:col-span-2;
+  }
+  .mj-ui-panel {
+    @apply flex min-w-0 flex-col gap-4 rounded-2xl p-5;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-panel[aria-busy="true"] {
+    opacity: 0.7;
+  }
+  .mj-ui-panel-head {
+    @apply flex min-w-0 items-start justify-between gap-4;
+  }
+  .mj-ui-panel-heading {
+    @apply flex min-w-0 flex-col gap-1;
+  }
+  .mj-ui-more {
+    @apply inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium no-underline;
+    color: var(--mj-accent);
+  }
+  .mj-ui-more:hover {
+    @apply underline;
+  }
+  .mj-ui-more > .mj-ui-icon {
+    @apply h-4 w-4;
+  }
+  .mj-ui-panel-title {
+    @apply text-base font-semibold;
+  }
+  .mj-ui-panel-sub {
+    @apply text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-ui-panel-body {
+    @apply min-w-0 flex-1;
+  }
+  .mj-ui-sources {
+    @apply grid gap-1.5 border-t pt-3;
+    border-color: var(--mj-line);
+  }
+  .mj-ui-source {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-source-name {
+    @apply font-semibold;
+    color: var(--mj-body);
+  }
+  .mj-ui-chip {
+    @apply inline-flex max-w-full items-center overflow-hidden rounded-md text-xs no-underline;
+    border: 1px solid var(--mj-line);
+    background: var(--mj-sunken);
+  }
+  .mj-ui-chip-kind {
+    @apply px-1.5 py-0.5 font-sans font-semibold;
+    color: var(--mj-accent);
+    border-right: 1px solid var(--mj-line);
+  }
+  .mj-ui-chip-value {
+    @apply truncate px-1.5 py-0.5;
+    color: var(--mj-body);
+  }
+  .mj-ui-chip--link:hover {
+    border-color: var(--mj-accent);
+  }
+  .mj-ui-technical {
+    @apply underline decoration-dotted underline-offset-2;
+    color: var(--mj-muted);
+  }
+  .mj-ui-technical:hover {
+    color: var(--mj-accent);
+  }
+  .mj-ui-empty {
+    @apply text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-ui-line {
+    @apply mb-3 text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-ui-cell-title {
+    @apply ml-2;
+    color: var(--mj-fg);
+  }
+  .mj-ui-row-link {
+    @apply no-underline;
+    color: inherit;
+  }
+  .mj-ui-row-link:hover .mj-ui-cell-title {
+    color: var(--mj-accent);
+    @apply underline;
+  }
+  /* the row a link lands on is lit, so the reader sees where it went */
+  tr:target {
+    background: var(--mj-accent-soft);
+    box-shadow: inset 3px 0 0 var(--mj-accent);
+  }
+  .mj-ui-cell-meter {
+    @apply min-w-40;
+  }
+  .mj-ui-badges {
+    @apply flex flex-wrap gap-1;
+  }
+
+  /* a meter: the bar is a picture of the two numbers written beside it */
+  .mj-ui-meter {
+    @apply flex items-center gap-2;
+  }
+  .mj-ui-meter-track {
+    @apply block h-1.5 flex-1 overflow-hidden rounded-full;
+    background: var(--mj-sunken);
+  }
+  .mj-ui-meter-fill {
+    @apply block h-full rounded-full;
+    background: var(--mj-accent-fill);
+  }
+  .mj-ui-meter-text {
+    @apply whitespace-nowrap font-mono text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* a donut and its legend; each segment takes its tone from the design system */
+  .mj-ui-donut {
+    @apply flex flex-wrap items-center gap-6;
+  }
+  .mj-ui-donut-figure {
+    @apply relative h-40 w-40 shrink-0;
+  }
+  .mj-ui-donut-svg {
+    @apply h-full w-full -rotate-90;
+  }
+  .mj-ui-donut-track {
+    fill: none;
+    stroke: var(--mj-sunken);
+    stroke-width: 5;
+  }
+  .mj-ui-donut-segment {
+    fill: none;
+    stroke: var(--mj-tone-fill, var(--mj-accent-fill));
+    stroke-width: 5;
+  }
+  .mj-ui-donut-center {
+    @apply absolute inset-0 flex flex-col items-center justify-center text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-donut-center > strong {
+    @apply text-2xl font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-legend {
+    @apply m-0 grid min-w-0 flex-1 list-none gap-2 p-0;
+  }
+  .mj-ui-legend-item {
+    @apply flex items-center gap-2 text-sm;
+  }
+  .mj-ui-legend-dot {
+    @apply h-2.5 w-2.5 shrink-0 rounded-full;
+    background: var(--mj-tone-fill, var(--mj-accent-fill));
+  }
+  .mj-ui-legend-name {
+    @apply flex-1 truncate;
+    color: var(--mj-body);
+  }
+  .mj-ui-legend-value {
+    @apply font-mono;
+    color: var(--mj-fg);
+  }
+
+  /* a timeline of dated entries */
+  .mj-ui-timeline {
+    @apply relative m-0 grid list-none gap-3 p-0;
+  }
+  .mj-ui-timeline-item {
+    @apply relative grid items-start gap-3;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .mj-ui-timeline-dot {
+    @apply mt-1.5 h-2.5 w-2.5 rounded-full;
+    background: var(--mj-accent-fill);
+    box-shadow: 0 0 0 4px var(--mj-accent-soft);
+  }
+  .mj-ui-timeline-body {
+    @apply flex min-w-0 flex-col;
+  }
+  .mj-ui-timeline-title {
+    @apply font-mono font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-timeline-when {
+    @apply whitespace-nowrap font-mono text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* a list of checks, each with its status */
+  .mj-ui-checks {
+    @apply m-0 grid list-none gap-2 p-0;
+  }
+  .mj-ui-check {
+    @apply flex items-start justify-between gap-3 rounded-lg px-3 py-2;
+    background: var(--mj-sunken);
+  }
+  .mj-ui-check-text {
+    @apply flex min-w-0 flex-col;
+  }
+  .mj-ui-check-title {
+    @apply text-sm font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-ui-check-detail {
+    @apply text-xs;
+    color: var(--mj-muted);
+    overflow-wrap: anywhere;
+  }
+
+  /* a relationship graph: the canvas once the script has drawn it, the table before */
+  .mj-ui-graph-canvas {
+    @apply h-96 w-full rounded-xl;
+    background:
+      radial-gradient(70% 70% at 50% 40%, var(--mj-accent-soft), transparent 75%),
+      var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-graph--drawn .mj-ui-graph-fallback {
+    @apply mt-4;
+  }
+
+  /* tabs: links to the same route with the filter a capability declares */
+  .mj-ui-tabs {
+    @apply flex flex-wrap gap-1 rounded-xl p-1;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-tab {
+    @apply rounded-lg px-3 py-1.5 text-sm font-medium no-underline;
+    color: var(--mj-body);
+  }
+  .mj-ui-tab:hover {
+    color: var(--mj-fg);
+  }
+  .mj-ui-tab[aria-current="page"] {
+    color: var(--mj-on-accent);
+    background: var(--mj-accent-fill);
+  }
+
+  /* cards: one entity each, as the product features are */
+  .mj-ui-cards {
+    @apply m-0 grid list-none gap-3 p-0;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  }
+  .mj-ui-card {
+    @apply flex min-w-0 flex-col gap-1.5 rounded-xl p-4;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-card-kicker {
+    @apply text-xs;
+    color: var(--mj-accent);
+  }
+  .mj-ui-card-title {
+    @apply text-sm font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-card-text {
+    @apply text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* the detail of one entity, opened from its row */
+  .mj-ui-detail {
+    @apply flex min-w-0 flex-col gap-3 rounded-xl p-4;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-accent-line);
+  }
+  .mj-ui-detail-head {
+    @apply flex flex-col gap-1;
+  }
+  .mj-ui-detail-title {
+    @apply text-lg font-semibold;
+  }
+  section:target {
+    box-shadow: 0 0 0 2px var(--mj-accent);
+  }
+
+  /* named counts, listed rather than summed */
+  .mj-ui-facts {
+    @apply m-0 grid gap-2;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+  }
+  .mj-ui-fact {
+    @apply flex flex-col gap-0.5 rounded-lg px-3 py-2;
+    background: var(--mj-sunken);
+  }
+  .mj-ui-fact > dt {
+    @apply text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-fact > dd {
+    @apply m-0 font-mono text-lg font-semibold;
+    color: var(--mj-fg);
+  }
+}

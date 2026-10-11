@@ -248,6 +248,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the pack's index, shards and manifest under tmp/packs/ (or --out), after planning with pack.plan and before verifying with pack.verify.",
     },
     LocalCommand {
+        command: "offload derive",
+        reason: LocalReason::WritesRepository,
+        note: "stages the files a derive on a declared host changed into the caller's worktree, after a round trip over the caller's own ssh credentials.",
+    },
+    LocalCommand {
         command: "worktree create",
         reason: LocalReason::WritesRepository,
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
@@ -273,6 +278,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prunes the worktrees git still records and whose directories are gone.",
     },
     // ---------------------------------------------------------------- the caller's own checkout
+    LocalCommand {
+        command: "offload probe",
+        reason: LocalReason::SessionLocal,
+        note: "measures the declared hosts over the invoking user's ssh keys and network, which a networked caller does not share.",
+    },
     LocalCommand {
         command: "worktree root",
         reason: LocalReason::SessionLocal,
@@ -316,6 +326,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the canonical input or output schema that capabilities.describe already carries on the descriptor it returns.",
     },
     LocalCommand {
+        command: "offload hosts",
+        reason: LocalReason::RendersCapability("objects.get"),
+        note: "prints the derive-offload declaration, the object objects.get serves as majordomus://derive-offload/<id>, with its defaults filled in.",
+    },
+    LocalCommand {
         command: "mesh status",
         reason: LocalReason::RendersCapability("mesh.status"),
         note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",
@@ -339,6 +354,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh state",
         reason: LocalReason::RendersCapability("mesh.state"),
         note: "asks this checkout's running server for mesh.state and renders the folded cooperation state and its digest.",
+    },
+    LocalCommand {
+        command: "monitor",
+        reason: LocalReason::RendersCapability("monitor.stream"),
+        note: "asks this checkout's running server for monitor.stream and renders a page, or follows it.",
     },
     LocalCommand {
         command: "mesh events",

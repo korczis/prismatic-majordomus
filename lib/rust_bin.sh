@@ -395,6 +395,29 @@ mj_rust_reasoning_report() {
 # Never a build, as for the peer board. Prints the line or nothing; always returns 0.
 #
 # mj_rust_prs_brief <repository-root> [<tool-root>]
+# mj_rust_monitor_brief <root> [home] — what happened around this repository in the last
+# hour, for a briefing (ADR 0133): one summary line, then at most five signals that name the
+# reader ($MAJORDOMUS_MONITOR_FOR) and five that ask for attention, newest first. Local
+# sources only (the mesh and the executor's trail): the start of a session is no place to
+# wait on the network. Prints nothing when there is no executable, no server or no jq — a
+# briefing degrades to silence, never to an error.
+mj_rust_monitor_brief() {
+  mj_mb_root="$1"
+  command -v jq >/dev/null 2>&1 || return 0
+  mj_mb_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_mb_bin" ] || return 0
+  mj_mb_share="$(mj_rust_share "${2:-$1}")"
+  mj_mb_out="$( ( [ -z "$mj_mb_share" ] || export MAJORDOMUS_SHARE="$mj_mb_share"
+    "$mj_mb_bin" monitor --repo "$mj_mb_root" --since 1h --limit 200 --sources mesh,executor --format json ) 2>/dev/null)" || return 0
+  printf '%s' "$mj_mb_out" | jq -r '
+    select(.signals != null)
+    | "\(.signals | length) signal(s) in the last hour, \(.for_you) for you, \(.suppressed) folded away as noise — majordomus monitor --follow streams it",
+      ([.signals[] | select(.for_you)] | reverse | .[0:5][] | "  for you    " + .summary),
+      ([.signals[] | select((.for_you | not) and .severity != "info")] | reverse | .[0:5][] | "  " + .severity + "  " + .summary)
+  ' 2>/dev/null || true
+  return 0
+}
+
 mj_rust_prs_brief() {
   mj_pb_root="$1"
   mj_pb_bin="$(mj_rust_bin "${2:-$1}")"

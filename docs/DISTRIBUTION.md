@@ -151,9 +151,26 @@ Trusted: GitHub Pages serving the metadata, GitHub Releases serving the artifact
 pipeline that produced both. Checksums bind an artifact to its metadata; they do not, by
 themselves, prove who wrote the metadata.
 
-Deferred, deliberately: signed provenance (GitHub artifact attestations, Sigstore). It is
-worth adding and it is not claimed here, because a security document that describes
-protections it does not have is worse than one that is short.
+**Provenance, where it can be checked.** The release workflow attests every archive it
+publishes (GitHub artifact attestations, signed with the workflow run's identity), so an
+archive can be traced to this repository's release workflow at its tag. An attestation is
+found by the archive's digest, which means GitHub answers a release published before
+attestations began and an archive that is not the one the workflow built in the same way:
+no attestation for that digest. What each path verifies:
+
+| path | checksum (SHA-256 and size) | provenance (attestation) |
+|---|---|---|
+| `curl … \| sh`, the GitHub CLI installed and signed in | always, fatal on mismatch | asked; a refusal is reported and the install continues on the checksum |
+| the same, with `MAJORDOMUS_REQUIRE_PROVENANCE=1` | always, fatal on mismatch | required; anything short of a verified attestation installs nothing |
+| `curl … \| sh` without the GitHub CLI, or signed out | always, fatal on mismatch | not checked, and the closing report says so |
+| a plain-HTTP fixture origin (the installer's own tests) | always, fatal on mismatch | not checked: no attestation describes a fixture |
+| by hand: `gh attestation verify <archive> --repo korczis/prismatic-majordomus` | `SHA256SUMS` beside the release | yes |
+
+The installer's closing report names which it verified under `Verified:` — `provenance (…)
+and checksum`, or `checksum only — provenance not verified: <why>`. Provenance is not fatal
+by default because a refusal cannot be told apart from an older release; it becomes fatal on
+request. Not claimed: a signature over the metadata itself, or any check of a release older
+than its attestations.
 
 ## Releasing
 
@@ -177,12 +194,11 @@ scripts/ci/release-verdict --commit HEAD
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
 
-# 5. the pipeline publishes, then proposes the record as release/record-v0.3.0:
-#    merge that pull request — until it lands, releases/latest.json still names the
-#    previous release and the installer installs it
-# 6. Pages deploys the record; confirm with scripts/pages verify --commit <merge sha> and
-#    curl -fsSL https://majordomus.dev/releases/latest.json, and re-run the smoke job if it
-#    ran before the record was published
+# 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
+#    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
+#    with curl -fsSL https://majordomus.dev/releases/latest.json
+# 6. merge the record's pull request once its ci is green; Pages then deploys master with
+#    the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
@@ -200,12 +216,15 @@ build    one archive per supported target, on the runner the model names, verifi
 publish  digests, the GitHub release, the record written from what was uploaded and staged,
          every projection derived from it and judged by scripts/derive-check, then both
          proposed to the default branch as one pull request, release/record-<tag>
-smoke    the published installer, from its published URL, installing the release that was
-         just published, on every runner whose target it was built for
+smoke    scripts/ci/install-check --expect <tag>: the published installer, from its published
+         URL, installs the release that was just published, and the installed tool
+         initialises and serves a repository that is not this one, on every runner whose
+         target it was built for; no step of it swallows a failure
 ```
 
-Only `publish` has `contents: write`. Nothing else in the run can write anything; `plan`
-reads check-runs (`checks: read`) and nothing more.
+Only `publish` has `contents: write`, and with it the `id-token` and `attestations` writes
+that attest its archives. Nothing else in the run can write anything; `plan` reads
+check-runs (`checks: read`) and nothing more.
 
 A release follows the verdict. v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from commits
 whose `ci` check-run concluded failure, because the pipeline asked only whether the tag agreed
@@ -278,6 +297,25 @@ does not fail the job, because the release is published either way and `smoke` m
 run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
 workflows to this.
 
+#### The site serves a release before its record lands
+
+What the installer reads is `releases/latest.json` and `releases/<tag>.json`, both projections
+of the release record. The record reaches master through a pull request whose `ci` ran for
+106 minutes for v0.19.1, and on 2026-10-10 v0.20.0 was published on GitHub at 16:38Z and
+served by the site at 17:42Z, after the record was merged by hand. So the publish job, once
+the record and its projections are derived and judged, runs `scripts/site-deploy
+--release-metadata <tag>`: those two files go onto what `gh-pages` serves, and nothing else
+does. `build.json` keeps naming the master commit the site was built from, so the
+`pages-live` gate still reads master (ADR 0131).
+
+Until the record lands, master's own deploys carry the previous release's `latest.json`. An
+ordinary deploy therefore keeps the `latest.json` that `gh-pages` serves, and the tag file it
+names, when it names a newer version than the build; it says so in its output and in the
+`gh-pages` commit. `--release-metadata` refuses a tag the metadata does not name, a
+`latest.json` that differs from the tag's file, and a release older than the one served: a
+site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
+all of it.
+
 #### Why the release asks Pages to publish
 
 The publish job ends by running `gh workflow run pages.yml`, and that step is not a
@@ -345,7 +383,17 @@ published site:
 5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
    launcher out passes every check that only reads the archive's file list, and fails here
 6  the installed tool initialises a repository that has none
+7  and serves it: the installed MCP launcher, started there without --standalone, answers
+   initialize and tools/list over stdio and elects itself that repository's shared server,
+   which reports itself ready and names that repository — its identity is the digest of
+   the repository's root, so a server that answered for this checkout instead is refused
 ```
+
+The release smoke runs the same gate on the tag it published (`--expect <tag>` refuses
+metadata that names any other release), so the promise is measured by one gate at
+publication, every night and on request. Case 1024
+(`test/cases/1024_an_installed_release_serves_a_foreign_repository.sh`) proves that it fails
+on an archive whose MCP launcher cannot start.
 
 Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
 own, so the prefix, the launchers and the PATH hint all land inside it.

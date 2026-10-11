@@ -591,3 +591,22 @@ fn a_query_read_as_a_resource_accepts_an_empty_input() {
     assert_eq!((c.id.as_str(), matched.name.as_str()), ("a.two", "n"));
     assert!(r.by_mcp_uri("majordomus://a").is_none());
 }
+
+#[test]
+fn a_query_that_declares_writing_the_repository_is_refused_naming_both_policies() {
+    let mut writer = query(
+        "a.one",
+        tool("majordomus_a_one"),
+        Stability::Implemented,
+        "m",
+    );
+    writer.capability.execution = writer.capability.execution.writes_repository();
+    let errs = errors_of(vec![writer]);
+    assert!(
+        matches!(&errs[..], [RegistryError::Shape { id, reason, .. }]
+            if id == "a.one"
+                && reason.contains("declares the execution policy")
+                && reason.contains("its kind makes it")),
+        "{errs:?}"
+    );
+}

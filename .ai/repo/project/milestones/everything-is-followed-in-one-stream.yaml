@@ -1,0 +1,63 @@
+id: everything-is-followed-in-one-stream
+title: "Everything that happens in the repository is followed in one stream"
+slug: everything-is-followed-in-one-stream
+order: 340
+priority: p1
+problem: "A worker that wants to know what is happening around it reads six surfaces with six cursors: the mesh journal (where about 95% of events are identical session re-projections on every heartbeat), the board, the executor trail, the executions, and GitHub's pull requests and checks through gh. Nothing joins them, nothing says which of it is addressed to the reader, and every session that needs it hand-rolls a jq loop over majordomus mesh events and gh pr list. Sessions miss reviews and handovers addressed to them for hours because nothing they read shows them."
+outcome: "majordomus monitor is the one stream: a typed, cursor-paged feed of signals from every source, with the heartbeat noise folded away and what is addressed to the reader marked and listed first, served by the running server over HTTP, MCP and the command line (with --follow), shown live in the Cockpit, printed at every session start, named by the provider bootstrap, documented and released."
+current_state: "No monitor command, module or capability exists (origin/master 890e112d04, 0.20.0). mesh.events, peers, integration.events and executions.events each answer their own page; the CLI renders mesh events one by one, unfiltered."
+desired_state: "One read capability, monitor, answers a page of signals after an opaque cursor across mesh, board, executor and executions (and GitHub when reachable, as a reported source state otherwise); majordomus monitor --follow streams it; /cockpit/monitor shows it live; the start briefing and majordomus context say what happened since the last look."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/providers"
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/cli"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/tests"
+  - "lib"
+  - "docs"
+  - "site"
+  - "test/cases"
+  - "README.md"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+
+non_scope:
+  - "Writing anything: the monitor reads; acting on a signal stays with the capability that owns the act"
+  - "A second journal or event store: every signal is derived from a source that already records it"
+  - "Push notifications to systems outside the repository (Slack, mail); a notifier subscribes to the stream later"
+
+acceptance_criteria:
+  - "One capability answers a page of signals from mesh, board, executor trail and executions after an opaque cursor, and the next page after the answer's cursor repeats nothing"
+  - "A session_opened that only re-projects an unchanged session is counted as suppressed and never shown; a new session or a changed intent is shown"
+  - "Signals addressed to the reader are marked for_you and listed first in a briefing"
+  - "majordomus monitor --follow streams new signals and --count/--until let a script wait for one and exit"
+  - "An unreachable source is reported with its reason, never answered as empty"
+  - "The Cockpit shows the stream live, and the start briefing and majordomus context print what happened since the last look"
+  - "The provider bootstrap names the command; docs/MONITOR.md, the README and a blog article describe it; the release carries it"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib monitor"
+  - "cargo test --test monitor_stream"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1050 1051 1052 1053 1054"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "monitor_capability"
+  - "fold_suppresses_reprojection"
+  - "follow_terminates"
+  - "absent_source_reported"
+  - "cockpit_monitor_page"
+  - "session_start_monitor_line"
+  - "released_and_deployed"
+
+risks:
+  - "A stream that shows everything is as unread as six that show their own: the fold and for_you are the feature, not the joining."
+  - "GitHub is network: it must never make a local page slow or an absent network look like a quiet repository."
+
+created_at: 2026-10-10
+updated_at: 2026-10-10

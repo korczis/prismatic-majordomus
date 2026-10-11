@@ -1,0 +1,28 @@
+id: I2402
+milestone: everything-is-followed-in-one-stream
+title: "majordomus monitor follows the stream from a terminal and a script"
+slug: monitor-cli
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add majordomus monitor with --follow, --for, --sources, --since, --count, --until and --format text|json|ndjson, rendering one line per signal with its source tag."
+why: "The person and every agent need one command to follow the repository live and a way for a script to wait for one event and exit, instead of hand-rolled jq loops."
+current_state: "No command."
+desired_state: "majordomus monitor prints a page; --follow streams it; --count and --until terminate."
+scope:
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/cli"
+  - "test/cases/1050_the_monitor_folds_the_noise.sh"
+  - "test/cases/1051_a_followed_stream_can_be_waited_on.sh"
+depends_on: 
+  - "I2401"
+acceptance_criteria:
+  - "One page prints one line per signal and the suppressed count"
+  - "--follow --count N exits after N signals"
+  - "--format ndjson prints one JSON document per line"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1050 1051"
+evidence_required:
+  - "monitor_cli_cases"
+created_at: 2026-10-10
+updated_at: 2026-10-10

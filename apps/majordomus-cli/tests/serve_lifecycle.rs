@@ -300,6 +300,49 @@ fn stop_answers_for_the_server_it_named_even_when_the_lease_is_taken_again_at_on
     let _ = std::fs::remove_file(&lease);
 }
 
+/// A server stops on `serve stop` however it was started, and only the server that held the
+/// lease removes it (I2128). `ensure` always starts one with an idle bound and no pipe; the
+/// two other ways a server waits — reading a parent's pipe, and running until it is stopped —
+/// answer the same signal, and are started here by hand.
+#[test]
+fn a_server_stops_on_a_signal_whether_it_reads_a_pipe_or_runs_unbounded() {
+    use std::process::Stdio;
+    for piped in [true, false] {
+        let f = Fixture::new();
+        let mut child = Command::new(BIN)
+            .args(["serve", "--port", "0"])
+            .current_dir(f.root())
+            .env("MAJORDOMUS_SHARE", dist_share())
+            .env_remove("MAJORDOMUS_HTTP_HOST")
+            .stdin(if piped { Stdio::piped() } else { Stdio::null() })
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("spawn serve");
+        // the pipe stays open on this side; the child is reaped the moment it ends, as a
+        // parent shell or launcher would, because `serve stop` reads an unreaped child as a
+        // process still running
+        let pipe = child.stdin.take();
+        let ended = std::thread::spawn(move || child.wait().expect("wait for serve"));
+        let lease = lease_path(&f);
+        wait_until(
+            "the server publishes its address",
+            Duration::from_secs(30),
+            || matches!(LeaseFile::read(&lease), LeaseFile::Document(d) if d.url.is_some()),
+        );
+        let (code, out, err) = mj(&f.root(), &["serve", "stop", "--wait", "10"]);
+        assert_eq!(code, 0, "piped={piped}: {out}{err}");
+        assert!(out.starts_with("stopped "), "piped={piped}: {out}");
+        ended.join().expect("the server ended");
+        assert!(
+            !lease.exists(),
+            "piped={piped}: the server that held the lease removed it"
+        );
+        // the pipe was still open: it was the signal, not stdin closing, that ended it
+        drop(pipe);
+    }
+}
+
 /// `serve ensure` bounded by `wait` seconds, for a call that is expected not to converge.
 fn ensure_waiting(cwd: &Path, wait: u64) -> (i32, Value, String) {
     let wait = wait.to_string();
@@ -535,6 +578,97 @@ fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
     assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
     let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+/// A server of another release, answering for this checkout. The installer puts each release
+/// in a directory of its own, so the replaced-on-disk check above never sees an upgrade; the
+/// lease here names no executable at all, so that only the version can decide (I2163).
+fn a_server_of_release(f: &Fixture, version: &str) -> String {
+    let old = TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", old.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+        "leaseholder": true,
+        "version": version,
+    })
+    .to_string();
+    std::thread::spawn(move || {
+        for stream in old.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let mut request = [0u8; 4096];
+            let _ = s.read(&mut request);
+            let _ = write!(
+                s,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+        }
+    });
+    let lease = lease_path(f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        serde_json::json!({
+            "schema": "majordomus-mcp-lease/v1",
+            "pid": std::process::id(),
+            "token": format!("release-{version}"),
+            "root": f.root(),
+            "url": url,
+            "started_at": "2026-09-10T00:00:00Z",
+            "version": version,
+        })
+        .to_string(),
+    )
+    .unwrap();
+    url
+}
+
+#[test]
+fn newer_client_replaces_older_server_test() {
+    // An older release serves this checkout from its own directory. This executable is
+    // newer: `ensure` starts a server, whose election takes the older lease over, and the new
+    // one is what stands there. Before I2163 the older server was "ready" to every new
+    // client until it idled out.
+    let f = Fixture::new();
+    let old_url = a_server_of_release(&f, "0.0.1");
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(a["started"], true, "the older server was replaced: {a}");
+    assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
+    assert!(
+        matches!(LeaseFile::read(&lease_path(&f)), LeaseFile::Document(d) if d.version.as_deref() == Some(majordomus_cli::VERSION)),
+        "the lease is this release's"
+    );
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
+fn an_older_client_leaves_a_newer_server_alone_and_says_so() {
+    // The other way round: the server is a newer release. This executable does not take it
+    // over — a newer server is no worse than one of its own — and says which is older.
+    let f = Fixture::new();
+    let newer_url = a_server_of_release(&f, "999.0.0");
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_ne!(code, 0, "an outdated standing is not ready: {a}\n{err}");
+    assert_eq!(a["standing"], "outdated", "{a}");
+    assert_eq!(
+        a["started"], false,
+        "nothing replaced the newer server: {a}"
+    );
+    assert!(
+        a.to_string().contains("newer than this executable"),
+        "the report says which side is older: {a}"
+    );
+    assert!(
+        matches!(LeaseFile::read(&lease_path(&f)), LeaseFile::Document(d) if d.url.as_deref() == Some(newer_url.as_str())),
+        "the lease still names the newer server"
+    );
+    // never `serve stop` here: the lease names this test process, and stop signals its pid
+    std::fs::remove_file(lease_path(&f)).unwrap();
 }
 
 #[test]

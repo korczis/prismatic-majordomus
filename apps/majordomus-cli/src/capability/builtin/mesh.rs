@@ -124,21 +124,52 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
     let runtime = ctx.mesh.decided().then(|| ctx.mesh.status());
-    Ok(crate::mesh::doctor::doctor_at(
-        declaration(ctx),
-        Some(root),
-        runtime.as_ref(),
-    ))
+    let resolved = resolved_declaration(ctx);
+    let source = crate::mesh::doctor::declaration_source(&resolved);
+    let mut report =
+        crate::mesh::doctor::doctor_at(resolved.declaration, Some(root), runtime.as_ref());
+    if let Some(check) = source {
+        report.checks.push(check);
+    }
+    // the journal is judged only where a runtime holds one
+    if let Some(cooperation) = ctx.mesh.cooperation() {
+        report.checks.push(crate::mesh::doctor::journal_check(
+            &cooperation.journal().tallies(),
+        ));
+    }
+    // one conjunction over every check, so neither added check's failure can be lost
+    report.ok = report.checks.iter().all(|c| c.ok);
+    Ok(report)
 }
 
-/// The repository's mesh declaration, as the index discovered it: `None` when no object
-/// of the kind exists, the parse verdict when one does.
+/// Put the declaration's trust in force on a running cooperation runtime, ending the links of
+/// every key it no longer trusts (I2134). The server calls this with each new generation of the
+/// repository it reads, so a key withdrawn from `trust.allow` and committed loses its links
+/// without a restart. Returns the runtime keys whose links ended.
+pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
+    let (Some(cooperation), Some(Ok(config))) = (ctx.mesh.cooperation(), declaration(ctx)) else {
+        return Vec::new();
+    };
+    cooperation.retrust(config.trust)
+}
+
+/// The repository's mesh declaration in force: `None` when no object of the kind exists,
+/// the parse verdict when one does — the working tree's copy with every widening of the
+/// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,
+/// so the runtime, the doctor and every status agree on what is obeyed.
 pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
-    ctx.index
+    resolved_declaration(ctx).declaration
+}
+
+/// [`declaration`], with the trunk it was held against and what was narrowed.
+pub(crate) fn resolved_declaration(ctx: &Context) -> crate::mesh::root::Resolved {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let working = ctx
+        .index
         .objects
         .iter()
-        .find(|o| o.kind == crate::mesh::KIND)
-        .map(MeshConfig::parse)
+        .find(|o| o.kind == crate::mesh::KIND);
+    crate::mesh::root::resolve(root, working)
 }
 
 // ---------------------------------------------------------------- mesh.register
@@ -592,7 +623,9 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The highest Lamport stamp the journal has seen: the `after` of the next page.
+    /// The `after` of the next page: the stamp of the last event this page carries, or the
+    /// `after` that was asked when it carries none. A page never ends inside a run of equal
+    /// stamps, so resuming after it misses nothing (I2140).
     pub lamport: u64,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
@@ -608,11 +641,12 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
-    let events = c.journal().events_after(input.after.unwrap_or(0), limit);
+    let after = input.after.unwrap_or(0);
+    let events = c.journal().events_after(after, limit);
     Ok(EventList {
         active: true,
         count: events.len(),
-        lamport: c.journal().tallies().lamport,
+        lamport: events.last().map_or(after, |e| e.lamport),
         events,
     })
 }
@@ -1169,7 +1203,10 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_register"), http: post(REGISTER_PATH), cli: None },
                 tags: ["mesh", "coordination", "discovery"],
                 handler: mesh_register,
-            },
+            }
+            // the caller is another machine by design, admitted by the signature on its envelope
+            // and the trust policy, never by its address (ADR 0126)
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.cooperation",
                 title: "Cooperation, at a glance",
@@ -1353,7 +1390,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(HELLO_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_hello,
-            },
+            }
+            // a hello is signed by the dialling node and verified before a link is admitted
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.link.sync",
                 kind: CapabilityKind::Command,
@@ -1365,7 +1404,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(SYNC_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_sync,
-            },
+            }
+            // a sync round is signed under the link's key and verified before anything is ingested
+            .authenticates_its_input(),
         ],
     }
 }

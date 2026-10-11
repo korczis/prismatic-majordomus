@@ -1,0 +1,28 @@
+id: I2401
+milestone: everything-is-followed-in-one-stream
+title: "monitor is one read capability with three projections"
+slug: monitor-capability
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare capability monitor (MCP majordomus_monitor, GET /api/v1/monitor, CLI majordomus monitor) with OpenAPI-unique names and a benchmark case, and generate its projections."
+why: "A feed that only the CLI can read is one more private loop; MCP clients and the Cockpit need the same answer (ADR 0004: one declaration, every projection)."
+current_state: "No capability."
+desired_state: "One capability! declaration; generated OpenAPI, MCP tool list and benchmark inventory carry it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs/CAPABILITIES.md"
+  - "share"
+depends_on: 
+  - "I2400"
+acceptance_criteria:
+  - "GET /api/v1/monitor answers a page with sources, signals, suppressed and next cursor"
+  - "majordomus_monitor is listed and answers the same page"
+  - "majordomus generate --check is clean"
+validation:
+  - "cargo test --test monitor_stream"
+  - "majordomus generate --check"
+evidence_required:
+  - "monitor_capability_projections"
+created_at: 2026-10-10
+updated_at: 2026-10-10

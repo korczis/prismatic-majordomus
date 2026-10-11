@@ -1,0 +1,34 @@
+id: I2163
+milestone: safe-self-update
+title: "A client never attaches to a server of another version without saying so, and a newer client replaces an older server"
+slug: versions-meet-safely
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the election compare versions through the one standing verdict: a newer client takes over in an ordered hand-off, an older client attaches and says it is older."
+why: "lease::elect and ask compare name, repository_id and leaseholder, never the version (apps/majordomus-cli/src/lease.rs:896-920). The superseded check covers only a binary replaced at the same path (apps/majordomus-cli/src/lease.rs:695-709); the installer puts each version in its own directory under ~/.local/share/majordomus/versions/<v>/, so an upgrade changes the path and nothing is superseded. A new client then attaches to the older server, and the mismatch is reported only as an Outdated warning by server::standing_at (apps/majordomus-cli/src/capability/builtin/server.rs:410-424, apps/majordomus-cli/src/capability/builtin/health.rs:606), which MCP clients never see. docs/MCP.md:49 presents supersession as covering yesterday's code. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 3, premise 3 and drift 7."
+current_state: "After an upgrade through the installer, new clients are served by the old version until it idles out."
+desired_state: "ask treats a lease whose version differs from crate::VERSION through the verdict server::standing_at already gives: a newer client takes over in an ordered hand-off, the old server's sessions moving on as I2127 makes them; an older client attaches and reports the difference in its initialize answer; docs/MCP.md says what each case does."
+scope:
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+depends_on:
+  - "I2127"
+acceptance_criteria:
+  - "A client of version N+1 started beside a server of version N installed at another path ends with one server of N+1 and the old server's sessions re-attached"
+  - "A client of version N-1 attaching to a server of version N reports the difference in its initialize answer"
+  - "One function decides the version verdict for elect, serve ensure and server.status"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle --test server_status"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "newer_client_replaces_older_server_test"
+  - "older_client_told_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

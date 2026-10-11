@@ -1147,7 +1147,9 @@ pub struct Cooperation {
     own_key: String,
     repository: MeshRepositoryIdentity,
     config: CooperationConfig,
-    trust: TrustConfig,
+    /// The trust in force: replaced, never patched, when the declaration changes under a
+    /// running server ([`Cooperation::retrust`]).
+    trust: std::sync::RwLock<TrustConfig>,
     registry: Arc<MeshRegistry>,
     transport: Arc<dyn LinkTransport>,
     journal: Arc<Journal>,
@@ -1201,6 +1203,30 @@ fn rfc3339_now() -> String {
     crate::peers::rfc3339(std::time::SystemTime::now())
 }
 
+/// The trust verdict for `public_key` on a machine whose own key is `own_key`: the one
+/// definition behind [`Cooperation::trust_of_key`], and behind the journal's reload, which
+/// runs before the runtime exists and must decide exactly what the live path decides.
+fn key_trust(
+    own_key: &str,
+    config: &TrustConfig,
+    registry: &MeshRegistry,
+    public_key: &str,
+) -> TrustState {
+    if public_key == own_key {
+        return TrustState::Trusted("this machine's own key".into());
+    }
+    let Some(node) = node_id_of_key(public_key) else {
+        return TrustState::Rejected("not a key".into());
+    };
+    trust::evaluate(
+        &config.policy,
+        &config.allow,
+        public_key,
+        registry.known_key(&node).as_deref(),
+        registry.trust_of(&node).as_ref(),
+    )
+}
+
 impl Cooperation {
     /// Open the journal and build the runtime; nothing dials until [`Cooperation::start`].
     ///
@@ -1237,12 +1263,32 @@ impl Cooperation {
     /// ```
     pub fn new(setup: CooperationSetup) -> Result<Arc<Self>, super::MeshError> {
         setup.config.validate().map_err(super::MeshError::Config)?;
-        let journal = Arc::new(Journal::open(
+        // The journal file is believed as far as the declared trust believes its origins
+        // now, exactly as `origin_accept` decides for an event arriving over a link: a key
+        // withdrawn from the allowlist does not come back from this runtime's own disk.
+        let own_pk = setup.identity.public.public_key.as_str();
+        let reload_accept = |event: &MeshEvent| {
+            if key_trust(own_pk, &setup.trust, &setup.registry, &event.pk).is_trusted() {
+                Ok(())
+            } else {
+                Err(Rejection::Untrusted)
+            }
+        };
+        let journal = Arc::new(Journal::open_trusting(
             Arc::clone(&setup.identity),
             &setup.runtime,
             setup.repository.id.clone(),
-            setup.journal_path,
+            setup.journal_path.clone(),
+            &reload_accept,
         )?);
+        let reloaded = journal.reload_report();
+        if reloaded.rejected_total() > 0 {
+            tracing::warn!(
+                accepted = reloaded.accepted,
+                refused = ?reloaded.rejected,
+                "mesh journal reload refused events its trust no longer admits"
+            );
+        }
         let card = RuntimeCard {
             pk: setup.identity.public.public_key.clone(),
             runtime: setup.runtime.clone(),
@@ -1266,7 +1312,7 @@ impl Cooperation {
             own_key,
             repository: setup.repository,
             config: setup.config,
-            trust: setup.trust,
+            trust: std::sync::RwLock::new(setup.trust),
             registry: setup.registry,
             transport: setup.transport,
             journal,
@@ -1665,19 +1711,76 @@ impl Cooperation {
     /// assert!(!cooperation.trust_of_key("not a key at all").is_trusted());
     /// ```
     pub fn trust_of_key(&self, public_key: &str) -> TrustState {
-        if public_key == self.identity.public.public_key {
-            return TrustState::Trusted("this machine's own key".into());
-        }
-        let Some(node) = node_id_of_key(public_key) else {
-            return TrustState::Rejected("not a key".into());
-        };
-        trust::evaluate(
-            &self.trust.policy,
-            &self.trust.allow,
+        key_trust(
+            &self.identity.public.public_key,
+            &self
+                .trust
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+            &self.registry,
             public_key,
-            self.registry.known_key(&node).as_deref(),
-            self.registry.trust_of(&node).as_ref(),
         )
+    }
+
+    /// Put `trust` in force while this runtime runs, and end every link to a runtime it no
+    /// longer trusts. Returns the runtime keys whose links ended.
+    ///
+    /// Before this, a key withdrawn from the declaration kept its links until every runtime
+    /// that had admitted it restarted. Now the server calls this whenever it reads a new
+    /// generation of the repository: the withdrawn peer's link is gone at once, its next
+    /// sync meets `unknown_link`, and the hello it says next is refused `untrusted`. Events it
+    /// wrote stay in the journal until the next restart, whose reload applies the trust in
+    /// force (I2124).
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::TrustConfig;
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::cooperation::{Cooperation, CooperationSetup, CheckoutFacts};
+    /// # use majordomus_cli::mesh::{identity::NodeIdentity, registry::MeshRegistry, repository::of_root_commits};
+    /// # use majordomus_cli::mesh::config::CooperationConfig;
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed};
+    /// # struct Nowhere;
+    /// # impl LinkTransport for Nowhere {
+    /// #     fn post(&self, e: &str, _: &str, _: &Signed) -> Result<LinkReply, String> { Err(format!("{e}: nobody")) } }
+    /// # let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![], version: "doc".into(),
+    /// #     config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()), transport: Arc::new(Nowhere), board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// let stranger = NodeIdentity::ephemeral().unwrap().public.public_key;
+    /// assert!(c.trust_of_key(&stranger).is_trusted(), "tofu");
+    /// assert!(c.retrust(TrustConfig::default()).is_empty(), "no link to end");
+    /// assert!(!c.trust_of_key(&stranger).is_trusted(), "deny_unknown is in force now");
+    /// ```
+    pub fn retrust(&self, trust: TrustConfig) -> Vec<String> {
+        *self
+            .trust
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = trust;
+        let mut table = self.table.lock().expect("cooperation table");
+        let mut ended = Vec::new();
+        let mut links = Vec::new();
+        for (key, peer) in table.peers.iter_mut() {
+            let verdict = self.trust_of_key(&peer.card.pk);
+            if verdict.is_trusted() {
+                continue;
+            }
+            if let Some(inbound) = peer.inbound.take() {
+                links.push(inbound.link);
+            }
+            peer.outbound = None;
+            peer.expired = true;
+            peer.trust = verdict;
+            ended.push(key.clone());
+            tracing::warn!(runtime_id = %self.own_key, peer = %key, "mesh link ended: the peer's key is no longer trusted");
+        }
+        for link in links {
+            table.inbound_links.remove(&link);
+        }
+        ended
     }
 
     fn origin_accept(&self, event: &MeshEvent) -> Result<(), Rejection> {
@@ -1825,6 +1928,18 @@ impl Cooperation {
                 "that is this runtime".into(),
                 runtime,
             );
+        }
+        // An addressed hello is this runtime's only when it names this runtime. The address is
+        // inside the signed bytes, so a copy taken on its way to another runtime of the same
+        // repository cannot be replayed here; refused before the replay cache sees its nonce.
+        if let Some(to) = hello.to.as_deref() {
+            if to != self.own_key {
+                return self.refuse_in(
+                    RefusalCode::Misaddressed,
+                    "the hello is addressed to another runtime".into(),
+                    runtime,
+                );
+            }
         }
         if hello.card.repo != self.repository.id {
             return self.refuse_in(
@@ -2080,24 +2195,88 @@ impl Cooperation {
             &|pk| self.trust_of_key(pk).is_trusted(),
             self.expiry(),
         );
-        let events = self.journal.missing_for(&request.marks, SYNC_EVENT_BUDGET);
         self.counters.syncs_in.fetch_add(1, Ordering::Relaxed);
-        self.counters
-            .events_served
-            .fetch_add(events.len() as u64, Ordering::Relaxed);
         if report.accepted > 0 || report.rejected_total() > 0 {
             tracing::debug!(runtime_id = %self.own_key, peer = %runtime_key, accepted = report.accepted, duplicate = report.duplicate, rejected = report.rejected_total(), "mesh sync ingested");
         }
-        let answer = SyncAnswer {
-            link: request.link,
-            counter: request.counter,
-            marks: self.journal.marks(),
-            events,
-            report,
+        let marks = self.journal.marks_for(&request.marks);
+        let answer =
+            self.sync_within_bound(Domain::SyncAnswer, &request.marks, |events| SyncAnswer {
+                link: request.link.clone(),
+                counter: request.counter,
+                marks: marks.clone(),
+                events,
+                report: report.clone(),
+            });
+        match answer {
+            Ok((signed, served)) => {
+                self.counters
+                    .events_served
+                    .fetch_add(served as u64, Ordering::Relaxed);
+                LinkReply::accepted(signed)
+            }
+            Err(e) => LinkReply::refused(RefusalCode::Oversized, e),
+        }
+    }
+
+    /// Sign a sync message carrying as many of the events `peer` lacks as fit: the bytes
+    /// left under [`MAX_LINK_MESSAGE`] once everything else in the message is serialized,
+    /// and never more than [`SYNC_EVENT_BUDGET`]. Answers the message and how many events it
+    /// carries.
+    ///
+    /// The event budget was a constant that ignored what the marks weigh: a journal at its
+    /// stream bounds sends marks of hundreds of kilobytes, and those with a full budget of
+    /// events made a message the peer refuses as oversized, round after round, so a busy
+    /// journal stopped replicating (I2139). The size is checked on the message as signed,
+    /// where it is built, and an event that would take it over is left for the next round.
+    fn sync_within_bound<T: serde::Serialize>(
+        &self,
+        domain: Domain,
+        peer: &Marks,
+        message: impl Fn(Vec<MeshEvent>) -> T,
+    ) -> Result<(Signed, usize), String> {
+        let signed = |events: Vec<MeshEvent>| -> Result<(Signed, usize), String> {
+            let body = serde_json::to_value(message(events)).map_err(|e| e.to_string())?;
+            let signed = sign(&self.identity, domain, body);
+            let size = serde_json::to_vec(&signed)
+                .map_err(|e| e.to_string())?
+                .len();
+            Ok((signed, size))
         };
-        match serde_json::to_value(&answer) {
-            Ok(body) => LinkReply::accepted(sign(&self.identity, Domain::SyncAnswer, body)),
-            Err(e) => LinkReply::refused(RefusalCode::Malformed, e.to_string()),
+        let (bare, overhead) = signed(Vec::new())?;
+        if overhead > MAX_LINK_MESSAGE {
+            return Err(format!(
+                "a sync message without events is {overhead} bytes, over the {MAX_LINK_MESSAGE}-byte link bound"
+            ));
+        }
+        let budget = (MAX_LINK_MESSAGE - overhead).min(SYNC_EVENT_BUDGET);
+        let mut events = self.journal.missing_for(peer, budget);
+        // compact JSON puts the events in the empty array the bare message carries, one
+        // comma between each two: the size is known before it is serialized again
+        let sizes: Vec<usize> = events
+            .iter()
+            .map(|e| serde_json::to_vec(e).map_or(MAX_LINK_MESSAGE, |b| b.len()))
+            .collect();
+        let mut total = overhead + sizes.iter().sum::<usize>() + sizes.len().saturating_sub(1);
+        while total > MAX_LINK_MESSAGE && !events.is_empty() {
+            events.pop();
+            total -= sizes[events.len()] + usize::from(!events.is_empty());
+        }
+        if events.is_empty() {
+            return Ok((bare, 0));
+        }
+        loop {
+            let count = events.len();
+            let (message, size) = signed(events.clone())?;
+            if size <= MAX_LINK_MESSAGE {
+                return Ok((message, count));
+            }
+            // the budget does not count the separators, and one event always goes: drop
+            // from the end until the message fits; the rest follow next round
+            events.pop();
+            if events.is_empty() {
+                return Ok((bare, 0));
+            }
         }
     }
 
@@ -2170,12 +2349,24 @@ impl Cooperation {
     /// a.dial(&["a:1".into()]).expect_err("a runtime does not cooperate with itself");
     /// ```
     pub fn dial(&self, endpoints: &[String]) -> Result<String, RoundError> {
+        self.dial_to(None, endpoints)
+    }
+
+    /// [`Cooperation::dial`], addressed: when the dialer knows the runtime key it means to
+    /// reach, the hello names it inside its signed bytes, and any other runtime that receives
+    /// a copy refuses it as `misaddressed`.
+    pub(crate) fn dial_to(
+        &self,
+        to: Option<&str>,
+        endpoints: &[String],
+    ) -> Result<String, RoundError> {
         let hello = Hello {
             proto_min: LINK_PROTOCOL_MIN,
             proto_max: LINK_PROTOCOL_MAX,
             card: self.card.clone(),
             nonce: fresh_token(),
             ts: super::protocol::now(),
+            to: to.map(str::to_string),
         };
         let body =
             serde_json::to_value(&hello).map_err(|e| RoundError::Unreachable(e.to_string()))?;
@@ -2396,19 +2587,19 @@ impl Cooperation {
             out.counter += 1;
             (out.clone(), peer.card.pk.clone())
         };
-        let request = SyncRequest {
-            link: out.link.clone(),
-            counter: out.counter,
-            instance: self.card.instance.clone(),
-            marks: self.journal.marks(),
-            events: self
-                .journal
-                .missing_for(&out.remote_marks, SYNC_EVENT_BUDGET),
-        };
-        let sent = request.events.len() as u64;
-        let body =
-            serde_json::to_value(&request).map_err(|e| RoundError::Unreachable(e.to_string()))?;
-        let message = sign(&self.identity, Domain::SyncRequest, body);
+        let marks = self.journal.marks_for(&out.remote_marks);
+        let (message, sent) = self
+            .sync_within_bound(Domain::SyncRequest, &out.remote_marks, |events| {
+                SyncRequest {
+                    link: out.link.clone(),
+                    counter: out.counter,
+                    instance: self.card.instance.clone(),
+                    marks: marks.clone(),
+                    events,
+                }
+            })
+            .map_err(RoundError::Unreachable)?;
+        let sent = sent as u64;
         // The push is counted as the request leaves, not when its answer returns. The peer
         // holds these events from the moment it ingests them, before its answer is written,
         // so a count taken on the answer trails every reading of the peer: in between, the
@@ -2560,6 +2751,10 @@ impl Cooperation {
     fn work(&self, target: Target, flag: Arc<AtomicBool>) {
         let mut learned = target.key.clone();
         let mut failures: u32 = 0;
+        // An answerer that restarted forgets the link and answers `unknown_link` once; the
+        // dialer says hello again at once. One that keeps answering it is retried no faster
+        // than a heartbeat, or a peer that welcomes and refuses every sync drives a busy loop.
+        let mut unknown_in_a_row: u32 = 0;
         while !self.stopped() && !flag.load(Ordering::SeqCst) {
             let linked = learned
                 .as_deref()
@@ -2573,7 +2768,9 @@ impl Cooperation {
                         self.sleep(self.heartbeat());
                         continue;
                     }
-                    match self.dial(&target.endpoints) {
+                    // addressed whenever the runtime behind the endpoints is known
+                    let to = learned.as_deref().or(target.key.as_deref());
+                    match self.dial_to(to, &target.endpoints) {
                         Ok(key) => {
                             learned = Some(key.clone());
                             // A fresh link syncs at once: the peer should see this
@@ -2587,11 +2784,17 @@ impl Cooperation {
             let delay = match outcome {
                 Ok(()) => {
                     failures = 0;
+                    unknown_in_a_row = 0;
                     self.heartbeat()
                 }
                 Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
                     failures = 0;
-                    Duration::ZERO
+                    unknown_in_a_row = unknown_in_a_row.saturating_add(1);
+                    if unknown_in_a_row == 1 {
+                        Duration::ZERO
+                    } else {
+                        self.heartbeat()
+                    }
                 }
                 Err(RoundError::Refused(_)) => {
                     failures = failures.saturating_add(3).min(6);
@@ -3652,6 +3855,26 @@ mod tests {
 
     type Answered = Box<dyn Fn() + Send>;
 
+    /// The one trust definition the live path and the reload share: this machine's own key
+    /// is trusted, and a value that is not a key is rejected before any policy is asked —
+    /// whatever the policy, even one that trusts on first use.
+    #[test]
+    fn a_value_that_is_not_a_key_is_rejected_by_every_policy() {
+        let registry = MeshRegistry::new();
+        let own = NodeIdentity::ephemeral().unwrap().public.public_key.clone();
+        for policy in [TrustPolicy::Tofu, TrustPolicy::DenyUnknown] {
+            let config = TrustConfig {
+                policy,
+                allow: vec!["not-a-key".into()],
+            };
+            assert!(key_trust(&own, &config, &registry, &own).is_trusted());
+            assert_eq!(
+                key_trust(&own, &config, &registry, "not-a-key"),
+                TrustState::Rejected("not a key".into())
+            );
+        }
+    }
+
     impl LinkTransport for InProcess {
         fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String> {
             if self.cut.lock().unwrap().iter().any(|c| c == endpoint) {
@@ -3763,6 +3986,84 @@ mod tests {
     }
 
     #[test]
+    fn a_withdrawn_key_loses_its_link_without_a_restart() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        b.dial(&["a:1".into()]).expect("linked under tofu");
+        assert_eq!(a.peers().len(), 1);
+        // A's declaration now trusts nobody it does not list, and lists nobody
+        let ended = a.retrust(TrustConfig::default());
+        assert_eq!(ended, vec![b.runtime_key().to_string()], "B's link ended");
+        // the link B already holds is gone on A's side: a sync over it is not served
+        let synced = b.sync_with(a.runtime_key());
+        assert!(
+            matches!(synced, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::UnknownLink),
+            "{synced:?}"
+        );
+        // B's next sync meets a link A no longer knows, and its hello is refused
+        let reply = b.dial(&["a:1".into()]);
+        assert!(
+            matches!(reply, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Untrusted),
+            "{reply:?}"
+        );
+        // and a trust that admits B again lets it link again
+        a.retrust(TrustConfig {
+            policy: TrustPolicy::DenyUnknown,
+            allow: vec![b.identity.public.public_key.clone()],
+        });
+        assert!(
+            b.dial(&["a:1".into()]).is_ok(),
+            "trusted again, linked again"
+        );
+    }
+
+    #[test]
+    fn a_hello_addressed_to_one_runtime_is_refused_by_another() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let c = runtime(&net, "c:1", "root", TrustPolicy::Tofu);
+        let addressed = |to: Option<String>| {
+            let hello = Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: a.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now(),
+                to,
+            };
+            sign(
+                &a.identity,
+                Domain::Hello,
+                serde_json::to_value(&hello).unwrap(),
+            )
+        };
+        // a hello on its way to B, captured and replayed to C: refused, and C links nobody
+        let to_b = addressed(Some(b.runtime_key().to_string()));
+        let refusal = c.accept_hello(&to_b).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Misaddressed);
+        assert!(c.peers().is_empty(), "the replay changed no link of C");
+        // the same hello is B's to accept
+        assert!(
+            b.accept_hello(&to_b).refusal.is_none(),
+            "B accepts what was meant for it"
+        );
+        // a hello that names nobody is still accepted: a seed, a first contact, an older release
+        assert!(c.accept_hello(&addressed(None)).refusal.is_none());
+        // and the dialer addresses what it knows: a dial to B by key reaches B
+        assert_eq!(
+            a.dial_to(Some(b.runtime_key()), &["b:1".into()]).unwrap(),
+            b.runtime_key()
+        );
+        let wrong = a.dial_to(Some(c.runtime_key()), &["b:1".into()]);
+        assert!(
+            matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
+            "{wrong:?}"
+        );
+    }
+
+    #[test]
     fn isolation_version_trust_and_replay_are_typed_refusals() {
         let net = Arc::new(InProcess::default());
         let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
@@ -3792,6 +4093,7 @@ mod tests {
             card: a.card.clone(),
             nonce: fresh_token(),
             ts: crate::mesh::protocol::now(),
+            to: None,
         };
         let signed = sign(
             &a.identity,

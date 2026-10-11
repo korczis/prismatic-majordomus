@@ -1,0 +1,37 @@
+id: I2128
+milestone: runtime-lifecycle
+title: "A lease is removed only by the process that holds it, and serve stop stops the server in order"
+slug: a-lease-is-removed-only-by-its-holder
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make every removal and every rewrite of the lease file conditional on the actor still holding it, and turn the SIGTERM that serve stop sends into the ordered stop the server already has."
+why: "Three findings. The signal handler unlinks the lease whenever HELD is set and re-raises with SIG_DFL (apps/majordomus-cli/src/lease.rs:1164-1212, the unlink at 1197-1211), so between a takeover and the old owner's next 500 ms tick a SIGTERM to the old owner unlinks the new owner's lease. take_over reads, compares and then calls remove_file (apps/majordomus-cli/src/lease.rs:778-798) in three steps, so two electors that both judged one lease stale can interleave and the second unlinks the first's fresh lease; publish checks is_mine and then renames the fixed tmp name server.json.tmp (apps/majordomus-cli/src/lease.rs:1082-1107) with no fsync, so a takeover between the check and the rename is overwritten. serve stop sends SIGTERM (apps/majordomus-cli/src/commands/serve.rs:814,890-903) and SharedServer::stop (apps/majordomus-cli/src/shared.rs:282-289, closing episodes and draining the mesh) never runs; apps/majordomus-cli/tests/mcp_shared.rs::sigterm_removes_the_lease_before_the_process_dies asserts the process dies of signal 15, while the comment at apps/majordomus-cli/src/shared.rs:274-281 implies serve stop runs the ordered stop. Every serve stop leaves open episodes for recover_orphans and cuts in-flight answers. LeaseView.pid is documented as informational (apps/majordomus-cli/src/capability/builtin/server.rs:236) although liveness (apps/majordomus-cli/src/lease.rs:742), the spawn claim (apps/majordomus-cli/src/commands/serve.rs:354-356) and serve stop (apps/majordomus-cli/src/commands/serve.rs:814) decide from it. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gaps 5 and 11, drift 5 and 6. Graceful termination of in-flight responses in the production container is I0906 (fly-deployment); this issue covers the lease and the episodes locally."
+current_state: "Lease removal by the signal handler and by take_over does not re-check the token. serve stop is a hard kill that removes the lease first."
+desired_state: "The serve loop turns SIGTERM into a flag it polls, waits a bounded time for peers to leave and runs SharedServer::stop; only then is the lease released through the path that checks is_mine. take_over renames the stale file aside under its own token and confirms what it moved before claiming. publish writes a tmp file named for its token and syncs it before the rename. A second SIGTERM, or the bound passing, still ends the process."
+scope:
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/tests/mcp_shared.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A SIGTERM to a server whose lease was taken over within the same tick leaves the new owner's lease file in place"
+  - "After serve stop, the stopped server's episodes are closed and recover_orphans finds none of them"
+  - "Two electors that both judged one lease stale end with exactly one lease, held by the process the file names"
+  - "The stopped process exits by its own return, not by signal 15, within serve stop's documented bound"
+  - "The comment at apps/majordomus-cli/src/shared.rs:274-281 and the LeaseView.pid doc describe what the code does"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared --test serve_lifecycle --test shared_units"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 113_shared_server_survives_a_crash"
+evidence_required:
+  - "sigterm_spares_a_successor_lease_test"
+  - "serve_stop_closes_episodes_test"
+  - "concurrent_takeover_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

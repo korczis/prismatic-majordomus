@@ -1,0 +1,27 @@
+id: I2406
+milestone: everything-is-followed-in-one-stream
+title: "The stream is documented where a reader looks"
+slug: monitor-docs
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Write docs/MONITOR.md, a README section, cross-links from docs/MESH.md and docs/MCP.md, the site docs page through the generated copy, and a blog article written from what landed."
+why: "An undocumented command is found by nobody but its author."
+current_state: "Nothing documents it."
+desired_state: "The manual, README, site page and blog article describe it and link the ADR and the cases."
+scope:
+  - "docs"
+  - "README.md"
+  - "site"
+depends_on: 
+  - "I2402"
+  - "I2404"
+acceptance_criteria:
+  - "docs/MONITOR.md documents every option and every signal kind"
+  - "The site carries the docs page and the article and site-check passes"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "monitor_documented"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -11,6 +11,11 @@
 # test scratch
 /test/tmp/
 
+# the release job's downloaded artifacts: never committed, and invisible to a derive
+# (project.a-derive-sees-what-the-commit-will refuses a derive over an untracked file that is
+# not ignored, and the release runs scripts/derive with dist/ beside it)
+/dist/
+
 # the generated web root: one directory per web surface, written by its producer, plus the
 # resolved manifest and the composed publication. Derived state, reproducible from source,
 # never read as truth (ADR 0013).
@@ -51,6 +56,9 @@ share/cockpit/vendor/cytoscape.min.js
 share/cockpit/vendor/three.module.min.js
 share/cockpit/vendor/three.core.min.js
 share/cockpit/vendor/p5.min.js
+# the UI's copy of the same pinned graph library, lazy-loaded by the screens that draw a
+# graph, each complete without it (ADR 0135)
+share/ui/vendor/
 
 # transient staging for scripts/generate-site-data (removed on exit)
 .mj-stage.*/

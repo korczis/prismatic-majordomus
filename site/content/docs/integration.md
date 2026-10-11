@@ -1,7 +1,7 @@
 +++
 title = "Pull-request integration"
 description = "pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
-weight = 53
+weight = 54
 [extra]
 source = "docs/INTEGRATION.md"
 +++
@@ -49,6 +49,17 @@ that range, because a merge's resolution has no patch to compare, nor a clean me
 changes authored paths: there master lacks something the head carries, such as a landed change
 that master has reverted since.
 
+A head that does not contain master is not always behind it. The relation is `carries_master`
+when two things hold: its merge into master is clean and writes the head's own tree, and every
+commit master has and the head lacks is a merge commit. Master then holds nothing the head
+lacks. That is a pull request built on another one's head, once the other has landed (see *A
+train* below). No path is merged in such a merge, so no driver decides one and the forge's
+merge writes the same tree. The second half is there because derived output is composed from
+history as well as from files: the changelog lists every commit that is not a merge, so a
+master that took a change and reverted it has the tree it had and two commits no changelog on
+the head ever listed. One change on master that the head never saw, authored or derived, or
+one commit of master's own that is not a merge, and the head is `behind`.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -76,9 +87,9 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
-| `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh`, or `prs repair <n> --apply` for one |
-| `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
-| `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
+| `needs_refresh` | waiting | merges cleanly, and neither contains master nor carries it | `prs drain --refresh`, or `prs repair <n> --apply` for one |
+| `waiting_for_checks` | waiting | contains or carries master; a required check is pending or missing on this head | wait |
+| `ready` | ready | contains or carries master, and every required check passed on this head | `prs drain` |
 
 </div>
 
@@ -127,7 +138,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
-| `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
+| `freshness` | the head contains master, or carries it: merging it writes the head's own tree and it lacks only merge commits | `behind_master:COMMITS`, with `fork_head` for a fork |
 | `required_checks` | every required check passed | `required_checks:STATE` (`pending`, `missing`, or `unknown` when a check run of an app-bound context names no app), `no_required_checks`, `required_checks_unread` |
 
 </div>
@@ -497,6 +508,40 @@ request is refreshed, so one silent check cannot stop every refresh. A check run
 the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
 no head, so a pull request refreshed by an older executor does not hold the pipeline.
 
+### A train
+
+One pull request per run of the required check is the cost of refreshing each head onto
+master alone. A train pays it once for several (ADR 0129). Its links are pull requests whose
+heads are stacked: the second is brought up to date on the first one's refreshed head, not on
+master, the third on the second's, and each says so with a `Stacked on #N` line in its body.
+Every link's required checks run at the same time, each on a head that holds everything below
+it.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| The link | Is |
+|---|---|
+| the lowest, with its checks passed | `ready`, `contains_master` |
+| above an open link | `waiting_for_dependency`, `depends_on:#N`, whatever its checks say |
+| above a link that landed, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
+| above a link that landed after its head moved | `needs_refresh`: master holds what this head never saw |
+| above a link that was closed without a merge | `blocked`, `dependency_closed_unmerged:#N`: a person decides |
+
+</div>
+
+
+The order is the dependency gate's and not a habit: a link merges only after the one it names.
+What makes the second merge safe is the relation, decided by git and never assumed from the
+stacking: the merge of the link into the master that now holds the first must write the link's
+own tree, and the first one's merge commit must be all the link lacks. Then the verdict its
+head already has is a verdict on exactly what master becomes.
+A link that goes red costs the links above it one ordinary refresh after it is fixed and
+lands, which is what every one of them costs without a train, and never a merge of a tree
+nobody judged.
+
+A train is prepared by whoever brings the heads up to date; the executor decides each link on
+what git says of it and does not build one itself yet.
+
 ## Repair
 
 The `repair` lane is a person's. Most pull requests here go `CONFLICTING` on the forge within
@@ -518,6 +563,7 @@ reports is then on a `merge=derived` path, which the regeneration settles.
 | relation `behind` | eligible: master is merged in, derived, committed and pushed |
 | relation `conflicting` | refused with exit 10, naming every authored file that conflicts: they are the owner's to settle |
 | relation `up_to_date` | nothing to repair: the head already contains master |
+| relation `carries_master` | nothing to repair: merging it writes its own tree, and its checks judged that tree |
 | `redundant`, `superseded`, relation `contained`, `superseded`, `patch_ids_upstream` or `derived_only` | nothing to repair: cleanup's lane, or a person's |
 | relation `unknown`, a fork's head, armed auto-merge, another base, not open | refused with exit 10 |
 
@@ -736,6 +782,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's gates, reasons, evidence and rank |
 | `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
+| `majordomus prs trains` | no | the trains of stacked pull requests in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn; exit 10 when the observation is stale or absent |
 | `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease and how far it reaches, the last merge, the last refresh, failure or stale decision; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
@@ -769,6 +816,67 @@ executor's recent actions. With nothing observed, it says so and names `prs refr
 `majordomus handover --derive` carries the same line under `# Current State`, so a session
 that continues drain work starts knowing what was merged, what remains, how the last step
 went, and whether an executor is running.
+
+## Trains
+
+A *train* is a group of open pull requests stacked on each other: each link stands on the one
+below it, and the train lands from the bottom up. The edges are the confirmed dependencies the
+classifier already reads ([Dependency markers](#dependency-markers)): a base branch that is
+another open pull request's head, or a `Stacked on #N` line, is a `STACKED_ON` edge; `Depends on`,
+`Requires` and `Land after` are `DEPENDS_ON` edges. An inferred dependency (a head that merely
+contains another) joins nothing. A pull request that declares a dependency on one that is no
+longer open is still a train of its own, with that pull request *beneath* it — landed, closed
+without a merge, or unread. The decision is ADR 0138; the code is `crate::integration::train`.
+
+Each link carries what the queue decided about it — disposition, lane, reasons, next action,
+required checks and every check on its head, relation to master with how far behind it is and
+whether it carries master (ADR 0129) — and what only a train can say:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Field | What |
+|---|---|
+| `position` | its turn, 1-based: a topological order, lower links first, ties broken by queue rank |
+| `depth` | links below it on its longest path to master; a root is 0 |
+| `at_turn` | every dependency it declares has landed, so the order allows it next |
+| `on`, `carries` | what it stands on, and the links stacked on it |
+| `prep` | the head the executor prepared for it under `refs/prep/<n>`, `pushed` when that commit is the head the forge serves and `pending` when it waits for its turn |
+| `in_cycle` | caught in a cycle of confirmed dependencies: no link of it can land first |
+
+</div>
+
+
+Per train: `roots` (no open link below them), `tops` (nothing stacked on them), `next` (the
+first link at its turn), the `edges` (satisfied when the pull request below landed) and the
+pull requests `beneath` it. Beside the trains, `unattached_prep` lists the prepared heads whose
+pull request is no link — open and stacked on nothing, or not open at all.
+
+It is all read: the queue from the recorded observation, the bodies and checks from the same
+observation, and the local `refs/prep/` refs with `git for-each-ref`. Nothing is fetched,
+pushed or moved; pushing a prepared head at its turn stays the executor's act.
+
+```text
+$ majordomus prs trains
+2 train(s), 5 link(s) of o/r observed at 2026-10-11T04:56:48Z; master at 1393d9ef2a; 1 prepared head(s) pending
+
+train-884  roots #884  tops #898  next #884
+   1. > #884   needs_refresh          behind 37        prep 9658f78da5 pending on master     fix(http): ...
+   2.   #898   waiting_for_dependency behind 37        no prep              on #884       fix(http): ...
+```
+
+The same answer is `GET /api/v1/pull-requests/trains` (MCP `majordomus_pull_request_trains`),
+declared once as `integration.trains`. The Cockpit draws it at `/cockpit/trains` in the manner
+of the Neo4j Browser: master as the anchor node, each link a circle with its number and title
+inside, coloured by its disposition from the design tokens (landed pull requests beneath a
+train in their own colour, dashed), labelled `STACKED_ON` / `DEPENDS_ON` arrows and a `TARGETS`
+arrow from each root to master; a force layout or a layered one, drag, zoom and pan, the
+neighbours of the node under the pointer lit, and a property panel with every field of the
+selected link and links to the pull request, its checks and `prs explain`. It filters by train
+and by disposition (the legend is the filter), searches by number, title or branch, and is
+driven from the keyboard (arrows move from link to link, Enter opens the pull request, `+`/`-`
+zoom, `0` fits, Escape clears); motion follows `prefers-reduced-motion`. It asks the route
+again once a minute while the tab is visible and shows when it last asked. Without JavaScript
+the page is one table per train with the same facts.
 
 ## Continuous mode
 
