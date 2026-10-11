@@ -101,6 +101,57 @@ impl BenchmarkCases for AnalysisInput {
     }
 }
 
+/// The input of `release.next`: the landing it is asked about.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::NextInput;
+/// // nothing named is the landing the executor performs: this branch onto the trunk
+/// let input = NextInput::default();
+/// assert_eq!((input.base(), input.head()), ("origin/master", "HEAD"));
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseNextInput")]
+pub struct NextInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The trunk the landing raises from; `origin/master` when absent.
+    pub base: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// What lands; `HEAD` when absent.
+    pub head: Option<String>,
+}
+
+impl NextInput {
+    /// The trunk the landing raises from: the ref named, or `origin/master`, which is the
+    /// trunk the integration executor lands on.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::release::NextInput;
+    /// assert_eq!(NextInput { base: Some("main".into()), head: None }.base(), "main");
+    /// ```
+    pub fn base(&self) -> &str {
+        self.base.as_deref().unwrap_or("origin/master")
+    }
+
+    /// What lands: the ref named, or `HEAD`, which is the branch this checkout is on.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::release::NextInput;
+    /// assert_eq!(NextInput::default().head(), "HEAD");
+    /// ```
+    pub fn head(&self) -> &str {
+        self.head.as_deref().unwrap_or("HEAD")
+    }
+}
+
+impl BenchmarkCases for NextInput {
+    /// None, for the reason [`AnalysisInput`] gives: the answer reads committed registries
+    /// at two refs, and a benchmark fixture has no history to read them from.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
+    }
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -177,12 +228,36 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: analysis,
             },
+            capability! {
+                id: NEXT_ID,
+                title: "The version a landing allocates, and why",
+                description: "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+                input: NextInput,
+                output: release::landing::LandingDecision,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_next".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/next"),
+                    // `majordomus release next` renders this capability; `cli::LOCAL`
+                    // declares that once, as it does for `release analyze`.
+                    cli: None,
+                },
+                tags: ["release", "version", "integration"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: next,
+            },
         ],
     }
 }
 
 /// The compatibility analysis, named beside its declaration.
 pub const ANALYSIS_ID: &str = "release.analysis";
+
+/// The landing decision, named beside its declaration.
+pub const NEXT_ID: &str = "release.next";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -279,6 +354,25 @@ fn analysis(ctx: &Context, input: AnalysisInput) -> Result<VersionPlan, Capabili
         input.since.as_deref(),
     )
     .map_err(|e| CapabilityError::NotFound(e.to_string()))
+}
+
+/// What a landing of the input's head onto its base allocates, under this repository's
+/// policy. An unreadable policy is refused: a decision made without its floor would
+/// understate what the repository asks.
+fn next(
+    ctx: &Context,
+    input: NextInput,
+) -> Result<release::landing::LandingDecision, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let repo = crate::repository::Repository::open(root).map_err(|e| {
+        CapabilityError::NotFound(format!("the repository could not be opened: {e}"))
+    })?;
+    let policy = crate::policy::LoadedPolicy::load(&repo)
+        .map_err(|e| CapabilityError::NotFound(format!("the policy could not be read: {e}")))?
+        .policy
+        .release;
+    release::landing::next_for(root, input.base(), input.head(), &policy)
+        .map_err(|e| CapabilityError::NotFound(e.to_string()))
 }
 
 #[cfg(test)]

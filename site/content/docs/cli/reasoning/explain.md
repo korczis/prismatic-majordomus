@@ -1,7 +1,7 @@
 +++
 title = "majordomus reasoning explain"
 description = "One record with the whole chain of its assessment: why a decision was made"
-weight = 157
+weight = 158
 [extra]
 route = "/docs/cli/reasoning/explain/"
 command = "majordomus reasoning explain"

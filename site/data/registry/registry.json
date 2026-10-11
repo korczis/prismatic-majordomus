@@ -6,28 +6,28 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "f695060c2b798b993564f8093a1ec480f976a875953e056b6e587e148ee6dab0",
+    "fingerprint": "add90d28e7abac8908835e385a4a7115c429729300f6eb6617324927b118802a",
     "summary": {
-      "total": 2134,
-      "builtin": 186,
-      "declarative": 1948,
+      "total": 2137,
+      "builtin": 187,
+      "declarative": 1950,
       "by_kind": {
         "command": 27,
-        "query": 159,
-        "resource": 1948
+        "query": 160,
+        "resource": 1950
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 46,
-        "implemented": 1956
+        "implemented": 1959
       },
-      "mcp_tools": 178,
-      "mcp_resources": 2002,
-      "http_routes": 182,
+      "mcp_tools": 179,
+      "mcp_resources": 2004,
+      "http_routes": 183,
       "cli_commands": 103,
       "modules": 86,
       "benchmark_required": 160,
-      "benchmark_waived": 26,
+      "benchmark_waived": 27,
       "cached": 41
     },
     "builtin": [
@@ -64013,6 +64013,223 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
       },
       {
+        "id": "release.next",
+        "module": "release",
+        "kind": "query",
+        "title": "The version a landing allocates, and why",
+        "description": "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+        "input": {
+          "name": "ReleaseNextInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "base": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk the landing raises from; `origin/master` when absent."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What lands; `HEAD` when absent."
+              }
+            },
+            "description": "The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base(), input.head()), (\"origin/master\", \"HEAD\"));\n```",
+            "title": "ReleaseNextInput"
+          }
+        },
+        "output": {
+          "name": "LandingDecision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`DECISION_SCHEMA`."
+              },
+              "trunk_version": {
+                "type": "string",
+                "description": "What the trunk declares: the number the next one is raised from."
+              },
+              "observed": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "How far the change moves the public contract, measured (ADR 0051)."
+              },
+              "required_by_compatibility": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "What that movement requires under the version's mode."
+              },
+              "floor": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "The policy's floor, or `none` when an exemption applied."
+              },
+              "exemption": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/AppliedExemption"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The exemption that lowered the floor, if one did."
+              },
+              "selected": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "The larger of the requirement and the floor."
+              },
+              "next_version": {
+                "type": "string",
+                "description": "The trunk's version raised by `selected`."
+              },
+              "allocation": {
+                "$ref": "#/$defs/ReleaseAllocation",
+                "description": "Whether the policy allocates at landing; the decision is computed either way."
+              },
+              "mode": {
+                "$ref": "#/$defs/ReleasePolicyMode",
+                "description": "The compatibility mode the trunk's version puts in force."
+              },
+              "explanation": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "One sentence per step, in the order the decision was made."
+              }
+            },
+            "required": [
+              "schema",
+              "trunk_version",
+              "observed",
+              "required_by_compatibility",
+              "floor",
+              "selected",
+              "next_version",
+              "allocation",
+              "mode",
+              "explanation"
+            ],
+            "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```",
+            "title": "LandingDecision",
+            "$defs": {
+              "ReleaseImpact": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "none",
+                    "description": "The contract did not move."
+                  },
+                  {
+                    "type": "string",
+                    "const": "patch",
+                    "description": "It moved behind the boundary: a caller cannot tell."
+                  },
+                  {
+                    "type": "string",
+                    "const": "minor",
+                    "description": "Something arrived; every existing caller still works."
+                  },
+                  {
+                    "type": "string",
+                    "const": "major",
+                    "description": "Something a caller could hold is gone or changed under it."
+                  }
+                ],
+                "description": "How much a change moves the contract.\n\nOrdered, so that \"the declared bump covers what is required\" is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major > Impact::Minor);\nassert!(Impact::Minor > Impact::Patch);\nassert!(Impact::Patch > Impact::None);\n```"
+              },
+              "AppliedExemption": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The class's id."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The class's description, which is the reason the floor did not apply."
+                  }
+                },
+                "required": [
+                  "id",
+                  "reason"
+                ],
+                "description": "The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \"plan-records\".into(), reason: \"plan records\".into() };\nassert_eq!(e.id, \"plan-records\");\n```"
+              },
+              "ReleaseAllocation": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "off",
+                    "description": "The version is raised by whoever changes the contract, as before ADR 0134."
+                  },
+                  {
+                    "type": "string",
+                    "const": "landing",
+                    "description": "The integration executor raises it at landing; a pull request does not."
+                  }
+                ],
+                "description": "Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\"\\\"landing\\\"\").unwrap();\nassert_eq!(a.as_str(), \"landing\");\n```"
+              },
+              "ReleasePolicyMode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pre1-0-strict",
+                    "description": "Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "semver",
+                    "description": "At or above `1.0.0`: the impact is the requirement."
+                  }
+                ],
+                "description": "How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \"anything MAY change at any\ntime\" — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\"0.9.0\").unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\"1.0.0\").unwrap()).mode, Mode::Semver);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_release_next"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/release/next"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "release",
+          "version",
+          "integration"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
+      },
+      {
         "id": "release.version",
         "module": "release",
         "kind": "query",
@@ -75822,7 +76039,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 86,
+        "capabilities": 87,
         "capability_ids": []
       },
       {
@@ -76745,10 +76962,11 @@
         "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
         "stability": "implemented",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
           "release.analysis",
           "release.changelog",
+          "release.next",
           "release.version"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
@@ -76933,7 +77151,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 416,
+        "capabilities": 417,
         "capability_ids": []
       },
       {
@@ -77023,7 +77241,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9b953b1bd2b120f0415c30f18b3b6fe2f3aa99e6ced5095ed87342d83658fc92",
+    "fingerprint": "0739da6ad1cb6ae4bc2c2d4d1ef86397705311a5a26ab1bc3a899d144bb1e547",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -77046,7 +77264,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 86,
+      "adr": 87,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -77076,7 +77294,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 416,
+      "test": 417,
       "use-case": 48,
       "workspace": 1
     },
@@ -78497,6 +78715,22 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0134",
+        "kind": "adr",
+        "identity": "adr-0134",
+        "title": "The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor",
+        "description": "The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor",
+        "path": ".ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6718,
+        "tags": [
+          "release",
+          "versioning",
+          "integration"
         ]
       },
       {
@@ -89971,7 +90205,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20714
+        "bytes": 21832
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -94205,6 +94439,14 @@
         "bytes": 5465
       },
       {
+        "uri": "majordomus://test/test/cases/1060_the_version_is_allocated_at_landing.sh",
+        "kind": "test",
+        "identity": "test/cases/1060_the_version_is_allocated_at_landing.sh",
+        "path": "test/cases/1060_the_version_is_allocated_at_landing.sh",
+        "source_class": "case",
+        "bytes": 8168
+      },
+      {
         "uri": "majordomus://test/test/cases/106_context_peers.sh",
         "kind": "test",
         "identity": "test/cases/106_context_peers.sh",
@@ -97913,7 +98155,7 @@
       "identity": [
         "id"
       ],
-      "objects": 86
+      "objects": 87
     },
     {
       "name": "application",
@@ -98218,7 +98460,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 416
+      "objects": 417
     },
     {
       "name": "use-case",
@@ -114156,6 +114398,148 @@
                   "json"
                 ],
                 "command": "majordomus release analyze --format json",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "release",
+              "next"
+            ],
+            "route": "/docs/cli/release/next/",
+            "executable": true,
+            "usage": "majordomus release next [OPTIONS]",
+            "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+            "args": [
+              {
+                "name": "base",
+                "long": "base",
+                "positional": false,
+                "help": "The trunk the landing raises from",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "origin/master"
+                ]
+              },
+              {
+                "name": "head",
+                "long": "head",
+                "positional": false,
+                "help": "What lands",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "HEAD"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "How to render the answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "release-next",
+                "title": "What a landing would raise the version to",
+                "description": "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
+                "argv": [
+                  "release",
+                  "next",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus release next --format json",
                 "setup": [],
                 "expectation": "exits 12"
               }
@@ -130320,6 +130704,23 @@
         "output": "ReleaseChangelog"
       },
       {
+        "name": "majordomus_release_next",
+        "id": "release.next",
+        "title": "The version a landing allocates, and why",
+        "description": "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ReleaseNextInput",
+        "output": "LandingDecision"
+      },
+      {
         "name": "majordomus_release_version",
         "id": "release.version",
         "title": "The version, and the one the contract requires next",
@@ -132113,6 +132514,12 @@
         "method": "GET",
         "path": "/api/v1/changelog",
         "id": "release.changelog",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/release/next",
+        "id": "release.next",
         "kind": "query"
       },
       {
@@ -142194,6 +142601,30 @@
           "cases": 2
         },
         {
+          "subject": "release.next",
+          "module": "release",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.next",
+          "module": "release",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.next",
+          "module": "release",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
           "subject": "release.version",
           "module": "release",
           "transport": "direct",
@@ -142904,24 +143335,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 186,
+          "required": 187,
           "covered": 160,
           "missing": 0,
-          "waived": 26,
+          "waived": 27,
           "inapplicable": 0
         },
         "http": {
-          "required": 182,
+          "required": 183,
           "covered": 160,
           "missing": 0,
-          "waived": 22,
+          "waived": 23,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 178,
+          "required": 179,
           "covered": 156,
           "missing": 0,
-          "waived": 22,
+          "waived": 23,
           "inapplicable": 0
         },
         "system": {
@@ -142932,10 +143363,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 559,
+          "required": 562,
           "covered": 489,
           "missing": 0,
-          "waived": 70,
+          "waived": 73,
           "inapplicable": 0
         }
       }

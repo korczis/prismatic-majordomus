@@ -153,6 +153,7 @@
     "op-recover-orphans": "docs/api/recover/",
     "op-release-analysis": "docs/api/release/",
     "op-release-changelog": "docs/api/release/",
+    "op-release-next": "docs/api/release/",
     "op-release-version": "docs/api/release/",
     "op-repository-info": "docs/api/repository/",
     "op-repository-scope": "docs/api/repository/",
@@ -200,6 +201,7 @@
     "schema-Announcement": "docs/api/peers/",
     "schema-AnswerObservation": "docs/api/shared/",
     "schema-AnswerView": "docs/api/objects/",
+    "schema-AppliedExemption": "docs/api/release/",
     "schema-Arch": "docs/api/distribution/",
     "schema-AreaList": "docs/api/why/",
     "schema-AreaView": "docs/api/why/",
@@ -629,6 +631,7 @@
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
     "schema-LabelEffect": "docs/api/integration/",
     "schema-LabelPolicy": "docs/api/integration/",
+    "schema-LandingDecision": "docs/api/release/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
@@ -852,6 +855,7 @@
     "schema-Relation": "docs/api/continuity/",
     "schema-RelationDirection": "docs/api/entity/",
     "schema-RelationToMaster": "docs/api/integration/",
+    "schema-ReleaseAllocation": "docs/api/release/",
     "schema-ReleaseArtifactView": "docs/api/distribution/",
     "schema-ReleaseBaseline": "docs/api/release/",
     "schema-ReleaseChange": "docs/api/release/",
@@ -1141,8 +1145,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 182,
-    "schemas": 903,
+    "operations": 183,
+    "schemas": 906,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1381,6 +1385,7 @@
     "recover.orphans": "recover",
     "release.analysis": "release",
     "release.changelog": "release",
+    "release.next": "release",
     "release.version": "release",
     "repository.info": "repository",
     "repository.scope": "repository",
@@ -1432,6 +1437,7 @@
     "Announcement": "peers",
     "AnswerObservation": "shared",
     "AnswerView": "objects",
+    "AppliedExemption": "release",
     "Arch": "distribution",
     "AreaList": "why",
     "AreaView": "why",
@@ -1861,6 +1867,7 @@
     "KnowledgeStatus": "knowledge-base",
     "LabelEffect": "integration",
     "LabelPolicy": "integration",
+    "LandingDecision": "release",
     "LayerSummary": "environment",
     "LeaseHolder": "integration",
     "LeaseView": "server",
@@ -2084,6 +2091,7 @@
     "Relation": "continuity",
     "RelationDirection": "entity",
     "RelationToMaster": "integration",
+    "ReleaseAllocation": "release",
     "ReleaseArtifactView": "distribution",
     "ReleaseBaseline": "release",
     "ReleaseChange": "release",
@@ -3273,6 +3281,35 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \"plan-records\".into(), reason: \"plan records\".into() };\nassert_eq!(e.id, \"plan-records\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "AppliedExemption",
+      "properties": [
+        {
+          "description": "The class's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The class's description, which is the reason the floor did not apply.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LandingDecision"
       ],
       "values": [],
       "variants": []
@@ -17676,6 +17713,7 @@
         "reasoning.record",
         "recover.orphans",
         "release.analysis",
+        "release.next",
         "release.version",
         "repository.info",
         "rules.report",
@@ -27364,6 +27402,112 @@
       "used_by_schemas": [
         "IntegrationPolicy"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "LandingDecision",
+      "properties": [
+        {
+          "description": "`DECISION_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the trunk declares: the number the next one is raised from.",
+          "name": "trunk_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the change moves the public contract, measured (ADR 0051).",
+          "name": "observed",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "What that movement requires under the version's mode.",
+          "name": "required_by_compatibility",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The policy's floor, or `none` when an exemption applied.",
+          "name": "floor",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The exemption that lowered the floor, if one did.",
+          "name": "exemption",
+          "refs": [
+            "AppliedExemption"
+          ],
+          "required": false,
+          "type": "AppliedExemption | null"
+        },
+        {
+          "description": "The larger of the requirement and the floor.",
+          "name": "selected",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The trunk's version raised by `selected`.",
+          "name": "next_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the policy allocates at landing; the decision is computed either way.",
+          "name": "allocation",
+          "refs": [
+            "ReleaseAllocation"
+          ],
+          "required": true,
+          "type": "ReleaseAllocation"
+        },
+        {
+          "description": "The compatibility mode the trunk's version puts in force.",
+          "name": "mode",
+          "refs": [
+            "ReleasePolicyMode"
+          ],
+          "required": true,
+          "type": "ReleasePolicyMode"
+        },
+        {
+          "description": "One sentence per step, in the order the decision was made.",
+          "name": "explanation",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.next"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -40219,6 +40363,29 @@
       ]
     },
     {
+      "description": "Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\"\\\"landing\\\"\").unwrap();\nassert_eq!(a.as_str(), \"landing\");\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "ReleaseAllocation",
+      "properties": [],
+      "type": "\"off\" | \"landing\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LandingDecision"
+      ],
+      "values": [
+        {
+          "description": "The version is raised by whoever changes the contract, as before ADR 0134.",
+          "value": "off"
+        },
+        {
+          "description": "The integration executor raises it at landing; a pull request does not.",
+          "value": "landing"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The artifact a target and a tag name, and the directory it unpacks into.",
       "home": "distribution",
       "is_enum": false,
@@ -40783,6 +40950,7 @@
       "type": "\"none\" | \"patch\" | \"minor\" | \"major\"",
       "used_by": [],
       "used_by_schemas": [
+        "LandingDecision",
         "ReleaseCommitEvidence",
         "ReleaseSurfaceChange",
         "ReleaseVersionPlan"
@@ -40869,6 +41037,7 @@
       "type": "\"pre1-0-strict\" | \"semver\"",
       "used_by": [],
       "used_by_schemas": [
+        "LandingDecision",
         "ReleasePolicy"
       ],
       "values": [
@@ -63130,6 +63299,75 @@
           "result_schema": "ReleaseVersionPlan",
           "stability": "implemented",
           "summary": "What the public contract did, and the smallest version it allows"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/next\"",
+          "description": "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+          "home": "release",
+          "id": "release.next",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_next",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The trunk the landing raises from; `origin/master` when absent.",
+              "examples": [],
+              "name": "base",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "What lands; `HEAD` when absent.",
+              "examples": [],
+              "name": "head",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/release/next",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The version a landing allocates, and why: the result.",
+              "schema": "LandingDecision",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LandingDecision",
+          "stability": "implemented",
+          "summary": "The version a landing allocates, and why"
         },
         {
           "benchmark": "required",

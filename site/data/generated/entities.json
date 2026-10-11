@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 86,
+      "count": 87,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 86
+      "count": 87
     },
     {
       "kind": "application",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 416
+      "count": 417
     },
     {
       "kind": "use-case",
@@ -1711,7 +1711,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3228,6 +3236,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0086/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
         }
       ]
     },
@@ -4722,7 +4737,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6520,6 +6543,87 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0134",
+      "identity": "adr-0134",
+      "slug": "adr-0134",
+      "cockpit": "/cockpit/objects/adr/adr-0134",
+      "title": "The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "versioning",
+        "integration"
+      ],
+      "source": ".ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/drain.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/compat.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/landing.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0029",
+          "kind": "adr",
+          "route": "/adrs/adr-0029/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0051",
+          "kind": "adr",
+          "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-version-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1060_the_version_is_allocated_at_landing.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -13301,6 +13405,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.prose-states-no-version@1",
           "kind": "rule",
@@ -14036,6 +14147,13 @@
           "label": "adr-0085",
           "kind": "adr",
           "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
           "external": false
         }
       ]

@@ -1,7 +1,7 @@
 +++
 title = "majordomus evidence claim"
 description = "One claim: its proof state, the execution behind it, and how to reproduce it"
-weight = 161
+weight = 162
 [extra]
 route = "/docs/cli/evidence/claim/"
 command = "majordomus evidence claim"

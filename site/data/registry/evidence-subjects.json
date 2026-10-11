@@ -824,6 +824,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:release.next",
+      "path": "/evidence/capabilities/release-next/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:release.version",
       "path": "/evidence/capabilities/release-version/"
     },
@@ -2986,6 +2991,11 @@
       "kind": "command",
       "subject": "command:release changelog",
       "path": "/evidence/commands/release-changelog/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:release next",
+      "path": "/evidence/commands/release-next/"
     },
     {
       "kind": "command",
@@ -5429,6 +5439,16 @@
       "kind": "capability",
       "id": "release.changelog",
       "page": "/evidence/capabilities/release-changelog/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:release.next": {
+      "kind": "capability",
+      "id": "release.next",
+      "page": "/evidence/capabilities/release-next/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -15799,6 +15819,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:release next": {
+      "kind": "command",
+      "id": "release next",
+      "page": "/evidence/commands/release-next/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:release version": {
       "kind": "command",
       "id": "release version",
@@ -19821,6 +19860,18 @@
       "programs": [],
       "members": [
         "capability:release.analysis"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_release_next": {
+      "kind": "mcp",
+      "id": "majordomus_release_next",
+      "alias_of": "capability:release.next",
+      "programs": [],
+      "members": [
+        "capability:release.next"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25939,6 +25990,7 @@
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",
+    "suite:1060_the_version_is_allocated_at_landing",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

@@ -9952,6 +9952,71 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_release_analysis
+  "/api/v1/release/next":
+    get:
+      operationId: release.next
+      summary: "The version a landing allocates, and why"
+      description: "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed."
+      tags:
+        - release
+      parameters:
+        - name: base
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The trunk the landing raises from; `origin/master` when absent."
+        - name: head
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "What lands; `HEAD` when absent."
+      responses:
+        "200":
+          description: "The version a landing allocates, and why: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/LandingDecision"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: release.next
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::release
+      x-majordomus-benchmark:
+        policy: waived
+        reason: published_history
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_release_next
   "/api/v1/release/version":
     get:
       operationId: release.version
@@ -12363,6 +12428,19 @@ components:
         - media_type
         - content
       description: "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an `ObjectView` where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
+    AppliedExemption:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The class's id."
+        reason:
+          type: string
+          description: "The class's description, which is the reason the floor did not apply."
+      required:
+        - id
+        - reason
+      description: "The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \"plan-records\".into(), reason: \"plan records\".into() };\nassert_eq!(e.id, \"plan-records\");\n```"
     Arch:
       oneOf:
         - type: string
@@ -25587,6 +25665,58 @@ components:
         - name
         - effect
       description: "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively."
+    LandingDecision:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`DECISION_SCHEMA`."
+        trunk_version:
+          type: string
+          description: "What the trunk declares: the number the next one is raised from."
+        observed:
+          "$ref": "#/components/schemas/ReleaseImpact"
+          description: "How far the change moves the public contract, measured (ADR 0051)."
+        required_by_compatibility:
+          "$ref": "#/components/schemas/ReleaseImpact"
+          description: "What that movement requires under the version's mode."
+        floor:
+          "$ref": "#/components/schemas/ReleaseImpact"
+          description: "The policy's floor, or `none` when an exemption applied."
+        exemption:
+          anyOf:
+            - "$ref": "#/components/schemas/AppliedExemption"
+            - type: "null"
+          description: "The exemption that lowered the floor, if one did."
+        selected:
+          "$ref": "#/components/schemas/ReleaseImpact"
+          description: The larger of the requirement and the floor.
+        next_version:
+          type: string
+          description: "The trunk's version raised by `selected`."
+        allocation:
+          "$ref": "#/components/schemas/ReleaseAllocation"
+          description: Whether the policy allocates at landing; the decision is computed either way.
+        mode:
+          "$ref": "#/components/schemas/ReleasePolicyMode"
+          description: "The compatibility mode the trunk's version puts in force."
+        explanation:
+          type: array
+          items:
+            type: string
+          description: "One sentence per step, in the order the decision was made."
+      required:
+        - schema
+        - trunk_version
+        - observed
+        - required_by_compatibility
+        - floor
+        - selected
+        - next_version
+        - allocation
+        - mode
+        - explanation
+      description: "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```"
     LayerSummary:
       type: object
       properties:
@@ -32774,6 +32904,15 @@ components:
             - reason
           description: "Git could not answer (the head is not fetched, or git failed); the reason."
       description: "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting."
+    ReleaseAllocation:
+      oneOf:
+        - type: string
+          const: "off"
+          description: "The version is raised by whoever changes the contract, as before ADR 0134."
+        - type: string
+          const: landing
+          description: The integration executor raises it at landing; a pull request does not.
+      description: "Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\"\\\"landing\\\"\").unwrap();\nassert_eq!(a.as_str(), \"landing\");\n```"
     ReleaseArtifactView:
       type: object
       properties:
