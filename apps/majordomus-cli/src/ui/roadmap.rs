@@ -252,7 +252,7 @@ mod tests {
     fn the_dependencies_are_a_table_and_a_graph_and_the_intents_are_listed() {
         let repo = planned_with_an_intent();
         let ctx = repo.context().expect("a context");
-        let view = screen(&ctx);
+        let view = screen(&ctx, &[]);
         let html = view.main.render();
         assert_eq!(view.status, 200);
         // m-second depends on m-first: its row in the table, its edge in the graph
@@ -262,8 +262,8 @@ mod tests {
             "a recorded dependency is a row: {html}"
         );
         assert!(
-            html.contains("#milestone-m-first"),
-            "a node leads to its row"
+            html.contains("/ui/roadmap?milestone=m-first#milestone"),
+            "a node opens its milestone's inspector"
         );
         assert!(html.contains("data-graph"), "{html}");
         assert!(
@@ -279,7 +279,7 @@ mod tests {
     fn a_roadmap_that_cannot_answer_draws_no_sequence() {
         let repo = SyntheticRepository::planned();
         let ctx = context_without(&repo, &["plan", "intents"]);
-        let html = screen(&ctx).main.render();
+        let html = screen(&ctx, &[]).main.render();
         assert!(html.contains("plan.roadmap could not answer"), "{html}");
         assert!(!html.contains("#milestone-m-first"), "{html}");
         assert!(
@@ -293,7 +293,7 @@ mod tests {
     fn a_plan_without_dependencies_or_intents_says_so() {
         let repo = SyntheticRepository::small().expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
-        let html = screen(&ctx).main.render();
+        let html = screen(&ctx, &[]).main.render();
         assert!(html.contains("No milestone depends on another."), "{html}");
         assert!(html.contains("No intent is recorded."), "{html}");
     }
