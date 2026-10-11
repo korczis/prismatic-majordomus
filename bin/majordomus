@@ -28,6 +28,9 @@ fi
 MJ_SELF="${MAJORDOMUS_LAUNCHER:-$MJ_BIN_DIR/majordomus}"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR MJ_SELF
 
+# The temporary root is made after the dispatch below, not as the library is sourced: a
+# command handed to the other program is an exec, and an exec runs no exit trap.
+MJ_TMP_ROOT_DEFER=1
 # shellcheck source=../lib/common.sh
 . "$MJ_LIB_DIR/common.sh"
 
