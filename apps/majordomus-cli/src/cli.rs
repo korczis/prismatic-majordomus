@@ -3175,7 +3175,7 @@ pub enum PrsCommand {
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
-    /// The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
+    /// The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
     Trains,
     /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed
     Brief,
