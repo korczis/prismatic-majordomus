@@ -134,6 +134,10 @@ impl Heartbeat {
 
 impl Session {
     fn open(args: McpArgs, repo: Repository) -> Result<Self> {
+        // the policy declares the lease timings, and it is read before the first election
+        // reads them: a timing read first is the compiled default for the life of the process
+        // (I2129). A policy that does not parse leaves the defaults; `doctor` reports it.
+        let _ = crate::policy::LoadedPolicy::load(&repo);
         let backend = match lease::elect(&repo) {
             Ok(Role::Server(lease)) => match Self::serve(&args, lease, None) {
                 Ok(backend) => backend,
@@ -217,6 +221,9 @@ impl Session {
             Backend::Remote { bridge, .. } => {
                 let answer = lock(bridge).handle(&message);
                 match answer {
+                    Ok(v) if message["method"] == "initialize" => {
+                        v.map(|v| Reply::Value(told_of_version(v, crate::VERSION)))
+                    }
                     Ok(v) => v.map(Reply::Value),
                     Err(e) if e.calls_for_an_election() => self.failover(message, e),
                     // the server is there and would not take this request: that is its
@@ -229,7 +236,12 @@ impl Session {
 
     /// The server this session was bridged to is gone: elect again, and either become
     /// the server (carrying the client's session over) or attach to whoever did.
+    ///
+    /// The message is sent again only when the cause says that cannot run it twice
+    /// ([`BridgeError::may_resend`]); otherwise the election still happens, for the
+    /// messages that follow, and the client is told this one's outcome is unknown.
     fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Reply> {
+        let resend = cause.may_resend(&message);
         tracing::warn!("{cause}; electing again");
         let (client, announcements) = match &self.backend {
             Backend::Remote { bridge, .. } => {
@@ -283,15 +295,16 @@ impl Session {
                                 );
                             }
                         }
-                        self.handle(message)
+                        if resend {
+                            self.handle(message)
+                        } else {
+                            outcome_unknown(&message, &cause)
+                        }
                     }
                     Err(e) => {
                         tracing::error!("cannot take over as the shared server: {e}");
-                        self.settle_alone(
-                            message,
-                            client,
-                            &format!("{cause}; and taking over failed: {e}"),
-                        )
+                        let reason = format!("{cause}; and taking over failed: {e}");
+                        self.settle_alone(message, client, &reason, (!resend).then_some(&cause))
                     }
                 }
             }
@@ -301,20 +314,27 @@ impl Session {
                 };
                 let mut b = lock(bridge);
                 b.move_to(url.clone());
-                let retry = b.reinitialize().and_then(|()| b.handle(&message));
+                let retry =
+                    b.reinitialize()
+                        .and_then(|()| if resend { b.handle(&message) } else { Ok(None) });
                 match retry {
+                    Ok(_) if !resend => {
+                        tracing::info!(url = %url, "re-attached to the shared server");
+                        outcome_unknown(&message, &cause)
+                    }
                     Ok(v) => {
                         tracing::info!(url = %url, "re-attached to the shared server");
                         v.map(Reply::Value)
                     }
+                    Err(_) if !resend => outcome_unknown(&message, &cause),
+                    Err(e) if !e.calls_for_an_election() => refused(&message, &e),
                     Err(e) => unavailable(&message, &e.to_string()),
                 }
             }
-            Err(e) => self.settle_alone(
-                message,
-                client,
-                &format!("{cause}; electing again failed: {e}"),
-            ),
+            Err(e) => {
+                let reason = format!("{cause}; electing again failed: {e}");
+                self.settle_alone(message, client, &reason, (!resend).then_some(&cause))
+            }
         }
     }
 
@@ -328,20 +348,29 @@ impl Session {
 
     /// Neither serving nor attaching worked: serve this client alone when the layer
     /// loads, and answer the request with an error naming every failure when it does not.
+    /// `withheld` is the failure that may have run the message already: it is then not
+    /// run here, and the client is told its outcome is unknown.
     fn settle_alone(
         &mut self,
         message: Value,
         client: Option<ClientInfo>,
         reason: &str,
+        withheld: Option<&BridgeError>,
     ) -> Option<Reply> {
         match Self::alone(&self.args, client, reason) {
             Ok(backend) => {
                 self.replace(backend);
-                self.handle(message)
+                match withheld {
+                    Some(cause) => outcome_unknown(&message, cause),
+                    None => self.handle(message),
+                }
             }
             Err(e) => {
                 tracing::error!("cannot serve this client alone either: {e}");
-                unavailable(&message, reason)
+                match withheld {
+                    Some(cause) => outcome_unknown(&message, cause),
+                    None => unavailable(&message, reason),
+                }
             }
         }
     }
@@ -376,6 +405,35 @@ impl Session {
     }
 }
 
+/// The `initialize` answer a bridged client relays, with what its client must know when the
+/// shared server is a newer release than this executable (`mine`): the answers come from
+/// the newer server, while this process — the bridge, its command line — is the older one
+/// until it is started from the newer executable. Said in the instructions, which every
+/// client shows its model, because an older client that attached in silence is how a
+/// version difference went unseen (I2163). Any other answer is relayed as it is.
+fn told_of_version(mut answer: Value, mine: &str) -> Value {
+    let served = answer["result"]["serverInfo"]["version"]
+        .as_str()
+        .map(str::to_string);
+    if lease::version_verdict(served.as_deref(), mine) != lease::VersionVerdict::ServerNewer {
+        return answer;
+    }
+    let theirs = served.unwrap_or_default();
+    let note = format!(
+        "This client is majordomus {mine}; the shared server it is bridged to runs {theirs}, a newer release. Its answers are the newer server's; this client process is the older one until it is started from the newer executable."
+    );
+    tracing::warn!("{note}");
+    if let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) {
+        let instructions = result
+            .get("instructions")
+            .and_then(Value::as_str)
+            .map(|i| format!("{note}\n\n{i}"))
+            .unwrap_or(note);
+        result.insert("instructions".into(), Value::String(instructions));
+    }
+    answer
+}
+
 /// The JSON-RPC answer for a request that no server could take; nothing for a notification.
 fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
     let id = message.get("id").cloned().filter(|i| !i.is_null())?;
@@ -386,14 +444,42 @@ fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
     })))
 }
 
-/// The JSON-RPC answer for a request a serving shared server would not take; nothing for a
-/// notification. An invalid request, in the server's own words: what it refused and why.
-fn refused(message: &Value, cause: &BridgeError) -> Option<Reply> {
+/// The JSON-RPC answer for a request that was sent, got no answer, and is not sent again
+/// because it may have run: its outcome is unknown, and the answer says so with its id.
+/// Nothing for a notification.
+fn outcome_unknown(message: &Value, cause: &BridgeError) -> Option<Reply> {
     let id = message.get("id").cloned().filter(|i| !i.is_null())?;
+    tracing::warn!(request = %id, "{cause}; the request may have run, so it is not sent again");
     Some(Reply::Value(json!({
         "jsonrpc": "2.0",
         "id": id,
-        "error": { "code": -32600, "message": cause.to_string() }
+        "error": {
+            "code": -32603,
+            "message": format!(
+                "outcome unknown: request {id} was sent to the shared server and no answer came \
+                 ({cause}); it may have run, so it was not sent again"
+            ),
+            "data": { "request_id": id, "outcome": "unknown" }
+        }
+    })))
+}
+
+/// The JSON-RPC answer for a request the server answered with a refusal that calls for no
+/// election (a 4xx other than 404 or 409): that refusal, named. Nothing for a notification.
+fn refused(message: &Value, cause: &BridgeError) -> Option<Reply> {
+    let id = message.get("id").cloned().filter(|i| !i.is_null())?;
+    let status = match cause {
+        BridgeError::Rejected { status, .. } => Some(*status),
+        BridgeError::Unreachable { .. } | BridgeError::Unanswered { .. } => None,
+    };
+    let text = match status {
+        Some(413) => format!("payload too large: request {id} was refused: {cause}"),
+        _ => format!("request {id} was refused: {cause}"),
+    };
+    Some(Reply::Value(json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": { "code": -32600, "message": text, "data": { "request_id": id, "status": status } }
     })))
 }
 
@@ -529,6 +615,35 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn initialized(version: &str) -> Value {
+        json!({"jsonrpc": "2.0", "id": 1, "result": {
+            "serverInfo": {"name": "majordomus", "version": version},
+            "instructions": "The projection of a repository's AI layer."
+        }})
+    }
+
+    #[test]
+    fn older_client_told_test() {
+        // bridged to a newer release, the client is told, before what the server said
+        let told = told_of_version(initialized("0.21.0"), "0.20.0");
+        let instructions = told["result"]["instructions"].as_str().unwrap();
+        assert!(instructions.starts_with("This client is majordomus 0.20.0"));
+        assert!(instructions.contains("runs 0.21.0, a newer release"));
+        assert!(instructions.ends_with("The projection of a repository's AI layer."));
+        // the same release, or an older one, is relayed as it is
+        assert_eq!(
+            told_of_version(initialized("0.20.0"), "0.20.0"),
+            initialized("0.20.0")
+        );
+        assert_eq!(
+            told_of_version(initialized("0.19.1"), "0.20.0"),
+            initialized("0.19.1")
+        );
+        // and an error answer has nothing to be told in
+        let error = json!({"jsonrpc": "2.0", "id": 1, "error": {"code": -32600}});
+        assert_eq!(told_of_version(error.clone(), "0.20.0"), error);
+    }
 
     #[test]
     fn a_diagnostic_is_introduced_by_the_verdict_word_of_its_severity() {

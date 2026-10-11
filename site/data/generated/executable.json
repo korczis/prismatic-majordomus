@@ -18,6 +18,23 @@
       "tool": "majordomus_artifacts"
     },
     {
+      "api_anchor": "/docs/api/brief/#op-brief-session",
+      "claims": [],
+      "cli": "majordomus brief",
+      "id": "brief.session",
+      "kind": "query",
+      "module": "brief",
+      "module_route": "/registry/modules/brief/",
+      "resource": null,
+      "route": "/registry/capabilities/brief-session/",
+      "slug": "brief-session",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "tests": [],
+      "title": "The session brief",
+      "tool": "majordomus_brief"
+    },
+    {
       "api_anchor": "/docs/api/capabilities/#op-capabilities-describe",
       "claims": [],
       "cli": "majordomus capabilities describe",
@@ -1377,6 +1394,23 @@
       "tool": "majordomus_ci_timings"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-trains",
+      "claims": [],
+      "cli": "majordomus prs trains",
+      "id": "integration.trains",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-trains/",
+      "slug": "integration-trains",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The trains of stacked pull requests",
+      "tool": "majordomus_pull_request_trains"
+    },
+    {
       "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
       "claims": [],
       "cli": "majordomus intent explain",
@@ -2135,6 +2169,23 @@
       "tests": [],
       "title": "Route a need to a model",
       "tool": "majordomus_models_route"
+    },
+    {
+      "api_anchor": "/docs/api/monitor/#op-monitor-stream",
+      "claims": [],
+      "cli": null,
+      "id": "monitor.stream",
+      "kind": "query",
+      "module": "monitor",
+      "module_route": "/registry/modules/monitor/",
+      "resource": null,
+      "route": "/registry/capabilities/monitor-stream/",
+      "slug": "monitor-stream",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "tests": [],
+      "title": "Follow everything in one stream",
+      "tool": "majordomus_monitor"
     },
     {
       "api_anchor": "/docs/api/objects/#op-objects-get",
@@ -3924,9 +3975,9 @@
     ]
   },
   "counts": {
-    "capabilities": 185,
+    "capabilities": 188,
     "claims": 89,
-    "modules": 53
+    "modules": 55
   },
   "generator": "majordomus-cli 0.21.0",
   "modules": [
@@ -3945,6 +3996,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
       "title": "Generated artifacts"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "brief.session",
+          "route": "/registry/capabilities/brief-session/",
+          "slug": "brief-session"
+        }
+      ],
+      "claims": [],
+      "id": "brief",
+      "route": "/registry/modules/brief/",
+      "slug": "brief",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "title": "The session brief"
     },
     {
       "capabilities": [
@@ -4582,6 +4649,11 @@
           "id": "integration.timings",
           "route": "/registry/capabilities/integration-timings/",
           "slug": "integration-timings"
+        },
+        {
+          "id": "integration.trains",
+          "route": "/registry/capabilities/integration-trains/",
+          "slug": "integration-trains"
         }
       ],
       "claims": [],
@@ -4884,6 +4956,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
       "title": "Models"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "monitor.stream",
+          "route": "/registry/capabilities/monitor-stream/",
+          "slug": "monitor-stream"
+        }
+      ],
+      "claims": [],
+      "id": "monitor",
+      "route": "/registry/modules/monitor/",
+      "slug": "monitor",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "title": "The monitor"
     },
     {
       "capabilities": [

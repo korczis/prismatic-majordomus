@@ -113,7 +113,7 @@ Trust is decided by the declared policy, and the default is that no one is trust
 | `allowlist` | observed; listed keys are trusted | the same as `deny_unknown` plus `allow` |
 | `tofu` | trusted on first use | a development convenience for a network you control: under TOFU **every** key on the segment that knows the repository identity is trusted and can link, claim and publish; every listing says `tofu`, and TOFU-trusted records are evictable |
 
-This machine's own key is trusted as itself, which is what lets two worktrees link. A node id
+A key withdrawn from `trust.allow` loses its links as soon as the server reads the change: the server puts the declaration's trust in force with every new generation of the repository, ends the link of every peer it no longer trusts, and refuses that peer's next hello `untrusted` — no restart (I2134). This machine's own key is trusted as itself, which is what lets two worktrees link. A node id
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
@@ -141,24 +141,34 @@ remote is older trust, which is the safe direction.
 A dialer — the runtime with the lower runtime key, or either one when only one can reach the
 other, or any runtime with a declared seed — posts a signed **hello** to
 `POST /api/v1/mesh/link/hello`: its runtime card (key, runtime, instance, repository, name,
-version, features, endpoints), a 32-hex nonce, a timestamp and its link protocol range. The
-answerer admits it only if, in order:
+version, features, endpoints), a 32-hex nonce, a timestamp, its link protocol range and,
+when the dialer knows whom it dials, the runtime key it means to reach (`to`). The answerer
+admits it only if, in the order the code checks:
 
 1. the message is within 900 KiB and has the shape of a hello;
 2. the Ed25519 signature verifies under the hello domain (a signature over another message
    kind can never be replayed as a hello);
 3. the timestamp is within ±300 s of its clock;
-4. the nonce has not been answered before;
+4. the nonce has 32 hex characters;
 5. the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);
 6. the peer is not this runtime;
-7. the peer's repository identity equals its own;
-8. the peer's key is trusted by its policy.
+7. a hello that names its recipient names this runtime — a copy captured on its way to
+   another runtime of the repository is refused `misaddressed`;
+8. the peer's repository identity equals its own;
+9. the peer's key is trusted by its policy;
+10. the nonce has not been answered before. It is checked last on purpose: the replay cache
+    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
+    fill it nor evict a real peer's nonce.
+
+A hello without `to` — from a seed, a first contact, or a release before it — is still
+admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
+and the skew window.
 
 It then answers with a signed **welcome** — its own card, a link id, its marks, the echoed
 nonce — and the dialer applies the same checks to the welcome (signature, echoed nonce,
 timestamp, protocol, self, repository, trust). Every failure on either side is a typed
 refusal (`malformed`, `oversized`, `signature`, `stale`, `replay`, `protocol_unsupported`,
-`self_link`, `repository_mismatch`, `untrusted`, `capacity`; a sync can also be refused
+`self_link`, `misaddressed`, `repository_mismatch`, `untrusted`, `capacity`; a sync can also be refused
 `not_active` or `unknown_link`, and an operation `feature_unsupported`),
 counted in `refused_in`/`refused_out` and listed with its detail on `mesh.cooperation`.
 
@@ -193,7 +203,10 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`. An event carries its stream, a dense sequence, a
+`review_requested`, `review_answered`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+(`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
+heartbeat, marks what names the reader, and pages with the full causal key rather than the
+Lamport stamp alone. An event carries its stream, a dense sequence, a
 Lamport stamp, its origin's wall clock (informational), the repository identity, the origin
 key, a body and an Ed25519 signature over the canonical JSON of all of it.
 
@@ -223,9 +236,16 @@ Replication is a comparison of marks, not a flood. A sync request carries the di
 (per stream: high-water sequence, beat, beat age) and the events the answerer's last marks
 lack; the answer carries the answerer's marks and the events the request's marks lack. One
 round replicates both ways. A runtime joining late — or rejoining after a partition — gets
-exactly what its marks lack in its first rounds (600 KiB per round), which after compaction is
-the live state plus what compaction keeps, not an unbounded history. Once marks agree, rounds
-carry no events: replication stops rather than loops.
+exactly what its marks lack in its first rounds, which after compaction is the live state plus
+what compaction keeps, not an unbounded history. Once marks agree, rounds carry no events:
+replication stops rather than loops.
+
+A round's events get what is left of the 900 KiB message bound once the rest of the message —
+its marks above all — is serialized, and never more than 600 KiB. The marks of a journal at its
+stream bounds weigh hundreds of kilobytes, and with a fixed 600 KiB of events beside them a
+message passed the bound and was refused as oversized, every round, so replication stopped with
+no explanation (I2139). The size is checked on the message as signed, where it is built, by the
+dialer and the answerer alike; an event that would take it over waits for the next round.
 
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
 verdicts computes the same state and the same `digest`.
@@ -298,7 +318,9 @@ mark so that a peer still holding the stream does not send it again, and the bea
 heard at. A late copy of what was held, or an event the stream wrote after it was compacted,
 changes nothing; the mark rises over a later event, so a relay that holds it stops offering it.
 Tombstones live in memory: a restarted runtime has none, may be sent a compacted stream again,
-and drops it again once it has been silent there as long as any stream must be.
+and drops it again once it has been silent there as long as any stream must be. A tombstone is
+told only to a peer whose marks show it holds that stream: to anyone else it says nothing, and
+the four thousand a full journal may keep would only weigh down every message.
 
 **A compacted stream that returns.** A laptop that sleeps past the expiry and the 15 minutes is
 compacted away by its peers; it wakes as the same process, so as the same stream, and goes on
@@ -310,7 +332,7 @@ with it: a claim it took and never released holds again the moment it beats, and
 holding only the part after the mark would admit a claim that conflicts with it, and would
 see releases of claims it never knew. The origin never compacts its own stream, so the whole
 stream is always there to fetch; a return costs one refetch, bounded by the node's quota and
-600 KiB a round. A relay replaying the old beat, however fresh it says it is, lifts nothing.
+a round's event budget. A relay replaying the old beat, however fresh it says it is, lifts nothing.
 
 **Digests while runtimes compact.** Each runtime decides on its own when compaction is due, so
 two runtimes can hold different sets of dead streams for a while: one has forgotten a dead
@@ -354,18 +376,19 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
 | a relay that alters or invents events | the origin's signature fails at every consumer |
 | a trusted key stamping events at the end of the Lamport range | an event more than 2^32 ahead of the receiver's clock is refused `clock_ahead` (`MAX_LAMPORT_LEAD`), so the clock rises at most that much per stored event. A stamp set low to win a claim conflict is not refused: Lamport stamps are their writer's own assertion |
-| flooding | bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
+| flooding | bounded datagrams and a bounded queue of them to the registry (1024; a flood beyond it is dropped and counted as `overflow` in `mesh.status`), messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a branch or an uncommitted edit that adds a key, a hub, a seed or `tofu` | the declaration in force is the working tree's with every widening of the trunk's committed copy removed; `mesh doctor` names each ignored line (`trust-root`), and `mesh-check` refuses a committed `tofu` (I2135) |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a host on the network posting claims, sessions, handovers or reviews for this node to sign | a request from an address that is not loopback runs only a capability that reads or whose input is a signed message (`mesh.link.hello`, `mesh.link.sync`, `mesh.register`); every other route answers 403 `forbidden` before its handler runs (ADR 0126) |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
+| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and the trusted nodes of its own repositories, never observed strangers or another repository (I2133) |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
 | publishing arbitrary files | handover publication reads only `.ai/local/state/handovers/` |

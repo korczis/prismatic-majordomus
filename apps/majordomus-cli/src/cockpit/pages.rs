@@ -354,6 +354,14 @@ pub fn overview(ctx: &Context) -> Page {
         el("div")
             .class("mj-grid")
             .child(four_questions(ctx))
+            .child(brief_card(ctx))
+            .child(card_with(
+                "What is happening",
+                link("/cockpit/monitor", "Monitor"),
+                el("p").class("mj-prose").text(
+                    "Sessions, claims, handovers and reviews on every linked machine, the executor's merges and GitHub's runs: one live list, with what names you first. In a terminal: majordomus monitor --follow.",
+                ),
+            ))
             .child(statistics)
             .child(identity)
             .child(health_card)
@@ -363,6 +371,63 @@ pub fn overview(ctx: &Context) -> Page {
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The session brief, beside the four questions: `brief.session` laid out, section by section
+/// (ADR 0136). The line a provider mod shows as its status line, then each section with
+/// the state its owner answered in, so that a section that could not be read reads so here
+/// as it does on the command line.
+fn brief_card(ctx: &Context) -> El {
+    use crate::capability::builtin::brief::{state_word, BriefSectionState, SessionBrief};
+    let b: SessionBrief = match ask(ctx, "brief.session", json!({})) {
+        Ok(b) => b,
+        Err(e) => return card("Session brief", alert("fail", e)),
+    };
+    let status = |s: BriefSectionState| match s {
+        BriefSectionState::Read => "ok",
+        BriefSectionState::Partial => "warn",
+        BriefSectionState::Unread => "fail",
+        BriefSectionState::Undeclared => "info",
+    };
+    let section = |name: &str, s: BriefSectionState, summary: &str| {
+        row(vec![
+            text_cell(name),
+            cell(badge(status(s), state_word(s))),
+            text_cell(summary),
+        ])
+    };
+    let mut body = el("div").child(el("p").child(mono(&b.line))).child(table(
+        &["Section", "State", "What its owner answered"],
+        vec![
+            section("session", b.session.state, &b.session.summary),
+            section("peers", b.peers.state, &b.peers.summary),
+            section("mesh", b.mesh.state, &b.mesh.summary),
+            section("integration", b.integration.state, &b.integration.summary),
+            section("derive", b.derive.state, &b.derive.summary),
+        ],
+    ));
+    if !b.peers.named.is_empty() {
+        body = body.child(
+            el("ul").class("mj-checklist").children(
+                b.peers
+                    .named
+                    .iter()
+                    .map(|n| el("li").class("mj-checklist-item").child(mono(n)))
+                    .collect::<Vec<_>>(),
+            ),
+        );
+    }
+    body = body.child(el("p").class("mj-empty").text(format!(
+        "Answered by the {} process at {}; a session reports this every {} minutes.",
+        b.answered_by.process.replace('_', " "),
+        b.at,
+        b.interval_minutes
+    )));
+    card_with(
+        "Session brief",
+        link("/cockpit/capabilities/brief.session", "brief.session"),
+        body,
+    )
 }
 
 /// The four questions, first on the overview: `dashboard.overview` laid out, card by card.
@@ -3730,6 +3795,13 @@ pub fn mesh(ctx: &Context) -> Page {
         "Mesh",
         el("div")
             .class("mj-grid")
+            .child(card(
+                "Follow it",
+                el("p")
+                    .class("mj-prose")
+                    .text("Everything this page shows, and the executor's merges and GitHub's runs beside it, as one live list with what names you first: ")
+                    .child(link("/cockpit/monitor", "the monitor")),
+            ))
             .child(card("This node", overview))
             .child(card("Cooperation", coop))
             .child(card(
@@ -5135,7 +5207,7 @@ fn o_path(p: &OverlapPath) -> String {
 /// The badge status of a disposition: what the reader should feel about it. Of the cleanup
 /// lane, what cleanup closes (`redundant`, `superseded`) warns, and what only a person may
 /// close (`possibly_redundant`) is as undecided as a held one.
-fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
+pub(crate) fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
     use crate::integration::IntegrationLane as L;
     use crate::integration::PullRequestDisposition as D;
     match (d.lane(), d) {
@@ -5256,7 +5328,7 @@ pub fn integration(ctx: &Context) -> Page {
                 "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
             ))
             .child(pre(
-                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
+                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs trains                   # the stacked pull requests, in landing order\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
             )),
     );
     let Some(q) = status.queue else {
@@ -5373,6 +5445,13 @@ pub fn integration(ctx: &Context) -> Page {
             ),
             ("Lease", Node::Element(lease)),
             ("Last merge", last_merge),
+            (
+                "Trains",
+                Node::Element(link(
+                    "/cockpit/trains",
+                    "the pull requests stacked on each other, drawn as a graph",
+                )),
+            ),
             (
                 "Policy",
                 Node::Element(el("span").text(format!(

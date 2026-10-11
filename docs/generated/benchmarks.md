@@ -9,17 +9,18 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 185 | 161 | 0 | 24 |
-| http | 182 | 161 | 0 | 21 |
-| mcp | 178 | 157 | 0 | 21 |
+| direct | 188 | 164 | 0 | 24 |
+| http | 185 | 164 | 0 | 21 |
+| mcp | 181 | 160 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 558 | 492 | 0 | 66 |
+| total | 567 | 501 | 0 | 66 |
 
 ## Capabilities
 
 | capability | module | kind | cache | direct | mcp | http | cases |
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
+| `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |
@@ -97,6 +98,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `integration.prove_dry_run` | integration | query | — | waived | waived | waived | — |
 | `integration.queue` | integration | query | — | covered | covered | covered | `default` |
 | `integration.timings` | integration | query | — | covered | covered | covered | `default` |
+| `integration.trains` | integration | query | — | covered | covered | covered | `default` |
 | `intent_realization.explain` | intent_realization | query | — | covered | covered | covered | `first-intent` |
 | `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent` |
 | `intents.binding` | intents | query | — | covered | covered | covered | `first-issue` |
@@ -137,6 +139,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.verify` | mesh | command | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
 | `models.route` | models | query | — | covered | covered | covered | `default` |
+| `monitor.stream` | monitor | query | — | covered | covered | covered | `local-first-page`, `local-resumed` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |

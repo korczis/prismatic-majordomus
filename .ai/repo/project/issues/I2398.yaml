@@ -1,0 +1,53 @@
+id: I2398
+milestone: development-runtime
+title: "A derive offloaded to another machine waits its turn in a declared queue"
+slug: the-derive-offload-is-a-capability
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the derive offload a capability of the executable: the hosts and their limits declared once under .ai/repo, the host chosen by free disk and queue length, a FIFO queue on the host in which a dead waiter's ticket blocks nobody, a build directory of each derive's own, and the bundle-in/bundle-back round trip with its refusals, tested without a network and documented."
+why: "Every session derives its branch on another machine with ~/dev/.derive-offload.sh, a script outside the repository that nothing tests or reviews. Measured 2026-10-11 00:18Z on lundra: one derive runs at a time for 11 to 13 minutes and five waited, the oldest for 2 h 12 min, because the host lock was `until mkdir; do sleep 15`: a race in which the latest arrival can win every time, not a queue. A v2 written that night adds a host choice, a FIFO ticket queue and a free-disk minimum, but it is again a file in a home directory, with its hosts typed into it. At 00:25Z on the second MacBook a derive run around the lock rebuilt the shared build directory under a running offloaded derive, and stage C refused with `this executable is not of this tree's generation`."
+current_state: "The offload is ~/dev/.derive-offload.sh (v1, mkdir race) and ~/dev/.derive-offload-v2.sh (v2, FIFO tickets, host choice, private build directory). Both carry the two host addresses and the 10 GiB minimum in their source. Nothing in the repository declares a host, tests the queue or documents the round trip."
+desired_state: "`majordomus offload derive <worktree>` does what v2 does, with the hosts and limits read from .ai/repo/offload/derive.yaml (kind derive-offload, schema derive-offload/v1). `offload hosts` prints the declaration and `offload probe` measures every host and names the one a derive would take. The queue is decided in Rust over observations of the host: two waiters are served in arrival order, a dead waiter's ticket is removed, a lock whose holders are all dead is reclaimed aloud and a lock with no holder file (a v1 or v2 waiter's) is waited for. Each derive builds in its own copy-on-write clone of the shared build directory, removed when it ends. Its queue paths and ticket names are v2's, so both kinds of waiter see each other while sessions move over."
+scope:
+  - ".ai/repo/offload/derive.yaml"
+  - ".ai/repo/offload/README.md"
+  - "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json"
+  - "share/kinds.yaml"
+  - ".ai/repo/knowledge/sources.yaml"
+  - "apps/majordomus-cli/src/offload/mod.rs"
+  - "apps/majordomus-cli/src/offload/declaration.rs"
+  - "apps/majordomus-cli/src/offload/queue.rs"
+  - "apps/majordomus-cli/src/offload/host.rs"
+  - "apps/majordomus-cli/src/offload/remote.rs"
+  - "apps/majordomus-cli/src/offload/run.rs"
+  - "apps/majordomus-cli/src/commands/offload.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/offload.rs"
+  - ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md"
+  - "docs/OFFLOAD.md"
+  - ".ai/repo/project/issues/I2398.yaml"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Retiring ~/dev/.derive-offload.sh and ~/dev/.derive-offload-v2.sh: they are outside the repository and instances run; sessions move over by calling the command instead."
+  - "Installing the executable on the hosts or running a hub there: the host needs git, a checkout of this repository and the toolchain scripts/derive builds with, nothing of this change."
+  - "Keeping the shared build directory warm from a finished derive's private one: v2 does not, and swapping it under a builder that ignores the lock is the failure this issue removes."
+acceptance_criteria:
+  - "The hosts, their ssh identity files, the free-disk minimum, the queue paths and the remote layout are read from .ai/repo/offload/derive.yaml and validated against derive-offload/v1; no host address is written in the crate or a script"
+  - "Two waiters are served in arrival order, and a ticket whose waiter is dead is removed and does not block the next one; proven against a real host directory with real processes"
+  - "A host under its free-disk minimum, or one that does not answer, is skipped, and the host with the fewest derives running or waiting is chosen, ties broken by declaration order"
+  - "A derive offloaded through a local ssh stand-in comes back staged and uncommitted; a merge in progress travels with both parents; untracked files, an unresolved merge and a derive that deletes a tracked file are each refused"
+  - "A derive's build directory is its own: a build into the shared directory while the derive runs does not replace the executable it derives with"
+  - "docs/OFFLOAD.md documents the command, the declaration, the queue and the board and mesh etiquette, and the rule project.a-derive-offload-waits-its-turn names the tests"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test offload"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "offload_queue_fairness_test"
+  - "offload_round_trip_test"
+depends_on: []
+created_at: 2026-10-11
+updated_at: 2026-10-11

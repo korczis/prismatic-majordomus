@@ -142,6 +142,17 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     Ok(report)
 }
 
+/// Put the declaration's trust in force on a running cooperation runtime, ending the links of
+/// every key it no longer trusts (I2134). The server calls this with each new generation of the
+/// repository it reads, so a key withdrawn from `trust.allow` and committed loses its links
+/// without a restart. Returns the runtime keys whose links ended.
+pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
+    let (Some(cooperation), Some(Ok(config))) = (ctx.mesh.cooperation(), declaration(ctx)) else {
+        return Vec::new();
+    };
+    cooperation.retrust(config.trust)
+}
+
 /// The repository's mesh declaration in force: `None` when no object of the kind exists,
 /// the parse verdict when one does — the working tree's copy with every widening of the
 /// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,
@@ -612,7 +623,9 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The highest Lamport stamp the journal has seen: the `after` of the next page.
+    /// The `after` of the next page: the stamp of the last event this page carries, or the
+    /// `after` that was asked when it carries none. A page never ends inside a run of equal
+    /// stamps, so resuming after it misses nothing (I2140).
     pub lamport: u64,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
@@ -628,11 +641,12 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
-    let events = c.journal().events_after(input.after.unwrap_or(0), limit);
+    let after = input.after.unwrap_or(0);
+    let events = c.journal().events_after(after, limit);
     Ok(EventList {
         active: true,
         count: events.len(),
-        lamport: c.journal().tallies().lamport,
+        lamport: events.last().map_or(after, |e| e.lamport),
         events,
     })
 }

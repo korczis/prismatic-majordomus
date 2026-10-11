@@ -616,6 +616,7 @@ fn malformed_forged_and_future_link_messages_are_typed_refusals_over_http() {
         card: card.clone(),
         nonce: majordomus_cli::mesh::link::fresh_token(),
         ts: majordomus_cli::mesh::protocol::now(),
+        to: None,
     };
     let future = sign(
         &stranger,

@@ -348,6 +348,20 @@ majordomus mesh verify      # a live round with every peer, and whether the stat
 The guarantees and their tests — separate processes over TCP, and a container lab that
 partitions and kills nodes on a real network — are in `docs/MESH.md`.
 
+To follow all of it, and the executor's merges and GitHub's runs beside it, in one stream,
+use `majordomus monitor`. It folds away the heartbeat noise, puts what names you first, and
+resumes from one cursor across every source:
+
+```sh
+majordomus monitor --for 1b                # the last hour, what names 1b first
+majordomus monitor --follow                # keep printing what is new
+majordomus monitor --follow --match '#885' --until merged --timeout 1h   # wait for one merge
+```
+
+The same stream is `majordomus_monitor` over MCP, `GET /api/v1/monitor`, and the Cockpit's
+`/cockpit/monitor`. Every session-start briefing prints a line of it. `docs/MONITOR.md` is
+the manual, and ADR 0133 is the decision.
+
 Beside it, `share/models.yaml` declares the AI models this tool's world can name —
 vendors, canonical ids, capabilities, context windows, provenance stated and pricing
 deliberately absent — and `majordomus models route` answers which model a stated need
