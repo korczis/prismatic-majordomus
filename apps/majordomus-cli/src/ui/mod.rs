@@ -26,8 +26,12 @@
 //! script adds two things: it pulls in the panels whose sources are slow, which are
 //! otherwise reached by their own links, and it reveals the theme toggle.
 
+pub(crate) mod capabilities;
+pub(crate) mod command;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod deployments;
+pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub mod icons;
@@ -94,6 +98,12 @@ pub const SCREENS: &[Screen] = &[
         answers: "How the delivery stands: health, release, plan, mesh and the queue.",
     },
     Screen {
+        route: command::ROUTE,
+        title: "Command",
+        icon: "terminal",
+        answers: "Everything that can be run, what it changes, and what is running.",
+    },
+    Screen {
         route: roadmap::ROUTE,
         title: "Roadmap",
         icon: "target",
@@ -106,6 +116,12 @@ pub const SCREENS: &[Screen] = &[
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
     },
     Screen {
+        route: capabilities::ROUTE,
+        title: "Capabilities",
+        icon: "puzzle",
+        answers: "Everything the product can be asked, and on which surfaces.",
+    },
+    Screen {
         route: mesh::ROUTE,
         title: "Mesh",
         icon: "nodes",
@@ -115,13 +131,25 @@ pub const SCREENS: &[Screen] = &[
         route: delivery::ROUTE,
         title: "CI/CD & Releases",
         icon: "layers",
-        answers: "What was released and deployed, and what the CI model runs.",
+        answers: "What was released, what the tree declares, and what the CI model runs.",
+    },
+    Screen {
+        route: deployments::ROUTE,
+        title: "Deployments",
+        icon: "server",
+        answers: "What is live, and whether it is what was built.",
     },
     Screen {
         route: evidence::ROUTE,
         title: "Evidence",
         icon: "file-check",
         answers: "Which claims hold, which are stale or untested, and why.",
+    },
+    Screen {
+        route: docs::ROUTE,
+        title: "Documentation",
+        icon: "book",
+        answers: "What the product does, and where it is written down.",
     },
     Screen {
         route: governance::ROUTE,
@@ -133,7 +161,7 @@ pub const SCREENS: &[Screen] = &[
 
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
-pub const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL];
+pub const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL, deployments::DELIVERY_PANEL];
 
 /// The UI over the repository as it is now.
 pub struct Ui {
@@ -202,12 +230,17 @@ impl Ui {
         let screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx),
-            work::ROUTE => work::screen(&ctx),
-            mesh::ROUTE => mesh::screen(&ctx),
+            work::ROUTE => work::screen(&ctx, &req.query),
+            mesh::ROUTE => mesh::screen(&ctx, &req.query),
             delivery::ROUTE => delivery::screen(&ctx),
+            deployments::ROUTE => deployments::screen(&ctx),
+            command::ROUTE => command::screen(&ctx, &req.query),
+            capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
+            docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx),
             governance::ROUTE => governance::screen(&ctx),
-            dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx),
+            dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
+            deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
             other => shell::not_found(other),
         };
         let body = if fragment {
@@ -291,11 +324,24 @@ mod tests {
         for (route, view) in [
             (PREFIX, dashboard::screen(&ctx)),
             (roadmap::ROUTE, roadmap::screen(&ctx)),
-            (work::ROUTE, work::screen(&ctx)),
-            (mesh::ROUTE, mesh::screen(&ctx)),
+            (
+                work::ROUTE,
+                work::screen(&ctx, &[("pr".into(), "1".into())]),
+            ),
+            (
+                mesh::ROUTE,
+                mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
+            ),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (evidence::ROUTE, evidence::screen(&ctx)),
             (governance::ROUTE, governance::screen(&ctx)),
+            (command::ROUTE, command::screen(&ctx, &[])),
+            (
+                capabilities::ROUTE,
+                capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
+            ),
+            (deployments::ROUTE, deployments::screen(&ctx)),
+            (docs::ROUTE, docs::screen(&ctx)),
         ] {
             let html = view.main.render();
             assert_eq!(view.status, 200, "{route}");

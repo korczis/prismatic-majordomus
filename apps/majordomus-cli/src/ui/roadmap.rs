@@ -15,7 +15,7 @@ use super::shell::View;
 use super::source::{ask_all, Source};
 use super::view::{
     graph, hero, kpi, kpi_count, list, panel, state, status_tone, table, text, unanswered, wide,
-    GraphNode,
+    GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -111,6 +111,7 @@ pub fn screen(ctx: &Context) -> View {
                         label: id.clone(),
                         tone: status_tone(&text(m, "status")),
                         href: format!("#milestone-{id}"),
+                        kind: "node",
                         id,
                     }
                 })
@@ -129,6 +130,7 @@ pub fn screen(ctx: &Context) -> View {
                 .collect();
             graph(
                 "The milestones of the plan and the dependencies between them",
+                Layout::Directed,
                 &nodes,
                 &edges,
                 dependencies,

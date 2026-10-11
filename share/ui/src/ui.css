@@ -530,6 +530,63 @@
     @apply mt-4;
   }
 
+  /* tabs: links to the same route with the filter a capability declares */
+  .mj-ui-tabs {
+    @apply flex flex-wrap gap-1 rounded-xl p-1;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-tab {
+    @apply rounded-lg px-3 py-1.5 text-sm font-medium no-underline;
+    color: var(--mj-body);
+  }
+  .mj-ui-tab:hover {
+    color: var(--mj-fg);
+  }
+  .mj-ui-tab[aria-current="page"] {
+    color: var(--mj-on-accent);
+    background: var(--mj-accent-fill);
+  }
+
+  /* cards: one entity each, as the product features are */
+  .mj-ui-cards {
+    @apply m-0 grid list-none gap-3 p-0;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  }
+  .mj-ui-card {
+    @apply flex min-w-0 flex-col gap-1.5 rounded-xl p-4;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-card-kicker {
+    @apply text-xs;
+    color: var(--mj-accent);
+  }
+  .mj-ui-card-title {
+    @apply text-sm font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-card-text {
+    @apply text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* the detail of one entity, opened from its row */
+  .mj-ui-detail {
+    @apply flex min-w-0 flex-col gap-3 rounded-xl p-4;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-accent-line);
+  }
+  .mj-ui-detail-head {
+    @apply flex flex-col gap-1;
+  }
+  .mj-ui-detail-title {
+    @apply text-lg font-semibold;
+  }
+  section:target {
+    box-shadow: 0 0 0 2px var(--mj-accent);
+  }
+
   /* named counts, listed rather than summed */
   .mj-ui-facts {
     @apply m-0 grid gap-2;

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "cb5c89a5a04d693f9fa380a125eaebce708348d2f841e298369df8a8274bfb55",
+  "fingerprint": "9fb1ef7827f28b1a968e7a34e31f78a5695f1eb5755b73f030a49c6c42972625",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -9108,10 +9108,15 @@
         "mesh",
         "integration",
         "deploy",
+        "delivery",
         "gates",
         "evidence",
         "rules",
-        "capabilities"
+        "capabilities",
+        "commands",
+        "executions",
+        "objects",
+        "web"
       ],
       "commands": [],
       "kinds": [],
@@ -9718,6 +9723,33 @@
           ]
         },
         {
+          "id": "delivery",
+          "title": "Delivery",
+          "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+          "capabilities": [
+            {
+              "id": "delivery.feature",
+              "title": "Does this feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery_feature",
+              "route": "GET /api/v1/delivery/feature",
+              "cli": "majordomus delivery show"
+            },
+            {
+              "id": "delivery.report",
+              "title": "Does each feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery",
+              "route": "GET /api/v1/delivery",
+              "cli": "majordomus delivery report"
+            }
+          ]
+        },
+        {
           "id": "gates",
           "title": "Completion gates",
           "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
@@ -9867,6 +9899,172 @@
               "cli": "majordomus capabilities projections"
             }
           ]
+        },
+        {
+          "id": "commands",
+          "title": "Command graph",
+          "description": "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not.",
+          "stability": "implemented",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+          "capabilities": [
+            {
+              "id": "commands.get",
+              "title": "One command in full",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_command",
+              "route": "GET /api/v1/command"
+            },
+            {
+              "id": "commands.graph",
+              "title": "The whole command graph",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_command_graph",
+              "route": "GET /api/v1/commands/graph"
+            },
+            {
+              "id": "commands.list",
+              "title": "Every command, one line each",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_commands",
+              "resource": "majordomus://commands",
+              "route": "GET /api/v1/commands"
+            }
+          ]
+        },
+        {
+          "id": "executions",
+          "title": "Executions",
+          "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+          "capabilities": [
+            {
+              "id": "executions.cancel",
+              "title": "Ask an execution to stop",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_execution_cancel",
+              "route": "POST /api/v1/executions/cancel",
+              "cli": "majordomus executions cancel"
+            },
+            {
+              "id": "executions.demonstrate",
+              "title": "Demonstrate an execution",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_demonstrate_execution",
+              "route": "GET /api/v1/executions/demonstrate"
+            },
+            {
+              "id": "executions.events",
+              "title": "An execution's event history",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_execution_events",
+              "route": "GET /api/v1/executions/events",
+              "cli": "majordomus executions events"
+            },
+            {
+              "id": "executions.get",
+              "title": "One execution",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_execution",
+              "route": "GET /api/v1/executions/get",
+              "cli": "majordomus executions show"
+            },
+            {
+              "id": "executions.list",
+              "title": "List executions",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_executions",
+              "resource": "majordomus://executions",
+              "route": "GET /api/v1/executions",
+              "cli": "majordomus executions list"
+            },
+            {
+              "id": "executions.protocol",
+              "title": "The live channel's contract",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_execution_protocol",
+              "resource": "majordomus://executions/protocol",
+              "route": "GET /api/v1/executions/protocol",
+              "cli": "majordomus executions protocol"
+            },
+            {
+              "id": "executions.start",
+              "title": "Start a capability as an execution",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_execution_start",
+              "route": "POST /api/v1/executions/start",
+              "cli": "majordomus run"
+            }
+          ]
+        },
+        {
+          "id": "objects",
+          "title": "Objects",
+          "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "capabilities": [
+            {
+              "id": "objects.get",
+              "title": "Get one object",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_get",
+              "route": "GET /api/v1/object"
+            },
+            {
+              "id": "objects.list",
+              "title": "List objects",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_list",
+              "route": "GET /api/v1/objects"
+            },
+            {
+              "id": "objects.search",
+              "title": "Search objects",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_search",
+              "route": "GET /api/v1/search"
+            },
+            {
+              "id": "objects.verify",
+              "title": "Verify the index against the working tree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_verify_objects",
+              "route": "GET /api/v1/objects/verify"
+            }
+          ]
+        },
+        {
+          "id": "web",
+          "title": "Web surfaces",
+          "description": "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+          "capabilities": [
+            {
+              "id": "web.surfaces",
+              "title": "Every web surface, resolved",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_web_surfaces",
+              "resource": "majordomus://web",
+              "route": "GET /api/v1/web/surfaces"
+            }
+          ]
         }
       ],
       "command_refs": [],
@@ -9924,10 +10122,22 @@
       ],
       "moments": [
         {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
           "id": "two-agents-one-bug",
           "title": "Two agents fixing the same bug in two branches",
           "hook": "found two agents fixing the same bug in two branches",
           "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
         },
         {
           "id": "done-because-the-model-said-so",
@@ -9942,10 +10152,34 @@
           "route": "/why/two-rulebooks-one-repository/"
         },
         {
+          "id": "re-arguing-a-settled-decision",
+          "title": "Re-arguing a decision that was settled last week",
+          "hook": "watched a session undo last week's decision, for the reason it was made",
+          "route": "/why/re-arguing-a-settled-decision/"
+        },
+        {
           "id": "task-in-progress-for-three-weeks",
           "title": "A task \"in progress\" that nobody has touched for three weeks",
           "hook": "found a task \"in progress\" that nobody had touched for three weeks",
           "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "rule-in-a-readme-nobody-loaded",
+          "title": "The rule for that directory, in a README no session ever loaded",
+          "hook": "found the rule for that directory in a README no session ever loaded",
+          "route": "/why/rule-in-a-readme-nobody-loaded/"
+        },
+        {
+          "id": "discovery-never-becomes-knowledge",
+          "title": "A hard-won discovery that never became knowledge",
+          "hook": "spent an hour discovering something the repository already knew, twice",
+          "route": "/why/discovery-never-becomes-knowledge/"
         },
         {
           "id": "context-budget-blown",
@@ -9990,6 +10224,18 @@
           "route": "/why/enforcement-nothing-invokes/"
         },
         {
+          "id": "decision-only-in-a-transcript",
+          "title": "The decision exists, in a conversation nobody can find",
+          "hook": "went looking for why we chose this and found a chat log",
+          "route": "/why/decision-only-in-a-transcript/"
+        },
+        {
+          "id": "implementation-contradicts-the-decision",
+          "title": "Code that quietly contradicts a written decision",
+          "hook": "found code that contradicted a decision the repository had written down",
+          "route": "/why/implementation-contradicts-the-decision/"
+        },
+        {
           "id": "code-without-an-issue",
           "title": "A change that no plan ever asked for",
           "hook": "found a substantial change that no issue, ticket or plan ever asked for",
@@ -10020,6 +10266,12 @@
           "route": "/why/generated-artifacts-stale/"
         },
         {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
           "id": "no-record-why-this-model",
           "title": "Nobody can say why that worker was chosen",
           "hook": "could not say why one provider was used for that work and another for this",
@@ -10030,6 +10282,18 @@
           "title": "Spend that cannot be tied to anything accepted",
           "hook": "looked at the bill and could not say which of it produced anything",
           "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "failure-disappears-between-sessions",
+          "title": "A failure that was seen once and never again",
+          "hook": "lost a failure a worker had already reproduced, because the session ended",
+          "route": "/why/failure-disappears-between-sessions/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
         },
         {
           "id": "site-claims-nothing-proves",
@@ -10044,19 +10308,37 @@
           "route": "/why/first-hour-in-an-unfamiliar-repository/"
         },
         {
+          "id": "contribution-that-could-not-have-known",
+          "title": "A fluent contribution that could not have known the rules",
+          "hook": "reviewed a well-written contribution that broke a convention it had no way to discover",
+          "route": "/why/contribution-that-could-not-have-known/"
+        },
+        {
+          "id": "same-dead-end-explored-twice",
+          "title": "The same dead end, explored twice",
+          "hook": "watched a worker spend a day on an approach that had already been ruled out",
+          "route": "/why/same-dead-end-explored-twice/"
+        },
+        {
           "id": "result-cannot-be-reproduced",
           "title": "A result nobody can reproduce, including its author",
           "hook": "could not reproduce a result because nothing recorded the state it came from",
           "route": "/why/result-cannot-be-reproduced/"
+        },
+        {
+          "id": "who-did-this-and-under-what-policy",
+          "title": "A change whose provenance cannot be reconstructed",
+          "hook": "was asked who made a change and under what policy, and had only a commit",
+          "route": "/why/who-did-this-and-under-what-policy/"
         }
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 71,
-        "mcp_tools": 65,
-        "mcp_resources": 12,
-        "http_routes": 69,
-        "cli_paths": 29,
+        "capabilities": 88,
+        "mcp_tools": 82,
+        "mcp_resources": 16,
+        "http_routes": 86,
+        "cli_paths": 37,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -10065,14 +10347,14 @@
         "adrs": 1,
         "claims": 0,
         "use_cases": 0,
-        "moments": 21
+        "moments": 35
       },
       "evidence": {
         "claims": {},
         "modules": {
-          "behaviorally_verified": 10,
-          "experimental": 2,
-          "implemented": 1
+          "behaviorally_verified": 13,
+          "experimental": 3,
+          "implemented": 2
         }
       },
       "domain_ref": {
@@ -11500,7 +11782,7 @@
         },
         {
           "name": "issue",
-          "objects": 272
+          "objects": 273
         },
         {
           "name": "intent",
@@ -11702,11 +11984,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 305,
+        "mcp_resources": 306,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 302,
+        "objects": 303,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15402,7 +15684,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (272)",
+        "title": "issue (273)",
         "features": [
           "planning"
         ]
@@ -16394,17 +16676,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2116,
+    "capabilities": 2117,
     "builtin": 184,
-    "declarative": 1932,
+    "declarative": 1933,
     "modules": 53,
     "mcp_tools": 177,
-    "mcp_resources": 1986,
+    "mcp_resources": 1987,
     "http_routes": 181,
     "cli_commands": 190,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1932,
+    "objects": 1933,
     "by_kind": {
       "adr": 86,
       "application": 5,
@@ -16422,7 +16704,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 272,
+      "issue": 273,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 27,
