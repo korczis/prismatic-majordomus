@@ -863,7 +863,16 @@ claims:
     test: test/cases/97_github_gate.sh
     status: guaranteed
     responsibility: plan
-    note: The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise.
+    note: The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise. The one drift it reports without refusing is the drift a head or a young landing made itself, which projected-record-edit-is-landable covers.
+
+  - id: projected-record-edit-is-landable
+    claim: A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed
+    source: docs/PLANNING.md
+    implementation: scripts/ci/github-check
+    test: test/cases/1038_a_head_is_judged_against_what_it_changes.sh
+    status: guaranteed
+    responsibility: plan
+    note: GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.
 
   # Intents (ADR 0070, 0073, 0075): what must become true above the milestones that realise it.
   # Every claim the site makes about intents is one of these, and the homepage's account of what

@@ -1,0 +1,38 @@
+id: I2300
+milestone: work-graph-github
+title: "A head is judged against what it changes, not against GitHub's live state"
+slug: a-head-is-judged-against-what-it-changes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make scripts/ci/github-check report as pending, and not refuse, the drift an apply would write on the records a head changed since its merge base, and on the trunk on the records that changed in a landing younger than a declared window; refuse the same drift on every other record, and on the trunk past the window with the remedy named."
+why: "The gate github-projection runs scripts/github-sync --check against live GitHub and refuses every record that is behind. The adapter projects only the trunk and nothing applies it automatically, so a pull request that edits an already projected record is red from birth and cannot go green on its own head. Measured on 2026-10-10: pull request #855 changed one line of I1900 and failed with 'DRIFT behind issue I1900 (#753) body is behind the canonical record'; pull request #820 failed with '8 record(s) state'. The only way out was to not edit the record. Had such a change landed, the trunk's own ci would have been red until somebody applied by hand, which blocks the next release tag. The ratcheting baseline covers only missing and adopt, and there is no label or base comparison for behind."
+current_state: "scripts/ci/github-check refuses behind, state, milestone and closed on every run, whatever the run is of. scripts/github-sync --apply is run by hand from master."
+desired_state: "On a head, drift on a record the head changed is reported PENDING with the words 'projected after merge'. On the trunk it is PENDING while the landing is younger than apply.window in .ai/repo/ci/github.yaml, and refused afterwards with scripts/github-sync --apply named. A record counts as changed when its file or its rendering differs. A change that cannot be measured refuses as before. docs/INTEGRATION.md tells the executor to apply after such a landing."
+scope:
+  - "scripts/ci/github-check"
+  - ".ai/repo/ci/github.yaml"
+  - ".ai/repo/ci/README.md"
+  - ".ai/repo/rules/project/github-projection-gated.v1.md"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
+  - "docs/INTEGRATION.md"
+  - "docs/PLANNING.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/projected-record-edit-is-landable.md"
+  - "docs/claims/github-projection-gated.md"
+depends_on: []
+acceptance_criteria:
+  - "A pull request head that changes a projected record passes the gate with that record reported PENDING"
+  - "Drift on a record the head did not change is refused on the same run"
+  - "The trunk reports a landed change PENDING inside the declared window and refuses it past the window, naming scripts/github-sync --apply"
+  - "The window is read from .ai/repo/ci/github.yaml and the gate carries no copy of it"
+  - "A base or a window that cannot be read refuses what the gate refused before"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 1038_a_head_is_judged_against_what_it_changes 97_github_gate 45_github_projection"
+evidence_required:
+  - "pending_class_case"
+  - "mutations_fail_the_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

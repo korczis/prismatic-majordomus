@@ -15,6 +15,7 @@ on lundra that way, the oldest for 2 h 12 min, while later arrivals won the lock
 
 ## The commands
 
+<!-- majordomus:unrun probe and derive reach the machines .ai/repo/offload/derive.yaml declares over ssh, which a documentation check has no access to; the declaration and the queue are held by the unit tests in apps/majordomus-cli/src/offload -->
 ```sh
 majordomus offload hosts                  # the declaration, defaults filled in; contacts nobody
 majordomus offload probe                  # measure every host, name the one a derive would take

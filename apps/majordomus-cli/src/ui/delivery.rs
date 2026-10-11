@@ -1,8 +1,9 @@
 //! CI/CD & Releases: what was released, where it is deployed, and what the CI model runs.
 //! Read from `distribution.releases`, `release.version`, `deploy.list` and `gates.model`.
 //!
-//! Per-run CI timings are not recorded by any capability yet, so no build-time chart is
-//! drawn: the CI model says which gates run and when, and that is what is shown.
+//! How long CI takes is `integration.timings`, measured from the recorded forge observation
+//! (`super::timings`): the CI model says which gates run and when, the timings how long the
+//! runs on the open pull requests took.
 
 use crate::capability::Context;
 use crate::cockpit::html::el;
@@ -11,7 +12,7 @@ use serde_json::Value;
 use super::dashboard::releases_panel;
 use super::shell::View;
 use super::source::{ask_all, Source};
-use super::view::{hero, kpi, list, nothing, panel, state, table, text, unanswered, wide};
+use super::view::{hero, kpi, list, panel, state, table, text, unanswered, wide};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/delivery";
@@ -23,7 +24,16 @@ const GATES: Source = Source::of("gates.model");
 
 /// The CI/CD & Releases screen.
 pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[RELEASES, VERSION, DEPLOYMENTS, GATES]);
+    let answers = ask_all(
+        ctx,
+        &[
+            RELEASES,
+            VERSION,
+            DEPLOYMENTS,
+            GATES,
+            super::timings::TIMINGS,
+        ],
+    );
     let (releases, version, deployments, gates) = (
         &answers[&RELEASES],
         &answers[&VERSION],
@@ -106,15 +116,45 @@ pub fn screen(ctx: &Context) -> View {
             model,
             &[gates],
         )))
-        .child(panel(
-            "Build timings",
-            "How long each run took.",
-            nothing("No capability records per-run CI timings yet, so none are drawn. The CI model above is what runs."),
-            &[gates],
-        ));
+        .child(wide(super::timings::panel_of(
+            &answers[&super::timings::TIMINGS],
+        )));
 
     View::new(
         "CI/CD & Releases",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ui::deployments::tests::furnished;
+
+    /// Every declared deployment is a row, and every gate of the CI model says when it
+    /// runs: in every plan, on demand, or when its paths change.
+    #[test]
+    fn every_deployment_and_every_gate_is_a_row_that_says_when_it_runs() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        assert!(
+            html.contains("The Majordomus layer, served from one machine"),
+            "{html}"
+        );
+        assert!(!html.contains("No deployment is declared."), "{html}");
+        for (gate, when) in [
+            ("every-plan", "every plan"),
+            ("when-asked", "on demand"),
+            ("by-path", "when its paths change"),
+        ] {
+            assert!(html.contains(gate), "{gate} is missing: {html}");
+            assert!(html.contains(when), "{gate} does not say {when}: {html}");
+        }
+        assert!(
+            html.contains("runs in every plan"),
+            "the gate's own summary: {html}"
+        );
+        assert!(!html.contains("The CI model declares no gate."), "{html}");
+    }
 }

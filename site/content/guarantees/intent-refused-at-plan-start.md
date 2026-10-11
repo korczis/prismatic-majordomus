@@ -1,7 +1,7 @@
 +++
 title = "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards"
 description = "The review of a plan is a precondition of the work, not a finding about it. In a repository whose policy says intent.binding: required, an issue whose intent was never critiqued, or whose critique has a blocking finding still open, does not become ACTIVE, and a task that would execute it does not start."
-weight = 118
+weight = 119
 [extra]
 claim_id = "intent-refused-at-plan-start"
 status = "guaranteed"

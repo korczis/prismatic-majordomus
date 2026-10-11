@@ -37,11 +37,12 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
-| Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list` |
+| Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
+| PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, and the lane's recent activity |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
-| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model` |
+| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report` |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
@@ -125,9 +126,10 @@ read. This is a refresh and is said as one; nothing claims a live stream.
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
-milestones (laid out in their direction), and the mesh's machines, the runtimes they run
-and the sessions those hold (laid out by force, sessions as small leaves labelled when
-selected). The server puts the nodes and edges on the page (`view::graph`). The vendored
+milestones (laid out in their direction; a node opens that milestone's inspector), the open pull requests that depend on one another
+(a dependency already merged is not drawn; one the queue does not hold is a small node that
+leads to the forge), and the mesh's machines, the runtimes they run and the sessions those
+hold (laid out by force, sessions as small leaves labelled when selected). The server puts the nodes and edges on the page (`view::graph`). The vendored
 Cytoscape, loaded only by a screen that has a graph, draws them:
 - in the tones of the design system, read from the stylesheet;
 - with a layout that does not animate under reduced motion;
@@ -165,6 +167,17 @@ class, because the stylesheet compiles only what is written in it. The icons are
 declared once in `site/data/kit/icons.toml` and compiled into the crate by `majordomus
 generate` (`apps/majordomus-cli/src/ui/icons.toml`); a test holds the two equal.
 
+## Choices are addresses
+
+What a reader picks on a screen is in its URL: a tab, a search, a row, a dependency, an
+issue. Every control is a link or a GET form to the same screen with the choice in its query,
+so a view can be bookmarked, shared and reloaded, the back button undoes a choice, and the
+screen needs no script to be used. A value a link carries is read as the source's own
+vocabulary or dropped: a disposition or lane is a word of the queue (lower case, digits,
+underscores), an issue is `I` and four digits, a pull request is a number; anything else is
+not echoed. On the PR Drain the choices travel to the deferred panel's route, so the slow
+part of the screen answers the same question as the rest of it.
+
 ## Adding a screen
 
 1. Add a module under `apps/majordomus-cli/src/ui/` that asks its sources with
@@ -182,6 +195,7 @@ generate` (`apps/majordomus-cli/src/ui/icons.toml`); a test holds the two equal.
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.
 - There is no Settings screen: no capability holds a reader's settings.
-- No capability records per-run CI timings, so the CI/CD screen draws no build-time chart and
-  says why.
+- CI timings are what the open pull requests' latest runs took, measured from the recorded
+  forge observation (`integration.timings`); there is no history of runs yet, so no trend is
+  drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.

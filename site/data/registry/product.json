@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "14279d25a6efe5b61fbaecdaa218c0f3cdf44910c349648d01f1920b5b833262",
+  "fingerprint": "49235adc3bced1dddacb4ae6540d6922ae5c94b0b7238692a1f5564bc3730f49",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 66,
+        "capabilities": 67,
         "moments": 17
       },
       "evidence": {
@@ -3450,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 242
+          "objects": 243
         }
       ],
       "rule_refs": [
@@ -3723,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 314,
+        "mcp_resources": 315,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 307,
+        "objects": 308,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -4729,6 +4729,14 @@
               "cli": "majordomus prs status"
             },
             {
+              "id": "integration.timings",
+              "title": "How long CI takes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_ci_timings",
+              "route": "GET /api/v1/pull-requests/timings"
+            },
+            {
               "id": "integration.trains",
               "title": "The trains of stacked pull requests",
               "kind": "query",
@@ -4998,10 +5006,10 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 13,
-        "mcp_tools": 13,
+        "capabilities": 14,
+        "mcp_tools": 14,
         "mcp_resources": 2,
-        "http_routes": 13,
+        "http_routes": 14,
         "cli_paths": 10,
         "commands": 3,
         "objects": 0,
@@ -7174,7 +7182,7 @@
         },
         {
           "name": "document",
-          "objects": 336
+          "objects": 337
         }
       ],
       "rule_refs": [
@@ -7447,11 +7455,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 434,
+        "mcp_resources": 435,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 431,
+        "objects": 432,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9736,6 +9744,14 @@
               "cli": "majordomus prs status"
             },
             {
+              "id": "integration.timings",
+              "title": "How long CI takes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_ci_timings",
+              "route": "GET /api/v1/pull-requests/timings"
+            },
+            {
               "id": "integration.trains",
               "title": "The trains of stacked pull requests",
               "kind": "query",
@@ -10392,10 +10408,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 92,
-        "mcp_tools": 85,
+        "capabilities": 93,
+        "mcp_tools": 86,
         "mcp_resources": 16,
-        "http_routes": 89,
+        "http_routes": 90,
         "cli_paths": 40,
         "commands": 0,
         "objects": 0,
@@ -11848,7 +11864,7 @@
         },
         {
           "name": "issue",
-          "objects": 316
+          "objects": 322
         },
         {
           "name": "intent",
@@ -12050,11 +12066,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 358,
+        "mcp_resources": 364,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 355,
+        "objects": 361,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15696,7 +15712,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (242)",
+        "title": "claim (243)",
         "features": [
           "declare-once"
         ]
@@ -15765,7 +15781,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (316)",
+        "title": "issue (322)",
         "features": [
           "planning"
         ]
@@ -16762,36 +16778,36 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2224,
-    "builtin": 190,
-    "declarative": 2034,
+    "capabilities": 2239,
+    "builtin": 191,
+    "declarative": 2048,
     "modules": 55,
-    "mcp_tools": 182,
-    "mcp_resources": 2088,
-    "http_routes": 186,
+    "mcp_tools": 183,
+    "mcp_resources": 2102,
+    "http_routes": 187,
     "cli_commands": 199,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2034,
+    "objects": 2048,
     "by_kind": {
       "adr": 94,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 242,
+      "claim": 243,
       "command": 31,
       "context": 37,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 336,
+      "document": 337,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 316,
+      "issue": 322,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16805,7 +16821,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 434,
+      "test": 440,
       "use-case": 48,
       "workspace": 1
     },
@@ -16823,7 +16839,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 224,
+    "declared": 225,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -17835,6 +17851,12 @@
         "supported": false
       },
       "project-status-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "projected-record-edit-is-landable": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

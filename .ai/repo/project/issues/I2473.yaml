@@ -1,0 +1,29 @@
+id: I2473
+milestone: development-runtime
+title: "A pull request shows its trail: what the executor did to it, and the drain what the lane did lately"
+slug: a-pull-request-shows-its-trail
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Show, in the PR Drain's inspector, every event the integration executor recorded about the inspected pull request, newest first, and on the drain the lane's most recent events about pull requests, each leading to that pull request's inspector."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (pack v3 M05-05: dependency graph, blockers and evidence trail; reference 03-pr-drain shows a per-PR timeline). The executor's audit trail (integration.events, one file under the common git directory) records every refresh, repair, selection, merge, refusal and verification with its actor, reasons and detail, and no screen showed it."
+current_state: "The PR Drain's inspector shows the queue's assessment of a pull request and nothing of what the executor did to it; nothing shows the lane's recent activity."
+desired_state: "The drain panel asks integration.queue and integration.events together. The inspector of ?pr=N ends with 'What the executor did': that pull request's events, newest first, at most fifteen, each with its action, detail, reasons and actor as a timeline; an event of another pull request is never its own, and a pull request the executor never touched says so. Below the drain, 'Recent activity' lists the lane's fifteen most recent events about a pull request, each leading to that pull request's inspector; an event about no pull request (an observation, the lease) is not activity."
+scope:
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - ".ai/repo/project/issues/I2473.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1078_a_pull_request_shows_its_trail.sh"
+depends_on: ["I2470"]
+acceptance_criteria:
+  - "?pr=N shows that pull request's events newest first and no other pull request's"
+  - "the drain lists recent events about pull requests, each a link to its inspector, and no event about none"
+  - "without the trail, the inspector says it was not asked"
+validation:
+  - "cargo test --lib ui::prs"
+  - "test/run.sh 1078_a_pull_request_shows_its_trail"
+evidence_required:
+  - "ui_prs_trail_unit_test"
+  - "ui_prs_trail_case_1078"
+created_at: 2026-10-11
+updated_at: 2026-10-11

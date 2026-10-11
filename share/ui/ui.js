@@ -71,8 +71,9 @@ function loadScript(src) {
   });
 }
 
-// A token's colour as rgb(): the tokens resolve to oklch(), which the graph library cannot
-// read, so the colour is painted on one pixel and read back in sRGB.
+// A token's colour as sRGB hex: the tokens resolve to OKLCH, which the graph library cannot
+// read, so the colour is painted on one pixel and its channels are read back. This converts a
+// token; it chooses no colour, and a token that does not resolve keeps the caller's fallback.
 const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
 function token(name, fallback) {
   const v = getComputedStyle(document.body || document.documentElement).getPropertyValue(name).trim();
@@ -82,7 +83,8 @@ function token(name, fallback) {
   probe.fillStyle = v;
   probe.fillRect(0, 0, 1, 1);
   const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
-  return a === 0 ? fallback : `rgb(${r}, ${g}, ${b})`;
+  const hex = (c) => c.toString(16).padStart(2, '0');
+  return a === 0 ? fallback : `#${hex(r)}${hex(g)}${hex(b)}`;
 }
 
 async function drawGraphs() {

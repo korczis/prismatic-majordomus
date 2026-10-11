@@ -171,6 +171,11 @@ pub struct CheckObservation {
     /// or when the forge did not say. The newest report of a context is its verdict.
     #[serde(default)]
     pub completed_at: String,
+    /// When a check run started, RFC 3339; empty for a status context, for a run that has not
+    /// started, and in an observation recorded before this was read. With `completed_at` it
+    /// is how long the run took (`integration::timings`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub started_at: String,
 }
 
 /// Where one check run stands.

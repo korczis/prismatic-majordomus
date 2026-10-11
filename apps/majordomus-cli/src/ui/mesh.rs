@@ -69,11 +69,15 @@ fn short(id: &str) -> String {
 /// The Mesh screen; `query` may select one machine (`node`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[PEERS, EVENTS]);
-    let (peers, events) = (&answers[&PEERS], &answers[&EVENTS]);
     let selected = query
         .iter()
         .find(|(k, _)| k == "node")
-        .map(|(_, v)| v.clone());
+        .map(|(_, v)| v.as_str());
+    render(&answers[&PEERS], &answers[&EVENTS], selected)
+}
+
+/// The screen drawn from the two answers it reads, with `selected` the machine to inspect.
+fn render(peers: &Answer, events: &Answer, selected: Option<&str>) -> View {
     let machines = list(peers, "/machines");
 
     let top = hero(
@@ -165,7 +169,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 
     let mut grid = el("div").class("mj-ui-grid");
     if let Some(name) = selected {
-        grid = grid.child(wide(inspector(&name, &machines, peers, events)));
+        grid = grid.child(wide(inspector(name, &machines, peers, events)));
     }
     grid = grid
         .child(wide(panel(
@@ -457,5 +461,249 @@ mod tests {
         };
         let html = inspector("nowhere", &[], &peers, &peers).render();
         assert!(html.contains("knows no machine by this name"), "{html}");
+    }
+
+    fn answer(source: Source, value: Result<Value, String>) -> Answer {
+        Answer {
+            source,
+            route: None,
+            exposure: Default::default(),
+            value,
+            took: std::time::Duration::ZERO,
+        }
+    }
+
+    /// A `mesh.peers` answer in the shape `MachineNode`/`RuntimeNode`/`SessionNode` serialise
+    /// to: this machine with an own and an expired runtime, a remote machine that beats, one
+    /// whose only runtime is gone, and one that says neither where it is nor what it runs.
+    fn peers() -> Answer {
+        answer(
+            PEERS,
+            Ok(serde_json::json!({
+                "active": true,
+                "machines": [
+                    {
+                        "node": "641bdb94aa",
+                        "name": "studio",
+                        "local": true,
+                        "runtimes": [
+                            {
+                                "runtime": "641bdb94aa-r1abcdef1234",
+                                "this_runtime": true,
+                                "liveness": "own",
+                                "last_beat_ms": 4200,
+                                "sessions": [
+                                    {
+                                        "key": "641bdb94aa-r1abcdef1234/s-1",
+                                        "info": {
+                                            "session": "s-1",
+                                            "worker": "claude-code",
+                                            "client": "2.1",
+                                            "intent": "build the ui"
+                                        },
+                                        "state": "open",
+                                        "claims": [{ "path": "a" }, { "path": "b" }],
+                                        "reviews": []
+                                    },
+                                    {
+                                        "key": "641bdb94aa-r1abcdef1234/anon",
+                                        "info": {},
+                                        "state": "open",
+                                        "claims": [],
+                                        "reviews": []
+                                    }
+                                ]
+                            },
+                            {
+                                "runtime": "641bdb94aa-r2",
+                                "this_runtime": false,
+                                "liveness": "expired",
+                                "sessions": []
+                            }
+                        ]
+                    },
+                    {
+                        "node": "77aa",
+                        "name": "lundra",
+                        "local": false,
+                        "runtimes": [
+                            { "runtime": "77aa-r9", "liveness": "live", "last_beat_ms": 1000, "sessions": [] }
+                        ]
+                    },
+                    {
+                        "node": "88bb",
+                        "name": "attic",
+                        "local": false,
+                        "runtimes": [{ "runtime": "88bb-r3", "liveness": "gone", "sessions": [] }]
+                    },
+                    { "node": "99cc", "name": "ghost" }
+                ],
+                "refused": [
+                    {
+                        "endpoint": "10.0.0.9:7000",
+                        "direction": "outbound",
+                        "refusal": { "detail": "not on the trust list" }
+                    },
+                    { "endpoint": "10.0.0.10:7000", "direction": "inbound" }
+                ]
+            })),
+        )
+    }
+
+    /// A `mesh.events` answer: one event of this machine's runtime with its time and kind, and
+    /// one of the remote runtime that says neither.
+    fn events() -> Answer {
+        answer(
+            EVENTS,
+            Ok(serde_json::json!({
+                "lamport": 42,
+                "events": [
+                    {
+                        "stream": "641bdb94aa-r1abcdef1234",
+                        "at": 1_760_000_000u64,
+                        "body": { "kind": "session.opened" }
+                    },
+                    { "stream": "77aa-r9", "body": {} }
+                ]
+            })),
+        )
+    }
+
+    /// Every machine, runtime and session becomes a node of the graph and a row of its table,
+    /// in the words the mesh runtime used, and the journal and the refused links are listed.
+    #[test]
+    fn the_topology_draws_every_machine_runtime_and_session() {
+        let view = render(&peers(), &events(), None);
+        assert_eq!(view.status, 200);
+        let html = view.main.render();
+        // the graph: machines, their runtimes by short id, and the sessions those hold
+        for drawn in [
+            "machine:studio",
+            "studio (this machine)",
+            "runtime:641bdb94aa-r1abcdef1234",
+            "r1abcdef12",
+            "session:641bdb94aa-r1abcdef1234/s-1",
+            "machine:lundra",
+            "machine:attic",
+            "rose",
+        ] {
+            assert!(
+                html.contains(drawn),
+                "the graph does not draw {drawn}: {html}"
+            );
+        }
+        // the table under it: where each machine is, and its runtimes' own words
+        for row in [
+            "this machine",
+            "remote",
+            "unknown",
+            "/ui/mesh?node=ghost#node",
+        ] {
+            assert!(html.contains(row), "no row says {row}");
+        }
+        for word in ["own", "expired", "live", "gone"] {
+            assert!(html.contains(word), "the liveness {word} is not shown");
+        }
+        // no machine is selected, so there is no inspector
+        assert!(!html.contains("id=\"node\""), "{html}");
+        // the journal, newest first, with what it does not know said as unknown
+        assert!(html.contains("session.opened"));
+        assert!(
+            html.contains("2025-10-09"),
+            "the event's time is its own: {html}"
+        );
+        // the refused links, with the reason when the runtime gave one
+        assert!(html.contains("10.0.0.9:7000") && html.contains("not on the trust list"));
+        assert!(html.contains("10.0.0.10:7000") && html.contains("inbound"));
+    }
+
+    /// Selecting a machine opens its inspector: what it is, its runtimes with their beats,
+    /// the sessions they hold with their claims, and only its own events.
+    #[test]
+    fn a_selected_machine_opens_its_inspector() {
+        let html = render(&peers(), &events(), Some("studio")).main.render();
+        assert!(html.contains("id=\"node\""), "{html}");
+        assert!(html.contains("641bdb94aa"));
+        assert!(
+            html.contains("4 s ago"),
+            "the beat is the runtime's own: {html}"
+        );
+        assert!(html.contains("claude-code 2.1"));
+        assert!(html.contains("build the ui"));
+        assert!(html.contains("Its events"));
+        let inspector = html
+            .split("Its events")
+            .nth(1)
+            .and_then(|rest| rest.split("Topology").next())
+            .expect("the inspector's events");
+        assert!(inspector.contains("session.opened"), "{inspector}");
+        assert!(
+            !inspector.contains("r9"),
+            "another machine's event is not this machine's: {inspector}"
+        );
+    }
+
+    /// A machine that says nothing about itself is shown with what is not known said so,
+    /// never as a machine that runs nothing on purpose.
+    #[test]
+    fn a_machine_that_says_nothing_is_inspected_as_unknown() {
+        let all = peers();
+        let machines = list(&all, "/machines");
+        let html = inspector("ghost", &machines, &all, &events()).render();
+        assert!(html.contains("unknown"), "{html}");
+        assert!(html.contains("It runs no runtime the mesh knows."));
+        assert!(html.contains("No session is open on it."));
+        assert!(html.contains("The journal holds no event from here."));
+        // a remote machine is said to be remote, and a runtime with no beat has an unknown one
+        let html = inspector("attic", &machines, &all, &events()).render();
+        assert!(
+            html.contains("remote") && html.contains("unknown"),
+            "{html}"
+        );
+    }
+
+    /// A source that could not answer is said to have failed, in every panel that reads it,
+    /// and nothing is drawn from it.
+    #[test]
+    fn a_mesh_that_cannot_answer_is_said_and_never_drawn() {
+        let peers = answer(PEERS, Err("the mesh is off".into()));
+        let events = answer(EVENTS, Err("no journal".into()));
+        let html = render(&peers, &events, None).main.render();
+        assert!(
+            html.contains("mesh.peers could not answer: the mesh is off"),
+            "{html}"
+        );
+        assert!(
+            html.contains("mesh.events could not answer: no journal"),
+            "{html}"
+        );
+        assert!(
+            !html.contains("data-graph"),
+            "a failed source draws no graph: {html}"
+        );
+    }
+
+    /// An empty mesh says so in words rather than drawing an empty picture.
+    #[test]
+    fn an_empty_mesh_says_so() {
+        let peers = answer(
+            PEERS,
+            Ok(serde_json::json!({ "machines": [], "refused": [] })),
+        );
+        let events = answer(EVENTS, Ok(serde_json::json!({ "events": [] })));
+        let html = render(&peers, &events, None).main.render();
+        assert!(html.contains("No machine is known to the mesh runtime."));
+        assert!(html.contains("No link was refused."));
+        assert!(html.contains("The journal holds no event from here."));
+    }
+
+    /// A label is the last segment of an id, at most ten characters, and the id itself when
+    /// it has no segments.
+    #[test]
+    fn a_label_is_the_last_segment_of_an_id() {
+        assert_eq!(short("641bdb94aa-r1abcdef1234"), "r1abcdef12");
+        assert_eq!(short("77aa-r9"), "r9");
+        assert_eq!(short("plain"), "plain");
+        assert!(livenesses(&serde_json::json!({ "name": "ghost" })).is_empty());
     }
 }

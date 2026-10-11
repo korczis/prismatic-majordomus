@@ -1,0 +1,36 @@
+id: I2296
+milestone: test-evidence
+title: "The executor reopens a record pull request no run was started for"
+slug: the-executor-reopens-a-record-pull-request
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Let `majordomus prs drain` close and reopen a release's record pull request itself when the workflow's token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing."
+why: "A release proposes its record as `release/record-<tag>` with GITHUB_TOKEN, and GitHub starts no workflow from an event that token caused: the pull request's own run concludes failure with no job in it and its required `ci` never reports. Until the record is on master, release-check fails `structure` on every open head (the owner kept that check strict on 2026-10-10). For v0.19.0 that window was 3 hours (#861, admin-merged after 1.7 h); for v0.19.1 it was 5.7 hours (#866): the dispatched validate went green at the head, branch protection still refused the merge, and a person closed and reopened the pull request 3.4 hours after it was proposed, which is what started the run that let it merge. The dispatch bought nothing but ninety minutes. I2282 records that defect; this issue removes the person from it."
+current_state: "The executor classifies a record pull request with an empty rollup as waiting_for_checks with required_checks:missing and waits for a check nothing will ever report. A person has to notice, close and reopen it. Nothing in the executor closes and reopens anything."
+desired_state: "When nothing is ready to merge, a pull request from a `release/record-` branch that waits for a missing required check is looked at on the forge: if it is open at the head decided on, was opened by the workflow's token, is older than a two-minute grace and has not a single check of its own, the executor closes it with a comment saying why and reopens it at once. It does so once per head, under the integration lease, with `reopen_attempted` on the trail before the forge is asked and `reopened` or `reopen_failed` after, and `--dry-run` only names it. A record a person opened, one that already has a run of its own, one still inside the grace, and every other branch are left alone. A reopen that fails after the closure says the pull request was left closed and names the command a person runs. Left to the owner, because it changes the release pipeline and case 996: the dispatch of validate in `.github/workflows/release.yml` is redundant once the executor reopens the record (both runs then validate the same head), and it stays until the owner removes it."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/integration_record_reopen.rs"
+  - "test/cases/1036_the_executor_reopens_a_record_pull_request.sh"
+  - "docs/INTEGRATION.md"
+  - "docs/DISTRIBUTION.md"
+acceptance_criteria:
+  - "`prs drain` against a scripted forge closes and reopens a `release/record-<tag>` pull request the workflow's token opened, older than the grace and with an empty rollup, and the trail holds `reopen_attempted` before `reopened`, between `lease_acquired` and `lease_released`"
+  - "`prs drain --dry-run` names the reopen and reaches the forge with no closure and no reopen"
+  - "The same head is not reopened twice, although it reads required_checks:missing until its run reports"
+  - "A record a person opened, one with a check of its own, one inside the grace, one the forge cannot show, and a branch that is no record are neither closed nor reopened"
+  - "A reopen the forge refuses is `reopen_failed` on the trail with its class, exits 10, and says whether the pull request was left closed"
+  - "When the trail cannot record `reopen_attempted`, nothing reaches the forge"
+  - "docs/INTEGRATION.md names the act and its three trail words, and docs/DISTRIBUTION.md says who reopens the record"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1036_the_executor_reopens_a_record_pull_request"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_record_reopen"
+evidence_required:
+  - "record_reopened_once_under_the_lease_case"
+  - "reopen_trail_first_unit_tests"
+created_at: 2026-10-10
+updated_at: 2026-10-10
