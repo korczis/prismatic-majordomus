@@ -35,6 +35,9 @@ const EVENTS: Source = Source::of("integration.events");
 
 /// How many of the executor's events the inspector and the activity list show.
 const TRAIL: usize = 15;
+
+/// How many days the throughput chart covers.
+const DAYS: u64 = 14;
 const PLAN: Source = Source::of("plan.status");
 const ISSUES: Source = Source::of("plan.issues");
 
@@ -323,6 +326,7 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
         el("div")
             .class("mj-ui-stack")
             .child(tallies(queue))
+            .when(events.is_some(), |s| s.child(throughput(&trail)))
             .child(next_up(queue, filter))
             .child(tabs(queue, filter))
             .child(search(filter))
@@ -371,6 +375,93 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
         body,
         &answers,
     )
+}
+
+/// Merges per day: how many pull requests the executor merged on each of the [`DAYS`] days
+/// that end on the day of the trail's newest event, from its `merge_succeeded` events. The
+/// window ends where the record ends, not at the reader's clock, so the chart says what was
+/// recorded and an idle week is a row of zeros the trail itself vouches for. Each day's count
+/// is written beside its bar, and a table carries the same numbers.
+pub fn merges_per_day(trail_newest_first: &[Value]) -> Vec<(String, u64)> {
+    let day_of = |e: &Value| crate::peers::parse_rfc3339(&text(e, "at")).map(|s| s / 86_400);
+    let Some(last) = trail_newest_first.iter().filter_map(day_of).max() else {
+        return Vec::new();
+    };
+    let first = last.saturating_sub(DAYS - 1);
+    let mut counts = vec![0u64; (last - first + 1) as usize];
+    for e in trail_newest_first {
+        if text(e, "action") != "merge_succeeded" {
+            continue;
+        }
+        if let Some(d) = day_of(e).filter(|d| (first..=last).contains(d)) {
+            counts[(d - first) as usize] += 1;
+        }
+    }
+    counts
+        .into_iter()
+        .enumerate()
+        .map(|(i, n)| {
+            let at =
+                std::time::UNIX_EPOCH + std::time::Duration::from_secs((first + i as u64) * 86_400);
+            (super::view::day(&crate::peers::rfc3339(at)), n)
+        })
+        .collect()
+}
+
+fn throughput(trail_newest_first: &[Value]) -> El {
+    let days = merges_per_day(trail_newest_first);
+    let body = if days.iter().all(|(_, n)| *n == 0) {
+        nothing("The executor recorded no merge in the days its trail covers.")
+    } else {
+        let max = days.iter().map(|(_, n)| *n).max().unwrap_or(1).max(1);
+        let w = 100 / days.len().max(1) as u64;
+        let bars: String = days
+            .iter()
+            .enumerate()
+            .map(|(i, (day, n))| {
+                let h = n * 40 / max;
+                format!(
+                    r#"<rect x="{x}" y="{y}" width="{bw}" height="{h}" rx="1" fill="currentColor"><title>{day}: {n}</title></rect><text x="{tx}" y="{ty}" font-size="4" text-anchor="middle" fill="currentColor">{n}</text>"#,
+                    x = i as u64 * w + 1,
+                    y = 45 - h,
+                    bw = w.saturating_sub(2).max(1),
+                    tx = i as u64 * w + w / 2,
+                    ty = 44 - h,
+                )
+            })
+            .collect();
+        let rows = days
+            .iter()
+            .map(|(day, n)| {
+                el("tr")
+                    .child(el("td").class("mj-ui-mono").text(day.clone()))
+                    .child(el("td").class("mj-ui-mono").text(n.to_string()))
+            })
+            .collect::<Vec<_>>();
+        el("div")
+            .child(
+                el("span")
+                    .class("mj-tone--green")
+                    .attr("role", "img")
+                    .attr(
+                        "aria-label",
+                        format!(
+                            "Merges per day from {} to {}: {}",
+                            days.first().map(|d| d.0.clone()).unwrap_or_default(),
+                            days.last().map(|d| d.0.clone()).unwrap_or_default(),
+                            days.iter().map(|(_, n)| n.to_string()).collect::<Vec<_>>().join(", ")
+                        ),
+                    )
+                    .raw(format!(
+                        r#"<svg viewBox="0 0 100 46" width="100%" height="120" preserveAspectRatio="none" focusable="false">{bars}</svg>"#
+                    )),
+            )
+            .child(table(&["Day", "Merges"], rows, "No day."))
+    };
+    el("div")
+        .attr("id", "throughput")
+        .child(el("h3").class("mj-ui-panel-title").text("Merge throughput"))
+        .child(body)
 }
 
 /// Events of the executor's trail as a timeline, newest first: what it did, to which pull
@@ -1276,6 +1367,46 @@ mod tests {
         let without = drain(&queue(sample()), &Filter::from_query(&q(&[("pr", "820")]))).render();
         assert!(without.contains("trail was not asked."));
         assert!(!without.contains("id=\"activity\""));
+    }
+
+    #[test]
+    fn merges_are_counted_per_day_over_the_days_the_trail_ends_on() {
+        let ev =
+            |at: &str, action: &str| serde_json::json!({ "at": at, "action": action, "pr": 1 });
+        // newest first, as the drain passes it
+        let trail = vec![
+            ev("2026-10-11T09:00:00Z", "merge_succeeded"),
+            ev("2026-10-11T08:00:00Z", "merge_attempted"),
+            ev("2026-10-10T20:00:00Z", "merge_succeeded"),
+            ev("2026-10-10T10:00:00Z", "merge_succeeded"),
+            ev("2026-09-01T10:00:00Z", "merge_succeeded"),
+        ];
+        let days = merges_per_day(&trail);
+        assert_eq!(
+            days.len(),
+            14,
+            "fourteen days end on the newest event's day"
+        );
+        assert_eq!(
+            days.last(),
+            Some(&("2026-10-11".to_string(), 1)),
+            "an attempt is no merge"
+        );
+        assert_eq!(days[12], ("2026-10-10".to_string(), 2));
+        assert_eq!(days[0].0, "2026-09-28");
+        assert_eq!(
+            days.iter().map(|(_, n)| n).sum::<u64>(),
+            3,
+            "a merge outside the window is not drawn"
+        );
+        assert!(merges_per_day(&[]).is_empty());
+        let html = throughput(&trail).render();
+        assert!(
+            html.contains("<svg") && html.contains("Merges per day from 2026-09-28 to 2026-10-11"),
+            "{html}"
+        );
+        let idle = throughput(&[ev("2026-10-11T09:00:00Z", "observed")]).render();
+        assert!(idle.contains("recorded no merge") && !idle.contains("<svg"));
     }
 
     #[test]
