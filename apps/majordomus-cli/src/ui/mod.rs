@@ -183,7 +183,6 @@ pub(crate) const SCREENS: &[Screen] = &[
 
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
-#[cfg(test)]
 pub(crate) const PANELS: &[&str] = &[
     dashboard::PULL_REQUESTS_PANEL,
     deployments::DELIVERY_PANEL,
@@ -248,7 +247,7 @@ impl Ui {
         let ctx = self.live.current();
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
-        let screen = match path {
+        let mut screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
@@ -266,6 +265,18 @@ impl Ui {
             prs::PANEL => prs::panel_view(&ctx, &req.query),
             other => shell::not_found(other),
         };
+        // A panel read as a page of its own has no hero, so it carries the page's one heading
+        // itself; the fragment a screen pulls in does not, or the screen would have two.
+        if !fragment && PANELS.contains(&path) {
+            screen.main = crate::cockpit::html::el("div")
+                .class("mj-ui-stack")
+                .child(
+                    crate::cockpit::html::el("h1")
+                        .class("mj-ui-title")
+                        .text(&screen.title),
+                )
+                .child(screen.main);
+        }
         let body = if fragment {
             screen.main.render()
         } else {
@@ -307,7 +318,7 @@ mod tests {
     fn every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel() {
         let source = include_str!("mod.rs");
         let dispatcher = source
-            .split("let screen = match path {")
+            .split("let mut screen = match path {")
             .nth(1)
             .and_then(|rest| rest.split("other =>").next())
             .expect("the dispatcher's match");
@@ -338,6 +349,59 @@ mod tests {
             SCREENS.len() + PANELS.len(),
             "a route is declared twice"
         );
+    }
+
+    /// The UI answers in-process exactly as it does over a socket: every screen and panel as
+    /// a page with one heading, a fragment without the frame, an asset by its digest, a
+    /// route it does not serve as a page that says so, and anything but GET refused.
+    #[test]
+    fn the_ui_answers_every_route_in_process() {
+        use crate::http::router::Request;
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let ui = Ui::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let get = |target: &str| ui.handle(&Request::parse_target("GET", target, Vec::new()));
+
+        for route in SCREENS
+            .iter()
+            .map(|s| s.route)
+            .chain(PANELS.iter().copied())
+        {
+            let r = get(route);
+            let html = r.body.text();
+            assert_eq!(r.status, 200, "{route}");
+            assert!(
+                html.to_ascii_lowercase().starts_with("<!doctype html>"),
+                "{route} is a page"
+            );
+            assert_eq!(html.matches("<h1").count(), 1, "{route} has one heading");
+        }
+        let fragment = get(&format!("{}?{FRAGMENT}", dashboard::PULL_REQUESTS_PANEL));
+        let html = fragment.body.text();
+        assert!(
+            !html.to_ascii_lowercase().contains("<!doctype") && !html.contains("<h1"),
+            "{html}"
+        );
+
+        let asset = get(&format!("{ASSETS_PREFIX}{SCRIPT}?v=anything"));
+        assert_eq!(asset.status, 200, "the UI's script is served");
+
+        let missing = get("/ui/nowhere");
+        assert_eq!(missing.status, 404);
+        assert!(missing
+            .body
+            .text()
+            .contains("serves no screen at /ui/nowhere"));
+
+        let post = ui.handle(&Request::parse_target("POST", PREFIX, Vec::new()));
+        assert_eq!(post.status, 405);
+
+        // without the distribution's files the screens still answer, unstyled and saying so
+        let bare = Ui::new(ctx, "0.0.0-test", None);
+        let r = bare.handle(&Request::parse_target("GET", PREFIX, Vec::new()));
+        assert!(r.body.text().contains("the UI is unstyled"));
     }
 
     /// Every screen renders against a real registry, with its hero and at least one panel,

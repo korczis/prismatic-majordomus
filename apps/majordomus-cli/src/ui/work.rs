@@ -126,3 +126,61 @@ fn issue_table(
         table(&["Issue", "Milestone", "Priority"], rows, empty)
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+    use serde_json::json;
+    use std::time::Duration;
+
+    fn answer(source: Source, value: serde_json::Value) -> super::super::source::Answer {
+        super::super::source::Answer {
+            source,
+            route: None,
+            exposure: Default::default(),
+            value: Ok(value),
+            took: Duration::ZERO,
+        }
+    }
+
+    /// With no pull request selected, the queue placeholder asks for the whole queue.
+    #[test]
+    fn without_a_selection_the_queue_panel_asks_for_the_whole_queue() {
+        let repo = SyntheticRepository::planned();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert!(
+            html.contains(&format!("data-panel-src=\"{PULL_REQUESTS_PANEL}\"")),
+            "{html}"
+        );
+        // a value that is not a number selects nothing
+        let html = screen(&ctx, &[("pr".into(), "seven".into())]).main.render();
+        assert!(html.contains(&format!("data-panel-src=\"{PULL_REQUESTS_PANEL}\"")));
+    }
+
+    /// An issue table lists the issues of its status alone, each with its milestone and
+    /// its priority, and says so when there is none.
+    #[test]
+    fn an_issue_table_lists_the_issues_of_its_status_alone() {
+        let issues = answer(
+            ISSUES,
+            json!({ "issues": [
+                { "id": "I0001", "title": "Ready work", "milestone": "m-first", "priority": "p1", "status": "READY" },
+                { "id": "I0002", "title": "Blocked work", "milestone": "m-first", "priority": "p2", "status": "BLOCKED" },
+                { "id": "I0003", "title": "Active work", "milestone": "m-second", "priority": "p0", "status": "ACTIVE" }
+            ] }),
+        );
+        let html = issue_table(&issues, "READY", "none ready").render();
+        assert!(html.contains("I0001") && html.contains("Ready work") && html.contains("m-first"));
+        assert!(html.contains("p1"), "{html}");
+        assert!(!html.contains("I0002") && !html.contains("I0003"), "{html}");
+        let html = issue_table(&issues, "ACTIVE", "none active").render();
+        assert!(
+            html.contains("I0003") && html.contains("m-second"),
+            "{html}"
+        );
+        let html = issue_table(&issues, "DONE", "Nothing is done.").render();
+        assert!(html.contains("Nothing is done."), "{html}");
+    }
+}

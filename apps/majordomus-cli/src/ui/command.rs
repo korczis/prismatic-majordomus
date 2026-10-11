@@ -129,3 +129,57 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+
+    /// The origin filter is the capability's own input: the tab it names is current, and an
+    /// origin the capability does not declare is ignored rather than passed on.
+    #[test]
+    fn the_origin_filter_marks_its_tab_and_an_unknown_one_is_ignored() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[("origin".into(), "executable".into())])
+            .main
+            .render();
+        assert!(
+            html.contains(&format!(
+                "href=\"{ROUTE}?origin=executable\" aria-current=\"page\""
+            )),
+            "{html}"
+        );
+        let html = screen(&ctx, &[("origin".into(), "nonsense".into())])
+            .main
+            .render();
+        assert!(
+            html.contains(&format!("href=\"{ROUTE}\" aria-current=\"page\"")),
+            "{html}"
+        );
+    }
+
+    /// An execution this process started is listed with its capability and its state.
+    #[test]
+    fn an_execution_this_process_started_is_listed() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let started = ctx
+            .execute(
+                "executions.start",
+                serde_json::json!({
+                    "capability": "executions.demonstrate",
+                    "input": { "steps": 1, "delay_ms": 0 }
+                }),
+            )
+            .expect("an execution starts");
+        let id = started["id"].as_str().expect("its id").to_string();
+        let html = screen(&ctx, &[]).main.render();
+        assert!(html.contains(&id), "{html}");
+        assert!(html.contains("executions.demonstrate"), "{html}");
+        assert!(
+            !html.contains("This process is running no execution"),
+            "{html}"
+        );
+    }
+}
