@@ -118,7 +118,7 @@ impl Memory {
             .unwrap_or_else(|| node.chars().take(8).collect());
         // a kind newer than this executable's EventBody (ADR 0133 meets I2415): read raw
         if event.kind() == "review_withdrawn" {
-            let mut s = self.withdrawn(event, &stream, ctx)?;
+            let mut s = self.withdrawn(event, &stream)?;
             s.machine = Some(machine);
             return Some(s);
         }
@@ -383,12 +383,7 @@ impl Memory {
 
     /// A review withdrawn by its asker (I2415's `review_withdrawn` {request, session, note?}):
     /// news to whoever was asked for it or answered it, a note to everyone else.
-    fn withdrawn(
-        &mut self,
-        event: &MeshEvent,
-        stream: &str,
-        ctx: &Context<'_>,
-    ) -> Option<MonitorSignal> {
+    fn withdrawn(&mut self, event: &MeshEvent, stream: &str) -> Option<MonitorSignal> {
         let body = &event.body;
         let request = body.get("request")?.as_str()?.to_string();
         let session = body
