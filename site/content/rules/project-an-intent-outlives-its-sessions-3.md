@@ -1,7 +1,7 @@
 +++
 title = "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence"
 description = "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence"
-weight = 71
+weight = 72
 [extra]
 kind = "rule"
 slug = "project-an-intent-outlives-its-sessions-3"

@@ -30,7 +30,8 @@
 //!
 //! **It is cheap.** Each source is asked once per answer, and the sources are the ones that
 //! read what this process already holds: no delivery report, no release analysis, no
-//! evidence judgement — nothing that rebuilds canonical state or refuses on a network.
+//! evidence judgement — nothing that rebuilds canonical state or refuses on a network. They
+//! are asked at once, so the answer costs its slowest source, not the sum of them.
 //!
 //! ```
 //! use majordomus_cli::capability::builtin::dashboard::module;
@@ -620,23 +621,7 @@ const CARDS: &[Spec] = &[
 /// The overview: each source asked once, through the executor, and every card read out of
 /// its answer.
 fn overview(ctx: &Context, _: Empty) -> Result<DashboardOverview, CapabilityError> {
-    // one execution per (capability, input): four cards of `release.version` are one call
-    let mut answers: BTreeMap<(&str, &str), Result<Value, String>> = BTreeMap::new();
-    for spec in CARDS {
-        answers
-            .entry((spec.capability, spec.input))
-            .or_insert_with(|| {
-                let input: Value = serde_json::from_str(spec.input)
-                    .map_err(|e| format!("the card's own input does not parse: {e}"))?;
-                let answer = ctx
-                    .execute(spec.capability, input)
-                    .map_err(|e| e.to_string());
-                ctx.progress
-                    .step_done(spec.capability, answer.is_ok(), None);
-                answer
-            });
-    }
-
+    let answers = ask_all(ctx, &sources(CARDS));
     let questions: Vec<DashboardQuestion> = QUESTIONS
         .iter()
         .map(|(id, title)| {
@@ -661,6 +646,62 @@ fn overview(ctx: &Context, _: Empty) -> Result<DashboardOverview, CapabilityErro
             .fold(HealthStatus::Ok, |acc, q| acc.worse(q.status)),
         questions,
     })
+}
+
+/// One source: a capability and the input it is asked with, however many cards read it.
+type Source = (&'static str, &'static str);
+
+/// The distinct sources of `cards`, in the order the cards first name them: four cards of
+/// `release.version` are one source, asked once.
+fn sources(cards: &[Spec]) -> Vec<Source> {
+    let mut out: Vec<Source> = Vec::new();
+    for spec in cards {
+        let source = (spec.capability, spec.input);
+        if !out.contains(&source) {
+            out.push(source);
+        }
+    }
+    out
+}
+
+/// Every source asked at once, each on a thread of its own, so that the overview costs its
+/// slowest source rather than the sum of them. Asked one after another, the seven took
+/// 7.4-10.6 s on this repository (`continuity.state` 4.9 s, `worktree.status` 2.0 s,
+/// `health.report` 0.9 s, `release.version` 0.6 s), which is the Cockpit's first paint.
+///
+/// The sources are independent reads through the shared executor, which every transport
+/// already calls from many threads. Progress is reported after the last answer, in the order
+/// the sources were declared, so an execution's step list does not depend on which thread
+/// finished first. A source whose thread panicked is an answer that failed, and its cards
+/// are `unknown` with that reason, as for any other failure.
+fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Result<Value, String>> {
+    let answers: Vec<Result<Value, String>> = std::thread::scope(|scope| {
+        let asked: Vec<_> = sources
+            .iter()
+            .map(|&(capability, input)| scope.spawn(move || ask(ctx, capability, input)))
+            .collect();
+        asked
+            .into_iter()
+            .map(|thread| {
+                thread
+                    .join()
+                    .unwrap_or_else(|_| Err("the source panicked while answering".into()))
+            })
+            .collect()
+    });
+    let mut out = BTreeMap::new();
+    for (&source, answer) in sources.iter().zip(answers) {
+        ctx.progress.step_done(source.0, answer.is_ok(), None);
+        out.insert(source, answer);
+    }
+    out
+}
+
+/// One source asked through the executor, with the input its card declares.
+fn ask(ctx: &Context, capability: &str, input: &str) -> Result<Value, String> {
+    let input: Value = serde_json::from_str(input)
+        .map_err(|e| format!("the card's own input does not parse: {e}"))?;
+    ctx.execute(capability, input).map_err(|e| e.to_string())
 }
 
 /// One card from its declaration and its source's answer — or, when the source could not
@@ -852,6 +893,48 @@ mod tests {
             assert!(
                 CARDS.iter().any(|s| s.question == q),
                 "the question {q} has no card"
+            );
+        }
+    }
+
+    /// Each source is asked once however many cards read it, and the sources keep the order
+    /// the cards first name them in, which is the order progress is reported in.
+    #[test]
+    fn every_source_is_asked_once_in_the_order_it_is_declared() {
+        let asked = sources(CARDS);
+        let mut seen = std::collections::BTreeSet::new();
+        for source in &asked {
+            assert!(seen.insert(*source), "{source:?} would be asked twice");
+        }
+        let mut first_named: Vec<Source> = Vec::new();
+        for spec in CARDS {
+            if !first_named.contains(&(spec.capability, spec.input)) {
+                first_named.push((spec.capability, spec.input));
+            }
+        }
+        assert_eq!(asked, first_named);
+        assert!(
+            asked.len() < CARDS.len(),
+            "some cards share a source, and sharing is what this is for"
+        );
+    }
+
+    /// Asked at once, every source answers what it answers when asked alone: the threads
+    /// change when an answer arrives, not what it is or which source it is filed under.
+    #[test]
+    fn asked_at_once_every_source_answers_as_it_does_alone() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let asked = sources(CARDS);
+        let at_once = ask_all(&ctx, &asked);
+        assert_eq!(at_once.len(), asked.len(), "one answer per source");
+        for &(capability, input) in &asked {
+            let alone = ask(&ctx, capability, input);
+            let concurrent = &at_once[&(capability, input)];
+            assert_eq!(
+                alone.is_ok(),
+                concurrent.is_ok(),
+                "{capability} answered differently at once ({concurrent:?}) and alone ({alone:?})"
             );
         }
     }

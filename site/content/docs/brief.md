@@ -1,7 +1,7 @@
 +++
 title = "The session brief"
 description = "the session brief: `majordomus brief` and `brief.session` — one line and a few about what surrounds a session (its episode and task, the peers of every board, the mesh, the integration queue, the derive lock), who composes it, the policy switch, and the Claude Code mod that keeps a session briefed and awake"
-weight = 57
+weight = 59
 [extra]
 source = "docs/BRIEF.md"
 +++

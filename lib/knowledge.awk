@@ -56,7 +56,7 @@ BEGIN {
     # node with no edge to the claims, use cases and ADRs it names — 100 unknown nodes in
     # this repository, found by a repository that adopted the tool (OSCILLA, 2026-10-04).
     # `domain` joined the skeleton with the product domains (batch N1) and is read the same way.
-    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session feature moment area audience deployment intent mesh-declaration workspace release-record critique gap command distribution-model domain "
+    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session feature moment area audience deployment intent mesh-declaration derive-offload workspace release-record critique gap command distribution-model domain "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.

@@ -258,7 +258,7 @@ impl ProgressView {
 /// on the process's own error stream, where the operator running the server can read it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionError {
-    /// `invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.
+    /// `invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.
     pub code: String,
     /// What went wrong, for a person.
     pub message: String,

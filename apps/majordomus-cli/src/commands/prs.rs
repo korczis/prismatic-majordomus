@@ -1009,7 +1009,9 @@ fn explain(
     let relation = match &a.relation {
         RelationToMaster::Behind { behind, .. } => format!("behind master by {behind}"),
         RelationToMaster::Conflicting { paths } => format!("conflicts on {}", paths.join(", ")),
-        r => integration::classify::word(r),
+        // the relation's own word: it serialises as an object under `kind`, which is not a
+        // word, and every relation but the two above used to print here as `unknown`
+        r => integration::classify::relation_word(r).to_string(),
     };
     lines.push(format!("  relation:     {relation}"));
     lines.push(format!(
@@ -1249,6 +1251,16 @@ mod tests {
             let t = text(|o| explain(&q, a, rank + 1, OutputFormat::Text, o));
             assert!(t.starts_with(&format!("#{} ", a.number)), "{t}");
             assert!(t.contains(a.disposition.as_str()), "{t}");
+            // the relation in its own word: `unknown` only when git could not answer
+            let said = t
+                .lines()
+                .find(|l| l.trim_start().starts_with("relation:"))
+                .expect("a relation line");
+            assert_eq!(
+                said.contains("unknown"),
+                matches!(a.relation, RelationToMaster::Unknown { .. }),
+                "{said}"
+            );
             let j: serde_json::Value =
                 serde_json::from_str(&text(|o| explain(&q, a, rank + 1, OutputFormat::Json, o)))
                     .unwrap();

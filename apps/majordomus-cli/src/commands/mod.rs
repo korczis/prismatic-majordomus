@@ -53,6 +53,7 @@ pub(crate) mod knowledge;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod offload;
 pub(crate) mod pack;
 pub(crate) mod product;
 pub(crate) mod prs;
@@ -90,6 +91,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
         Command::Prs(args) => prs::run(args),
+        Command::Offload(args) => offload::run(args),
         Command::Convergence(args) => convergence::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),

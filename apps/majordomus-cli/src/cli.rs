@@ -67,6 +67,8 @@ pub enum Command {
     /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
     #[command(alias = "pr")]
     Prs(PrsArgs),
+    /// A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed
+    Offload(OffloadArgs),
     /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
     Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
@@ -3180,6 +3182,84 @@ pub enum PrsCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus offload`. The declaration is the repository's own unless `--declaration`
+/// names a file; the output shape is global, as for `worktree`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OffloadArgs, OffloadCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "offload", "probe", "--format", "json", "--declaration", "hosts.yaml",
+/// ])
+/// .unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let offload: OffloadArgs = offload;
+/// assert!(matches!(offload.command, OffloadCommand::Probe));
+/// assert_eq!(offload.format, OutputFormat::Json);
+/// assert_eq!(offload.declaration.unwrap().to_str(), Some("hosts.yaml"));
+///
+/// // there is no default subcommand: an offload names what it does
+/// assert!(Cli::try_parse_from(["majordomus", "offload"]).is_err());
+/// ```
+pub struct OffloadArgs {
+    #[command(flatten)]
+    /// Where the repository is found; its index is read for the declaration.
+    pub repo: RepoArgs,
+
+    /// Read this derive-offload declaration file instead of the repository's
+    #[arg(long, value_name = "FILE", global = true)]
+    pub declaration: Option<PathBuf>,
+
+    #[command(subcommand)]
+    /// The subcommand.
+    pub command: OffloadCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus offload`: `hosts` reads the declaration and contacts
+/// nobody, `probe` measures every declared host over ssh and names the one a derive would
+/// take, and `derive` sends a worktree there and stages what the derive changed.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OffloadCommand};
+///
+/// // with nothing named, the current directory is derived on the host the probe chooses
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "derive"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
+/// assert_eq!((worktree.to_str(), host, keep), (Some("."), None, false));
+///
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "derive", "../wt", "--host", "lundra", "--keep"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
+/// assert_eq!((worktree.to_str(), host.as_deref(), keep), (Some("../wt"), Some("lundra"), true));
+/// ```
+pub enum OffloadCommand {
+    /// The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
+    Hosts,
+    /// Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one
+    Probe,
+    /// Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out
+    Derive {
+        /// The worktree to derive
+        #[arg(default_value = ".")]
+        worktree: PathBuf,
+        /// A declared host, by id or address, instead of the one the probe chooses
+        #[arg(long, value_name = "HOST")]
+        host: Option<String>,
+        /// Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)
+        #[arg(long)]
+        keep: bool,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus worktree` (alias `wt`). The output shape is global, so it reads the way a
 /// person writes it — `worktree list --format json` — and is declared once.
 pub struct WorktreeArgs {
@@ -6251,6 +6331,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["devcontext", "policy"],
             setup: &[],
             expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
+    },
+    CommandExamples {
+        command: "offload hosts",
+        examples: &[ExampleDoc {
+            id: "offload-hosts-json",
+            title: "The declared hosts, or the answer that there are none",
+            description: "Reads the repository's derive-offload declaration (.ai/repo/offload/*.yaml) and prints it with every default filled in: the hosts in tie-break order, each one's free-space minimum and ssh identity file, the queue's paths and the layout on a host. No host is contacted. This fixture declares none, which is an answer, not an error: `declared` is false and the declaration is null.",
+            argv: &["offload", "hosts", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/declared", "/declaration"]),
+        }],
+    },
+    CommandExamples {
+        command: "offload probe",
+        examples: &[ExampleDoc {
+            id: "offload-probe-undeclared",
+            title: "No declared host, no probe",
+            description: "Measures every declared host over ssh — free space under its home, derives running or waiting in its queue — and names the one a derive would take: the eligible host with the fewest, ties to the one declared first. A repository that declares no host has nothing to measure, and the probe refuses with 12 rather than reporting an empty success.",
+            argv: &["offload", "probe"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "offload derive",
+        examples: &[ExampleDoc {
+            id: "offload-derive-undeclared",
+            title: "A derive with nowhere to go is refused before anything travels",
+            description: "Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.",
+            argv: &["offload", "derive", "."],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

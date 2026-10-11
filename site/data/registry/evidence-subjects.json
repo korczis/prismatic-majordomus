@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -2779,6 +2779,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:offload derive",
+      "path": "/evidence/commands/offload-derive/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload hosts",
+      "path": "/evidence/commands/offload-hosts/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload probe",
+      "path": "/evidence/commands/offload-probe/"
+    },
+    {
+      "kind": "command",
       "subject": "command:pack build",
       "path": "/evidence/commands/pack-build/"
     },
@@ -3371,6 +3386,11 @@
       "kind": "feature",
       "subject": "feature:skills",
       "path": "/evidence/features/skills/"
+    },
+    {
+      "kind": "feature",
+      "subject": "feature:ui",
+      "path": "/evidence/features/ui/"
     },
     {
       "kind": "feature",
@@ -14739,6 +14759,63 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:offload derive": {
+      "kind": "command",
+      "id": "offload derive",
+      "page": "/evidence/commands/offload-derive/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload hosts": {
+      "kind": "command",
+      "id": "offload hosts",
+      "page": "/evidence/commands/offload-hosts/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload probe": {
+      "kind": "command",
+      "id": "offload probe",
+      "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:pack build": {
       "kind": "command",
       "id": "pack build",
@@ -17847,6 +17924,21 @@
         "command:skills",
         "rule:majordomus.skill-integrity",
         "use_case:follow-a-skill-the-repository-defines"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "feature:ui": {
+      "kind": "feature",
+      "id": "ui",
+      "status": "draft",
+      "page": "/evidence/features/ui/",
+      "programs": [],
+      "members": [
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state",
+        "rule:project.web-surface-declared-once"
       ],
       "routes": [],
       "mechanisms": [],
@@ -21275,6 +21367,27 @@
       "mechanisms": [
         "scripts/ci/campaigns-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-derive-offload-waits-its-turn": {
+      "kind": "rule",
+      "id": "project.a-derive-offload-waits-its-turn",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:offload",
+          "path": "apps/majordomus-cli/tests/offload.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/offload.rs",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-derive-sees-what-the-commit-will": {
@@ -25730,6 +25843,8 @@
     "crate:mcp_prose",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
+    "crate:mesh_trust_reload",
+    "crate:mesh_trust_root",
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
@@ -25739,6 +25854,7 @@
     "crate:providers_projection",
     "crate:reasoning_mesh",
     "crate:redaction",
+    "crate:remote_callers",
     "crate:repository_discovery",
     "crate:response_schema",
     "crate:rules",
@@ -25748,9 +25864,15 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_surface",
     "crate:worktree",
     "suite:09_site_mobile_first",
+    "suite:1022_a_remote_caller_cannot_write",
+    "suite:1023_a_branch_cannot_widen_the_mesh_trust",
+    "suite:1024_an_installed_release_serves_a_foreign_repository",
     "suite:102_completion_shell",
+    "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
+    "suite:1041_a_release_publishes_its_metadata",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
