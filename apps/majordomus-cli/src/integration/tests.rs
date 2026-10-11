@@ -546,19 +546,62 @@ impl Integrator for World {
 /// clock alone collided: tests started in the same microsecond were handed one directory, and
 /// the second `git init` found the first one's files. A per-process counter makes the name
 /// unique, and `create_dir` (not `create_dir_all`) refuses a directory that already exists.
+///
+/// Every one lives under this process's own directory ([`process_temp`]), never beside the
+/// system's other temporary files: one directory per test, left there, filled the system's
+/// temporary directory with tens of thousands of them until it could hold no new
+/// subdirectory, and every `mktemp -d` on the machine failed.
 fn unique_temp(prefix: &str) -> std::path::PathBuf {
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let d = std::env::temp_dir().join(format!(
-        "{prefix}-{}-{}-{n}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
+    let d = process_temp().join(format!("{prefix}-{n}"));
     std::fs::create_dir(&d).unwrap_or_else(|e| panic!("{}: {e}", d.display()));
     d
+}
+
+/// This test process's directory, `<temp>/mj-integration-tests/<pid>`, made on first use. A
+/// test process cannot clean up after itself (the harness has no teardown), so the next one
+/// does: the directory of every process that is no longer running is removed before this one
+/// is made, and what is left behind is bounded by the test processes alive at once.
+fn process_temp() -> &'static std::path::Path {
+    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let parent = std::env::temp_dir().join("mj-integration-tests");
+        std::fs::create_dir_all(&parent).unwrap_or_else(|e| panic!("{}: {e}", parent.display()));
+        for entry in std::fs::read_dir(&parent).into_iter().flatten().flatten() {
+            let pid = entry
+                .file_name()
+                .to_str()
+                .and_then(|n| n.parse::<i32>().ok());
+            if pid.is_some_and(|pid| !running(pid)) {
+                let _ = std::fs::remove_dir_all(entry.path());
+            }
+        }
+        let mine = parent.join(std::process::id().to_string());
+        std::fs::create_dir_all(&mine).unwrap_or_else(|e| panic!("{}: {e}", mine.display()));
+        mine
+    })
+}
+
+/// Whether a process with this id runs: signal 0 checks without sending, and a process this
+/// user may not signal still exists.
+fn running(pid: i32) -> bool {
+    // SAFETY: kill with signal 0 performs only the existence and permission check
+    let answered = unsafe { libc::kill(pid, 0) };
+    answered == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+#[test]
+fn a_test_directory_lives_under_its_process_and_a_dead_process_leaves_none() {
+    let parent = std::env::temp_dir().join("mj-integration-tests");
+    let d = unique_temp("mj-integration-placed");
+    assert_eq!(
+        d.parent(),
+        Some(parent.join(std::process::id().to_string()).as_path())
+    );
+    assert!(running(std::process::id() as i32));
+    // a pid beyond any the system hands out is never running
+    assert!(!running(i32::MAX));
 }
 
 /// A scratch repository: the audit trail is the repository's, under its common git
