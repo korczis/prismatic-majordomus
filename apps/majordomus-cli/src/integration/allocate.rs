@@ -174,6 +174,23 @@ pub fn version_only_conflict(root: &Path, master: &str, head: &str) -> bool {
     }
 }
 
+/// The version a landing of `head` onto `master` allocates, when master allocates at
+/// landing and the head, which contains master, does not carry it: such a head owes a
+/// refresh although nothing of master is missing from it (ADR 0134, slice B2). `None` when
+/// master does not allocate, when the head carries the allocated version, and when the
+/// allocation cannot be decided, which the refresh would refuse in its own words.
+///
+/// Every input is a fact of the two commits, as [`super::relation`] requires of what it
+/// caches: master's committed policy, its manifest and registry, the head's.
+pub fn owed_version(root: &Path, master: &str, head: &str) -> Option<String> {
+    let policy = policy_at(root, master)
+        .ok()
+        .filter(|p| p.allocation == Allocation::Landing)?;
+    let decision = landing::next_for(root, master, head, &policy).ok()?;
+    let carried = show(root, head, MANIFEST).and_then(|m| version::declared_in(&m));
+    (carried.as_deref() != Some(decision.next_version.as_str())).then_some(decision.next_version)
+}
+
 /// In `dir`, where a merge of master into the head stopped: when the manifest is the only
 /// path left unmerged and its conflict is the version line alone, resolve it to the merge
 /// with master's version and stage it. `Ok(false)` leaves the merge as it stopped, for the

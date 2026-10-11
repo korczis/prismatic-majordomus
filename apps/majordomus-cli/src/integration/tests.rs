@@ -284,7 +284,10 @@ impl World {
         }
         let authored = s.paths.clone();
         if s.contains == self.master {
-            RelationToMaster::UpToDate { authored }
+            RelationToMaster::UpToDate {
+                authored,
+                owes_version: None,
+            }
         } else {
             RelationToMaster::Behind {
                 behind: u64::from(self.master - s.contains),
@@ -1725,7 +1728,7 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
     ));
     assert!(matches!(
         relation_to_master(&dir, &master, &up_to_date),
-        RelationToMaster::UpToDate { ref authored } if authored == &vec!["d.txt".to_string()]
+        RelationToMaster::UpToDate { ref authored, .. } if authored == &vec!["d.txt".to_string()]
     ));
     assert_eq!(
         relation_to_master(&dir, &master, &conflicting),
@@ -4042,6 +4045,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::RequiredCheckFailed
         | R::BehindMaster { .. }
         | R::ForkHead
+        | R::VersionUnallocated { .. }
         | R::RequiredChecks { .. }
         | R::NoRequiredChecks
         | R::RequiredChecksUnread
@@ -4089,6 +4093,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::RequiredCheckFailed,
         R::BehindMaster { commits: 12 },
         R::ForkHead,
+        R::VersionUnallocated {
+            version: "0.22.0".into(),
+        },
         R::NoRequiredChecks,
         R::RequiredChecksUnread,
         R::ContainsMaster,

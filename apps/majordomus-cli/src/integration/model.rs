@@ -259,6 +259,11 @@ pub enum RelationToMaster {
     UpToDate {
         /// Authored (non-derived) paths the merge changes.
         authored: Vec<String>,
+        /// The version a landing of this head allocates, when master allocates at landing
+        /// (ADR 0134) and the head does not carry it: the head owes a refresh even though it
+        /// contains master. Absent when the policy does not allocate, or the head carries it.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        owes_version: Option<String>,
     },
     /// The head does not contain master, but the merge is clean with the derived driver.
     Behind {
@@ -697,7 +702,8 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, \
 `relation_unknown:WHY`, \
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
-`required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
+`required_check_failed`, `behind_master:COMMITS`, `fork_head`, \
+`version_unallocated:VERSION`, `required_checks:STATE`, \
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
 `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
 `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, \
@@ -797,6 +803,12 @@ pub enum ReasonCode {
     },
     /// `fork_head`: the head is a fork's branch, which cannot be refreshed from here.
     ForkHead,
+    /// `version_unallocated:VERSION`: master allocates the version at landing (ADR 0134) and
+    /// the head, though it contains master, does not carry the version its landing takes.
+    VersionUnallocated {
+        /// The version the landing allocates.
+        version: String,
+    },
     /// `required_checks:STATE`: the required checks have not all passed.
     RequiredChecks {
         /// Their verdict.
@@ -881,6 +893,7 @@ impl ReasonCode {
             ReasonCode::RequiredCheckFailed => "required_check_failed",
             ReasonCode::BehindMaster { .. } => "behind_master",
             ReasonCode::ForkHead => "fork_head",
+            ReasonCode::VersionUnallocated { .. } => "version_unallocated",
             ReasonCode::RequiredChecks { .. } => "required_checks",
             ReasonCode::NoRequiredChecks => "no_required_checks",
             ReasonCode::RequiredChecksUnread => "required_checks_unread",
@@ -925,6 +938,7 @@ impl std::fmt::Display for ReasonCode {
             | ReasonCode::Label { name: s }
             | ReasonCode::LabelObsolete { name: s }
             | ReasonCode::RelationUnknown { reason: s }
+            | ReasonCode::VersionUnallocated { version: s }
             | ReasonCode::ExecutorMergeRefused { head: s }
             | ReasonCode::ExecutorRefreshFailed { master: s } => write!(f, "{}:{s}", self.code()),
             ReasonCode::ConflictsOn { count } => write!(f, "{}:{count}", self.code()),
@@ -984,6 +998,9 @@ impl std::str::FromStr for ReasonCode {
             ("label", Some(p)) => ReasonCode::Label { name: p.into() },
             ("label_obsolete", Some(p)) => ReasonCode::LabelObsolete { name: p.into() },
             ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
+            ("version_unallocated", Some(p)) => {
+                ReasonCode::VersionUnallocated { version: p.into() }
+            }
             ("conflicts_on", Some(p)) => ReasonCode::ConflictsOn {
                 count: p.parse().map_err(|_| bad())?,
             },

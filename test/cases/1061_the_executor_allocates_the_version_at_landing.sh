@@ -13,6 +13,9 @@
 #      Version-Allocated trailer on the commit it pushes
 #   4. master moves on to 0.6.0 by another landing: the next refresh recomputes from the new
 #      master (0.7.0), never raising the number the head already carries a second time
+#   5. a head that already contains master but carries master's own number owes a refresh
+#      all the same (slice B2): needs_refresh for version_unallocated:0.7.0, and the refresh
+#      writes it
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -138,6 +141,25 @@ q="$(prs status --format json)"
 [ "$(disp)" = needs_refresh ] || { echo "    after master moved #1 is not behind:"; why; exit 1; }
 out="$(prs drain --refresh 2>&1)" || { echo "    the second refresh drain failed: $out"; exit 1; }
 [ "$(declared)" = 0.7.0 ] || { echo "    the second refresh allocated $(declared), not 0.7.0 from the new master"; exit 1; }
+# ---------------------------------------------------------------- 5. contains master, owes its number
+# #1's refreshed head reports failing checks, so the drain neither waits on it (it refreshes
+# nothing while a refreshed head's checks are awaited) nor merges it
+echo FAILURE > "$STATE/ci/$(git -C "$ORIGIN" rev-parse refs/heads/feature/1)"
+gitq checkout -q -b feature/2 master; echo two > two.txt
+gitq add two.txt; gitq commit -qm "fix: two"; gitq push -q origin HEAD:refs/heads/feature/2
+H2="$(git rev-parse HEAD)"; echo SUCCESS > "$STATE/ci/$H2"
+printf '%s\t%s\t%s\t%s\n' 2 feature/2 2026-09-02T00:00:00Z "" >> "$STATE/prs.tsv"
+prs refresh >/dev/null
+q="$(prs status --format json)"
+d2() { printf '%s' "$q" | jq -c '.assessments[] | select(.number == 2) | {disposition, reasons}'; }
+[ "$(d2)" = '{"disposition":"needs_refresh","reasons":["version_unallocated:0.7.0"]}' ] \
+  || { echo "    a head containing master without its allocation is not owed a refresh: $(d2)"; exit 1; }
+# #1, refreshed above, carries its allocation and is owed nothing for it
+[ "$(disp)" != needs_refresh ] || { echo "    the head the executor allocated is asked to allocate again:"; why; exit 1; }
+out="$(prs drain --refresh 2>&1)" || { echo "    the refresh drain for #2 failed: $out"; exit 1; }
+v2="$(git -C "$ORIGIN" show "refs/heads/feature/2:$MANIFEST" | sed -n 's/^version = "\(.*\)"$/\1/p')"
+[ "$v2" = 0.7.0 ] || { echo "    the refresh of a head containing master wrote $v2, not 0.7.0: $out"; git -C "$ORIGIN" log -3 --format='      %h %s' refs/heads/feature/2; exit 1; }
+
 ! grep -q '^ADMIN\|^UNEXPECTED' "$STATE/log" || { echo "    the forge was asked something it should not be:"; grep '^ADMIN\|^UNEXPECTED' "$STATE/log"; exit 1; }
 
-echo "    the executor allocates the version at landing: resolved, floored, trailed, recomputed"
+echo "    the executor allocates the version at landing: resolved, floored, trailed, recomputed, owed"

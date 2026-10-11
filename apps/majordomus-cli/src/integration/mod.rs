@@ -569,7 +569,8 @@ pub fn build_queue_shaped(
             (Some(s), _) => s.authored.clone(),
             (
                 None,
-                RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+                RelationToMaster::UpToDate { authored, .. }
+                | RelationToMaster::Behind { authored, .. },
             ) => authored.clone(),
             (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
             _ => Vec::new(),
@@ -2085,6 +2086,7 @@ mod dependency_queue {
         // a relation that passes, so the dependency gate is the one that decides
         let q = build_queue(&o, "m", |_| RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
+            owes_version: None,
         });
         for n in [1, 2] {
             assert_eq!(

@@ -256,7 +256,11 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         };
     }
     match git(root, &["merge-base", "--is-ancestor", master, head]) {
-        Ok((true, _)) => RelationToMaster::UpToDate { authored },
+        Ok((true, _)) => RelationToMaster::UpToDate {
+            // contains master, but under allocation at landing it may still owe its number
+            owes_version: super::allocate::owed_version(root, master, head),
+            authored,
+        },
         Ok(_) => {
             let behind = git(root, &["rev-list", "--count", &format!("{head}..{master}")])
                 .ok()
