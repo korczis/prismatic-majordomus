@@ -4,7 +4,9 @@
 //! local registry's own handler is truthful. Everything else is a fact of the *running
 //! server*'s memory — the registry, the links, the journal — so the command finds this
 //! checkout's server (through the same `server.status` capability `serve status` renders)
-//! and asks it over HTTP; a missing server is an answer with its reason, never an error.
+//! and asks it over HTTP. A linked worktree with no server of its own asks the repository's
+//! running one, the primary's first, and says so on stderr; a missing server is an answer
+//! with its reason, never an error.
 //! `doctor` is both: its `runtime` check is the server's verdict on the declaration, so the
 //! report is the server's when one serves this checkout, and this process's — where that
 //! check reports an absence — when none does (ADR 0059). The command owns rendering and
@@ -186,13 +188,13 @@ fn not_ok(v: &Value) -> bool {
     v["ok"] != json!(true)
 }
 
-/// `mesh doctor`: the running server's report when one serves this checkout, because its
-/// `runtime` check is that server's verdict on the declaration; this process's otherwise.
-/// Exit 10 when a check failed.
+/// `mesh doctor`: the running server's report when one answers for this checkout
+/// ([`choose`]), because its `runtime` check is that server's verdict on the declaration;
+/// this process's otherwise. Exit 10 when a check failed.
 fn doctor(args: MeshQueryArgs) -> Result<u8> {
     match server_url(&args)? {
-        Some(url) => ask_at(
-            &url,
+        Some(serving) => ask_at(
+            &serving.url,
             &args,
             "GET",
             "/api/v1/mesh/doctor",
@@ -243,24 +245,93 @@ fn in_process(
     Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
 }
 
-/// This checkout's ready server, when there is one.
-fn server_url(args: &MeshQueryArgs) -> Result<Option<String>> {
+/// The server a mesh command asks.
+#[derive(Debug, PartialEq)]
+struct Serving {
+    url: String,
+    /// The other checkout whose server answers, when this one has none of its own.
+    borrowed_from: Option<String>,
+}
+
+/// The server of this repository that answers for this checkout, from `server.status`'s
+/// list of every checkout's server: this checkout's when it is ready, otherwise the
+/// primary's, otherwise the first other ready one. A linked worktree is a checkout of the
+/// same repository, and the mesh — the machine's identity, its links, its journal — is
+/// the repository's, so a worktree without a server of its own cooperates through the
+/// running one rather than reporting the mesh inactive or starting a second server.
+fn choose(servers: &[Value]) -> Option<Serving> {
+    let ready = |s: &&Value| s["standing"] == json!("ready") && s["lease"]["url"].is_string();
+    let url = |s: &Value| s["lease"]["url"].as_str().unwrap_or_default().to_string();
+    if let Some(own) = servers
+        .iter()
+        .filter(ready)
+        .find(|s| s["this_checkout"] == json!(true))
+    {
+        return Some(Serving {
+            url: url(own),
+            borrowed_from: None,
+        });
+    }
+    let other = servers
+        .iter()
+        .filter(ready)
+        .find(|s| s["primary"] == json!(true))
+        .or_else(|| servers.iter().find(|s| ready(s)))?;
+    Some(Serving {
+        url: url(other),
+        borrowed_from: Some(
+            other["worktree"]
+                .as_str()
+                .unwrap_or("another checkout")
+                .to_string(),
+        ),
+    })
+}
+
+/// The ready server that answers for this checkout ([`choose`]), and a note on stderr when
+/// it is another checkout's.
+fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
     let app = App::load(&args.repo)?;
     let status = app
         .context
         .execute("server.status", json!({}))
         .map_err(map)?;
-    Ok(status["servers"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
-        .and_then(|s| s["lease"]["url"].as_str())
-        .map(str::to_string))
+    let servers = status["servers"].as_array().cloned().unwrap_or_default();
+    let serving = choose(&servers);
+    if let Some(Serving {
+        url,
+        borrowed_from: Some(worktree),
+    }) = &serving
+    {
+        eprintln!(
+            "mesh: this checkout has no running server; asking the server of {worktree} at {url} (the same repository)"
+        );
+    }
+    Ok(serving)
 }
 
-/// Ask this checkout's running server, and render the answer. No running server is an
-/// answer for a question and a refusal for a command: the mesh lives in the server.
+/// Why a request cannot go through another checkout's server, when it cannot: it reads or
+/// writes the files of the checkout whose server answers it. A published handover is read
+/// from that checkout's `.ai/local/state/handovers/` (the latest, or the path named under
+/// it), so through a borrowed server it would publish the other checkout's record; a
+/// consumed handover is materialized there, so it would land in the other checkout.
+fn touches_the_serving_checkout(target: &str, body: Option<&Value>) -> Option<&'static str> {
+    match target {
+        "/api/v1/mesh/handovers" => Some(
+            "publishing through it would read that checkout's handovers, not this one's: publish from a checkout with its own running server (`majordomus serve ensure` here)",
+        ),
+        "/api/v1/mesh/handovers/consume"
+            if body.is_some_and(|b| b["materialize"] != json!(false)) =>
+        {
+            Some("consuming through it would write the handover into that checkout: pass --no-materialize, or consume it there")
+        }
+        _ => None,
+    }
+}
+
+/// Ask the running server that answers for this checkout ([`choose`]), and render the
+/// answer. No running server in the repository is an answer for a question and a refusal
+/// for a command: the mesh lives in the server.
 fn ask(
     args: &MeshQueryArgs,
     method: &str,
@@ -269,15 +340,33 @@ fn ask(
     render: fn(&Value) -> String,
     failed: fn(&Value) -> bool,
 ) -> Result<u8> {
-    let Some(url) = server_url(args)? else {
+    let Some(serving) = server_url(args)? else {
         let answer = json!({
             "active": false,
-            "reason": "no running server for this checkout: the mesh lives inside the shared server (majordomus serve ensure starts one)",
+            "reason": "no running server for any checkout of this repository: the mesh lives inside the shared server (majordomus serve ensure in the primary checkout starts one)",
         });
         emit(args, &answer, render);
         return Ok(if method == "GET" { 0 } else { EXIT_REFUSED });
     };
-    ask_at(&url, args, method, target, body, render, failed)
+    if let Some(worktree) = &serving.borrowed_from {
+        if let Some(why) = touches_the_serving_checkout(target, body.as_ref()) {
+            let message = format!(
+                "this checkout has no running server, and the one answering is {worktree}'s; {why}"
+            );
+            match args.format {
+                OutputFormat::Json => println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "error": { "code": "borrowed_server", "message": message }
+                    }))
+                    .unwrap_or_default()
+                ),
+                OutputFormat::Text => eprintln!("mesh: borrowed_server: {message}"),
+            }
+            return Ok(EXIT_REFUSED);
+        }
+    }
+    ask_at(&serving.url, args, method, target, body, render, failed)
 }
 
 /// [`ask`] of the server at `url`, already found.
@@ -793,6 +882,97 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
+    fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {
+        json!({
+            "worktree": worktree,
+            "primary": primary,
+            "this_checkout": this,
+            "standing": standing,
+            "lease": { "url": format!("http://127.0.0.1:{port}") },
+        })
+    }
+
+    #[test]
+    fn this_checkouts_ready_server_answers_for_it() {
+        let servers = [
+            server("/r", true, false, "ready", 1),
+            server("/r-wt/x", false, true, "ready", 2),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:2".into(),
+                borrowed_from: None
+            })
+        );
+    }
+
+    #[test]
+    fn a_worktree_without_a_server_borrows_the_primarys_first() {
+        let servers = [
+            server("/r", true, false, "ready", 1),
+            server("/r-wt/x", false, true, "absent", 2),
+            server("/r-wt/y", false, false, "ready", 3),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:1".into(),
+                borrowed_from: Some("/r".into())
+            })
+        );
+        // the primary not ready: the first ready other checkout
+        let servers = [
+            server("/r", true, false, "outdated", 1),
+            server("/r-wt/x", false, true, "stale", 2),
+            server("/r-wt/y", false, false, "ready", 3),
+        ];
+        assert_eq!(
+            choose(&servers),
+            Some(Serving {
+                url: "http://127.0.0.1:3".into(),
+                borrowed_from: Some("/r-wt/y".into())
+            })
+        );
+        // nothing ready anywhere: no server, and the command answers so
+        let servers = [
+            server("/r", true, false, "absent", 1),
+            server("/r-wt/x", false, true, "outdated", 2),
+        ];
+        assert_eq!(choose(&servers), None);
+        assert_eq!(choose(&[]), None);
+    }
+
+    #[test]
+    fn a_publish_and_a_materializing_consume_touch_the_serving_checkout() {
+        let consume = "/api/v1/mesh/handovers/consume";
+        assert!(touches_the_serving_checkout(
+            consume,
+            Some(&json!({ "handover": "h", "materialize": true }))
+        )
+        .is_some_and(|why| why.contains("--no-materialize")));
+        assert_eq!(
+            touches_the_serving_checkout(
+                consume,
+                Some(&json!({ "handover": "h", "materialize": false }))
+            ),
+            None
+        );
+        // a publish reads the serving checkout's handovers, named or latest
+        assert!(touches_the_serving_checkout(
+            "/api/v1/mesh/handovers",
+            Some(&json!({ "path": "p" }))
+        )
+        .is_some_and(|why| why.contains("that checkout's handovers")));
+        assert!(touches_the_serving_checkout("/api/v1/mesh/handovers", None).is_some());
+        assert_eq!(
+            touches_the_serving_checkout("/api/v1/mesh/claims", None),
+            None
+        );
+        assert_eq!(touches_the_serving_checkout("/api/v1/mesh", None), None);
+    }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
     const NODE_A: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";

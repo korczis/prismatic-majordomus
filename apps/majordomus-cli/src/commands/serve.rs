@@ -98,7 +98,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     let (host, port) = match &declared {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (
-            crate::cli::local_http_host(args.host.as_deref()).0,
+            crate::cli::checkout_http_host(
+                args.host.as_deref(),
+                std::path::Path::new(&app.context.index.repository.root),
+            )
+            .0,
             args.port,
         ),
     };
