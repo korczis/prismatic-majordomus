@@ -238,6 +238,12 @@
           "command": "majordomus continuity",
           "name": "continuity",
           "route": "/docs/cli/continuity/"
+        },
+        {
+          "about": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other",
+          "command": "majordomus fleet",
+          "name": "fleet",
+          "route": "/docs/cli/fleet/"
         }
       ],
       "command": "majordomus",
@@ -34064,13 +34070,567 @@
       ],
       "route": "/docs/cli/continuity/resume/",
       "usage": "majordomus continuity resume [OPTIONS]"
+    },
+    {
+      "about": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "What a rollout would do on every machine, reaching nothing",
+          "command": "majordomus fleet plan",
+          "name": "plan",
+          "route": "/docs/cli/fleet/plan/"
+        },
+        {
+          "about": "What every machine runs: platform, installed version, servers, and each hub's checkout and answer",
+          "command": "majordomus fleet status",
+          "name": "status",
+          "route": "/docs/cli/fleet/status/"
+        },
+        {
+          "about": "Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged",
+          "command": "majordomus fleet rollout",
+          "name": "rollout",
+          "route": "/docs/cli/fleet/rollout/"
+        }
+      ],
+      "command": "majordomus fleet",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "fleet",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "fleet"
+      ],
+      "route": "/docs/cli/fleet/",
+      "usage": "majordomus fleet [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "What a rollout would do on every machine, reaching nothing",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus fleet",
+          "name": "fleet",
+          "route": "/docs/cli/fleet/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A machine to plan for, by its name in the fleet; repeat for more, every machine when absent",
+          "long": "machine",
+          "name": "machine",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MACHINE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus fleet plan",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "fleet",
+            "plan"
+          ],
+          "command": "majordomus fleet plan",
+          "description": "The plan reads `.ai/repo/fleet/` and reaches nothing. In a repository with no fleet declaration it exits 12 and names where one goes; with one, it lists every machine, the ssh destinations tried in order, the hub it serves and the steps a rollout would take there (docs/FLEET.md).",
+          "expectation": "exits 12",
+          "id": "fleet-plan-no-fleet",
+          "setup": [],
+          "title": "A repository that declares no fleet says so"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "plan",
+      "parent_route": "/docs/cli/fleet/",
+      "path": [
+        "majordomus",
+        "fleet",
+        "plan"
+      ],
+      "route": "/docs/cli/fleet/plan/",
+      "usage": "majordomus fleet plan [OPTIONS]"
+    },
+    {
+      "about": "What every machine runs: platform, installed version, servers, and each hub's checkout and answer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus fleet",
+          "name": "fleet",
+          "route": "/docs/cli/fleet/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus fleet status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "fleet",
+            "status"
+          ],
+          "command": "majordomus fleet status",
+          "description": "Status asks every declared machine over ssh what it runs. With no fleet declared there is nothing to ask, and it exits 12 before opening any connection.",
+          "expectation": "exits 12",
+          "id": "fleet-status-no-fleet",
+          "setup": [],
+          "title": "No fleet, no machine to ask"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/fleet/",
+      "path": [
+        "majordomus",
+        "fleet",
+        "status"
+      ],
+      "route": "/docs/cli/fleet/status/",
+      "usage": "majordomus fleet status [OPTIONS]"
+    },
+    {
+      "about": "Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus fleet",
+          "name": "fleet",
+          "route": "/docs/cli/fleet/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A machine to roll out to, by its name in the fleet; repeat for more, every machine when absent",
+          "long": "machine",
+          "name": "machine",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MACHINE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Leave running the servers a machine runs from an older installed tree, rather than restarting them at the version",
+          "long": "keep-servers",
+          "name": "keep_servers",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "KEEP_SERVERS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus fleet rollout",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "fleet",
+            "rollout"
+          ],
+          "command": "majordomus fleet rollout",
+          "description": "The rollout changes other machines, so it runs only from a terminal and only over what the repository declares. With no fleet declared it exits 12 and touches nothing; with one, it reports every machine's steps and verdict, and exits 10 unless every machine converged.",
+          "expectation": "exits 12",
+          "id": "fleet-rollout-no-fleet",
+          "setup": [],
+          "title": "A rollout needs a fleet to roll out to"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "rollout",
+      "parent_route": "/docs/cli/fleet/",
+      "path": [
+        "majordomus",
+        "fleet",
+        "rollout"
+      ],
+      "route": "/docs/cli/fleet/rollout/",
+      "usage": "majordomus fleet rollout [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1493,
+    "commands": 220,
+    "examples": 219,
+    "runnable": 193
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.20.0",

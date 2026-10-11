@@ -46,6 +46,7 @@ pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
+pub(crate) mod fleet;
 pub(crate) mod generate;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
@@ -113,6 +114,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
+        Command::Fleet(args) => fleet::run(args),
     }
 }
 

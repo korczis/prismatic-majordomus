@@ -361,6 +361,15 @@ kinds:
       field: schema
       supported: [mesh/v1]
 
+  fleet-declaration:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json
+    schema: majordomus.fleet-declaration/v1
+    identity: [id]
+    schema_version:
+      field: schema
+      supported: [fleet/v1]
+
   workspace:
     format: yaml
     # the identity fixes the path: share/schemas/majordomus/workspace/workspace.v1.schema.json

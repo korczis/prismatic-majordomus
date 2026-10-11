@@ -1156,6 +1156,57 @@
       "tool": "majordomus_execution_start"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus fleet plan",
+      "id": "fleet.plan",
+      "kind": "query",
+      "module": "fleet",
+      "module_route": "/registry/modules/fleet/",
+      "resource": null,
+      "route": "/registry/capabilities/fleet-plan/",
+      "slug": "fleet-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "tests": [],
+      "title": "What a rollout would do on every machine",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus fleet rollout",
+      "id": "fleet.rollout",
+      "kind": "command",
+      "module": "fleet",
+      "module_route": "/registry/modules/fleet/",
+      "resource": null,
+      "route": "/registry/capabilities/fleet-rollout/",
+      "slug": "fleet-rollout",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "tests": [],
+      "title": "Bring every machine of the fleet to this release, and form the mesh",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus fleet status",
+      "id": "fleet.status",
+      "kind": "query",
+      "module": "fleet",
+      "module_route": "/registry/modules/fleet/",
+      "resource": null,
+      "route": "/registry/capabilities/fleet-status/",
+      "slug": "fleet-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "tests": [],
+      "title": "What every machine of the fleet runs",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/gates/#op-gates-completion",
       "claims": [],
       "cli": null,
@@ -3907,9 +3958,9 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 187,
     "claims": 89,
-    "modules": 53
+    "modules": 54
   },
   "generator": "majordomus-cli 0.20.0",
   "modules": [
@@ -4465,6 +4516,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
       "title": "Executions"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "fleet.plan",
+          "route": "/registry/capabilities/fleet-plan/",
+          "slug": "fleet-plan"
+        },
+        {
+          "id": "fleet.rollout",
+          "route": "/registry/capabilities/fleet-rollout/",
+          "slug": "fleet-rollout"
+        },
+        {
+          "id": "fleet.status",
+          "route": "/registry/capabilities/fleet-status/",
+          "slug": "fleet-status"
+        }
+      ],
+      "claims": [],
+      "id": "fleet",
+      "route": "/registry/modules/fleet/",
+      "slug": "fleet",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/fleet.rs",
+      "title": "Fleet"
     },
     {
       "capabilities": [
