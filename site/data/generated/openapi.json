@@ -98,6 +98,7 @@
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
     "op-mesh-events": "docs/api/mesh/",
+    "op-mesh-firewall": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
     "op-mesh-handover-publish": "docs/api/mesh/",
     "op-mesh-identity": "docs/api/mesh/",
@@ -155,6 +156,7 @@
     "op-recover-orphans": "docs/api/recover/",
     "op-release-analysis": "docs/api/release/",
     "op-release-changelog": "docs/api/release/",
+    "op-release-next": "docs/api/release/",
     "op-release-version": "docs/api/release/",
     "op-repository-info": "docs/api/repository/",
     "op-repository-scope": "docs/api/repository/",
@@ -187,6 +189,7 @@
     "schema-ActiveTask": "docs/api/shared/",
     "schema-Actor": "docs/api/executions/",
     "schema-ActorKind": "docs/api/executions/",
+    "schema-AdmitCommand": "docs/api/mesh/",
     "schema-AdrRef": "docs/api/product/",
     "schema-AdvisorCapacity": "docs/api/reasoning/",
     "schema-AdvisorCircuit": "docs/api/reasoning/",
@@ -201,6 +204,7 @@
     "schema-Announcement": "docs/api/peers/",
     "schema-AnswerObservation": "docs/api/shared/",
     "schema-AnswerView": "docs/api/objects/",
+    "schema-AppliedExemption": "docs/api/release/",
     "schema-Arch": "docs/api/distribution/",
     "schema-AreaList": "docs/api/why/",
     "schema-AreaView": "docs/api/why/",
@@ -221,6 +225,7 @@
     "schema-Attribution": "docs/api/trace/",
     "schema-AudienceList": "docs/api/why/",
     "schema-AudienceView": "docs/api/why/",
+    "schema-Backend": "docs/api/mesh/",
     "schema-Balance": "docs/api/lifecycle/",
     "schema-BenchmarkPolicy": "docs/api/capabilities/",
     "schema-BenchmarkPrecondition": "docs/api/capabilities/",
@@ -518,6 +523,11 @@
     "schema-FieldProvenance": "docs/api/devtask/",
     "schema-FieldSource": "docs/api/environment/",
     "schema-Finding": "docs/api/why/",
+    "schema-FirewallObservation": "docs/api/mesh/",
+    "schema-FirewallObservationState": "docs/api/mesh/",
+    "schema-FirewallPlan": "docs/api/mesh/",
+    "schema-FirewallReport": "docs/api/mesh/",
+    "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
     "schema-Fly": "docs/api/deploy/",
     "schema-Fonts": "docs/api/design/",
@@ -629,10 +639,12 @@
     "schema-KindRef": "docs/api/product/",
     "schema-KnowledgeCandidate": "docs/api/knowledge-base/",
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
+    "schema-KnowledgeGroup": "docs/api/knowledge-base/",
     "schema-KnowledgeRecord": "docs/api/knowledge-base/",
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
     "schema-LabelEffect": "docs/api/integration/",
     "schema-LabelPolicy": "docs/api/integration/",
+    "schema-LandingDecision": "docs/api/release/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
@@ -809,6 +821,7 @@
     "schema-PromptSource": "docs/api/product/",
     "schema-ProofState": "docs/api/shared/",
     "schema-ProofStep": "docs/api/integration/",
+    "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
     "schema-Provider": "docs/api/deploy/",
@@ -874,6 +887,7 @@
     "schema-Relation": "docs/api/continuity/",
     "schema-RelationDirection": "docs/api/entity/",
     "schema-RelationToMaster": "docs/api/integration/",
+    "schema-ReleaseAllocation": "docs/api/release/",
     "schema-ReleaseArtifactView": "docs/api/distribution/",
     "schema-ReleaseBaseline": "docs/api/release/",
     "schema-ReleaseChange": "docs/api/release/",
@@ -929,6 +943,7 @@
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
+    "schema-Role": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
     "schema-RoutingDecision": "docs/api/models/",
@@ -1172,8 +1187,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 184,
-    "schemas": 930,
+    "operations": 186,
+    "schemas": 943,
     "tags": 55
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1363,6 +1378,7 @@
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
     "mesh.events": "mesh",
+    "mesh.firewall": "mesh",
     "mesh.handover.consume": "mesh",
     "mesh.handover.publish": "mesh",
     "mesh.identity": "mesh",
@@ -1420,6 +1436,7 @@
     "recover.orphans": "recover",
     "release.analysis": "release",
     "release.changelog": "release",
+    "release.next": "release",
     "release.version": "release",
     "repository.info": "repository",
     "repository.scope": "repository",
@@ -1456,6 +1473,7 @@
     "ActiveTask": "shared",
     "Actor": "executions",
     "ActorKind": "executions",
+    "AdmitCommand": "mesh",
     "AdrRef": "product",
     "AdvisorCapacity": "reasoning",
     "AdvisorCircuit": "reasoning",
@@ -1470,6 +1488,7 @@
     "Announcement": "peers",
     "AnswerObservation": "shared",
     "AnswerView": "objects",
+    "AppliedExemption": "release",
     "Arch": "distribution",
     "AreaList": "why",
     "AreaView": "why",
@@ -1490,6 +1509,7 @@
     "Attribution": "trace",
     "AudienceList": "why",
     "AudienceView": "why",
+    "Backend": "mesh",
     "Balance": "lifecycle",
     "BenchmarkPolicy": "capabilities",
     "BenchmarkPrecondition": "capabilities",
@@ -1787,6 +1807,11 @@
     "FieldProvenance": "devtask",
     "FieldSource": "environment",
     "Finding": "why",
+    "FirewallObservation": "mesh",
+    "FirewallObservationState": "mesh",
+    "FirewallPlan": "mesh",
+    "FirewallReport": "mesh",
+    "FirewallRule": "mesh",
     "Fixtures": "repository",
     "Fly": "deploy",
     "Fonts": "design",
@@ -1898,10 +1923,12 @@
     "KindRef": "product",
     "KnowledgeCandidate": "knowledge-base",
     "KnowledgeCandidates": "knowledge-base",
+    "KnowledgeGroup": "knowledge-base",
     "KnowledgeRecord": "knowledge-base",
     "KnowledgeStatus": "knowledge-base",
     "LabelEffect": "integration",
     "LabelPolicy": "integration",
+    "LandingDecision": "release",
     "LayerSummary": "environment",
     "LeaseHolder": "integration",
     "LeaseView": "server",
@@ -2078,6 +2105,7 @@
     "PromptSource": "product",
     "ProofState": "shared",
     "ProofStep": "integration",
+    "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
     "Provider": "deploy",
@@ -2143,6 +2171,7 @@
     "Relation": "continuity",
     "RelationDirection": "entity",
     "RelationToMaster": "integration",
+    "ReleaseAllocation": "release",
     "ReleaseArtifactView": "distribution",
     "ReleaseBaseline": "release",
     "ReleaseChange": "release",
@@ -2198,6 +2227,7 @@
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
+    "Role": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
     "RoutingDecision": "models",
@@ -2567,6 +2597,42 @@
           "value": "internal"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One command that admits a rule: the rule's label, its argument vector exactly as\n`apply` executes it, and the same quoted as one line a person pastes into a root\nshell. The two are projections of one vector, so what the report shows is what runs.\n\n```\nuse std::net::Ipv4Addr;\nuse majordomus_cli::mesh::firewall::{plan, render, AdmitCommand, Backend};\nuse majordomus_cli::mesh::MeshConfig;\n\nlet config: MeshConfig = serde_json::from_value(serde_json::json!({\n    \"schema\": \"mesh/v1\", \"kind\": \"mesh-declaration\", \"id\": \"doc\", \"enabled\": true,\n})).unwrap();\nlet p = plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);\nlet commands: Vec<AdmitCommand> = render(Backend::Ufw, &p, None);\nassert_eq!(commands[0].argv[0], \"ufw\");\nassert_eq!(commands[0].rule, \"udp/7741 to 239.255.77.77 from any\");\nassert_eq!(commands[0].line, \"ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "AdmitCommand",
+      "properties": [
+        {
+          "description": "The rule it admits.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The program and its arguments, as executed.",
+          "name": "argv",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The same, quoted for a shell.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -3303,6 +3369,35 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \"plan-records\".into(), reason: \"plan records\".into() };\nassert_eq!(e.id, \"plan-records\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "AppliedExemption",
+      "properties": [
+        {
+          "description": "The class's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The class's description, which is the reason the floor did not apply.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LandingDecision"
       ],
       "values": [],
       "variants": []
@@ -4289,6 +4384,37 @@
         "CatalogueView"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \"application_firewall\");\nassert_eq!(Backend::None.as_str(), \"none\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Backend",
+      "properties": [],
+      "type": "\"ufw\" | \"nftables\" | \"application_firewall\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [
+        {
+          "description": "Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path.",
+          "value": "ufw"
+        },
+        {
+          "description": "nftables without ufw in front: `nft` is on the path.",
+          "value": "nftables"
+        },
+        {
+          "description": "macOS: the application firewall (`socketfilterfw`), which admits executables, not ports.",
+          "value": "application_firewall"
+        },
+        {
+          "description": "No firewall front this executable knows; nothing is observed and nothing is applied.",
+          "value": "none"
+        }
+      ],
       "variants": []
     },
     {
@@ -18147,6 +18273,7 @@
         "mesh.cooperation",
         "mesh.doctor",
         "mesh.events",
+        "mesh.firewall",
         "mesh.handover.publish",
         "mesh.handover.consume",
         "mesh.identity",
@@ -18207,6 +18334,7 @@
         "reasoning.record",
         "recover.orphans",
         "release.analysis",
+        "release.next",
         "release.version",
         "repository.info",
         "rules.report",
@@ -21377,6 +21505,278 @@
       "used_by": [],
       "used_by_schemas": [
         "ValidationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The firewall's own word, judged against the plan: the state, the evidence behind it,\nand the labels of the rules not admitted when the state is `missing`.\n\n```\nuse majordomus_cli::mesh::firewall::{judge_ufw, plan, FirewallObservation, FirewallObservationState};\n\nlet o: FirewallObservation = judge_ufw(\"Status: inactive\\n\", &plan(None, &[], None));\nassert_eq!(o.state, FirewallObservationState::Inactive);\nassert!(o.missing.is_empty() && o.detail.contains(\"inactive\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallObservation",
+      "properties": [
+        {
+          "description": "The verdict.",
+          "name": "state",
+          "refs": [
+            "FirewallObservationState"
+          ],
+          "required": true,
+          "type": "FirewallObservationState"
+        },
+        {
+          "description": "The evidence: the status line, the rules found, or the refusal.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The rules not admitted, by label, when `state` is `missing`.",
+          "name": "missing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the host's firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \"unobservable\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "FirewallObservationState",
+      "properties": [],
+      "type": "\"no_backend\" | \"inactive\" | \"present\" | \"missing\" | \"unobservable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallObservation"
+      ],
+      "values": [
+        {
+          "description": "No backend to ask.",
+          "value": "no_backend"
+        },
+        {
+          "description": "The firewall is off: nothing filters, nothing is needed.",
+          "value": "inactive"
+        },
+        {
+          "description": "Every rule of the plan is admitted.",
+          "value": "present"
+        },
+        {
+          "description": "At least one rule of the plan is not admitted.",
+          "value": "missing"
+        },
+        {
+          "description": "The firewall could not be asked from this process — it needs root.",
+          "value": "unobservable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What the declaration implies this host must admit: the rules, the networks they admit\nfrom, the hub ports this machine is listed for, and the addresses the plan saw. The\nanswer of `plan`; an empty `rules` is \"nothing is needed\", which is the answer for no\ndeclaration and for a disabled one.\n\n```\nuse majordomus_cli::mesh::firewall::{plan, FirewallPlan};\n\nlet nothing: FirewallPlan = plan(None, &[], None);\nassert!(nothing.rules.is_empty() && nothing.hub_ports.is_empty() && nothing.networks.is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallPlan",
+      "properties": [
+        {
+          "description": "This machine's addresses, as the plan saw them.",
+          "name": "local_addresses",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The private networks peers come from: the enclosing ranges of every address the\ndeclaration names, or of this machine's own when it names none.",
+          "name": "networks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The ports of the declared hubs this machine is.",
+          "name": "hub_ports",
+          "refs": [],
+          "required": true,
+          "type": "array of integer (uint16)"
+        },
+        {
+          "description": "The admissions, in a fixed order.",
+          "name": "rules",
+          "refs": [
+            "FirewallRule"
+          ],
+          "required": true,
+          "type": "array of FirewallRule"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole report: the plan, the backend, the commands, the firewall's word and the\nkernel's, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor's `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &[], None);\nassert!(r.ok && r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallReport",
+      "properties": [
+        {
+          "description": "Whether the host admits the mesh as far as it can be observed: nothing missing, and\nnothing logged as dropped.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The platform (`linux`, `macos`, …).",
+          "name": "platform",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The firewall front found.",
+          "name": "backend",
+          "refs": [
+            "Backend"
+          ],
+          "required": true,
+          "type": "Backend"
+        },
+        {
+          "description": "The executable the server runs as, which is what the macOS firewall admits.",
+          "name": "executable",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the declaration implies this host must admit.",
+          "name": "plan",
+          "refs": [
+            "FirewallPlan"
+          ],
+          "required": true,
+          "type": "FirewallPlan"
+        },
+        {
+          "description": "The commands that admit it on this backend; what `apply` runs.",
+          "name": "commands",
+          "refs": [
+            "AdmitCommand"
+          ],
+          "required": true,
+          "type": "array of AdmitCommand"
+        },
+        {
+          "description": "The firewall's own word about the plan.",
+          "name": "observation",
+          "refs": [
+            "FirewallObservation"
+          ],
+          "required": true,
+          "type": "FirewallObservation"
+        },
+        {
+          "description": "The window `blocked_recently` covers, in seconds.",
+          "name": "window_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Drops the kernel logged toward the plan's ports within the window, per port;\nabsent when the log could not be read.",
+          "name": "blocked_recently",
+          "refs": [],
+          "required": false,
+          "type": "object | null"
+        },
+        {
+          "description": "The sentence a person reads.",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.firewall"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\"192.168.7.0/24\".into()],\n    reason: \"this machine is a declared rendezvous hub\".into(),\n};\nassert_eq!(rule.label(), \"tcp/8791 from 192.168.7.0/24\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallRule",
+      "properties": [
+        {
+          "description": "Why.",
+          "name": "role",
+          "refs": [
+            "Role"
+          ],
+          "required": true,
+          "type": "Role"
+        },
+        {
+          "description": "The transport protocol.",
+          "name": "protocol",
+          "refs": [
+            "Protocol"
+          ],
+          "required": true,
+          "type": "Protocol"
+        },
+        {
+          "description": "The destination port.",
+          "name": "port",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint16)"
+        },
+        {
+          "description": "The destination address when it is a multicast group; `None` for this host's own.",
+          "name": "destination",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The sentence a person reads beside the rule.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallPlan"
       ],
       "values": [],
       "variants": []
@@ -27192,6 +27592,20 @@
           ],
           "required": true,
           "type": "AgeSource"
+        },
+        {
+          "description": "What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else.",
+          "name": "about",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Which owner should look first, derived from `about`'s structure; empty without one.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -27246,6 +27660,15 @@
           "type": "array of KnowledgeCandidate"
         },
         {
+          "description": "The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject.",
+          "name": "groups",
+          "refs": [
+            "KnowledgeGroup"
+          ],
+          "required": false,
+          "type": "array of KnowledgeGroup"
+        },
+        {
           "description": "`knowledge.candidates_max_files`, when the policy declares it.",
           "name": "cap",
           "refs": [],
@@ -27272,6 +27695,56 @@
         "knowledge_base.candidates"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```",
+      "home": "knowledge-base",
+      "is_enum": false,
+      "name": "KnowledgeGroup",
+      "properties": [
+        {
+          "description": "The subject, as written.",
+          "name": "about",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The route of its records.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The candidates awaiting review, by id.",
+          "name": "candidates",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The records rejected and kept, by id.",
+          "name": "rejected",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The episodes behind all of them, each once, in order.",
+          "name": "episodes",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KnowledgeCandidates"
+      ],
       "values": [],
       "variants": []
     },
@@ -27576,6 +28049,112 @@
       "used_by_schemas": [
         "IntegrationPolicy"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "LandingDecision",
+      "properties": [
+        {
+          "description": "`DECISION_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the trunk declares: the number the next one is raised from.",
+          "name": "trunk_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the change moves the public contract, measured (ADR 0051).",
+          "name": "observed",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "What that movement requires under the version's mode.",
+          "name": "required_by_compatibility",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The policy's floor, or `none` when an exemption applied.",
+          "name": "floor",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The exemption that lowered the floor, if one did.",
+          "name": "exemption",
+          "refs": [
+            "AppliedExemption"
+          ],
+          "required": false,
+          "type": "AppliedExemption | null"
+        },
+        {
+          "description": "The larger of the requirement and the floor.",
+          "name": "selected",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The trunk's version raised by `selected`.",
+          "name": "next_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the policy allocates at landing; the decision is computed either way.",
+          "name": "allocation",
+          "refs": [
+            "ReleaseAllocation"
+          ],
+          "required": true,
+          "type": "ReleaseAllocation"
+        },
+        {
+          "description": "The compatibility mode the trunk's version puts in force.",
+          "name": "mode",
+          "refs": [
+            "ReleasePolicyMode"
+          ],
+          "required": true,
+          "type": "ReleasePolicyMode"
+        },
+        {
+          "description": "One sentence per step, in the order the decision was made.",
+          "name": "explanation",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.next"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -36775,6 +37354,29 @@
       "variants": []
     },
     {
+      "description": "The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \"udp\");\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \"tcp\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Protocol",
+      "properties": [],
+      "type": "\"udp\" | \"tcp\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallRule"
+      ],
+      "values": [
+        {
+          "description": "Datagrams: discovery.",
+          "value": "udp"
+        },
+        {
+          "description": "Connections: the hub's registrations and the link protocol.",
+          "value": "tcp"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it.",
       "home": "executions",
       "is_enum": false,
@@ -41274,6 +41876,13 @@
               "type": "array of string"
             },
             {
+              "description": "The version a landing of this head allocates, when master allocates at landing\n(ADR 0134) and the head does not carry it: the head owes a refresh even though it\ncontains master. Absent when the policy does not allocate, or the head carries it.",
+              "name": "owes_version",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
               "description": "",
               "name": "kind",
               "refs": [],
@@ -41378,6 +41987,29 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\"\\\"landing\\\"\").unwrap();\nassert_eq!(a.as_str(), \"landing\");\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "ReleaseAllocation",
+      "properties": [],
+      "type": "\"off\" | \"landing\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LandingDecision"
+      ],
+      "values": [
+        {
+          "description": "The version is raised by whoever changes the contract, as before ADR 0134.",
+          "value": "off"
+        },
+        {
+          "description": "The integration executor raises it at landing; a pull request does not.",
+          "value": "landing"
+        }
+      ],
+      "variants": []
     },
     {
       "description": "The artifact a target and a tag name, and the directory it unpacks into.",
@@ -41944,6 +42576,7 @@
       "type": "\"none\" | \"patch\" | \"minor\" | \"major\"",
       "used_by": [],
       "used_by_schemas": [
+        "LandingDecision",
         "ReleaseCommitEvidence",
         "ReleaseSurfaceChange",
         "ReleaseVersionPlan"
@@ -42030,6 +42663,7 @@
       "type": "\"pre1-0-strict\" | \"semver\"",
       "used_by": [],
       "used_by_schemas": [
+        "LandingDecision",
         "ReleasePolicy"
       ],
       "values": [
@@ -44732,6 +45366,37 @@
         "CooperationState"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Role",
+      "properties": [],
+      "type": "\"multicast\" | \"broadcast\" | \"hub\" | \"link\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallRule"
+      ],
+      "values": [
+        {
+          "description": "The declared multicast group: every runtime of the segment advertises to it.",
+          "value": "multicast"
+        },
+        {
+          "description": "The declared broadcast port, when broadcast is a permitted fallback.",
+          "value": "broadcast"
+        },
+        {
+          "description": "This machine is a declared rendezvous hub: the fleet registers here.",
+          "value": "hub"
+        },
+        {
+          "description": "This machine's server is dialed by peers on the link protocol.",
+          "value": "link"
+        }
+      ],
       "variants": []
     },
     {
@@ -58324,7 +58989,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence claim",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-finding-names-how-to-see-it-again\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-candidate-is-routed-by-what-it-is-about\"",
           "description": "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give.",
           "home": "evidence",
           "id": "evidence.claim",
@@ -58338,7 +59003,7 @@
               "examples": [
                 {
                   "case": "first-claim",
-                  "value": "\"a-finding-names-how-to-see-it-again\""
+                  "value": "\"a-candidate-is-routed-by-what-it-is-about\""
                 }
               ],
               "name": "claim",
@@ -58391,7 +59056,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence proves",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A138_governance_gates\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A982_a_candidate_is_routed_by_what_it_is_about\"",
           "description": "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.",
           "home": "evidence",
           "id": "evidence.test",
@@ -58405,7 +59070,7 @@
               "examples": [
                 {
                   "case": "first-test",
-                  "value": "\"suite:138_governance_gates\""
+                  "value": "\"suite:982_a_candidate_is_routed_by_what_it_is_about\""
                 }
               ],
               "name": "test",
@@ -59796,7 +60461,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent explain",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=a-session-leaves-what-it-observed\"",
           "description": "One intent explained from the derivations alone: a sentence for its stage naming each milestone's derived status, a sentence per criterion naming its evidence state, the plan's coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it.",
           "home": "intent-realization",
           "id": "intent_realization.explain",
@@ -59810,7 +60475,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "id",
@@ -59863,7 +60528,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent realization",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=a-session-leaves-what-it-observed\"",
           "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning.",
           "home": "intent-realization",
           "id": "intent_realization.work",
@@ -59877,7 +60542,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "intent",
@@ -60227,7 +60892,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent show",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=a-session-leaves-what-it-observed\"",
           "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.",
           "home": "intents",
           "id": "intents.record",
@@ -60241,7 +60906,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "id",
@@ -61261,6 +61926,68 @@
           "result_schema": "EventList",
           "stability": "experimental",
           "summary": "The cooperation journal"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh firewall",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/firewall\"",
+          "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+          "home": "mesh",
+          "id": "mesh.firewall",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_firewall",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The port this checkout's server listens on beyond loopback, when it does: a peer\ndials it there on the link protocol, so it needs admitting too. Omitted, the plan\nholds the discovery ports and the hub ports the declaration gives this machine.",
+              "examples": [],
+              "name": "port",
+              "required": false,
+              "type": "integer (uint16)"
+            }
+          ],
+          "path": "/api/v1/mesh/firewall",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The host firewall, as the mesh needs it: the result.",
+              "schema": "FirewallReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "FirewallReport",
+          "stability": "experimental",
+          "summary": "The host firewall, as the mesh needs it"
         },
         {
           "benchmark": "waived",
@@ -65281,6 +66008,75 @@
           "result_schema": "ReleaseVersionPlan",
           "stability": "implemented",
           "summary": "What the public contract did, and the smallest version it allows"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/next\"",
+          "description": "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+          "home": "release",
+          "id": "release.next",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_next",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The trunk the landing raises from; `origin/master` when absent.",
+              "examples": [],
+              "name": "base",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "What lands; `HEAD` when absent.",
+              "examples": [],
+              "name": "head",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/release/next",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The version a landing allocates, and why: the result.",
+              "schema": "LandingDecision",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LandingDecision",
+          "stability": "implemented",
+          "summary": "The version a landing allocates, and why"
         },
         {
           "benchmark": "required",

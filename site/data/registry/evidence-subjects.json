@@ -544,6 +544,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.firewall.apply",
+      "path": "/evidence/capabilities/mesh-firewall-apply/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.firewall",
+      "path": "/evidence/capabilities/mesh-firewall/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.handover.consume",
       "path": "/evidence/capabilities/mesh-handover-consume/"
     },
@@ -829,6 +839,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:release.next",
+      "path": "/evidence/capabilities/release-next/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:release.version",
       "path": "/evidence/capabilities/release-version/"
     },
@@ -979,8 +994,18 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "path": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:a-finding-names-how-to-see-it-again",
       "path": "/evidence/claims/a-finding-names-how-to-see-it-again/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:a-session-records-what-it-observed",
+      "path": "/evidence/claims/a-session-records-what-it-observed/"
     },
     {
       "kind": "claim",
@@ -1031,6 +1056,11 @@
       "kind": "claim",
       "subject": "claim:ai-layer-manifest",
       "path": "/evidence/claims/ai-layer-manifest/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:an-observation-becomes-a-grouped-candidate",
+      "path": "/evidence/claims/an-observation-becomes-a-grouped-candidate/"
     },
     {
       "kind": "claim",
@@ -1641,6 +1671,11 @@
       "kind": "claim",
       "subject": "claim:mesh-declared-is-held",
       "path": "/evidence/claims/mesh-declared-is-held/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:mesh-firewall-is-derived",
+      "path": "/evidence/claims/mesh-firewall-is-derived/"
     },
     {
       "kind": "claim",
@@ -2709,6 +2744,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh firewall apply",
+      "path": "/evidence/commands/mesh-firewall-apply/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh firewall",
+      "path": "/evidence/commands/mesh-firewall/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh handover consume",
       "path": "/evidence/commands/mesh-handover-consume/"
     },
@@ -2996,6 +3041,11 @@
       "kind": "command",
       "subject": "command:release changelog",
       "path": "/evidence/commands/release-changelog/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:release next",
+      "path": "/evidence/commands/release-next/"
     },
     {
       "kind": "command",
@@ -4818,6 +4868,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:mesh.firewall": {
+      "kind": "capability",
+      "id": "mesh.firewall",
+      "page": "/evidence/capabilities/mesh-firewall/",
+      "programs": [],
+      "members": [
+        "command:mesh firewall"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.firewall.apply": {
+      "kind": "capability",
+      "id": "mesh.firewall.apply",
+      "page": "/evidence/capabilities/mesh-firewall-apply/",
+      "programs": [],
+      "members": [
+        "command:mesh firewall apply"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:mesh.handover.consume": {
       "kind": "capability",
       "id": "mesh.handover.consume",
@@ -5460,6 +5534,16 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:release.next": {
+      "kind": "capability",
+      "id": "release.next",
+      "page": "/evidence/capabilities/release-next/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:release.version": {
       "kind": "capability",
       "id": "release.version",
@@ -5802,6 +5886,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:a-candidate-is-routed-by-what-it-is-about": {
+      "kind": "claim",
+      "id": "a-candidate-is-routed-by-what-it-is-about",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:a-finding-names-how-to-see-it-again": {
       "kind": "claim",
       "id": "a-finding-names-how-to-see-it-again",
@@ -5819,6 +5926,29 @@
             "docs/DOCTRINE.md",
             "scripts/ci/finding-reproduce-check",
             "test/cases/138_governance_gates.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:a-session-records-what-it-observed": {
+      "kind": "claim",
+      "id": "a-session-records-what-it-observed",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-session-records-what-it-observed/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/980_a_session_records_what_it_observed.sh"
           ]
         }
       ],
@@ -6049,6 +6179,29 @@
             "docs/SCHEMAS.md",
             "lib/init.sh",
             "test/cases/01_init.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:an-observation-becomes-a-grouped-candidate": {
+      "kind": "claim",
+      "id": "an-observation-becomes-a-grouped-candidate",
+      "status": "guaranteed",
+      "page": "/evidence/claims/an-observation-becomes-a-grouped-candidate/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
           ]
         }
       ],
@@ -8835,6 +8988,29 @@
             "docs/MESH.md",
             "apps/majordomus-cli/src/mesh/doctor.rs",
             "test/cases/494_the_mesh_is_declared_and_held.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:mesh-firewall-is-derived": {
+      "kind": "claim",
+      "id": "mesh-firewall-is-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mesh-firewall-is-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:495_the_firewall_admits_the_mesh",
+          "path": "test/cases/495_the_firewall_admits_the_mesh.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/mesh/firewall.rs",
+            "test/cases/495_the_firewall_admits_the_mesh.sh"
           ]
         }
       ],
@@ -11635,6 +11811,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
@@ -14340,6 +14528,24 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
@@ -14367,6 +14573,24 @@
           "via": "negative",
           "test": "suite:709_knowledge_promotion_is_an_act",
           "path": "test/cases/709_knowledge_promotion_is_an_act.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
           "category": "e2e"
         }
       ],
@@ -14491,6 +14715,44 @@
       "kind": "command",
       "id": "mesh events",
       "page": "/evidence/commands/mesh-events/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh firewall": {
+      "kind": "command",
+      "id": "mesh firewall",
+      "page": "/evidence/commands/mesh-firewall/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh firewall apply": {
+      "kind": "command",
+      "id": "mesh firewall apply",
+      "page": "/evidence/commands/mesh-firewall-apply/",
       "programs": [
         "native"
       ],
@@ -15786,6 +16048,25 @@
       "kind": "command",
       "id": "release changelog",
       "page": "/evidence/commands/release-changelog/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:release next": {
+      "kind": "command",
+      "id": "release next",
+      "page": "/evidence/commands/release-next/",
       "programs": [
         "native"
       ],
@@ -19231,6 +19512,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_mesh_firewall": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_firewall",
+      "alias_of": "capability:mesh.firewall",
+      "programs": [],
+      "members": [
+        "capability:mesh.firewall"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_mesh_handover_consume": {
       "kind": "mcp",
       "id": "majordomus_mesh_handover_consume",
@@ -19862,6 +20155,18 @@
       "programs": [],
       "members": [
         "capability:release.analysis"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_release_next": {
+      "kind": "mcp",
+      "id": "majordomus_release_next",
+      "alias_of": "capability:release.next",
+      "programs": [],
+      "members": [
+        "capability:release.next"
       ],
       "routes": [],
       "mechanisms": [],
@@ -26055,7 +26360,12 @@
     "suite:1052_an_absent_source_is_reported",
     "suite:1053_the_cockpit_follows_the_stream",
     "suite:1054_every_session_is_told_the_stream",
+    "suite:1060_the_version_is_allocated_at_landing",
+    "suite:1061_the_executor_allocates_the_version_at_landing",
+    "suite:1070_a_number_in_prose_is_a_number_the_repository_states",
+    "suite:1071_the_site_searches_from_everywhere",
     "suite:1072_the_train_is_seen",
+    "suite:1074_a_script_that_sources_the_library_leaves_no_temp_files",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

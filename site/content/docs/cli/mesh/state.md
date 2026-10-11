@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh state"
 description = "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review"
-weight = 138
+weight = 141
 [extra]
 route = "/docs/cli/mesh/state/"
 command = "majordomus mesh state"

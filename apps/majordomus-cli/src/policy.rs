@@ -168,6 +168,11 @@ pub struct Policy {
     /// policy predates the block starts work exactly as it did (ADR 0111).
     #[serde(default)]
     pub intent: IntentPolicy,
+    /// `release:` — who raises the version and by at least how much (ADR 0134). Absent is
+    /// `allocation: off` with no floor: a repository whose policy predates the block raises
+    /// its version exactly as it did.
+    #[serde(default)]
+    pub release: crate::release::landing::ReleasePolicy,
 }
 
 /// How strictly a start is held to its binding.
