@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 21.
+Stability: experimental. Capabilities: 22.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
@@ -72,6 +72,26 @@ Every prerequisite proved on this machine alone — the declaration parses, the 
 Input: none.
 
 Output: `MeshDoctorReport`.
+
+## `mesh.enrol` — Enrol this machine in the mesh
+
+Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_enrol` |
+| HTTP | `POST /api/v1/mesh/enrol` |
+| CLI | `majordomus mesh enrol` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, identity, trust |
+
+Input: none.
+
+Output: `MeshEnrolment`.
 
 ## `mesh.events` — The cooperation journal
 

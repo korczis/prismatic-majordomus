@@ -45,9 +45,15 @@ poll() {
 
 # ---------------------------------------------------------------- 1. the committed declaration
 expect_file "$DECL"
-# This repository's decision is not the tool's default: the skeleton ships no declaration.
-skeleton_mesh="$(find "$ROOT/share/skeleton" -path '*/repo/mesh/*' -name '*.yaml' 2>/dev/null)"
-[ -z "$skeleton_mesh" ] || { echo "    the skeleton ships a mesh declaration, so every new repository would inherit this one's: $skeleton_mesh"; exit 1; }
+# This repository's fleet is not the tool's default: the declaration the skeleton ships (ADR
+# 0137) lists no key and names no endpoint, so a new repository inherits nobody's trust and
+# dials nobody's hub — it stays closed until one of its own machines is enrolled.
+skeleton_mesh="$ROOT/share/skeleton/ai/repo/mesh/mesh.yaml"
+expect_file "$skeleton_mesh"
+grep -q '^  allow: \[\]$' "$skeleton_mesh" && grep -q '^  policy: deny_unknown$' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration trusts somebody, or not by deny_unknown:"; cat "$skeleton_mesh"; exit 1; }
+! grep -qE 'https?://|^rendezvous:|seeds:' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration names an endpoint a new repository would dial:"; cat "$skeleton_mesh"; exit 1; }
 EMPTY="$T/no-identity"; mkdir -p "$EMPTY"
 # The self-check runs in this process, under the state directory given here: `mesh doctor`
 # would ask a server serving $ROOT, whose identity is the machine's and not the fixture's

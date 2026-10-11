@@ -1780,6 +1780,23 @@
       "tool": "majordomus_mesh_doctor"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-enrol",
+      "claims": [],
+      "cli": "majordomus mesh enrol",
+      "id": "mesh.enrol",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-enrol/",
+      "slug": "mesh-enrol",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Enrol this machine in the mesh",
+      "tool": "majordomus_mesh_enrol"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-events",
       "claims": [],
       "cli": null,
@@ -3907,11 +3924,11 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 185,
     "claims": 89,
     "modules": 53
   },
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "modules": [
     {
       "capabilities": [
@@ -4742,6 +4759,11 @@
           "id": "mesh.doctor",
           "route": "/registry/capabilities/mesh-doctor/",
           "slug": "mesh-doctor"
+        },
+        {
+          "id": "mesh.enrol",
+          "route": "/registry/capabilities/mesh-enrol/",
+          "slug": "mesh-enrol"
         },
         {
           "id": "mesh.events",

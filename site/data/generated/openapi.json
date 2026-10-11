@@ -95,6 +95,7 @@
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
+    "op-mesh-enrol": "docs/api/mesh/",
     "op-mesh-events": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
     "op-mesh-handover-publish": "docs/api/mesh/",
@@ -659,6 +660,7 @@
     "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
+    "schema-MeshEnrolment": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
     "schema-MeshProviderState": "docs/api/mesh/",
@@ -1130,8 +1132,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 181,
-    "schemas": 893,
+    "operations": 182,
+    "schemas": 894,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1161,7 +1163,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.20.0",
+  "generated_by": "majordomus-cli 0.21.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1170,7 +1172,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "infrastructure": [
     {
@@ -1312,6 +1314,7 @@
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
+    "mesh.enrol": "mesh",
     "mesh.events": "mesh",
     "mesh.handover.consume": "mesh",
     "mesh.handover.publish": "mesh",
@@ -1880,6 +1883,7 @@
     "McpTransportEntry": "mcp",
     "Measured": "design",
     "MeshDoctorReport": "mesh",
+    "MeshEnrolment": "mesh",
     "MeshEvent": "mesh",
     "MeshIdentityReport": "mesh",
     "MeshProviderState": "mesh",
@@ -16380,6 +16384,7 @@
       "properties": [],
       "type": "object",
       "used_by": [
+        "mesh.enrol",
         "mesh.verify"
       ],
       "used_by_schemas": [],
@@ -17527,6 +17532,7 @@
         "mesh.release",
         "mesh.cooperation",
         "mesh.doctor",
+        "mesh.enrol",
         "mesh.events",
         "mesh.handover.publish",
         "mesh.handover.consume",
@@ -28690,6 +28696,49 @@
       "type": "object",
       "used_by": [
         "mesh.doctor"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.enrol`: which declaration, which key, and whether it changed.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshEnrolment",
+      "properties": [
+        {
+          "description": "The declaration file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This machine's public key: what is listed, never a secret.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the key was added now; `false` when it was listed already.",
+          "name": "added",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What to do next: commit the file, or nothing.",
+          "name": "next",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.enrol"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -58761,6 +58810,70 @@
           "result_schema": "MeshDoctorReport",
           "stability": "experimental",
           "summary": "The mesh self-check"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "Empty",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh enrol",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/enrol\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+          "home": "mesh",
+          "id": "mesh.enrol",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_enrol",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/enrol",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Enrol this machine in the mesh: the result.",
+              "schema": "MeshEnrolment",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshEnrolment",
+          "stability": "experimental",
+          "summary": "Enrol this machine in the mesh"
         },
         {
           "benchmark": "required",

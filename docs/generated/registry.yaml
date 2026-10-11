@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.21.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
+generator: majordomus-cli 0.21.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -184,7 +184,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 21
+    capabilities: 22
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -29986,6 +29986,72 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.enrol
+    module: mesh
+    kind: command
+    title: Enrol this machine in the mesh
+    description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshEnrolment
+      schema:
+        type: object
+        properties:
+          path:
+            type: string
+            description: "The declaration file, repository-relative."
+          key:
+            type: string
+            description: "This machine's public key: what is listed, never a secret."
+          added:
+            type: boolean
+            description: "Whether the key was added now; `false` when it was listed already."
+          next:
+            type: string
+            description: "What to do next: commit the file, or nothing."
+        required:
+          - path
+          - key
+          - added
+          - next
+        description: "The answer of `mesh.enrol`: which declaration, which key, and whether it changed."
+        title: MeshEnrolment
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_enrol
+      http:
+        method: POST
+        path: /api/v1/mesh/enrol
+      cli:
+        path:
+          - mesh
+          - enrol
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - identity
+      - trust
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.events
     module: mesh

@@ -402,3 +402,77 @@ fn an_enabled_declaration_the_server_could_not_activate_fails_the_doctor_and_nam
     );
     assert_eq!(s.stop(), 0);
 }
+
+#[test]
+fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
+    let f = Fixture::new();
+    // the declaration `majordomus init` ships: enabled, deny_unknown, nobody listed
+    let seeded = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../share/skeleton/ai/repo/mesh/mesh.yaml"),
+    )
+    .unwrap();
+    f.write(".ai/repo/mesh/mesh.yaml", &seeded);
+    let state = f.root().join("xdg-state");
+    let mj = |args: &[&str]| {
+        let out = std::process::Command::new(common::BIN)
+            .args(args)
+            .args(["--discovery", "filesystem"])
+            .current_dir(f.root())
+            .env("XDG_STATE_HOME", &state)
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .output()
+            .unwrap();
+        (
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stdout).to_string(),
+        )
+    };
+
+    // closed before: the doctor's trust check names this machine as unlisted
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    let trust = |report: &str| -> Value {
+        serde_json::from_str::<Value>(report).unwrap()["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["check"] == json!("trust"))
+            .cloned()
+            .unwrap_or(Value::Null)
+    };
+    // no identity yet: nothing to check against, so no trust verdict either way
+    assert_ne!(trust(&doctor)["ok"], json!(true), "{doctor}");
+
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    let enrolled: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(enrolled["added"], json!(true), "{enrolled}");
+    let key = enrolled["key"].as_str().unwrap().to_string();
+    assert_eq!(key.len(), 64);
+    assert!(
+        state.join("majordomus").join("node.json").is_file(),
+        "enrolment created this machine's identity under its state directory"
+    );
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    assert!(written.contains(&format!("    - \"{key}\"")), "{written}");
+    assert!(
+        written.starts_with("# The mesh of this repository"),
+        "the comments stay"
+    );
+
+    // once: a second enrolment changes nothing
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(
+        serde_json::from_str::<Value>(&out).unwrap()["added"],
+        json!(false)
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        written
+    );
+
+    // and the machine is listed: the trust check passes
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
+}

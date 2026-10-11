@@ -117,6 +117,86 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, Capability
     }
 }
 
+// ---------------------------------------------------------------- mesh.enrol
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `mesh.enrol`: which declaration, which key, and whether it changed.
+pub struct MeshEnrolment {
+    /// The declaration file, repository-relative.
+    pub path: String,
+    /// This machine's public key: what is listed, never a secret.
+    pub key: String,
+    /// Whether the key was added now; `false` when it was listed already.
+    pub added: bool,
+    /// What to do next: commit the file, or nothing.
+    pub next: String,
+}
+
+/// The name a machine's allowlist entry carries: its node id, its host name and its
+/// platform, the shape a person writes by hand ("641bdb94 — a MacBook (macos aarch64)").
+fn machine_label(identity: &PublicIdentity) -> String {
+    let host = std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "this machine".into());
+    format!(
+        "{} — {host} ({} {})",
+        identity.display_name,
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    )
+}
+
+fn mesh_enrol(ctx: &Context, _: Empty) -> Result<MeshEnrolment, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let object = ctx
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == crate::mesh::KIND)
+        .ok_or_else(|| {
+            CapabilityError::NotFound(
+                "this repository declares no mesh: `majordomus init --extend` seeds .ai/repo/mesh/mesh.yaml".into(),
+            )
+        })?;
+    let relative = object.provenance.path.clone();
+    let path = root.join(&relative);
+    let identity_path = default_identity_path().ok_or_else(|| {
+        CapabilityError::Refused(
+            "no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity".into(),
+        )
+    })?;
+    let identity = NodeIdentity::load_or_create(&identity_path)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let key = identity.public.public_key.clone();
+    let text = std::fs::read_to_string(&path)
+        .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
+    match crate::mesh::enrol::enrol(&text, &key, &machine_label(&identity.public)) {
+        Ok(None) => Ok(MeshEnrolment {
+            path: relative,
+            key,
+            added: false,
+            next: "nothing: this machine's key is listed already".into(),
+        }),
+        Ok(Some(enrolled)) => {
+            std::fs::write(&path, enrolled)
+                .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
+            Ok(MeshEnrolment {
+                next: format!(
+                    "commit {relative}, so every machine that pulls it trusts this one; restart this checkout's server (`majordomus serve stop`, then `majordomus serve ensure`) to open the mesh here"
+                ),
+                path: relative,
+                key,
+                added: true,
+            })
+        }
+        Err(e) => Err(CapabilityError::Refused(format!("{relative}: {e}"))),
+    }
+}
+
 // ---------------------------------------------------------------- mesh.doctor
 
 fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityError> {
@@ -1129,6 +1209,24 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_nodes,
             },
             capability! {
+                id: "mesh.enrol",
+                kind: CapabilityKind::Command,
+                title: "Enrol this machine in the mesh",
+                description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+                input: Empty,
+                output: MeshEnrolment,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_enrol"),
+                    http: post("/api/v1/mesh/enrol"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "enrol".into()] }),
+                },
+                tags: ["mesh", "identity", "trust"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_enrol,
+            }
+            .writes_repository(),
+            capability! {
                 id: "mesh.identity",
                 title: "This machine's node identity",
                 description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
@@ -1388,6 +1486,11 @@ mod tests {
                 "/api/v1/mesh/nodes",
             ),
             (
+                "mesh.enrol",
+                Some("majordomus_mesh_enrol"),
+                "/api/v1/mesh/enrol",
+            ),
+            (
                 "mesh.identity",
                 Some("majordomus_mesh_identity"),
                 "/api/v1/mesh/identity",
@@ -1533,10 +1636,12 @@ mod tests {
                     c.id
                 );
             }
-            assert_ne!(
-                c.execution.effect,
-                crate::capability::model::Effect::RepositoryMutation,
-                "{}: the mesh writes no tracked file",
+            // one tracked file is written, by one capability: the declaration's trust list,
+            // by `mesh.enrol` (ADR 0137); nothing the mesh hears ever writes the repository
+            assert_eq!(
+                c.execution.effect == crate::capability::model::Effect::RepositoryMutation,
+                c.id.as_str() == "mesh.enrol",
+                "{}: only enrolment writes a tracked file",
                 c.id
             );
         }

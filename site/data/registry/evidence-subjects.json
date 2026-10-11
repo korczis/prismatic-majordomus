@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -526,6 +526,11 @@
       "kind": "capability",
       "subject": "capability:mesh.doctor",
       "path": "/evidence/capabilities/mesh-doctor/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.enrol",
+      "path": "/evidence/capabilities/mesh-enrol/"
     },
     {
       "kind": "capability",
@@ -2679,6 +2684,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh enrol",
+      "path": "/evidence/commands/mesh-enrol/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh events",
       "path": "/evidence/commands/mesh-events/"
     },
@@ -4724,6 +4734,18 @@
       "programs": [],
       "members": [
         "command:mesh doctor"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.enrol": {
+      "kind": "capability",
+      "id": "mesh.enrol",
+      "page": "/evidence/capabilities/mesh-enrol/",
+      "programs": [],
+      "members": [
+        "command:mesh enrol"
       ],
       "routes": [],
       "mechanisms": [],
@@ -14338,6 +14360,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh enrol": {
+      "kind": "command",
+      "id": "mesh enrol",
+      "page": "/evidence/commands/mesh-enrol/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh events": {
       "kind": "command",
       "id": "mesh events",
@@ -18943,6 +18984,18 @@
       "programs": [],
       "members": [
         "capability:mesh.doctor"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_enrol": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_enrol",
+      "alias_of": "capability:mesh.enrol",
+      "programs": [],
+      "members": [
+        "capability:mesh.enrol"
       ],
       "routes": [],
       "mechanisms": [],
