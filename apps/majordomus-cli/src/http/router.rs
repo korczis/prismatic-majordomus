@@ -17,6 +17,7 @@ use serde_json::{json, Value};
 use crate::capability::{CapabilityError, CaseContext, Context, HttpMethod};
 use crate::cockpit::Cockpit;
 use crate::live::{IntoLive, Live, Memo};
+use crate::ui::Ui;
 use crate::web::discover::Runtime;
 use crate::web::home;
 
@@ -356,6 +357,7 @@ pub struct Router {
     mcp: Option<Arc<McpEndpoint>>,
     /// The Cockpit, when the process located a distribution to serve its assets from.
     cockpit: Option<Arc<Cockpit>>,
+    ui: Option<Arc<Ui>>,
     /// The resolved surfaces and their handlers, and the context narrowed to them. Built
     /// on first use, because the builder learns what this process offers after `new`, and
     /// again for each generation, because the topology is read out of the repository.
@@ -425,6 +427,7 @@ impl Router {
             openapi: Arc::new(Memo::default()),
             mcp: None,
             cockpit: None,
+            ui: None,
             served: Arc::new(Memo::default()),
             git: Arc::new(std::sync::OnceLock::new()),
         }
@@ -433,6 +436,17 @@ impl Router {
     /// The same router, serving the Cockpit's pages with its assets read from `share_dir`.
     pub fn with_cockpit(mut self, share_dir: Option<&std::path::Path>) -> Self {
         self.cockpit = Some(Arc::new(Cockpit::new(
+            Arc::clone(&self.live),
+            self.version,
+            share_dir,
+        )));
+        self
+    }
+
+    /// The same router, serving the UI's pages (ADR 0135) with its assets read from
+    /// `share_dir`.
+    pub fn with_ui(mut self, share_dir: Option<&std::path::Path>) -> Self {
+        self.ui = Some(Arc::new(Ui::new(
             Arc::clone(&self.live),
             self.version,
             share_dir,
@@ -451,6 +465,7 @@ impl Router {
         Runtime {
             mcp: self.mcp.is_some(),
             cockpit: self.cockpit.is_some(),
+            ui: self.ui.is_some(),
         }
     }
 
@@ -633,6 +648,14 @@ impl Router {
                     500,
                     "internal",
                     "the Cockpit surface is served with no Cockpit behind it",
+                ),
+            },
+            Bound::Route(Native::Ui) => match &self.ui {
+                Some(ui) => ui.handle(req),
+                None => error_response(
+                    500,
+                    "internal",
+                    "the UI surface is served with no UI behind it",
                 ),
             },
             Bound::Route(Native::Api) => {

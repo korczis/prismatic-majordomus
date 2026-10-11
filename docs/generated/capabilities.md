@@ -258,4 +258,4 @@ Every object of the repository's AI layer is a capability of kind `resource` wit
 
 ## Infrastructure routes
 
-The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/events`, `/cockpit`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.
+The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/events`, `/cockpit`, `/ui`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.

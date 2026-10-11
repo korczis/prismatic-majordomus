@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 88,
+      "count": 89,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 88
+      "count": 89
     },
     {
       "kind": "application",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -133,7 +133,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 28
     },
     {
       "kind": "gap",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 280
+      "count": 283
     },
     {
       "kind": "knowledge",
@@ -739,6 +739,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0089/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
         }
       ]
     },
@@ -1227,7 +1234,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -5132,7 +5147,15 @@
           "external": true
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6701,6 +6724,60 @@
           "edge": "put_in_force",
           "label": "test/cases/96_site_deploy.sh",
           "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0135",
+      "identity": "adr-0135",
+      "slug": "adr-0135",
+      "cockpit": "/cockpit/objects/adr/adr-0135",
+      "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "cockpit"
+      ],
+      "source": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0022",
+          "kind": "adr",
+          "route": "/adrs/adr-0022/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
           "route": null,
           "external": false
         }

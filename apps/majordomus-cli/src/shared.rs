@@ -173,7 +173,8 @@ impl SharedServer {
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
         let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
-            .with_cockpit(share_dir);
+            .with_cockpit(share_dir)
+            .with_ui(share_dir);
         // The mesh, when the repository declares one — before the workers pick up their
         // first request, so a client that connects on the "listening" line already sees
         // the activated runtime. Never blocking: providers open sockets on their own
