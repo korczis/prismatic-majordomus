@@ -47,7 +47,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
-| Governance | `/ui/governance` | `rules.report` |
+| Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a

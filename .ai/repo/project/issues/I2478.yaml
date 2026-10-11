@@ -1,0 +1,31 @@
+id: I2478
+milestone: development-runtime
+title: "A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it"
+slug: a-rule-opens-its-proof
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a reader of majordomus ui open any rule (/ui/governance?rule=<id>) into an inspector from rules.show: what it states, how it is enforced, every test that proves it with the state of its proof, the gates that run them, what is still missing to prove it, and the rules it depends on and that require it, each a link."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (pack v3 M10 governance). The Governance screen lists 165 rules as rows that open nothing, and its rule column read a field the report gives as an object, so a row did not even name its rule; rules.show already joins one rule to its proof."
+current_state: "A rule is a row of the Governance screen that opens nothing and does not name its rule."
+desired_state: "?rule=<id> asks rules.show and opens the inspector above the Governance screen: the rule's identity, title, class, status and proof state, its statement, what its proof state means, how it is enforced (mode and validator), its gates, the rules it depends on and that require it (each a link), where it is declared, every test that proves it with its state and meaning, and what is still missing to prove it. The Governance rows name each rule by its id and title and lead to its inspector. A rule the index does not hold is shown as the capability's refusal; a value that is no rule id is never asked."
+scope:
+  - "apps/majordomus-cli/src/ui/rule.rs"
+  - "apps/majordomus-cli/src/ui/governance.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2478.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1083_a_rule_opens_its_proof.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "?rule=<id> opens the inspector with what proves it and the rules around it as links"
+  - "the Governance rows name each rule and lead to its inspector"
+  - "an unknown rule is said as the capability's refusal, and a value that is no id is never asked"
+validation:
+  - "cargo test --lib ui::rule"
+  - "test/run.sh 1083_a_rule_opens_its_proof"
+evidence_required:
+  - "ui_rule_unit_tests"
+  - "ui_rule_case_1083"
+created_at: 2026-10-11
+updated_at: 2026-10-11

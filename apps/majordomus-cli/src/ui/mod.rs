@@ -52,6 +52,7 @@ pub(crate) mod mesh;
 pub(crate) mod milestone;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
+pub(crate) mod rule;
 pub(crate) mod shell;
 pub(crate) mod source;
 pub(crate) mod timings;
@@ -270,7 +271,7 @@ impl Ui {
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
             docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
-            governance::ROUTE => governance::screen(&ctx),
+            governance::ROUTE => governance::screen(&ctx, &req.query),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
             prs::PANEL => prs::panel_view(&ctx, &req.query),
@@ -449,7 +450,10 @@ mod tests {
                 evidence::ROUTE,
                 evidence::screen(&ctx, &[("claim".into(), "no-such-claim".into())]),
             ),
-            (governance::ROUTE, governance::screen(&ctx)),
+            (
+                governance::ROUTE,
+                governance::screen(&ctx, &[("rule".into(), "no.such-rule".into())]),
+            ),
             (command::ROUTE, command::screen(&ctx, &[])),
             (
                 capabilities::ROUTE,

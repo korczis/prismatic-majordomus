@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use super::forge::ForgeObservation;
 use super::model::{CheckKind, CheckRunState};
+use crate::order::{canonical, numeric, OrderKey, Ordered};
 use crate::peers::parse_rfc3339;
 
 /// How one check takes, across the open heads that ran it.
@@ -70,6 +71,25 @@ pub struct CiTimings {
     pub checks: Vec<CheckTiming>,
     /// Every head with a measured check, the longest wall time first.
     pub heads: Vec<HeadTiming>,
+}
+
+/// Checks are read slowest median first, then by name: the median is the rank, negated so
+/// that the longest wait leads.
+impl Ordered for CheckTiming {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.name, &self.name).ranked(slowest_first(self.median_seconds))
+    }
+}
+
+/// Heads are read longest wall time first, then by head.
+impl Ordered for HeadTiming {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.head_sha, &self.head_sha).ranked(slowest_first(self.wall_seconds))
+    }
+}
+
+fn slowest_first(seconds: u64) -> i64 {
+    i64::try_from(seconds).map_or(i64::MIN, |s| -s)
 }
 
 /// The value at the nearest rank `p` (0..=100) of `sorted`, which is ascending and not empty.
@@ -140,8 +160,11 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
     }
     let mut checks: Vec<CheckTiming> = by_check
         .into_iter()
-        .map(|(name, (mut took, passed, failed))| {
-            took.sort_unstable();
+        .map(|(name, (took, passed, failed))| {
+            // a sample has one order, `order::numeric`'s; whole seconds are exact in an f64
+            let mut sample: Vec<f64> = took.iter().map(|&t| t as f64).collect();
+            numeric(&mut sample);
+            let took: Vec<u64> = sample.into_iter().map(|t| t as u64).collect();
             CheckTiming {
                 runs: took.len() as u64,
                 passed,
@@ -153,16 +176,8 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
             }
         })
         .collect();
-    checks.sort_by(|a, b| {
-        b.median_seconds
-            .cmp(&a.median_seconds)
-            .then(a.name.cmp(&b.name))
-    });
-    heads.sort_by(|a, b| {
-        b.wall_seconds
-            .cmp(&a.wall_seconds)
-            .then(a.number.cmp(&b.number))
-    });
+    canonical(&mut checks);
+    canonical(&mut heads);
     CiTimings {
         observed_at: obs.observed_at.clone(),
         measured_runs: checks.iter().map(|c| c.runs).sum(),
@@ -293,6 +308,34 @@ mod tests {
             "a status context is no run"
         );
         assert!(t.checks.is_empty() && t.heads.is_empty());
+    }
+
+    #[test]
+    fn heads_lead_with_the_longest_wait_and_equal_medians_read_naturally() {
+        let o = observation(vec![
+            pr(
+                1,
+                vec![check("check-10", CheckRunState::Passed, &at(0), &at(5))],
+            ),
+            pr(
+                2,
+                vec![check("check-2", CheckRunState::Passed, &at(0), &at(5))],
+            ),
+            pr(
+                3,
+                vec![check("check-2", CheckRunState::Passed, &at(0), &at(20))],
+            ),
+        ]);
+        let t = timings(&o);
+        let heads: Vec<u64> = t.heads.iter().map(|h| h.number).collect();
+        assert_eq!(heads[0], 3, "the longest wall time first: {heads:?}");
+        let names: Vec<&str> = t.checks.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(
+            names,
+            ["check-2", "check-10"],
+            "check-2's median is 5 min too"
+        );
+        assert!(crate::order::is_canonical(&t.checks) && crate::order::is_canonical(&t.heads));
     }
 
     #[test]

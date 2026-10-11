@@ -1109,7 +1109,7 @@ fn dependency_graph(all: &[Value], repository: &str, filter: &Filter) -> El {
         .map(|(_, m)| m.clone())
         .filter(|m| !held.contains(m))
         .collect();
-    outside.sort();
+    crate::order::canonical_strings(&mut outside);
     outside.dedup();
     nodes.extend(outside.into_iter().map(|m| GraphNode {
         href: if repository.is_empty() {

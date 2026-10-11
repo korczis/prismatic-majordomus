@@ -17,10 +17,12 @@ pub const ROUTE: &str = "/ui/governance";
 
 const RULES: Source = Source::of("rules.report");
 
-/// The Governance screen.
-pub fn screen(ctx: &Context) -> View {
+/// The Governance screen; `query` may pick one rule to inspect (`?rule=<id>`).
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[RULES]);
     let rules = &answers[&RULES];
+    let inspected = super::rule::picked(query)
+        .map(|id| super::rule::inspector(&super::rule::ask(ctx, &id), &id));
 
     let top = hero(
         "shield-check",
@@ -41,8 +43,23 @@ pub fn screen(ctx: &Context) -> View {
         let rows = list(rules, "/rules")
             .iter()
             .map(|r| {
+                // the report gives the rule as an object: its id and title, a link to it
+                let rule = r.get("rule").cloned().unwrap_or(serde_json::Value::Null);
+                let id = super::rule::id_of(&rule);
                 el("tr")
-                    .child(el("td").class("mj-ui-mono").text(text(r, "rule")))
+                    .child(
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", super::rule::href(&id))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(id.clone()))
+                                .child(
+                                    el("span")
+                                        .class("mj-ui-cell-title")
+                                        .text(text(&rule, "title")),
+                                ),
+                        ),
+                    )
                     .child(el("td").child(state(r, "state")))
                     .child(el("td").class("mj-ui-dim").text(text(r, "meaning")))
             })
@@ -54,8 +71,11 @@ pub fn screen(ctx: &Context) -> View {
         )
     });
 
-    let grid = el("div")
-        .class("mj-ui-grid")
+    let mut grid = el("div").class("mj-ui-grid");
+    if let Some(inspector) = inspected {
+        grid = grid.child(wide(inspector));
+    }
+    let grid = grid
         .child(panel(
             "Proof states",
             "How far each rule's proof reaches, counted by the report.",
