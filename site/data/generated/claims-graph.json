@@ -1896,6 +1896,15 @@
       "note": "The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand."
     },
     {
+      "id": "claim:mesh-firewall-is-derived",
+      "kind": "claim",
+      "label": "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-firewall-is-derived/",
+      "external": false,
+      "note": "The plan, the backend detection and every judgement of a firewall's output are pure functions with doctests; only observing and applying touch the host, and each says when it could not (unobservable without root is an absence, not a failure, unless the kernel log shows drops). The case runs the report over this repository's declaration and over fixtures, and never applies anything. It does not make a firewall nobody runs the command on admit anything."
+    },
+    {
       "id": "claim:models-one-declaration",
       "kind": "claim",
       "label": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
@@ -2410,6 +2419,13 @@
       "id": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mesh/doctor.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/firewall.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/firewall.rs",
       "route": null,
       "external": false
     },
@@ -3940,6 +3956,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/494_the_mesh_is_declared_and_held.sh"
     },
     {
+      "id": "test:test/cases/495_the_firewall_admits_the_mesh.sh",
+      "kind": "test",
+      "label": "test/cases/495_the_firewall_admits_the_mesh.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/495_the_firewall_admits_the_mesh.sh"
+    },
+    {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "test",
       "label": "test/cases/49_roadmap_doctrine.sh",
@@ -5393,6 +5416,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:models-one-declaration",
       "target": "source:docs/MODELS.md",
       "kind": "specified_by"
@@ -6518,6 +6546,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "impl:apps/majordomus-cli/src/mesh/firewall.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:models-one-declaration",
       "target": "impl:apps/majordomus-cli/src/models/mod.rs",
       "kind": "implemented_by"
@@ -7640,6 +7673,11 @@
     {
       "source": "claim:mesh-declared-is-held",
       "target": "test:test/cases/494_the_mesh_is_declared_and_held.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "test:test/cases/495_the_firewall_admits_the_mesh.sh",
       "kind": "proved_by"
     },
     {

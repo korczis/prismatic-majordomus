@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -143,7 +143,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh status`](#majordomus-mesh-status) | `/docs/cli/mesh/status/` | Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies |
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
 | [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
-| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end |
+| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall |
+| [`majordomus mesh firewall`](#majordomus-mesh-firewall) | `/docs/cli/mesh/firewall/` | What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root |
+| [`majordomus mesh firewall apply`](#majordomus-mesh-firewall-apply) | `/docs/cli/mesh/firewall/apply/` | Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh |
 | [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine, runtime and session this checkout's server cooperates with, with each link's state |
 | [`majordomus mesh peer`](#majordomus-mesh-peer) | `/docs/cli/mesh/peer/` | One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here |
 | [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest |
@@ -4027,7 +4029,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4119,7 +4121,7 @@ Examples:
 <a id="majordomus-mesh-doctor"></a>
 ## `majordomus mesh doctor`
 
-Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
 
 ```text
 majordomus mesh doctor [OPTIONS]
@@ -4142,6 +4144,64 @@ Examples:
   ```
 
   Verified: exits 0; prints protocol.
+
+<a id="majordomus-mesh-firewall"></a>
+## `majordomus mesh firewall`
+
+What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
+
+Subcommands: [`majordomus mesh firewall apply`](#majordomus-mesh-firewall-apply).
+
+```text
+majordomus mesh firewall [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--port` | `<PORT>` | — | The port this checkout's server listens on beyond loopback, when it does |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the host firewall must admit for the declared mesh, and whether it does** — The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10.
+
+  ```console
+  $ majordomus mesh firewall
+  ```
+
+  Verified: exits 0; prints backend, verdict.
+
+<a id="majordomus-mesh-firewall-apply"></a>
+## `majordomus mesh firewall apply`
+
+Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh
+
+```text
+majordomus mesh firewall apply [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--port` | `<PORT>` | — | The port this checkout's server listens on beyond loopback, when it does |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Admit the mesh through the host firewall, as root** — Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.
+
+  ```console
+  $ majordomus mesh firewall apply
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-mesh-peers"></a>
 ## `majordomus mesh peers`

@@ -1,7 +1,7 @@
 +++
 title = "majordomus intent explain"
 description = "Why an intent stands where it stands: its stage, each criterion, the work realising it"
-weight = 178
+weight = 180
 [extra]
 route = "/docs/cli/intent/explain/"
 command = "majordomus intent explain"

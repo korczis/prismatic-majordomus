@@ -1,7 +1,7 @@
 +++
 title = "majordomus continuity device"
 description = "This device's identity — the mesh node key, created when absent — and its label; with --label, rename it"
-weight = 212
+weight = 214
 [extra]
 route = "/docs/cli/continuity/device/"
 command = "majordomus continuity device"

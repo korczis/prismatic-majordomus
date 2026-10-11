@@ -11,6 +11,7 @@
 //! claims, handovers, reviews. There is no remote execution here for a linked peer to gain.
 
 use std::collections::BTreeMap;
+use std::net::Ipv4Addr;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -18,13 +19,15 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
-    BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, Stability, WaiverReason,
+    BenchmarkPolicy, CachePolicy, CapabilityKind, CliExposure, Exposure, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::mesh::address::interfaces;
 use crate::mesh::cooperation::{
     Cooperation, CooperationError, CooperationStatus, MeshVerifyReport, PeerView, RefusedView,
     Written,
 };
+use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
 use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::rendezvous::REGISTER_PATH;
@@ -133,6 +136,43 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
 
 /// The repository's mesh declaration, as the index discovered it: `None` when no object
 /// of the kind exists, the parse verdict when one does.
+// ---------------------------------------------------------------- mesh.firewall
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.firewall` and `mesh.firewall.apply`.
+pub struct FirewallInput {
+    /// The port this checkout's server listens on beyond loopback, when it does: a peer
+    /// dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+    /// holds the discovery ports and the hub ports the declaration gives this machine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+}
+
+impl BenchmarkCases for FirewallInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("declared", FirewallInput { port: None })]
+    }
+}
+
+/// The report over this checkout's declaration and this machine's interfaces.
+fn firewall_report(ctx: &Context, input: &FirewallInput) -> FirewallReport {
+    let config = declaration(ctx).and_then(|d| d.ok());
+    let local: Vec<Ipv4Addr> = interfaces().into_iter().map(|(_, ip)| ip).collect();
+    crate::mesh::firewall::report(config.as_ref(), &local, input.port)
+}
+
+fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
+    Ok(firewall_report(ctx, &input))
+}
+
+fn mesh_firewall_apply(
+    ctx: &Context,
+    input: FirewallInput,
+) -> Result<FirewallApplyReport, CapabilityError> {
+    Ok(crate::mesh::firewall::apply(firewall_report(ctx, &input)))
+}
+
 pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
     ctx.index
         .objects
@@ -1159,6 +1199,41 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_doctor,
             },
             capability! {
+                id: "mesh.firewall",
+                title: "The host firewall, as the mesh needs it",
+                description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+                input: FirewallInput,
+                output: FirewallReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_firewall"),
+                    http: get("/api/v1/mesh/firewall"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "firewall".into()] }),
+                },
+                tags: ["mesh", "diagnostics", "firewall"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_firewall,
+            },
+            capability! {
+                id: "mesh.firewall.apply",
+                kind: CapabilityKind::Command,
+                title: "Admit the mesh through the host firewall",
+                description: "Run the commands mesh.firewall renders, on this host, as root: one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall; nothing else is touched, and every rule written carries the comment `majordomus mesh` so it can be told from an operator's own. Refuses, running nothing, without root or without a backend; records every command with its exit and output; and asks the firewall again afterwards, so the verdict is the firewall's. Offered on the command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP may do.",
+                input: FirewallInput,
+                output: FirewallApplyReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "firewall".into(), "apply".into()] }),
+                },
+                tags: ["mesh", "firewall"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_firewall_apply,
+            },
+            capability! {
                 id: "mesh.register",
                 kind: CapabilityKind::Command,
                 title: "Register with this node's mesh",
@@ -1398,6 +1473,13 @@ mod tests {
                 "/api/v1/mesh/doctor",
             ),
             (
+                "mesh.firewall",
+                Some("majordomus_mesh_firewall"),
+                "/api/v1/mesh/firewall",
+            ),
+            // the one command served nowhere over HTTP: it runs a privileged host tool
+            ("mesh.firewall.apply", None, ""),
+            (
                 "mesh.register",
                 Some("majordomus_mesh_register"),
                 REGISTER_PATH,
@@ -1494,7 +1576,7 @@ mod tests {
             );
             assert_eq!(
                 exposure.http.as_ref().map(|h| h.path.as_str()),
-                Some(*path),
+                (!path.is_empty()).then_some(*path),
                 "{id} lost or renamed its HTTP route"
             );
         }
@@ -1510,6 +1592,7 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.firewall",
             "mesh.cooperation",
             "mesh.peers",
             "mesh.peer",
@@ -1526,12 +1609,22 @@ mod tests {
                 c.id
             );
             if !is_query {
-                assert_eq!(
-                    c.exposure.http.as_ref().map(|h| h.method.as_str()),
-                    Some("POST"),
-                    "{} changes state and must be a POST",
-                    c.id
-                );
+                match c.exposure.http.as_ref() {
+                    Some(h) => assert_eq!(
+                        h.method.as_str(),
+                        "POST",
+                        "{} changes state and must be a POST",
+                        c.id
+                    ),
+                    // a command served nowhere over HTTP runs a privileged host tool,
+                    // which nothing reachable over the network may do; there is one
+                    None => assert_eq!(
+                        c.id.as_str(),
+                        "mesh.firewall.apply",
+                        "{}: a command without an HTTP route must be the firewall's",
+                        c.id
+                    ),
+                }
             }
             assert_ne!(
                 c.execution.effect,

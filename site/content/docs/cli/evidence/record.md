@@ -1,7 +1,7 @@
 +++
 title = "majordomus evidence record"
 description = "Record a run that happened into the ledger"
-weight = 161
+weight = 163
 [extra]
 route = "/docs/cli/evidence/record/"
 command = "majordomus evidence record"

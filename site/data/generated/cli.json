@@ -20913,10 +20913,16 @@
           "route": "/docs/cli/mesh/identity/"
         },
         {
-          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
           "command": "majordomus mesh doctor",
           "name": "doctor",
           "route": "/docs/cli/mesh/doctor/"
+        },
+        {
+          "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
         },
         {
           "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
@@ -21381,7 +21387,7 @@
       "usage": "majordomus mesh identity [OPTIONS]"
     },
     {
-      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21508,6 +21514,302 @@
       ],
       "route": "/docs/cli/mesh/doctor/",
       "usage": "majordomus mesh doctor [OPTIONS]"
+    },
+    {
+      "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+          "command": "majordomus mesh firewall apply",
+          "name": "apply",
+          "route": "/docs/cli/mesh/firewall/apply/"
+        }
+      ],
+      "command": "majordomus mesh firewall",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall"
+          ],
+          "command": "majordomus mesh firewall",
+          "description": "The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10.",
+          "expectation": "exits 0; prints backend, verdict",
+          "id": "mesh-firewall",
+          "setup": [],
+          "title": "What the host firewall must admit for the declared mesh, and whether it does"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "firewall",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall"
+      ],
+      "route": "/docs/cli/mesh/firewall/",
+      "usage": "majordomus mesh firewall [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh firewall apply",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall",
+            "apply"
+          ],
+          "command": "majordomus mesh firewall apply",
+          "description": "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.",
+          "expectation": "exits 10",
+          "id": "mesh-firewall-apply",
+          "setup": [],
+          "title": "Admit the mesh through the host firewall, as root"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "apply",
+      "parent_route": "/docs/cli/mesh/firewall/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall",
+        "apply"
+      ],
+      "route": "/docs/cli/mesh/firewall/apply/",
+      "usage": "majordomus mesh firewall apply [OPTIONS]"
     },
     {
       "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
@@ -34067,13 +34369,13 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1482,
+    "commands": 218,
+    "examples": 218,
+    "runnable": 192
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.20.0",
+  "generator_version": "0.21.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"
