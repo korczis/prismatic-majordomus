@@ -206,43 +206,49 @@ fn cli_missing(command: &str) -> bool {
 /// The output of `<command> status --json`, or why it could not be read. Bounded by
 /// [`STATUS_TIMEOUT`]: a CLI that hangs is killed and the reading counts as failed.
 fn read_status(command: &str) -> Result<String, String> {
+    read_status_within(command, STATUS_TIMEOUT)
+}
+
+/// [`read_status`] with its deadline. Standard output is read on a thread of its own while
+/// the process is waited for: a large tailnet answers with more than a pipe holds, and a
+/// CLI that cannot finish writing never exits, so reading only after the exit would turn
+/// every large answer into a timeout. Standard error is discarded; the exit status says
+/// that the reading failed.
+fn read_status_within(command: &str, deadline: Duration) -> Result<String, String> {
     let mut child = Command::new(command)
         .args(["status", "--json"])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::null())
         .spawn()
         .map_err(|e| format!("`{command} status --json` could not run: {e}"))?;
+    let mut stdout = child.stdout.take().expect("stdout is piped");
+    let reader = std::thread::spawn(move || {
+        let mut text = String::new();
+        let _ = std::io::Read::read_to_string(&mut stdout, &mut text);
+        text
+    });
     let started = Instant::now();
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => break,
-            Ok(None) if started.elapsed() >= STATUS_TIMEOUT => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(format!(
-                    "`{command} status --json` did not answer within {}s",
-                    STATUS_TIMEOUT.as_secs()
-                ));
-            }
-            Ok(None) => std::thread::sleep(Duration::from_millis(50)),
-            Err(e) => {
-                return Err(format!(
-                    "`{command} status --json` could not be waited on: {e}"
-                ))
-            }
+    let status = loop {
+        // an error asking the process is treated as "still running": the deadline ends it
+        if let Ok(Some(status)) = child.try_wait() {
+            break status;
         }
+        if started.elapsed() >= deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(format!(
+                "`{command} status --json` did not answer within {}s",
+                deadline.as_secs_f32()
+            ));
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    let text = reader.join().unwrap_or_default();
+    if !status.success() {
+        return Err(format!("`{command} status --json` failed: {status}"));
     }
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("`{command} status --json` could not be read: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "`{command} status --json` failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        ));
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    Ok(text)
 }
 
 /// The tailnet addresses of the peers a `tailscale status --json` answer lists online, one
@@ -396,6 +402,151 @@ mod tests {
             "no peer online, so nothing observed"
         );
         assert_eq!(provider.status().sent, 0);
+    }
+
+    /// A stand-in `tailscale` CLI: `body` is the shell after the shebang.
+    fn stand_in(dir: &std::path::Path, body: &str) -> String {
+        let cli = dir.join("tailscale");
+        std::fs::write(&cli, format!("#!/bin/sh\n{body}\n")).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&cli, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        cli.display().to_string()
+    }
+
+    fn wait_for(what: &str, mut done: impl FnMut() -> bool) {
+        let until = Instant::now() + Duration::from_secs(15);
+        while !done() {
+            assert!(Instant::now() < until, "gave up waiting for {what}");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
+
+    #[test]
+    fn a_cli_that_fails_at_start_fails_the_provider_with_its_reason() {
+        let mut provider = TailscaleProvider::new(TailscaleConfig {
+            command: "false".into(),
+            ..TailscaleConfig::default()
+        });
+        let (ctx, _rx) = context();
+        let err = provider
+            .start(&ctx)
+            .expect_err("a failing CLI is a provider error");
+        assert!(err.to_string().contains("failed"), "{err}");
+        assert_eq!(provider.status().state, MeshProviderState::Failed);
+    }
+
+    #[test]
+    fn an_online_peer_is_asked_as_a_rendezvous_and_its_candidates_are_observed() {
+        // a hub on loopback that answers every registration with one candidate
+        let hub = tiny_http::Server::http("127.0.0.1:0").unwrap();
+        let port = hub.server_addr().to_ip().unwrap().port();
+        let other = crate::mesh::provider::Beacon::new(
+            Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+            vec!["127.0.0.1:1".into()],
+            vec![],
+            vec![],
+            "peer",
+        );
+        let answer = serde_json::to_string(&super::super::rendezvous::RegisterAnswer {
+            accepted: true,
+            refusal: None,
+            candidates: vec![other.next_envelope()],
+        })
+        .unwrap();
+        let served = std::thread::spawn(move || {
+            let request = hub.recv().unwrap();
+            assert_eq!(request.url(), super::super::rendezvous::REGISTER_PATH);
+            let _ = request.respond(tiny_http::Response::from_string(answer));
+        });
+
+        let dir = tempfile::tempdir().unwrap();
+        let cli = stand_in(
+            dir.path(),
+            "echo '{\"Peer\":{\"hub\":{\"Online\":true,\"TailscaleIPs\":[\"127.0.0.1\"]}}}'",
+        );
+        let mut provider = TailscaleProvider::new(TailscaleConfig {
+            command: cli,
+            port,
+            interval_seconds: 60,
+            ..TailscaleConfig::default()
+        });
+        let (ctx, rx) = context();
+        provider.start(&ctx).unwrap();
+        let seen = rx
+            .recv_timeout(Duration::from_secs(15))
+            .expect("the hub's candidate is observed");
+        ctx.stop.store(true, Ordering::SeqCst);
+        served.join().unwrap();
+        assert_eq!(seen.source, MeshSource::Tailscale);
+        assert_eq!(seen.path, format!("http://127.0.0.1:{port}"));
+        assert_eq!(provider.status().sent, 1);
+        assert_eq!(provider.status().received, 1);
+        assert!(provider
+            .status()
+            .detail
+            .is_some_and(|d| d.starts_with("1 online tailnet peer(s)")));
+    }
+
+    #[test]
+    fn a_reading_that_fails_later_fails_the_provider_until_one_succeeds() {
+        // answers once, then exits 1: the daemon stopped after the provider started
+        let dir = tempfile::tempdir().unwrap();
+        let marker = dir.path().join("asked");
+        let cli = stand_in(
+            dir.path(),
+            &format!(
+                "if [ -e '{m}' ]; then exit 1; fi; touch '{m}'; echo '{{}}'",
+                m = marker.display()
+            ),
+        );
+        let mut provider = TailscaleProvider::new(TailscaleConfig {
+            command: cli,
+            interval_seconds: 1,
+            ..TailscaleConfig::default()
+        });
+        let (ctx, _rx) = context();
+        provider.start(&ctx).unwrap();
+        wait_for("the failed reading", || {
+            provider.status().state == MeshProviderState::Failed
+        });
+        ctx.stop.store(true, Ordering::SeqCst);
+        assert!(provider
+            .status()
+            .detail
+            .is_some_and(|d| d.contains("failed")));
+    }
+
+    #[test]
+    fn a_reading_is_bounded_and_a_cli_that_cannot_run_says_so() {
+        let dir = tempfile::tempdir().unwrap();
+        let slow = stand_in(dir.path(), "sleep 5");
+        let why = read_status_within(&slow, Duration::from_millis(200)).unwrap_err();
+        assert!(why.contains("did not answer within"), "{why}");
+        let why = read_status_within("/nonexistent/majordomus-no-cli", Duration::from_secs(1))
+            .unwrap_err();
+        assert!(why.contains("could not run"), "{why}");
+        // a large answer is read whole: more than a pipe holds, and still no timeout
+        let big = stand_in(
+            dir.path(),
+            "i=0; while [ $i -lt 4000 ]; do printf '%064d\\n' 0; i=$((i+1)); done",
+        );
+        let text = read_status_within(&big, Duration::from_secs(10)).unwrap();
+        assert!(text.len() > 200_000, "{}", text.len());
+    }
+
+    #[test]
+    fn an_answer_that_is_not_a_tailnet_offers_nobody_and_v6_is_bracketed() {
+        assert!(peers_of("not json").is_empty());
+        assert!(peers_of("{}").is_empty());
+        let peers: Vec<IpAddr> = vec!["100.64.0.2".parse().unwrap(), "fd7a::2".parse().unwrap()];
+        assert_eq!(
+            endpoints(&peers, 8791),
+            ["http://100.64.0.2:8791", "http://[fd7a::2]:8791"]
+        );
+        assert_eq!(MeshSource::Tailscale.as_str(), "tailscale");
     }
 
     #[test]

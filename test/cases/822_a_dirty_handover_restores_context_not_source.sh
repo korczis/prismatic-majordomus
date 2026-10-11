@@ -23,6 +23,10 @@ origin() {
   on "$1" git init -q -b main .
   on "$1" git config user.email "$1@example.com"; on "$1" git config user.name "$1"
   on "$1" "$MJ" init >/dev/null; on "$1" "$MJ" update >/dev/null
+  # init seeds a mesh declaration that trusts no machine yet (ADR 0139), and continuity resumes
+  # only from a listed key under one; this case is about continuity, so its machines stay in
+  # the repository without a declaration, where a resume warns instead
+  rm -f "$S/$1/repo/.ai/repo/mesh/mesh.yaml"
   mkdir -p "$S/$1/repo/lib"; echo a > "$S/$1/repo/lib/a"
   on "$1" git add -A; on "$1" git commit -qm base
   on "$1" git remote add origin "$S/shared.git"

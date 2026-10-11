@@ -449,7 +449,7 @@ would be written into the other checkout.
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
 this repository's reviewed decision about who is listed. The tool's default is the same shape
-with an empty trust list: `majordomus init` seeds `.ai/repo/mesh/mesh.yaml` enabled and
+with an empty trust list: `majordomus init` seeds a declaration, `mesh.yaml` under `.ai/repo/mesh/`, enabled and
 `deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
 is committed (ADR 0139; the guarantee `mesh-off-by-default`).
 

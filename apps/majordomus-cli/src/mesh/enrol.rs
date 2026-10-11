@@ -113,9 +113,11 @@ pub fn enrol(text: &str, key: &str, label: &str) -> Result<Option<String>, Strin
     let mut after = lines.join("\n");
     after.push('\n');
     let parsed = parse(&after)?;
-    if !parsed.trust.allow.iter().any(|k| k == key) {
-        return Err("the edited declaration does not list the key; nothing was changed".into());
-    }
+    // the edit above lists the key by construction; a parse that disagrees is a defect here
+    debug_assert!(
+        parsed.trust.allow.iter().any(|k| k == key),
+        "the edited declaration does not list the key"
+    );
     Ok(Some(after))
 }
 
@@ -185,5 +187,11 @@ mod tests {
     fn a_bad_key_or_an_unreadable_declaration_is_refused() {
         assert!(enrol(HEAD, "not-a-key", "x").is_err());
         assert!(enrol("schema: mesh/v1\nkind: other\n", KEY, "x").is_err());
+        // it parses, but it is not a mesh declaration
+        let other = "schema: mesh/v1\nkind: deployment\nid: mesh\nenabled: true\n";
+        let why = enrol(other, KEY, "x").unwrap_err();
+        assert!(why.starts_with("not a mesh declaration"), "{why}");
+        let why = enrol(&HEAD.replace("mesh/v1", "mesh/v9"), KEY, "x").unwrap_err();
+        assert!(why.contains("schema mesh/v9"), "{why}");
     }
 }

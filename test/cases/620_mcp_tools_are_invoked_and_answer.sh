@@ -102,6 +102,28 @@ answer majordomus_mesh_identity '{}' "$S/mesh.json"
 jq -e '(.path | test("node\\.json$")) and (.present | type) == "boolean"' "$S/mesh.json" >/dev/null \
   || bad "majordomus_mesh_identity does not say where the node identity is and whether it exists:" "$S/mesh.json"
 
+# ---------------------------------------------------------------- 6b. mesh.enrol
+# The one mesh tool that writes the repository, asked where it must refuse before it writes:
+# with no HOME and no XDG_STATE_HOME there is nowhere to keep a node identity, so this
+# repository's declaration is never touched by the case. A refusal is a result with isError.
+cp "$ROOT/.ai/repo/mesh/majordomus.yaml" "$S/declaration.before"
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case620","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_mesh_enrol","arguments":{}}}\n'
+} | env -u MAJORDOMUS_SHARE -u HOME -u XDG_STATE_HOME "$RB" mcp --standalone --repo "$ROOT" 2>"$S/err" | sed -n 2p > "$S/enrol.json"
+jq -e '.result.isError == true and (.error | not)' "$S/enrol.json" >/dev/null \
+  || bad "majordomus_mesh_enrol does not refuse when there is nowhere to keep an identity:" "$S/enrol.json"
+jq -e '[.result.content[].text] | join(" ") | test("XDG_STATE_HOME")' "$S/enrol.json" >/dev/null \
+  || bad "the refusal does not say where an identity would be kept:" "$S/enrol.json"
+cmp -s "$S/declaration.before" "$ROOT/.ai/repo/mesh/majordomus.yaml" \
+  || { echo "    majordomus_mesh_enrol changed this repository's declaration"; exit 1; }
+
+# ---------------------------------------------------------------- 6c. mesh.review.withdraw
+# Without a running server there is no cooperation to withdraw from: refused, as a result.
+call majordomus_mesh_review_withdraw '{"request":"none/r-000000000000","session":"case620"}' > "$S/withdraw.json"
+jq -e '.result.isError == true and (.error | not)' "$S/withdraw.json" >/dev/null \
+  || bad "majordomus_mesh_review_withdraw does not refuse without cooperation, as a result:" "$S/withdraw.json"
+
 # ---------------------------------------------------------------- 7. plan.issues
 # Every issue the project store holds, and a narrowing that actually narrows.
 answer majordomus_plan_issues '{}' "$S/issues.json"
@@ -288,6 +310,7 @@ rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 [ "$rc" = 0 ] || { echo "    the gate does not pass on this repository, exit $rc"; cat "$S/real.log"; exit 1; }
 for tool in majordomus_artifacts majordomus_deployment majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
+            majordomus_mesh_enrol majordomus_mesh_review_withdraw \
             majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do
   if grep -qE "^[[:space:]]*${tool}[[:space:]]*$" "$ROOT/.ai/repo/mcp-tool-run-baseline.txt"; then

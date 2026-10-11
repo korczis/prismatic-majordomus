@@ -1285,6 +1285,62 @@ mod tests {
     }
 
     #[test]
+    fn a_review_state_has_one_word_and_only_open_waits() {
+        let all = [
+            ReviewState::Open,
+            ReviewState::Answered,
+            ReviewState::Withdrawn,
+            ReviewState::Expired,
+        ];
+        let words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();
+        assert_eq!(words, ["open", "answered", "withdrawn", "expired"]);
+        for state in all {
+            assert_eq!(serde_json::to_value(state).unwrap(), state.as_str());
+            assert_eq!(state.is_waiting(), state == ReviewState::Open);
+        }
+    }
+
+    #[test]
+    fn an_answer_after_a_withdrawal_is_kept_and_does_not_reopen_it() {
+        let a = journal("0000000000000001");
+        a.append_own(EventBody::ReviewRequested {
+            review: "r1".into(),
+            session: "s1".into(),
+            subject: "x".into(),
+            scope: vec![],
+            issue: None,
+            reviewer: None,
+            body: None,
+        })
+        .unwrap();
+        let request = format!("{}/r1", a.own_stream());
+        a.append_own(EventBody::ReviewWithdrawn {
+            request: request.clone(),
+            session: "s1".into(),
+            note: Some("void".into()),
+        })
+        .unwrap();
+        a.append_own(EventBody::ReviewAnswered {
+            request,
+            session: "s2".into(),
+            verdict: "commented".into(),
+            note: None,
+        })
+        .unwrap();
+        let review = &fold(&a.events(), &all_live).reviews[0];
+        assert_eq!(review.state, ReviewState::Withdrawn);
+        assert_eq!(review.answers.len(), 1, "the late answer is kept");
+        // and a withdrawal within the bound is valid
+        assert!(EventBody::ReviewWithdrawn {
+            request: "a/r1".into(),
+            session: "s1".into(),
+            note: Some("x".repeat(crate::mesh::journal::REVIEW_BODY_MAX)),
+        }
+        .validate()
+        .is_ok());
+    }
+
+    #[test]
     fn a_body_or_result_over_the_bound_is_refused() {
         let over = "x".repeat(crate::mesh::journal::REVIEW_BODY_MAX + 1);
         let asked = EventBody::ReviewRequested {

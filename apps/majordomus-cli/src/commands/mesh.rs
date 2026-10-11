@@ -1312,6 +1312,120 @@ mod tests {
         })
     }
 
+    /// A real shared server, in this process, over a synthetic repository: the doctor and a
+    /// question reach it, the absence of any server is an answer, and a linked worktree that
+    /// borrows the server is refused a publish, said in text.
+    #[test]
+    fn a_running_server_answers_and_a_worktree_borrows_it_but_never_its_files() {
+        use crate::cli::{DiscoveryMode, RepoArgs};
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().to_path_buf();
+        let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let args = |repo: &std::path::Path, format: OutputFormat| MeshQueryArgs {
+            repo: RepoArgs {
+                repo: Some(repo.to_path_buf()),
+                discovery: DiscoveryMode::Filesystem,
+                share: Some(share.clone()),
+                ..Default::default()
+            },
+            format,
+        };
+
+        // no server anywhere: a question is answered with the reason, a command refused
+        let q = args(&root, OutputFormat::Json);
+        assert_eq!(
+            ask(&q, "GET", "/api/v1/mesh", None, render_status, never).unwrap(),
+            0
+        );
+        assert_eq!(
+            ask(
+                &q,
+                "POST",
+                "/api/v1/mesh/claims",
+                Some(json!({})),
+                render_written,
+                never
+            )
+            .unwrap(),
+            EXIT_REFUSED
+        );
+
+        let app = App::load(&args(&root, OutputFormat::Json).repo).unwrap();
+        let crate::lease::Role::Server(lease) = crate::lease::elect(&app.repository).unwrap()
+        else {
+            panic!("the fixture has no server yet");
+        };
+        let server = crate::shared::SharedServer::start(
+            std::sync::Arc::new(crate::live::Live::pinned(std::sync::Arc::clone(
+                &app.context,
+            ))),
+            crate::VERSION,
+            "127.0.0.1",
+            0,
+            true,
+            None,
+            lease,
+            None,
+        )
+        .unwrap();
+        // the doctor is the server's, and a question is answered by it
+        assert!(doctor(args(&root, OutputFormat::Json)).is_ok());
+        assert_eq!(
+            ask(
+                &args(&root, OutputFormat::Text),
+                "GET",
+                "/api/v1/mesh",
+                None,
+                render_status,
+                never
+            )
+            .unwrap(),
+            0
+        );
+
+        // a linked worktree with no server of its own borrows it, and is refused a publish
+        let wt = fixture.root().with_extension("wt");
+        // the synthetic repository is files only: a worktree needs git and a commit
+        let git = |argv: &[&str]| {
+            assert!(
+                std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&root)
+                    .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                    .args(argv)
+                    .status()
+                    .unwrap()
+                    .success(),
+                "git {argv:?}"
+            )
+        };
+        git(&["init", "-q"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        assert!(std::process::Command::new("git")
+            .arg("-C")
+            .arg(&root)
+            .args(["worktree", "add", "-q", "--detach"])
+            .arg(&wt)
+            .status()
+            .unwrap()
+            .success());
+        assert_eq!(
+            ask(
+                &args(&wt, OutputFormat::Text),
+                "POST",
+                "/api/v1/mesh/handovers",
+                Some(json!({})),
+                render_written,
+                never
+            )
+            .unwrap(),
+            EXIT_REFUSED
+        );
+        server.stop();
+        let _ = std::fs::remove_dir_all(&wt);
+    }
+
     #[test]
     fn a_withdrawn_review_shows_the_requesters_result_under_it() {
         let mut v = folded_state();
