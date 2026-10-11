@@ -53,7 +53,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list` |
-| Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route |
+| Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model` |
@@ -80,9 +80,15 @@ Every screen has the same shape:
 
 KPI tiles lead to the screen that explains them. A panel whose whole is on another screen
 says "View all". A milestone row leads to that milestone on the Roadmap, where the row it
-lands on is lit. A capability row opens its detail (`?id=`), and a machine of the mesh — in
-its table or as a node of its graph — opens its inspector (`?node=`); both selections are
-URLs, so they survive a reload and the browser's Back.
+lands on is lit. A capability row opens its detail (`?id=`), a pull request of the queue opens
+its detail (`?pr=`), and a machine of the mesh — in its table or as a node of its graph — opens
+its inspector (`?node=`); every selection is a URL, so it survives a reload and the browser's
+Back.
+
+A pull request's detail is read from the queue's own answer, so it costs no second call: what
+the pull request is, every gate with its verdict, the evidence each verdict was read from, why
+it stands where it stands, the next action that would move it, the paths it authors and the
+factors of its rank. A number the queue did not observe is said to be unobserved.
 
 ## Where a value comes from
 
