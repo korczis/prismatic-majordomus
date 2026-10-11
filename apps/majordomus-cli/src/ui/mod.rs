@@ -46,6 +46,7 @@ pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
 pub(crate) mod mesh;
+pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod shell;
 pub(crate) mod source;
@@ -130,6 +131,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
     },
     Screen {
+        route: prs::ROUTE,
+        title: "PR Drain",
+        icon: "branch",
+        answers: "Every open pull request, what the lane would do with it, and why.",
+    },
+    Screen {
         route: capabilities::ROUTE,
         title: "Capabilities",
         icon: "puzzle",
@@ -176,7 +183,11 @@ pub(crate) const SCREENS: &[Screen] = &[
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
 #[cfg(test)]
-pub(crate) const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL, deployments::DELIVERY_PANEL];
+pub(crate) const PANELS: &[&str] = &[
+    dashboard::PULL_REQUESTS_PANEL,
+    deployments::DELIVERY_PANEL,
+    prs::PANEL,
+];
 
 /// The UI over the repository as it is now.
 pub(crate) struct Ui {
@@ -240,6 +251,7 @@ impl Ui {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx),
             work::ROUTE => work::screen(&ctx, &req.query),
+            prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
             delivery::ROUTE => delivery::screen(&ctx),
             deployments::ROUTE => deployments::screen(&ctx),
@@ -250,6 +262,7 @@ impl Ui {
             governance::ROUTE => governance::screen(&ctx),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
+            prs::PANEL => prs::panel_view(&ctx, &req.query),
             other => shell::not_found(other),
         };
         let body = if fragment {
@@ -339,6 +352,10 @@ mod tests {
             (
                 work::ROUTE,
                 work::screen(&ctx, &[("pr".into(), "1".into())]),
+            ),
+            (
+                prs::ROUTE,
+                prs::screen(&ctx, &[("issue".into(), "I0001".into())]),
             ),
             (
                 mesh::ROUTE,

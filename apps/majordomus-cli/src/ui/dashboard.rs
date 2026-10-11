@@ -382,8 +382,8 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                                 .attr(
                                     "href",
                                     n.map_or_else(
-                                        || super::work::ROUTE.to_string(),
-                                        |n| format!("{}?pr={n}#pr", super::work::ROUTE),
+                                        || super::prs::ROUTE.to_string(),
+                                        |n| format!("{}?pr={n}#pr", super::prs::ROUTE),
                                     ),
                                 )
                                 .child(el("span").class("mj-ui-cell-title").text(text(a, "title"))),
@@ -436,7 +436,7 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
     panel_to(
         "Pull-request queue",
         "What the integration lane would merge, repair or wait for, and why.",
-        Some(super::work::ROUTE),
+        Some(super::prs::ROUTE),
         body,
         &[queue],
     )
@@ -641,7 +641,7 @@ mod tests {
         );
         assert!(html.contains(">base<") && html.contains(">ci<"));
         assert!(
-            html.contains("/ui/work?pr=7#pr"),
+            html.contains("/ui/prs?pr=7#pr"),
             "rows lead to their detail"
         );
         assert!(queue_panel(&queue, Some(8))
