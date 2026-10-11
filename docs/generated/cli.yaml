@@ -15235,7 +15235,7 @@ cli:
               route: /docs/cli/mesh/review/withdraw/
               executable: true
               usage: "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
-              about: "Withdraw a review request this session asked for, with its result"
+              about: "Withdraw a review request this runtime asked for, with its result"
               args:
                 - name: request
                   positional: true
@@ -15249,7 +15249,7 @@ cli:
                 - name: session
                   long: session
                   positional: false
-                  help: "The session that asked for it, within this runtime"
+                  help: "The withdrawing session, within the runtime that asked"
                   value_name: SESSION
                   takes_value: true
                   required: true
@@ -15330,7 +15330,7 @@ cli:
               examples:
                 - id: mesh-review-withdraw
                   title: Withdraw a review request with its result
-                  description: "Only the session that asked may withdraw its request; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10."
+                  description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10."
                   argv:
                     - mesh
                     - review

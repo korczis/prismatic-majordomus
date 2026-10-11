@@ -3632,10 +3632,11 @@ impl Cooperation {
         )
     }
 
-    /// End a review request this runtime's `session` asked for: done, void or superseded,
-    /// with an optional result the request then carries. Only the asking session may: a
-    /// withdrawal is the requester's own record, never a verdict, so it does not count as
-    /// an answer and cannot be written for somebody else's request.
+    /// End a review request this runtime asked for: done, void or superseded, with an
+    /// optional result the request then carries. Any session of the asking runtime may —
+    /// an MCP session is one connection, and the asker that reconnects is another session
+    /// of the same runtime — and no other runtime may: a withdrawal is the requester's own
+    /// record, never a verdict, so it does not count as an answer.
     ///
     /// ```
     /// # use std::sync::Arc;
@@ -3659,8 +3660,9 @@ impl Cooperation {
     ///         Some("structure job and own cases, hook environment unset".into()))
     ///     .unwrap();
     ///
-    /// // another session cannot end it
-    /// cooperation.withdraw_review(&asked.key, "s2", None).expect_err("not the asker");
+    /// // a request of another runtime cannot be ended here
+    /// cooperation.withdraw_review("other-0000000000000009/r-1", "s1", None)
+    ///     .expect_err("not this runtime's request");
     ///
     /// cooperation.withdraw_review(&asked.key, "s1", Some("clean: 45 gates, 12 cases".into()))
     ///     .unwrap();
@@ -3681,9 +3683,12 @@ impl Cooperation {
                 "no review request {request}"
             )));
         };
-        if review.session != self.own(session) {
+        if !review
+            .key
+            .starts_with(&format!("{}/", self.journal.own_stream()))
+        {
             return Err(CooperationError::Invalid(format!(
-                "review {request} was asked by {}, and only the session that asked may withdraw it",
+                "review {request} was asked by {}, and only the runtime that asked may withdraw it",
                 review.session
             )));
         }

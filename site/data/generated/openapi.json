@@ -43049,11 +43049,11 @@
           "value": "answered"
         },
         {
-          "description": "The session that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it.",
+          "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it.",
           "value": "withdrawn"
         },
         {
-          "description": "Nobody answered and the request outlived its asker: the requesting session closed,\nor its runtime stopped beating. Decided like a claim's expiry, from the journal and\nthe streams' beats, so no runtime needs another's clock.",
+          "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again.",
           "value": "expired"
         }
       ],
@@ -43162,7 +43162,7 @@
           "type": "string"
         },
         {
-          "description": "The requesting session; the calling MCP session's own when omitted.",
+          "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted.",
           "name": "session",
           "refs": [],
           "required": false,
@@ -59598,7 +59598,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews/withdraw\" -H \"content-type: application/json\" -d '{\"request\":\"none/r-0\",\"session\":\"bench\",\"note\":\"superseded\"}'",
-          "description": "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.review.withdraw",
           "kind": "command",

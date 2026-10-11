@@ -10602,7 +10602,7 @@
       "post": {
         "operationId": "mesh.review.withdraw",
         "summary": "Withdraw a review request",
-        "description": "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
         "tags": [
           "mesh"
         ],
@@ -49696,12 +49696,12 @@
           {
             "type": "string",
             "const": "withdrawn",
-            "description": "The session that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+            "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
           },
           {
             "type": "string",
             "const": "expired",
-            "description": "Nobody answered and the request outlived its asker: the requesting session closed,\nor its runtime stopped beating. Decided like a claim's expiry, from the journal and\nthe streams' beats, so no runtime needs another's clock."
+            "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
           }
         ],
         "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
@@ -49791,7 +49791,7 @@
               "string",
               "null"
             ],
-            "description": "The requesting session; the calling MCP session's own when omitted."
+            "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
           },
           "note": {
             "type": [

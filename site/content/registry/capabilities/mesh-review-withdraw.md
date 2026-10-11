@@ -1,6 +1,6 @@
 +++
 title = "mesh.review.withdraw"
-description = "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only."
+description = "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only."
 weight = 111
 slug = "mesh-review-withdraw"
 [extra]

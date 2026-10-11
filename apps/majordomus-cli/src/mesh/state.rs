@@ -343,12 +343,12 @@ pub enum ReviewState {
     Open,
     /// At least one answer.
     Answered,
-    /// The session that asked ended the request: done, void or superseded. Whatever was
+    /// The runtime that asked ended the request: done, void or superseded. Whatever was
     /// answered before stays with it.
     Withdrawn,
-    /// Nobody answered and the request outlived its asker: the requesting session closed,
-    /// or its runtime stopped beating. Decided like a claim's expiry, from the journal and
-    /// the streams' beats, so no runtime needs another's clock.
+    /// Nobody answered and the runtime that asked stopped beating. A reading of liveness,
+    /// like a claim's expiry, decided from the journal and the streams' beats so that no
+    /// runtime needs another's clock — a runtime that beats again reads open again.
     Expired,
 }
 
@@ -561,7 +561,7 @@ pub fn fold(
     let mut handovers: BTreeMap<String, HandoverView> = BTreeMap::new();
     let mut reviews: BTreeMap<String, ReviewView> = BTreeMap::new();
     // Where and when each request was asked: what its expiry is judged by.
-    let mut asked_at: BTreeMap<String, (StreamId, u64)> = BTreeMap::new();
+    let mut asked_at: BTreeMap<String, StreamId> = BTreeMap::new();
     let mut opaque = 0usize;
     let mut closed_at: BTreeMap<String, u64> = BTreeMap::new();
 
@@ -660,9 +660,7 @@ pub fn fold(
                 body,
             } => {
                 let k = key(&review);
-                asked_at
-                    .entry(k.clone())
-                    .or_insert((event.stream.clone(), event.lamport));
+                asked_at.entry(k.clone()).or_insert(event.stream.clone());
                 reviews.entry(k.clone()).or_insert(ReviewView {
                     key: k,
                     session: key(&session),
@@ -700,14 +698,17 @@ pub fn fold(
             }
             EventBody::ReviewWithdrawn {
                 request,
-                session,
+                session: _,
                 note,
             } => {
-                // Only the asker ends its request; a withdrawal from any other session is
-                // ignored, as admission refuses it.
+                // Only the runtime that asked ends its request — any of its sessions, because
+                // an MCP session is one connection and a reconnected asker is another
+                // session of the same runtime. A withdrawal another runtime wrote is
+                // ignored, as admission refuses it. The withdrawing session is recorded in
+                // the event and not needed here.
                 if let Some(view) = reviews
                     .get_mut(&request)
-                    .filter(|view| view.session == key(&session))
+                    .filter(|view| view.key.starts_with(&format!("{stream}/")))
                 {
                     view.state = ReviewState::Withdrawn;
                     view.result = note;
@@ -716,23 +717,18 @@ pub fn fold(
         }
     }
 
-    // A request nobody answered ends with its asker: the asking session closed after it
-    // asked, or the stream that asked stopped beating.
+    // A request nobody answered ends with the runtime that asked: when its stream stops
+    // beating. Not when the asking session closes — an MCP session is one connection, and a
+    // lane request outlives many of them. This is a reading of liveness, like a claim's: a
+    // runtime that sleeps and beats again reads open again.
     for view in reviews.values_mut() {
         if view.state != ReviewState::Open {
             continue;
         }
-        let Some((stream, lamport)) = asked_at.get(&view.key) else {
-            continue;
-        };
-        let session_ended = closed_at
-            .get(&view.session)
-            .is_some_and(|closed| lamport < closed)
-            || sessions
-                .get(&view.session)
-                .is_some_and(|s| s.state != SessionState::Active);
-        if session_ended || !liveness(stream).is_alive() {
-            view.state = ReviewState::Expired;
+        if let Some(stream) = asked_at.get(&view.key) {
+            if !liveness(stream).is_alive() {
+                view.state = ReviewState::Expired;
+            }
         }
     }
 
@@ -1193,9 +1189,10 @@ mod tests {
         open(&a, "s1");
         open(&a, "s3");
         ask(&a, "r1", "s1"); // withdrawn by its asker, with a result
-        ask(&a, "r2", "s1"); // withdrawal attempted by another session: ignored
-        ask(&a, "r3", "s3"); // its session closes before anyone answers
-        ask(&a, "r4", "s3"); // answered first, then the session closes: stays answered
+        ask(&a, "r2", "s1"); // withdrawn by another session of the same runtime (a reconnect)
+        ask(&a, "r3", "s3"); // its session closes: a lane request outlives it, still open
+        ask(&a, "r4", "s3"); // a withdrawal written by another runtime: ignored
+        ask(&a, "r5", "s3"); // answered, then the session closes: stays answered
         let r = |n: &str| format!("{}/{n}", a.own_stream());
         a.append_own(EventBody::ReviewWithdrawn {
             request: r("r1"),
@@ -1210,8 +1207,14 @@ mod tests {
         })
         .unwrap();
         sync(&a, &b);
-        b.append_own(EventBody::ReviewAnswered {
+        b.append_own(EventBody::ReviewWithdrawn {
             request: r("r4"),
+            session: "s1".into(),
+            note: Some("not mine to end".into()),
+        })
+        .unwrap();
+        b.append_own(EventBody::ReviewAnswered {
+            request: r("r5"),
             session: "s9".into(),
             verdict: "approved".into(),
             note: None,
@@ -1237,15 +1240,20 @@ mod tests {
         assert_eq!(state_of("r1"), ReviewState::Withdrawn);
         assert_eq!(
             state_of("r2"),
-            ReviewState::Open,
-            "only the asker withdraws"
+            ReviewState::Withdrawn,
+            "any session of the asking runtime"
         );
-        assert_eq!(state_of("r3"), ReviewState::Expired, "its asker is gone");
+        assert_eq!(
+            state_of("r3"),
+            ReviewState::Open,
+            "a closed session does not end it"
+        );
         assert_eq!(
             state_of("r4"),
-            ReviewState::Answered,
-            "an answer outlives the asker"
+            ReviewState::Open,
+            "only the asking runtime withdraws"
         );
+        assert_eq!(state_of("r5"), ReviewState::Answered);
         let r1 = at_b.reviews.iter().find(|v| v.key == r("r1")).unwrap();
         assert_eq!(r1.result.as_deref(), Some("superseded by the rebuilt head"));
         assert!(r1.answers.is_empty(), "a result is not an answer");
@@ -1254,7 +1262,8 @@ mod tests {
             "an 8 KiB body replicates and folds"
         );
 
-        // where the asking runtime stopped beating, an unanswered request has ended too
+        // where the asking runtime stopped beating, an unanswered request has ended; one that
+        // was answered or withdrawn keeps that ending
         let elsewhere = fold(&b.events(), &|s: &StreamId| {
             if s == a.own_stream() {
                 StreamLiveness::Expired
@@ -1262,8 +1271,17 @@ mod tests {
                 StreamLiveness::Live
             }
         });
-        let r2 = elsewhere.reviews.iter().find(|v| v.key == r("r2")).unwrap();
-        assert_eq!(r2.state, ReviewState::Expired);
+        let at = |n: &str| {
+            elsewhere
+                .reviews
+                .iter()
+                .find(|v| v.key == r(n))
+                .unwrap()
+                .state
+        };
+        assert_eq!(at("r3"), ReviewState::Expired);
+        assert_eq!(at("r1"), ReviewState::Withdrawn);
+        assert_eq!(at("r5"), ReviewState::Answered);
     }
 
     #[test]

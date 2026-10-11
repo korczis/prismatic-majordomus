@@ -160,7 +160,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review`](#majordomus-mesh-review) | `/docs/cli/mesh/review/` | Ask the mesh for a review, or answer a request |
 | [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
 | [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
-| [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this session asked for, with its result |
+| [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -4573,7 +4573,7 @@ Examples:
 <a id="majordomus-mesh-review-withdraw"></a>
 ## `majordomus mesh review withdraw`
 
-Withdraw a review request this session asked for, with its result
+Withdraw a review request this runtime asked for, with its result
 
 ```text
 majordomus mesh review withdraw [OPTIONS] <REQUEST>
@@ -4582,7 +4582,7 @@ majordomus mesh review withdraw [OPTIONS] <REQUEST>
 | argument | value | default | description |
 |---|---|---|---|
 | `<REQUEST>` | `<REQUEST>` | required | The request's key, `<stream>/<review>` |
-| `--session` | `<SESSION>` | required | The session that asked for it, within this runtime |
+| `--session` | `<SESSION>` | required | The withdrawing session, within the runtime that asked |
 | `--note` | `<NOTE>` | — | What came of it, or why it is void (up to 8 KiB) |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
@@ -4592,7 +4592,7 @@ majordomus mesh review withdraw [OPTIONS] <REQUEST>
 
 Examples:
 
-- **Withdraw a review request with its result** — Only the session that asked may withdraw its request; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.
+- **Withdraw a review request with its result** — Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.
 
   ```console
   $ majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded

@@ -1089,7 +1089,7 @@ pub enum MeshReviewCommand {
     Request(MeshReviewRequestArgs),
     /// Answer a review request
     Answer(MeshReviewAnswerArgs),
-    /// Withdraw a review request this session asked for, with its result
+    /// Withdraw a review request this runtime asked for, with its result
     Withdraw(MeshReviewWithdrawArgs),
 }
 
@@ -1197,9 +1197,9 @@ pub struct MeshReviewAnswerArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh review withdraw`: end a request this session asked for, because it is done, void
-/// or superseded, with what came of it. Only the asking session may; the note is its own
-/// result, shown with the request, and never counts as an answer.
+/// `mesh review withdraw`: end a request this runtime asked for, because it is done, void
+/// or superseded, with what came of it. Any session of the asking runtime may, no other
+/// runtime may; the note is its own result, shown with the request, and never an answer.
 ///
 /// ```
 /// use clap::Parser;
@@ -1221,7 +1221,7 @@ pub struct MeshReviewAnswerArgs {
 pub struct MeshReviewWithdrawArgs {
     /// The request's key, `<stream>/<review>`
     pub request: String,
-    /// The session that asked for it, within this runtime
+    /// The withdrawing session, within the runtime that asked
     #[arg(long)]
     pub session: String,
     /// What came of it, or why it is void (up to 8 KiB)
@@ -6434,7 +6434,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "mesh-review-withdraw",
             title: "Withdraw a review request with its result",
-            description: "Only the session that asked may withdraw its request; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+            description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
             argv: &["mesh", "review", "withdraw", "stream/r-000000000000", "--session", "s1", "--note", "superseded"],
             setup: &[],
             expect: Expect::ExitCode(10),

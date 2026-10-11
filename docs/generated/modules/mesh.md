@@ -361,7 +361,7 @@ Output: `Written`.
 
 ## `mesh.review.withdraw` — Withdraw a review request
 
-End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.
+End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -377,7 +377,8 @@ End a review request the calling session asked for — done, void or superseded 
 | input | type | required | description |
 |---|---|---|---|
 | `request` | string | yes | The request's key, `<stream>/<review>`. |
-| `session` | string or null | no | The requesting session; the calling MCP session's own when omitted. |
+| `session` | string or null | no | The withdrawing session of the asking runtime; the calling MCP session's own when
+omitted. |
 | `note` | string or null | no | The requester's result or reason, up to 8 KiB: what came of it, or why it is void. |
 
 Output: `Written`.

@@ -293,12 +293,20 @@ requests of what it drops — never a claim that holds or a session that is open
 handover still offered, and never who took or answered what stays. A property test holds
 that over random histories of dead and live runs.
 
-A review request ends in one of three ways, and the fold says which: `answered` when another
-session gives a verdict; `withdrawn` when the session that asked ends it with
-`mesh review withdraw` (done, void or superseded), whose note is the requester's own `result`
-and never an answer; and `expired` when nobody answered and the asking session closed or its
-runtime stopped beating. Expiry is decided like a claim's, from the journal and the streams'
-beats, so no runtime reads another's clock. A request may carry a `body` of up to 8 KiB
+A review request ends in one of three ways, and the fold says which:
+
+- `answered`: another session gives a verdict.
+- `withdrawn`: the runtime that asked ends it with `mesh review withdraw` (done, void or
+  superseded). Any session of that runtime may, because an MCP session is one connection and
+  an asker that reconnects is another session of the same runtime. No other runtime may. The
+  note is the requester's own `result` and never an answer.
+- `expired`: nobody answered and the asking runtime has stopped beating.
+
+Expiry is a reading of liveness like a claim's, so no runtime reads another's clock. A runtime
+that sleeps and beats again reads `open` again, and the asking session closing does not end a
+request, since a lane request outlives many connections. A consumer that takes only `open`
+requests (`ReviewState::is_waiting`), such as an executor's lane intake, therefore skips
+expired ones: it should name them rather than drop them silently. A request may carry a `body` of up to 8 KiB
 beside its one-line subject: the evidence, the commands and the question. A runtime older
 than the field reads the request without its body, and holds `review_withdrawn` as an opaque
 event it relays but does not fold.

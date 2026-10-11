@@ -551,13 +551,13 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
-    /// The session that asked for a review ended its request: done, void, or superseded.
-    /// Only the requesting session writes it, so it is never a verdict; its note is the
-    /// requester's own result, shown with the request.
+    /// The runtime that asked for a review ended its request: done, void, or superseded.
+    /// Only the asking runtime writes it — from any of its sessions — so it is never a
+    /// verdict; its note is the requester's own result, shown with the request.
     ReviewWithdrawn {
         /// The request: `<stream>/<review>`.
         request: String,
-        /// The requesting session within the stream.
+        /// The withdrawing session within the stream.
         session: String,
         /// The requester's result or reason, up to [`REVIEW_BODY_MAX`] bytes.
         #[serde(default, skip_serializing_if = "Option::is_none")]

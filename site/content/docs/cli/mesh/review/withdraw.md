@@ -1,6 +1,6 @@
 +++
 title = "majordomus mesh review withdraw"
-description = "Withdraw a review request this session asked for, with its result"
+description = "Withdraw a review request this runtime asked for, with its result"
 weight = 147
 [extra]
 route = "/docs/cli/mesh/review/withdraw/"

@@ -1061,7 +1061,8 @@ fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written
 pub struct ReviewWithdrawInput {
     /// The request's key, `<stream>/<review>`.
     pub request: String,
-    /// The requesting session; the calling MCP session's own when omitted.
+    /// The withdrawing session of the asking runtime; the calling MCP session's own when
+    /// omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session: Option<String>,
     /// The requester's result or reason, up to 8 KiB: what came of it, or why it is void.
@@ -1389,7 +1390,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.review.withdraw",
                 kind: CapabilityKind::Command,
                 title: "Withdraw a review request",
-                description: "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+                description: "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
                 input: ReviewWithdrawInput,
                 output: Written,
                 stability: Stability::Experimental,

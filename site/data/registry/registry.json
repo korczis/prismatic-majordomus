@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "6062c106bf72241611080f7c484d2df408d63295540bd3ced3fbe0459e449b35",
+    "fingerprint": "93ecc91d282b4164aa5dd2bbc936f48959c08d2be1c1089d840df488f4147ccb",
     "summary": {
       "total": 2113,
       "builtin": 185,
@@ -45727,7 +45727,7 @@
         "module": "mesh",
         "kind": "command",
         "title": "Withdraw a review request",
-        "description": "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
         "input": {
           "name": "ReviewWithdrawInput",
           "schema": {
@@ -45743,7 +45743,7 @@
                   "string",
                   "null"
                 ],
-                "description": "The requesting session; the calling MCP session's own when omitted."
+                "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
               },
               "note": {
                 "type": [
@@ -46731,12 +46731,12 @@
                   {
                     "type": "string",
                     "const": "withdrawn",
-                    "description": "The session that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+                    "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
                   },
                   {
                     "type": "string",
                     "const": "expired",
-                    "description": "Nobody answered and the request outlived its asker: the requesting session closed,\nor its runtime stopped beating. Decided like a claim's expiry, from the journal and\nthe streams' beats, so no runtime needs another's clock."
+                    "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
                   }
                 ],
                 "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
@@ -76285,7 +76285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f53e44b8c1095a76cd10f1cce59a45b8440aba8de172ef6830509e0f185c7859",
+    "fingerprint": "cded4ea5a9e1e600a3a4118f069c3d8c74252f4563cbee8786b4404814d66961",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81759,7 +81759,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 43132
+        "bytes": 43598
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -117807,7 +117807,7 @@
                 "route": "/docs/cli/mesh/review/withdraw/",
                 "executable": true,
                 "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>",
-                "about": "Withdraw a review request this session asked for, with its result",
+                "about": "Withdraw a review request this runtime asked for, with its result",
                 "args": [
                   {
                     "name": "request",
@@ -117824,7 +117824,7 @@
                     "name": "session",
                     "long": "session",
                     "positional": false,
-                    "help": "The session that asked for it, within this runtime",
+                    "help": "The withdrawing session, within the runtime that asked",
                     "value_name": "SESSION",
                     "takes_value": true,
                     "required": true,
@@ -117933,7 +117933,7 @@
                   {
                     "id": "mesh-review-withdraw",
                     "title": "Withdraw a review request with its result",
-                    "description": "Only the session that asked may withdraw its request; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+                    "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
                     "argv": [
                       "mesh",
                       "review",
@@ -128534,7 +128534,7 @@
         "name": "majordomus_mesh_review_withdraw",
         "id": "mesh.review.withdraw",
         "title": "Withdraw a review request",
-        "description": "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
         "kind": "command",
         "read_only": false,
         "effect": "process_state",
