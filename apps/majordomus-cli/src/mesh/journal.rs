@@ -2977,6 +2977,72 @@ mod tests {
     }
 
     #[test]
+    fn an_append_after_a_torn_tail_starts_a_line_of_its_own() {
+        let dir = tempfile::tempdir().unwrap();
+        // the parent is created on the first append
+        let path = dir.path().join("deeper").join("journal.jsonl");
+        append_synced(&path, "{\"a\":1}\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "{\"a\":1}\n");
+        // a crash tore the last line: the next append begins on a new line
+        std::fs::write(&path, "{\"a\":1}\n{\"torn\"").unwrap();
+        append_synced(&path, "{\"b\":2}\n").unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "{\"a\":1}\n{\"torn\"\n{\"b\":2}\n"
+        );
+        // an intact tail gets nothing in between
+        append_synced(&path, "{\"c\":3}\n").unwrap();
+        assert!(std::fs::read_to_string(&path)
+            .unwrap()
+            .ends_with("{\"b\":2}\n{\"c\":3}\n"));
+    }
+
+    #[test]
+    fn a_synced_write_replaces_the_whole_file_and_its_directory_is_synced() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl.tmp");
+        write_synced(&path, "first, and longer\n").unwrap();
+        write_synced(&path, "second\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "second\n");
+        sync_parent(&path);
+        // a path with no directory to open is not an error
+        sync_parent(Path::new("journal.jsonl"));
+    }
+
+    #[test]
+    fn a_compaction_that_cannot_replace_the_file_leaves_the_old_one_and_no_temporary() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let a = journal("0000000000000001");
+        opened(&a, "s1");
+        let b = Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path.clone()),
+        )
+        .unwrap();
+        b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
+        // the journal's place is taken by a directory that is not empty: the rename must fail
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        std::fs::write(path.join("occupied"), "x").unwrap();
+        let dropped = b.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true);
+        assert!(
+            dropped > 0,
+            "a's silent stream was due and dropped in memory"
+        );
+        assert!(
+            path.join("occupied").exists(),
+            "what stood there still stands"
+        );
+        assert!(
+            !path.with_extension("jsonl.tmp").exists(),
+            "the temporary file is removed"
+        );
+    }
+
+    #[test]
     fn a_reloaded_journal_keeps_events_and_resurrects_no_liveness() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("journal.jsonl");

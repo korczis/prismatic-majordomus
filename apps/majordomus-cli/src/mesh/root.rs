@@ -405,6 +405,66 @@ mod tests {
     }
 
     #[test]
+    fn a_trunk_copy_that_is_not_text_or_not_yaml_is_a_refusal_naming_it() {
+        // not UTF-8: refused as the trunk's copy, never read as absent
+        let repo = trunk_holding(None);
+        std::fs::create_dir_all(repo.path().join(".ai/repo/mesh")).unwrap();
+        std::fs::write(
+            repo.path().join(".ai/repo/mesh/majordomus.yaml"),
+            [0xff, 0xfe, 0x00],
+        )
+        .unwrap();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .args(["-c", "user.email=t@t.invalid", "-c", "user.name=t"])
+                .args(args)
+                .current_dir(repo.path())
+                .output()
+                .unwrap()
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "binary"]);
+        let refused = committed(repo.path(), "master", ".ai/repo/mesh/majordomus.yaml")
+            .expect("the trunk holds a file there")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.contains("master:.ai/repo/mesh/majordomus.yaml"),
+            "{refused}"
+        );
+
+        // not YAML: the parser's refusal, named by the trunk's path
+        let repo = trunk_holding(Some("schema: [mesh/v1\nkind: : :\n"));
+        let refused = committed(repo.path(), "master", ".ai/repo/mesh/majordomus.yaml")
+            .expect("the trunk holds a file there")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.contains("master:.ai/repo/mesh/majordomus.yaml"),
+            "{refused}"
+        );
+    }
+
+    #[test]
+    fn a_trunk_git_cannot_be_asked_about_holds_nothing() {
+        let gone = std::env::temp_dir()
+            .join("majordomus-no-such-checkout")
+            .join("x");
+        assert!(committed(&gone, "master", ".ai/repo/mesh/majordomus.yaml").is_none());
+        // a branch the repository does not have holds nothing either
+        let repo = trunk_holding(Some(TRUNK));
+        assert!(committed(
+            repo.path(),
+            "no-such-branch",
+            ".ai/repo/mesh/majordomus.yaml"
+        )
+        .is_none());
+    }
+
+    #[test]
     fn a_declaration_the_trunk_does_not_hold_is_read_as_uncommitted() {
         let repo = trunk_holding(None);
         let resolved = resolve(repo.path(), Some(&working(tofu())));
