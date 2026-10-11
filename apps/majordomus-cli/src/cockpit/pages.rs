@@ -3687,10 +3687,7 @@ pub fn mesh(ctx: &Context) -> Page {
                 .join("; ");
             card_with(
                 format!("Review of {}", r.subject),
-                word_badge(match r.state {
-                    crate::mesh::state::ReviewState::Open => "open",
-                    crate::mesh::state::ReviewState::Answered => "answered",
-                }),
+                word_badge(r.state.as_str()),
                 el("div").child(facts(vec![
                     ("Requested by", Node::Element(mono(r.session.clone()))),
                     (

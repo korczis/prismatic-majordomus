@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -160,6 +160,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review`](#majordomus-mesh-review) | `/docs/cli/mesh/review/` | Ask the mesh for a review, or answer a request |
 | [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
 | [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
+| [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -4497,7 +4498,7 @@ Examples:
 
 Ask the mesh for a review, or answer a request
 
-Subcommands: [`majordomus mesh review request`](#majordomus-mesh-review-request), [`majordomus mesh review answer`](#majordomus-mesh-review-answer).
+Subcommands: [`majordomus mesh review request`](#majordomus-mesh-review-request), [`majordomus mesh review answer`](#majordomus-mesh-review-answer), [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw).
 
 ```text
 majordomus mesh review <COMMAND>
@@ -4521,6 +4522,7 @@ majordomus mesh review request [OPTIONS] <SUBJECT>
 | `--scope` | `<SCOPE>` | — | A path the review covers (repeatable) |
 | `--issue` | `<ISSUE>` | — | The issue |
 | `--reviewer` | `<REVIEWER>` | — | The runtime asked, `<node>-<runtime>` |
+| `--body` | `<BODY>` | — | What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB) |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4564,6 +4566,36 @@ Examples:
 
   ```console
   $ majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-review-withdraw"></a>
+## `majordomus mesh review withdraw`
+
+Withdraw a review request this runtime asked for, with its result
+
+```text
+majordomus mesh review withdraw [OPTIONS] <REQUEST>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<REQUEST>` | `<REQUEST>` | required | The request's key, `<stream>/<review>` |
+| `--session` | `<SESSION>` | required | The withdrawing session, within the runtime that asked |
+| `--note` | `<NOTE>` | — | What came of it, or why it is void (up to 8 KiB) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Withdraw a review request with its result** — Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded
   ```
 
   Verified: exits 10.

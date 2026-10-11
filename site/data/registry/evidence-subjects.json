@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -591,6 +591,11 @@
       "kind": "capability",
       "subject": "capability:mesh.review.request",
       "path": "/evidence/capabilities/mesh-review-request/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.review.withdraw",
+      "path": "/evidence/capabilities/mesh-review-withdraw/"
     },
     {
       "kind": "capability",
@@ -2729,6 +2734,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh review withdraw",
+      "path": "/evidence/commands/mesh-review-withdraw/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh session close",
       "path": "/evidence/commands/mesh-session-close/"
     },
@@ -4855,6 +4865,16 @@
       "kind": "capability",
       "id": "mesh.review.request",
       "page": "/evidence/capabilities/mesh-review-request/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.review.withdraw": {
+      "kind": "capability",
+      "id": "mesh.review.withdraw",
+      "page": "/evidence/capabilities/mesh-review-withdraw/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -14528,6 +14548,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh review withdraw": {
+      "kind": "command",
+      "id": "mesh review withdraw",
+      "page": "/evidence/commands/mesh-review-withdraw/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh session close": {
       "kind": "command",
       "id": "mesh session close",
@@ -19075,6 +19114,18 @@
       "programs": [],
       "members": [
         "capability:mesh.review.request"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_review_withdraw": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_review_withdraw",
+      "alias_of": "capability:mesh.review.withdraw",
+      "programs": [],
+      "members": [
+        "capability:mesh.review.withdraw"
       ],
       "routes": [],
       "mechanisms": [],

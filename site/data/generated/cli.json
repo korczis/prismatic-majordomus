@@ -23407,6 +23407,12 @@
           "command": "majordomus mesh review answer",
           "name": "answer",
           "route": "/docs/cli/mesh/review/answer/"
+        },
+        {
+          "about": "Withdraw a review request this runtime asked for, with its result",
+          "command": "majordomus mesh review withdraw",
+          "name": "withdraw",
+          "route": "/docs/cli/mesh/review/withdraw/"
         }
       ],
       "command": "majordomus mesh review",
@@ -23502,6 +23508,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "REVIEWER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)",
+          "long": "body",
+          "name": "body",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BODY"
         },
         {
           "defaults": [],
@@ -23822,6 +23840,182 @@
       ],
       "route": "/docs/cli/mesh/review/answer/",
       "usage": "majordomus mesh review answer [OPTIONS] <REQUEST>"
+    },
+    {
+      "about": "Withdraw a review request this runtime asked for, with its result",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh review",
+          "name": "review",
+          "route": "/docs/cli/mesh/review/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The request's key, `<stream>/<review>`",
+          "name": "request",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "REQUEST"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The withdrawing session, within the runtime that asked",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What came of it, or why it is void (up to 8 KiB)",
+          "long": "note",
+          "name": "note",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NOTE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh review withdraw",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "review",
+            "withdraw",
+            "stream/r-000000000000",
+            "--session",
+            "s1",
+            "--note",
+            "superseded"
+          ],
+          "command": "majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded",
+          "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+          "expectation": "exits 10",
+          "id": "mesh-review-withdraw",
+          "setup": [],
+          "title": "Withdraw a review request with its result"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "withdraw",
+      "parent_route": "/docs/cli/mesh/review/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "review",
+        "withdraw"
+      ],
+      "route": "/docs/cli/mesh/review/withdraw/",
+      "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
     },
     {
       "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
@@ -34067,13 +34261,13 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1479,
+    "commands": 217,
+    "examples": 217,
+    "runnable": 191
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.20.0",
+  "generator_version": "0.21.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

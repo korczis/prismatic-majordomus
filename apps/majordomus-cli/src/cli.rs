@@ -1089,6 +1089,8 @@ pub enum MeshReviewCommand {
     Request(MeshReviewRequestArgs),
     /// Answer a review request
     Answer(MeshReviewAnswerArgs),
+    /// Withdraw a review request this runtime asked for, with its result
+    Withdraw(MeshReviewWithdrawArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1131,6 +1133,10 @@ pub struct MeshReviewRequestArgs {
     /// The runtime asked, `<node>-<runtime>`
     #[arg(long)]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question (up to
+    /// 8 KiB)
+    #[arg(long)]
+    pub body: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1183,6 +1189,42 @@ pub struct MeshReviewAnswerArgs {
     ])]
     pub verdict: String,
     /// The note
+    #[arg(long)]
+    pub note: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh review withdraw`: end a request this runtime asked for, because it is done, void
+/// or superseded, with what came of it. Any session of the asking runtime may, no other
+/// runtime may; the note is its own result, shown with the request, and never an answer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand,
+///     MeshReviewWithdrawArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "withdraw", "a1b2c3d4-r1/r-1", "--session", "s1",
+///     "--note", "superseded by the rebuilt head",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Withdraw(w) = review.command else { panic!("expected `withdraw`") };
+/// let w: MeshReviewWithdrawArgs = w;
+/// assert_eq!(w.request, "a1b2c3d4-r1/r-1");
+/// assert_eq!(w.note.as_deref(), Some("superseded by the rebuilt head"));
+/// ```
+pub struct MeshReviewWithdrawArgs {
+    /// The request's key, `<stream>/<review>`
+    pub request: String,
+    /// The withdrawing session, within the runtime that asked
+    #[arg(long)]
+    pub session: String,
+    /// What came of it, or why it is void (up to 8 KiB)
     #[arg(long)]
     pub note: Option<String>,
     #[command(flatten)]
@@ -6455,6 +6497,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Answer a review request from any runtime",
             description: "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
             argv: &["mesh", "review", "answer", "stream/r-000000000000", "--session", "s1", "--verdict", "approved"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review withdraw",
+        examples: &[ExampleDoc {
+            id: "mesh-review-withdraw",
+            title: "Withdraw a review request with its result",
+            description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "withdraw", "stream/r-000000000000", "--session", "s1", "--note", "superseded"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

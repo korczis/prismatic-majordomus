@@ -327,7 +327,7 @@ pub struct HandoverView {
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
-///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None }).unwrap();
+///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();
 /// let asked = fold(&j.events(), &|_| StreamLiveness::Own);
 /// assert_eq!(asked.reviews[0].state, ReviewState::Open);
 ///
@@ -343,6 +343,43 @@ pub enum ReviewState {
     Open,
     /// At least one answer.
     Answered,
+    /// The runtime that asked ended the request: done, void or superseded. Whatever was
+    /// answered before stays with it.
+    Withdrawn,
+    /// Nobody answered and the runtime that asked stopped beating. A reading of liveness,
+    /// like a claim's expiry, decided from the journal and the streams' beats so that no
+    /// runtime needs another's clock — a runtime that beats again reads open again.
+    Expired,
+}
+
+impl ReviewState {
+    /// Whether the request still waits for a verdict: open, and nothing else.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::state::ReviewState;
+    /// assert!(ReviewState::Open.is_waiting());
+    /// assert!(!ReviewState::Answered.is_waiting() && !ReviewState::Withdrawn.is_waiting());
+    /// assert!(!ReviewState::Expired.is_waiting());
+    /// ```
+    pub fn is_waiting(self) -> bool {
+        self == ReviewState::Open
+    }
+
+    /// The state's word, as every surface prints it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::state::ReviewState;
+    /// assert_eq!(ReviewState::Withdrawn.as_str(), "withdrawn");
+    /// assert_eq!(serde_json::to_value(ReviewState::Expired).unwrap(), ReviewState::Expired.as_str());
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ReviewState::Open => "open",
+            ReviewState::Answered => "answered",
+            ReviewState::Withdrawn => "withdrawn",
+            ReviewState::Expired => "expired",
+        }
+    }
 }
 
 /// One answer to a review request: who answered, what they decided, and why. The verdict
@@ -391,7 +428,7 @@ pub struct ReviewAnswer {
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
 ///     subject: "feature/mesh-cooperation".into(), scope: vec!["src/mesh".into()],
-///     issue: Some("#184".into()), reviewer: None }).unwrap();
+///     issue: Some("#184".into()), reviewer: None, body: None }).unwrap();
 /// let request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();
 /// j.append_own(EventBody::ReviewAnswered { request, session: "s2".into(),
 ///     verdict: "approved".into(), note: Some("reads well".into()) }).unwrap();
@@ -418,10 +455,17 @@ pub struct ReviewView {
     /// The runtime asked, when one was.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject, when the requester wrote it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
     /// Its standing.
     pub state: ReviewState,
     /// The answers, in Lamport order.
     pub answers: Vec<ReviewAnswer>,
+    /// The requester's own result or reason, written when it withdrew the request. Never an
+    /// answer: a review is another session's verdict.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub result: Option<String>,
 }
 
 /// The whole folded state, every collection in key order, and its digest: two runtimes
@@ -516,6 +560,8 @@ pub fn fold(
     let mut claims: BTreeMap<String, ClaimView> = BTreeMap::new();
     let mut handovers: BTreeMap<String, HandoverView> = BTreeMap::new();
     let mut reviews: BTreeMap<String, ReviewView> = BTreeMap::new();
+    // Where and when each request was asked: what its expiry is judged by.
+    let mut asked_at: BTreeMap<String, StreamId> = BTreeMap::new();
     let mut opaque = 0usize;
     let mut closed_at: BTreeMap<String, u64> = BTreeMap::new();
 
@@ -611,8 +657,10 @@ pub fn fold(
                 scope,
                 issue,
                 reviewer,
+                body,
             } => {
                 let k = key(&review);
+                asked_at.entry(k.clone()).or_insert(event.stream.clone());
                 reviews.entry(k.clone()).or_insert(ReviewView {
                     key: k,
                     session: key(&session),
@@ -620,8 +668,10 @@ pub fn fold(
                     scope,
                     issue,
                     reviewer,
+                    body,
                     state: ReviewState::Open,
                     answers: Vec::new(),
+                    result: None,
                 });
             }
             EventBody::ReviewAnswered {
@@ -636,13 +686,48 @@ pub fn fold(
                     .get_mut(&request)
                     .filter(|view| view.session != key(&session))
                 {
-                    view.state = ReviewState::Answered;
+                    if view.state != ReviewState::Withdrawn {
+                        view.state = ReviewState::Answered;
+                    }
                     view.answers.push(ReviewAnswer {
                         session: key(&session),
                         verdict,
                         note,
                     });
                 }
+            }
+            EventBody::ReviewWithdrawn {
+                request,
+                session: _,
+                note,
+            } => {
+                // Only the runtime that asked ends its request — any of its sessions, because
+                // an MCP session is one connection and a reconnected asker is another
+                // session of the same runtime. A withdrawal another runtime wrote is
+                // ignored, as admission refuses it. The withdrawing session is recorded in
+                // the event and not needed here.
+                if let Some(view) = reviews
+                    .get_mut(&request)
+                    .filter(|view| view.key.starts_with(&format!("{stream}/")))
+                {
+                    view.state = ReviewState::Withdrawn;
+                    view.result = note;
+                }
+            }
+        }
+    }
+
+    // A request nobody answered ends with the runtime that asked: when its stream stops
+    // beating. Not when the asking session closes — an MCP session is one connection, and a
+    // lane request outlives many of them. This is a reading of liveness, like a claim's: a
+    // runtime that sleeps and beats again reads open again.
+    for view in reviews.values_mut() {
+        if view.state != ReviewState::Open {
+            continue;
+        }
+        if let Some(stream) = asked_at.get(&view.key) {
+            if !liveness(stream).is_alive() {
+                view.state = ReviewState::Expired;
             }
         }
     }
@@ -1048,6 +1133,7 @@ mod tests {
             scope: vec!["apps".into()],
             issue: Some("#184".into()),
             reviewer: None,
+            body: None,
         })
         .unwrap();
         sync(&a, &b);
@@ -1075,6 +1161,153 @@ mod tests {
     }
 
     #[test]
+    fn a_review_request_ends_by_withdrawal_or_with_its_asker() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        let ask = |j: &Journal, review: &str, session: &str| {
+            j.append_own(EventBody::ReviewRequested {
+                review: review.into(),
+                session: session.into(),
+                subject: format!("subject {review}"),
+                scope: vec![],
+                issue: None,
+                reviewer: None,
+                body: Some(format!("{}\nthe evidence", "b".repeat(8000))),
+            })
+            .unwrap();
+        };
+        let open = |j: &Journal, session: &str| {
+            j.append_own(EventBody::SessionOpened {
+                info: SessionInfo {
+                    session: session.into(),
+                    client: "test".into(),
+                    ..SessionInfo::default()
+                },
+            })
+            .unwrap();
+        };
+        open(&a, "s1");
+        open(&a, "s3");
+        ask(&a, "r1", "s1"); // withdrawn by its asker, with a result
+        ask(&a, "r2", "s1"); // withdrawn by another session of the same runtime (a reconnect)
+        ask(&a, "r3", "s3"); // its session closes: a lane request outlives it, still open
+        ask(&a, "r4", "s3"); // a withdrawal written by another runtime: ignored
+        ask(&a, "r5", "s3"); // answered, then the session closes: stays answered
+        let r = |n: &str| format!("{}/{n}", a.own_stream());
+        a.append_own(EventBody::ReviewWithdrawn {
+            request: r("r1"),
+            session: "s1".into(),
+            note: Some("superseded by the rebuilt head".into()),
+        })
+        .unwrap();
+        a.append_own(EventBody::ReviewWithdrawn {
+            request: r("r2"),
+            session: "s2".into(),
+            note: None,
+        })
+        .unwrap();
+        sync(&a, &b);
+        b.append_own(EventBody::ReviewWithdrawn {
+            request: r("r4"),
+            session: "s1".into(),
+            note: Some("not mine to end".into()),
+        })
+        .unwrap();
+        b.append_own(EventBody::ReviewAnswered {
+            request: r("r5"),
+            session: "s9".into(),
+            verdict: "approved".into(),
+            note: None,
+        })
+        .unwrap();
+        sync(&b, &a);
+        a.append_own(EventBody::SessionClosed {
+            session: "s3".into(),
+        })
+        .unwrap();
+        sync(&a, &b);
+
+        let at_a = fold(&a.events(), &all_live);
+        let at_b = fold(&b.events(), &all_live);
+        assert_eq!(at_a.digest, at_b.digest, "both runtimes fold the same ends");
+        let state_of = |n: &str| {
+            at_a.reviews
+                .iter()
+                .find(|v| v.key == r(n))
+                .map(|v| v.state)
+                .unwrap()
+        };
+        assert_eq!(state_of("r1"), ReviewState::Withdrawn);
+        assert_eq!(
+            state_of("r2"),
+            ReviewState::Withdrawn,
+            "any session of the asking runtime"
+        );
+        assert_eq!(
+            state_of("r3"),
+            ReviewState::Open,
+            "a closed session does not end it"
+        );
+        assert_eq!(
+            state_of("r4"),
+            ReviewState::Open,
+            "only the asking runtime withdraws"
+        );
+        assert_eq!(state_of("r5"), ReviewState::Answered);
+        let r1 = at_b.reviews.iter().find(|v| v.key == r("r1")).unwrap();
+        assert_eq!(r1.result.as_deref(), Some("superseded by the rebuilt head"));
+        assert!(r1.answers.is_empty(), "a result is not an answer");
+        assert!(
+            r1.body.as_deref().is_some_and(|b| b.len() > 8000),
+            "an 8 KiB body replicates and folds"
+        );
+
+        // where the asking runtime stopped beating, an unanswered request has ended; one that
+        // was answered or withdrawn keeps that ending
+        let elsewhere = fold(&b.events(), &|s: &StreamId| {
+            if s == a.own_stream() {
+                StreamLiveness::Expired
+            } else {
+                StreamLiveness::Live
+            }
+        });
+        let at = |n: &str| {
+            elsewhere
+                .reviews
+                .iter()
+                .find(|v| v.key == r(n))
+                .unwrap()
+                .state
+        };
+        assert_eq!(at("r3"), ReviewState::Expired);
+        assert_eq!(at("r1"), ReviewState::Withdrawn);
+        assert_eq!(at("r5"), ReviewState::Answered);
+    }
+
+    #[test]
+    fn a_body_or_result_over_the_bound_is_refused() {
+        let over = "x".repeat(crate::mesh::journal::REVIEW_BODY_MAX + 1);
+        let asked = EventBody::ReviewRequested {
+            review: "r1".into(),
+            session: "s1".into(),
+            subject: "s".into(),
+            scope: vec![],
+            issue: None,
+            reviewer: None,
+            body: Some(over.clone()),
+        };
+        assert!(asked.validate().is_err());
+        let withdrawn = EventBody::ReviewWithdrawn {
+            request: "a/r1".into(),
+            session: "s1".into(),
+            note: Some(over),
+        };
+        assert!(withdrawn.validate().is_err());
+        assert_eq!(withdrawn.kind(), "review_withdrawn");
+        assert!(crate::mesh::journal::KNOWN_KINDS.contains(&withdrawn.kind()));
+    }
+
+    #[test]
     fn the_session_that_asked_for_a_review_cannot_answer_it() {
         let a = journal("0000000000000001");
         a.append_own(EventBody::ReviewRequested {
@@ -1084,6 +1317,7 @@ mod tests {
             scope: vec![],
             issue: None,
             reviewer: None,
+            body: None,
         })
         .unwrap();
         a.append_own(EventBody::ReviewAnswered {

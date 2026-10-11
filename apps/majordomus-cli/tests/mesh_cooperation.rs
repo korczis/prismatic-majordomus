@@ -278,6 +278,44 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
         })
     });
 
+    // B asks again, with a body; nobody else may end it, B withdraws it with its result,
+    // and A folds the request withdrawn with that result and no answer.
+    let (status, requested) = post(
+        &sb,
+        "/api/v1/mesh/reviews",
+        json!({"session": "b1", "subject": "pre-flight", "body": "45 gates\n12 cases"}),
+    );
+    assert_eq!(status, 200, "{requested}");
+    let preflight = requested["key"].as_str().unwrap().to_string();
+    wait_until("A sees the request's body", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter()
+                .any(|x| x["key"] == json!(preflight) && x["body"] == json!("45 gates\n12 cases"))
+        })
+    });
+    let (status, refused) = post(
+        &sa,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "a1"}),
+    );
+    assert_eq!(status, 400, "only the asker withdraws: {refused}");
+    let (status, withdrawn) = post(
+        &sb,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "b1", "note": "clean"}),
+    );
+    assert_eq!(status, 200, "{withdrawn}");
+    wait_until("A sees the withdrawal", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter().any(|x| {
+                x["key"] == json!(preflight)
+                    && x["state"] == json!("withdrawn")
+                    && x["result"] == json!("clean")
+                    && x["answers"] == json!([])
+            })
+        })
+    });
+
     // A publishes its handover; B consumes it into its own handovers directory.
     a.fixture.write(
         ".ai/local/state/handovers/20260915T120000Z--feature-mesh--0123456--00000000000000aa.md",

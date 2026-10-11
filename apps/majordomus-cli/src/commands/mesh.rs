@@ -158,6 +158,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                     "scope": a.scope,
                     "issue": a.issue,
                     "reviewer": a.reviewer,
+                    "body": a.body,
                 })),
                 render_written,
                 never,
@@ -175,7 +176,27 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_written,
                 never,
             ),
+            MeshReviewCommand::Withdraw(a) => ask(
+                &a.query,
+                "POST",
+                "/api/v1/mesh/reviews/withdraw",
+                Some(json!({
+                    "request": a.request,
+                    "session": a.session,
+                    "note": a.note,
+                })),
+                render_written,
+                never,
+            ),
         },
+    }
+}
+
+/// `text` cut to at most `max` characters, with an ellipsis when it was longer.
+fn clip(text: &str, max: usize) -> String {
+    match text.char_indices().nth(max) {
+        Some((at, _)) => format!("{}…", &text[..at]),
+        None => text.to_string(),
     }
 }
 
@@ -772,6 +793,10 @@ fn render_state(v: &Value) -> String {
             s(r, "state"),
             r["answers"].as_array().map(Vec::len).unwrap_or(0)
         ));
+        if let Some(result) = r["result"].as_str() {
+            let first = result.lines().next().unwrap_or_default();
+            out.push_str(&format!("           result: {}\n", clip(first, 120)));
+        }
     }
     out.push_str(&format!("digest     {}", s(st, "digest")));
     out
@@ -1255,6 +1280,26 @@ mod tests {
             },
             "streams": [],
         })
+    }
+
+    #[test]
+    fn a_withdrawn_review_shows_the_requesters_result_under_it() {
+        let mut v = folded_state();
+        v["state"]["reviews"] = json!([{
+            "key": "s/r2", "subject": "pre-flight #919", "state": "withdrawn", "answers": [],
+            "result": format!("clean: 45 gates\nsecond line {}", "x".repeat(200)),
+        }]);
+        let text = render_state(&v);
+        assert!(
+            text.contains("review     s/r2 pre-flight #919 withdrawn (0 answer(s))\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("           result: clean: 45 gates\n"),
+            "first line only:\n{text}"
+        );
+        assert_eq!(clip("abcdef", 3), "abc…");
+        assert_eq!(clip("abc", 3), "abc");
     }
 
     #[test]

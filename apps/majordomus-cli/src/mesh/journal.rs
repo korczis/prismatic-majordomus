@@ -533,6 +533,11 @@ pub enum EventBody {
         /// The runtime asked (`<node>-<runtime>`), when one was.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         reviewer: Option<String>,
+        /// What the reviewer needs beyond the subject line: the evidence, the commands, the
+        /// question. Up to [`REVIEW_BODY_MAX`] bytes. A runtime older than the field reads
+        /// the request without it.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        body: Option<String>,
     },
     /// A session answered a review request (on any runtime).
     ReviewAnswered {
@@ -546,7 +551,23 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// The runtime that asked for a review ended its request: done, void, or superseded.
+    /// Only the asking runtime writes it — from any of its sessions — so it is never a
+    /// verdict; its note is the requester's own result, shown with the request.
+    ReviewWithdrawn {
+        /// The request: `<stream>/<review>`.
+        request: String,
+        /// The withdrawing session within the stream.
+        session: String,
+        /// The requester's result or reason, up to [`REVIEW_BODY_MAX`] bytes.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        note: Option<String>,
+    },
 }
+
+/// The most a review request's body, or a requester's result note, carries: room for the
+/// evidence a reviewer needs without a second channel, and far under the link's bound.
+pub const REVIEW_BODY_MAX: usize = 8 * 1024;
 
 /// The event kinds this executable interprets. An event naming another kind is stored and
 /// relayed, never folded.
@@ -559,6 +580,7 @@ pub const KNOWN_KINDS: &[&str] = &[
     "handover_consumed",
     "review_requested",
     "review_answered",
+    "review_withdrawn",
 ];
 
 impl EventBody {
@@ -585,6 +607,7 @@ impl EventBody {
             EventBody::HandoverConsumed { .. } => "handover_consumed",
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
+            EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
         }
     }
 
@@ -696,6 +719,7 @@ impl EventBody {
                 scope,
                 issue,
                 reviewer,
+                body,
             } => {
                 ident("review", review)?;
                 ident("session", session)?;
@@ -706,6 +730,9 @@ impl EventBody {
                 }
                 if let Some(v) = reviewer {
                     text("reviewer", v, 64)?;
+                }
+                if let Some(v) = body {
+                    text("body", v, REVIEW_BODY_MAX)?;
                 }
                 Ok(())
             }
@@ -724,6 +751,18 @@ impl EventBody {
                 }
                 if let Some(v) = note {
                     text("note", v, 2048)?;
+                }
+                Ok(())
+            }
+            EventBody::ReviewWithdrawn {
+                request,
+                session,
+                note,
+            } => {
+                text("request", request, 128)?;
+                ident("session", session)?;
+                if let Some(v) = note {
+                    text("note", v, REVIEW_BODY_MAX)?;
                 }
                 Ok(())
             }
@@ -2960,6 +2999,7 @@ mod tests {
                 scope: Vec::new(),
                 issue: None,
                 reviewer: None,
+                body: None,
             })
             .unwrap();
         // The taker and the reviewer hear of the handover and the request before they act.
@@ -3230,6 +3270,7 @@ mod tests {
                         scope: Vec::new(),
                         issue: None,
                         reviewer: None,
+                        body: None,
                     };
                     run.append_own(asked).unwrap();
                     reviews[i] = true;

@@ -3515,7 +3515,7 @@ impl Cooperation {
     /// use majordomus_cli::mesh::state::ReviewState;
     ///
     /// cooperation.request_review("s1", "feature/mesh-cooperation".into(),
-    ///     vec!["apps/majordomus-cli/src/mesh".into()], Some("#184".into()), None).unwrap();
+    ///     vec!["apps/majordomus-cli/src/mesh".into()], Some("#184".into()), None, None).unwrap();
     ///
     /// let review = &cooperation.state().reviews[0];
     /// assert_eq!(review.subject, "feature/mesh-cooperation");
@@ -3523,7 +3523,7 @@ impl Cooperation {
     ///
     /// // a reviewer nobody is linked to is refused now, not left waiting
     /// cooperation.request_review("s1", "feature/x".into(), vec![], None,
-    ///     Some("somebody-0000000000000002".into())).expect_err("no such peer");
+    ///     Some("somebody-0000000000000002".into()), None).expect_err("no such peer");
     /// ```
     pub fn request_review(
         &self,
@@ -3532,6 +3532,7 @@ impl Cooperation {
         scope: Vec<String>,
         issue: Option<String>,
         reviewer: Option<String>,
+        body: Option<String>,
     ) -> Result<Written, CooperationError> {
         if let Some(target) = &reviewer {
             if *target != self.own_key {
@@ -3561,6 +3562,7 @@ impl Cooperation {
                 scope,
                 issue,
                 reviewer,
+                body,
             },
             self.own(&review),
         )
@@ -3591,7 +3593,7 @@ impl Cooperation {
     /// use majordomus_cli::mesh::state::ReviewState;
     ///
     /// let asked = cooperation
-    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None)
+    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None, None)
     ///     .unwrap();
     ///
     /// cooperation.answer_review(&asked.key, "s2", "approved".into(),
@@ -3627,6 +3629,76 @@ impl Cooperation {
                 request: request.into(),
                 session: session.into(),
                 verdict,
+                note,
+            },
+            request.into(),
+        )
+    }
+
+    /// End a review request this runtime asked for: done, void or superseded, with an
+    /// optional result the request then carries. Any session of the asking runtime may —
+    /// an MCP session is one connection, and the asker that reconnects is another session
+    /// of the same runtime — and no other runtime may: a withdrawal is the requester's own
+    /// record, never a verdict, so it does not count as an answer.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::state::ReviewState;
+    ///
+    /// let asked = cooperation
+    ///     .request_review("s1", "pre-flight of #919".into(), vec![], None, None,
+    ///         Some("structure job and own cases, hook environment unset".into()))
+    ///     .unwrap();
+    ///
+    /// // a request of another runtime cannot be ended here
+    /// cooperation.withdraw_review("other-0000000000000009/r-1", "s1", None)
+    ///     .expect_err("not this runtime's request");
+    ///
+    /// cooperation.withdraw_review(&asked.key, "s1", Some("clean: 45 gates, 12 cases".into()))
+    ///     .unwrap();
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.state, ReviewState::Withdrawn);
+    /// assert_eq!(review.result.as_deref(), Some("clean: 45 gates, 12 cases"));
+    /// assert!(review.answers.is_empty(), "a result is not an answer");
+    /// ```
+    pub fn withdraw_review(
+        &self,
+        request: &str,
+        session: &str,
+        note: Option<String>,
+    ) -> Result<Written, CooperationError> {
+        let state = self.state();
+        let Some(review) = state.reviews.iter().find(|r| r.key == request) else {
+            return Err(CooperationError::NotFound(format!(
+                "no review request {request}"
+            )));
+        };
+        if !review
+            .key
+            .starts_with(&format!("{}/", self.journal.own_stream()))
+        {
+            return Err(CooperationError::Invalid(format!(
+                "review {request} was asked by {}, and only the runtime that asked may withdraw it",
+                review.session
+            )));
+        }
+        self.write(
+            EventBody::ReviewWithdrawn {
+                request: request.into(),
+                session: session.into(),
                 note,
             },
             request.into(),
@@ -4099,7 +4171,14 @@ mod tests {
             .unwrap()
             .card
             .features = vec!["claims".into()];
-        let refused = a.request_review("s1", "feature/x".into(), vec![], None, Some(key.clone()));
+        let refused = a.request_review(
+            "s1",
+            "feature/x".into(),
+            vec![],
+            None,
+            Some(key.clone()),
+            None,
+        );
         assert!(
             matches!(refused, Err(CooperationError::FeatureUnsupported(_))),
             "{refused:?}"
@@ -4110,12 +4189,13 @@ mod tests {
                 "feature/x".into(),
                 vec![],
                 None,
-                Some("nobody".into())
+                Some("nobody".into()),
+                None
             ),
             Err(CooperationError::NotFound(_))
         ));
         assert!(a
-            .request_review("s1", "feature/x".into(), vec![], None, None)
+            .request_review("s1", "feature/x".into(), vec![], None, None, None)
             .is_ok());
 
         a.start();
