@@ -30808,6 +30808,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2460",
+        "kind": "issue",
+        "label": "I2460",
+        "summary": "The overview asks its sources at once, so it costs its slowest source and not their sum",
+        "route": "/cockpit/objects/issue/i2460",
+        "source": ".ai/repo/project/issues/I2460.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each distinct (capability, input) source of the overview is asked exactly once, in the order the cards first name it",
+            "Asked at once, every source answers as it does when asked alone, and every card is still its source's value at its pointer or unknown",
+            "On the shared server of this repository, GET /api/v1/dashboard/overview answers in no more than the slowest single source plus composition, measured before and after"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The seven sources are executed sequentially; the overview's latency is the sum of theirs.",
+          "depends_on": [],
+          "evidence_required": [
+            "overview_sources_concurrent_test",
+            "overview_latency_before_after"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            ".ai/repo/project/issues/I2460.yaml"
+          ],
+          "slug": "the-overview-asks-its-sources-at-once",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib capability::builtin::dashboard",
+            "cargo test --test dashboard",
+            "MJ_TEST_JOBS=4 bash test/run.sh 534_the_overview_answers_four_questions.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2461",
         "kind": "issue",
         "label": "I2461",
@@ -67441,6 +67480,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2460",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2460",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2461",
         "target": "kind:issue",
         "kind": "is_a"
@@ -76272,8 +76321,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2513,
-      "edges": 5486,
+      "nodes": 2514,
+      "edges": 5488,
       "acyclic": false,
       "truncated": false
     }
