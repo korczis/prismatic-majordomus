@@ -1848,6 +1848,40 @@
       "tool": "majordomus_mesh_events"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-firewall",
+      "claims": [],
+      "cli": "majordomus mesh firewall",
+      "id": "mesh.firewall",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall/",
+      "slug": "mesh-firewall",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The host firewall, as the mesh needs it",
+      "tool": "majordomus_mesh_firewall"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh firewall apply",
+      "id": "mesh.firewall.apply",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall-apply/",
+      "slug": "mesh-firewall-apply",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Admit the mesh through the host firewall",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-handover-consume",
       "claims": [],
       "cli": null,
@@ -2857,6 +2891,23 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-next",
+      "claims": [],
+      "cli": null,
+      "id": "release.next",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-next/",
+      "slug": "release-next",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The version a landing allocates, and why",
+      "tool": "majordomus_release_next"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-version",
       "claims": [],
       "cli": null,
@@ -3808,6 +3859,13 @@
         "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
+        "id": "mesh-firewall-is-derived",
+        "implementation": "apps/majordomus-cli/src/mesh/firewall.rs",
+        "route": "/guarantees/mesh-firewall-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/495_the_firewall_admits_the_mesh.sh"
+      },
+      {
         "id": "models-one-declaration",
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-one-declaration/",
@@ -3911,6 +3969,13 @@
         "route": "/guarantees/review-is-never-fabricated/",
         "status": "guaranteed",
         "test": "test/cases/736_reasoning_check_refuses_drift.sh"
+      },
+      {
+        "id": "the-closing-question-is-measured",
+        "implementation": "apps/majordomus-cli/src/gates/closing.rs",
+        "route": "/guarantees/the-closing-question-is-measured/",
+        "status": "guaranteed",
+        "test": "test/cases/1037_the_closing_question_is_measured.sh"
       }
     ],
     "http": [
@@ -3975,8 +4040,8 @@
     ]
   },
   "counts": {
-    "capabilities": 188,
-    "claims": 89,
+    "capabilities": 191,
+    "claims": 91,
     "modules": 55
   },
   "generator": "majordomus-cli 0.21.0",
@@ -4843,6 +4908,16 @@
           "slug": "mesh-events"
         },
         {
+          "id": "mesh.firewall",
+          "route": "/registry/capabilities/mesh-firewall/",
+          "slug": "mesh-firewall"
+        },
+        {
+          "id": "mesh.firewall.apply",
+          "route": "/registry/capabilities/mesh-firewall-apply/",
+          "slug": "mesh-firewall-apply"
+        },
+        {
           "id": "mesh.handover.consume",
           "route": "/registry/capabilities/mesh-handover-consume/",
           "slug": "mesh-handover-consume"
@@ -5277,6 +5352,11 @@
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",
           "slug": "release-changelog"
+        },
+        {
+          "id": "release.next",
+          "route": "/registry/capabilities/release-next/",
+          "slug": "release-next"
         },
         {
           "id": "release.version",

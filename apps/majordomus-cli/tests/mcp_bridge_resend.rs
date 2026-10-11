@@ -398,28 +398,42 @@ fn a_rejected_request_is_answered_as_that_error_without_an_election() {
     assert!(!log.contains("electing again"), "no election: {log}");
 }
 
-/// A message over the server's body limit, sent through a bridge to a real shared server,
-/// reaches the client as "payload too large" and starts no election.
+/// A message over the bound, sent through a bridge to a real shared server, is refused by
+/// the stdio transport before it is read, starts no election, and the session goes on.
 #[test]
-fn an_oversized_message_is_payload_too_large() {
+fn an_oversized_message_is_refused_and_the_session_goes_on() {
     let f = Fixture::new();
     let mut a = Mcp::spawn(&f, &["--http-port", "0"]);
     a.wait_log("listening on http://");
     let mut b = Mcp::spawn(&f, &["--http-port", "0"]);
     b.wait_log("bridging this stdio session");
     b.initialize();
+    // over the stdio transport's own bound (every transport has one): the line is refused
+    // before it is read, so its id is unknown and JSON-RPC's parse error answers it with a
+    // null id; it never reaches the server, which would have answered 413
     let pad = "x".repeat(majordomus_cli::http::server::MAX_BODY_BYTES + 1);
-    let answer = b.call(
-        11,
-        WRITER,
-        json!({ "id": "I0001", "status": "done", "pad": pad }),
-    );
-    let log = b.drain_log();
+    b.send(&json!({
+        "jsonrpc": "2.0", "id": 11, "method": "tools/call",
+        "params": { "name": WRITER, "arguments": { "id": "I0001", "status": "done", "pad": pad } },
+    }));
+    let line = b.out.recv_timeout(WAIT).unwrap_or_else(|_| {
+        panic!(
+            "no frame for the oversized message; stderr:\n{}",
+            b.drain_log()
+        )
+    });
+    let answer: Value = serde_json::from_str(&line).expect("a JSON frame");
+    assert_eq!(answer["id"], Value::Null, "{line}");
+    assert_eq!(answer["error"]["code"], -32700, "{line}");
     let text = answer["error"]["message"].as_str().unwrap_or_default();
     assert!(
-        text.contains("payload too large"),
-        "{answer}; stderr:\n{log}"
+        text.contains("bound") && text.contains("not read"),
+        "{line}"
     );
+    // the session goes on: the next call is answered, and nobody elected again
+    let next = b.call(12, READER, json!({}));
+    assert!(next.get("result").is_some(), "{next}");
+    let log = b.drain_log();
     assert!(!log.contains("electing again"), "no election: {log}");
     assert!(
         a.child.try_wait().unwrap().is_none(),

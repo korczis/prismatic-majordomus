@@ -1,0 +1,269 @@
+{
+  "name": "majordomus-mesh-interactive-v5",
+  "repo": "korczis/prismatic-majordomus",
+  "target_route": "/ui/mesh",
+  "milestones": [
+    {
+      "id": "00-RECONCILE-AUDIT",
+      "title": "Reality audit and reconciliation",
+      "depends_on": [],
+      "issues": [
+        {
+          "id": "M00-I01",
+          "objective": "Inspect current /ui/mesh route and runtime implementation, discover actual UI route owner, templates, asset graph and mesh capabilities"
+        },
+        {
+          "id": "M00-I02",
+          "objective": "Inventory all related PRs, issues, intents, milestones, rules, ADRs and previous UI packs; deduplicate and connect"
+        },
+        {
+          "id": "M00-I03",
+          "objective": "Capture actual baseline screenshots and browser interaction traces at desktop, tablet, narrow mobile; record missing functionality"
+        },
+        {
+          "id": "M00-I04",
+          "objective": "Map each node/edge UI field to canonical source, evidence availability, permissions and freshness"
+        },
+        {
+          "id": "M00-I05",
+          "objective": "Record supported realtime transports, event envelope and existing execution WebSocket; identify semantic mismatch"
+        },
+        {
+          "id": "M00-I06",
+          "objective": "Create canonical milestone DAG, issues, acceptance evidence and performance baseline"
+        }
+      ]
+    },
+    {
+      "id": "01-CANONICAL-GRAPH",
+      "title": "Canonical typed mesh topology and entity resolver",
+      "depends_on": [
+        "00-RECONCILE-AUDIT"
+      ],
+      "issues": [
+        {
+          "id": "M01-I01",
+          "objective": "Resolve stable node/runtime/instance/stream/peer/task/capability identities, do not use hostname, address or PID as identity"
+        },
+        {
+          "id": "M01-I02",
+          "objective": "Derive typed graph nodes and edges from mesh discovery, handshake, signed journal, fold, capability relation and task model"
+        },
+        {
+          "id": "M01-I03",
+          "objective": "Specify observable versus trusted versus actionable node states, provenance and authorization semantics"
+        },
+        {
+          "id": "M01-I04",
+          "objective": "Implement generic entity deep links, reverse links and route lookup with no consumer-specific ID lists"
+        },
+        {
+          "id": "M01-I05",
+          "objective": "Generate JSON schema and data contract from canonical model; include revision, cursor, collected-at, status and absence reasons"
+        },
+        {
+          "id": "M01-I06",
+          "objective": "Property and contract tests: deterministic ordering, dedupe, topology changes, churn, restarts, partitions and missing evidence"
+        }
+      ]
+    },
+    {
+      "id": "02-INTERACTIVE-VIEW",
+      "title": "Graph interactions and node inspector",
+      "depends_on": [
+        "01-CANONICAL-GRAPH"
+      ],
+      "issues": [
+        {
+          "id": "M02-I01",
+          "objective": "Compose existing server-rendered Cockpit /ui shell, preserve no-JS table/detail baseline and canonical route ownership"
+        },
+        {
+          "id": "M02-I02",
+          "objective": "Build Cytoscape topology with pan/zoom/minimap/fit, semantic labels, clustering, layout toggle, keyboard equivalents"
+        },
+        {
+          "id": "M02-I03",
+          "objective": "Click, tap or keyboard-select node to show inspector with identity, trust, health, last seen, freshness and provenance"
+        },
+        {
+          "id": "M02-I04",
+          "objective": "Inspector tabs: Overview, Tasks, Sessions, Capabilities, Connections, Events, Metrics, Logs, Evidence, Actions; show only supported panels"
+        },
+        {
+          "id": "M02-I05",
+          "objective": "Bidirectional selection graph-table-inspector-URL, browser back/forward, shareable deep link and restored filters"
+        },
+        {
+          "id": "M02-I06",
+          "objective": "Edge inspector shows type, direction, reason, signed-event provenance, status, last observed, diagnostics and linked entities"
+        }
+      ]
+    },
+    {
+      "id": "03-LIVE-TRANSPORT",
+      "title": "Live node monitoring and streaming",
+      "depends_on": [
+        "02-INTERACTIVE-VIEW"
+      ],
+      "issues": [
+        {
+          "id": "M03-I01",
+          "objective": "Audit existing execution GET /events WebSocket; reuse framing/auth/heartbeats, extend using typed mesh events only if required"
+        },
+        {
+          "id": "M03-I02",
+          "objective": "Define snapshot-then-subscribe with monotonic cursor, sequence, deduplication, versioned envelope and replay policy"
+        },
+        {
+          "id": "M03-I03",
+          "objective": "Stream real mesh link transitions, heartbeats, claims, conflicts, handovers, reviews, task and execution progress where actually emitted"
+        },
+        {
+          "id": "M03-I04",
+          "objective": "Implement per-node subscription filtering, bounded backpressure, bounded buffers, masking of secrets and explicit retention limits"
+        },
+        {
+          "id": "M03-I05",
+          "objective": "Reconnect with exponential backoff, gap detection, catch-up snapshot, stale/offline badges and no fabricated activity"
+        },
+        {
+          "id": "M03-I06",
+          "objective": "Test socket churn, event reorder/duplicate/gap, browser sleep, tab close, server restart and mesh partition"
+        }
+      ]
+    },
+    {
+      "id": "04-AUTHORIZED-ACTIONS",
+      "title": "Node actions, tasks and coordination",
+      "depends_on": [
+        "03-LIVE-TRANSPORT"
+      ],
+      "issues": [
+        {
+          "id": "M04-I01",
+          "objective": "Derive available actions from capabilities, input schemas, runtime target and effective authorization; never invent buttons"
+        },
+        {
+          "id": "M04-I02",
+          "objective": "Enable supported local actions like inspect, explain, copy link, view work, run named canonical capability through existing executor"
+        },
+        {
+          "id": "M04-I03",
+          "objective": "Where remote execution is not supported, display explicit non-actionable state; design authenticated delegated execution only through reviewed existing mesh boundary"
+        },
+        {
+          "id": "M04-I04",
+          "objective": "Provide schema-driven action forms, preflight, effect preview, required confirmation for destructive mutations, idempotency keys"
+        },
+        {
+          "id": "M04-I05",
+          "objective": "Attach action execution ID to node, issue, task, milestone and intent as supported; display live result and evidence"
+        },
+        {
+          "id": "M04-I06",
+          "objective": "Authorization and race tests for forged peer, stale trust, denied action, duplicate clicks, capability disappearance and expired delegation"
+        }
+      ]
+    },
+    {
+      "id": "05-UX-AND-PERF",
+      "title": "Visual fidelity, mobile and observability",
+      "depends_on": [
+        "04-AUTHORIZED-ACTIONS"
+      ],
+      "issues": [
+        {
+          "id": "M05-I01",
+          "objective": "Apply shared design tokens, Flowbite/Tailwind and Alpine.js within current asset pipeline; do not introduce a SPA"
+        },
+        {
+          "id": "M05-I02",
+          "objective": "Create responsive split graph and inspector with mobile bottom sheet, no inaccessible drawers or hover-only controls"
+        },
+        {
+          "id": "M05-I03",
+          "objective": "Add graph search, facet filters, status/category grouping, legend, view switching and state URL persistence"
+        },
+        {
+          "id": "M05-I04",
+          "objective": "Use Apache ECharts only for measured time series; distinguish absent/unmeasured/stale/failed from zero"
+        },
+        {
+          "id": "M05-I05",
+          "objective": "Lazy-load graph/chart libraries, scale to large meshes and benchmark rendering, event volumes and reconnect costs"
+        },
+        {
+          "id": "M05-I06",
+          "objective": "WCAG keyboard/focus/contrast/reduced-motion tests and no-JS tabular rendering parity"
+        }
+      ]
+    },
+    {
+      "id": "06-ENFORCE-AND-DOCS",
+      "title": "Majordomus governance and derived documentation",
+      "depends_on": [
+        "05-UX-AND-PERF"
+      ],
+      "issues": [
+        {
+          "id": "M06-I01",
+          "objective": "Update canonical .ai/ rules and doctrines after existing-rule reconciliation, replace obsolete rules instead of piling on duplicates"
+        },
+        {
+          "id": "M06-I02",
+          "objective": "Attach executable negative tests to every blocking invariant and wire into existing gate model and CI planner"
+        },
+        {
+          "id": "M06-I03",
+          "objective": "Add cross-surface parity tests for CLI, MCP, HTTP, Cockpit, graph and node detail with identical canonical IDs"
+        },
+        {
+          "id": "M06-I04",
+          "objective": "Generate OpenAPI/JSON schema and relevant docs from typed declarations; preserve stable route and asset topology"
+        },
+        {
+          "id": "M06-I05",
+          "objective": "Update docs/MESH.md, Cockpit docs, operating/security guides, screenshots, ADR when repository policy warrants it"
+        },
+        {
+          "id": "M06-I06",
+          "objective": "Implement no-mock/no-hardcoded-inventory drift gate, provenance coverage checks and exact path to diagnose failures"
+        }
+      ]
+    },
+    {
+      "id": "07-DELIVER",
+      "title": "Incremental delivery, rollout and proof",
+      "depends_on": [
+        "06-ENFORCE-AND-DOCS"
+      ],
+      "issues": [
+        {
+          "id": "M07-I01",
+          "objective": "Integrate in smallest safe vertical slices, run focused tests, only affected derive, check and verify before merge"
+        },
+        {
+          "id": "M07-I02",
+          "objective": "Drive PR queue through existing prs drain, respect conflicts, review and branch protection; preserve self-hosting"
+        },
+        {
+          "id": "M07-I03",
+          "objective": "Apply repository version analysis, bump as warranted, regenerate version surfaces and publish authenticated release"
+        },
+        {
+          "id": "M07-I04",
+          "objective": "Deploy authorized runtime and site updates, perform HTTP/WebSocket/node selection real browser smoke tests"
+        },
+        {
+          "id": "M07-I05",
+          "objective": "Run independent adopter-repo scenario, healthy/empty/offline/partitioned mesh cases, mobile and accessibility validation"
+        },
+        {
+          "id": "M07-I06",
+          "objective": "Produce evidence report: URL, SHA, run IDs, tests, latency, screenshots, artifacts, failures, blockers and follow-up issues"
+        }
+      ]
+    }
+  ]
+}

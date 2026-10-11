@@ -41,6 +41,10 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             let since = since.clone();
             analyze(&args, since.as_deref(), explain)
         }
+        Some(ReleaseCommand::Next { ref base, ref head }) => {
+            let (base, head) = (base.clone(), head.clone());
+            next(&args, &base, &head)
+        }
         Some(ReleaseCommand::Bump {
             ref level,
             ref exact,
@@ -275,6 +279,44 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
     } else {
         0
     })
+}
+
+/// `majordomus release next`: what a landing would allocate, through the capability so
+/// every surface renders one value. Exit 0 when decided, [`EXIT_UNREADABLE`] when an input
+/// could not be read.
+fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let value = app
+        .context
+        .execute(
+            crate::capability::builtin::release::NEXT_ID,
+            serde_json::json!({ "base": base, "head": head }),
+        )
+        .map_err(|e| Error::Refused {
+            code: EXIT_UNREADABLE,
+            reason: e.to_string(),
+        })?;
+    let decision: crate::release::landing::LandingDecision = serde_json::from_value(value)
+        .map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })?;
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    match args.format {
+        OutputFormat::Json => writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(&decision).unwrap_or_default()
+        )
+        .map_err(Error::Transport)?,
+        OutputFormat::Text => {
+            for line in &decision.explanation {
+                writeln!(out, "  {line}").map_err(Error::Transport)?;
+            }
+            writeln!(out, "next  {}", decision.next_version).map_err(Error::Transport)?;
+        }
+    }
+    Ok(0)
 }
 
 /// The human rendering of a plan. One function, so `analyze` and `bump` cannot describe the

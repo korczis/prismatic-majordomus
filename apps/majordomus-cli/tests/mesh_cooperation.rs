@@ -143,7 +143,7 @@ fn connected(s: &Served) -> usize {
 }
 
 fn state(s: &Served) -> Value {
-    s.get("/api/v1/mesh/state").1["state"].clone()
+    s.get("/api/v1/mesh/state?view=full").1["state"].clone()
 }
 
 fn claims_in(s: &Served, st: &str) -> Vec<Value> {
@@ -331,6 +331,30 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
     let http = sb.get("/api/v1/mesh/peers").1;
     assert_eq!(cli["runtime"], http["runtime"]);
     assert_eq!(cli["repository"], http["repository"]);
+    assert_eq!(http["view"], json!("summary"), "the default is the summary");
+
+    // The state's default answer is the summary too: bounded, closed by the whole fold's
+    // digest; a filter narrows the full view and never changes that digest.
+    let whole = state(&sb)["digest"].clone();
+    let summary = sb.get("/api/v1/mesh/state").1;
+    assert_eq!(summary["view"], json!("summary"));
+    assert!(
+        summary["state"].is_null(),
+        "the summary does not carry the fold"
+    );
+    assert_eq!(summary["summary"]["digest"], whole);
+    assert!(summary.to_string().len() < 16 * 1024);
+    let nobody = sb
+        .get("/api/v1/mesh/state?view=full&claims=live&session=nobody")
+        .1;
+    assert_eq!(nobody["state"]["claims"], json!([]));
+    assert_eq!(nobody["state"]["sessions"], json!([]));
+    assert_eq!(nobody["state"]["digest"], whole);
+    let (status, refused) = sb.get("/api/v1/mesh/state?view=everything");
+    assert_eq!(
+        status, 400,
+        "an unknown view is refused, not read as the default: {refused}"
+    );
     let (code, _, _) = run_in(
         &b.fixture.root(),
         &[

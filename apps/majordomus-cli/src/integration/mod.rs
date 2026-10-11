@@ -41,6 +41,7 @@
 //! run, so the forge calls nearly every pull request conflicting. The relation to master is
 //! decided here, by git, with the drivers ([`relation`]).
 
+pub mod allocate;
 pub mod classify;
 pub mod drain;
 pub mod exclusive;
@@ -603,7 +604,7 @@ pub fn build_queue_shaped(
             (Some(s), _) => s.authored.clone(),
             (
                 None,
-                RelationToMaster::UpToDate { authored }
+                RelationToMaster::UpToDate { authored, .. }
                 | RelationToMaster::CarriesMaster { authored, .. }
                 | RelationToMaster::Behind { authored, .. },
             ) => authored.clone(),
@@ -2143,6 +2144,7 @@ mod dependency_queue {
         // a relation that passes, so the dependency gate is the one that decides
         let q = build_queue(&o, "m", |_| RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
+            owes_version: None,
         });
         for n in [1, 2] {
             assert_eq!(

@@ -147,12 +147,96 @@ mj_kdisc_state() {
   [ "$any" = 1 ]
 }
 
+# ---------------------------------------------------------------- observe
+# What a session met, as one typed ledger line (ADR 0118). An act like `decision add`: the
+# worker states it, the tool checks its shape and records it, and nothing is judged here —
+# the episode boundary derives the candidate. Every refusal writes nothing.
+MJ_KNOWLEDGE_OBSERVATION_KINDS='friction workaround defect drift repetition'
+
+mj_knowledge_observe_cmd() {
+  local kind="" subject="" statement="" evidence="" ev_json="" ref task_id=none
+  while [ $# -gt 0 ]; do case "$1" in
+    --kind) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--kind needs a value"; kind="$2"; shift 2 ;;
+    --kind=*) kind="${1#--kind=}"; shift ;;
+    --subject) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--subject needs a value"; subject="$2"; shift 2 ;;
+    --subject=*) subject="${1#--subject=}"; shift ;;
+    --evidence) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--evidence needs a value"
+                evidence="$evidence$2"$'\n'; shift 2 ;;
+    --evidence=*) evidence="$evidence${1#--evidence=}"$'\n'; shift ;;
+    -*) mj_die "$MJ_EX_USAGE" "knowledge observe: unknown option $1" ;;
+    *) [ -z "$statement" ] || mj_die "$MJ_EX_USAGE" "knowledge observe: the statement must be one argument (quote it)"
+       statement="$1"; shift ;;
+  esac; done
+  case " $MJ_KNOWLEDGE_OBSERVATION_KINDS " in
+    *" $kind "*) [ -n "$kind" ] || mj_die "$MJ_EX_USAGE" "knowledge observe: --kind is required ($MJ_KNOWLEDGE_OBSERVATION_KINDS)" ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge observe: --kind must be one of: $MJ_KNOWLEDGE_OBSERVATION_KINDS (got '$kind')" ;;
+  esac
+  [ -n "$subject" ] || mj_die "$MJ_EX_USAGE" "knowledge observe: --subject is required: a repository path, or capability:|rule:|command:|gate:<id>"
+  mj_knowledge_subject_ok "$subject" \
+    || mj_die "$MJ_EX_USAGE" "knowledge observe: '$subject' is not a subject: a repository-relative path without '..', or capability:|rule:|command:|gate: followed by an identifier"
+  [ -n "$statement" ] || mj_die "$MJ_EX_USAGE" "knowledge observe: the statement is required, as one quoted argument"
+  mj_is_multiline "$statement$subject" && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement and the subject must be single-line"
+  printf '%s\n' "$statement" | grep -Eq "$MJ_KNOWLEDGE_TRANSCRIPT" \
+    && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement opens like a turn of a conversation; an observation is an assertion, never a transcript"
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    printf '%s' "$ref" | grep -Eq '^(file|test|commit|issue|claim):[^[:space:]]+$' \
+      || mj_die "$MJ_EX_USAGE" "knowledge observe: evidence '$ref' is not a reference (file:|test:|commit:|issue:|claim: followed by what it names)"
+    ev_json="$ev_json${ev_json:+,}\"$(mj_json_esc "$ref")\""
+  done <<EOF_EV
+$evidence
+EOF_EV
+  mj_require_installed
+  # The deriver selects an observation by its episode stamp, and the ledger stamps a line only
+  # while an episode is open: an observation without one would be written and never derived.
+  [ -n "$(mj_open_session_id)" ] \
+    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout, so the observation would never be derived; open one first: majordomus session start"
+  mj_load_current 2>/dev/null && [ "$(mj_cur outcome)" = active ] && task_id="$(mj_cur id)"
+  mj_ledger_append observation.recorded \
+    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]"
+  printf 'observed: %s %s — %s\n' "$kind" "$subject" "$statement"
+}
+
+# Which owner should look first at an observation about $1, from its structure alone, in
+# ADR 0118's order. The tool's own share/ is the platform only when it lies inside this
+# repository — the tool's own source tree; in a repository that adopted the tool, share/ is
+# the project's own and the tool's lives outside the checkout. Prints the route.
+mj_knowledge_route() {
+  local subject="$1" share root
+  case "$subject" in
+    command:*|capability:*|rule:majordomus.*) printf platform; return 0 ;;
+    rule:*|gate:*) printf enforcement; return 0 ;;
+  esac
+  case "$subject" in "$(mj_rel "$MJ_RULES_DIR")/vendor/"*) printf platform; return 0 ;; esac
+  share="$(cd "$MJ_SHARE_DIR" 2>/dev/null && pwd -P)"; root="$(cd "$MJ_ROOT" && pwd -P)"
+  if [ -n "$share" ]; then
+    case "$share" in
+      "$root"/*) case "$subject" in "${share#"$root"/}"/*|"${share#"$root"/}") printf platform; return 0 ;; esac ;;
+    esac
+  fi
+  [ -n "${MJ_LIB_changed:-}" ] || . "$MJ_LIB_DIR/changed.sh"
+  mj_changed_is_generated "$subject" && { printf generator; return 0; }
+  case "$subject" in docs/*|docs) printf documentation; return 0 ;; esac
+  printf project
+}
+
+# A subject is what an observation is about, in a form a route can be derived from without
+# reading prose: a repository-relative path, or a typed identifier.
+mj_knowledge_subject_ok() {
+  case "$1" in
+    capability:?*|rule:?*|command:?*|gate:?*)
+      printf '%s' "${1#*:}" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._/@-]*$' ;;
+    /*|*..*|*:*) return 1 ;;
+    *) printf '%s' "$1" | grep -Eq '^[A-Za-z0-9._][A-Za-z0-9._/-]*$' ;;
+  esac
+}
+
 # ---------------------------------------------------------------- command
 mj_cmd_knowledge() {
   local sub="${1:-sources}"
   case "$sub" in
     --help|-h|help) mj_knowledge_usage; return 0 ;;
-    sources|nodes|edges|derive|candidates|promote|reject|check) shift || true ;;
+    sources|nodes|edges|derive|candidates|promote|reject|check|observe) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "knowledge: unknown subcommand '$sub' (see: majordomus knowledge --help)" ;;
   esac
   mj_require_installed
@@ -165,6 +249,7 @@ mj_cmd_knowledge() {
     promote)    mj_knowledge_promote_cmd "$@" ;;
     reject)     mj_knowledge_reject_cmd "$@" ;;
     check)      mj_knowledge_check_cmd "$@" ;;
+    observe)    mj_knowledge_observe_cmd "$@" ;;
   esac
 }
 
@@ -189,6 +274,12 @@ usage: majordomus knowledge <subcommand> [options]
         supersede a candidate in place, recording why and what replaces it
   check [--json]
         every record is schema-valid, evidenced and resolves what it names  (read-only)
+  observe --kind <friction|workaround|defect|drift|repetition> --subject <ref>
+          [--evidence <ref>]... "<one-line statement>"
+        record what this session met: one observation.recorded line in the ledger, inside a
+        task or outside one; the episode boundary turns it into a candidate (ADR 0118)
+        subject: a repository path, or capability:|rule:|command:|gate:<id>
+        evidence: file:|test:|commit:|issue:|claim:<ref>
 
   Discovery is driven by the version-control index for repository knowledge and by the
   state directories Majordomus owns for operational records. An untracked file is not a
@@ -712,6 +803,19 @@ mj_knowledge_evidence() {
           print "task", task, ts, "task.finished" US task US o, \
             "Task " task " completed; verified by: " jstr($0, "command") " (exit " jraw($0, "exit") ")", \
             "The verification command passed when the task finished in episode " sid ".", "fact", "observed", "task", o
+      } else if (e == "observation.recorded") {
+        # ADR 0118: what a worker met. The subject and the evidence travel in the last two
+        # columns; the canonical evidence is the kind, the subject and the statement, so the
+        # same observation in one episode is one file and in another episode another.
+        k = jstr($0, "kind"); subj = jstr($0, "subject"); st = jstr($0, "statement")
+        if (k == "" || subj == "" || st == "") next
+        ev = ""; at = index($0, "\"evidence\":[")
+        if (at > 0) {
+          ev = substr($0, at + 12); sub(/\].*$/, "", ev); gsub(/"/, "", ev); gsub(/,/, " ", ev)
+        }
+        if (ev == "") ev = "-"
+        print "observation", task, ts, "observation.recorded" US k US subj US st, st, \
+          "Observed as " k " about " subj " in episode " sid ".", "lesson", "observed", "observation", subj, ev
       }
     }' "$led"
 }
@@ -785,13 +889,15 @@ mj_knowledge_yq() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 # the exact key order the section's README documents. Prints the record id.
 mj_knowledge_compose() {
   local sid="$1" row="$2" refs="$3" out="$4"
-  local kind task ts canon title desc class epi tag rest id
-  IFS="$MJ_TAB" read -r kind task ts canon title desc class epi tag rest <<EOF
+  local kind task ts canon title desc class epi tag rest evrefs id about="" route="" ref
+  IFS="$MJ_TAB" read -r kind task ts canon title desc class epi tag rest evrefs <<EOF
 $row
 EOF
-  : "$rest"     # the outcome column belongs to the derive loop, not to composition
+  # The tenth column is a task's outcome, which belongs to the derive loop; for an
+  # observation it is the subject, and the eleventh its evidence references (ADR 0118).
+  if [ "$kind" = observation ]; then about="$rest"; route="$(mj_knowledge_route "$about")"; fi
   # A lesson carries the reason the task's own note gave, when it left one.
-  if [ "$class" = lesson ] && [ -n "$task" ] && [ "$task" != none ]; then
+  if [ "$kind" = task ] && [ "$class" = lesson ] && [ -n "$task" ] && [ "$task" != none ]; then
     local reason; reason="$(mj_knowledge_note_line "$MJ_STATE_DIR/completed/$task.md" Reason)"
     [ -n "$reason" ] && title="$title: $reason"
   fi
@@ -800,6 +906,7 @@ EOF
     printf -- '---\nschema: knowledge/v1\nid: %s\nkind: knowledge\nclass: %s\n' "$id" "$class"
     printf 'title: "%s"\ndescription: "%s"\n' "$(mj_knowledge_yq "$title")" "$(mj_knowledge_yq "$desc")"
     printf 'status: candidate\nepistemics: %s\ndate: %s\ntags:\n  - derived\n  - %s\n' "$epi" "${ts%%T*}" "$tag"
+    if [ -n "$about" ]; then printf 'about: "%s"\nroute: %s\n' "$(mj_knowledge_yq "$about")" "$route"; fi
     printf 'provenance:\n  origin: extracted\n  derived_from:\n    - session:%s\n' "$sid"
     # A decision has no identity of its own in the ledger; the task it was recorded under
     # is the reference, as the schema's own comment uses it. A decision recorded outside a
@@ -808,11 +915,26 @@ EOF
       case "$kind" in decision) printf '    - decision:%s\n' "$task" ;; *) printf '    - task:%s\n' "$task" ;; esac
     fi
     [ -s "$refs" ] && sed -n 's/^commit:/    - commit:/p' "$refs"
+    # An observation's own evidence, where it resolves now: a commit git knows, a file or a
+    # test the tree tracks. The rest — an issue, a claim, a path since removed — stays on
+    # the ledger line and in the body, where nothing has to resolve it.
+    if [ "$kind" = observation ] && [ "${evrefs:--}" != - ]; then
+      for ref in $evrefs; do
+        case "$ref" in
+          commit:*) mj_git cat-file -e "${ref#commit:}^{commit}" 2>/dev/null && printf '    - %s\n' "$ref" ;;
+          file:*|test:*) mj_git ls-files --error-unmatch -- "${ref#*:}" >/dev/null 2>&1 && printf '    - %s\n' "$ref" ;;
+        esac
+      done
+    fi
     if [ -s "$refs" ] && grep -q '^file:' "$refs"; then
       printf 'relations:\n'
       grep '^file:' "$refs" | while IFS= read -r p; do printf '  - type: relates_to\n    target: %s\n' "$p"; done
     fi
     printf -- '---\n\n# %s\n\n%s\n' "$title" "$desc"
+    if [ "$kind" = observation ] && [ "${evrefs:--}" != - ]; then
+      printf '\n# Evidence\n\n'
+      for ref in $evrefs; do printf -- '- `%s`\n' "$ref"; done
+    fi
   } > "$out"
   printf '%s' "$id"
 }
@@ -1003,7 +1125,7 @@ mj_knowledge_candidate_rows() {
       ep = ""; for (i = 0; (("provenance.derived_from." i) in v); i++) if (v["provenance.derived_from." i] ~ /^session:/) { ep = substr(v["provenance.derived_from." i], 9); break }
       b = (ep in branch) ? branch[ep] : ""
       if (("id" in v) && v["id"] != "")
-        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v["id"], nz(v["class"]), nz(v["status"]), nz(v["epistemics"]), nz(v["date"]), nz(ep), nz(b), path[cur], nz(unq(v["title"]))
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v["id"], nz(v["class"]), nz(v["status"]), nz(v["epistemics"]), nz(v["date"]), nz(ep), nz(b), path[cur], nz(unq(v["title"])), nz(unq(v["about"])), nz(v["route"])
       delete v; cur = ""
     }
     FILENAME == map { path[$1] = $2; next }
@@ -1054,26 +1176,59 @@ mj_knowledge_candidates_cmd() {
     --help|-h) mj_knowledge_usage; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "knowledge candidates: unknown option $1" ;;
   esac; done
-  local out n=0; out="$(mktemp "${TMPDIR:-/tmp}/mj.kca.XXXXXX")"
-  mj_knowledge_candidate_rows | awk -F'\t' '$3 == "candidate"' > "$out"
-  local id cls st epi date ep br path title first=1
+  local all out groups n=0; all="$(mktemp "${TMPDIR:-/tmp}/mj.kca.XXXXXX")"
+  out="$all.c"; groups="$all.g"
+  mj_knowledge_candidate_rows > "$all"
+  awk -F'\t' '$3 == "candidate"' "$all" > "$out"
+  # ADR 0118: what the candidates are about, grouped. A group is every record that names one
+  # subject — awaiting review, or rejected and kept — with the episodes behind them, so a
+  # recurring defect reads as one thing and a rejection is listed beside what came after it.
+  # Rows: about, route, candidate ids, rejected ids, episodes (space-joined, sorted, '-' none).
+  awk -F'\t' '
+    $10 == "-" { next }
+    $3 != "candidate" && $3 != "superseded" { next }
+    { a = $10; route[a] = $11
+      if ($3 == "candidate") cand[a] = cand[a] " " $1; else rej[a] = rej[a] " " $1
+      if ($6 != "-" && !((a, $6) in seen)) { seen[a, $6] = 1; eps[a] = eps[a] " " $6 } }
+    END { for (a in route) {
+            c = cand[a]; r = rej[a]; e = eps[a]; sub(/^ /, "", c); sub(/^ /, "", r); sub(/^ /, "", e)
+            printf "%s\t%s\t%s\t%s\t%s\n", a, route[a], (c == "" ? "-" : c), (r == "" ? "-" : r), (e == "" ? "-" : e) } }' "$all" \
+    | LC_ALL=C sort -t "$MJ_TAB" -k1,1 > "$groups"
+  local id cls st epi date ep br path title about route c r e first=1 j
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":1,"candidates":['
-    while IFS="$MJ_TAB" read -r id cls st epi date ep br path title; do
+    while IFS="$MJ_TAB" read -r id cls st epi date ep br path title about route; do
       [ "$first" = 1 ] || printf ','; first=0
-      printf '{"id":"%s","class":"%s","status":"%s","epistemics":"%s","date":"%s","episode":"%s","branch":%s,"path":"%s","title":"%s"}' \
+      printf '{"id":"%s","class":"%s","status":"%s","epistemics":"%s","date":"%s","episode":"%s","branch":%s,"path":"%s","title":"%s"' \
         "$(mj_json_esc "$id")" "$cls" "$st" "$epi" "$date" "$([ "$ep" != - ] && mj_json_esc "$ep")" \
         "$([ "$br" != - ] && printf '"%s"' "$(mj_json_esc "$br")" || printf 'null')" "$(mj_json_esc "$path")" "$(mj_json_esc "$title")"
+      [ "${about:--}" = - ] || printf ',"about":"%s","route":"%s"' "$(mj_json_esc "$about")" "$route"
+      printf '}'
     done < "$out"
+    printf '],"groups":['; first=1
+    while IFS="$MJ_TAB" read -r about route c r e; do
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"about":"%s","route":"%s"' "$(mj_json_esc "$about")" "$route"
+      for j in candidates:"$c" rejected:"$r" episodes:"$e"; do
+        printf ',"%s":[%s]' "${j%%:*}" "$( [ "${j#*:}" = - ] || printf '%s\n' ${j#*:} | while IFS= read -r v; do printf '"%s",' "$(mj_json_esc "$v")"; done | sed 's/,$//')"
+      done
+      printf '}'
+    done < "$groups"
     printf ']}\n'
   else
-    while IFS="$MJ_TAB" read -r id cls st epi date ep br path title; do
+    while IFS="$MJ_TAB" read -r id cls st epi date ep br path title about route; do
       printf '%-46s %-10s %-10s %-24s %s\n' "$id" "$cls" "$date" "${br:--}" "$title"
       n=$((n + 1))
     done < "$out"
     printf 'knowledge candidates: %s awaiting review\n' "$n"
+    while IFS="$MJ_TAB" read -r about route c r e; do
+      printf 'about %s  route %s  awaiting %s  rejected %s  episodes %s\n' "$about" "$route" \
+        "$( [ "$c" = - ] && printf 0 || printf '%s\n' $c | grep -c .)" \
+        "$( [ "$r" = - ] && printf 0 || printf '%s\n' $r | grep -c .)" \
+        "$( [ "$e" = - ] && printf 0 || printf '%s\n' $e | grep -c .)"
+    done < "$groups"
   fi
-  rm -f "$out"
+  rm -f "$all" "$out" "$groups"
   return 0
 }
 

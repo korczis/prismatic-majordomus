@@ -1,7 +1,7 @@
 +++
 title = "majordomus run"
 description = "Run a capability as an execution and follow it: its steps, its progress and its output as they happen"
-weight = 120
+weight = 121
 [extra]
 route = "/docs/cli/run/"
 command = "majordomus run"

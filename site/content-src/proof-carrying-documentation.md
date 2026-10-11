@@ -49,9 +49,9 @@ flowchart TD
   I --> J[a refusal, with the command that reproduces it]
 ```
 
-The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. Today that registry holds 1482 capabilities. 110 of them are exposed as MCP tools, 1410 as MCP resources, 112 as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.
+The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. As this page is built, that registry holds {{ <cite_figure name="capabilities" /> }} capabilities: {{ <cite_figure name="mcp_tools" /> }} of them are exposed as MCP tools, {{ <cite_figure name="mcp_resources" /> }} as MCP resources, {{ <cite_figure name="http_routes" /> }} as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.
 
-I want to be precise about what this does not cover, because the honest version is more useful than the tidy one. The command line is **not** a pure projection. The command graph holds 195 commands, and 64 of them have no capability behind them — the tool says so itself, in the same report: `commands no capability claims: 64`. Those commands are a second declaration, checked against the first rather than derived from it. Closing that gap is ongoing work, and until it closes, "one declaration, every surface" is true of the API, the MCP surface and the documentation, and aspirational for the CLI.
+I want to be precise about what this does not cover, because the honest version is more useful than the tidy one. The command line is **not** a pure projection. The executable's command line has {{ <cite_figure name="cli_commands" /> }} runnable commands, and not every one of them has a capability behind it — the tool says how many do not itself, in the same report, on the line `commands no capability claims`. Those commands are a second declaration, checked against the first rather than derived from it. Closing that gap is ongoing work, and until it closes, "one declaration, every surface" is true of the API, the MCP surface and the documentation, and aspirational for the CLI.
 
 ## Claims as objects
 
@@ -63,7 +63,7 @@ Guaranteed means: implemented, and a behavioural test proves it.
 
 The rule that makes this more than a spreadsheet is that the relationship must hold in **both** directions, and a gate decides it. `scripts/ci/claim-proof-check` reads every guaranteed claim, opens the test file the claim names, and requires that test to name the claim back in its header. A claim pointing at a test that has never heard of it is a finding. Then it requires the named test to be *runnable* — a shell case under `test/cases/` or a crate test under `apps/majordomus-cli/tests/` — because a claim whose proof is a Markdown file is not proven, it is described.
 
-Right now that check reports:
+When I wrote this, that check reported:
 
 ```console
 $ scripts/ci/claim-proof-check --strict
@@ -73,9 +73,9 @@ blocking rules:      not measured here — scripts/ci/rule-proof-check is the on
 claim-proof-check: every guaranteed claim names a test that names it back
 ```
 
-161 guaranteed claims, all closed, and the exemption baseline beside the check contains thirteen lines of comments and no exempted claims. There is nothing on a waiver list.
+The matrix holds {{ <cite_figure name="claims_guaranteed" /> }} guaranteed claims as this page is built, and the check runs strict over every one of them: the exemption baseline beside it contains comments and no exempted claim. There is nothing on a waiver list.
 
-The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. 137 rules resolve in a deterministic order; 116 carry a validator; all 109 blocking rules carry one. Four rules declare that a human reader enforces them — and that is a *typed* state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.
+The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. The repository's object graph indexes {{ <cite_figure name="rule_objects" /> }} rule documents; the rules they define resolve in a deterministic order, and every blocking one carries a validator — `scripts/ci/rule-proof-check` is the reader that decides it. The standard package alone, the part every adopting repository inherits, declares {{ <cite_figure name="doctrines_declared" /> }} rules, {{ <cite_figure name="doctrines_blocking" /> }} of them blocking. A few rules declare that a human reader enforces them — and that is a *typed* state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.
 
 ## The place where it stops
 
@@ -83,11 +83,11 @@ Here is the part that a promotional article would leave out.
 
 Everything above proves that a proof **exists**. None of it proves the proof **ran**.
 
-The repository has an evidence ledger — `.ai/repo/evidence/ledger.json` — designed to join claims to recorded executions, so that a claim can carry a state like proven, stale or failing rather than merely "has a test". The subsystem is implemented. The ledger currently holds six executions. All six have `"origin": "local"`. The newest is six days old.
+The repository has an evidence ledger — `.ai/repo/evidence/ledger.json` — designed to join claims to recorded executions, so that a claim can carry a state like proven, stale or failing rather than merely "has a test". The subsystem is implemented. The ledger currently holds {{ <cite_figure name="evidence_executions" /> }} executions, every one of them recorded on a developer's machine — `"origin": "local"` — because nothing else records one yet.
 
-Ask the tool for the proof state of all 176 claims and it answers: 153 not run, 14 stale, 9 no test. Zero proven. The rules report says the same thing in its own vocabulary: `recorded: 0, passing: 0`.
+Ask the tool for the proof state of all {{ <cite_figure name="evidence_claims" /> }} claims and, as this page is built, it answers: {{ <cite_figure name="claims_not_run" /> }} not run, {{ <cite_figure name="claims_stale" /> }} stale, {{ <cite_figure name="claims_no_test" /> }} with no test, {{ <cite_figure name="claims_proven" /> }} proven. When I wrote this, the rules report said the same thing in its own vocabulary: `recorded: 0, passing: 0`.
 
-The cause is mundane and specific: no CI workflow calls `majordomus evidence record`. The suite runs on every push — 224 shell cases and 1545 Rust test functions — and writes its results into a log that GitHub deletes on the next re-run. There is no published machine-readable test report; `https://majordomus.dev/reports/tests.json` returns 404.
+The cause is mundane and specific: no CI workflow calls `majordomus evidence record`. The suite runs on every push — every shell case under `test/cases/` and every Rust test function of the crate — and writes its results into a log that GitHub deletes on the next re-run. There is no published machine-readable test report; `https://majordomus.dev/reports/tests.json` returns 404.
 
 So the accurate summary of the current state is: **this repository can prove that every guaranteed claim has a test that names it back, and cannot yet prove that any of those tests passed recently.** The first half is a real, enforced, unexempted invariant. The second half is a wire that is not connected. Both are true today, and a reader deserves to be told which is which.
 
@@ -116,10 +116,10 @@ That is what I mean by executable governance. Not that a document says the rules
 | Statement | Status | How you can check it |
 |---|---|---|
 | Every guaranteed claim names a runnable test that names it back | Verified, enforced | `scripts/ci/claim-proof-check --strict`, exit 0, empty baseline |
-| One registry renders the HTTP API, OpenAPI, MCP and the docs | Verified, measured | `majordomus capabilities projections`: 1482 rows, 112 HTTP, 110 MCP tools, 1410 MCP resources |
-| The CLI is derived from that registry | **Not true yet** | 64 of 195 commands have no capability behind them |
-| Every blocking rule carries a validator | Verified | 109 of 109; `scripts/ci/rule-proof-check`, exit 0 |
-| Claims carry a recorded proof state | **Implemented, unpopulated** | ledger holds 6 executions, all local; 0 of 176 claims proven |
+| One registry renders the HTTP API, OpenAPI, MCP and the docs | Verified, measured | `majordomus capabilities projections`: {{ <cite_figure name="capabilities" /> }} rows, {{ <cite_figure name="http_routes" /> }} HTTP, {{ <cite_figure name="mcp_tools" /> }} MCP tools, {{ <cite_figure name="mcp_resources" /> }} MCP resources |
+| The CLI is derived from that registry | **Not true yet** | `majordomus capabilities projections` counts which of the {{ <cite_figure name="cli_commands" /> }} runnable commands no capability claims |
+| Every blocking rule carries a validator | Verified | `scripts/ci/rule-proof-check`, exit 0 |
+| Claims carry a recorded proof state | **Implemented, not fed by CI** | ledger holds {{ <cite_figure name="evidence_executions" /> }} executions, all local; {{ <cite_figure name="claims_proven" /> }} of {{ <cite_figure name="evidence_claims" /> }} claims proven |
 | The published site is generated from the repository | Verified, deployed | `build.json` names the version, the commit and the generator |
 | Mesh: servers discover each other across machines | Experimental, off | `enabled: false` by default; status reports inactive |
 
@@ -135,14 +135,14 @@ Three things, in descending order of confidence.
 
 ## Evidence
 
-Every number above was measured in September 2026, at commit `d8c97273f0`, the one that added this page, with the command that produced it beside each one. The repository is public.
+This article was written in September 2026, at commit `d8c97273f0`, the one that added this page. The counts in it are not typed into it: each is read, on every build of this site, from the data the repository generates, and the commands below measure the same things on a checkout. The repository is public.
 
 - Capability counts, projections, unbacked commands: `majordomus capabilities projections --format json`
 - Claim counts and proof states: `majordomus evidence show --format json`
 - Claim closure: `scripts/ci/claim-proof-check --strict`; baseline `.ai/repo/claim-proof-baseline.txt`
 - Rule counts and enforcement modes: `majordomus rules report --format json`; `scripts/ci/rule-proof-check`
-- Tests: 224 files under `test/cases/`; 1545 `#[test]` functions, 374 of them in `apps/majordomus-cli/tests/`
-- Gates: 54 declared in `.ai/repo/ci/gates.yaml`, 17 always-on
+- Tests: `ls test/cases/*.sh | wc -l` counts the shell cases; `grep -r '#\[test\]' apps/majordomus-cli | wc -l` the Rust test functions
+- Gates: declared in `.ai/repo/ci/gates.yaml`, those that run on every change marked `always: true`
 - Deployment: `build.json` on the published site names the source version, the commit and the generator
 - The rule this article had to amend: `.ai/repo/rules/project/english-only.v2.md`, and the decision that amended it
 

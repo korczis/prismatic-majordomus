@@ -59,6 +59,18 @@ got="$(printf '%s' "$t" | jq -r '.timings | [.measured_runs, .unmeasured_runs, .
 [ "$got" = "3 2 site 2400 2 600 1800 11 2400 site" ] \
   || { echo "    the timings are not what the runs took: '$got'"; printf '%s\n' "$t" | head -c 1200 | sed 's/^/    | /'; echo; exit 1; }
 
+# ---------------------------------------------------------------- the MCP tool, as a client calls it
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case1077","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_ci_timings","arguments":{}}}'
+} > mcp.in
+"$RB" mcp < mcp.in > mcp.out 2> mcp.err || { echo "    the MCP server failed"; tail -5 mcp.err; exit 1; }
+mcp="$(jq -c 'select(.id == 2)' mcp.out)"
+printf '%s' "$mcp" | jq -e '.result.isError == false' >/dev/null || { echo "    majordomus_ci_timings failed:"; printf '%s' "$mcp" | head -c 600; exit 1; }
+[ "$(printf '%s' "$mcp" | jq -cS '.result.structuredContent.timings')" = "$(printf '%s' "$t" | jq -cS '.timings')" ] \
+  || { echo "    the MCP tool and the HTTP route disagree:"; printf '%s' "$mcp" | head -c 600; exit 1; }
+
 # ---------------------------------------------------------------- the screen
 page="$(get /ui/delivery)"
 printf '%s' "$page" | grep -q '40 min 00 s' \

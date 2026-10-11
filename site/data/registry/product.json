@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "28cb5c0effacf5f861cf8c2d946032d2dd9647e255e47f58b6da94b737463499",
+  "fingerprint": "1ac9865563c4c1245d7091f9850cd71abc77ac139cfec4e454f52270bbf4c365",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 65,
+        "capabilities": 67,
         "moments": 17
       },
       "evidence": {
@@ -3170,7 +3170,7 @@
         "use_cases": 9,
         "rules": 13,
         "enforced_rules": 12,
-        "capabilities": 54,
+        "capabilities": 55,
         "moments": 38
       },
       "evidence": {
@@ -3450,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 238
+          "objects": 243
         }
       ],
       "rule_refs": [
@@ -3723,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 310,
+        "mcp_resources": 315,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 303,
+        "objects": 308,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -5382,6 +5382,22 @@
               "route": "GET /api/v1/mesh/events"
             },
             {
+              "id": "mesh.firewall",
+              "title": "The host firewall, as the mesh needs it",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_firewall",
+              "route": "GET /api/v1/mesh/firewall",
+              "cli": "majordomus mesh firewall"
+            },
+            {
+              "id": "mesh.firewall.apply",
+              "title": "Admit the mesh through the host firewall",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh firewall apply"
+            },
+            {
               "id": "mesh.handover.consume",
               "title": "Consume a handover from the mesh",
               "kind": "command",
@@ -5636,11 +5652,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 21,
-        "mcp_tools": 19,
+        "capabilities": 23,
+        "mcp_tools": 20,
         "mcp_resources": 2,
-        "http_routes": 21,
-        "cli_paths": 2,
+        "http_routes": 22,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7158,7 +7174,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 92
+          "objects": 94
         },
         {
           "name": "knowledge",
@@ -7166,7 +7182,7 @@
         },
         {
           "name": "document",
-          "objects": 332
+          "objects": 337
         }
       ],
       "rule_refs": [
@@ -7439,11 +7455,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 428,
+        "mcp_resources": 435,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 425,
+        "objects": 432,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7659,7 +7675,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 166
+          "objects": 167
         }
       ],
       "rule_refs": [
@@ -8035,11 +8051,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 168,
+        "mcp_resources": 169,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 166,
+        "objects": 167,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9265,6 +9281,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.next",
+              "title": "The version a landing allocates, and why",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_next",
+              "route": "GET /api/v1/release/next"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -9513,6 +9537,22 @@
               "stability": "experimental",
               "tool": "majordomus_mesh_events",
               "route": "GET /api/v1/mesh/events"
+            },
+            {
+              "id": "mesh.firewall",
+              "title": "The host firewall, as the mesh needs it",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_firewall",
+              "route": "GET /api/v1/mesh/firewall",
+              "cli": "majordomus mesh firewall"
+            },
+            {
+              "id": "mesh.firewall.apply",
+              "title": "Admit the mesh through the host firewall",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh firewall apply"
             },
             {
               "id": "mesh.handover.consume",
@@ -10368,11 +10408,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 90,
-        "mcp_tools": 84,
+        "capabilities": 93,
+        "mcp_tools": 86,
         "mcp_resources": 16,
-        "http_routes": 88,
-        "cli_paths": 38,
+        "http_routes": 90,
+        "cli_paths": 40,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -11272,6 +11312,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.next",
+              "title": "The version a landing allocates, and why",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_next",
+              "route": "GET /api/v1/release/next"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -11452,10 +11500,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 8,
+        "capabilities": 9,
+        "mcp_tools": 9,
         "mcp_resources": 22,
-        "http_routes": 8,
+        "http_routes": 9,
         "cli_paths": 5,
         "commands": 4,
         "objects": 21,
@@ -11812,15 +11860,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 34
+          "objects": 35
         },
         {
           "name": "issue",
-          "objects": 320
+          "objects": 327
         },
         {
           "name": "intent",
-          "objects": 3
+          "objects": 4
         }
       ],
       "rule_refs": [
@@ -12018,11 +12066,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 360,
+        "mcp_resources": 369,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 357,
+        "objects": 366,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15636,7 +15684,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (92)",
+        "title": "adr (94)",
         "features": [
           "knowledge"
         ]
@@ -15664,7 +15712,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (238)",
+        "title": "claim (243)",
         "features": [
           "declare-once"
         ]
@@ -15685,7 +15733,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (2)",
+        "title": "critique (3)",
         "features": []
       },
       {
@@ -15721,19 +15769,19 @@
       },
       {
         "id": "gap",
-        "title": "gap (2)",
+        "title": "gap (3)",
         "features": []
       },
       {
         "id": "intent",
-        "title": "intent (3)",
+        "title": "intent (4)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (320)",
+        "title": "issue (327)",
         "features": [
           "planning"
         ]
@@ -15754,7 +15802,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (34)",
+        "title": "milestone (35)",
         "features": [
           "planning"
         ]
@@ -15796,7 +15844,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (166)",
+        "title": "rule (167)",
         "features": [
           "doctrine"
         ]
@@ -16730,50 +16778,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2211,
-    "builtin": 188,
-    "declarative": 2023,
+    "capabilities": 2249,
+    "builtin": 191,
+    "declarative": 2058,
     "modules": 55,
-    "mcp_tools": 181,
-    "mcp_resources": 2077,
-    "http_routes": 185,
-    "cli_commands": 196,
+    "mcp_tools": 183,
+    "mcp_resources": 2112,
+    "http_routes": 187,
+    "cli_commands": 199,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2023,
+    "objects": 2058,
     "by_kind": {
-      "adr": 92,
+      "adr": 94,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 238,
+      "claim": 243,
       "command": 31,
       "context": 37,
-      "critique": 2,
+      "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 332,
+      "document": 337,
       "domain": 6,
       "feature": 28,
-      "gap": 2,
+      "gap": 3,
       "implementation": 52,
-      "intent": 3,
-      "issue": 320,
+      "intent": 4,
+      "issue": 327,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 34,
+      "milestone": 35,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 166,
+      "rule": 167,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 434,
+      "test": 445,
       "use-case": 48,
       "workspace": 1
     },
@@ -16791,13 +16839,25 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 220,
+    "declared": 225,
     "supported": 0,
     "claims": {
+      "a-candidate-is-routed-by-what-it-is-about": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "a-finding-names-how-to-see-it-again": {
         "status": "guaranteed",
         "state": "stale",
         "label": "stale",
+        "supported": false
+      },
+      "a-session-records-what-it-observed": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "a-skipped-case-is-not-a-proof": {
@@ -16855,6 +16915,12 @@
         "supported": false
       },
       "ai-layer-manifest": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "an-observation-becomes-a-grouped-candidate": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -17592,6 +17658,12 @@
         "label": "not run",
         "supported": false
       },
+      "mesh-firewall-is-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "mesh-liveness-expiry": {
         "status": "guaranteed",
         "state": "not-run",
@@ -18124,6 +18196,12 @@
         "status": "planned",
         "state": "no-test",
         "label": "no test",
+        "supported": false
+      },
+      "the-closing-question-is-measured": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "token-savings-measured": {

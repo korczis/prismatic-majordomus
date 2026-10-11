@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 188 | 164 | 0 | 24 |
-| http | 185 | 164 | 0 | 21 |
-| mcp | 181 | 160 | 0 | 21 |
+| direct | 191 | 164 | 0 | 27 |
+| http | 187 | 164 | 0 | 23 |
+| mcp | 183 | 160 | 0 | 23 |
 | system | 13 | 13 | 0 | 0 |
-| total | 567 | 501 | 0 | 66 |
+| total | 574 | 501 | 0 | 73 |
 
 ## Capabilities
 
@@ -120,6 +120,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.events` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.firewall` | mesh | query | — | waived | waived | waived | — |
+| `mesh.firewall.apply` | mesh | command | — | waived | — | — | — |
 | `mesh.handover.consume` | mesh | command | — | waived | waived | waived | — |
 | `mesh.handover.publish` | mesh | command | — | waived | waived | waived | — |
 | `mesh.identity` | mesh | query | — | covered | covered | covered | `default` |
@@ -127,14 +129,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.link.sync` | mesh | command | — | covered | — | covered | `malformed` |
 | `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.peer` | mesh | query | — | covered | covered | covered | `unknown` |
-| `mesh.peers` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.peers` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.register` | mesh | command | — | covered | covered | covered | `refused` |
 | `mesh.release` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.request` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.close` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.open` | mesh | command | — | waived | waived | waived | — |
-| `mesh.state` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.verify` | mesh | command | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
@@ -177,6 +179,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.next` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | — | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
