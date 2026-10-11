@@ -9,6 +9,7 @@
 #   a change one exemption covers   held to no floor, so nothing is allocated
 #   a file moved into an exempt tree  judged at both paths, so the move is not exempt
 #   the record of the trunk's release   lands at that release's number, though it changes more
+#   an edit of a written record     owes the floor: only the change adding the record is exempt
 #   no floor in the policy          a fix behind the boundary allocates nothing
 #   an unreadable trunk             refused with exit 12, never a guessed number
 #
@@ -117,6 +118,15 @@ git add -A >/dev/null && git commit -qm "chore(release): record v0.4.0"
 d="$(next trunk recorded)"
 [ "$(printf '%s' "$d" | jq -r '[.floor, .next_version] | join(" ")')" = "none 0.4.0" ] \
   || { echo "    the record of the trunk's release was raised past its tag:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
+# once the record is written, a change that edits it beside anything else is no record pull
+# request: it owes the floor like any other
+git checkout -q -b edited recorded
+printf 'version: 0.4.0\nnote: edited\n' > .ai/repo/releases/v0.4.0.yaml
+printf 'install 0.4.0, edited\n' > docs/INSTALL.md
+git add -A >/dev/null && git commit -qm "docs: edit the install guide and the record"
+d="$(next recorded edited)"
+[ "$(printf '%s' "$d" | jq -r '[.floor, .next_version] | join(" ")')" = "minor 0.5.0" ] \
+  || { echo "    a change editing a written record escaped the floor:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
 
 # ---------------------------------------------------------------- no floor in the policy
 git checkout -q trunk
