@@ -653,6 +653,14 @@ mod tests {
             .contains("#8 is not among"));
     }
 
+    /// An assessment that carries no number is shown as unknown, never as #0.
+    #[test]
+    fn a_pull_request_without_a_number_is_unknown_never_zero() {
+        let html = pull_request_detail(&serde_json::json!({ "title": "unnumbered", "gates": [] }))
+            .render();
+        assert!(html.contains("unknown") && !html.contains("#0"), "{html}");
+    }
+
     /// A failed source says it could not answer, and a queue never observed says so.
     #[test]
     fn a_missing_value_reads_as_missing() {

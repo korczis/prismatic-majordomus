@@ -478,6 +478,20 @@ mod tests {
         assert!(none.contains("No issue of the plan matches."));
     }
 
+    /// An issue filed under no milestone says none, and a key the pick does not read gives
+    /// nothing back, so a link never carries a parameter it did not mean.
+    #[test]
+    fn an_issue_without_a_milestone_says_none() {
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [{ "id": "I0042", "title": "loose", "status": "READY", "priority": "p3" }] }),
+        );
+        let roadmap = answer("plan.roadmap", serde_json::json!({ "milestones": [] }));
+        let html = browser(&issues, &roadmap, &Pick::default()).render();
+        assert!(html.contains("I0042") && html.contains(">none<"), "{html}");
+        assert_eq!(Pick::default().get("nothing-of-ours"), None);
+    }
+
     #[test]
     fn a_value_that_is_no_word_of_the_plan_is_dropped() {
         let p = Pick::from_query(&q(&[

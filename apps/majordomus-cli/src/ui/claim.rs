@@ -63,9 +63,8 @@ fn mono(t: String) -> El {
 /// The inspector of the claim `answer` is about.
 pub fn inspector(answer: &Answer, id: &str) -> El {
     let body = unanswered(answer).unwrap_or_else(|| {
-        let Some(c) = answer.ok().cloned() else {
-            return nothing(&format!("{id} could not be read."));
-        };
+        // `unanswered` has spoken for an answer that failed; this one answered
+        let c = answer.ok().cloned().unwrap_or(Value::Null);
         let fact = |label: &str, value: El| {
             el("div")
                 .class("mj-ui-fact")
@@ -222,6 +221,40 @@ mod tests {
             value,
             took: Duration::from_millis(1),
         }
+    }
+
+    /// A claim that never ran, names no reproduction, changed nothing since and shares its
+    /// test with no other claim says each of those, rather than drawing an empty field.
+    #[test]
+    fn a_claim_never_run_says_what_it_lacks() {
+        let html = inspector(
+            &answer(Ok(
+                serde_json::json!({ "id": "c-2", "claim": "Alone", "state": "not_run" }),
+            )),
+            "c-2",
+        )
+        .render();
+        for want in [
+            "never run",
+            ">none<",
+            "Nothing it names has changed since its proof.",
+            "The test proves this claim alone.",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        let html = inspector(
+            &answer(Ok(
+                serde_json::json!({ "id": "c-3", "claim": "Timed nowhere",
+                "execution": { "outcome": "pass", "commit": "0123456789abcdef" } }),
+            )),
+            "c-3",
+        )
+        .render();
+        assert!(html.contains("0123456789"), "{html}");
+        assert!(
+            html.contains("?"),
+            "a run without its seconds says so: {html}"
+        );
     }
 
     #[test]

@@ -12,7 +12,7 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::source::{ask_input, Answer};
-use super::view::{nothing, panel, state, table, text, unanswered};
+use super::view::{panel, state, table, text, unanswered};
 
 /// A rule id as the index writes them (`project.worktree-topology`, `majordomus.adr-integrity@1`):
 /// letters, digits, `.`, `-`, `_` and `@`, and nothing a link could carry anything else in.
@@ -85,9 +85,8 @@ fn strings(v: &Value, k: &str) -> Vec<String> {
 /// The inspector of the rule `answer` is about.
 pub fn inspector(answer: &Answer, id: &str) -> El {
     let body = unanswered(answer).unwrap_or_else(|| {
-        let Some(a) = answer.ok().cloned() else {
-            return nothing(&format!("{id} could not be read."));
-        };
+        // `unanswered` has spoken for an answer that failed; this one answered
+        let a = answer.ok().cloned().unwrap_or(Value::Null);
         let proof = a.get("proof").cloned().unwrap_or(Value::Null);
         let rule = proof.get("rule").cloned().unwrap_or(Value::Null);
         let enforcement = rule.get("enforcement").cloned().unwrap_or(Value::Null);
@@ -235,6 +234,22 @@ mod tests {
             "/ui/governance?rule=project.c#rule",
             "bash test/run.sh 96_a",
         ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+    }
+
+    /// A rule its index says little about still opens: no dependency either way, no
+    /// enforcement named, no gate, each said rather than left blank.
+    #[test]
+    fn a_rule_that_says_little_says_what_it_lacks() {
+        let html = inspector(
+            &answer(Ok(serde_json::json!({
+                "proof": { "rule": { "id": "project.z", "title": "Z" }, "tests": [], "state": "not_run" }
+            }))),
+            "project.z",
+        )
+        .render();
+        for want in ["not said", "no validator", "It names no test.", ">none<"] {
             assert!(html.contains(want), "no {want}: {html}");
         }
     }

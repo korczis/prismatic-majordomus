@@ -69,6 +69,15 @@ impl Drop for Scratch {
     }
 }
 
+/// An answer that may have failed, with what it was about: the one error sentence this
+/// module writes for the file system, the version writer and git alike.
+fn about<T, E: std::fmt::Display>(
+    r: Result<T, E>,
+    what: impl std::fmt::Display,
+) -> Result<T, String> {
+    r.map_err(|e| format!("{what}: {e}"))
+}
+
 fn scratch() -> Result<Scratch, String> {
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let dir = std::env::temp_dir().join(format!(
@@ -78,16 +87,16 @@ fn scratch() -> Result<Scratch, String> {
     ));
     let manifest = dir.join(MANIFEST);
     let parent = manifest.parent().unwrap_or(&dir);
-    std::fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
+    about(std::fs::create_dir_all(parent), parent.display())?;
     Ok(Scratch(dir))
 }
 
 /// `manifest` with its package version set to `to`, by the one writer of that line.
 fn with_version(s: &Scratch, manifest: &str, to: &str) -> Result<String, String> {
     let path = s.0.join(MANIFEST);
-    std::fs::write(&path, manifest).map_err(|e| format!("{}: {e}", path.display()))?;
-    version::write(&s.0, to).map_err(|e| format!("the version could not be written: {e}"))?;
-    std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))
+    about(std::fs::write(&path, manifest), path.display())?;
+    about(version::write(&s.0, to), "the version could not be written")?;
+    about(std::fs::read_to_string(&path), path.display())
 }
 
 /// The manifest a three-way merge of `branch` and `trunk` over `base` gives once the branch
@@ -116,20 +125,32 @@ pub fn merged_on_trunk_version(
         ("other", trunk),
     ];
     for (name, text) in files {
-        std::fs::write(s.0.join(name), text).map_err(|e| format!("{name}: {e}"))?;
+        about(std::fs::write(s.0.join(name), text), name)?;
     }
-    let out = Command::new("git")
-        .current_dir(&s.0)
-        .args(["merge-file", "-p", "-q", "current", "base", "other"])
-        .output()
-        .map_err(|e| format!("git merge-file could not run: {e}"))?;
-    match out.status.code() {
-        Some(0) => Ok(Some(String::from_utf8_lossy(&out.stdout).into_owned())),
-        // a positive status is the number of conflicts git left
+    let out = about(
+        Command::new("git")
+            .current_dir(&s.0)
+            .args(["merge-file", "-p", "-q", "current", "base", "other"])
+            .output(),
+        "git merge-file could not run",
+    )?;
+    merge_verdict(out.status.code(), &out.stdout, &out.stderr)
+}
+
+/// What `git merge-file`'s exit says: the merged text, `None` for a conflict (a positive
+/// status is the number of conflicts git left), and an error for anything else, a signal
+/// included.
+fn merge_verdict(
+    code: Option<i32>,
+    stdout: &[u8],
+    stderr: &[u8],
+) -> Result<Option<String>, String> {
+    match code {
+        Some(0) => Ok(Some(String::from_utf8_lossy(stdout).into_owned())),
         Some(n) if (1..=127).contains(&n) => Ok(None),
         _ => Err(format!(
             "git merge-file failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
+            String::from_utf8_lossy(stderr).trim()
         )),
     }
 }
@@ -272,6 +293,185 @@ mod tests {
 
     const BASE: &str =
         "[package]\nname = \"x\"\nversion = \"0.1.0\"\n\n[dependencies]\na = \"1\"\n";
+
+    #[test]
+    fn a_failure_says_what_it_was_about_and_git_merge_files_exit_is_read_in_full() {
+        assert_eq!(
+            about::<(), _>(Err("boom"), "the manifest"),
+            Err("the manifest: boom".into())
+        );
+        assert_eq!(
+            merge_verdict(Some(0), b"merged", b""),
+            Ok(Some("merged".into()))
+        );
+        assert_eq!(merge_verdict(Some(2), b"", b""), Ok(None));
+        assert_eq!(
+            merge_verdict(Some(255), b"", b"usage"),
+            Err("git merge-file failed: usage".into())
+        );
+        assert!(
+            merge_verdict(None, b"", b"killed").is_err(),
+            "a signal is no merge"
+        );
+    }
+
+    fn git(root: &Path, args: &[&str]) -> std::process::Output {
+        Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@example.com")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@example.com")
+            .output()
+            .expect("git")
+    }
+
+    fn ok(root: &Path, args: &[&str]) {
+        let out = git(root, args);
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    fn write(root: &Path, rel: &str, body: &str) {
+        let path = root.join(rel);
+        std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+        std::fs::write(path, body).expect("written");
+    }
+
+    /// A layer whose master commits `BASE` as the crate's manifest, this repository's own
+    /// committed registry (so both refs publish the same surface) and `release` as its
+    /// policy's release block.
+    fn trunk(release: &str) -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let root = repo.root();
+        ok(root, &["init", "-q", "-b", "master"]);
+        write(root, MANIFEST, BASE);
+        let registry = std::fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(crate::release::surface::REGISTRY),
+        )
+        .expect("this repository's registry");
+        write(root, crate::release::surface::REGISTRY, &registry);
+        let policy = root.join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).expect("the policy");
+        std::fs::write(&policy, format!("{text}release:\n{release}")).expect("the policy");
+        ok(root, &["add", "-A"]);
+        ok(root, &["commit", "-qm", "base"]);
+        repo
+    }
+
+    /// The policy is read from master's commit: allocation at landing when it says so, the
+    /// default for a revision that does not exist, and every unreadable layer refused by
+    /// what made it unreadable rather than taken as off.
+    #[test]
+    fn the_policy_is_read_from_masters_commit_and_an_unreadable_one_is_refused() {
+        let repo = trunk("  allocation: landing\n  floor: minor\n");
+        let root = repo.root();
+        assert_eq!(
+            policy_at(root, "master").expect("readable").allocation,
+            Allocation::Landing
+        );
+        assert!(allocates_at(root, "master"));
+        assert_eq!(
+            policy_at(root, "no-such-rev").expect("default").allocation,
+            Allocation::Off
+        );
+
+        let policy = root.join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).unwrap();
+        std::fs::write(
+            &policy,
+            text.replace("allocation: landing", "allocation: sideways"),
+        )
+        .unwrap();
+        ok(root, &["commit", "-qam", "an unreadable policy"]);
+        let refused = policy_at(root, "master").expect_err("refused");
+        assert!(refused.contains("could not be read"), "{refused}");
+        assert!(
+            !allocates_at(root, "master"),
+            "an unreadable policy allocates nothing"
+        );
+
+        let manifest = root.join(".ai/manifest.yaml");
+        let text = std::fs::read_to_string(&manifest).unwrap();
+        std::fs::write(&manifest, text.replace("  policy: repo/policy.yaml\n", "")).unwrap();
+        let refused = policy_at(root, "master").expect_err("refused");
+        assert!(refused.contains("no policy section"), "{refused}");
+
+        std::fs::write(&manifest, "schema: not-a-layer\n").unwrap();
+        let refused = policy_at(root, "master").expect_err("refused");
+        assert!(refused.contains("could not be opened"), "{refused}");
+    }
+
+    /// The whole seam on a real history (the head is a branch named `topic`: on a
+    /// case-insensitive file system a branch named `head` is read as HEAD): a head and
+    /// master that both moved the version
+    /// conflict on that line alone; the version the head owes is the one a landing
+    /// allocates; the refresh resolves the conflict to master's number, keeping the head's
+    /// own change, and writes the allocated version over it.
+    #[test]
+    fn a_version_conflict_is_resolved_and_the_landing_number_written() {
+        let repo = trunk("  allocation: landing\n  floor: minor\n");
+        let root = repo.root();
+        ok(root, &["checkout", "-q", "-b", "topic"]);
+        write(
+            root,
+            MANIFEST,
+            &BASE
+                .replace("0.1.0", "0.1.1")
+                .replace("a = \"1\"\n", "a = \"1\"\nb = \"2\"\n"),
+        );
+        ok(
+            root,
+            &["commit", "-qam", "the head moves its version and adds b"],
+        );
+        ok(root, &["checkout", "-q", "master"]);
+        write(root, MANIFEST, &BASE.replace("0.1.0", "0.2.0"));
+        ok(root, &["commit", "-qam", "master moves its version"]);
+
+        assert!(version_only_conflict(root, "master", "topic"));
+        assert!(!version_only_conflict(root, "master", "no-such-head"));
+        let owed = owed_version(root, "master", "topic").expect("the head owes a number");
+        assert_eq!(owed, "0.3.0", "master's 0.2.0 raised by the minor floor");
+
+        ok(root, &["checkout", "-q", "topic"]);
+        assert!(
+            !git(root, &["merge", "-q", "master"]).status.success(),
+            "the merge stops on the version"
+        );
+        assert_eq!(resolve_version_conflict(root), Ok(true));
+        let merged = std::fs::read_to_string(root.join(MANIFEST)).unwrap();
+        assert!(
+            merged.contains("version = \"0.2.0\"") && merged.contains("b = \"2\""),
+            "{merged}"
+        );
+
+        let landing = policy_at(root, "master").unwrap();
+        let decision = allocate_in(root, root, "master", "topic", &landing)
+            .expect("allocated")
+            .expect("a decision under landing");
+        assert_eq!(decision.next_version, "0.3.0");
+        assert!(std::fs::read_to_string(root.join(MANIFEST))
+            .unwrap()
+            .contains("version = \"0.3.0\""));
+        assert_eq!(
+            allocate_in(root, root, "master", "topic", &ReleasePolicy::default()),
+            Ok(None),
+            "off allocates nothing"
+        );
+        ok(root, &["commit", "-qam", "the refresh"]);
+        assert_eq!(
+            resolve_version_conflict(root),
+            Ok(false),
+            "nothing unmerged, nothing to resolve"
+        );
+    }
 
     #[test]
     fn a_conflict_on_the_version_line_alone_resolves_to_the_trunks_number() {

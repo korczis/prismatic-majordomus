@@ -488,6 +488,42 @@ pub fn next_for(
 mod tests {
     use super::*;
 
+    /// The decision read from git at two refs, in this crate's own repository: its head
+    /// landed onto itself moves nothing, the trunk's version is the one committed at that
+    /// head, and every step is said. A ref git cannot resolve is refused by name. HEAD on
+    /// both sides holds in a shallow clone, where origin/master may not exist.
+    #[test]
+    fn a_head_landed_onto_itself_is_read_from_git_and_moves_nothing() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let d =
+            next_for(&root, "HEAD", "HEAD", &ReleasePolicy::default()).expect("readable at HEAD");
+        assert_eq!(d.observed, Impact::None);
+        let committed = std::process::Command::new("git")
+            .current_dir(&root)
+            .args([
+                "show",
+                &format!("HEAD:{}", crate::release::version::MANIFEST),
+            ])
+            .output()
+            .expect("git");
+        let committed =
+            crate::release::version::declared_in(&String::from_utf8_lossy(&committed.stdout));
+        assert_eq!(Some(d.trunk_version.clone()), committed);
+        assert!(!d.explanation.is_empty());
+        assert_eq!(
+            (Allocation::Off.as_str(), Allocation::Landing.as_str()),
+            ("off", "landing")
+        );
+        let refused = next_for(
+            &root,
+            "no-such-ref-of-ours",
+            "HEAD",
+            &ReleasePolicy::default(),
+        )
+        .expect_err("an unknown base is refused");
+        assert!(refused.0.contains("no-such-ref-of-ours"), "{}", refused.0);
+    }
+
     fn v(text: &str) -> Version {
         Version::parse(text).expect("a version")
     }

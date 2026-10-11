@@ -338,6 +338,20 @@ mod tests {
         assert!(crate::order::is_canonical(&t.checks) && crate::order::is_canonical(&t.heads));
     }
 
+    /// A skipped run that started and completed is measured, and counted neither as passed
+    /// nor as failed.
+    #[test]
+    fn a_skipped_run_is_measured_and_neither_passed_nor_failed() {
+        let o = observation(vec![pr(
+            11,
+            vec![check("lint", CheckRunState::Skipped, &at(0), &at(1))],
+        )]);
+        let t = timings(&o);
+        let lint = &t.checks[0];
+        assert_eq!((lint.runs, lint.passed, lint.failed), (1, 0, 0));
+        assert!(!t.heads[0].failed);
+    }
+
     #[test]
     fn the_nearest_rank_of_one_value_is_that_value() {
         assert_eq!(rank(&[42], 50), 42);

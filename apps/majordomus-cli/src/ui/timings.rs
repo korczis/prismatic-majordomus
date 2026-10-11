@@ -186,6 +186,21 @@ mod tests {
         }
     }
 
+    /// A check or a head the answer gives without its numbers is drawn as unknown and
+    /// unnumbered, never as a zero it did not say.
+    #[test]
+    fn what_the_answer_leaves_out_is_unknown_never_zero() {
+        let html = panel_of(&answer(serde_json::json!({ "observed": true, "timings": {
+            "observed_at": "2026-10-11T12:00:00Z",
+            "checks": [{ "name": "site" }],
+            "heads": [{ "head_sha": "a", "slowest_check": "site", "failed": false }]
+        }})))
+        .render();
+        assert!(html.contains("unknown"), "{html}");
+        assert!(html.contains("unnumbered"), "{html}");
+        assert!(!html.contains(">0 s<"), "{html}");
+    }
+
     #[test]
     fn a_duration_reads_as_a_person_says_it() {
         assert_eq!(duration(42), "42 s");

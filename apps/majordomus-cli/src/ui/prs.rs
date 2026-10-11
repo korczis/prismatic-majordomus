@@ -1537,6 +1537,106 @@ mod tests {
         );
     }
 
+    fn plan(value: Value) -> Answer {
+        Answer {
+            source: ISSUES,
+            route: Some("GET /api/v1/plan/issues".into()),
+            exposure: Exposure::default(),
+            value: Ok(value),
+            took: Duration::from_millis(1),
+        }
+    }
+
+    /// An issue opens with where it sits, what it waits for and unblocks (each a link to that
+    /// issue), what it serves, its scope, its evidence and its dates, and says "none" and
+    /// "not yet" for what it lacks rather than drawing nothing.
+    #[test]
+    fn an_issue_opens_with_what_it_waits_for_unblocks_and_serves() {
+        let issues = plan(serde_json::json!({ "issues": [{
+            "id": "I0002", "title": "The second thing", "milestone": "M1", "priority": "p1", "wave": 3,
+            "status": "READY", "objective": "Make the second thing true.",
+            "depends_on": ["I0001"], "blocked_by": [], "dependents": ["I0003"],
+            "serves": ["intent-a#c1"], "scope": ["apps/a.rs"],
+            "evidence_have": 1, "evidence_need": 2, "started_at": "2026-10-01T10:00:00Z"
+        }]}));
+        let filter = Filter::from_query(&q(&[("lane", "repair"), ("issue", "I0002")]));
+        let html = issue_panel(&issues, "I0002", &filter).render();
+        for want in [
+            "id=\"issue\"",
+            "I0002 · M1 · p1 · wave 3",
+            "Make the second thing true.",
+            "issue=I0001",
+            "issue=I0003",
+            "intent-a#c1",
+            "apps/a.rs",
+            "2026-10-01 10:00:00Z",
+            "not yet",
+            "Pull requests that name it",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        assert!(
+            html.contains("lane=repair"),
+            "a link keeps the drain's filter: {html}"
+        );
+        let missing = issue_panel(&issues, "I9999", &filter).render();
+        assert!(missing.contains("I9999 is not an issue of the plan."));
+    }
+
+    /// A queue that left things out is drawn as what it said: no tabs without counts, an
+    /// unknown time, no last merge, a number given as text, a gate without a verdict, a
+    /// dependency without a number, and a trail that names no pull request.
+    #[test]
+    fn a_queue_that_left_things_out_is_drawn_as_what_it_said() {
+        let queue = queue(serde_json::json!({
+            "observed": true,
+            "queue": {
+                "repository": "",
+                "assessments": [
+                    { "number": "77", "title": "the seventy-seventh", "author": "a", "head_ref": "f/77",
+                      "disposition": "needs_refresh", "lane": "waiting", "reasons": ["behind_master:1"],
+                      "wait": { "actionable_since": "2026-10-10T08:00:00Z" },
+                      "gates": [{ "gate": "ci", "passed": false }, { "gate": "review" }],
+                      "dependencies": [{ "number": 5, "state": "merged", "satisfied": true }, { "state": "open" }],
+                      "overlaps": [] },
+                    { "number": 78, "title": "the seventy-eighth", "author": "a", "head_ref": "f/78",
+                      "disposition": "waiting_for_dependency", "lane": "waiting", "reasons": ["depends_on:77"],
+                      "dependencies": [{ "number": 77, "state": "open", "satisfied": false }],
+                      "overlaps": [] }
+                ]
+            }
+        }));
+        let trail = events(serde_json::json!({ "events": [
+            { "at": "2026-10-11T01:00:00Z", "action": "observed", "pr": null, "detail": "2 open", "reasons": [], "actor": "x" }
+        ]}));
+        let html = drain_with(
+            &queue,
+            Some(&trail),
+            &Filter::from_query(&q(&[("pr", "77"), ("lane", "waiting")])),
+        )
+        .render();
+        for want in [
+            "The queue did not count its dispositions.",
+            "at an unknown time",
+            "none recorded",
+            "id=\"pr\"",
+            "actionable since",
+            "No factor was named.",
+            "The executor has recorded nothing about it.",
+            "The executor has recorded nothing about a pull request.",
+            ">fail<",
+            ">unknown<",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        // #78 depends on #77, which is open: the link stays in the drain
+        let html78 = drain_with(&queue, None, &Filter::from_query(&q(&[("pr", "78")]))).render();
+        assert!(
+            html78.contains("pr=77#pr"),
+            "an open dependency leads to its inspector: {html78}"
+        );
+    }
+
     #[test]
     fn the_screen_paints_the_issue_and_defers_the_drain() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())

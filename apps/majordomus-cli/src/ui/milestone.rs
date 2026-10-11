@@ -333,6 +333,29 @@ mod tests {
         (roadmap, issues)
     }
 
+    /// A milestone that gives no order, counts nothing blocked and holds no open issue says
+    /// each of those rather than inventing a number or drawing an empty path.
+    #[test]
+    fn a_milestone_with_nothing_open_says_so() {
+        let roadmap = answer(
+            "plan.roadmap",
+            serde_json::json!({ "milestones": [
+                { "id": "M009", "status": "DONE", "priority": "p2", "title": "done already",
+                  "depends_on": [], "blocked_by": [], "dependents": [],
+                  "counts": { "total": 1, "by_status": { "DONE": 1 } }, "issues": ["I0009"] }
+            ]}),
+        );
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [issue("I0009", "DONE", &[])] }),
+        );
+        let html = inspector(&roadmap, &issues, "M009").render();
+        for want in ["M009 · order ? · p2", "No issue of it is open."] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        assert!(html.contains(">none<"), "no blocked count is none: {html}");
+    }
+
     #[test]
     fn the_critical_path_is_the_longest_chain_of_open_issues() {
         let (_, issues) = plan();

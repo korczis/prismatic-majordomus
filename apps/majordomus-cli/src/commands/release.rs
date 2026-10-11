@@ -286,27 +286,54 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
 /// could not be read.
 fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
     let app = App::load(&args.repo)?;
-    let value = app
-        .context
+    let decision = landing_decision(&app.context, base, head)?;
+    let stdout = std::io::stdout();
+    render_next(&mut stdout.lock(), &decision, args.format)?;
+    Ok(0)
+}
+
+/// The landing decision the capability answers for `head` onto `base`; a refusal is the
+/// command's [`EXIT_UNREADABLE`].
+fn landing_decision(
+    ctx: &crate::capability::Context,
+    base: &str,
+    head: &str,
+) -> Result<release::landing::LandingDecision> {
+    let value = ctx
         .execute(
             crate::capability::builtin::release::NEXT_ID,
             serde_json::json!({ "base": base, "head": head }),
         )
-        .map_err(|e| Error::Refused {
-            code: EXIT_UNREADABLE,
-            reason: e.to_string(),
-        })?;
-    let decision: crate::release::landing::LandingDecision = serde_json::from_value(value)
-        .map_err(|e| Error::Protocol {
-            reason: e.to_string(),
-        })?;
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    match args.format {
+        .map_err(unreadable)?;
+    serde_json::from_value(value).map_err(protocol)
+}
+
+/// A refusal of the capability, as the command's exit says it.
+fn unreadable(e: impl std::fmt::Display) -> Error {
+    Error::Refused {
+        code: EXIT_UNREADABLE,
+        reason: e.to_string(),
+    }
+}
+
+/// An answer that is not the decision the capability declares.
+fn protocol(e: impl std::fmt::Display) -> Error {
+    Error::Protocol {
+        reason: e.to_string(),
+    }
+}
+
+/// A decision as JSON, or as its explanation and the number it allocates.
+fn render_next(
+    out: &mut impl Write,
+    decision: &release::landing::LandingDecision,
+    format: OutputFormat,
+) -> Result<()> {
+    match format {
         OutputFormat::Json => writeln!(
             out,
             "{}",
-            serde_json::to_string_pretty(&decision).unwrap_or_default()
+            serde_json::to_string_pretty(decision).unwrap_or_default()
         )
         .map_err(Error::Transport)?,
         OutputFormat::Text => {
@@ -316,7 +343,7 @@ fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
             writeln!(out, "next  {}", decision.next_version).map_err(Error::Transport)?;
         }
     }
-    Ok(0)
+    Ok(())
 }
 
 /// The human rendering of a plan. One function, so `analyze` and `bump` cannot describe the
@@ -732,6 +759,92 @@ mod tests {
     use super::*;
     use crate::release::compat::Diagnostic;
     use crate::release::model::{DecidedBy, VersionReport};
+
+    /// A decision renders as its explanation and the number, or as the whole decision in
+    /// JSON; a refusal and a malformed answer are each their own error.
+    #[test]
+    fn a_landing_decision_renders_as_text_or_json_and_its_failures_are_named() {
+        let policy = release::landing::ReleasePolicy {
+            allocation: release::landing::Allocation::Landing,
+            floor: Impact::Minor,
+            exempt: Vec::new(),
+        };
+        let d = release::landing::decide(
+            version::Version::parse("0.21.0").unwrap(),
+            Impact::None,
+            &policy,
+            &["apps/majordomus-cli/src/lib.rs".to_string()],
+        );
+        let mut text = Vec::new();
+        render_next(&mut text, &d, OutputFormat::Text).unwrap();
+        let text = String::from_utf8(text).unwrap();
+        assert!(
+            text.ends_with("next  0.22.0\n") && text.starts_with("  "),
+            "{text}"
+        );
+        let mut json = Vec::new();
+        render_next(&mut json, &d, OutputFormat::Json).unwrap();
+        let back: release::landing::LandingDecision = serde_json::from_slice(&json).unwrap();
+        assert_eq!(back.next_version, "0.22.0");
+        assert!(matches!(
+            unreadable("no"),
+            Error::Refused {
+                code: EXIT_UNREADABLE,
+                ..
+            }
+        ));
+        assert!(matches!(protocol("no"), Error::Protocol { .. }));
+    }
+
+    /// Through the capability, in a repository with a history: the head landed onto itself
+    /// is decided, and a ref git cannot resolve is refused with the command's exit.
+    #[test]
+    fn the_command_asks_the_capability_and_a_bad_ref_is_unreadable() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let root = repo.root();
+        let git = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .status()
+                .expect("git")
+                .success());
+        };
+        let write = |rel: &str, body: &str| {
+            let path = root.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, body).unwrap();
+        };
+        git(&["init", "-q"]);
+        write(
+            version::MANIFEST,
+            "[package]\nname = \"x\"\nversion = \"0.3.0\"\n",
+        );
+        let registry = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(release::surface::REGISTRY),
+        )
+        .unwrap();
+        write(release::surface::REGISTRY, &registry);
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        let ctx = repo.context().expect("a context");
+        let d = landing_decision(&ctx, "HEAD", "HEAD").expect("decided");
+        assert_eq!(d.trunk_version, "0.3.0");
+        assert!(matches!(
+            landing_decision(&ctx, "no-such-ref-of-ours", "HEAD"),
+            Err(Error::Refused {
+                code: EXIT_UNREADABLE,
+                ..
+            })
+        ));
+    }
 
     fn report(decided_by: DecidedBy) -> VersionReport {
         VersionReport {

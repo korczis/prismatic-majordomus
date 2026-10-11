@@ -379,6 +379,20 @@ fn next(
 mod tests {
     use super::*;
 
+    /// A repository whose manifest cannot be read is refused by name, never guessed at.
+    #[test]
+    fn a_landing_in_a_repository_that_cannot_be_opened_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        std::fs::remove_file(repo.root().join(crate::repository::MANIFEST)).expect("the manifest");
+        match next(&ctx, NextInput::default()) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(m.contains("could not be opened"), "{m}")
+            }
+            other => panic!("not refused as not found: {other:?}"),
+        }
+    }
+
     /// Two capabilities, and every surface that carries them is derived from this
     /// declaration: the MCP tools, the changelog resource, the HTTP routes, the OpenAPI
     /// operations. A refactor that renamed a route, dropped the resource or added a third
