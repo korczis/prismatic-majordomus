@@ -25,10 +25,12 @@ pub mod assets;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod mcp;
+pub(crate) mod monitor;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod plan;
 pub(crate) mod reasoning;
+pub(crate) mod trains;
 pub(crate) mod view;
 
 use std::sync::Arc;
@@ -95,7 +97,9 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/worktrees", "worktrees"),
     ("/cockpit/peers", "peers"),
     ("/cockpit/integration", "integration"),
+    ("/cockpit/trains", "trains"),
     ("/cockpit/mesh", "mesh"),
+    ("/cockpit/monitor", ""),
     ("/cockpit/models", "models"),
     ("/cockpit/reasoning", "reasoning"),
     ("/cockpit/economics", "economics"),
@@ -230,7 +234,9 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
+            "/cockpit/trains" => trains::page(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
+            "/cockpit/monitor" => monitor::page(ctx, query),
             "/cockpit/models" => pages::models(ctx),
             "/cockpit/reasoning" => reasoning::page(ctx),
             "/cockpit/economics" => pages::economics(ctx),

@@ -211,4 +211,10 @@ budget:
   # case passing, the v0.19.0 record among them, and each cost a rerun of about 86 minutes:
   # runner load on a shared pool, not growth. About a tenth above the worst, 3530 x 1.1 = 3883,
   # so 3890, below the case bound as case 417 requires.
-  slowest_case_seconds: 3890
+  # Re-derived on 2026-10-11 from two uncensored runs on a saturated pool (19 jobs in progress,
+  # the cap, 132 queued): 95_skills cost 4085 s in run 38073770856 (2026-10-10 22:15Z, #859)
+  # and 4127 s in run 38101518374 (2026-10-11 06:29Z, #909, a head carrying master's #881),
+  # every case passing both times; each cost the verdict and a rerun. Runner load again, not
+  # growth: the case is unchanged since the 3530 above. About a tenth above the worst,
+  # 4127 x 1.1 = 4540, still under the 5300 case bound as case 417 requires.
+  slowest_case_seconds: 4540

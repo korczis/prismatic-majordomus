@@ -2,8 +2,9 @@
 //! anything is answering there now.
 //!
 //! Paths are not written here. Each descriptor names the constant that already decides its
-//! route — [`crate::cockpit::PREFIX`], [`crate::capability::HttpExposure::PREFIX`],
-//! [`crate::http::swagger::SWAGGER_PATH`], [`crate::web::discover::DOCS_MOUNT`] and the
+//! route — [`crate::ui::PREFIX`], [`crate::cockpit::PREFIX`],
+//! [`crate::capability::HttpExposure::PREFIX`], [`crate::http::swagger::SWAGGER_PATH`],
+//! [`crate::web::discover::DOCS_MOUNT`] and the
 //! rest of what [`crate::http::openapi::infrastructure_routes`] lists — so a route that
 //! moves moves here too, and `every_infrastructure_route_is_described` fails the build if
 //! a new one is added without a name for it. The base address is the shared server's lease, which is
@@ -37,8 +38,15 @@ struct Descriptor {
 
 /// Every service, in the order a snapshot reports them: the human surfaces first, the
 /// machine ones after.
-fn descriptors() -> [Descriptor; 8] {
+fn descriptors() -> [Descriptor; 9] {
     [
+        Descriptor {
+            // The product's own surface (ADR 0135), first because it is the one a person
+            // is meant to open; the Cockpit after it is the technical layer.
+            id: crate::ui::SURFACE,
+            title: "majordomus ui",
+            path: crate::ui::PREFIX,
+        },
         Descriptor {
             id: "cockpit",
             title: "Cockpit",

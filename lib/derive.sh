@@ -514,7 +514,7 @@ mj_derive_ses_outcome() {
 # stands, as `mj_capture_ensure_server` reported it, and its second what that server did with
 # the mesh declaration, as `mj_capture_mesh_line` reported it; each empty when nothing asked.
 mj_derive_briefing() {
-  local server="${1:-}" mesh="${2:-}" budget out
+  local server="${1:-}" mesh="${2:-}" monitor="${3:-}" budget out
   budget="$(mj_pol session.briefing_budget_lines)"
   case "$budget" in ''|*[!0-9]*) budget="$(mj_pol context.always_loaded_budget_lines)" ;; esac
   case "$budget" in ''|*[!0-9]*) budget=60 ;; esac
@@ -548,6 +548,8 @@ mj_derive_briefing_body() {
   # --- the mesh, directly under the server it lives in, whenever a declaration exists: a
   # declaration enabled and a mesh not active is said here, not discovered later (ADR 0059)
   if [ -n "$mesh" ]; then printf 'Mesh: %s\n' "$mesh"; fi
+  # --- what happened around the repository in the last hour, what names this worker first
+  if [ -n "$monitor" ]; then printf 'Monitor: %s\n' "$monitor"; fi
 
   # --- what blocks acceptance. First, because it is the only thing here that refuses a
   # command the worker is otherwise about to run.

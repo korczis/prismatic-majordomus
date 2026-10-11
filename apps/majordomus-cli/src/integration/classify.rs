@@ -916,7 +916,9 @@ pub fn classify(
         (Some(s), _) => s.authored.clone(),
         (
             None,
-            RelationToMaster::UpToDate { authored, .. } | RelationToMaster::Behind { authored, .. },
+            RelationToMaster::UpToDate { authored, .. }
+            | RelationToMaster::CarriesMaster { authored, .. }
+            | RelationToMaster::Behind { authored, .. },
         ) => authored.clone(),
         (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
         _ => queue.authored.get(&pr.number).cloned().unwrap_or_default(),
@@ -1425,7 +1427,9 @@ pub fn classify(
                         paths.join(", ")
                     )),
                 ),
-                RelationToMaster::UpToDate { .. } | RelationToMaster::Behind { .. } => None,
+                RelationToMaster::UpToDate { .. }
+                | RelationToMaster::CarriesMaster { .. }
+                | RelationToMaster::Behind { .. } => None,
             },
         ),
         (
@@ -1551,7 +1555,9 @@ pub fn classify(
                         "the executor's refresh writes {version}, the version this landing takes; CI runs again"
                     )),
                 ),
-                RelationToMaster::UpToDate { .. } => None,
+                // what the checks judged on the head is what master becomes, whether the
+                // head holds master's commits or lacks only merges that brought it nothing
+                RelationToMaster::UpToDate { .. } | RelationToMaster::CarriesMaster { .. } => None,
                 RelationToMaster::Behind { behind, .. } if pr.cross_repository => fails(
                     PullRequestDisposition::NeedsRepair,
                     vec![
@@ -1636,7 +1642,11 @@ pub fn classify(
     }
     let (disposition, next) = decided.unwrap_or_else(|| {
         reasons = vec![
-            ReasonCode::ContainsMaster,
+            if matches!(relation, RelationToMaster::CarriesMaster { .. }) {
+                ReasonCode::CarriesMaster
+            } else {
+                ReasonCode::ContainsMaster
+            },
             if checks == RequiredCheckState::Skipped {
                 ReasonCode::RequiredChecksSkipped
             } else {
@@ -1790,6 +1800,7 @@ pub fn relation_word(r: &RelationToMaster) -> &'static str {
         RelationToMaster::PatchIdsUpstream { .. } => "patch_ids_upstream",
         RelationToMaster::DerivedOnly { .. } => "derived_only",
         RelationToMaster::UpToDate { .. } => "up_to_date",
+        RelationToMaster::CarriesMaster { .. } => "carries_master",
         RelationToMaster::Behind { .. } => "behind",
         RelationToMaster::Conflicting { .. } => "conflicting",
         RelationToMaster::Unknown { .. } => "unknown",
@@ -1809,6 +1820,10 @@ fn relation_detail(r: &RelationToMaster) -> String {
         RelationToMaster::UpToDate { authored, .. } => {
             format!("contains master; {} authored path(s)", authored.len())
         }
+        RelationToMaster::CarriesMaster { behind, authored } => format!(
+            "{behind} master merge commit(s) behind, and merging it yields its own tree; {} authored path(s)",
+            authored.len()
+        ),
         RelationToMaster::Behind { behind, authored } => format!(
             "{behind} master commit(s) behind; merges cleanly; {} authored path(s)",
             authored.len()

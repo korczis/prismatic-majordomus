@@ -1,0 +1,47 @@
+id: mcp-transports-are-reliable
+title: "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation"
+slug: mcp-transports-are-reliable
+order: 139
+priority: p0
+problem: "The MCP projection is already one registry walk: tools and resources come from apps/majordomus-cli/src/mcp/surface.rs:367-394, annotations from the declared effect (apps/majordomus-cli/src/mcp/protocol.rs:446-456), held by apps/majordomus-cli/tests/projections.rs:26, apps/majordomus-cli/tests/mcp_conformance.rs and case 940. The pack's premise that MCP keeps independent lists is refuted. The transport is the defect. The stdio bridge resends the same tools/call after a 60 s timeout or any 4xx other than 404 (apps/majordomus-cli/src/mcp/bridge.rs:25,352; apps/majordomus-cli/src/commands/mcp.rs:283,301), so a slow writer can run twice. notifications/cancelled is dropped (apps/majordomus-cli/src/mcp/protocol.rs:234-238) and could not be forwarded anyway because the bridge is sequential under a mutex (apps/majordomus-cli/src/commands/mcp.rs:218). stdin lines and bridge responses are unbounded (apps/majordomus-cli/src/mcp/stdio.rs:40, apps/majordomus-cli/src/mcp/bridge.rs:85); the Streamable HTTP endpoint ignores MCP-Protocol-Version, issues predictable session ids (apps/majordomus-cli/src/http/mcp.rs:159) and can reap a session whose request is still running (apps/majordomus-cli/src/http/mcp.rs:138). The provider launch configurations are hand-written and diagnosed by substring (apps/majordomus-cli/src/capability/builtin/mcp.rs:394-399). Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it."
+current_state: "Implemented and tested: stdout hygiene (apps/majordomus-cli/tests/mcp_stdio.rs), malformed traffic (apps/majordomus-cli/tests/mcp_conformance.rs::malformed_traffic_is_answered_and_the_session_survives), session isolation over HTTP (apps/majordomus-cli/tests/mcp_conformance_http.rs), protocol negotiation (apps/majordomus-cli/src/mcp/protocol.rs:71). Absent: idempotency on resend, cancellation, symmetric bounds, the version header, generated client configs. Authorization of writers and the effect laundering through executions.start for remote callers are I2123 (runtime-trust)."
+desired_state: "The audit's MCP rows are all I in plan/RUNTIME_BASELINE.md, each with a real-process test: a timed-out writer runs once, a cancelled call stops, an oversized message is refused with its real cause, a long request is not reaped, a Codex config without its table is reported unwired."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mcp.rs"
+  - "share/providers.yaml"
+  - "lib/update.sh"
+  - ".mcp.json"
+  - ".gemini/settings.json"
+  - ".codex/config.toml"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - "docs/MCP.md"
+non_scope:
+  - "A GET/SSE stream on the Streamable HTTP endpoint; docs/MCP.md documents its absence and no client here needs it."
+  - "Authorization and remote callers, which are I2123."
+  - "A second tool list or MCP-specific capability metadata; the registry stays the one source."
+acceptance_criteria:
+  - "A mutating tool call that outlasts the bridge timeout is executed exactly once"
+  - "notifications/cancelled stops a running call within a bound"
+  - "One declared message bound applies to stdin, request bodies and bridge responses, each with a test one byte over it"
+  - "The three client launch configurations are generated and their diagnosis parses them"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared --test mcp_conformance --test mcp_conformance_http --test shared_units --test providers_projection"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 620_mcp_tools_are_invoked_and_answer 940_mcp_says_nothing_its_capability_does_not"
+evidence_required:
+  - "at_most_once_tool_calls"
+  - "cancellation_test"
+  - "transport_bounds_tests"
+depends_on: []
+risks:
+  - "Claude Code once dropped every tool of this server for a month because of one schema detail; any change to the initialize answer or tool listing needs the client-acceptance test (apps/majordomus-cli/tests/mcp_conformance.rs::every_listed_tool_is_one_a_client_accepts) green."
+  - "Answering 'outcome unknown' instead of resending moves a decision to the client; the error text must say what to check."
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,7 +1,7 @@
 +++
 title = "Integration rollout record"
 description = "the record of each integration rollout stage of ADR 0101 §13: what was run against the real repository, with which released executable and under which rule and ADR versions, what it answered, and that nothing moved"
-weight = 54
+weight = 55
 [extra]
 source = "docs/INTEGRATION_ROLLOUT.md"
 +++

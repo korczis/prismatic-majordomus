@@ -1,0 +1,42 @@
+id: I2303
+milestone: test-evidence
+title: "A release publishes its metadata to the site before its record lands, and the site never goes back a release"
+slug: the-release-publishes-its-metadata
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make majordomus.dev serve a release's releases/latest.json and releases/<tag>.json from the release run itself, minutes after its archives are published, instead of after its record's pull request has passed its ci, without the site ever going back a release."
+why: "On 2026-10-10 v0.20.0 was published on GitHub at 16:38Z and served by the site at 17:42Z, only after its record was merged by hand without waiting for ci; v0.19.1 was published at 01:46Z and served after 07:09Z, its record's ci running 106 minutes. The owner set a bound of 15 minutes from tag to served release and chose, asked the same day, that the release run publish its metadata itself before the record lands."
+current_state: "release.yml's publish job derives the record and its projections, proposes them as release/record-<tag>, and dispatches pages.yml on the default branch; the site serves the release only once the record's pull request is merged and master deployed. scripts/site-deploy replaces gh-pages with the build entirely."
+desired_state: "The publish job runs `scripts/site-deploy --release-metadata <tag>` after `scripts/derive-check` judged the tree: exactly releases/<tag>.json and releases/latest.json change on gh-pages, build.json still names master's commit. It refuses a missing or mismatched tag file, a latest.json that differs from it, and a release older than the one served. An ordinary deploy keeps gh-pages' latest.json and the tag file it names when they name a newer release than the build, and says so. ADR 0131 records the decision."
+scope:
+  - "scripts/site-deploy"
+  - ".github/workflows/release.yml"
+  - "docs/DISTRIBUTION.md"
+  - ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md"
+  - ".ai/repo/project/issues/I2303.yaml"
+  - "test/cases/1041_a_release_publishes_its_metadata.sh"
+  - "test/cases/87_release_pipeline.sh"
+  - "docs/generated"
+  - "docs/PLAN_STATUS.md"
+  - "docs/PAGES_STATUS.md"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Shortening the build and the publish job, which the 15-minute bound also needs: the macOS x86_64 package step, the second derivation and the rebuilt executable of the publish job."
+  - "The staging line release.yml's publish step fails on since /dist/ is ignored: I2302."
+acceptance_criteria:
+  - "`scripts/site-deploy --release-metadata <tag>` changes exactly releases/<tag>.json and releases/latest.json on gh-pages and leaves build.json naming master's commit, proven against a local bare remote"
+  - "It refuses, pushing nothing, a missing tag file, a latest.json naming another tag, a latest.json that differs from the tag file, and a release older than the one served"
+  - "An ordinary deploy of a build that names an older release keeps the served latest.json and its tag file and says so; a build naming the same or a newer release replaces them"
+  - "release.yml's publish job runs the mode after scripts/derive-check and before the record is proposed, and the smoke job waits for the served metadata rather than for the record to be on the default branch"
+  - "The case fails against the previous scripts/site-deploy, and against one without the keep rule"
+validation:
+  - "bash test/run.sh 1041_a_release_publishes_its_metadata"
+  - "MJ_TEST_JOBS=3 bash test/run.sh 87_release_pipeline 26_ci_wiring 996_the_record_pull_request_gets_its_verdict"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "release_metadata_published_ahead_of_record_case"
+  - "decision_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

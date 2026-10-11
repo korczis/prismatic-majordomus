@@ -46,10 +46,13 @@ struct Loaded {
     digest: String,
 }
 
-/// The Cockpit's asset directory, with what has been read from it.
+/// A surface's asset directory, with what has been read from it: the Cockpit's
+/// `share/cockpit/` under `/cockpit/assets/`, or another surface's beside it (ADR 0135).
 #[derive(Debug)]
 pub struct Assets {
     root: Option<PathBuf>,
+    dir: &'static str,
+    prefix: &'static str,
     loaded: Mutex<BTreeMap<String, Option<Loaded>>>,
 }
 
@@ -59,9 +62,28 @@ impl Assets {
     /// the module scripts simply resolve to 404, and the Cockpit degrades to unstyled
     /// server-rendered HTML rather than failing.
     pub fn new(share_dir: &Path) -> Self {
-        let root = share_dir.join(DIR);
+        Assets::under(share_dir, DIR, PREFIX)
+    }
+
+    /// The assets under `share_dir/<dir>`, served under `prefix`: one surface's files, read
+    /// and digested exactly as the Cockpit's are. A surface does not get a second file
+    /// server; it gets this one pointed at its own directory.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::assets::Assets;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::create_dir_all(dir.path().join("ui")).unwrap();
+    /// std::fs::write(dir.path().join("ui/ui.css"), "body{}").unwrap();
+    /// let ui = Assets::under(dir.path(), "ui", "/ui/assets/");
+    /// assert!(ui.url("ui.css").starts_with("/ui/assets/ui.css?v="));
+    /// assert!(!Assets::new(dir.path()).present(), "the Cockpit's directory is another one");
+    /// ```
+    pub fn under(share_dir: &Path, dir: &'static str, prefix: &'static str) -> Self {
+        let root = share_dir.join(dir);
         Assets {
             root: root.is_dir().then_some(root),
+            dir,
+            prefix,
             loaded: Mutex::new(BTreeMap::new()),
         }
     }
@@ -70,7 +92,28 @@ impl Assets {
     pub fn none() -> Self {
         Assets {
             root: None,
+            dir: DIR,
+            prefix: PREFIX,
             loaded: Mutex::new(BTreeMap::new()),
+        }
+    }
+
+    /// No asset directory, for a surface whose files would live under `dir` and `prefix`:
+    /// nothing is servable, and every URL keeps its plain path under that surface's prefix,
+    /// so a missing file is a 404 that names where it was looked for.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::assets::Assets;
+    /// let ui = Assets::none_under("ui", "/ui/assets/");
+    /// assert!(!ui.present());
+    /// assert!(!ui.has("ui.css"));
+    /// assert_eq!(ui.url("ui.css"), "/ui/assets/ui.css");
+    /// ```
+    pub fn none_under(dir: &'static str, prefix: &'static str) -> Self {
+        Assets {
+            dir,
+            prefix,
+            ..Assets::none()
         }
     }
 
@@ -89,8 +132,12 @@ impl Assets {
     /// path, so the 404 names the file a reader should look for.
     pub fn url(&self, name: &str) -> String {
         match self.load(name) {
-            Some(a) => format!("{PREFIX}{name}?v={}", &a.digest[..16.min(a.digest.len())]),
-            None => format!("{PREFIX}{name}"),
+            Some(a) => format!(
+                "{}{name}?v={}",
+                self.prefix,
+                &a.digest[..16.min(a.digest.len())]
+            ),
+            None => format!("{}{name}", self.prefix),
         }
     }
 
@@ -102,7 +149,8 @@ impl Assets {
                 404,
                 "not_found",
                 &format!(
-                    "no cockpit asset '{name}'; the distribution's share/{DIR}/ holds the ones there are"
+                    "no asset '{name}'; the distribution's share/{}/ holds the ones there are",
+                    self.dir
                 ),
             );
         };
@@ -145,7 +193,8 @@ impl Assets {
         if !resolved.starts_with(&root) {
             tracing::warn!(
                 asset = name,
-                "a cockpit asset resolves outside share/{DIR}; refused"
+                dir = self.dir,
+                "an asset resolves outside its share directory; refused"
             );
             return None;
         }

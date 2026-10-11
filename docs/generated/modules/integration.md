@@ -5,7 +5,7 @@
 
 Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.
 
-Stability: experimental. Capabilities: 5.
+Stability: experimental. Capabilities: 6.
 
 ## `integration.cleanup` — What cleanup would do
 
@@ -107,4 +107,24 @@ The ranked queue: the repository, the base and the master commit every assessmen
 Input: none.
 
 Output: `IntegrationStatus`.
+
+## `integration.trains` — The trains of stacked pull requests
+
+Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_pull_request_trains` |
+| HTTP | `GET /api/v1/pull-requests/trains` |
+| CLI | `majordomus prs trains` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::integration |
+| tags | integration, pull-requests, trains, graph |
+
+Input: none.
+
+Output: `TrainsView`.
 

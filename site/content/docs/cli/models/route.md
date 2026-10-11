@@ -1,7 +1,7 @@
 +++
 title = "majordomus models route"
 description = "Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out"
-weight = 152
+weight = 158
 [extra]
 route = "/docs/cli/models/route/"
 command = "majordomus models route"
