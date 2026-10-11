@@ -330,9 +330,12 @@ impl std::fmt::Display for Unreadable {
 impl std::error::Error for Unreadable {}
 
 /// What a landing of `head` onto `base` allocates in the repository at `root`: the trunk's
-/// version is the manifest at `base`, the movement is `base`'s committed registry against
-/// `head`'s, and the changed paths are git's between the two. Everything is read from git,
-/// so the answer is the same in any checkout and does not depend on which executable runs.
+/// version is the manifest at `base`; the movement is the committed registry where `head`
+/// forked from `base` against `head`'s, and the changed paths are git's over the same span.
+/// Measuring from the fork point is what makes the movement the pull request's own: a head
+/// that is behind `base` lacks what `base` added since, and read against `base` itself that
+/// absence would count as a removal it never made. Everything is read from git, so the
+/// answer is the same in any checkout and does not depend on which executable runs.
 ///
 /// ```
 /// use majordomus_cli::release::landing::{next_for, ReleasePolicy};
@@ -374,14 +377,15 @@ pub fn next_for(
                 crate::release::version::MANIFEST
             ))
         })?;
-    let before = Surface::read_ref(root, base).map_err(|e| Unreadable(e.to_string()))?;
+    let fork = git(&["merge-base", base, head])?.trim().to_string();
+    let before = Surface::read_ref(root, &fork).map_err(|e| Unreadable(e.to_string()))?;
     let after = Surface::read_ref(root, head).map_err(|e| Unreadable(e.to_string()))?;
     let observed = crate::release::compat::diff(&before, &after)
         .iter()
         .map(|c| c.impact)
         .max()
         .unwrap_or(Impact::None);
-    let changed: Vec<String> = git(&["diff", "--name-only", &format!("{base}...{head}")])?
+    let changed: Vec<String> = git(&["diff", "--name-only", &fork, head])?
         .lines()
         .filter(|l| !l.is_empty())
         .map(str::to_string)

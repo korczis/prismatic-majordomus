@@ -5,6 +5,7 @@
 #
 #   an added public capability      the movement is a minor, and the next version is one
 #   a fix behind the boundary       nothing moved, and the policy floor still asks a minor
+#   a head behind the trunk         what the trunk added since is not a removal the head made
 #   a change one exemption covers   held to no floor, so nothing is allocated
 #   no floor in the policy          a fix behind the boundary allocates nothing
 #   an unreadable trunk             refused with exit 12, never a guessed number
@@ -72,6 +73,19 @@ printf '%s' "$text" | grep -q 'the policy floor is minor' \
   || { echo "    the explanation does not name the floor:"; printf '%s\n' "$text" | sed 's/^/    | /'; exit 1; }
 printf '%s' "$text" | grep -q '^next  0.5.0$' \
   || { echo "    the text rendering does not end with the next version"; exit 1; }
+
+# ---------------------------------------------------------------- a head behind the trunk
+# the trunk gains a capability after `fixed` forked: measured against the trunk itself,
+# `fixed` would seem to remove it, so the movement is measured from where it forked
+git checkout -q trunk
+jq '.capabilities += [(.capabilities[] | select(.id == "release.analysis")
+     | .id = "fixture.later" | .exposure.http.path = "/api/v1/fixture/later"
+     | .exposure.mcp.tool = "majordomus_fixture_later")]' \
+  docs/generated/registry.json > registry.tmp && mv registry.tmp docs/generated/registry.json
+git add -A >/dev/null && git commit -qm "feat: the trunk moves on"
+d="$(next trunk fixed)"
+[ "$(printf '%s' "$d" | jq -r '[.observed, .next_version] | join(" ")')" = "none 0.5.0" ] \
+  || { echo "    a head behind the trunk was charged for what the trunk added:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
 
 # ---------------------------------------------------------------- a change one exemption covers
 git checkout -q -b planned trunk
