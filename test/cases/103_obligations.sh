@@ -214,6 +214,14 @@ if start_http "$S/public"; then
     mkdir -p "$S/public$r"
     sed -n "/^    - route: ${r//\//\\/}\$/{n;s/^      marker: //p;}" "$ROOT/.ai/repo/ci/pages.yaml" > "$S/public${r}index.html"
   done
+  # a marker held to a release carries the version its served document names
+  awk '/^    - route: /{r=$3} /^      marker: /{m=$2} /^      release: /{print r, m, $2}' \
+    "$ROOT/.ai/repo/ci/pages.yaml" | while read -r r m doc; do
+    mkdir -p "$(dirname "$S/public$doc")"
+    printf '{"version":"1.2.3"}\n' > "$S/public$doc"
+    sed "s/^$m\$/$m=\"1.2.3\"/" "$S/public${r}index.html" > "$S/release.html"
+    mv "$S/release.html" "$S/public${r}index.html"
+  done
   expect_exit 0 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
   expect_grep 'smoke [0-9]+ route check\(s\) answered'
 
