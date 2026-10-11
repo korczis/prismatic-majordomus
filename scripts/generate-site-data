@@ -443,7 +443,15 @@ for srcp in $(cd "$ROOT/site/content-src" && find . -name '*.md' | sed 's#^\./##
   srcp="$ROOT/site/content-src/$srcp"; rel="${srcp#"$ROOT"/site/content-src/}"
   dst="$STAGE/content/$rel"
   mkdir -p "$(dirname "$dst")"
-  awk 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} n==2 && !b{print "{% raw %}"; b=1} {print}' "$srcp" \
+  # The body is raw: a brace in prose is prose, not template. The one exception is a figure
+  # citation, `{{ <cite_figure name="..." /> }}`, which the raw block is closed around so that
+  # Zola resolves it from site/data/figures.toml (templates/shortcodes/cite_figure.html). A
+  # citation inside a code fence or an inline code span is an example of the syntax and stays
+  # raw, as scripts/site-check reads it.
+  awk 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} n==2 && !b{print "{% raw %}"; b=1}
+       /^[ \t]*(```|~~~)/{f=!f; print; next}
+       !f{m=split($0, p, "`"); s=""; for(k=1;k<=m;k++){ if(k%2) gsub(/[{][{] *<cite_figure [^}]*\/> *[}][}]/, "{% endraw %}&{% raw %}", p[k]); s=s (k>1 ? "`" : "") p[k] } $0=s}
+       {print}' "$srcp" \
     | awk -v lib="$ROOT/scripts/lib/project-markdown.awk" 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} {print | ("awk -f " lib)}' > "$dst"
   # close only what was opened: a page whose template renders everything (front matter and no
   # body) gets no raw block, and a lone endraw is a template error Zola refuses to render
