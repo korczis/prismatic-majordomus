@@ -221,14 +221,16 @@ fn exemption_for<'a>(
 /// Where a release's record lives: `<RECORDS>v<version>.yaml`.
 const RECORDS: &str = ".ai/repo/releases/";
 
-/// The record of the release `trunk` declares, when the change writes it. A release is tagged
+/// The record of the release `trunk` declares, when the change adds it. A release is tagged
 /// at the commit that declares its version and its record follows in a pull request of its
 /// own, which may carry more than the record class covers (the v0.20.0 record also changed
 /// `.gitattributes` and `docs/INSTALL.md`): held to the floor, it would be raised past the
-/// tag it records. What makes it the record is the file it writes, not the paths around it.
-fn records_release_of(trunk: Version, changed: &[String]) -> Option<String> {
+/// tag it records. What makes it the record is the file it adds, not the paths around it;
+/// a change that edits a record already written is no record pull request, and owes the
+/// floor like any other.
+fn records_release_of(trunk: Version, added: &[String]) -> Option<String> {
     let path = format!("{RECORDS}v{trunk}.yaml");
-    changed.contains(&path).then_some(path)
+    added.contains(&path).then_some(path)
 }
 
 /// The policy floor as the version's mode reads it: below 1.0.0 the contract is held by
@@ -275,10 +277,46 @@ pub fn decide(
     policy: &ReleasePolicy,
     changed: &[String],
 ) -> LandingDecision {
+    decide_adding(trunk, observed, policy, changed, &[])
+}
+
+/// [`decide`] for a change that also says which of its `changed` paths it `added`: the
+/// record of the trunk's release lands at that release's number only when the change adds
+/// it. [`decide`] knows of no added path, so it never grants that.
+///
+/// ```
+/// use majordomus_cli::release::compat::Impact;
+/// use majordomus_cli::release::landing::{decide_adding, Allocation, ReleasePolicy};
+/// use majordomus_cli::release::version::Version;
+///
+/// let policy = ReleasePolicy {
+///     allocation: Allocation::Landing,
+///     floor: Impact::Minor,
+///     exempt: vec![],
+/// };
+/// let trunk = Version::parse("0.20.0").unwrap();
+/// let changed = [
+///     ".ai/repo/releases/v0.20.0.yaml".to_string(),
+///     "docs/INSTALL.md".to_string(),
+/// ];
+/// // the record pull request adds the record, and lands at the release's number
+/// let d = decide_adding(trunk, Impact::None, &policy, &changed, &changed[..1]);
+/// assert_eq!(d.next_version, "0.20.0");
+/// // a change that edits the record already written owes the floor
+/// let d = decide_adding(trunk, Impact::None, &policy, &changed, &[]);
+/// assert_eq!(d.next_version, "0.21.0");
+/// ```
+pub fn decide_adding(
+    trunk: Version,
+    observed: Impact,
+    policy: &ReleasePolicy,
+    changed: &[String],
+    added: &[String],
+) -> LandingDecision {
     let compat = CompatPolicy::for_version(trunk);
     let required = compat.required_of(observed);
     let exemption = exemption_for(policy, changed);
-    let record = records_release_of(trunk, changed);
+    let record = records_release_of(trunk, added);
     // a floor speaks the version's mode as compatibility does: below 1.0.0 nothing costs a
     // major, so a `major` floor asks a minor there; a change of nothing is no landing; and
     // the record of the release the trunk already declares lands at that release's number,
@@ -431,7 +469,19 @@ pub fn next_for(
         .filter(|l| !l.is_empty())
         .map(str::to_string)
         .collect();
-    Ok(decide(trunk, observed, policy, &changed))
+    let added: Vec<String> = git(&[
+        "diff",
+        "--name-only",
+        "--no-renames",
+        "--diff-filter=A",
+        &fork,
+        head,
+    ])?
+    .lines()
+    .filter(|l| !l.is_empty())
+    .map(str::to_string)
+    .collect();
+    Ok(decide_adding(trunk, observed, policy, &changed, &added))
 }
 
 #[cfg(test)]
@@ -662,7 +712,14 @@ mod tests {
             "docs/INSTALL.md".to_string(),
             ".gitattributes".to_string(),
         ];
-        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &changed);
+        let added = &changed[..1];
+        let d = decide_adding(
+            v("0.20.0"),
+            Impact::None,
+            &landing(Impact::Minor),
+            &changed,
+            added,
+        );
         assert_eq!((d.floor, d.next_version.as_str()), (Impact::None, "0.20.0"));
         assert!(
             d.explanation
@@ -671,12 +728,27 @@ mod tests {
             "{:?}",
             d.explanation
         );
-        // the record of another release is no reason: the floor applies
+        // a change that edits the record already written is no record pull request
+        let d = decide_adding(
+            v("0.20.0"),
+            Impact::None,
+            &landing(Impact::Minor),
+            &changed,
+            &[],
+        );
+        assert_eq!(d.next_version, "0.21.0");
+        // nor is a change that adds the record of another release
         let other = [
             ".ai/repo/releases/v0.19.0.yaml".to_string(),
             "docs/INSTALL.md".to_string(),
         ];
-        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &other);
+        let d = decide_adding(
+            v("0.20.0"),
+            Impact::None,
+            &landing(Impact::Minor),
+            &other,
+            &other,
+        );
         assert_eq!(d.next_version, "0.21.0");
     }
 }
