@@ -1,0 +1,31 @@
+id: I2075
+milestone: a-session-leaves-what-it-observed
+title: A candidate is routed by what it is about
+slug: a-candidate-is-routed
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-session-leaves-what-it-observed#route-is-structural
+objective: "Derive route for every observation candidate from its subject, in ADR 0118's order: command:, capability:, rule:majordomus.*, the vendored rules directory, or the tool's share/ when inside the repository -> platform; another rule: or gate: -> enforcement; a path the scope declares generated or .gitattributes marks merge=derived -> generator; docs/ -> documentation; anything else -> project."
+why: "A candidate with no owner is read by nobody, and the route must come from structure because ADR 0091 rejected classifying by wording; in an adopter, the project's own share/ is not the tool."
+current_state: "No candidate carries an owner."
+desired_state: "Every observation candidate names its route, adopter-correct, and candidates shows it per group."
+scope:
+  - lib/knowledge.sh
+  - lib/changed.sh
+  - docs/KNOWLEDGE.md
+  - test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh
+depends_on:
+  - I2074
+acceptance_criteria:
+  - In this repository each of the five routes is reached by a subject of its kind
+  - In a freshly initialised repository with its own share/, a path under it routes project, and command:, capability: and rule:majordomus.* route platform
+  - Two observations with different statements about one subject carry the same route
+  - The derivation emits no event it reads
+validation:
+  - bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about
+evidence_required:
+  - candidate_routed
+created_at: 2026-10-09
+updated_at: 2026-10-09

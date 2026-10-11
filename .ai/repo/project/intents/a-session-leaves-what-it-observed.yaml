@@ -1,0 +1,45 @@
+id: a-session-leaves-what-it-observed
+title: Every managed session leaves what it observed, and the repository groups and routes it without being asked
+statement: "A worker of any provider records friction it met — a workaround, a defect, a drift, a repeated manual step — as a typed observation with a subject and evidence, in one command, inside the episode it works in. At that episode's boundary, with no model and no prompt, the repository turns each observation into a knowledge candidate that says what it is about and which owner should look first — the tool itself, its enforcement, a generator, the documentation or the project — derived from the subject's structure, never from the wording. Reading the candidates groups them by what they are about, so the same defect seen by three sessions is one group with three episodes behind it. An episode that observed nothing records that it was evaluated and found nothing; rejecting a candidate is a recorded act and stays recorded."
+invariants:
+  - Observations are typed ledger lines and candidates are knowledge records; no second store, kind or queue (ADR 0010, ADR 0091)
+  - Nothing reads a conversation, a transcript or a prompt; a statement is one line a worker wrote, refused when it carries a transcript marker
+  - Derivation needs no model, no network and no provider, writes no event it reads, and writes only its own episode's files, so a derivation never triggers another and never rewrites another episode's record
+  - A route is derived from the subject's structure, and in a repository that adopted the tool only the tool's own identifiers and vendored rules route to the platform
+  - Promotion, routing into the plan and rejection are acts; the deriver proposes and never promotes
+milestones:
+  - a-session-leaves-what-it-observed
+satisfaction:
+  - id: an-observation-is-recorded
+    criterion: knowledge observe records one observation.recorded line with its kind, subject, statement and evidence references inside an open episode, inside or outside a task, and refuses an unknown kind, a malformed subject or evidence reference, a multi-line statement, a transcript marker or the absence of an episode without writing
+    evidence: test
+    ref: test/cases/980_a_session_records_what_it_observed.sh
+  - id: an-observation-becomes-a-candidate
+    criterion: Closing an episode derives one candidate per observation it recorded, carrying the subject as about, with no model; a second derivation writes nothing; an episode that recorded nothing derives nothing and still records that it was evaluated
+    evidence: test
+    ref: test/cases/981_an_observation_becomes_a_grouped_candidate.sh
+  - id: recurrence-is-grouped
+    criterion: Two episodes observing the same subject write one file each, and the candidates listing groups them under that subject with both episodes, on the command line and in the Rust reader alike; a rejected candidate stays rejected and a later observation of its subject is listed beside it
+    evidence: test
+    ref: test/cases/981_an_observation_becomes_a_grouped_candidate.sh
+  - id: route-is-structural
+    criterion: Every observation candidate carries a route derived from its subject's structure — platform, enforcement, generator, documentation or project — and in an adopting repository with a share/ directory of its own, a project path never routes platform
+    evidence: test
+    ref: test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.never-store-transcripts
+  - rule:project.no-new-nouns
+  - rule:project.no-network-no-eval
+  - adr:adr-0010
+  - adr:adr-0091
+  - adr:adr-0118
+non_goals:
+  - Creating issues, rules, ADRs or pull requests from a candidate; acting on a route is a later milestone and an act
+  - Deriving friction from task.refused or task.gate; which of those lines are friction rather than the tool working needs its own measurement
+  - Sending a candidate to another repository; nothing leaves the checkout
+  - Classifying by an LLM; an agent may record observations and act on routes, and the core needs none
+  - Codex and Gemini lifecycle hooks; an observation needs an open episode, which any provider opens with session start or an MCP attach
+  - Where candidates are written on a trunk that accepts only pull requests (I1984); grouping on read holds wherever they are
+created_at: 2026-10-09
+updated_at: 2026-10-09

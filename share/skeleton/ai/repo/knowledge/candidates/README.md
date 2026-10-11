@@ -33,6 +33,13 @@ into `../curated/`; a record here that claims to be verified is refused by `chec
 digest of the evidence, so a second derivation over the same evidence rewrites the same
 file and changes nothing.
 
+A candidate derived from an observation (`majordomus knowledge observe`) also says what it is
+`about` — the subject the worker named — and its `route`, which owner should look first,
+derived from that subject's structure (ADR 0118). Each stays one episode's own file;
+`majordomus knowledge candidates` groups the records about one subject, so the same thing
+observed by several sessions reads as one group, a rejected record listed beside what came
+after it.
+
 The directory is tracked for the reason every closed session record is: a record only one
 machine can read is a record nobody reads. Add a candidate beside the session record it
 names; `doctor` names the ones version control does not hold, and the queue is measured

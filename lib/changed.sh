@@ -196,6 +196,45 @@ EOF
   return 1
 }
 
+# Is repository-relative path $1 one the repository says is generated? 0 yes, 1 no.
+#
+# Narrower than mj_changed_is_derived, which is everything the tool writes and nobody reads
+# (sessions, local state, projections): this is only what a generator produces — the scope's
+# out.generated paths and names, and every path .gitattributes marks merge=derived. It is the
+# question an observation's route asks (ADR 0118): a defect in a generated file is a defect
+# of its generator. Same glob language, same translation, its own cache.
+MJ_GENERATED_ERE=""; MJ_GENERATED_NAMES=""; MJ_GENERATED_LOADED=0
+mj_changed_is_generated() {
+  local f="$1" n t alt="" e flat specs=""
+  if [ "$MJ_GENERATED_LOADED" = 0 ]; then
+    MJ_GENERATED_LOADED=1
+    if [ -n "${MJ_SCOPE_FILE:-}" ] && [ -f "$MJ_SCOPE_FILE" ]; then
+      flat="$(mktemp "${TMPDIR:-/tmp}/mj.cg.XXXXXX")"
+      if mj_yaml_flatten "$MJ_SCOPE_FILE" > "$flat" 2>/dev/null; then
+        specs="$(mj_ylist "$flat" out.generated.paths)"$'\n'
+        MJ_GENERATED_NAMES="$(mj_ylist "$flat" out.generated.names)"
+      fi
+      rm -f "$flat"
+    fi
+    if [ -f "$MJ_ROOT/.gitattributes" ]; then
+      specs="$specs$(awk '$0 !~ /^[[:space:]]*#/ && $0 ~ /merge=derived/ { print $1 }' "$MJ_ROOT/.gitattributes")"
+    fi
+    while IFS= read -r t; do
+      [ -n "$t" ] || continue
+      e="$(mj_changed_glob_ere "$t")"; [ -n "$e" ] && alt="${alt:+$alt|}$e"
+    done <<< "$specs"
+    [ -n "$alt" ] && MJ_GENERATED_ERE="^($alt)\$"
+  fi
+  # shellcheck disable=SC2076  # the declaration is a pattern
+  if [ -n "$MJ_GENERATED_ERE" ] && [[ "$f" =~ $MJ_GENERATED_ERE ]]; then return 0; fi
+  while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    # shellcheck disable=SC2254
+    case "${f##*/}" in $n) return 0 ;; esac
+  done <<< "$MJ_GENERATED_NAMES"
+  return 1
+}
+
 # The episode's work product: the files a record should name.
 #
 #   mj_changed_files [<base commit>]
