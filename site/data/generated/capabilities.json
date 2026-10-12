@@ -846,6 +846,19 @@
       "test_case": "01_init"
     },
     {
+      "id": "personal-layer-changes-nothing-shared",
+      "claim": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+      "source": "docs/INSTALL.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "status": "guaranteed",
+      "note": "The cover is a marked block in the common git directory's info/exclude. init --personal exits 10 unless git status reads the same after it as before, the installer compares it again by itself, update and capture install cover each path before writing it and refuse a tracked one whole, and doctor re-verifies on every run. Whether a layer is personal is read from the block and stored nowhere. init --extend --shared removes the cover and commits nothing.",
+      "responsibility": "layer",
+      "source_route": "/docs/install/",
+      "command": null,
+      "test_case": "2979_a_personal_layer_changes_nothing_shared"
+    },
+    {
       "id": "local-state-ignored",
       "claim": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
       "source": "docs/SCHEMAS.md",

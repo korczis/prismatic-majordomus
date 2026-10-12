@@ -591,6 +591,15 @@
       "note": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads."
     },
     {
+      "id": "claim:personal-layer-changes-nothing-shared",
+      "kind": "claim",
+      "label": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+      "status": "guaranteed",
+      "route": "/guarantees/personal-layer-changes-nothing-shared/",
+      "external": false,
+      "note": "The cover is a marked block in the common git directory's info/exclude. init --personal exits 10 unless git status reads the same after it as before, the installer compares it again by itself, update and capture install cover each path before writing it and refuse a tracked one whole, and doctor re-verifies on every run. Whether a layer is personal is read from the block and stored nowhere. init --extend --shared removes the cover and commits nothing."
+    },
+    {
       "id": "claim:local-state-ignored",
       "kind": "claim",
       "label": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
@@ -3856,6 +3865,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
     },
     {
+      "id": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "kind": "test",
+      "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+    },
+    {
       "id": "test:test/cases/29_prompt_capture.sh",
       "kind": "test",
       "label": "test/cases/29_prompt_capture.sh",
@@ -4805,6 +4821,11 @@
     {
       "source": "claim:ai-layer-manifest",
       "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "source:docs/INSTALL.md",
       "kind": "specified_by"
     },
     {
@@ -6028,6 +6049,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -7185,6 +7211,11 @@
     {
       "source": "claim:ai-layer-manifest",
       "target": "test:test/cases/01_init.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
       "kind": "proved_by"
     },
     {

@@ -21,12 +21,46 @@ have had a word for the hardware version of this for years: bring your own devic
 the same bargain one level up, bring your own discipline. The habits and the tool are
 yours, the repository and its rules are the organisation's, and neither changes the other.
 
-There is no switch for this yet. It is assembled from three things git and Majordomus already
-do: git's per-clone exclude file, a policy that is now private and can say what you need,
-and discovery that walks the work tree instead of asking the index. This page is a
-measurement, taken on 2026-10-12 in a scratch repository (one `git init`, a README, one
-source file, one commit) against the released build of that day. Every step says whether it
-was run. Two were not, and they are named.
+There is a switch for it: `majordomus init --personal`, and `--personal` on the installer
+(ADR 0145, [`claims/personal-layer-changes-nothing-shared.md`](@/guarantees/personal-layer-changes-nothing-shared.md)).
+[The switch](#the-switch) says what it does. The rest of this page is the measurement the
+switch was built from, taken by hand on 2026-10-12 in a scratch repository (one `git init`,
+a README, one source file, one commit) against the released build of that day, which had
+no switch. It stays because it shows what each piece is and why it is ordinary practice.
+Every step says whether it was run. Two were not, and they are named. Where the switch
+changes a statement below, the statement says so.
+
+## The switch
+
+<!-- majordomus:unrun creates a layer in the repository it is run in and rewrites that repository's .git/info/exclude; test/cases/2979_a_personal_layer_changes_nothing_shared.sh runs it in fixtures -->
+```sh
+majordomus init --personal
+majordomus update
+majordomus doctor
+```
+
+`init --personal` creates the layer a plain `init` creates, covers it in a marked block of
+git's per-clone exclude file, and exits 10 unless `git status` reads the same after it as
+before. What it does that the hand-made arrangement below did not:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| By hand, below | With the switch |
+|---|---|
+| `init` writes two lines to `.gitignore`, restored with `git checkout .gitignore` | `.gitignore` is not written |
+| the exclude lines are typed, and nothing checks them | one marked block, verified by `init`, by the installer and by every `doctor` |
+| the policy is narrowed so that `update` writes one private file | `update` covers each target before writing it; a target the project tracks is refused whole, with the advice to point that projection at `CLAUDE.local.md` |
+| `capture install` was not run, because it writes under `.claude/` | it covers what it writes the same way |
+| the session record's commit and push are turned off in the policy | under a personal layer neither happens, whatever the policy says |
+| the server needs `--discovery filesystem`, started before the client | discovery walks the work tree by itself when the layer is tracked nowhere |
+| `doctor` keeps the failure about the README | the project's README is not asked to name `AGENTS.md` |
+| converting means deleting the exclude lines and `init --extend` | `majordomus init --extend --shared` |
+
+</div>
+
+
+The hook is still yours to add, and what the organisation's policy says about tools is
+still the organisation's to say.
 
 ## What it is for
 
@@ -151,7 +185,10 @@ means it holds for every linked worktree of the clone as well.
 </div>
 
 
-## The steps
+## The steps, by hand
+
+This is the arrangement as it was assembled before the switch existed. It still works, and
+it is the one to read when the switch refuses something and you want to know why.
 
 <!-- majordomus:unrun these lines rewrite a repository's .git/info/exclude and its .gitignore; they were run by hand in a scratch repository on 2026-10-12, and a documentation check has no repository of somebody else's to run them in -->
 ```sh
@@ -269,6 +306,7 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 | a touched file outside the scope is a failure, and `finish` evaluates its contract line by line | [`claims/scope-enforcement.md`](@/guarantees/scope-enforcement.md), [`claims/finish-contract.md`](@/guarantees/finish-contract.md) |
 | a verification command that does nothing is refused | [`verification-integrity`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md) |
 | nothing performs a network call | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| a personal layer changes nothing shared, and the command that says so checks it | [`lib/common.sh`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/lib/common.sh), [`test/cases/2979_a_personal_layer_changes_nothing_shared.sh`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/test/cases/2979_a_personal_layer_changes_nothing_shared.sh), [`claims/personal-layer-changes-nothing-shared.md`](@/guarantees/personal-layer-changes-nothing-shared.md) |
 | discovery can walk the work tree instead of asking the index | [`apps/majordomus-cli/src/cli.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/cli.rs), [`MCP.md`](@/docs/mcp.md), [`the-server-sees-the-current-tree`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-server-sees-the-current-tree.v1.md) |
 | what a worker never reads is declared once | [`claims/scope-declared.md`](@/guarantees/scope-declared.md), [`SCOPE.md`](@/docs/scope.md) |
 
@@ -277,9 +315,10 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 
 ## What does not fit
 
-- **`doctor` keeps one failure.** Of the six a fresh adoption reports, five go with the
-  policy above and the hook. The one left is `bootstrap README.md — does not name
-  AGENTS.md`, and removing it means editing the README.
+- **By hand, `doctor` keeps one failure.** Of the six a fresh adoption reports, five go
+  with the policy above and the hook. The one left is `bootstrap README.md — does not name
+  AGENTS.md`, and removing it means editing the README. With the switch that check is not
+  asked of a personal layer.
 - **The released build has no `ui` command.** The `/ui` surface is served; open it in a
   browser.
 - **Nothing is shared, so nothing is backed up.** ADRs, knowledge records, session records
@@ -297,6 +336,10 @@ Personal mode has done its job when you can show what it gave you. The proposal 
 is then a pull request and a set of records, not an opinion: the tasks you ran with a
 scope, the handovers a session started from, the times `finish` refused. The conversion was
 measured on 2026-10-12 in a scratch repository whose layer still carried the seeded policy.
+
+With the switch this is one command, `majordomus init --extend --shared`: it removes the
+cover, adds the two `.gitignore` lines, prints what is now the repository's to commit, and
+commits nothing. By hand it was this.
 
 Delete the two lines you added to `.git/info/exclude`. `git status --short` then shows the
 layer as one untracked directory. After that:
