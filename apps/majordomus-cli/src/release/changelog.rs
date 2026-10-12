@@ -350,7 +350,8 @@ fn added_at_each(root: &Path, paths: &[&str]) -> Vec<Option<String>> {
             .collect();
         workers
             .into_iter()
-            .flat_map(|w| w.join().unwrap_or_else(|e| std::panic::resume_unwind(e)))
+            // `added_at` has no panic site, so a worker always returns: no panic to carry on
+            .flat_map(|w| w.join().expect("added_at does not panic"))
             .collect()
     });
     let mut out = vec![None; paths.len()];

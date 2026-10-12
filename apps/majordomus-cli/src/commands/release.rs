@@ -794,6 +794,31 @@ mod tests {
             }
         ));
         assert!(matches!(protocol("no"), Error::Protocol { .. }));
+
+        // a writer that refuses is the command's transport error, on every line it writes
+        assert!(render_next(&mut RefuseAfter(0), &d, OutputFormat::Json).is_err());
+        for lines in [0, d.explanation.len()] {
+            assert!(
+                render_next(&mut RefuseAfter(lines), &d, OutputFormat::Text).is_err(),
+                "{lines}"
+            );
+        }
+    }
+
+    /// A writer that accepts `.0` lines and refuses every write after them.
+    struct RefuseAfter(usize);
+
+    impl Write for RefuseAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("refused"));
+            }
+            self.0 -= buf.iter().filter(|b| **b == b'\n').count().min(self.0);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
     }
 
     /// Through the capability, in a repository with a history: the head landed onto itself
@@ -844,6 +869,22 @@ mod tests {
                 ..
             })
         ));
+
+        // the command itself: decided exits 0, a bad ref and a directory that is no
+        // repository are each refused
+        let args = |at: &std::path::Path| ReleaseArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(at.to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: None,
+            format: OutputFormat::Json,
+        };
+        assert_eq!(next(&args(root), "HEAD", "HEAD").expect("decided"), 0);
+        assert!(next(&args(root), "no-such-ref-of-ours", "HEAD").is_err());
+        let empty = tempfile::tempdir().unwrap();
+        assert!(next(&args(empty.path()), "HEAD", "HEAD").is_err());
     }
 
     fn report(decided_by: DecidedBy) -> VersionReport {
