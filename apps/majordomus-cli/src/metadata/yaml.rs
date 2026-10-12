@@ -493,6 +493,14 @@ fn key_literal(key: &str) -> String {
 }
 
 fn is_plain_key(key: &str) -> bool {
+    // a YAML 1.1 parser reads these bare as a boolean or null, so the key `on` of a schema
+    // became `true` in docs/generated/openapi.yaml while the JSON kept `on`
+    if matches!(
+        key.to_ascii_lowercase().as_str(),
+        "true" | "false" | "null" | "yes" | "no" | "on" | "off"
+    ) {
+        return false;
+    }
     let mut chars = key.chars();
     match chars.next() {
         Some(c) if c.is_ascii_alphabetic() || c == '_' => {}
@@ -810,6 +818,10 @@ mod tests {
             "\"/api/v1/peers\": 1\n"
         );
         assert_eq!(render(&json!({ "a.b": 1 })), "\"a.b\": 1\n");
+        // a key a YAML 1.1 parser would read as a boolean or null keeps its name
+        assert_eq!(render(&json!({ "on": [1] })), "\"on\":\n  - 1\n");
+        assert_eq!(render(&json!({ "No": 1 })), "\"No\": 1\n");
+        assert_eq!(render(&json!({ "one": 1 })), "one: 1\n");
         // null has no place in the subset and is still written
         assert_eq!(render(&json!({ "a": Value::Null })), "a: null\n");
     }

@@ -17,7 +17,19 @@ SRC=apps/majordomus-cli/src
 fixture() {
   local f="$T/tree$1"
   rm -rf "$f"
-  mkdir -p "$f/$SRC/cockpit" "$f/$SRC/capability/builtin" "$f/$SRC/models"
+  mkdir -p "$f/$SRC/cockpit" "$f/$SRC/ui" "$f/$SRC/capability/builtin" "$f/$SRC/models"
+  # the UI (`majordomus ui`, ADR 0135) is held to the same rule as the Cockpit: a screen
+  # that asks, and an absent number rendered as unknown
+  cat > "$f/$SRC/ui/dashboard.rs" <<'RS'
+pub fn screen(ctx: &Context) -> View {
+    let answers = ask_all(ctx, FIRST_PAINT);
+    View::new(answers)
+}
+
+fn number(a: &Value) -> String {
+    a.get("number").and_then(Value::as_u64).map_or_else(|| "unknown".into(), |n| format!("#{n}"))
+}
+RS
   cat > "$f/$SRC/cockpit/nav.rs" <<'RS'
 pub fn build(ctx: &Context) -> Navigation {
     let summary = ctx.registry.summary();
@@ -207,7 +219,46 @@ cp "$F/.ai/repo/ui-integrity-baseline.txt" "$F2/.ai/repo/"
 expect_exit 0 env MJ_ROOT="$F2" "$GATE" --ui-integrity
 expect_grep '^paid count-default'
 
+# --- the UI is held as the Cockpit is: a screen that reads the registry itself fails, and
+# so does an absent count drawn as zero (ADR 0135 widened the subject to src/ui)
+F="$(fixture 11)"
+cat >> "$F/$SRC/ui/dashboard.rs" <<'RS'
+
+fn route_of(ctx: &Context, id: &str) -> Option<String> {
+    ctx.registry.get(id).map(|c| c.id.to_string())
+}
+RS
+expect_exit 10 env MJ_ROOT="$F" "$GATE" --ui-integrity
+expect_grep "^FAIL $SRC/ui/dashboard.rs:11  direct-read"
+expect_grep 'ctx.registry is read directly in fn route_of'
+F="$(fixture 12)"
+cat >> "$F/$SRC/ui/dashboard.rs" <<'RS'
+
+fn open(q: &Value) -> String {
+    q.pointer("/open").and_then(Value::as_u64).unwrap_or(0).to_string()
+}
+RS
+expect_exit 10 env MJ_ROOT="$F" "$GATE" --ui-integrity
+expect_grep "^FAIL $SRC/ui/dashboard.rs:11  count-default: an absent count renders as zero in fn open"
+# and the index check of ADR 0012 reaches the UI too
+F="$(fixture 13)"
+cat >> "$F/$SRC/ui/dashboard.rs" <<'RS'
+
+fn objects(ctx: &Context) -> usize {
+    ctx.index.objects.len()
+}
+RS
+expect_exit 10 env MJ_ROOT="$F" "$GATE"
+expect_grep "ui/dashboard.rs:11:    ctx.index"
+
 # --- a tree without a subject is unusable, not clean
+F="$(fixture 14)"
+rm -r "$F/$SRC/ui"
+expect_exit 12 env MJ_ROOT="$F" "$GATE" --ui-integrity
+expect_grep 'cannot read apps/majordomus-cli/src/ui'
+expect_exit 12 env MJ_ROOT="$F" "$GATE"
+expect_grep 'no UI at apps/majordomus-cli/src/ui'
+
 F="$(fixture 9)"
 rm "$F/$SRC/capability/builtin/health.rs"
 expect_exit 12 env MJ_ROOT="$F" "$GATE" --ui-integrity

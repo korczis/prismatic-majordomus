@@ -5,26 +5,26 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 185,
-      "covered": 161,
+      "required": 192,
+      "covered": 165,
       "missing": 0,
-      "waived": 24,
+      "waived": 27,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 182,
-      "covered": 161,
+      "required": 188,
+      "covered": 165,
       "missing": 0,
-      "waived": 21,
+      "waived": 23,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 178,
-      "covered": 157,
+      "required": 184,
+      "covered": 161,
       "missing": 0,
-      "waived": 21,
+      "waived": 23,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 558,
-      "covered": 492,
+      "required": 577,
+      "covered": 504,
       "missing": 0,
-      "waived": 66,
+      "waived": 73,
       "inapplicable": 0
     }
   ],
@@ -56,6 +56,18 @@
       "cases": [
         "all",
         "one-encoding"
+      ]
+    },
+    {
+      "id": "brief.session",
+      "module": "brief",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {
@@ -990,6 +1002,30 @@
       ]
     },
     {
+      "id": "integration.timings",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "integration.trains",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "intent_realization.explain",
       "module": "intent_realization",
       "kind": "query",
@@ -1242,6 +1278,26 @@
       ]
     },
     {
+      "id": "mesh.firewall",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.firewall.apply",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
       "id": "mesh.handover.consume",
       "module": "mesh",
       "kind": "command",
@@ -1330,7 +1386,8 @@
       "mcp": "covered",
       "http": "covered",
       "cases": [
-        "default"
+        "summary",
+        "full"
       ]
     },
     {
@@ -1404,7 +1461,8 @@
       "mcp": "covered",
       "http": "covered",
       "cases": [
-        "default"
+        "summary",
+        "full"
       ]
     },
     {
@@ -1452,6 +1510,19 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "monitor.stream",
+      "module": "monitor",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "local-first-page",
+        "local-resumed"
       ]
     },
     {
@@ -1911,6 +1982,16 @@
         "all",
         "one-version"
       ]
+    },
+    {
+      "id": "release.next",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "release.version",

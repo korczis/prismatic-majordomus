@@ -168,6 +168,11 @@ pub struct Policy {
     /// policy predates the block starts work exactly as it did (ADR 0111).
     #[serde(default)]
     pub intent: IntentPolicy,
+    /// `release:` — who raises the version and by at least how much (ADR 0134). Absent is
+    /// `allocation: off` with no floor: a repository whose policy predates the block raises
+    /// its version exactly as it did.
+    #[serde(default)]
+    pub release: crate::release::landing::ReleasePolicy,
 }
 
 /// How strictly a start is held to its binding.
@@ -312,6 +317,11 @@ pub struct SessionPolicy {
     /// `checkpoint_on_compact`: the two record different things.
     #[serde(default = "yes")]
     pub knowledge_on_compact: bool,
+    /// `session.brief_interval_minutes:` — how often a session reports on itself without
+    /// being asked (ADR 0136). Absent is the default `brief.session` carries; the provider
+    /// mod reads the interval from that answer rather than from this file.
+    #[serde(default)]
+    pub brief_interval_minutes: Option<u64>,
 }
 
 impl Default for SessionPolicy {
@@ -321,6 +331,7 @@ impl Default for SessionPolicy {
             ensure_server_on_start: true,
             knowledge_on_end: true,
             knowledge_on_compact: true,
+            brief_interval_minutes: None,
         }
     }
 }
@@ -534,4 +545,8 @@ pub struct ServerPolicy {
     /// on, and asked again, before its lease is taken over.
     #[serde(default)]
     pub busy_grace_seconds: Option<u64>,
+    /// `server.read_deadline_seconds:` — how long the shared server lets a connection go
+    /// without a request read in full on it before it closes the connection.
+    #[serde(default)]
+    pub read_deadline_seconds: Option<u64>,
 }

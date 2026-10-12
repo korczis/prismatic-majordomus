@@ -482,6 +482,9 @@ impl Live {
             Ok(app) => {
                 state.ctx = Arc::new(app.context.continuing(&previous));
                 state.number += 1;
+                // the declaration may have changed with the repository: a key withdrawn from
+                // it loses its links now, not at the next restart (I2134)
+                warn_of_ended_links(&crate::capability::builtin::mesh::retrust(&state.ctx));
                 state.stamp = taken;
                 tracing::info!(
                     generation = state.number,
@@ -654,6 +657,19 @@ fn head_of(ctx: &Context) -> String {
         crate::git::GitState::Available(info) => info.head.clone().unwrap_or_else(|| "-".into()),
         crate::git::GitState::Unavailable { .. } => "-".into(),
     }
+}
+
+/// Say which mesh links a reload ended because the declaration no longer trusts their keys
+/// (I2134); `true` when there was one to name. A reload that ended none says nothing.
+fn warn_of_ended_links(ended: &[String]) -> bool {
+    if ended.is_empty() {
+        return false;
+    }
+    tracing::warn!(
+        peers = ?ended,
+        "mesh links ended: their keys are no longer trusted by the declaration"
+    );
+    true
 }
 
 fn read<T>(lock: &RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
@@ -852,5 +868,11 @@ mod tests {
             });
         }
         assert_eq!(built, 1);
+    }
+
+    #[test]
+    fn a_reload_names_the_links_it_ended_and_is_silent_when_it_ended_none() {
+        assert!(!warn_of_ended_links(&[]));
+        assert!(warn_of_ended_links(&["node-a".to_string()]));
     }
 }

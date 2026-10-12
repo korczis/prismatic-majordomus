@@ -196,6 +196,21 @@ for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
 awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
+# Every job that carries a gate leaves its receipts, and the verdict is asked for them: a
+# job's `success` says no step failed, not that the gate's step ran, so scripts/ci/verdict
+# refuses a selected gate with no receipt (I2416). A gate job without MJ_CI_RECEIPTS writes
+# none and one that does not upload them sends none; either turns every gate of that job red
+# on the first run that plans it — this says so before that run.
+for j in $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
+  blk="$(awk -v j="  $j:" '$0 == j {f=1; next} /^  [a-z][a-z_-]*:$/ {f=0} f' "$W")"
+  printf '%s\n' "$blk" | grep -q '^      MJ_CI_RECEIPTS: \${{ github.workspace }}/receipts.tsv$' \
+    || { echo "    job $j carries gates and sets no MJ_CI_RECEIPTS; its gates would leave no receipt"; exit 1; }
+  printf '%s\n' "$blk" | grep -qE '^          name: ci-receipts-' \
+    || { echo "    job $j does not upload its receipts (ci-receipts-*); the verdict would find none"; exit 1; }
+done
+ci_blk="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W")"
+printf '%s\n' "$ci_blk" | grep -q 'pattern: ci-receipts-\*' || { echo "    the ci job does not download the receipts"; exit 1; }
+printf '%s\n' "$ci_blk" | grep -q 'scripts/ci/verdict .*--receipts receipts' || { echo "    the ci verdict is not asked for the receipts"; exit 1; }
 # a started run reaches its verdict: a pull request's runs queue per pull request, and a
 # newer commit never cancels the run in progress (a two-hour suite under frequent pushes
 # never finished); master's runs are each their own group

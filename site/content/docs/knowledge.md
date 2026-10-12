@@ -60,7 +60,7 @@ every kind, and both carry a `README.md` contract.
 ## What is derived, from what
 
 The evidence is the ledger lines the episode stamped and the commits it made. The mapping is
-this table and the deriver implements exactly this table.
+this table and the deriver implements exactly this table; ADR 0118 added its observation row.
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -70,6 +70,7 @@ this table and the deriver implements exactly this table.
 | `question.resolved` | the answer, stating the question it answers | `fact` | `observed` | `session:<episode>`, `task:<task-id>` |
 | `task.finished` with outcome `blocked`, `failed` or `no_match` | the outcome and the first line of the task note's `# Reason` | `lesson` | `inferred` | `session:<episode>`, `task:<task-id>` |
 | `task.finished` with outcome `completed` and a `verify` command | the verification that passed | `fact` | `observed` | `session:<episode>`, `task:<task-id>` |
+| `observation.recorded` (ADR 0118) | the statement, with `about` set to the subject and `route` derived from it | `lesson` | `observed` | `session:<episode>`, `task:<task-id>` when one was active, and each evidence reference that resolves now (a commit, a tracked file or test) |
 | commits of the episode touching `.ai/repo/rules/` or `.ai/repo/adrs/` | no record; each record of the episode gains `commit:<sha>` in `derived_from` and `relates_to file:<path>` in `relations` | — | — | — |
 
 </div>
@@ -91,6 +92,32 @@ inside a decision neither cuts the record short nor changes its identity. A line
 carries a transcript marker yields no record; it is reported as skipped rather than written
 for the integrity check to refuse. No network, no model, no `eval`
 (`project.no-network-no-eval`).
+
+## What a session observed
+
+A worker records friction it met with `majordomus knowledge observe --kind <kind> --subject
+<ref> [--evidence <ref>]... "<statement>"` (ADR 0118). The kinds are `friction`,
+`workaround`, `defect`, `drift` and `repetition`; the subject is a repository path or
+`capability:`, `rule:`, `command:`, `gate:` with an identifier; evidence references are
+`file:`, `test:`, `commit:`, `issue:` or `claim:`. The command writes one
+`observation.recorded` line and judges nothing; malformed input is refused with exit 2 and
+nothing is written.
+
+**Where an observation routes.** In this order: a `command:`, `capability:` or
+`rule:majordomus.*` subject, a path under the vendored rules, or a path under the tool's own
+`share/` only when that directory lies inside the repository, routes `platform`; another
+`rule:` or a `gate:` routes `enforcement`; a path the scope declares generated or
+`.gitattributes` marks `merge=derived` routes `generator`; a path under `docs/` routes
+`documentation`; anything else routes `project`. The words are never read, and the route
+decides nothing: promotion and rejection stay acts. In a repository that adopted the tool,
+`share/` is the project's own and routes `project`.
+
+**Recurrence is read.** Every observation candidate is its own episode's file, so two
+episodes, worktrees or machines never write one name and a merge adds files without a
+conflict. `knowledge candidates` groups the candidates and rejected records about one subject,
+with the episodes behind them — the same answer from the shell and from
+`knowledge_base.candidates`. An episode that observed nothing writes no candidate and still
+appends `knowledge.derived` with `written: 0`: evaluated, nothing found.
 
 ## The two moments
 

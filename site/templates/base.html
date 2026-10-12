@@ -66,7 +66,10 @@
 {% block content %}{% endblock content %}
 </main>
 {% include "partials/footer.html" %}
+{#- the site's one search, opened by the navbar's trigger on every page that extends this layout -#}
+{% include "partials/site-search.html" %}
 <script defer src="{{ get_url(path="js/nav.js") }}"></script>
+<script defer src="{{ get_url(path="js/search.js") }}"></script>
 <script src="{{ get_url(path="js/theme.js") }}"></script>
 <script defer src="{{ get_url(path="js/alpine.min.js") }}"></script>
 {% block scripts %}{% endblock scripts %}

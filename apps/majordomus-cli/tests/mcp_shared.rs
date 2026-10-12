@@ -18,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{without_observation_times, Fixture, BIN};
+use common::{without_observation_times, Fixture};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -37,7 +37,7 @@ impl Mcp {
     fn spawn(cwd: &Path, args: &[&str]) -> Self {
         let mut all = vec!["mcp"];
         all.extend_from_slice(args);
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(&all)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")
@@ -1005,10 +1005,17 @@ fn sigterm_removes_the_lease_before_the_process_dies() {
         .unwrap();
     assert!(sent.success(), "kill -TERM");
     let status = a.child.wait().unwrap();
-    assert_eq!(status.signal(), Some(15), "died of SIGTERM: {status:?}");
+    // The handler only records the request. The server's own thread then runs the ordered
+    // stop — episodes closed, the lease released through the check that it is still this
+    // process's — and only then ends the process with the signal it was sent: the stdio
+    // session of a `majordomus mcp` belongs to its client and was cut, which the exit status
+    // still says. (A `majordomus serve` returns from `main` instead: tests/lease_holder.rs.)
+    let log = a.wait_log("shared server stopped");
+    assert!(log.contains("shared server stopped"), "{log}");
+    assert_eq!(status.signal(), Some(15), "ended by SIGTERM: {status:?}");
     assert!(
         !lease_path(&f).exists(),
-        "the handler removed the lease before the process died"
+        "the lease was gone by the time the process was"
     );
     // the next client finds no stale lease and starts cleanly
     let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);

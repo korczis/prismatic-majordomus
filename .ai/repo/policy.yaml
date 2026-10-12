@@ -52,6 +52,23 @@ intent:
     - id: exploration
       description: Reading, measuring or prototyping whose result is a finding and not a change to the product
 
+# Who raises the version and by at least how much (ADR 0134). Every eligible integration
+# advances at least a minor; a change one exemption class covers entirely is held to no
+# floor, and to whatever its movement of the public contract still requires. Allocation
+# stays `off` until a pull request stops raising its own version (ADR 0134, slice C):
+# until then `majordomus release next` reports what a landing would raise to, and a pull
+# request still raises its own version.
+release:
+  allocation: off
+  floor: minor
+  exempt:
+    - id: release-record
+      description: The record a release writes of itself, and the projections derived from it
+      paths: [".ai/repo/releases/**", "site/static/releases/**", "docs/generated/**", "site/data/generated/**", "site/data/registry/**", "site/content/**", "share/version.txt", "docs/PAGES_STATUS.md", "docs/PLAN_STATUS.md"]
+    - id: plan-records
+      description: Plan, intent, session, evidence and knowledge records, which change no product behaviour
+      paths: [".ai/repo/project/**", ".ai/repo/sessions/**", ".ai/repo/evidence/**", ".ai/repo/knowledge/**"]
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200
@@ -111,6 +128,9 @@ session:
   handover_on_end: true
   handover_on_fill: true                 # ask the worker for a handover while the context
                                          # window still has room to write one (ADR 0123)
+  brief_on_interval: true                # keep the session briefed on what surrounds it, as
+                                         # its status line and on an interval (ADR 0136)
+  brief_interval_minutes: 20             # how often a session reports on itself unasked
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
@@ -339,6 +359,7 @@ server:
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
+  read_deadline_seconds: 30
 
 projections:
   - provider: agents

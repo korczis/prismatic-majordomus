@@ -44,12 +44,61 @@ done
 # ---------------------------------------------------------------- the image carries no toolchain
 grep -q '^FROM .* AS build$' "$ROOT/deploy/Dockerfile" || { echo "    the image is not multi-stage"; exit 1; }
 grep -q '^USER ' "$ROOT/deploy/Dockerfile" || { echo "    the image runs as root"; exit 1; }
-grep -q '^COPY --from=build ' "$ROOT/deploy/Dockerfile" || { echo "    the runtime stage does not take the binary from the builder"; exit 1; }
-awk '/^FROM .* AS build$/{b=1} /^FROM [^ ]*$/{b=0} !b && /cargo|rustup|apk add/{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
+# and the one directory it writes is its own: everything copied is root's, and an image whose
+# process could not create its lease under .ai/local stopped at start and never served
+awk '/^COPY \.ai /{c=1} /^RUN install -d -o majordomus -g majordomus \/app\/\.ai\/local$/{o=c} /^USER /{exit !o}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    the unprivileged process cannot write the layer's local half"; exit 1; }
+[ "$(grep -c '^COPY --from=binary ' "$ROOT/deploy/Dockerfile")" = 1 ] && ! grep -q '^COPY --from=build ' "$ROOT/deploy/Dockerfile" \
+  || { echo "    the runtime stage does not take the binary from the one binary stage"; exit 1; }
+# every named stage is a builder stage; the one unnamed FROM is the runtime
+awk '/^FROM .* AS [a-z]+$/{b=1} /^FROM [^ ]*$/{b=0} !b && /cargo|rustup|apk add/{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
   || { echo "    the runtime stage carries a build toolchain"; exit 1; }
 # nothing local, nothing secret
 grep -qE '/Users/|/home/|_TOKEN|_SECRET|FlyV1|fo1_' "$ROOT/deploy/Dockerfile" "$ROOT/fly.toml" "$ROOT/.dockerignore" \
   && { echo "    a generated artifact carries an absolute developer path or a credential"; exit 1; }
+
+# ---------------------------------------------------------------- the builder is the repository's toolchain
+# One pin: rust-toolchain.toml. The image stood on rust:1.85 while the repository built with
+# 1.98.1, and 1.85 cannot compile the locked dependencies (tiktoken-rs uses let chains), so
+# the committed image definition did not build at all and nothing said so.
+toolchain="$(sed -n 's/^channel = "\([0-9.]*\)".*/\1/p' "$ROOT/rust-toolchain.toml")"
+[ -n "$toolchain" ] || { echo "    rust-toolchain.toml pins no exact channel"; exit 1; }
+grep -q "^FROM rust:${toolchain}-alpine[0-9.]* AS toolchain$" "$ROOT/deploy/Dockerfile" \
+  || { echo "    the builder is not the repository's Rust $toolchain: $(grep '^FROM rust:' "$ROOT/deploy/Dockerfile")"; exit 1; }
+# builder and runtime link against and run the same musl
+b_alpine="$(sed -n 's/^FROM rust:[0-9.]*-alpine\([0-9.]*\) AS toolchain$/\1/p' "$ROOT/deploy/Dockerfile")"
+grep -q "^FROM alpine:${b_alpine}$" "$ROOT/deploy/Dockerfile" \
+  || { echo "    the runtime's Alpine is not the builder's ($b_alpine)"; exit 1; }
+
+# ---------------------------------------------------------------- the dependencies are compiled where a cache can carry them
+# A cache mount never leaves the builder it was made on, so on a fresh runner it saves
+# nothing by itself; the compiled dependencies must be a stage's own layer content, and
+# nothing that moves with every commit may come before them. The one mount is sccache's,
+# beside the layer and never instead of it: the target directory is never mounted.
+[ "$(sed -n 's/^FROM .* AS \([a-z]*\)$/\1/p' "$ROOT/deploy/Dockerfile" | tr '\n' ' ')" = 'toolchain recipe deps build release binary ' ] \
+  || { echo "    the builder stages are not toolchain, recipe, deps, build, release, binary"; exit 1; }
+grep -o -- '--mount=type=cache[^ ]*' "$ROOT/deploy/Dockerfile" | grep -vx -- '--mount=type=cache,id=majordomus-sccache,target=/sccache' \
+  && { echo "    a cache mount other than sccache's holds compiler output no registry export carries"; exit 1; }
+[ "$(grep -c -- '--mount=type=cache,id=majordomus-sccache,target=/sccache' "$ROOT/deploy/Dockerfile")" = 2 ] \
+  || { echo "    the deps and build stages do not both compile behind the sccache mount"; exit 1; }
+grep -q '^ENV RUSTC_WRAPPER=sccache ' "$ROOT/deploy/Dockerfile" || { echo "    cargo does not run behind sccache"; exit 1; }
+awk '/ AS build$/{exit} /MAJORDOMUS_BUILD_(COMMIT|DIRTY)/{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    a stage before build reads the commit, so every commit recompiles the dependencies"; exit 1; }
+awk '/ AS build$/{exit} /^COPY / && !/^COPY --from=recipe / && !/Cargo\.toml .*Cargo\.lock /{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    a stage before build copies more than the manifest and the lockfile"; exit 1; }
+
+# ---------------------------------------------------------------- a release image compiles nothing
+# MAJORDOMUS_BINARY_FROM=release takes the release's own published executable from the
+# release-binary build context; the default compiles. The argument is declared before the
+# first FROM (a FROM can only name a global argument), and the release stage neither
+# compiles nor reads the commit: the commit is the one the archive was built from.
+awk '/^FROM /{exit} /^ARG MAJORDOMUS_BINARY_FROM=build$/{found=1} END{exit !found}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    the binary source is not a global argument defaulting to build"; exit 1; }
+grep -qx 'FROM ${MAJORDOMUS_BINARY_FROM} AS binary' "$ROOT/deploy/Dockerfile" || { echo "    no stage chooses the binary"; exit 1; }
+awk '/ AS release$/{r=1; next} /^FROM /{r=0} r && /cargo|MAJORDOMUS_BUILD_/{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    the release stage compiles or names a commit of its own"; exit 1; }
+grep -qx 'COPY --from=release-binary majordomus-${TARGETARCH} /out/majordomus' "$ROOT/deploy/Dockerfile" \
+  || { echo "    the release stage does not take the executable from the release-binary context"; exit 1; }
 
 # ---------------------------------------------------------------- the context is bounded
 # Everything is excluded and the declared inputs are let back in, so a file that appears in
