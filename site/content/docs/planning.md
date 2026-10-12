@@ -535,7 +535,10 @@ person rewritten the region since it was posted, and has the canonical record mo
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
 
-Applying is a deliberate act; agreement is a gate. `scripts/ci/github-check` reads the
+Applying is a consequence of landing; agreement is a gate. Every push to the default branch
+starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
+owed, then the gate (`project.the-projection-is-applied-at-landing@1`); a person's `--apply`
+from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
 remote on every change that can move either side, refuses the first six states outright,
 and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
 may fall and may never rise. It exists because the detector was written, never called, and
@@ -544,7 +547,7 @@ the projection decayed to a tenth of the model over five days with every build g
 
 A head is judged against what it changes. GitHub shows the trunk's plan and nothing else,
 so a record a pull request edits is `behind` there until the pull request has merged and
-somebody has applied. The gate reports the four states an apply writes (`behind`, `state`,
+the landing has applied it. The gate reports the four states an apply writes (`behind`, `state`,
 `milestone`, `closed`) as `PENDING` instead of refusing them, for the records the head
 changed since its merge base, and on the trunk for the records that changed in a landing
 younger than `apply.window` in `.ai/repo/ci/github.yaml`. Past that window the trunk is
