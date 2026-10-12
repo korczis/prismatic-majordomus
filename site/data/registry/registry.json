@@ -6,27 +6,27 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "e5e9cb9c4707dea884a9b3ae5e698cdd5572c7818ce1ed50d9b3c417a0829660",
+    "fingerprint": "9d0ac0d881754e796134439d42100875cff8a95a884f45e73a8d51c65336e614",
     "summary": {
-      "total": 2281,
-      "builtin": 193,
-      "declarative": 2088,
+      "total": 2284,
+      "builtin": 194,
+      "declarative": 2090,
       "by_kind": {
         "command": 28,
-        "query": 165,
-        "resource": 2088
+        "query": 166,
+        "resource": 2090
       },
       "by_stability": {
-        "behaviorally_verified": 134,
+        "behaviorally_verified": 135,
         "experimental": 50,
-        "implemented": 2097
+        "implemented": 2099
       },
-      "mcp_tools": 185,
-      "mcp_resources": 2143,
-      "http_routes": 189,
+      "mcp_tools": 186,
+      "mcp_resources": 2145,
+      "http_routes": 190,
       "cli_commands": 105,
       "modules": 90,
-      "benchmark_required": 165,
+      "benchmark_required": 166,
       "benchmark_waived": 28,
       "cached": 54
     },
@@ -11820,6 +11820,275 @@
         "stability": "behaviorally_verified",
         "tags": [
           "deployment"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "deploy.observed",
+        "module": "deploy",
+        "kind": "query",
+        "title": "What was deployed, and where",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ObservedDeployments",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "boolean",
+                "description": "Whether this checkout holds an observation at all."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, and what to run, when it holds none or cannot read it."
+              },
+              "repository": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`owner/name`, when observed."
+              },
+              "repository_url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The repository's address on the forge, when observed."
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the forge was asked, when observed."
+              },
+              "environments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EnvironmentSummary"
+                },
+                "description": "Every environment something was deployed to, by name."
+              },
+              "deployments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ObservedDeployment"
+                },
+                "description": "The observed deployments, newest first."
+              },
+              "releases": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ObservedRelease"
+                },
+                "description": "The observed releases, newest first."
+              }
+            },
+            "required": [
+              "observed",
+              "environments",
+              "deployments",
+              "releases"
+            ],
+            "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here.",
+            "title": "ObservedDeployments",
+            "$defs": {
+              "EnvironmentSummary": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The environment."
+                  },
+                  "deployments": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of the observed deployments went to it."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "The state of its newest deployment."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The commit its newest deployment put there."
+                  },
+                  "deployed_at": {
+                    "type": "string",
+                    "description": "When that was."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it is served, when its newest deployment says."
+                  },
+                  "activity_url": {
+                    "type": "string",
+                    "description": "The environment's activity on the forge."
+                  }
+                },
+                "required": [
+                  "name",
+                  "deployments",
+                  "state",
+                  "sha",
+                  "deployed_at",
+                  "activity_url"
+                ],
+                "description": "One environment, as its deployments describe it."
+              },
+              "ObservedDeployment": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The forge's identity of the deployment."
+                  },
+                  "environment": {
+                    "type": "string",
+                    "description": "The environment it went to, in the forge's words (`github-pages`, `production`, ...)."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The commit that was deployed."
+                  },
+                  "git_ref": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The ref it was deployed from, when the forge still names one."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "When it was created, RFC 3339."
+                  },
+                  "creator": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Who or what created it."
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all."
+                  },
+                  "environment_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where the environment is served, when the deployment says."
+                  },
+                  "log_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The run that performed it, when the deployment says."
+                  }
+                },
+                "required": [
+                  "id",
+                  "environment",
+                  "sha",
+                  "created_at",
+                  "state"
+                ],
+                "description": "One deployment the forge recorded."
+              },
+              "ObservedRelease": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "The tag."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The release's title, when it has one."
+                  },
+                  "published_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it was published; absent for a draft."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "Its page on the forge."
+                  },
+                  "prerelease": {
+                    "type": "boolean",
+                    "description": "Whether the forge marks it a pre-release."
+                  },
+                  "draft": {
+                    "type": "boolean",
+                    "description": "Whether it is still a draft."
+                  }
+                },
+                "required": [
+                  "tag",
+                  "url",
+                  "prerelease",
+                  "draft"
+                ],
+                "description": "One release the forge published."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_deployments_observed"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/deployments/observed"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "delivery"
         ],
         "benchmark": {
           "policy": "required"
@@ -79753,11 +80022,12 @@
         "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
           "deploy.check",
           "deploy.get",
-          "deploy.list"
+          "deploy.list",
+          "deploy.observed"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
       },
@@ -80556,7 +80826,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -80699,7 +80969,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 455,
+        "capabilities": 456,
         "capability_ids": []
       },
       {
@@ -80789,7 +81059,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d279eaf988435a9312504664a259379576b2cfe2018ccdae5888a3e8194a6375",
+    "fingerprint": "cffa5a5010e25bf44b3cb0a22b39a8f61e0f48318755e5fa288e1a12d14e8c43",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80838,12 +81108,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 170,
+      "rule": 171,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 455,
+      "test": 456,
       "use-case": 48,
       "workspace": 1
     },
@@ -82442,7 +82712,7 @@
         "path": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7337,
+        "bytes": 7918,
         "tags": [
           "architecture",
           "interface",
@@ -86510,7 +86780,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 54988
+        "bytes": 56677
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -86591,7 +86861,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 21676
+        "bytes": 23534
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -97576,6 +97846,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+        "kind": "rule",
+        "identity": "project.the-published-ui-is-the-trunks@1",
+        "title": "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication",
+        "description": "The UI snapshot a publication holds at the UI's mount is read at the commit the site itself is built from, which is the trunk's head within the window the site is held to; the publication model declares that a publication holds it, the deploy refuses a site without it, and the public probe and the live gate refuse one that is absent, names another commit, serves fewer pages than its own record lists, or does not say what ended its reading.",
+        "path": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 8486,
+        "tags": [
+          "ui",
+          "publication",
+          "web",
+          "pages"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.the-server-sees-the-current-tree@1",
         "kind": "rule",
         "identity": "project.the-server-sees-the-current-tree@1",
@@ -98795,7 +99082,7 @@
         "path": ".ai/repo/skills/deploy-site/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 3863,
+        "bytes": 4753,
         "tags": [
           "site",
           "deploy",
@@ -99524,6 +99811,14 @@
         "bytes": 4294
       },
       {
+        "uri": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
+        "kind": "test",
+        "identity": "test/cases/1096_the_published_ui_is_the_trunks.sh",
+        "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
+        "source_class": "case",
+        "bytes": 19251
+      },
+      {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "identity": "test/cases/109_design_system.sh",
@@ -99937,7 +100232,7 @@
         "identity": "test/cases/180_publication_is_observed.sh",
         "path": "test/cases/180_publication_is_observed.sh",
         "source_class": "case",
-        "bytes": 16819
+        "bytes": 17388
       },
       {
         "uri": "majordomus://test/test/cases/181_local_is_never_published.sh",
@@ -100913,7 +101208,7 @@
         "identity": "test/cases/489_rustdoc_deploy.sh",
         "path": "test/cases/489_rustdoc_deploy.sh",
         "source_class": "case",
-        "bytes": 7112
+        "bytes": 7517
       },
       {
         "uri": "majordomus://test/test/cases/48_roadmap_graph.sh",
@@ -102441,7 +102736,7 @@
         "identity": "test/cases/96_site_deploy.sh",
         "path": "test/cases/96_site_deploy.sh",
         "source_class": "case",
-        "bytes": 5575
+        "bytes": 6086
       },
       {
         "uri": "majordomus://test/test/cases/96_worktree_topology.sh",
@@ -103444,7 +103739,7 @@
         "id",
         "version"
       ],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "scope",
@@ -103499,7 +103794,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 455
+      "objects": 456
     },
     {
       "name": "use-case",
@@ -135322,6 +135617,23 @@
         "output": "DeploymentList"
       },
       {
+        "name": "majordomus_deployments_observed",
+        "id": "deploy.observed",
+        "title": "What was deployed, and where",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "ObservedDeployments"
+      },
+      {
         "name": "majordomus_design_contrast",
         "id": "design.contrast",
         "title": "Whether the declared colours can be read",
@@ -138563,6 +138875,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/deployments/observed",
+        "id": "deploy.observed",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/design/contrast",
         "id": "design.contrast",
         "kind": "query"
@@ -140428,6 +140746,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/deployments"
+      },
+      {
+        "key": "deploy.observed|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "deploy.observed",
+        "module": "deploy",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "deploy.observed|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "deploy.observed",
+        "module": "deploy",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_deployments_observed"
+      },
+      {
+        "key": "deploy.observed|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "deploy.observed",
+        "module": "deploy",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/deployments/observed"
       },
       {
         "key": "design.contrast|direct|default",
@@ -147225,6 +147572,27 @@
           "cases": 1
         },
         {
+          "subject": "deploy.observed",
+          "module": "deploy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.observed",
+          "module": "deploy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.observed",
+          "module": "deploy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "design.contrast",
           "module": "design",
           "transport": "direct",
@@ -150785,22 +151153,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 193,
-          "covered": 165,
+          "required": 194,
+          "covered": 166,
           "missing": 0,
           "waived": 28,
           "inapplicable": 0
         },
         "http": {
-          "required": 189,
-          "covered": 165,
+          "required": 190,
+          "covered": 166,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 185,
-          "covered": 161,
+          "required": 186,
+          "covered": 162,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
@@ -150813,8 +151181,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 581,
-          "covered": 505,
+          "required": 584,
+          "covered": 508,
           "missing": 0,
           "waived": 76,
           "inapplicable": 0

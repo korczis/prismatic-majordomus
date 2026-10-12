@@ -50,6 +50,7 @@ pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod rule;

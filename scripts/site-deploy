@@ -22,9 +22,11 @@
 #                                       record lands (ADR 0131)
 #
 # Refuses (exit 10): a dirty tree, a HEAD that origin/master does not contain, a failed gate,
-# a build that lost the CNAME the source declares — publishing that unsets the custom domain. A
-# deploy that says nothing is a deploy nobody can audit, so the gh-pages commit message names
-# the source commit, and the site's footer shows the same commit.
+# a build that lost the CNAME the source declares — publishing that unsets the custom domain —
+# and a build that lacks a snapshot the publication model says a publication holds, or carries
+# one read at another commit (the UI at its mount, ADR 0141). A deploy that says nothing is a
+# deploy nobody can audit, so the gh-pages commit message names the source commit, and the
+# site's footer shows the same commit.
 #
 # The site never serves an older release than it served (ADR 0131). A release publishes its
 # metadata here minutes after its archives, and its record reaches master an hour or more later;
@@ -41,7 +43,7 @@ while [ $# -gt 0 ]; do
     --release-metadata)
       [ $# -ge 2 ] && [ -n "$2" ] || { echo "site-deploy: --release-metadata needs a tag" >&2; exit 2; }
       RELEASE_TAG="$2"; shift ;;
-    -h|--help) sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "site-deploy: unknown option $1" >&2; exit 2 ;;
   esac
   shift
@@ -178,6 +180,45 @@ if [ -f site/static/CNAME ]; then
   [ "$got" = "$want" ] \
     || refuse "site/static/CNAME declares $want but the build carries $got; one of the two is stale, and publishing sends GitHub the wrong domain"
 fi
+# What a publication holds that the site build does not compose survives a deploy only by
+# being in the tree, for the reason the CNAME does: this script empties the gh-pages worktree
+# before it copies site/public. The UI's snapshot (ADR 0141) is such a thing — written by a
+# producer of its own and placed at the UI's mount by the deploy job of the pages workflow,
+# never by scripts/site-build — so a deploy from a terminal, which runs no such job, published
+# the site without it: the mount answered 404, every check of the site's own pages was green,
+# and the tree that did it was not the tree that noticed. A snapshot left over from an earlier
+# build is the same defect one step subtler: the pages name HEAD and the UI beside them names
+# another commit. Both are refused here rather than after the push
+# (project.the-published-ui-is-the-trunks).
+#
+# Which snapshots, at which mount, written by which command, is the publication model's to say
+# (deploy.snapshots of .ai/repo/ci/pages.yaml, with the mount from the topology) and is read
+# through `scripts/pages snapshots`, so this script names no mount and no producer of its own.
+# A model that declares none asks nothing here, and neither does a tree that carries no model
+# at all — there is then no declaration to hold the build to, which is a different thing from
+# a model that is there and cannot be read: that one is refused, because a deploy that cannot
+# tell whether it is whole is not published. --release-metadata, above, is not a deploy of the
+# site: it adds two files to what gh-pages already serves and leaves every other path, the
+# snapshot among them, as the last full deploy published it, so it is not asked either.
+snapshots=""
+if [ -f .ai/repo/ci/pages.yaml ]; then
+  snapshots="$(scripts/pages snapshots)" \
+    || refuse "what a publication holds beside the site's pages could not be read (scripts/pages snapshots); a deploy that cannot tell whether it is whole is not published"
+fi
+while IFS="$(printf '\t')" read -r s_id s_mount s_artifact s_producer _; do
+  [ -n "$s_id" ] || continue
+  s_place="place it as the deploy job of .github/workflows/pages.yml does — $s_producer && mkdir -p site/public$s_mount && cp -R $s_artifact/. site/public$s_mount/ — then scripts/site-deploy --skip-build"
+  [ -f "site/public$s_mount/surface.json" ] \
+    || refuse "site/public$s_mount holds no snapshot of the $s_id surface (no surface.json), and the publication model says a publication holds one; publishing this build would take $s_mount off the public site. $s_place"
+  s_built="$(jq -r '.built_from // empty' "site/public$s_mount/surface.json" 2>/dev/null || true)"
+  [ "${#s_built}" -ge 7 ] && [ "${HEAD_SHA#"$s_built"}" != "$HEAD_SHA" ] \
+    || refuse "the snapshot of the $s_id surface at site/public$s_mount was read at ${s_built:-no commit it names}, not at HEAD ${HEAD_SHA:0:7}; the pages and the UI beside them would name two commits. $s_place"
+  s_at="$(jq -r '.mount // empty' "site/public$s_mount/surface.json" 2>/dev/null || true)"
+  [ "$s_at" = "$s_mount" ] \
+    || refuse "site/public$s_mount/surface.json declares mount ${s_at:-none}, not $s_mount, where it stands; one of the two is not the $s_id surface's snapshot"
+done <<EOF
+$snapshots
+EOF
 routes="$(find site/public -name index.html | wc -l | tr -d ' ')"
 fp="$(jq -r '.registry.fingerprint // empty' site/data/registry/registry.json 2>/dev/null | cut -c1-12)"
 
