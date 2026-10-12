@@ -30,4 +30,25 @@ evidence_required:
   - "ui_milestone_unit_tests"
   - "ui_milestone_case_1076"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T11:02:16Z
+started_at: 2026-10-12T11:01:59Z
+started_event: sha256:5cf2bcdf60b24689dcef6ba01e787bbc8f2b6e13b4430909216b2b1f5957cf5c
+verified_at: 2026-10-12T11:02:03Z
+verified_event: sha256:6fbe5024b74a9a987d86066e1f953018368547418f4d7a06faf1439eb06be04e
+completed_at: 2026-10-12T11:02:16Z
+completed_event: sha256:b62f35b7996957ce64115f4984f1571790ef85fa5a7155c8d026d463e1f3131f
+evidence:
+  - covers: ui_milestone_unit_tests
+    type: ci
+    command: "cargo test --lib ui::milestone (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "5 ui::milestone tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:02:09Z
+  - covers: ui_milestone_case_1076
+    type: ci
+    command: "test/run.sh 1076_the_roadmap_opens_a_milestone (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1076_the_roadmap_opens_a_milestone ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:02:12Z

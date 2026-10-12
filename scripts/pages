@@ -61,6 +61,17 @@
 #                                         One ASCII line per URL probed.
 #                                         0 verified, 10 it serves something else, 12 it never
 #                                         answered or the probe cannot judge
+#   scripts/pages release-live [--url URL] [--window N] [--wait N] [--expect TAG] [--repo SLUG]
+#                                         the release the public site offers is the release that
+#                                         was published: the homepage's offer (and /build.json),
+#                                         /releases/latest.json and GitHub's newest release name
+#                                         one version. A disagreement younger than the window
+#                                         (deploy.release_window) after GitHub's release is a
+#                                         publication in flight; older, or a site offering what
+#                                         GitHub has not published, is refused. --wait polls
+#                                         until they agree; --expect TAG also requires GitHub's
+#                                         newest release to be TAG. 0 one release, or in flight;
+#                                         10 they disagree; 12 a reading could not be taken
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -1104,6 +1115,128 @@ cmd_rebuild() {
   return 0
 }
 
+# ---------------------------------------------------------------- release-live
+# One fact, three surfaces: which release is the latest. The homepage offers one (its trust strip
+# carries `data-release`, rendered from build.json's `release`, which scripts/site-build derives),
+# /releases/latest.json is the one the installer resolves, and GitHub's newest release is the one
+# that was published. On 2026-10-12 v0.21.0 was on GitHub and in latest.json at 10:23Z while the
+# homepage offered v0.20.0, and nothing said so: every check read one surface at a time. This
+# reads all three and judges them together (project.the-site-offers-the-release-it-published).
+#
+# A release reaches the three in order — GitHub, then latest.json from the publish job, then the
+# pages from the build the release job asks for — so a disagreement is weather for a while after
+# GitHub's release and a defect after that. The window is deploy.release_window. A site that
+# offers a version GitHub has not published is never weather. The readings go through curl and
+# gh only, so a file:// URL and a gh on PATH are a whole fixture (test/cases/1087).
+release_reading() {   # <url> -> body on stdout, or nothing
+  local u="$1"
+  case "$u" in
+    file://*) curl -fsSL --max-time 30 "$u" 2>/dev/null || true ;;
+    *) curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$u?t=$(now)" 2>/dev/null || true ;;
+  esac
+}
+cmd_release_live() {
+  local url="" window="" wait=0 expect="" repo="" t0 home build latest gh_line
+  local home_v build_v latest_v gh_tag gh_v gh_at age missing newer_than_gh v
+  while [ $# -gt 0 ]; do case "$1" in
+    --url) url="${2:?--url needs a value}"; shift 2 ;;
+    --window) window="${2:?--window needs seconds}"; shift 2 ;;
+    --wait) wait="${2:?--wait needs seconds}"; shift 2 ;;
+    --expect) expect="${2:?--expect needs a tag}"; shift 2 ;;
+    --repo) repo="${2:?--repo needs owner/name}"; shift 2 ;;
+    *) echo "pages release-live: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
+  [ -n "$window" ] || window="$(m deploy.release_window)"
+  case "$window" in ''|*[!0-9]*) echo "pages release-live: no numeric deploy.release_window in ${MODEL#"$ROOT"/} and no --window" >&2; return 12 ;; esac
+  case "$wait" in *[!0-9]*) echo "pages release-live: --wait takes seconds" >&2; exit 2 ;; esac
+  # Where the releases are published is the distribution model's `repository`; a tree without
+  # that projection is asked the way `pages built` asks, so pages-check has one slug for both.
+  [ -n "$repo" ] || repo="$(jq -r '.repository // empty' "$ROOT/site/data/registry/distribution.json" 2>/dev/null || true)"
+  [ -n "$repo" ] || repo="${GITHUB_REPOSITORY:-}"
+  [ -n "$repo" ] || repo="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  command -v curl >/dev/null || { echo "pages release-live: curl is required" >&2; return 12; }
+  url="${url%/}"
+  local home_url="$url/"
+  case "$url" in file://*) home_url="$url/index.html" ;; esac
+  t0="$(now)"
+  while :; do
+    home="$(release_reading "$home_url")"
+    build="$(release_reading "$url/$IDENTITY")"
+    latest="$(release_reading "$url/releases/latest.json")"
+    home_v="$(printf '%s' "$home" | sed -n 's/.*data-trust-key="release" data-release="\([^"]*\)".*/\1/p' | head -n 1)"
+    # A page built before the trust strip carried the attribute still states the version as
+    # the first number in that card; it is read so that such a site is judged, not skipped.
+    [ -n "$home_v" ] || home_v="$(printf '%s' "$home" | tr '\n' ' ' \
+      | awk '{ i = index($0, "data-trust-key=\"release\""); if (i) print substr($0, i, 800) }' \
+      | grep -oE '>[0-9]+\.[0-9]+\.[0-9]+<' | head -n 1 | tr -d '<>' || true)"
+    build_v="$(printf '%s' "$build" | jq -r '.release.version // empty' 2>/dev/null || true)"
+    latest_v="$(printf '%s' "$latest" | jq -r '.version // empty' 2>/dev/null || true)"
+    gh_line=""
+    if command -v gh >/dev/null 2>&1 && [ -n "$repo" ]; then
+      gh_line="$(gh api "repos/$repo/releases/latest" --jq '[.tag_name, .published_at] | @tsv' 2>/dev/null || true)"
+    fi
+    gh_tag="$(printf '%s' "$gh_line" | cut -f1)"; gh_v="${gh_tag#v}"
+    gh_at="$(printf '%s' "$gh_line" | cut -f2)"
+    if [ -n "$home_v" ] && [ "$home_v" = "$build_v" ] && [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
+      break
+    fi
+    [ $(( $(now) - t0 )) -lt "$wait" ] || break
+    sleep 10
+  done
+  printf 'pages release-live: %s\n' "$url"
+  printf '  homepage offers         %s\n' "${home_v:-(no data-release on the homepage)}"
+  printf '  /%s offers      %s\n' "$IDENTITY" "${build_v:-(no release in it)}"
+  printf '  /releases/latest.json   %s\n' "${latest_v:-(unreadable)}"
+  printf '  GitHub newest release   %s%s\n' "${gh_tag:-(unreadable: no gh, no token, or no release)}" "${gh_at:+ published $gh_at}"
+  missing=""
+  [ -n "$home_v" ] || missing="$missing the homepage's offer,"
+  [ -n "$latest_v" ] || missing="$missing /releases/latest.json,"
+  [ -n "$gh_v" ] || missing="$missing GitHub's newest release,"
+  if [ -n "$missing" ]; then
+    printf 'pages release-live: NOT DETERMINED — could not read%s so the three surfaces were not compared\n' "${missing%,}" >&2
+    return 12
+  fi
+  if [ -n "$expect" ] && [ "$gh_tag" != "$expect" ]; then
+    printf 'pages release-live: GitHub'"'"'s newest release is %s, not %s\n' "$gh_tag" "$expect" >&2
+    return 10
+  fi
+  if [ -n "$build_v" ] && [ "$home_v" != "$build_v" ]; then
+    printf 'pages release-live: FAIL the homepage offers %s and /%s %s; the pages and the build that made them disagree\n' "$home_v" "$IDENTITY" "${build_v:-nothing}" >&2
+    return 10
+  fi
+  if [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
+    printf 'pages release-live: ok — the homepage, /releases/latest.json and GitHub name one release, %s\n' "$gh_tag"
+    return 0
+  fi
+  # A surface ahead of GitHub offers what was not published: never weather.
+  newer_than_gh=""
+  for v in "$home_v" "$latest_v"; do
+    [ "$v" = "$gh_v" ] && continue
+    if [ "$(printf '%s\n%s\n' "$v" "$gh_v" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$v" ]; then
+      newer_than_gh="$v"
+    fi
+  done
+  if [ -n "$newer_than_gh" ]; then
+    printf 'pages release-live: FAIL the site offers %s, which GitHub has not published (its newest is %s)\n' "$newer_than_gh" "$gh_tag" >&2
+    return 10
+  fi
+  age="$(jq -rn --arg at "$gh_at" '($at | fromdateiso8601? // empty) as $t | if $t then (now - $t | floor) else empty end' 2>/dev/null || true)"
+  if [ -z "$age" ]; then
+    printf 'pages release-live: NOT DETERMINED — GitHub'"'"'s release %s carries no readable published_at, so the window cannot be judged\n' "$gh_tag" >&2
+    return 12
+  fi
+  if [ "$age" -lt "$window" ]; then
+    printf 'pages release-live: ok — in flight: GitHub published %s %ss ago, inside the %ss window; the homepage offers %s and latest.json names %s until the publication reaches them\n' \
+      "$gh_tag" "$age" "$window" "$home_v" "$latest_v"
+    return 0
+  fi
+  printf 'pages release-live: FAIL GitHub published %s %ss ago, beyond the %ss window, and the homepage offers %s while /releases/latest.json names %s\n' \
+    "$gh_tag" "$age" "$window" "$home_v" "$latest_v" >&2
+  printf '  the publish job writes latest.json (scripts/site-deploy --release-metadata); the pages follow\n  the next build of master, which reads it (scripts/site-build); dispatch the pages workflow\n' >&2
+  return 10
+}
+
 case "${1:-}" in
   evidence)    shift; cmd_evidence "$@" ;;
   build)       shift; cmd_build "$@" ;;
@@ -1121,6 +1254,7 @@ case "${1:-}" in
   verify)      shift; cmd_verify "$@" ;;
   verify-docs) shift; cmd_verify_docs "$@" ;;
   verify-rustdoc) shift; cmd_verify_rustdoc "$@" ;;
+  release-live) shift; cmd_release_live "$@" ;;
   # the whole header, up to the line that ends it, rather than a line range that stops
   # short the day a command is added to it
   -h|--help|"") awk 'NR > 1 && /^set -eu$/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;

@@ -110,7 +110,10 @@ grep -q 'status\[id\] = st' "$ROOT/lib/project.awk" || { echo "    the one place
 # The data is generated fresh into this case's scratch directory, so a repository whose
 # committed generation is behind its canonical files fails `generate-site-data --check`,
 # which is where that belongs, rather than failing this case for the wrong reason.
-if command -v jq >/dev/null 2>&1 && "$ROOT/scripts/generate-site-data" --out "$T/gen" >/dev/null 2>&1; then
+# --no-scenarios: plan.json is derived from the project model, not from the use-case
+# scenarios, and executing every scenario of the real repository was most of what this case
+# cost (652 of a 924 s generation, measured 2026-10-12) for data nothing here reads.
+if command -v jq >/dev/null 2>&1 && "$ROOT/scripts/generate-site-data" --out "$T/gen" --no-scenarios >/dev/null 2>&1; then
 PJ="$T/gen/plan.json"
   site_ids="$(jq -r '.issues[].id' "$PJ" | LC_ALL=C sort)"
   cli_real="$("$MJ" --repo "$ROOT" plan list | awk 'NR>1{print $1}' | LC_ALL=C sort)"

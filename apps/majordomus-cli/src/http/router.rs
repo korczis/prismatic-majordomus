@@ -532,6 +532,12 @@ impl Router {
         if !super::ws::is_upgrade(req) {
             return None;
         }
+        // the upgrade is answered before `handle`, so it is refused here for the reason
+        // `handle` refuses every other request a DNS-rebinding page sends: otherwise a page
+        // whose domain was made to resolve to this machine follows every execution
+        if let Some(refusal) = Self::rebound(req) {
+            return Some(Err(refusal));
+        }
         // a process whose topology does not resolve serves nothing, the live channel
         // included: the same answer every other path gets
         let resolution = self.resolution();
@@ -539,7 +545,11 @@ impl Router {
             Ok(resolution) => &resolution.ctx,
             Err(reason) => return Some(Err(Response::error(500, "internal", reason))),
         };
-        Some(events::accept(ctx.executions.store(), req))
+        Some(events::accept(
+            ctx.executions.store(),
+            req,
+            &snapshot_route(ctx),
+        ))
     }
 
     fn openapi(&self) -> Response {
@@ -644,6 +654,7 @@ impl Router {
             Bound::Route(Native::Events) => match events::accept(
                 resolution.ctx.executions.store(),
                 req,
+                &snapshot_route(&resolution.ctx),
             ) {
                 Ok(_) => Response::error(
                     500,
@@ -1131,6 +1142,16 @@ pub fn percent_decode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+/// The route of `executions.get` as the registry declares it: where the live channel tells
+/// a client to read a value too large for one frame.
+fn snapshot_route(ctx: &Context) -> String {
+    ctx.registry
+        .get("executions.get")
+        .and_then(|c| c.exposure.http.as_ref())
+        .map(|h| h.path.clone())
+        .unwrap_or_default()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1181,6 +1202,47 @@ mod tests {
         )
         .unwrap();
         assert!(body.to_string().contains("plan.transition"), "{body}");
+    }
+
+    /// The live channel is upgraded before `handle` is reached, so the DNS-rebinding guard
+    /// `handle` applies must be applied to the upgrade as well: a page whose domain resolves
+    /// here names that domain in both Host and Origin, which match, from loopback.
+    #[test]
+    fn a_rebound_page_cannot_open_the_live_channel() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let upgrade = |host: &str| {
+            Request::parse_target("GET", events::PATH, Vec::new())
+                .with_headers(vec![
+                    ("Upgrade".into(), "websocket".into()),
+                    ("Connection".into(), "Upgrade".into()),
+                    (
+                        "Sec-WebSocket-Key".into(),
+                        "dGhlIHNhbXBsZSBub25jZQ==".into(),
+                    ),
+                    ("Sec-WebSocket-Version".into(), "13".into()),
+                    ("Host".into(), host.into()),
+                    ("Origin".into(), format!("http://{host}")),
+                ])
+                .with_remote(Some("127.0.0.1".parse().unwrap()))
+        };
+        match router.websocket(&upgrade("rebound.example:8741")) {
+            Some(Err(r)) => {
+                assert_eq!(r.status, 403, "{}", r.body.text());
+                assert!(
+                    r.body.text().contains("rebound.example"),
+                    "{}",
+                    r.body.text()
+                );
+            }
+            Some(Ok(_)) => panic!("a rebound page was handed the live channel"),
+            None => panic!("an upgrade of the live channel was not recognised"),
+        }
+        assert!(
+            matches!(router.websocket(&upgrade("127.0.0.1:8741")), Some(Ok(_))),
+            "this server's own page still opens it"
+        );
     }
 
     #[test]

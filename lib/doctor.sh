@@ -944,14 +944,16 @@ mj_validate_doctrine_wiring() {
     # reads its subject is excused for nothing if no job does. The header block only, as
     # test/run.sh reads it, so a case that writes the header into a fixture declares nothing.
     if [ -f "$ci" ]; then
-      local cf sj sjobs=""
-      for cf in "$root"/test/cases/*.sh; do
-        sj="$(awk '/^[[:space:]]*$/ { next }
-                   /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
-                            v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
-                            print v; exit } ; next }
-                   { exit }' "$cf" 2>/dev/null)"
-        [ -n "$sj" ] || continue
+      # one awk over every case rather than one per case: each file's header ends at its first
+      # line that is neither blank nor a comment, and yields its first such declaration
+      local sj sjobs=""
+      for sj in $(awk 'FNR == 1 { over = 0 }
+                       over { next }
+                       /^[[:space:]]*$/ { next }
+                       /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
+                                v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
+                                print v; over = 1 } ; next }
+                       { over = 1 }' "$root"/test/cases/*.sh 2>/dev/null); do
         case " $sjobs " in *" $sj "*) ;; *) sjobs="$sjobs $sj" ;; esac
       done
       for sj in $sjobs; do
@@ -1203,11 +1205,25 @@ mj_validate_schema_integrity() {
   # Every schema, wherever it sits. The files are two directories deep — the identifier
   # `majordomus.adr/v1` fixes the path share/schemas/majordomus/adr/adr.v1.schema.json — so
   # a one-level glob here examined nothing and reported it as a clean bill of health.
-  local f base id allow orphan="" bad="" m=0 gen=0
+  local f base id allow orphan="" bad="" m=0 gen=0 list facts="" fok fid fallow
+  list="$(find "$sdir" -name '*.schema.json' 2>/dev/null | LC_ALL=C sort)"
+  # Whether each file parses, and the two fields read from it, for every schema in one
+  # interpreter rather than two or three per file: the answers are mj_json_ok's and
+  # mj_json_string's, which each started python3 again for one file, and that start-up was
+  # most of what doctor spent here. Without python3 the per-file readers below still answer.
+  if command -v python3 >/dev/null 2>&1; then
+    facts="$(mktemp "${TMPDIR:-/tmp}/mj.schemas.XXXXXX")"
+    printf '%s\n' "$list" | python3 -c "$MJ_SCHEMA_FACTS_PY" > "$facts" 2>/dev/null || { rm -f "$facts"; facts=""; }
+  fi
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     base="$(basename "$f" .schema.json)"; m=$((m + 1))
-    mj_json_ok "$f" || { bad="$bad $base"; continue; }
+    if [ -n "$facts" ]; then
+      IFS= read -r -d '' fok <&3; IFS= read -r -d '' fid <&3; IFS= read -r -d '' fallow <&3
+      [ "$fok" = 1 ] || { bad="$bad $base"; continue; }
+    else
+      mj_json_ok "$f" || { bad="$bad $base"; continue; }
+    fi
     # The contracts of the generated documents are applied by the generator, which reads the
     # whole directory (apps/majordomus-cli/src/generate.rs) rather than any file by name, and
     # test/cases/52_generated_artifact_typing.sh asks the same question from the other side:
@@ -1215,11 +1231,11 @@ mj_validate_schema_integrity() {
     case "$f" in
       "$sdir"/generated/*) gen=$((gen + 1)); continue ;;
     esac
-    id="$(mj_schema_identifier "$f")"
+    if [ -n "$facts" ]; then id="$(mj_schema_identifier "$f" "$fid")"; else id="$(mj_schema_identifier "$f")"; fi
     case "$named" in
       *" $id "*) continue ;;
     esac
-    allow="$(mj_schema_allow "$f")"
+    if [ -n "$facts" ]; then allow="$(mj_schema_allow "$f" "$fallow")"; else allow="$(mj_schema_allow "$f")"; fi
     # `if`, not `a && b && continue`: bin/majordomus runs under `set -e`, where an && list
     # that fails as a whole ends the run rather than falling through to the next test.
     if [ -n "$allow" ] && mj_allow_applied "$allow"; then continue; fi
@@ -1228,9 +1244,10 @@ mj_validate_schema_integrity() {
     # source rather than a list kept here, so wiring one up is what makes it count.
     if mj_schema_named_in_source "$id"; then continue; fi
     orphan="$orphan $base"
-  done <<SCHEMAS
-$(find "$sdir" -name '*.schema.json' 2>/dev/null | LC_ALL=C sort)
+  done 3< "${facts:-/dev/null}" <<SCHEMAS
+$list
 SCHEMAS
+  [ -z "$facts" ] || rm -f "$facts"
 
   if [ -n "$bad" ]; then
     mj_doctrine_fail schema "share/schemas" "$(printf '%s' "$bad" | wc -w | tr -d ' ') schema(s) do not parse as JSON:$bad" "python3 -m json.tool share/schemas/*/*/${bad# }.schema.json"
@@ -1249,9 +1266,9 @@ SCHEMAS
 # path gives the identity back — share/schemas/majordomus/adr/adr.v1.schema.json is
 # majordomus.adr/v1 — so the file is read first and the path is the fallback, never the
 # other way round.
-mj_schema_identifier() {
+mj_schema_identifier() { # <file> [<its x-majordomus-schema, already read>]
   local id vendor name ver
-  id="$(mj_json_string "$1" x-majordomus-schema)"
+  if [ $# -ge 2 ]; then id="$2"; else id="$(mj_json_string "$1" x-majordomus-schema)"; fi
   if [ -n "$id" ]; then printf '%s' "$id"; return 0; fi
   name="$(basename "$(dirname "$1")")"
   vendor="$(basename "$(dirname "$(dirname "$1")")")"
@@ -1262,9 +1279,9 @@ mj_schema_identifier() {
 # The allow-list a schema is the source of, by name. Declared as `x-majordomus-allow`; where
 # it is not, the directory the schema sits in is the name, because that is what
 # `generate allow` writes.
-mj_schema_allow() {
+mj_schema_allow() { # <file> [<its x-majordomus-allow, already read>]
   local a
-  a="$(mj_json_string "$1" x-majordomus-allow)"
+  if [ $# -ge 2 ]; then a="$2"; else a="$(mj_json_string "$1" x-majordomus-allow)"; fi
   [ -n "$a" ] || a="$(basename "$(dirname "$1")")"
   printf '%s' "$a"
 }
@@ -1293,6 +1310,26 @@ sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null
     jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null
   fi
 }
+
+# The batch form of mj_json_ok and mj_json_string over the paths on stdin, one per line:
+# for each, "1" or "0" (does it parse), then its x-majordomus-schema and x-majordomus-allow,
+# each NUL-terminated and each what "$(mj_json_string ...)" would have held — a string field
+# or nothing, without the trailing newlines and NUL bytes a command substitution drops.
+MJ_SCHEMA_FACTS_PY='import json,sys
+def field(d, k):
+    try:
+        v = d.get(k, "")
+    except Exception:
+        v = ""
+    return (v if isinstance(v, str) else "").replace("\0", "").rstrip("\n")
+for p in sys.stdin.read().split("\n"):
+    if not p:
+        continue
+    try:
+        d = json.load(open(p)); ok = "1"
+    except Exception:
+        d = None; ok = "0"
+    sys.stdout.write(ok + "\0" + field(d, "x-majordomus-schema") + "\0" + field(d, "x-majordomus-allow") + "\0")'
 
 # Is this schema applied through its generated allow-list? True when something in the tool
 # reads share/allow/<name>.txt, which is the only way a schema reaches the local half of the

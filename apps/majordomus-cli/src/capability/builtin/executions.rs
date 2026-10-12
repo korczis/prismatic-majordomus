@@ -823,7 +823,12 @@ mod tests {
             variants_of(&CanonicalSchema::of::<crate::http::events::StreamMessage>().schema);
         assert_eq!(
             stream,
-            ["stream.ready", "stream.lagged", "stream.closing"],
+            [
+                "stream.ready",
+                "stream.heartbeat",
+                "stream.lagged",
+                "stream.closing"
+            ],
             "the control messages"
         );
     }

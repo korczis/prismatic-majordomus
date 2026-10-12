@@ -16,7 +16,11 @@ wrong and changes in the same commit as the fix.
 - The decision is
   [ADR 0135](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md).
 - The rule the UI is held to is `project.ui-derived-state`.
-- The feature record is `.ai/repo/features/ui.md`.
+- The feature record is `.ai/repo/features/ui.md` (stable since 2026-10-12, when the owner
+  accepted ADR 0135).
+- The claim a reader can check is `ui-dashboard-cites-its-sources`
+  (`docs/claims/ui-dashboard-cites-its-sources.md`), proven by
+  `apps/majordomus-cli/tests/ui_surface.rs`.
 - The owner's brief, with its reference screens, is
   `campaigns/majordomus-ui-complete-opus-fable-v3-20261011/`.
 
@@ -35,9 +39,14 @@ The shared server of a checkout serves two surfaces a person reads.
 
 
 The UI is where a person is sent first, and it is not a view of the registry: its navigation
-is its screens, its words are the delivery's. It refers to the Cockpit in exactly two places:
+is its screens, its words are the delivery's. It refers to the Cockpit only as the technical
+view of what a screen read (ADR 0135), and in the frame:
 - the "technical view" link on each source line, to the Cockpit's page for that capability;
-- the Cockpit entry among the other surfaces in the top bar.
+- the technical view of an object a screen names and the UI has no screen of its own for (a
+  document, a test, a declaring file, a feature's or a deployment's record), to the Cockpit's
+  page for that object;
+- the Cockpit entry among the other surfaces in the top bar, and the top bar's search, which
+  is the Cockpit's search (`/cockpit/search`) until the UI has a search of its own.
 
 Both surfaces are projections (ADR 0012): they hold no data, they compose capabilities
 through the executor every transport calls, and the same process serves them under one
@@ -51,7 +60,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Screen | Route | Reads |
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
-| Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
+| Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
@@ -87,6 +96,37 @@ its detail (`?pr=`), and a machine of the mesh — in its table or as a node of 
 its inspector (`?node=`); every selection is a URL, so it survives a reload and the browser's
 Back.
 
+## What a screen names is a link
+
+Every entity a screen names leads somewhere (I2481):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| What is named | Where it leads |
+|---|---|
+| an issue, a pull request, a milestone, an intent, a claim, a rule, a capability, a machine | its inspector in the UI |
+| a gate | its row in the CI model, `/ui/delivery#gate-<id>`; the gates it implies lead to theirs |
+| a deployment | its row on Deployments, `/ui/deployments#deployment-<id>` |
+| a command the registry also serves as a capability | that capability's inspector; the two are one when the capability's declared command-line path is the command's invocation |
+| a release | the record the distribution publishes for it, at the address `distribution.releases` gives |
+| a document, a test, a feature, a rule's or a deployment's declaration | its technical view, the Cockpit's page for that object |
+| the public address the delivery report probed | that address |
+
+</div>
+
+
+A link to a technical view is drawn only when the index holds the object: the source said so
+(a rule's own URI, a test the proof found on disk), or `objects.get` resolves it. What the
+index does not hold is text, so no link leads to a page that answers 404. Two kinds of name
+stay text because nothing derives where they lead: a commit, since no capability a screen can
+ask at first paint states the forge's address (the PR Drain, which asks the queue, does link
+the forge), and a path that is not an object of the index.
+
+A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here", with a link
+to the screen that shows them all when there is one. Case 1091 and
+`apps/majordomus-cli/tests/ui_links.rs` read every screen through a real server and follow
+every link under `/ui` and every technical view it draws; one that does not answer fails them.
+
 A pull request's detail is read from the queue's own answer, so it costs no second call: what
 the pull request is, every gate with its verdict, the evidence each verdict was read from, why
 it stands where it stands, the next action that would move it, the paths it authors and the
@@ -110,6 +150,11 @@ Nothing is computed on the UI's behalf:
 - A meter is a picture of the two numbers written beside it.
 - A donut draws the counts its legend lists.
 - A status word is the source's own word, styled by the design system's status vocabulary.
+- A window is the source's own. The merge tiles are labelled with the queue's
+  `throughput/window_days`, and the PR Drain's throughput chart counts the trail's merges per
+  day over that same window; when the queue states no window, the tile says so and no day is
+  counted. The chart's bars are the one thing a screen tallies itself, each from the trail's
+  own `merge_succeeded` events of that day, with the count written beside the bar.
 
 Classes that overlap, such as a rule report's coverage, are listed and never summed. What is
 missing says so:
@@ -146,6 +191,16 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the top bar. That time is when the sources were
 read. This is a refresh and is said as one; nothing claims a live stream.
+
+How fast is measured, not written here. `majordomus bench` derives a target from every
+screen in `SCREENS` and every panel in `PANELS`, cold and warm:
+- `system.http.ui.<route>` reads the page over a pinned context.
+- `system.http.live.ui.<route>` reads a screen over the live view that `serve` answers from,
+  so it pays the per-request git stamp. `system.http.live.index` measures that stamp alone,
+  on `/`.
+- A panel is measured only by `--profile full`, because its source is the reason it is a panel.
+
+The targets are listed in [`generated/benchmarks.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/benchmarks.md).
 
 ## Relationship graphs
 
@@ -214,12 +269,58 @@ part of the screen answers the same question as the rest of it.
 2. Add it to `SCREENS` in `ui/mod.rs` with its icon, and its arm to the dispatcher.
 3. A source too slow for a first paint becomes a panel route in `PANELS`, drawn as a
    placeholder with `data-panel-src`.
+   Either list makes the route a benchmark target; nothing else is edited.
 4. Lead somewhere: a tile with `kpi_to`, a panel with `panel_to`, a row with a link.
+
+## On the public site: a snapshot
+
+The UI is a projection a running process answers, and the public site is files. So the site
+carries the UI as a **snapshot** at `/ui/` (ADR 0141): the UI's own answers, read once at the
+commit the site publishes, written down.
+
+```sh
+majordomus web report ui-snapshot --limit 20
+```
+
+It writes into `target/web/ui-snapshot`. `--limit` bounds the pages and `--budget-seconds`
+the time spent on the pages the screens link to; the command's own help states the defaults.
+
+The command builds the same UI the server routes to, in-process, and asks it for every screen
+and panel, then for the pages those link to: one page per family in turn (every rule's
+inspector, every claim's, every issue's) until `--limit` pages are written or
+`--budget-seconds` have passed, whichever is first. The screens and panels are written whatever
+they cost. It renders nothing itself. What it changes is only what a file cannot do that a route can:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| In the UI | In the snapshot |
+|---|---|
+| a link to another screen or inspector | a relative link to that page's file; an inspector's query is a directory (`governance/_rule/<id>/`) |
+| a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
+| a link into the served documentation (`/docs/…`) | the same page of the published site |
+| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
+
+</div>
+
+
+A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
+recorded forge observation and no running execution, so those panels read `none`, `unknown`
+or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+that, run `majordomus serve` in a checkout and open `/ui`.
+
+The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,
+`published-only`, built from the commit it was read at. A process serves the UI at `/ui` and a
+publication holds the snapshot there, and `majordomus web validate` holds both without a
+collision. `snapshot.json` beside it lists every page written, every page left to the live
+UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
+`test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
 
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
-  the next slice. Until then, open `/ui` on the address `majordomus serve status` prints.
+  I2484. Until it lands, open `/ui` on the address `majordomus serve status` prints.
 - Nothing on the UI starts work yet: launching a capability, an issue or a milestone through
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.

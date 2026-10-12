@@ -2762,6 +2762,133 @@ cli:
                   setup: []
                   expectation: exits 13
               subcommands: []
+            - path:
+                - majordomus
+                - web
+                - report
+                - ui-snapshot
+              route: /docs/cli/web/report/ui-snapshot/
+              executable: true
+              usage: "majordomus web report ui-snapshot [OPTIONS]"
+              about: "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)"
+              args:
+                - name: limit
+                  long: limit
+                  positional: false
+                  help: "The most pages to write: every screen and panel first, then what they link to"
+                  value_name: LIMIT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "240"
+                - name: budget_seconds
+                  long: budget-seconds
+                  positional: false
+                  help: The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost
+                  value_name: BUDGET_SECONDS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "180"
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract)"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+                - name: only
+                  long: only
+                  positional: false
+                  help: "Only these surfaces, by discovered id (repeat or separate with commas)"
+                  value_name: ONLY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: exclude
+                  long: exclude
+                  positional: false
+                  help: "Every surface except these, by discovered id"
+                  value_name: EXCLUDE
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+              examples:
+                - id: web-report-ui-snapshot
+                  title: Read the UI once and write it as the pages a publication carries at /ui
+                  description: "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process."
+                  argv:
+                    - web
+                    - report
+                    - ui-snapshot
+                    - "--limit"
+                    - "20"
+                  command: majordomus web report ui-snapshot --limit 20
+                  setup: []
+                  expectation: "exits 0; prints web report, ui-snapshot"
+              subcommands: []
         - path:
             - majordomus
             - web

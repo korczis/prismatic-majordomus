@@ -81,7 +81,7 @@ Every release this repository recorded, newest first, and the one an unpinned in
 | MCP tool | `majordomus_releases` |
 | HTTP | `GET /api/v1/distribution/releases` |
 | CLI | `majordomus distribution releases` |
-| cache | — |
+| cache | process, 1 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::distribution |
 | tags | distribution, release |

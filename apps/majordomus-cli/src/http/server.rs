@@ -394,12 +394,7 @@ fn answer_http(router: &Router, watch: &Watch, mut request: tiny_http::Request) 
 fn respond(request: tiny_http::Request, response: super::router::Response, head: bool) {
     // always Content-Length, never chunked: one less thing a small client must decode;
     // a HEAD gets the GET's headers and no body
-    let body: Vec<u8> = if head {
-        Vec::new()
-    } else {
-        response.body.as_bytes().to_vec()
-    };
-    let length = body.len();
+    let (body, length) = wire_body(&response, head);
     let mut out = HttpResponse::new(
         response.status.into(),
         Vec::new(),
@@ -421,6 +416,10 @@ fn respond(request: tiny_http::Request, response: super::router::Response, head:
         out.add_header(Header::from_bytes("Cache-Control", "no-store").expect("static header"));
     }
     for (name, value) in &response.headers {
+        // the length is the server's to write, and `wire_body` has already read it
+        if name.eq_ignore_ascii_case("content-length") {
+            continue;
+        }
         if let Ok(h) = Header::from_bytes(name.as_bytes(), value.as_bytes()) {
             out.add_header(h);
         }
@@ -428,6 +427,28 @@ fn respond(request: tiny_http::Request, response: super::router::Response, head:
     if let Err(e) = request.respond(out) {
         tracing::debug!("client went away before the response was written: {e}");
     }
+}
+
+/// The bytes to write and the `Content-Length` to announce. A HEAD writes nothing. A
+/// `304 Not Modified` writes nothing either, and announces the length its producer names in
+/// a `Content-Length` header — the 200's, the only value RFC 9110 section 8.6 allows a 304
+/// to carry — or none of its own, an empty body's 0.
+fn wire_body(response: &super::router::Response, head: bool) -> (Vec<u8>, usize) {
+    if response.status == 304 {
+        let named = response
+            .headers
+            .iter()
+            .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+            .and_then(|(_, value)| value.trim().parse().ok());
+        return (Vec::new(), named.unwrap_or(0));
+    }
+    let body: Vec<u8> = if head {
+        Vec::new()
+    } else {
+        response.body.as_bytes().to_vec()
+    };
+    let length = body.len();
+    (body, length)
 }
 
 /// Is stdin a pipe or a socket, as when a parent process spawned us and holds the other end?
@@ -457,6 +478,22 @@ pub fn stdin_is_a_pipe() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_304_writes_no_body_and_announces_the_length_it_names() {
+        use super::super::router::Response;
+        let not_modified = Response::new(304, "text/css", "").with_header("Content-Length", "1234");
+        assert_eq!(wire_body(&not_modified, false), (Vec::new(), 1234));
+        let unnamed = Response::new(304, "text/css", "ignored");
+        assert_eq!(wire_body(&unnamed, false), (Vec::new(), 0));
+        let ok = Response::new(200, "text/css", "body{}");
+        assert_eq!(wire_body(&ok, false), (b"body{}".to_vec(), 6));
+        assert_eq!(
+            wire_body(&ok, true),
+            (Vec::new(), 0),
+            "a HEAD writes nothing"
+        );
+    }
 
     #[test]
     fn a_request_that_could_not_be_given_a_thread_gives_back_its_slot() {

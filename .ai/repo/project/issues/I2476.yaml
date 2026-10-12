@@ -30,4 +30,25 @@ evidence_required:
   - "ui_intent_unit_tests"
   - "ui_intent_case_1081"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T11:05:13Z
+started_at: 2026-10-12T11:04:55Z
+started_event: sha256:6dd72dfaef426a3824085abb32653b5639e75207b9641aab87e27100492f9024
+verified_at: 2026-10-12T11:05:01Z
+verified_event: sha256:fde09edd323f366979e119123a44655dc0fae5339dc4d7330bcf5472f41dac54
+completed_at: 2026-10-12T11:05:13Z
+completed_event: sha256:534be51f9249c8328de1f6b5475c36ecda2fde8feb2343c2d7af275e27586309
+evidence:
+  - covers: ui_intent_unit_tests
+    type: ci
+    command: "cargo test --lib ui::intent (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "3 ui::intent tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:05:07Z
+  - covers: ui_intent_case_1081
+    type: ci
+    command: "test/run.sh 1081_an_intent_opens_what_serves_it (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1081_an_intent_opens_what_serves_it ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:05:10Z

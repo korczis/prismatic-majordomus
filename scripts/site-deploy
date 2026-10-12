@@ -209,6 +209,11 @@ if newer "$prev_version" "$build_version" && [ -n "$prev_tag" ] \
   git -C "$W" show "HEAD:releases/$prev_tag.json" > "$W/releases/$prev_tag.json"
   kept="$prev_tag"
   echo "site-deploy: kept releases/latest.json at $prev_tag ($prev_version): the build carries ${build_version:-none}, an older release (ADR 0131)"
+  # The build read gh-pages before the release's metadata reached it (scripts/site-build derives
+  # the release its pages offer from the record and from what gh-pages served at checkout), so
+  # its pages offer the older release until the next build. The release job asks for that build;
+  # `scripts/pages release-live` and the pages-live gate refuse it once the window has passed.
+  echo "site-deploy: warning: the pages of this build offer ${build_version:-no release}, older than the $prev_version gh-pages serves; the next build offers $prev_version (project.the-site-offers-the-release-it-published)" >&2
 fi
 msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes${kept:+, release metadata kept at $kept}"
 (

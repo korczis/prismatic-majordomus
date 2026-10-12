@@ -30,4 +30,25 @@ evidence_required:
   - "ui_every_screen_renders_test"
   - "ui_mesh_inspector_screenshot"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T11:00:20Z
+started_at: 2026-10-12T11:00:05Z
+started_event: sha256:e14e298a686b4ce6a774baff957699725922768dbc9d10cc68f070fdaf2dce83
+verified_at: 2026-10-12T11:00:10Z
+verified_event: sha256:44b67fd307b97d7acd739f8e673dafaaf96c94b7fa4d91771260de53f1eeec74
+completed_at: 2026-10-12T11:00:20Z
+completed_event: sha256:878f4152de7097dccdc7bdc281549a909f26995fae5723c56427a85590cc62a9
+evidence:
+  - covers: ui_every_screen_renders_test
+    type: ci
+    command: "cargo test --lib ui::tests (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "every_screen_renders_its_hero_and_panels and every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel ok; 106 ui:: tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:00:15Z
+  - covers: ui_mesh_inspector_screenshot
+    type: artifact
+    command: "node scratchpad/shots.mjs (Playwright Chromium, dark) against majordomus serve 0.21.0 built from perf/the-ui-answers-at-once d24107bd88"
+    result: "/ui/mesh?node=641bdb94 at 1440x900: the node, its 7 runtimes with liveness, sessions and events; no overflow, no page errors"
+    artifact: "site/static/images/ui/ui-mesh-inspector-1440.png"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:00:17Z

@@ -50,6 +50,14 @@ deploy:
   output: site/public
   # the served file that names the commit the public site was built from; the probe reads it
   identity: build.json
+  # How long after GitHub publishes a release the homepage and /releases/latest.json may still
+  # name an older one before `scripts/pages release-live` refuses the site. A release reaches
+  # the three in order: GitHub, then latest.json from the release's publish job, then the pages
+  # from the build of master that job asks for, which waits in the Actions queue like any other
+  # run. The bound is the deploy window scripts/ci/pages-check judges an owed publication by
+  # (OWED_AFTER, 1800s), for the same measured reason: a queue of 25 minutes is weather.
+  # project.the-site-offers-the-release-it-published.
+  release_window: 1800
   publish: scripts/site-deploy --skip-build
   # What the publishing clone must be able to answer, and therefore what it must be given.
   #

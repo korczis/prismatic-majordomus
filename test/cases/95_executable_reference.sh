@@ -10,13 +10,21 @@
 # projections.rs; the rendered side — every entry a page, no page without an entry — is
 # scripts/site-check, run by test/cases/12_site_build.sh. No cargo needed here: the
 # manifest is data, and this case edits the data.
+#
+# Every generation runs with --no-scenarios, the flag the generator keeps for the cases that
+# test derivation: the reference is projected from the manifest whether or not the use-case
+# scenarios are executed, `usecase validate` (which checks the use cases' tools against the
+# manifest) still runs, and the manifest is refused after the scenarios would have run, so
+# each of the seven generations here executed them all and nothing read the result —
+# ~70% of a generation's time (652 of 924 s, measured 2026-10-12). 10_site_data and the
+# site job execute them over the real tree.
 # claims: executable-reference-derived
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || skip "jq absent"
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 REG="$T/docs/generated/registry.json"; G="$T/site/data/generated"; C="$T/site/content/registry"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 cp -R "$G" "$T/before"
 n="$(jq '.capabilities | length' "$REG")"
 [ "$(jq '.counts.capabilities' "$G/executable.json")" = "$n" ] || { echo "    executable.json counts $(jq '.counts.capabilities' "$G/executable.json") capabilities, the manifest $n"; exit 1; }
@@ -46,7 +54,7 @@ for pg in _index executable cli mcp benchmarks; do [ -f "$C/$pg.md" ] || { echo 
 # --- 1. a capability joins the manifest: its route, its links and its index entry appear,
 #        and nothing was edited to tell the site about it
 jq '.capabilities += [ (.capabilities[] | select(.id=="objects.search")) | .id = "objects.grep" | .title = "Grep objects" | .description = "ADDED CAPABILITY" | .exposure.http.path = "/api/v1/grep" | .exposure.mcp.tool = "majordomus_grep" ] | .modules |= map(if .id == "objects" then .capabilities += 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ -f "$C/capabilities/objects-grep.md" ] || { echo "    the added capability got no stub"; exit 1; }
 expect_grep '^description = "ADDED CAPABILITY"' "$C/capabilities/objects-grep.md"
 # The reference is one page per module, not one page: an operation lives on its tag's page
@@ -59,7 +67,7 @@ jq -e '.modules[] | select(.id=="objects") | .capabilities | map(.id) | index("o
 [ "$(jq -r .source_hash "$G/source.json")" != "$(jq -r .source_hash "$T/before/source.json")" ] || { echo "    the input hash did not move with the manifest"; exit 1; }
 # the previous data is stale to --check: a manifest regenerated without the site is caught
 rm -rf "$G"; cp -R "$T/before" "$G"
-expect_exit 10 "$T/scripts/generate-site-data" --check
+expect_exit 10 "$T/scripts/generate-site-data" --check --no-scenarios
 expect_grep 'STALE'
 
 # --- 2. a capability leaves the manifest: its page goes with it, no orphan stays.
@@ -69,7 +77,7 @@ expect_grep 'STALE'
 #        catalogue requires. Nothing names majordomus_web_surfaces, which is what makes it
 #        removable without contradicting anything.
 jq 'del(.capabilities[] | select(.id=="objects.grep" or .id=="web.surfaces")) | .modules |= map(if .id == "objects" then .capabilities -= 1 elif .id == "web" then .capabilities -= 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ ! -e "$C/capabilities/objects-grep.md" ] && [ ! -e "$C/capabilities/web-surfaces.md" ] || { echo "    a removed capability kept its stub"; exit 1; }
 jq -e '[.capabilities[].id] | index("web.surfaces") | not' "$G/executable.json" >/dev/null || { echo "    executable.json still lists the removed capability"; exit 1; }
 [ "$(jq '.counts.capabilities' "$G/executable.json")" = "$((n - 1))" ]
@@ -78,12 +86,12 @@ jq -e '[.capabilities[].id] | index("web.surfaces") | not' "$G/executable.json" 
 cp -R "$G" "$T/good"
 jq '.capabilities[0].module = "nowhere"' "$REG" > "$REG.bad"
 cp "$REG" "$REG.keep"; mv "$REG.bad" "$REG"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 "$T/scripts/generate-site-data" --no-scenarios
 expect_grep 'module nowhere is not a builtin module'
 diff -r "$T/good" "$G" >/dev/null || { echo "    a refused generation changed the published data"; exit 1; }
 jq '.capabilities[0].source_path = "apps/majordomus-cli/src/capability/builtin/vanished.rs"' "$REG.keep" > "$REG"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 "$T/scripts/generate-site-data" --no-scenarios
 expect_grep 'no such file exists'
 jq '.schema = "majordomus/capability-registry/v0"' "$REG.keep" > "$REG"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 "$T/scripts/generate-site-data" --no-scenarios
 expect_grep 'not a majordomus/capability-registry/v1 manifest'
