@@ -52,7 +52,7 @@
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.21.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.21.0">v0.21.0</span>
       
     </a>
     <div class="flex items-center gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -168,7 +168,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-deploy" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-deploy" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">deploy</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.</p><article id="op-deploy-get" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -196,7 +196,7 @@
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployment?id=majordomus&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployment?id=majordomus&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -233,14 +233,14 @@
     <a href="#op-deploy-list" class="font-mono text-xs text-body-subtle hover:underline">deploy.list</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Deployments</h3>
-  <p class="mt-1 break-words text-sm text-body">Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider&#39;s own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.</p>
+  <p class="mt-1 break-words text-sm text-body">Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_deployments</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {&quot;name&quot;: &quot;deployments&quot;, &quot;uri&quot;: &quot;majordomus://deployments&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployments&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployments&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -284,7 +284,7 @@
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_deploy_check</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployments/check&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/deployments/check&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -398,26 +398,6 @@ site.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-DeploymentView" class="font-mono text-fg-brand underline">DeploymentView</a></p></article>
-<article id="schema-Concurrency" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">Concurrency</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">When the edge considers a machine loaded, in requests.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">soft_limit</td>
-          <td class="px-3 py-2 font-mono text-body">Positive <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Positive" class="text-fg-brand underline">Positive</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Where the edge starts preferring another machine.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">hard_limit</td>
-          <td class="px-3 py-2 font-mono text-body">Positive <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Positive" class="text-fg-brand underline">Positive</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Where it stops sending requests to this one.</td>
-        </tr></tbody>
-    </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-Fly" class="font-mono text-fg-brand underline">Fly</a></p></article>
 <article id="schema-CpuKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">CpuKind</h3>
@@ -528,7 +508,7 @@ and <code>distribution::Status</code> answers a different question, so each says
           <td class="px-3 py-2 font-mono font-semibold text-heading">application</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The application's name at the provider.</td>
+          <td class="px-3 py-2 text-body">The application's name: what the deployment is known by in a listing.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">build</td>
           <td class="px-3 py-2 font-mono text-body">Build <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Build" class="text-fg-brand underline">Build</a></td>
@@ -565,11 +545,6 @@ and <code>distribution::Status</code> answers a different question, so each says
           <td class="px-3 py-2 font-mono text-body">no</td>
           <td class="px-3 py-2 text-body">The measured figures it is held to.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">provider</td>
-          <td class="px-3 py-2 font-mono text-body">Provider <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Provider" class="text-fg-brand underline">Provider</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The provider and its own facts.</td>
-        </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
           <td class="px-3 py-2 font-mono text-body">string | null</td>
           <td class="px-3 py-2 font-mono text-body">no</td>
@@ -582,31 +557,6 @@ and <code>distribution::Status</code> answers a different question, so each says
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-DeploymentList" class="font-mono text-fg-brand underline">DeploymentList</a></p></article>
-<article id="schema-Fly" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">Fly</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Fly.io's own facts: what has no meaning for any other provider.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">org</td>
-          <td class="px-3 py-2 font-mono text-body">string | null</td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">The organisation the application belongs to.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">force_https</td>
-          <td class="px-3 py-2 font-mono text-body">boolean | null</td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">Whether the edge redirects plain HTTP to HTTPS.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">concurrency</td>
-          <td class="px-3 py-2 font-mono text-body">Concurrency | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Concurrency" class="text-fg-brand underline">Concurrency</a></td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">When the edge considers a machine loaded.</td>
-        </tr></tbody>
-    </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-Provider" class="font-mono text-fg-brand underline">Provider</a></p></article>
 <article id="schema-HealthRoutes" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">HealthRoutes</h3>
@@ -660,7 +610,7 @@ is the intent that replaces suppressing the bind warning.</span></li></ul><p cla
           <td class="px-3 py-2 font-mono font-semibold text-heading">port</td>
           <td class="px-3 py-2 font-mono text-body">Port <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Port" class="text-fg-brand underline">Port</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The port, stated once for the process, the image and the provider configuration.</td>
+          <td class="px-3 py-2 text-body">The port, stated once for the process and the image.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">interface</td>
           <td class="px-3 py-2 font-mono text-body">Interface <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Interface" class="text-fg-brand underline">Interface</a></td>
@@ -710,33 +660,7 @@ process runs as a non-root user and could not bind one.</div><p class="mt-3 text
     <h3 class="font-mono text-base font-semibold text-heading">Positive</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">integer (uint32)</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused
-wherever zero would mean "a deployment that cannot run".</div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-Budgets" class="font-mono text-fg-brand underline">Budgets</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-Concurrency" class="font-mono text-fg-brand underline">Concurrency</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-HealthRoutes" class="font-mono text-fg-brand underline">HealthRoutes</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-Machines" class="font-mono text-fg-brand underline">Machines</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-Resources" class="font-mono text-fg-brand underline">Resources</a></p></article>
-<article id="schema-Provider" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">Provider</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The provider and the facts that belong to it alone.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
-          <td class="px-3 py-2 font-mono text-body">ProviderName <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-ProviderName" class="text-fg-brand underline">ProviderName</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Which provider.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">fly</td>
-          <td class="px-3 py-2 font-mono text-body">Fly | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/deploy/#schema-Fly" class="text-fg-brand underline">Fly</a></td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">Fly's own block, when the provider is Fly.</td>
-        </tr></tbody>
-    </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-DeploymentView" class="font-mono text-fg-brand underline">DeploymentView</a></p></article>
-<article id="schema-ProviderName" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">ProviderName</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;fly&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The hosting provider. One is supported; a second is an object of its own rather than an
-abstraction over this one.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">fly</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Fly.io.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-Provider" class="font-mono text-fg-brand underline">Provider</a></p></article>
+wherever zero would mean "a deployment that cannot run".</div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/deploy/#schema-Budgets" class="font-mono text-fg-brand underline">Budgets</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-HealthRoutes" class="font-mono text-fg-brand underline">HealthRoutes</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-Machines" class="font-mono text-fg-brand underline">Machines</a> <a href="https://majordomus.dev/docs/api/deploy/#schema-Resources" class="font-mono text-fg-brand underline">Resources</a></p></article>
 <article id="schema-Refusal" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">Refusal</h3>
@@ -854,9 +778,9 @@ the deployment's to know and not the object's to state.</div><p class="mt-3 text
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -864,7 +788,7 @@ the deployment's to know and not the object's to state.</div><p class="mt-3 text
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012" class="font-mono underline">81178f5</a> · inputs <span class="font-mono">4c89f3e1eee9</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

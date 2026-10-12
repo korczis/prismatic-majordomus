@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "8d7825451f88dbe1a6ac701dbce975e4d5648f08",
+  "commit": "81178f5362ea7ef4948a951d7604bce298fed012",
   "source_version": "0.21.0",
-  "registry_fingerprint": "f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe"
+  "registry_fingerprint": "8c07b57718f0fe738b6c5615b481c889dd3c664b592878ce8b9f2d186b129d76"
  },
  "counts": {
-  "pages": 2112,
-  "capabilities": 2256,
+  "pages": 2118,
+  "capabilities": 2268,
   "cli_commands": 105,
   "http_routes": 187,
   "mcp_tools": 183,
-  "mcp_resources": 2119,
+  "mcp_resources": 2131,
   "modules": 89
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 95
+   "count": 96
   },
   {
    "kind": "application",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 328
+   "count": 331
   },
   {
    "kind": "knowledge",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 168
+   "count": 169
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 446
+   "count": 453
   },
   {
    "kind": "use-case",
@@ -1155,6 +1155,15 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0139",
    "source": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0141/",
+   "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+   "description": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0141",
+   "source": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
    "section": "Decisions"
   },
   {
@@ -3012,6 +3021,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/cli/web/report/ui-snapshot/",
+   "title": "majordomus web report ui-snapshot",
+   "description": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/cli/web/report/ui/",
    "title": "majordomus web report ui",
    "description": "The UI conformance audit, rendered as a section of the test surface (/tests/ui)",
@@ -3625,8 +3640,8 @@
   },
   {
    "route": "/doctrines/deployment-contract/",
-   "title": "A deployment is described once, and every provider artifact is generated from it",
-   "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and the provider configuration are projections of it, never a second description.",
+   "title": "A deployment is described once, and every artifact built from it is generated from it",
+   "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and its ignore file are projections of it, never a second description.",
    "section": "Doctrine"
   },
   {
@@ -7704,6 +7719,24 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2481/",
+   "title": "I2481 — The UI links every entity it names, and says none where a source has no value",
+   "description": "Make every entity a screen of majordomus ui names lead somewhere: to the UI's own screen or inspector for it, to its technical view when the UI has no screen for it, or to the address its source gives when it lives elsewhere; say none where a source has no value; say how much a cut list leaves out; and count throughput over the window the queue states rather than one the screen chooses.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2482/",
+   "title": "I2482 — Every screen of the UI has a case, and no link on the UI is dead",
+   "description": "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2483/",
+   "title": "I2483 — The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+   "description": "Let a person who has not cloned the repository open majordomus ui on the public site: the UI's own answers for every screen and panel, and for the inspectors they link to up to a bound, written as static files at the commit the site publishes, every page saying it is a snapshot and none of them leading to nothing.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2484/",
    "title": "I2484 — majordomus ui ensures the shared server and opens the UI's dashboard",
    "description": "Give the primary surface its command: `majordomus ui` ensures this checkout's shared server, the way `serve ensure` does, prints the address of /ui and opens it in a browser, so that a person reaches the UI in one step and never needs the lease, a port or the Cockpit to find it.",
@@ -8066,7 +8099,7 @@
   {
    "route": "/registry/capabilities/deploy-list/",
    "title": "deploy.list",
-   "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+   "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
    "section": "Registry"
   },
   {
@@ -9571,8 +9604,8 @@
   },
   {
    "route": "/rules/majordomus-deployment-contract-1/",
-   "title": "A deployment is described once, and every provider artifact is generated from it",
-   "description": "A deployment is described once, and every provider artifact is generated from it",
+   "title": "A deployment is described once, and every artifact built from it is generated from it",
+   "description": "A deployment is described once, and every artifact built from it is generated from it",
    "kind": "rule",
    "id": "majordomus://rule/majordomus.deployment-contract@1",
    "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
@@ -10830,6 +10863,15 @@
    "section": "Rules"
   },
   {
+   "route": "/rules/project-the-site-offers-the-release-it-published-1/",
+   "title": "The site offers the release that was published, on every surface at once",
+   "description": "The site offers the release that was published, on every surface at once",
+   "kind": "rule",
+   "id": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+   "source": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+   "section": "Rules"
+  },
+  {
    "route": "/rules/project-the-version-is-measured-2/",
    "title": "The version is measured against the public surface, not claimed",
    "description": "The version is measured against the public surface, not claimed",
@@ -10940,7 +10982,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.21.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.21.0, built from commit 8d7825451f88dbe1a6ac701dbce975e4d5648f08: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.21.0, built from commit 81178f5362ea7ef4948a951d7604bce298fed012: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.21.0 — Rust API reference"
   },
   {
@@ -11414,7 +11456,7 @@
   {
    "route": "/rustdoc/majordomus_cli/deploy/render/",
    "title": "majordomus_cli::deploy::render - Rust",
-   "description": "The provider artifacts, rendered from the canonical deployment object: the container image definition, the ignore file that bounds its build context, and the provider configuration.",
+   "description": "The deployment artifacts, rendered from the canonical deployment object: the container image definition and the ignore file that bounds its build context. No provider configuration is rendered: no hosting provider is a target (see `super`).",
    "section": "majordomus-cli 0.21.0 — Rust API reference"
   },
   {
@@ -12350,7 +12392,7 @@
   {
    "route": "/rustdoc/majordomus_cli/web/report/",
    "title": "majordomus_cli::web::report - Rust",
-   "description": "The reports this repository generates as web surfaces: the test run, the benchmark run, and the UI conformance audit that is a section of the first.",
+   "description": "The reports this repository generates as web surfaces: the test run, the benchmark run, the UI conformance audit that is a section of the first, and the UI itself read once at a pinned commit, which a publication carries at the UI’s mount (`snapshot`, ADR 0141).",
    "section": "majordomus-cli 0.21.0 — Rust API reference"
   },
   {

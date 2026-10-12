@@ -52,7 +52,7 @@
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.21.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.21.0">v0.21.0</span>
       
     </a>
     <div class="flex items-center gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -494,6 +494,9 @@
     I2476[&quot;I2476&lt;br/&gt;An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it&quot;]:::done
     I2477[&quot;I2477&lt;br/&gt;A claim opens its proof: what settles it, its last run, what changed since, how to see it again&quot;]:::done
     I2478[&quot;I2478&lt;br/&gt;A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it&quot;]:::done
+    I2481[&quot;I2481&lt;br/&gt;The UI links every entity it names, and says none where a source has no value&quot;]:::ready
+    I2482[&quot;I2482&lt;br/&gt;Every screen of the UI has a case, and no link on the UI is dead&quot;]:::blocked
+    I2483[&quot;I2483&lt;br/&gt;The UI is published as a snapshot: read once at the published commit and carried by the site at /ui&quot;]:::ready
     I2484[&quot;I2484&lt;br/&gt;majordomus ui ensures the shared server and opens the UI&#39;s dashboard&quot;]:::ready
     I0001 --&gt; I0002
     I0002 --&gt; I0003
@@ -837,6 +840,7 @@
     I2462 --&gt; I2470
     I2462 --&gt; I2477
     I2462 --&gt; I2478
+    I2462 --&gt; I2483
     I2470 --&gt; I2471
     I2470 --&gt; I2473
     I2470 --&gt; I2475
@@ -844,6 +848,8 @@
     I2471 --&gt; I2475
     I2471 --&gt; I2476
     I2473 --&gt; I2474
+    I2478 --&gt; I2481
+    I2481 --&gt; I2482
     classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
@@ -2910,6 +2916,12 @@
           <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
  <span class="text-heading">A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it</span></td>
         </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2462/" class="text-fg-brand underline">I2462</a> <span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2483/" class="text-fg-brand underline">I2483</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+ <span class="text-heading">The UI is published as a snapshot: read once at the published commit and carried by the site at /ui</span></td>
+        </tr><tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2470/" class="text-fg-brand underline">I2470</a> <span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2471/" class="text-fg-brand underline">I2471</a></td>
@@ -2951,6 +2963,18 @@
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2474/" class="text-fg-brand underline">I2474</a></td>
           <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
  <span class="text-heading">The drain draws its merge throughput: each day&#39;s merges over the fortnight its trail ends on</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2478/" class="text-fg-brand underline">I2478</a> <span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2481/" class="text-fg-brand underline">I2481</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+ <span class="text-heading">The UI links every entity it names, and says none where a source has no value</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2481/" class="text-fg-brand underline">I2481</a> <span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2482/" class="text-fg-brand underline">I2482</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+ <span class="text-heading">Every screen of the UI has a case, and no link on the UI is dead</span></td>
         </tr>
       </tbody>
     </table>
@@ -3156,6 +3180,7 @@
 </a><a href="https://majordomus.dev/plan/i2470/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2470</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </a><a href="https://majordomus.dev/plan/i2477/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2477</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </a><a href="https://majordomus.dev/plan/i2478/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2478</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
+</a><a href="https://majordomus.dev/plan/i2483/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2483</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 </a></p>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -3201,6 +3226,7 @@
 </a><a href="https://majordomus.dev/plan/i2406/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2406</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i2471/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2471</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </a><a href="https://majordomus.dev/plan/i2473/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2473</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
+</a><a href="https://majordomus.dev/plan/i2481/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2481</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 </a></p>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -3249,6 +3275,7 @@
 </a><a href="https://majordomus.dev/plan/i2474/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2474</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </a><a href="https://majordomus.dev/plan/i2475/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2475</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </a><a href="https://majordomus.dev/plan/i2476/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2476</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
+</a><a href="https://majordomus.dev/plan/i2482/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2482</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 </a></p>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -3379,9 +3406,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -3389,7 +3416,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012" class="font-mono underline">81178f5</a> · inputs <span class="font-mono">4c89f3e1eee9</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

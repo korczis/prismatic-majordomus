@@ -179,246 +179,274 @@
 <a href=#179 id=179 data-nosnippet>179</a>                            ),
 <a href=#180 id=180 data-nosnippet>180</a>                        )
 <a href=#181 id=181 data-nosnippet>181</a>                        .child(el(<span class="string">"td"</span>).child(state(i, <span class="string">"status"</span>)))
-<a href=#182 id=182 data-nosnippet>182</a>                        .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-mono"</span>).text(text(i, <span class="string">"priority"</span>)))
-<a href=#183 id=183 data-nosnippet>183</a>                        .child(
-<a href=#184 id=184 data-nosnippet>184</a>                            el(<span class="string">"td"</span>)
-<a href=#185 id=185 data-nosnippet>185</a>                                .class(<span class="string">"mj-ui-mono"</span>)
-<a href=#186 id=186 data-nosnippet>186</a>                                .text(i.get(<span class="string">"wave"</span>).map(Value::to_string).unwrap_or_default()),
-<a href=#187 id=187 data-nosnippet>187</a>                        )
-<a href=#188 id=188 data-nosnippet>188</a>                        .child(el(<span class="string">"td"</span>).child(chips(<span class="kw-2">&amp;</span>strings(i, <span class="string">"blocked_by"</span>), issue_href)))
-<a href=#189 id=189 data-nosnippet>189</a>                })
-<a href=#190 id=190 data-nosnippet>190</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#191 id=191 data-nosnippet>191</a>            <span class="kw">let </span>fact = |label: <span class="kw-2">&amp;</span>str, value: El| {
-<a href=#192 id=192 data-nosnippet>192</a>                el(<span class="string">"div"</span>)
-<a href=#193 id=193 data-nosnippet>193</a>                    .class(<span class="string">"mj-ui-fact"</span>)
-<a href=#194 id=194 data-nosnippet>194</a>                    .child(el(<span class="string">"dt"</span>).text(label))
-<a href=#195 id=195 data-nosnippet>195</a>                    .child(el(<span class="string">"dd"</span>).child(value))
-<a href=#196 id=196 data-nosnippet>196</a>            };
-<a href=#197 id=197 data-nosnippet>197</a>            <span class="kw">let </span>count = |s: <span class="kw-2">&amp;</span>str| {
-<a href=#198 id=198 data-nosnippet>198</a>                m.pointer(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/counts/by_status/{s}"</span>))
-<a href=#199 id=199 data-nosnippet>199</a>                    .and_then(Value::as_u64)
-<a href=#200 id=200 data-nosnippet>200</a>            };
-<a href=#201 id=201 data-nosnippet>201</a>            el(<span class="string">"section"</span>)
-<a href=#202 id=202 data-nosnippet>202</a>                .class(<span class="string">"mj-ui-detail"</span>)
-<a href=#203 id=203 data-nosnippet>203</a>                .attr(<span class="string">"id"</span>, <span class="string">"milestone"</span>)
-<a href=#204 id=204 data-nosnippet>204</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"Milestone {id}"</span>))
-<a href=#205 id=205 data-nosnippet>205</a>                .child(
-<a href=#206 id=206 data-nosnippet>206</a>                    el(<span class="string">"div"</span>)
-<a href=#207 id=207 data-nosnippet>207</a>                        .class(<span class="string">"mj-ui-detail-head"</span>)
-<a href=#208 id=208 data-nosnippet>208</a>                        .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-mono mj-ui-dim"</span>).text(<span class="macro">format!</span>(
-<a href=#209 id=209 data-nosnippet>209</a>                            <span class="string">"{id} · order {} · {}"</span>,
-<a href=#210 id=210 data-nosnippet>210</a>                            m.get(<span class="string">"order"</span>).map(Value::to_string).unwrap_or_else(|| <span class="string">"?"</span>.into()),
-<a href=#211 id=211 data-nosnippet>211</a>                            text(<span class="kw-2">&amp;</span>m, <span class="string">"priority"</span>)
-<a href=#212 id=212 data-nosnippet>212</a>                        )))
-<a href=#213 id=213 data-nosnippet>213</a>                        .child(el(<span class="string">"h3"</span>).class(<span class="string">"mj-ui-detail-title"</span>).text(text(<span class="kw-2">&amp;</span>m, <span class="string">"title"</span>)))
-<a href=#214 id=214 data-nosnippet>214</a>                        .child(
-<a href=#215 id=215 data-nosnippet>215</a>                            el(<span class="string">"p"</span>)
-<a href=#216 id=216 data-nosnippet>216</a>                                .class(<span class="string">"mj-ui-badges"</span>)
-<a href=#217 id=217 data-nosnippet>217</a>                                .child(state(<span class="kw-2">&amp;</span>m, <span class="string">"status"</span>))
-<a href=#218 id=218 data-nosnippet>218</a>                                .child(
-<a href=#219 id=219 data-nosnippet>219</a>                                    el(<span class="string">"a"</span>)
-<a href=#220 id=220 data-nosnippet>220</a>                                        .class(<span class="string">"mj-ui-more"</span>)
-<a href=#221 id=221 data-nosnippet>221</a>                                        .attr(
-<a href=#222 id=222 data-nosnippet>222</a>                                            <span class="string">"href"</span>,
-<a href=#223 id=223 data-nosnippet>223</a>                                            <span class="macro">format!</span>(<span class="string">"{}#milestone-{id}"</span>, <span class="kw">super</span>::roadmap::ROUTE),
-<a href=#224 id=224 data-nosnippet>224</a>                                        )
-<a href=#225 id=225 data-nosnippet>225</a>                                        .text(<span class="string">"Close"</span>),
-<a href=#226 id=226 data-nosnippet>226</a>                                ),
-<a href=#227 id=227 data-nosnippet>227</a>                        ),
-<a href=#228 id=228 data-nosnippet>228</a>                )
-<a href=#229 id=229 data-nosnippet>229</a>                .child(
-<a href=#230 id=230 data-nosnippet>230</a>                    el(<span class="string">"dl"</span>)
-<a href=#231 id=231 data-nosnippet>231</a>                        .class(<span class="string">"mj-ui-facts"</span>)
-<a href=#232 id=232 data-nosnippet>232</a>                        .child(fact(
-<a href=#233 id=233 data-nosnippet>233</a>                            <span class="string">"Done"</span>,
-<a href=#234 id=234 data-nosnippet>234</a>                            meter(
-<a href=#235 id=235 data-nosnippet>235</a>                                count(<span class="string">"DONE"</span>),
-<a href=#236 id=236 data-nosnippet>236</a>                                m.pointer(<span class="string">"/counts/total"</span>).and_then(Value::as_u64),
-<a href=#237 id=237 data-nosnippet>237</a>                            ),
-<a href=#238 id=238 data-nosnippet>238</a>                        ))
-<a href=#239 id=239 data-nosnippet>239</a>                        .child(fact(<span class="string">"Ready now"</span>, chips(<span class="kw-2">&amp;</span>ready, issue_href)))
-<a href=#240 id=240 data-nosnippet>240</a>                        .child(fact(
-<a href=#241 id=241 data-nosnippet>241</a>                            <span class="string">"Blocked"</span>,
-<a href=#242 id=242 data-nosnippet>242</a>                            el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-mono"</span>).text(
-<a href=#243 id=243 data-nosnippet>243</a>                                count(<span class="string">"BLOCKED"</span>).map_or_else(|| <span class="string">"none"</span>.into(), |n| n.to_string()),
-<a href=#244 id=244 data-nosnippet>244</a>                            ),
-<a href=#245 id=245 data-nosnippet>245</a>                        ))
+<a href=#182 id=182 data-nosnippet>182</a>                        .child(
+<a href=#183 id=183 data-nosnippet>183</a>                            el(<span class="string">"td"</span>)
+<a href=#184 id=184 data-nosnippet>184</a>                                .class(<span class="string">"mj-ui-mono"</span>)
+<a href=#185 id=185 data-nosnippet>185</a>                                .text(<span class="kw">super</span>::view::value(i, <span class="string">"priority"</span>)),
+<a href=#186 id=186 data-nosnippet>186</a>                        )
+<a href=#187 id=187 data-nosnippet>187</a>                        .child(
+<a href=#188 id=188 data-nosnippet>188</a>                            el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-mono"</span>).text(
+<a href=#189 id=189 data-nosnippet>189</a>                                i.get(<span class="string">"wave"</span>)
+<a href=#190 id=190 data-nosnippet>190</a>                                    .filter(|w| !w.is_null())
+<a href=#191 id=191 data-nosnippet>191</a>                                    .map_or_else(|| <span class="string">"none"</span>.into(), Value::to_string),
+<a href=#192 id=192 data-nosnippet>192</a>                            ),
+<a href=#193 id=193 data-nosnippet>193</a>                        )
+<a href=#194 id=194 data-nosnippet>194</a>                        .child(el(<span class="string">"td"</span>).child(chips(<span class="kw-2">&amp;</span>strings(i, <span class="string">"blocked_by"</span>), issue_href)))
+<a href=#195 id=195 data-nosnippet>195</a>                })
+<a href=#196 id=196 data-nosnippet>196</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#197 id=197 data-nosnippet>197</a>            <span class="kw">let </span>fact = |label: <span class="kw-2">&amp;</span>str, value: El| {
+<a href=#198 id=198 data-nosnippet>198</a>                el(<span class="string">"div"</span>)
+<a href=#199 id=199 data-nosnippet>199</a>                    .class(<span class="string">"mj-ui-fact"</span>)
+<a href=#200 id=200 data-nosnippet>200</a>                    .child(el(<span class="string">"dt"</span>).text(label))
+<a href=#201 id=201 data-nosnippet>201</a>                    .child(el(<span class="string">"dd"</span>).child(value))
+<a href=#202 id=202 data-nosnippet>202</a>            };
+<a href=#203 id=203 data-nosnippet>203</a>            <span class="kw">let </span>count = |s: <span class="kw-2">&amp;</span>str| {
+<a href=#204 id=204 data-nosnippet>204</a>                m.pointer(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/counts/by_status/{s}"</span>))
+<a href=#205 id=205 data-nosnippet>205</a>                    .and_then(Value::as_u64)
+<a href=#206 id=206 data-nosnippet>206</a>            };
+<a href=#207 id=207 data-nosnippet>207</a>            el(<span class="string">"section"</span>)
+<a href=#208 id=208 data-nosnippet>208</a>                .class(<span class="string">"mj-ui-detail"</span>)
+<a href=#209 id=209 data-nosnippet>209</a>                .attr(<span class="string">"id"</span>, <span class="string">"milestone"</span>)
+<a href=#210 id=210 data-nosnippet>210</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"Milestone {id}"</span>))
+<a href=#211 id=211 data-nosnippet>211</a>                .child(
+<a href=#212 id=212 data-nosnippet>212</a>                    el(<span class="string">"div"</span>)
+<a href=#213 id=213 data-nosnippet>213</a>                        .class(<span class="string">"mj-ui-detail-head"</span>)
+<a href=#214 id=214 data-nosnippet>214</a>                        .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-mono mj-ui-dim"</span>).text(<span class="macro">format!</span>(
+<a href=#215 id=215 data-nosnippet>215</a>                            <span class="string">"{id} · order {} · {}"</span>,
+<a href=#216 id=216 data-nosnippet>216</a>                            m.get(<span class="string">"order"</span>).map(Value::to_string).unwrap_or_else(|| <span class="string">"?"</span>.into()),
+<a href=#217 id=217 data-nosnippet>217</a>                            text(<span class="kw-2">&amp;</span>m, <span class="string">"priority"</span>)
+<a href=#218 id=218 data-nosnippet>218</a>                        )))
+<a href=#219 id=219 data-nosnippet>219</a>                        .child(el(<span class="string">"h3"</span>).class(<span class="string">"mj-ui-detail-title"</span>).text(text(<span class="kw-2">&amp;</span>m, <span class="string">"title"</span>)))
+<a href=#220 id=220 data-nosnippet>220</a>                        .child(
+<a href=#221 id=221 data-nosnippet>221</a>                            el(<span class="string">"p"</span>)
+<a href=#222 id=222 data-nosnippet>222</a>                                .class(<span class="string">"mj-ui-badges"</span>)
+<a href=#223 id=223 data-nosnippet>223</a>                                .child(state(<span class="kw-2">&amp;</span>m, <span class="string">"status"</span>))
+<a href=#224 id=224 data-nosnippet>224</a>                                .child(
+<a href=#225 id=225 data-nosnippet>225</a>                                    el(<span class="string">"a"</span>)
+<a href=#226 id=226 data-nosnippet>226</a>                                        .class(<span class="string">"mj-ui-more"</span>)
+<a href=#227 id=227 data-nosnippet>227</a>                                        .attr(
+<a href=#228 id=228 data-nosnippet>228</a>                                            <span class="string">"href"</span>,
+<a href=#229 id=229 data-nosnippet>229</a>                                            <span class="macro">format!</span>(<span class="string">"{}#milestone-{id}"</span>, <span class="kw">super</span>::roadmap::ROUTE),
+<a href=#230 id=230 data-nosnippet>230</a>                                        )
+<a href=#231 id=231 data-nosnippet>231</a>                                        .text(<span class="string">"Close"</span>),
+<a href=#232 id=232 data-nosnippet>232</a>                                ),
+<a href=#233 id=233 data-nosnippet>233</a>                        ),
+<a href=#234 id=234 data-nosnippet>234</a>                )
+<a href=#235 id=235 data-nosnippet>235</a>                .child(
+<a href=#236 id=236 data-nosnippet>236</a>                    el(<span class="string">"dl"</span>)
+<a href=#237 id=237 data-nosnippet>237</a>                        .class(<span class="string">"mj-ui-facts"</span>)
+<a href=#238 id=238 data-nosnippet>238</a>                        .child(fact(
+<a href=#239 id=239 data-nosnippet>239</a>                            <span class="string">"Done"</span>,
+<a href=#240 id=240 data-nosnippet>240</a>                            meter(
+<a href=#241 id=241 data-nosnippet>241</a>                                count(<span class="string">"DONE"</span>),
+<a href=#242 id=242 data-nosnippet>242</a>                                m.pointer(<span class="string">"/counts/total"</span>).and_then(Value::as_u64),
+<a href=#243 id=243 data-nosnippet>243</a>                            ),
+<a href=#244 id=244 data-nosnippet>244</a>                        ))
+<a href=#245 id=245 data-nosnippet>245</a>                        .child(fact(<span class="string">"Ready now"</span>, chips(<span class="kw-2">&amp;</span>ready, issue_href)))
 <a href=#246 id=246 data-nosnippet>246</a>                        .child(fact(
-<a href=#247 id=247 data-nosnippet>247</a>                            <span class="string">"Waits for"</span>,
-<a href=#248 id=248 data-nosnippet>248</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"depends_on"</span>), href_owned),
-<a href=#249 id=249 data-nosnippet>249</a>                        ))
-<a href=#250 id=250 data-nosnippet>250</a>                        .child(fact(
-<a href=#251 id=251 data-nosnippet>251</a>                            <span class="string">"Blocked by"</span>,
-<a href=#252 id=252 data-nosnippet>252</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"blocked_by"</span>), href_owned),
-<a href=#253 id=253 data-nosnippet>253</a>                        ))
-<a href=#254 id=254 data-nosnippet>254</a>                        .child(fact(
-<a href=#255 id=255 data-nosnippet>255</a>                            <span class="string">"Unblocks"</span>,
-<a href=#256 id=256 data-nosnippet>256</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"dependents"</span>), href_owned),
-<a href=#257 id=257 data-nosnippet>257</a>                        ))
-<a href=#258 id=258 data-nosnippet>258</a>                        .child(fact(<span class="string">"Serves"</span>, chips(<span class="kw-2">&amp;</span>serves, <span class="kw">super</span>::intent::href))),
-<a href=#259 id=259 data-nosnippet>259</a>                )
-<a href=#260 id=260 data-nosnippet>260</a>                .child(el(<span class="string">"h4"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(<span class="string">"Critical path"</span>))
-<a href=#261 id=261 data-nosnippet>261</a>                .child(<span class="kw">if </span>path.is_empty() {
-<a href=#262 id=262 data-nosnippet>262</a>                    nothing(<span class="string">"No issue of it is open."</span>)
-<a href=#263 id=263 data-nosnippet>263</a>                } <span class="kw">else </span>{
-<a href=#264 id=264 data-nosnippet>264</a>                    el(<span class="string">"ol"</span>)
-<a href=#265 id=265 data-nosnippet>265</a>                        .class(<span class="string">"mj-ui-badges"</span>)
-<a href=#266 id=266 data-nosnippet>266</a>                        .attr(<span class="string">"aria-label"</span>, <span class="string">"The longest chain of open issues"</span>)
-<a href=#267 id=267 data-nosnippet>267</a>                        .children(
-<a href=#268 id=268 data-nosnippet>268</a>                            path.iter()
-<a href=#269 id=269 data-nosnippet>269</a>                                .map(|i| el(<span class="string">"li"</span>).child(chip(issue_href(i), i.clone()))),
-<a href=#270 id=270 data-nosnippet>270</a>                        )
-<a href=#271 id=271 data-nosnippet>271</a>                })
-<a href=#272 id=272 data-nosnippet>272</a>                .child(el(<span class="string">"h4"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(<span class="string">"Issues"</span>))
-<a href=#273 id=273 data-nosnippet>273</a>                .child(table(
-<a href=#274 id=274 data-nosnippet>274</a>                    <span class="kw-2">&amp;</span>[<span class="string">"Issue"</span>, <span class="string">"Status"</span>, <span class="string">"Priority"</span>, <span class="string">"Wave"</span>, <span class="string">"Blocked by"</span>],
-<a href=#275 id=275 data-nosnippet>275</a>                    rows,
-<a href=#276 id=276 data-nosnippet>276</a>                    <span class="string">"The milestone holds no issue."</span>,
-<a href=#277 id=277 data-nosnippet>277</a>                ))
-<a href=#278 id=278 data-nosnippet>278</a>        });
-<a href=#279 id=279 data-nosnippet>279</a>    panel(
-<a href=#280 id=280 data-nosnippet>280</a>        <span class="string">"Milestone"</span>,
-<a href=#281 id=281 data-nosnippet>281</a>        <span class="string">"One milestone of the plan: what it holds, what can start, and what it waits for."</span>,
-<a href=#282 id=282 data-nosnippet>282</a>        body,
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw-2">&amp;</span>[roadmap, issues],
-<a href=#284 id=284 data-nosnippet>284</a>    )
-<a href=#285 id=285 data-nosnippet>285</a>}
-<a href=#286 id=286 data-nosnippet>286</a>
-<a href=#287 id=287 data-nosnippet>287</a><span class="kw">fn </span>href_owned(id: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#288 id=288 data-nosnippet>288</a>    href(id)
-<a href=#289 id=289 data-nosnippet>289</a>}
-<a href=#290 id=290 data-nosnippet>290</a>
-<a href=#291 id=291 data-nosnippet>291</a><span class="attr">#[cfg(test)]
-<a href=#292 id=292 data-nosnippet>292</a></span><span class="kw">mod </span>tests {
-<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::source::{Exposure, Source};
-<a href=#295 id=295 data-nosnippet>295</a>    <span class="kw">use </span>std::time::Duration;
+<a href=#247 id=247 data-nosnippet>247</a>                            <span class="string">"Blocked"</span>,
+<a href=#248 id=248 data-nosnippet>248</a>                            el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-mono"</span>).text(
+<a href=#249 id=249 data-nosnippet>249</a>                                count(<span class="string">"BLOCKED"</span>).map_or_else(|| <span class="string">"none"</span>.into(), |n| n.to_string()),
+<a href=#250 id=250 data-nosnippet>250</a>                            ),
+<a href=#251 id=251 data-nosnippet>251</a>                        ))
+<a href=#252 id=252 data-nosnippet>252</a>                        .child(fact(
+<a href=#253 id=253 data-nosnippet>253</a>                            <span class="string">"Waits for"</span>,
+<a href=#254 id=254 data-nosnippet>254</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"depends_on"</span>), href_owned),
+<a href=#255 id=255 data-nosnippet>255</a>                        ))
+<a href=#256 id=256 data-nosnippet>256</a>                        .child(fact(
+<a href=#257 id=257 data-nosnippet>257</a>                            <span class="string">"Blocked by"</span>,
+<a href=#258 id=258 data-nosnippet>258</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"blocked_by"</span>), href_owned),
+<a href=#259 id=259 data-nosnippet>259</a>                        ))
+<a href=#260 id=260 data-nosnippet>260</a>                        .child(fact(
+<a href=#261 id=261 data-nosnippet>261</a>                            <span class="string">"Unblocks"</span>,
+<a href=#262 id=262 data-nosnippet>262</a>                            chips(<span class="kw-2">&amp;</span>strings(<span class="kw-2">&amp;</span>m, <span class="string">"dependents"</span>), href_owned),
+<a href=#263 id=263 data-nosnippet>263</a>                        ))
+<a href=#264 id=264 data-nosnippet>264</a>                        .child(fact(<span class="string">"Serves"</span>, chips(<span class="kw-2">&amp;</span>serves, <span class="kw">super</span>::intent::href))),
+<a href=#265 id=265 data-nosnippet>265</a>                )
+<a href=#266 id=266 data-nosnippet>266</a>                .child(el(<span class="string">"h4"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(<span class="string">"Critical path"</span>))
+<a href=#267 id=267 data-nosnippet>267</a>                .child(<span class="kw">if </span>path.is_empty() {
+<a href=#268 id=268 data-nosnippet>268</a>                    nothing(<span class="string">"No issue of it is open."</span>)
+<a href=#269 id=269 data-nosnippet>269</a>                } <span class="kw">else </span>{
+<a href=#270 id=270 data-nosnippet>270</a>                    el(<span class="string">"ol"</span>)
+<a href=#271 id=271 data-nosnippet>271</a>                        .class(<span class="string">"mj-ui-badges"</span>)
+<a href=#272 id=272 data-nosnippet>272</a>                        .attr(<span class="string">"aria-label"</span>, <span class="string">"The longest chain of open issues"</span>)
+<a href=#273 id=273 data-nosnippet>273</a>                        .children(
+<a href=#274 id=274 data-nosnippet>274</a>                            path.iter()
+<a href=#275 id=275 data-nosnippet>275</a>                                .map(|i| el(<span class="string">"li"</span>).child(chip(issue_href(i), i.clone()))),
+<a href=#276 id=276 data-nosnippet>276</a>                        )
+<a href=#277 id=277 data-nosnippet>277</a>                })
+<a href=#278 id=278 data-nosnippet>278</a>                .child(el(<span class="string">"h4"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(<span class="string">"Issues"</span>))
+<a href=#279 id=279 data-nosnippet>279</a>                .child(table(
+<a href=#280 id=280 data-nosnippet>280</a>                    <span class="kw-2">&amp;</span>[<span class="string">"Issue"</span>, <span class="string">"Status"</span>, <span class="string">"Priority"</span>, <span class="string">"Wave"</span>, <span class="string">"Blocked by"</span>],
+<a href=#281 id=281 data-nosnippet>281</a>                    rows,
+<a href=#282 id=282 data-nosnippet>282</a>                    <span class="string">"The milestone holds no issue."</span>,
+<a href=#283 id=283 data-nosnippet>283</a>                ))
+<a href=#284 id=284 data-nosnippet>284</a>        });
+<a href=#285 id=285 data-nosnippet>285</a>    panel(
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="string">"Milestone"</span>,
+<a href=#287 id=287 data-nosnippet>287</a>        <span class="string">"One milestone of the plan: what it holds, what can start, and what it waits for."</span>,
+<a href=#288 id=288 data-nosnippet>288</a>        body,
+<a href=#289 id=289 data-nosnippet>289</a>        <span class="kw-2">&amp;</span>[roadmap, issues],
+<a href=#290 id=290 data-nosnippet>290</a>    )
+<a href=#291 id=291 data-nosnippet>291</a>}
+<a href=#292 id=292 data-nosnippet>292</a>
+<a href=#293 id=293 data-nosnippet>293</a><span class="kw">fn </span>href_owned(id: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#294 id=294 data-nosnippet>294</a>    href(id)
+<a href=#295 id=295 data-nosnippet>295</a>}
 <a href=#296 id=296 data-nosnippet>296</a>
-<a href=#297 id=297 data-nosnippet>297</a>    <span class="kw">fn </span>answer(capability: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, value: Value) -&gt; Answer {
-<a href=#298 id=298 data-nosnippet>298</a>        Answer {
-<a href=#299 id=299 data-nosnippet>299</a>            source: Source::of(capability),
-<a href=#300 id=300 data-nosnippet>300</a>            route: <span class="prelude-val">None</span>,
-<a href=#301 id=301 data-nosnippet>301</a>            exposure: Exposure::default(),
-<a href=#302 id=302 data-nosnippet>302</a>            value: <span class="prelude-val">Ok</span>(value),
-<a href=#303 id=303 data-nosnippet>303</a>            took: Duration::from_millis(<span class="number">1</span>),
-<a href=#304 id=304 data-nosnippet>304</a>        }
-<a href=#305 id=305 data-nosnippet>305</a>    }
-<a href=#306 id=306 data-nosnippet>306</a>
-<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">fn </span>issue(id: <span class="kw-2">&amp;</span>str, status: <span class="kw-2">&amp;</span>str, deps: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; Value {
-<a href=#308 id=308 data-nosnippet>308</a>        <span class="macro">serde_json::json!</span>({ <span class="string">"id"</span>: id, <span class="string">"milestone"</span>: <span class="string">"M004"</span>, <span class="string">"status"</span>: status, <span class="string">"title"</span>: <span class="macro">format!</span>(<span class="string">"issue {id}"</span>),
-<a href=#309 id=309 data-nosnippet>309</a>            <span class="string">"priority"</span>: <span class="string">"p1"</span>, <span class="string">"wave"</span>: <span class="number">1</span>, <span class="string">"depends_on"</span>: deps, <span class="string">"blocked_by"</span>: [], <span class="string">"serves"</span>: [<span class="string">"INT-1"</span>] })
-<a href=#310 id=310 data-nosnippet>310</a>    }
-<a href=#311 id=311 data-nosnippet>311</a>
-<a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">fn </span>plan() -&gt; (Answer, Answer) {
-<a href=#313 id=313 data-nosnippet>313</a>        <span class="kw">let </span>roadmap = answer(
-<a href=#314 id=314 data-nosnippet>314</a>            <span class="string">"plan.roadmap"</span>,
-<a href=#315 id=315 data-nosnippet>315</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"milestones"</span>: [
-<a href=#316 id=316 data-nosnippet>316</a>                { <span class="string">"id"</span>: <span class="string">"M003"</span>, <span class="string">"status"</span>: <span class="string">"DONE"</span>, <span class="string">"order"</span>: <span class="number">3</span>, <span class="string">"priority"</span>: <span class="string">"p0"</span>, <span class="string">"title"</span>: <span class="string">"before"</span>,
-<a href=#317 id=317 data-nosnippet>317</a>                  <span class="string">"depends_on"</span>: [], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [<span class="string">"M004"</span>], <span class="string">"issues"</span>: [] },
-<a href=#318 id=318 data-nosnippet>318</a>                { <span class="string">"id"</span>: <span class="string">"M004"</span>, <span class="string">"status"</span>: <span class="string">"ACTIVE"</span>, <span class="string">"order"</span>: <span class="number">4</span>, <span class="string">"priority"</span>: <span class="string">"p0"</span>, <span class="string">"title"</span>: <span class="string">"the one"</span>,
-<a href=#319 id=319 data-nosnippet>319</a>                  <span class="string">"depends_on"</span>: [<span class="string">"M003"</span>], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [],
-<a href=#320 id=320 data-nosnippet>320</a>                  <span class="string">"counts"</span>: { <span class="string">"total"</span>: <span class="number">4</span>, <span class="string">"by_status"</span>: { <span class="string">"DONE"</span>: <span class="number">1</span>, <span class="string">"READY"</span>: <span class="number">1</span>, <span class="string">"BLOCKED"</span>: <span class="number">2 </span>} },
-<a href=#321 id=321 data-nosnippet>321</a>                  <span class="string">"issues"</span>: [<span class="string">"I0001"</span>, <span class="string">"I0002"</span>, <span class="string">"I0003"</span>, <span class="string">"I0004"</span>] }
-<a href=#322 id=322 data-nosnippet>322</a>            ]}),
-<a href=#323 id=323 data-nosnippet>323</a>        );
-<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let </span>issues = answer(
-<a href=#325 id=325 data-nosnippet>325</a>            <span class="string">"plan.issues"</span>,
-<a href=#326 id=326 data-nosnippet>326</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [
-<a href=#327 id=327 data-nosnippet>327</a>                issue(<span class="string">"I0001"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[]),
-<a href=#328 id=328 data-nosnippet>328</a>                issue(<span class="string">"I0002"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0001"</span>]),
-<a href=#329 id=329 data-nosnippet>329</a>                issue(<span class="string">"I0003"</span>, <span class="string">"BLOCKED"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0002"</span>]),
-<a href=#330 id=330 data-nosnippet>330</a>                issue(<span class="string">"I0004"</span>, <span class="string">"BLOCKED"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0003"</span>, <span class="string">"I0002"</span>]),
-<a href=#331 id=331 data-nosnippet>331</a>            ]}),
-<a href=#332 id=332 data-nosnippet>332</a>        );
-<a href=#333 id=333 data-nosnippet>333</a>        (roadmap, issues)
-<a href=#334 id=334 data-nosnippet>334</a>    }
-<a href=#335 id=335 data-nosnippet>335</a>
-<a href=#336 id=336 data-nosnippet>336</a>    <span class="doccomment">/// A milestone that gives no order, counts nothing blocked and holds no open issue says
-<a href=#337 id=337 data-nosnippet>337</a>    /// each of those rather than inventing a number or drawing an empty path.
-<a href=#338 id=338 data-nosnippet>338</a>    </span><span class="attr">#[test]
-<a href=#339 id=339 data-nosnippet>339</a>    </span><span class="kw">fn </span>a_milestone_with_nothing_open_says_so() {
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="kw">let </span>roadmap = answer(
-<a href=#341 id=341 data-nosnippet>341</a>            <span class="string">"plan.roadmap"</span>,
-<a href=#342 id=342 data-nosnippet>342</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"milestones"</span>: [
-<a href=#343 id=343 data-nosnippet>343</a>                { <span class="string">"id"</span>: <span class="string">"M009"</span>, <span class="string">"status"</span>: <span class="string">"DONE"</span>, <span class="string">"priority"</span>: <span class="string">"p2"</span>, <span class="string">"title"</span>: <span class="string">"done already"</span>,
-<a href=#344 id=344 data-nosnippet>344</a>                  <span class="string">"depends_on"</span>: [], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [],
-<a href=#345 id=345 data-nosnippet>345</a>                  <span class="string">"counts"</span>: { <span class="string">"total"</span>: <span class="number">1</span>, <span class="string">"by_status"</span>: { <span class="string">"DONE"</span>: <span class="number">1 </span>} }, <span class="string">"issues"</span>: [<span class="string">"I0009"</span>] }
-<a href=#346 id=346 data-nosnippet>346</a>            ]}),
-<a href=#347 id=347 data-nosnippet>347</a>        );
-<a href=#348 id=348 data-nosnippet>348</a>        <span class="kw">let </span>issues = answer(
-<a href=#349 id=349 data-nosnippet>349</a>            <span class="string">"plan.issues"</span>,
-<a href=#350 id=350 data-nosnippet>350</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [issue(<span class="string">"I0009"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[])] }),
-<a href=#351 id=351 data-nosnippet>351</a>        );
-<a href=#352 id=352 data-nosnippet>352</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M009"</span>).render();
-<a href=#353 id=353 data-nosnippet>353</a>        <span class="kw">for </span>want <span class="kw">in </span>[<span class="string">"M009 · order ? · p2"</span>, <span class="string">"No issue of it is open."</span>] {
-<a href=#354 id=354 data-nosnippet>354</a>            <span class="macro">assert!</span>(html.contains(want), <span class="string">"no {want}: {html}"</span>);
-<a href=#355 id=355 data-nosnippet>355</a>        }
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;none&lt;"</span>), <span class="string">"no blocked count is none: {html}"</span>);
-<a href=#357 id=357 data-nosnippet>357</a>    }
-<a href=#358 id=358 data-nosnippet>358</a>
-<a href=#359 id=359 data-nosnippet>359</a>    <span class="attr">#[test]
-<a href=#360 id=360 data-nosnippet>360</a>    </span><span class="kw">fn </span>the_critical_path_is_the_longest_chain_of_open_issues() {
-<a href=#361 id=361 data-nosnippet>361</a>        <span class="kw">let </span>(<span class="kw">_</span>, issues) = plan();
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>all = list(<span class="kw-2">&amp;</span>issues, <span class="string">"/issues"</span>);
-<a href=#363 id=363 data-nosnippet>363</a>        <span class="macro">assert_eq!</span>(critical_path(<span class="kw-2">&amp;</span>all), [<span class="string">"I0002"</span>, <span class="string">"I0003"</span>, <span class="string">"I0004"</span>]);
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>cyclic = <span class="macro">vec!</span>[issue(<span class="string">"I1"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I2"</span>]), issue(<span class="string">"I2"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I1"</span>])];
-<a href=#365 id=365 data-nosnippet>365</a>        <span class="macro">assert!</span>(critical_path(<span class="kw-2">&amp;</span>cyclic).len() &lt;= <span class="number">2</span>, <span class="string">"a cycle ends a chain"</span>);
-<a href=#366 id=366 data-nosnippet>366</a>    }
-<a href=#367 id=367 data-nosnippet>367</a>
-<a href=#368 id=368 data-nosnippet>368</a>    <span class="attr">#[test]
-<a href=#369 id=369 data-nosnippet>369</a>    </span><span class="kw">fn </span>the_inspector_links_every_issue_and_milestone_it_names() {
-<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let </span>(roadmap, issues) = plan();
-<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M004"</span>).render();
-<a href=#372 id=372 data-nosnippet>372</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"milestone\""</span>));
-<a href=#373 id=373 data-nosnippet>373</a>        <span class="kw">for </span>want <span class="kw">in </span>[
-<a href=#374 id=374 data-nosnippet>374</a>            <span class="string">"/ui/prs?issue=I0002#issue"</span>,
-<a href=#375 id=375 data-nosnippet>375</a>            <span class="string">"/ui/prs?issue=I0004#issue"</span>,
-<a href=#376 id=376 data-nosnippet>376</a>            <span class="string">"/ui/roadmap?milestone=M003#milestone"</span>,
-<a href=#377 id=377 data-nosnippet>377</a>            <span class="string">"INT-1"</span>,
-<a href=#378 id=378 data-nosnippet>378</a>        ] {
-<a href=#379 id=379 data-nosnippet>379</a>            <span class="macro">assert!</span>(html.contains(want), <span class="string">"no {want}: {html}"</span>);
-<a href=#380 id=380 data-nosnippet>380</a>        }
-<a href=#381 id=381 data-nosnippet>381</a>        <span class="macro">assert!</span>(
-<a href=#382 id=382 data-nosnippet>382</a>            html.contains(<span class="string">"1 of 4"</span>),
-<a href=#383 id=383 data-nosnippet>383</a>            <span class="string">"the meter says how many are done: {html}"
-<a href=#384 id=384 data-nosnippet>384</a>        </span>);
-<a href=#385 id=385 data-nosnippet>385</a>    }
-<a href=#386 id=386 data-nosnippet>386</a>
-<a href=#387 id=387 data-nosnippet>387</a>    <span class="attr">#[test]
-<a href=#388 id=388 data-nosnippet>388</a>    </span><span class="kw">fn </span>an_unknown_milestone_says_so_and_a_hostile_one_is_never_picked() {
-<a href=#389 id=389 data-nosnippet>389</a>        <span class="kw">let </span>(roadmap, issues) = plan();
-<a href=#390 id=390 data-nosnippet>390</a>        <span class="macro">assert!</span>(inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M999"</span>)
-<a href=#391 id=391 data-nosnippet>391</a>            .render()
-<a href=#392 id=392 data-nosnippet>392</a>            .contains(<span class="string">"M999 is not a milestone of the plan."</span>));
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">let </span>q = |v: <span class="kw-2">&amp;</span>str| <span class="macro">vec!</span>[(<span class="string">"milestone"</span>.to_string(), v.to_string())];
-<a href=#394 id=394 data-nosnippet>394</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">"M004"</span>)), <span class="prelude-val">Some</span>(<span class="string">"M004"</span>.into()));
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">assert_eq!</span>(
-<a href=#396 id=396 data-nosnippet>396</a>            picked(<span class="kw-2">&amp;</span>q(<span class="string">"development-runtime"</span>)),
-<a href=#397 id=397 data-nosnippet>397</a>            <span class="prelude-val">Some</span>(<span class="string">"development-runtime"</span>.into()),
-<a href=#398 id=398 data-nosnippet>398</a>            <span class="string">"a milestone named by a slug is a milestone"
-<a href=#399 id=399 data-nosnippet>399</a>        </span>);
-<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">"M0\" onclick=\"x"</span>)), <span class="prelude-val">None</span>);
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">""</span>)), <span class="prelude-val">None</span>);
-<a href=#402 id=402 data-nosnippet>402</a>    }
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a>    <span class="doccomment">/// An issue that names the milestone is one of its own even when the milestone's list
-<a href=#405 id=405 data-nosnippet>405</a>    /// leaves it out; an issue of another milestone is not.
-<a href=#406 id=406 data-nosnippet>406</a>    </span><span class="attr">#[test]
-<a href=#407 id=407 data-nosnippet>407</a>    </span><span class="kw">fn </span>an_issue_naming_the_milestone_is_its_own_though_the_list_omits_it() {
-<a href=#408 id=408 data-nosnippet>408</a>        <span class="kw">let </span>(roadmap, <span class="kw">_</span>) = plan();
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">let </span><span class="kw-2">mut </span>stray = issue(<span class="string">"I0099"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[]);
-<a href=#410 id=410 data-nosnippet>410</a>        stray[<span class="string">"milestone"</span>] = <span class="macro">serde_json::json!</span>(<span class="string">"M003"</span>);
-<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw">let </span>issues = answer(
-<a href=#412 id=412 data-nosnippet>412</a>            <span class="string">"plan.issues"</span>,
-<a href=#413 id=413 data-nosnippet>413</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [
-<a href=#414 id=414 data-nosnippet>414</a>                issue(<span class="string">"I0001"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[]),
-<a href=#415 id=415 data-nosnippet>415</a>                issue(<span class="string">"I0005"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[]),
-<a href=#416 id=416 data-nosnippet>416</a>                stray,
-<a href=#417 id=417 data-nosnippet>417</a>            ]}),
-<a href=#418 id=418 data-nosnippet>418</a>        );
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M004"</span>).render();
-<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"/ui/prs?issue=I0005#issue"</span>), <span class="string">"{html}"</span>);
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"I0099"</span>), <span class="string">"{html}"</span>);
-<a href=#422 id=422 data-nosnippet>422</a>    }
-<a href=#423 id=423 data-nosnippet>423</a>}
+<a href=#297 id=297 data-nosnippet>297</a><span class="attr">#[cfg(test)]
+<a href=#298 id=298 data-nosnippet>298</a></span><span class="kw">mod </span>tests {
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#300 id=300 data-nosnippet>300</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::source::{Exposure, Source};
+<a href=#301 id=301 data-nosnippet>301</a>    <span class="kw">use </span>std::time::Duration;
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="kw">fn </span>answer(capability: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, value: Value) -&gt; Answer {
+<a href=#304 id=304 data-nosnippet>304</a>        Answer {
+<a href=#305 id=305 data-nosnippet>305</a>            source: Source::of(capability),
+<a href=#306 id=306 data-nosnippet>306</a>            route: <span class="prelude-val">None</span>,
+<a href=#307 id=307 data-nosnippet>307</a>            exposure: Exposure::default(),
+<a href=#308 id=308 data-nosnippet>308</a>            value: <span class="prelude-val">Ok</span>(value),
+<a href=#309 id=309 data-nosnippet>309</a>            took: Duration::from_millis(<span class="number">1</span>),
+<a href=#310 id=310 data-nosnippet>310</a>        }
+<a href=#311 id=311 data-nosnippet>311</a>    }
+<a href=#312 id=312 data-nosnippet>312</a>
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">fn </span>issue(id: <span class="kw-2">&amp;</span>str, status: <span class="kw-2">&amp;</span>str, deps: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; Value {
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="macro">serde_json::json!</span>({ <span class="string">"id"</span>: id, <span class="string">"milestone"</span>: <span class="string">"M004"</span>, <span class="string">"status"</span>: status, <span class="string">"title"</span>: <span class="macro">format!</span>(<span class="string">"issue {id}"</span>),
+<a href=#315 id=315 data-nosnippet>315</a>            <span class="string">"priority"</span>: <span class="string">"p1"</span>, <span class="string">"wave"</span>: <span class="number">1</span>, <span class="string">"depends_on"</span>: deps, <span class="string">"blocked_by"</span>: [], <span class="string">"serves"</span>: [<span class="string">"INT-1"</span>] })
+<a href=#316 id=316 data-nosnippet>316</a>    }
+<a href=#317 id=317 data-nosnippet>317</a>
+<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">fn </span>plan() -&gt; (Answer, Answer) {
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">let </span>roadmap = answer(
+<a href=#320 id=320 data-nosnippet>320</a>            <span class="string">"plan.roadmap"</span>,
+<a href=#321 id=321 data-nosnippet>321</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"milestones"</span>: [
+<a href=#322 id=322 data-nosnippet>322</a>                { <span class="string">"id"</span>: <span class="string">"M003"</span>, <span class="string">"status"</span>: <span class="string">"DONE"</span>, <span class="string">"order"</span>: <span class="number">3</span>, <span class="string">"priority"</span>: <span class="string">"p0"</span>, <span class="string">"title"</span>: <span class="string">"before"</span>,
+<a href=#323 id=323 data-nosnippet>323</a>                  <span class="string">"depends_on"</span>: [], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [<span class="string">"M004"</span>], <span class="string">"issues"</span>: [] },
+<a href=#324 id=324 data-nosnippet>324</a>                { <span class="string">"id"</span>: <span class="string">"M004"</span>, <span class="string">"status"</span>: <span class="string">"ACTIVE"</span>, <span class="string">"order"</span>: <span class="number">4</span>, <span class="string">"priority"</span>: <span class="string">"p0"</span>, <span class="string">"title"</span>: <span class="string">"the one"</span>,
+<a href=#325 id=325 data-nosnippet>325</a>                  <span class="string">"depends_on"</span>: [<span class="string">"M003"</span>], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [],
+<a href=#326 id=326 data-nosnippet>326</a>                  <span class="string">"counts"</span>: { <span class="string">"total"</span>: <span class="number">4</span>, <span class="string">"by_status"</span>: { <span class="string">"DONE"</span>: <span class="number">1</span>, <span class="string">"READY"</span>: <span class="number">1</span>, <span class="string">"BLOCKED"</span>: <span class="number">2 </span>} },
+<a href=#327 id=327 data-nosnippet>327</a>                  <span class="string">"issues"</span>: [<span class="string">"I0001"</span>, <span class="string">"I0002"</span>, <span class="string">"I0003"</span>, <span class="string">"I0004"</span>] }
+<a href=#328 id=328 data-nosnippet>328</a>            ]}),
+<a href=#329 id=329 data-nosnippet>329</a>        );
+<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">let </span>issues = answer(
+<a href=#331 id=331 data-nosnippet>331</a>            <span class="string">"plan.issues"</span>,
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [
+<a href=#333 id=333 data-nosnippet>333</a>                issue(<span class="string">"I0001"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[]),
+<a href=#334 id=334 data-nosnippet>334</a>                issue(<span class="string">"I0002"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0001"</span>]),
+<a href=#335 id=335 data-nosnippet>335</a>                issue(<span class="string">"I0003"</span>, <span class="string">"BLOCKED"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0002"</span>]),
+<a href=#336 id=336 data-nosnippet>336</a>                issue(<span class="string">"I0004"</span>, <span class="string">"BLOCKED"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I0003"</span>, <span class="string">"I0002"</span>]),
+<a href=#337 id=337 data-nosnippet>337</a>            ]}),
+<a href=#338 id=338 data-nosnippet>338</a>        );
+<a href=#339 id=339 data-nosnippet>339</a>        (roadmap, issues)
+<a href=#340 id=340 data-nosnippet>340</a>    }
+<a href=#341 id=341 data-nosnippet>341</a>
+<a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// A milestone that gives no order, counts nothing blocked and holds no open issue says
+<a href=#343 id=343 data-nosnippet>343</a>    /// each of those rather than inventing a number or drawing an empty path.
+<a href=#344 id=344 data-nosnippet>344</a>    </span><span class="attr">#[test]
+<a href=#345 id=345 data-nosnippet>345</a>    </span><span class="kw">fn </span>a_milestone_with_nothing_open_says_so() {
+<a href=#346 id=346 data-nosnippet>346</a>        <span class="kw">let </span>roadmap = answer(
+<a href=#347 id=347 data-nosnippet>347</a>            <span class="string">"plan.roadmap"</span>,
+<a href=#348 id=348 data-nosnippet>348</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"milestones"</span>: [
+<a href=#349 id=349 data-nosnippet>349</a>                { <span class="string">"id"</span>: <span class="string">"M009"</span>, <span class="string">"status"</span>: <span class="string">"DONE"</span>, <span class="string">"priority"</span>: <span class="string">"p2"</span>, <span class="string">"title"</span>: <span class="string">"done already"</span>,
+<a href=#350 id=350 data-nosnippet>350</a>                  <span class="string">"depends_on"</span>: [], <span class="string">"blocked_by"</span>: [], <span class="string">"dependents"</span>: [],
+<a href=#351 id=351 data-nosnippet>351</a>                  <span class="string">"counts"</span>: { <span class="string">"total"</span>: <span class="number">1</span>, <span class="string">"by_status"</span>: { <span class="string">"DONE"</span>: <span class="number">1 </span>} }, <span class="string">"issues"</span>: [<span class="string">"I0009"</span>] }
+<a href=#352 id=352 data-nosnippet>352</a>            ]}),
+<a href=#353 id=353 data-nosnippet>353</a>        );
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="kw">let </span>issues = answer(
+<a href=#355 id=355 data-nosnippet>355</a>            <span class="string">"plan.issues"</span>,
+<a href=#356 id=356 data-nosnippet>356</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [issue(<span class="string">"I0009"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[])] }),
+<a href=#357 id=357 data-nosnippet>357</a>        );
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M009"</span>).render();
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="kw">for </span>want <span class="kw">in </span>[<span class="string">"M009 · order ? · p2"</span>, <span class="string">"No issue of it is open."</span>] {
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="macro">assert!</span>(html.contains(want), <span class="string">"no {want}: {html}"</span>);
+<a href=#361 id=361 data-nosnippet>361</a>        }
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;none&lt;"</span>), <span class="string">"no blocked count is none: {html}"</span>);
+<a href=#363 id=363 data-nosnippet>363</a>    }
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="attr">#[test]
+<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">fn </span>the_critical_path_is_the_longest_chain_of_open_issues() {
+<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">let </span>(<span class="kw">_</span>, issues) = plan();
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw">let </span>all = list(<span class="kw-2">&amp;</span>issues, <span class="string">"/issues"</span>);
+<a href=#369 id=369 data-nosnippet>369</a>        <span class="macro">assert_eq!</span>(critical_path(<span class="kw-2">&amp;</span>all), [<span class="string">"I0002"</span>, <span class="string">"I0003"</span>, <span class="string">"I0004"</span>]);
+<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let </span>cyclic = <span class="macro">vec!</span>[issue(<span class="string">"I1"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I2"</span>]), issue(<span class="string">"I2"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[<span class="string">"I1"</span>])];
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="macro">assert!</span>(critical_path(<span class="kw-2">&amp;</span>cyclic).len() &lt;= <span class="number">2</span>, <span class="string">"a cycle ends a chain"</span>);
+<a href=#372 id=372 data-nosnippet>372</a>    }
+<a href=#373 id=373 data-nosnippet>373</a>
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="attr">#[test]
+<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">fn </span>the_inspector_links_every_issue_and_milestone_it_names() {
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw">let </span>(roadmap, issues) = plan();
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M004"</span>).render();
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"milestone\""</span>));
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">for </span>want <span class="kw">in </span>[
+<a href=#380 id=380 data-nosnippet>380</a>            <span class="string">"/ui/prs?issue=I0002#issue"</span>,
+<a href=#381 id=381 data-nosnippet>381</a>            <span class="string">"/ui/prs?issue=I0004#issue"</span>,
+<a href=#382 id=382 data-nosnippet>382</a>            <span class="string">"/ui/roadmap?milestone=M003#milestone"</span>,
+<a href=#383 id=383 data-nosnippet>383</a>            <span class="string">"INT-1"</span>,
+<a href=#384 id=384 data-nosnippet>384</a>        ] {
+<a href=#385 id=385 data-nosnippet>385</a>            <span class="macro">assert!</span>(html.contains(want), <span class="string">"no {want}: {html}"</span>);
+<a href=#386 id=386 data-nosnippet>386</a>        }
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="macro">assert!</span>(
+<a href=#388 id=388 data-nosnippet>388</a>            html.contains(<span class="string">"1 of 4"</span>),
+<a href=#389 id=389 data-nosnippet>389</a>            <span class="string">"the meter says how many are done: {html}"
+<a href=#390 id=390 data-nosnippet>390</a>        </span>);
+<a href=#391 id=391 data-nosnippet>391</a>    }
+<a href=#392 id=392 data-nosnippet>392</a>
+<a href=#393 id=393 data-nosnippet>393</a>    <span class="attr">#[test]
+<a href=#394 id=394 data-nosnippet>394</a>    </span><span class="kw">fn </span>an_unknown_milestone_says_so_and_a_hostile_one_is_never_picked() {
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">let </span>(roadmap, issues) = plan();
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert!</span>(inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M999"</span>)
+<a href=#397 id=397 data-nosnippet>397</a>            .render()
+<a href=#398 id=398 data-nosnippet>398</a>            .contains(<span class="string">"M999 is not a milestone of the plan."</span>));
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">let </span>q = |v: <span class="kw-2">&amp;</span>str| <span class="macro">vec!</span>[(<span class="string">"milestone"</span>.to_string(), v.to_string())];
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">"M004"</span>)), <span class="prelude-val">Some</span>(<span class="string">"M004"</span>.into()));
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="macro">assert_eq!</span>(
+<a href=#402 id=402 data-nosnippet>402</a>            picked(<span class="kw-2">&amp;</span>q(<span class="string">"development-runtime"</span>)),
+<a href=#403 id=403 data-nosnippet>403</a>            <span class="prelude-val">Some</span>(<span class="string">"development-runtime"</span>.into()),
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="string">"a milestone named by a slug is a milestone"
+<a href=#405 id=405 data-nosnippet>405</a>        </span>);
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">"M0\" onclick=\"x"</span>)), <span class="prelude-val">None</span>);
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="macro">assert_eq!</span>(picked(<span class="kw-2">&amp;</span>q(<span class="string">""</span>)), <span class="prelude-val">None</span>);
+<a href=#408 id=408 data-nosnippet>408</a>    }
+<a href=#409 id=409 data-nosnippet>409</a>
+<a href=#410 id=410 data-nosnippet>410</a>    <span class="doccomment">/// An issue that names the milestone is one of its own even when the milestone's list
+<a href=#411 id=411 data-nosnippet>411</a>    /// leaves it out; an issue of another milestone is not.
+<a href=#412 id=412 data-nosnippet>412</a>    </span><span class="attr">#[test]
+<a href=#413 id=413 data-nosnippet>413</a>    </span><span class="kw">fn </span>an_issue_naming_the_milestone_is_its_own_though_the_list_omits_it() {
+<a href=#414 id=414 data-nosnippet>414</a>        <span class="kw">let </span>(roadmap, <span class="kw">_</span>) = plan();
+<a href=#415 id=415 data-nosnippet>415</a>        <span class="kw">let </span><span class="kw-2">mut </span>stray = issue(<span class="string">"I0099"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[]);
+<a href=#416 id=416 data-nosnippet>416</a>        stray[<span class="string">"milestone"</span>] = <span class="macro">serde_json::json!</span>(<span class="string">"M003"</span>);
+<a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">let </span>issues = answer(
+<a href=#418 id=418 data-nosnippet>418</a>            <span class="string">"plan.issues"</span>,
+<a href=#419 id=419 data-nosnippet>419</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [
+<a href=#420 id=420 data-nosnippet>420</a>                issue(<span class="string">"I0001"</span>, <span class="string">"DONE"</span>, <span class="kw-2">&amp;</span>[]),
+<a href=#421 id=421 data-nosnippet>421</a>                issue(<span class="string">"I0005"</span>, <span class="string">"READY"</span>, <span class="kw-2">&amp;</span>[]),
+<a href=#422 id=422 data-nosnippet>422</a>                stray,
+<a href=#423 id=423 data-nosnippet>423</a>            ]}),
+<a href=#424 id=424 data-nosnippet>424</a>        );
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M004"</span>).render();
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"/ui/prs?issue=I0005#issue"</span>), <span class="string">"{html}"</span>);
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"I0099"</span>), <span class="string">"{html}"</span>);
+<a href=#428 id=428 data-nosnippet>428</a>    }
+<a href=#429 id=429 data-nosnippet>429</a>
+<a href=#430 id=430 data-nosnippet>430</a>    <span class="doccomment">/// An issue that gives no wave or priority says so in its row rather than leaving it blank.
+<a href=#431 id=431 data-nosnippet>431</a>    </span><span class="attr">#[test]
+<a href=#432 id=432 data-nosnippet>432</a>    </span><span class="kw">fn </span>an_issue_without_a_wave_says_none() {
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="kw">let </span>roadmap = answer(
+<a href=#434 id=434 data-nosnippet>434</a>            <span class="string">"plan.roadmap"</span>,
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"milestones"</span>: [
+<a href=#436 id=436 data-nosnippet>436</a>                { <span class="string">"id"</span>: <span class="string">"M010"</span>, <span class="string">"status"</span>: <span class="string">"ACTIVE"</span>, <span class="string">"title"</span>: <span class="string">"waveless"</span>, <span class="string">"issues"</span>: [<span class="string">"I0100"</span>] }
+<a href=#437 id=437 data-nosnippet>437</a>            ]}),
+<a href=#438 id=438 data-nosnippet>438</a>        );
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="kw">let </span>issues = answer(
+<a href=#440 id=440 data-nosnippet>440</a>            <span class="string">"plan.issues"</span>,
+<a href=#441 id=441 data-nosnippet>441</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"issues"</span>: [
+<a href=#442 id=442 data-nosnippet>442</a>                { <span class="string">"id"</span>: <span class="string">"I0100"</span>, <span class="string">"milestone"</span>: <span class="string">"M010"</span>, <span class="string">"status"</span>: <span class="string">"READY"</span>, <span class="string">"title"</span>: <span class="string">"no wave"</span>, <span class="string">"wave"</span>: null }
+<a href=#443 id=443 data-nosnippet>443</a>            ]}),
+<a href=#444 id=444 data-nosnippet>444</a>        );
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="kw">let </span>html = inspector(<span class="kw-2">&amp;</span>roadmap, <span class="kw-2">&amp;</span>issues, <span class="string">"M010"</span>).render();
+<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(
+<a href=#447 id=447 data-nosnippet>447</a>            html.contains(<span class="string">"&lt;td class=\"mj-ui-mono\"&gt;none&lt;/td&gt;&lt;td class=\"mj-ui-mono\"&gt;none&lt;/td&gt;"</span>),
+<a href=#448 id=448 data-nosnippet>448</a>            <span class="string">"{html}"
+<a href=#449 id=449 data-nosnippet>449</a>        </span>);
+<a href=#450 id=450 data-nosnippet>450</a>    }
+<a href=#451 id=451 data-nosnippet>451</a>}
 </code></pre></div></section></main></body></html>

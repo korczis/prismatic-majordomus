@@ -54,7 +54,7 @@
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.21.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.21.0">v0.21.0</span>
       
     </a>
     <div class="flex items-center gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -189,8 +189,8 @@ flowchart TD
   B --&gt; I[validators and gates]
   I --&gt; J[a refusal, with the command that reproduces it]
 </pre>
-<p>The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. As this page is built, that registry holds 2256 capabilities: 183 of them are exposed as MCP tools, 2119 as MCP resources, 187 as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.</p>
-<p>I want to be precise about what this does not cover, because the honest version is more useful than the tidy one. The command line is <strong>not</strong> a pure projection. The executable's command line has 199 runnable commands, and not every one of them has a capability behind it — the tool says how many do not itself, in the same report, on the line <code>commands no capability claims</code>. Those commands are a second declaration, checked against the first rather than derived from it. Closing that gap is ongoing work, and until it closes, "one declaration, every surface" is true of the API, the MCP surface and the documentation, and aspirational for the CLI.</p>
+<p>The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. As this page is built, that registry holds 2268 capabilities: 183 of them are exposed as MCP tools, 2131 as MCP resources, 187 as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.</p>
+<p>I want to be precise about what this does not cover, because the honest version is more useful than the tidy one. The command line is <strong>not</strong> a pure projection. The executable's command line has 200 runnable commands, and not every one of them has a capability behind it — the tool says how many do not itself, in the same report, on the line <code>commands no capability claims</code>. Those commands are a second declaration, checked against the first rather than derived from it. Closing that gap is ongoing work, and until it closes, "one declaration, every surface" is true of the API, the MCP surface and the documentation, and aspirational for the CLI.</p>
 <h2 id="claims-as-objects"><a class="zola-anchor" href="#claims-as-objects" aria-label="Anchor link for: claims-as-objects">Claims as objects</a></h2>
 <p>The mechanism I actually want to show you is narrower and, I think, more transferable.</p>
 <p>Every capability sentence on the project's public website comes from one file, <code>docs/CLAIMS.yaml</code>. A claim there is a typed object: an id, one sentence in the present tense, the canonical file that defines the behaviour, the file that implements it, the test that proves it, and a status. The statuses are declared as data in the same file — guaranteed, advisory, planned, rejected — with their meanings, so the generator cannot invent a fifth.</p>
@@ -203,7 +203,7 @@ flowchart TD
 <span class="giallo-l"><span>blocking rules:      not measured here — scripts/ci/rule-proof-check is the one reader</span></span>
 <span class="giallo-l"><span>claim-proof-check: every guaranteed claim names a test that names it back</span></span></code></pre>
 <p>The matrix holds 226 guaranteed claims as this page is built, and the check runs strict over every one of them: the exemption baseline beside it contains comments and no exempted claim. There is nothing on a waiver list.</p>
-<p>The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. The repository's object graph indexes 168 rule documents; the rules they define resolve in a deterministic order, and every blocking one carries a validator — <code>scripts/ci/rule-proof-check</code> is the reader that decides it. The standard package alone, the part every adopting repository inherits, declares 48 rules, 42 of them blocking. A few rules declare that a human reader enforces them — and that is a <em>typed</em> state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.</p>
+<p>The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. The repository's object graph indexes 169 rule documents; the rules they define resolve in a deterministic order, and every blocking one carries a validator — <code>scripts/ci/rule-proof-check</code> is the reader that decides it. The standard package alone, the part every adopting repository inherits, declares 48 rules, 42 of them blocking. A few rules declare that a human reader enforces them — and that is a <em>typed</em> state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.</p>
 <h2 id="the-place-where-it-stops"><a class="zola-anchor" href="#the-place-where-it-stops" aria-label="Anchor link for: the-place-where-it-stops">The place where it stops</a></h2>
 <p>Here is the part that a promotional article would leave out.</p>
 <p>Everything above proves that a proof <strong>exists</strong>. None of it proves the proof <strong>ran</strong>.</p>
@@ -225,8 +225,8 @@ flowchart TD
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Statement</th><th>Status</th><th>How you can check it</th></tr></thead><tbody>
 <tr><td>Every guaranteed claim names a runnable test that names it back</td><td>Verified, enforced</td><td><code>scripts/ci/claim-proof-check --strict</code>, exit 0, empty baseline</td></tr>
-<tr><td>One registry renders the HTTP API, OpenAPI, MCP and the docs</td><td>Verified, measured</td><td><code>majordomus capabilities projections</code>: 2256 rows, 187 HTTP, 183 MCP tools, 2119 MCP resources</td></tr>
-<tr><td>The CLI is derived from that registry</td><td><strong>Not true yet</strong></td><td><code>majordomus capabilities projections</code> counts which of the 199 runnable commands no capability claims</td></tr>
+<tr><td>One registry renders the HTTP API, OpenAPI, MCP and the docs</td><td>Verified, measured</td><td><code>majordomus capabilities projections</code>: 2268 rows, 187 HTTP, 183 MCP tools, 2131 MCP resources</td></tr>
+<tr><td>The CLI is derived from that registry</td><td><strong>Not true yet</strong></td><td><code>majordomus capabilities projections</code> counts which of the 200 runnable commands no capability claims</td></tr>
 <tr><td>Every blocking rule carries a validator</td><td>Verified</td><td><code>scripts/ci/rule-proof-check</code>, exit 0</td></tr>
 <tr><td>Claims carry a recorded proof state</td><td><strong>Implemented, not fed by CI</strong></td><td>ledger holds 14 executions, all local; 0 of 244 claims proven</td></tr>
 <tr><td>The published site is generated from the repository</td><td>Verified, deployed</td><td><code>build.json</code> names the version, the commit and the generator</td></tr>
@@ -300,9 +300,9 @@ flowchart TD
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -310,7 +310,7 @@ flowchart TD
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012" class="font-mono underline">81178f5</a> · inputs <span class="font-mono">4c89f3e1eee9</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

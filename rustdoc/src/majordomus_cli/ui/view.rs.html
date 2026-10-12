@@ -5,757 +5,958 @@
 <a href=#5 id=5 data-nosnippet>5</a>//! The source of a value is shown in the UI itself — a tile's title, a panel's "Source"
 <a href=#6 id=6 data-nosnippet>6</a>//! line. The UI is its own product; the Cockpit is its low-level reference, so each source
 <a href=#7 id=7 data-nosnippet>7</a>//! carries one quiet "technical view" link to the Cockpit's page for that capability, for the
-<a href=#8 id=8 data-nosnippet>8</a>//! reader who wants the registry behind a value. Nothing else leads there (ADR 0135).
-<a href=#9 id=9 data-nosnippet>9</a>//!
-<a href=#10 id=10 data-nosnippet>10</a>//! Charts are drawn here as SVG, on the server: they are complete without JavaScript, they
-<a href=#11 id=11 data-nosnippet>11</a>//! carry their numbers as text beside them, and they draw only what a capability answered —
-<a href=#12 id=12 data-nosnippet>12</a>//! a series nobody measured is not drawn at all.
-<a href=#13 id=13 data-nosnippet>13</a>
-<a href=#14 id=14 data-nosnippet>14</a></span><span class="kw">use </span>serde_json::Value;
-<a href=#15 id=15 data-nosnippet>15</a>
-<a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::html::{el, El};
-<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::view::word_badge;
-<a href=#18 id=18 data-nosnippet>18</a>
-<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">super</span>::icons::icon;
-<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span><span class="kw">super</span>::source::{Answer, Availability, Reading};
-<a href=#21 id=21 data-nosnippet>21</a>
-<a href=#22 id=22 data-nosnippet>22</a><span class="doccomment">/// The tones the design system declares for a glyph or a series (`share/design/tokens.yaml`,
-<a href=#23 id=23 data-nosnippet>23</a>/// `tones`). A component takes one by name; nothing here names a colour.
-<a href=#24 id=24 data-nosnippet>24</a></span><span class="kw">pub const </span>TONES: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[<span class="string">"blue"</span>, <span class="string">"violet"</span>, <span class="string">"green"</span>, <span class="string">"cyan"</span>, <span class="string">"orange"</span>, <span class="string">"rose"</span>];
-<a href=#25 id=25 data-nosnippet>25</a>
-<a href=#26 id=26 data-nosnippet>26</a><span class="comment">// ---------------------------------------------------------------- the hero
-<a href=#27 id=27 data-nosnippet>27</a>
-<a href=#28 id=28 data-nosnippet>28</a></span><span class="doccomment">/// The hero band every screen opens with: the screen's glyph, its title, one line saying
-<a href=#29 id=29 data-nosnippet>29</a>/// what it is for, one sentence of lead, and the group of KPI tiles beside them.
-<a href=#30 id=30 data-nosnippet>30</a></span><span class="kw">pub fn </span>hero(glyph: <span class="kw-2">&amp;</span>str, tone: <span class="kw-2">&amp;</span>str, title: <span class="kw-2">&amp;</span>str, tagline: <span class="kw-2">&amp;</span>str, lead: <span class="kw-2">&amp;</span>str, kpis: Vec&lt;El&gt;) -&gt; El {
-<a href=#31 id=31 data-nosnippet>31</a>    el(<span class="string">"section"</span>)
-<a href=#32 id=32 data-nosnippet>32</a>        .class(<span class="string">"mj-ui-hero"</span>)
-<a href=#33 id=33 data-nosnippet>33</a>        .attr(<span class="string">"aria-labelledby"</span>, <span class="string">"mj-ui-title"</span>)
-<a href=#34 id=34 data-nosnippet>34</a>        .child(
-<a href=#35 id=35 data-nosnippet>35</a>            el(<span class="string">"div"</span>)
-<a href=#36 id=36 data-nosnippet>36</a>                .class(<span class="string">"mj-ui-hero-text"</span>)
-<a href=#37 id=37 data-nosnippet>37</a>                .child(
-<a href=#38 id=38 data-nosnippet>38</a>                    el(<span class="string">"div"</span>)
-<a href=#39 id=39 data-nosnippet>39</a>                        .class(<span class="string">"mj-ui-hero-heading"</span>)
-<a href=#40 id=40 data-nosnippet>40</a>                        .child(
-<a href=#41 id=41 data-nosnippet>41</a>                            el(<span class="string">"span"</span>)
-<a href=#42 id=42 data-nosnippet>42</a>                                .class(<span class="macro">format!</span>(<span class="string">"mj-ui-hero-glyph mj-tone--{tone}"</span>))
-<a href=#43 id=43 data-nosnippet>43</a>                                .child(icon(glyph)),
-<a href=#44 id=44 data-nosnippet>44</a>                        )
-<a href=#45 id=45 data-nosnippet>45</a>                        .child(
-<a href=#46 id=46 data-nosnippet>46</a>                            el(<span class="string">"h1"</span>)
-<a href=#47 id=47 data-nosnippet>47</a>                                .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-title"</span>)
-<a href=#48 id=48 data-nosnippet>48</a>                                .class(<span class="string">"mj-ui-title"</span>)
-<a href=#49 id=49 data-nosnippet>49</a>                                .text(title),
-<a href=#50 id=50 data-nosnippet>50</a>                        ),
-<a href=#51 id=51 data-nosnippet>51</a>                )
-<a href=#52 id=52 data-nosnippet>52</a>                .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-tagline"</span>).text(tagline))
-<a href=#53 id=53 data-nosnippet>53</a>                .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-lead"</span>).text(lead)),
-<a href=#54 id=54 data-nosnippet>54</a>        )
-<a href=#55 id=55 data-nosnippet>55</a>        .child(
-<a href=#56 id=56 data-nosnippet>56</a>            el(<span class="string">"div"</span>)
-<a href=#57 id=57 data-nosnippet>57</a>                .class(<span class="string">"mj-ui-hero-art"</span>)
-<a href=#58 id=58 data-nosnippet>58</a>                .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
-<a href=#59 id=59 data-nosnippet>59</a>                .raw(<span class="kw">super</span>::shell::MARK),
-<a href=#60 id=60 data-nosnippet>60</a>        )
-<a href=#61 id=61 data-nosnippet>61</a>        .child(
-<a href=#62 id=62 data-nosnippet>62</a>            el(<span class="string">"ul"</span>)
-<a href=#63 id=63 data-nosnippet>63</a>                .class(<span class="string">"mj-ui-hero-kpis"</span>)
-<a href=#64 id=64 data-nosnippet>64</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"{title} at a glance"</span>))
-<a href=#65 id=65 data-nosnippet>65</a>                .children(
-<a href=#66 id=66 data-nosnippet>66</a>                    kpis.into_iter()
-<a href=#67 id=67 data-nosnippet>67</a>                        .map(|k| el(<span class="string">"li"</span>).class(<span class="string">"mj-ui-kpi-item"</span>).child(k)),
-<a href=#68 id=68 data-nosnippet>68</a>                ),
-<a href=#69 id=69 data-nosnippet>69</a>        )
-<a href=#70 id=70 data-nosnippet>70</a>}
-<a href=#71 id=71 data-nosnippet>71</a>
-<a href=#72 id=72 data-nosnippet>72</a><span class="doccomment">/// One KPI tile of a hero group: a label, the value the reading holds and, as its title,
-<a href=#73 id=73 data-nosnippet>73</a>/// where the value was read from.
-<a href=#74 id=74 data-nosnippet>74</a></span><span class="kw">pub fn </span>kpi(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
-<a href=#75 id=75 data-nosnippet>75</a>    kpi_with(label, reading, shown(reading), <span class="prelude-val">None</span>)
-<a href=#76 id=76 data-nosnippet>76</a>}
-<a href=#77 id=77 data-nosnippet>77</a>
-<a href=#78 id=78 data-nosnippet>78</a><span class="doccomment">/// A KPI tile whose value is the length of the list or map at the reading's pointer: the
-<a href=#79 id=79 data-nosnippet>79</a>/// one count a screen may take of an answer, because it is the answer's own size.
-<a href=#80 id=80 data-nosnippet>80</a></span><span class="kw">pub fn </span>kpi_count(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
-<a href=#81 id=81 data-nosnippet>81</a>    <span class="kw">let </span>value = <span class="kw">match </span><span class="kw-2">&amp;</span>reading.state {
-<a href=#82 id=82 data-nosnippet>82</a>        Availability::Available(Value::Array(items)) =&gt; items.len().to_string(),
-<a href=#83 id=83 data-nosnippet>83</a>        Availability::Available(Value::Object(map)) =&gt; map.len().to_string(),
-<a href=#84 id=84 data-nosnippet>84</a>        <span class="kw">_ </span>=&gt; shown(reading),
-<a href=#85 id=85 data-nosnippet>85</a>    };
-<a href=#86 id=86 data-nosnippet>86</a>    kpi_with(label, reading, value, <span class="prelude-val">None</span>)
-<a href=#87 id=87 data-nosnippet>87</a>}
-<a href=#88 id=88 data-nosnippet>88</a>
-<a href=#89 id=89 data-nosnippet>89</a><span class="doccomment">/// A KPI tile whose value is a state word, drawn with its status.
-<a href=#90 id=90 data-nosnippet>90</a></span><span class="kw">pub fn </span>kpi_state(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
-<a href=#91 id=91 data-nosnippet>91</a>    <span class="kw">let </span>badge = reading
-<a href=#92 id=92 data-nosnippet>92</a>        .text()
-<a href=#93 id=93 data-nosnippet>93</a>        .filter(|w| !w.is_empty())
-<a href=#94 id=94 data-nosnippet>94</a>        .map(|w| word_badge(<span class="kw-2">&amp;</span>w));
-<a href=#95 id=95 data-nosnippet>95</a>    kpi_with(label, reading, shown(reading), badge)
-<a href=#96 id=96 data-nosnippet>96</a>}
-<a href=#97 id=97 data-nosnippet>97</a>
-<a href=#98 id=98 data-nosnippet>98</a><span class="kw">fn </span>kpi_with(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading, value: String, badge: <span class="prelude-ty">Option</span>&lt;El&gt;) -&gt; El {
-<a href=#99 id=99 data-nosnippet>99</a>    el(<span class="string">"span"</span>)
-<a href=#100 id=100 data-nosnippet>100</a>        .class(<span class="string">"mj-ui-kpi"</span>)
-<a href=#101 id=101 data-nosnippet>101</a>        .attr(<span class="string">"title"</span>, <span class="macro">format!</span>(<span class="string">"read from {}"</span>, reading.cite()))
-<a href=#102 id=102 data-nosnippet>102</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-label"</span>).text(label))
-<a href=#103 id=103 data-nosnippet>103</a>        .child(<span class="kw">match </span>badge {
-<a href=#104 id=104 data-nosnippet>104</a>            <span class="prelude-val">Some</span>(b) =&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-value"</span>).child(b),
-<a href=#105 id=105 data-nosnippet>105</a>            <span class="prelude-val">None </span>=&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-value"</span>).text(value),
-<a href=#106 id=106 data-nosnippet>106</a>        })
-<a href=#107 id=107 data-nosnippet>107</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-source"</span>).text(reading.cite()))
-<a href=#108 id=108 data-nosnippet>108</a>}
-<a href=#109 id=109 data-nosnippet>109</a>
-<a href=#110 id=110 data-nosnippet>110</a><span class="doccomment">/// What a reading shows: its value, or which way it is missing. A number is shown as the
-<a href=#111 id=111 data-nosnippet>111</a>/// source gave it, rounded to two places when it is a fraction.
-<a href=#112 id=112 data-nosnippet>112</a></span><span class="kw">pub fn </span>shown(r: <span class="kw-2">&amp;</span>Reading) -&gt; String {
-<a href=#113 id=113 data-nosnippet>113</a>    <span class="kw">match </span><span class="kw-2">&amp;</span>r.state {
-<a href=#114 id=114 data-nosnippet>114</a>        Availability::Available(Value::String(s)) =&gt; s.clone(),
-<a href=#115 id=115 data-nosnippet>115</a>        Availability::Available(Value::Number(n)) =&gt; number(n),
-<a href=#116 id=116 data-nosnippet>116</a>        Availability::Available(Value::Bool(b)) =&gt; <span class="kw">if </span><span class="kw-2">*</span>b { <span class="string">"yes" </span>} <span class="kw">else </span>{ <span class="string">"no" </span>}.into(),
-<a href=#117 id=117 data-nosnippet>117</a>        Availability::Available(v) =&gt; v.to_string(),
-<a href=#118 id=118 data-nosnippet>118</a>        Availability::Absent =&gt; <span class="string">"none"</span>.into(),
-<a href=#119 id=119 data-nosnippet>119</a>        Availability::Failed(<span class="kw">_</span>) =&gt; <span class="string">"not answered"</span>.into(),
-<a href=#120 id=120 data-nosnippet>120</a>    }
-<a href=#121 id=121 data-nosnippet>121</a>}
-<a href=#122 id=122 data-nosnippet>122</a>
-<a href=#123 id=123 data-nosnippet>123</a><span class="kw">fn </span>number(n: <span class="kw-2">&amp;</span>serde_json::Number) -&gt; String {
-<a href=#124 id=124 data-nosnippet>124</a>    <span class="comment">// an integer is written as the source wrote it; only a fraction is rounded
-<a href=#125 id=125 data-nosnippet>125</a>    </span><span class="kw">match </span>n.as_f64() {
-<a href=#126 id=126 data-nosnippet>126</a>        <span class="prelude-val">Some</span>(f) <span class="kw">if </span>n.is_f64() =&gt; {
-<a href=#127 id=127 data-nosnippet>127</a>            <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">"{f:.2}"</span>);
-<a href=#128 id=128 data-nosnippet>128</a>            s.trim_end_matches(<span class="string">'0'</span>).trim_end_matches(<span class="string">'.'</span>).to_string()
-<a href=#129 id=129 data-nosnippet>129</a>        }
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">_ </span>=&gt; n.to_string(),
-<a href=#131 id=131 data-nosnippet>131</a>    }
-<a href=#132 id=132 data-nosnippet>132</a>}
-<a href=#133 id=133 data-nosnippet>133</a>
-<a href=#134 id=134 data-nosnippet>134</a><span class="comment">// ---------------------------------------------------------------- panels
-<a href=#135 id=135 data-nosnippet>135</a>
-<a href=#136 id=136 data-nosnippet>136</a></span><span class="doccomment">/// A panel: a heading, one line under it, the body, and the line naming its sources.
-<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub fn </span>panel(title: <span class="kw-2">&amp;</span>str, sub: <span class="kw-2">&amp;</span>str, body: El, answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
-<a href=#138 id=138 data-nosnippet>138</a>    panel_to(title, sub, <span class="prelude-val">None</span>, body, answers)
-<a href=#139 id=139 data-nosnippet>139</a>}
-<a href=#140 id=140 data-nosnippet>140</a>
-<a href=#141 id=141 data-nosnippet>141</a><span class="doccomment">/// A panel that leads to the screen holding the whole of what it summarises: its heading
-<a href=#142 id=142 data-nosnippet>142</a>/// carries "View all", as every panel of the owner's references does.
-<a href=#143 id=143 data-nosnippet>143</a></span><span class="kw">pub fn </span>panel_to(title: <span class="kw-2">&amp;</span>str, sub: <span class="kw-2">&amp;</span>str, more: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, body: El, answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
-<a href=#144 id=144 data-nosnippet>144</a>    <span class="kw">let </span><span class="kw-2">mut </span>head = el(<span class="string">"header"</span>).class(<span class="string">"mj-ui-panel-head"</span>).child(
-<a href=#145 id=145 data-nosnippet>145</a>        el(<span class="string">"div"</span>)
-<a href=#146 id=146 data-nosnippet>146</a>            .class(<span class="string">"mj-ui-panel-heading"</span>)
-<a href=#147 id=147 data-nosnippet>147</a>            .child(el(<span class="string">"h2"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(title))
-<a href=#148 id=148 data-nosnippet>148</a>            .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-panel-sub"</span>).text(sub)),
-<a href=#149 id=149 data-nosnippet>149</a>    );
-<a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(href) = more {
-<a href=#151 id=151 data-nosnippet>151</a>        head = head.child(
-<a href=#152 id=152 data-nosnippet>152</a>            el(<span class="string">"a"</span>)
-<a href=#153 id=153 data-nosnippet>153</a>                .class(<span class="string">"mj-ui-more"</span>)
-<a href=#154 id=154 data-nosnippet>154</a>                .attr(<span class="string">"href"</span>, href)
-<a href=#155 id=155 data-nosnippet>155</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"View all: {title}"</span>))
-<a href=#156 id=156 data-nosnippet>156</a>                .child(el(<span class="string">"span"</span>).text(<span class="string">"View all"</span>))
-<a href=#157 id=157 data-nosnippet>157</a>                .child(icon(<span class="string">"arrow-right"</span>)),
-<a href=#158 id=158 data-nosnippet>158</a>        );
-<a href=#159 id=159 data-nosnippet>159</a>    }
-<a href=#160 id=160 data-nosnippet>160</a>    el(<span class="string">"section"</span>)
-<a href=#161 id=161 data-nosnippet>161</a>        .class(<span class="string">"mj-ui-panel"</span>)
-<a href=#162 id=162 data-nosnippet>162</a>        .attr(<span class="string">"aria-label"</span>, title)
-<a href=#163 id=163 data-nosnippet>163</a>        .child(head)
-<a href=#164 id=164 data-nosnippet>164</a>        .child(el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-panel-body"</span>).child(body))
-<a href=#165 id=165 data-nosnippet>165</a>        .child(sources(answers))
-<a href=#166 id=166 data-nosnippet>166</a>}
-<a href=#167 id=167 data-nosnippet>167</a>
-<a href=#168 id=168 data-nosnippet>168</a><span class="doccomment">/// A KPI tile that leads to the screen explaining its value.
-<a href=#169 id=169 data-nosnippet>169</a></span><span class="kw">pub fn </span>kpi_to(tile: El, href: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#170 id=170 data-nosnippet>170</a>    el(<span class="string">"a"</span>)
-<a href=#171 id=171 data-nosnippet>171</a>        .class(<span class="string">"mj-ui-kpi-anchor"</span>)
-<a href=#172 id=172 data-nosnippet>172</a>        .attr(<span class="string">"href"</span>, href)
-<a href=#173 id=173 data-nosnippet>173</a>        .child(tile)
-<a href=#174 id=174 data-nosnippet>174</a>}
-<a href=#175 id=175 data-nosnippet>175</a>
-<a href=#176 id=176 data-nosnippet>176</a><span class="doccomment">/// A row of KPI tiles outside a hero, each in its own list item.
-<a href=#177 id=177 data-nosnippet>177</a></span><span class="kw">pub fn </span>strip(tiles: Vec&lt;El&gt;) -&gt; El {
-<a href=#178 id=178 data-nosnippet>178</a>    el(<span class="string">"ul"</span>).class(<span class="string">"mj-ui-strip"</span>).children(
-<a href=#179 id=179 data-nosnippet>179</a>        tiles
-<a href=#180 id=180 data-nosnippet>180</a>            .into_iter()
-<a href=#181 id=181 data-nosnippet>181</a>            .map(|k| el(<span class="string">"li"</span>).class(<span class="string">"mj-ui-kpi-item"</span>).child(k)),
-<a href=#182 id=182 data-nosnippet>182</a>    )
-<a href=#183 id=183 data-nosnippet>183</a>}
-<a href=#184 id=184 data-nosnippet>184</a>
-<a href=#185 id=185 data-nosnippet>185</a><span class="doccomment">/// A wide panel, spanning the grid.
-<a href=#186 id=186 data-nosnippet>186</a></span><span class="kw">pub fn </span>wide(panel: El) -&gt; El {
-<a href=#187 id=187 data-nosnippet>187</a>    el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-span"</span>).child(panel)
-<a href=#188 id=188 data-nosnippet>188</a>}
-<a href=#189 id=189 data-nosnippet>189</a>
-<a href=#190 id=190 data-nosnippet>190</a><span class="doccomment">/// The sources of a panel: for each, the capability and how long it took, then every other
-<a href=#191 id=191 data-nosnippet>191</a>/// way to ask it the same question — the API route a browser opens, the command a person
-<a href=#192 id=192 data-nosnippet>192</a>/// types, the MCP tool an agent calls — and its technical reference in the Cockpit. Each is
-<a href=#193 id=193 data-nosnippet>193</a>/// the capability's own declaration, as `capabilities.describe` answered it.
-<a href=#194 id=194 data-nosnippet>194</a></span><span class="kw">pub fn </span>sources(answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
-<a href=#195 id=195 data-nosnippet>195</a>    <span class="kw">let </span><span class="kw-2">mut </span>box_ = el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-sources"</span>);
-<a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">for </span>a <span class="kw">in </span>answers {
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="kw">let </span><span class="kw-2">mut </span>line = el(<span class="string">"p"</span>)
-<a href=#198 id=198 data-nosnippet>198</a>            .class(<span class="string">"mj-ui-source"</span>)
-<a href=#199 id=199 data-nosnippet>199</a>            .child(
-<a href=#200 id=200 data-nosnippet>200</a>                el(<span class="string">"span"</span>)
-<a href=#201 id=201 data-nosnippet>201</a>                    .class(<span class="string">"mj-ui-source-name"</span>)
-<a href=#202 id=202 data-nosnippet>202</a>                    .text(a.source.capability),
-<a href=#203 id=203 data-nosnippet>203</a>            )
-<a href=#204 id=204 data-nosnippet>204</a>            .child(
-<a href=#205 id=205 data-nosnippet>205</a>                el(<span class="string">"span"</span>)
-<a href=#206 id=206 data-nosnippet>206</a>                    .class(<span class="string">"mj-ui-dim"</span>)
-<a href=#207 id=207 data-nosnippet>207</a>                    .text(<span class="macro">format!</span>(<span class="string">"{} ms"</span>, a.took.as_millis())),
-<a href=#208 id=208 data-nosnippet>208</a>            );
-<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = <span class="kw-2">&amp;</span>a.exposure.get {
-<a href=#210 id=210 data-nosnippet>210</a>            line = line.child(chip_link(<span class="string">"API"</span>, path, <span class="string">"open the same answer as JSON"</span>));
-<a href=#211 id=211 data-nosnippet>211</a>        }
-<a href=#212 id=212 data-nosnippet>212</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(cli) = <span class="kw-2">&amp;</span>a.exposure.cli {
-<a href=#213 id=213 data-nosnippet>213</a>            line = line.child(chip(<span class="string">"CLI"</span>, cli));
-<a href=#214 id=214 data-nosnippet>214</a>        }
-<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(tool) = <span class="kw-2">&amp;</span>a.exposure.mcp {
-<a href=#216 id=216 data-nosnippet>216</a>            line = line.child(chip(<span class="string">"MCP"</span>, tool));
-<a href=#217 id=217 data-nosnippet>217</a>        }
-<a href=#218 id=218 data-nosnippet>218</a>        line = line.child(
-<a href=#219 id=219 data-nosnippet>219</a>            el(<span class="string">"a"</span>)
-<a href=#220 id=220 data-nosnippet>220</a>                .class(<span class="string">"mj-ui-technical"</span>)
-<a href=#221 id=221 data-nosnippet>221</a>                .attr(<span class="string">"href"</span>, technical(a.source.capability))
-<a href=#222 id=222 data-nosnippet>222</a>                .attr(<span class="string">"title"</span>, <span class="string">"the capability behind this value, in the Cockpit"</span>)
-<a href=#223 id=223 data-nosnippet>223</a>                .text(<span class="string">"technical view"</span>),
-<a href=#224 id=224 data-nosnippet>224</a>        );
-<a href=#225 id=225 data-nosnippet>225</a>        box_ = box_.child(line);
-<a href=#226 id=226 data-nosnippet>226</a>    }
-<a href=#227 id=227 data-nosnippet>227</a>    box_
-<a href=#228 id=228 data-nosnippet>228</a>}
-<a href=#229 id=229 data-nosnippet>229</a>
-<a href=#230 id=230 data-nosnippet>230</a><span class="kw">fn </span>chip(kind: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#231 id=231 data-nosnippet>231</a>    el(<span class="string">"span"</span>)
-<a href=#232 id=232 data-nosnippet>232</a>        .class(<span class="string">"mj-ui-chip"</span>)
-<a href=#233 id=233 data-nosnippet>233</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-chip-kind"</span>).text(kind))
-<a href=#234 id=234 data-nosnippet>234</a>        .child(el(<span class="string">"code"</span>).class(<span class="string">"mj-ui-chip-value"</span>).text(value))
-<a href=#235 id=235 data-nosnippet>235</a>}
-<a href=#236 id=236 data-nosnippet>236</a>
-<a href=#237 id=237 data-nosnippet>237</a><span class="kw">fn </span>chip_link(kind: <span class="kw-2">&amp;</span>str, href: <span class="kw-2">&amp;</span>str, title: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#238 id=238 data-nosnippet>238</a>    el(<span class="string">"a"</span>)
-<a href=#239 id=239 data-nosnippet>239</a>        .class(<span class="string">"mj-ui-chip mj-ui-chip--link"</span>)
-<a href=#240 id=240 data-nosnippet>240</a>        .attr(<span class="string">"href"</span>, href)
-<a href=#241 id=241 data-nosnippet>241</a>        .attr(<span class="string">"title"</span>, title)
-<a href=#242 id=242 data-nosnippet>242</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-chip-kind"</span>).text(kind))
-<a href=#243 id=243 data-nosnippet>243</a>        .child(el(<span class="string">"code"</span>).class(<span class="string">"mj-ui-chip-value"</span>).text(href))
-<a href=#244 id=244 data-nosnippet>244</a>}
-<a href=#245 id=245 data-nosnippet>245</a>
-<a href=#246 id=246 data-nosnippet>246</a><span class="doccomment">/// The Cockpit's page for a capability: the low-level reference behind a value.
-<a href=#247 id=247 data-nosnippet>247</a></span><span class="kw">pub fn </span>technical(capability: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#248 id=248 data-nosnippet>248</a>    <span class="macro">format!</span>(<span class="string">"{}/capabilities/{capability}"</span>, <span class="kw">crate</span>::cockpit::PREFIX)
-<a href=#249 id=249 data-nosnippet>249</a>}
-<a href=#250 id=250 data-nosnippet>250</a>
-<a href=#251 id=251 data-nosnippet>251</a><span class="doccomment">/// The body of a panel whose source could not answer.
-<a href=#252 id=252 data-nosnippet>252</a></span><span class="kw">pub fn </span>unanswered(a: <span class="kw-2">&amp;</span>Answer) -&gt; <span class="prelude-ty">Option</span>&lt;El&gt; {
-<a href=#253 id=253 data-nosnippet>253</a>    a.value.as_ref().err().map(|reason| {
-<a href=#254 id=254 data-nosnippet>254</a>        el(<span class="string">"p"</span>)
-<a href=#255 id=255 data-nosnippet>255</a>            .class(<span class="string">"mj-ui-empty"</span>)
-<a href=#256 id=256 data-nosnippet>256</a>            .child(word_badge(<span class="string">"unknown"</span>))
-<a href=#257 id=257 data-nosnippet>257</a>            .text(<span class="macro">format!</span>(
-<a href=#258 id=258 data-nosnippet>258</a>                <span class="string">" {} could not answer: {reason}"</span>,
-<a href=#259 id=259 data-nosnippet>259</a>                a.source.capability
-<a href=#260 id=260 data-nosnippet>260</a>            ))
-<a href=#261 id=261 data-nosnippet>261</a>    })
-<a href=#262 id=262 data-nosnippet>262</a>}
-<a href=#263 id=263 data-nosnippet>263</a>
-<a href=#264 id=264 data-nosnippet>264</a><span class="doccomment">/// An empty list, said in words.
-<a href=#265 id=265 data-nosnippet>265</a></span><span class="kw">pub fn </span>nothing(what: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#266 id=266 data-nosnippet>266</a>    el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-empty"</span>).text(what)
-<a href=#267 id=267 data-nosnippet>267</a>}
-<a href=#268 id=268 data-nosnippet>268</a>
-<a href=#269 id=269 data-nosnippet>269</a><span class="doccomment">/// A state word an entry carries, or `unknown` when it carries none: an absent status is
-<a href=#270 id=270 data-nosnippet>270</a>/// never an empty badge, and never a healthy one (project.ui-derived-state).
-<a href=#271 id=271 data-nosnippet>271</a></span><span class="kw">pub fn </span>state_word(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#272 id=272 data-nosnippet>272</a>    entry
-<a href=#273 id=273 data-nosnippet>273</a>        .get(key)
-<a href=#274 id=274 data-nosnippet>274</a>        .and_then(Value::as_str)
-<a href=#275 id=275 data-nosnippet>275</a>        .filter(|w| !w.is_empty())
-<a href=#276 id=276 data-nosnippet>276</a>        .unwrap_or(<span class="string">"unknown"</span>)
-<a href=#277 id=277 data-nosnippet>277</a>        .to_string()
-<a href=#278 id=278 data-nosnippet>278</a>}
-<a href=#279 id=279 data-nosnippet>279</a>
-<a href=#280 id=280 data-nosnippet>280</a><span class="doccomment">/// A state word as its badge.
-<a href=#281 id=281 data-nosnippet>281</a></span><span class="kw">pub fn </span>state(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#282 id=282 data-nosnippet>282</a>    word_badge(<span class="kw-2">&amp;</span>state_word(entry, key).to_lowercase())
+<a href=#8 id=8 data-nosnippet>8</a>//! reader who wants the registry behind a value. An object a screen names and the UI has no
+<a href=#9 id=9 data-nosnippet>9</a>//! screen of its own for — a document, a test, a declaring file, an ADR — leads to the
+<a href=#10 id=10 data-nosnippet>10</a>//! Cockpit's page for that object, its technical view, and only when the index holds it.
+<a href=#11 id=11 data-nosnippet>11</a>//! Nothing else leads there (ADR 0135: the diagnostic view of the capability, object or graph
+<a href=#12 id=12 data-nosnippet>12</a>//! a panel read).
+<a href=#13 id=13 data-nosnippet>13</a>//!
+<a href=#14 id=14 data-nosnippet>14</a>//! Every entity a screen names is a link: to the UI's own screen or inspector for it when
+<a href=#15 id=15 data-nosnippet>15</a>//! there is one, to its technical view when there is not, and to the address its source gives
+<a href=#16 id=16 data-nosnippet>16</a>//! when it lives elsewhere. A value a source does not have is said as `none`, never left blank,
+<a href=#17 id=17 data-nosnippet>17</a>//! and a list cut short says how much is left out and where the rest is.
+<a href=#18 id=18 data-nosnippet>18</a>//!
+<a href=#19 id=19 data-nosnippet>19</a>//! Charts are drawn here as SVG, on the server: they are complete without JavaScript, they
+<a href=#20 id=20 data-nosnippet>20</a>//! carry their numbers as text beside them, and they draw only what a capability answered —
+<a href=#21 id=21 data-nosnippet>21</a>//! a series nobody measured is not drawn at all.
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">use </span>serde_json::Value;
+<a href=#24 id=24 data-nosnippet>24</a>
+<a href=#25 id=25 data-nosnippet>25</a><span class="kw">use </span><span class="kw">crate</span>::capability::Context;
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::html::{el, El};
+<a href=#27 id=27 data-nosnippet>27</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::view::word_badge;
+<a href=#28 id=28 data-nosnippet>28</a>
+<a href=#29 id=29 data-nosnippet>29</a><span class="kw">use </span><span class="kw">super</span>::icons::icon;
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use </span><span class="kw">super</span>::source::{Answer, Availability, Reading};
+<a href=#31 id=31 data-nosnippet>31</a>
+<a href=#32 id=32 data-nosnippet>32</a><span class="doccomment">/// The tones the design system declares for a glyph or a series (`share/design/tokens.yaml`,
+<a href=#33 id=33 data-nosnippet>33</a>/// `tones`). A component takes one by name; nothing here names a colour.
+<a href=#34 id=34 data-nosnippet>34</a></span><span class="kw">pub const </span>TONES: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[<span class="string">"blue"</span>, <span class="string">"violet"</span>, <span class="string">"green"</span>, <span class="string">"cyan"</span>, <span class="string">"orange"</span>, <span class="string">"rose"</span>];
+<a href=#35 id=35 data-nosnippet>35</a>
+<a href=#36 id=36 data-nosnippet>36</a><span class="comment">// ---------------------------------------------------------------- the hero
+<a href=#37 id=37 data-nosnippet>37</a>
+<a href=#38 id=38 data-nosnippet>38</a></span><span class="doccomment">/// The hero band every screen opens with: the screen's glyph, its title, one line saying
+<a href=#39 id=39 data-nosnippet>39</a>/// what it is for, one sentence of lead, and the group of KPI tiles beside them.
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">pub fn </span>hero(glyph: <span class="kw-2">&amp;</span>str, tone: <span class="kw-2">&amp;</span>str, title: <span class="kw-2">&amp;</span>str, tagline: <span class="kw-2">&amp;</span>str, lead: <span class="kw-2">&amp;</span>str, kpis: Vec&lt;El&gt;) -&gt; El {
+<a href=#41 id=41 data-nosnippet>41</a>    el(<span class="string">"section"</span>)
+<a href=#42 id=42 data-nosnippet>42</a>        .class(<span class="string">"mj-ui-hero"</span>)
+<a href=#43 id=43 data-nosnippet>43</a>        .attr(<span class="string">"aria-labelledby"</span>, <span class="string">"mj-ui-title"</span>)
+<a href=#44 id=44 data-nosnippet>44</a>        .child(
+<a href=#45 id=45 data-nosnippet>45</a>            el(<span class="string">"div"</span>)
+<a href=#46 id=46 data-nosnippet>46</a>                .class(<span class="string">"mj-ui-hero-text"</span>)
+<a href=#47 id=47 data-nosnippet>47</a>                .child(
+<a href=#48 id=48 data-nosnippet>48</a>                    el(<span class="string">"div"</span>)
+<a href=#49 id=49 data-nosnippet>49</a>                        .class(<span class="string">"mj-ui-hero-heading"</span>)
+<a href=#50 id=50 data-nosnippet>50</a>                        .child(
+<a href=#51 id=51 data-nosnippet>51</a>                            el(<span class="string">"span"</span>)
+<a href=#52 id=52 data-nosnippet>52</a>                                .class(<span class="macro">format!</span>(<span class="string">"mj-ui-hero-glyph mj-tone--{tone}"</span>))
+<a href=#53 id=53 data-nosnippet>53</a>                                .child(icon(glyph)),
+<a href=#54 id=54 data-nosnippet>54</a>                        )
+<a href=#55 id=55 data-nosnippet>55</a>                        .child(
+<a href=#56 id=56 data-nosnippet>56</a>                            el(<span class="string">"h1"</span>)
+<a href=#57 id=57 data-nosnippet>57</a>                                .attr(<span class="string">"id"</span>, <span class="string">"mj-ui-title"</span>)
+<a href=#58 id=58 data-nosnippet>58</a>                                .class(<span class="string">"mj-ui-title"</span>)
+<a href=#59 id=59 data-nosnippet>59</a>                                .text(title),
+<a href=#60 id=60 data-nosnippet>60</a>                        ),
+<a href=#61 id=61 data-nosnippet>61</a>                )
+<a href=#62 id=62 data-nosnippet>62</a>                .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-tagline"</span>).text(tagline))
+<a href=#63 id=63 data-nosnippet>63</a>                .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-lead"</span>).text(lead)),
+<a href=#64 id=64 data-nosnippet>64</a>        )
+<a href=#65 id=65 data-nosnippet>65</a>        .child(
+<a href=#66 id=66 data-nosnippet>66</a>            el(<span class="string">"div"</span>)
+<a href=#67 id=67 data-nosnippet>67</a>                .class(<span class="string">"mj-ui-hero-art"</span>)
+<a href=#68 id=68 data-nosnippet>68</a>                .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
+<a href=#69 id=69 data-nosnippet>69</a>                .raw(<span class="kw">super</span>::shell::MARK),
+<a href=#70 id=70 data-nosnippet>70</a>        )
+<a href=#71 id=71 data-nosnippet>71</a>        .child(
+<a href=#72 id=72 data-nosnippet>72</a>            el(<span class="string">"ul"</span>)
+<a href=#73 id=73 data-nosnippet>73</a>                .class(<span class="string">"mj-ui-hero-kpis"</span>)
+<a href=#74 id=74 data-nosnippet>74</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"{title} at a glance"</span>))
+<a href=#75 id=75 data-nosnippet>75</a>                .children(
+<a href=#76 id=76 data-nosnippet>76</a>                    kpis.into_iter()
+<a href=#77 id=77 data-nosnippet>77</a>                        .map(|k| el(<span class="string">"li"</span>).class(<span class="string">"mj-ui-kpi-item"</span>).child(k)),
+<a href=#78 id=78 data-nosnippet>78</a>                ),
+<a href=#79 id=79 data-nosnippet>79</a>        )
+<a href=#80 id=80 data-nosnippet>80</a>}
+<a href=#81 id=81 data-nosnippet>81</a>
+<a href=#82 id=82 data-nosnippet>82</a><span class="doccomment">/// One KPI tile of a hero group: a label, the value the reading holds and, as its title,
+<a href=#83 id=83 data-nosnippet>83</a>/// where the value was read from.
+<a href=#84 id=84 data-nosnippet>84</a></span><span class="kw">pub fn </span>kpi(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
+<a href=#85 id=85 data-nosnippet>85</a>    kpi_with(label, reading, shown(reading), <span class="prelude-val">None</span>)
+<a href=#86 id=86 data-nosnippet>86</a>}
+<a href=#87 id=87 data-nosnippet>87</a>
+<a href=#88 id=88 data-nosnippet>88</a><span class="doccomment">/// A KPI tile whose value is the length of the list or map at the reading's pointer: the
+<a href=#89 id=89 data-nosnippet>89</a>/// one count a screen may take of an answer, because it is the answer's own size.
+<a href=#90 id=90 data-nosnippet>90</a></span><span class="kw">pub fn </span>kpi_count(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
+<a href=#91 id=91 data-nosnippet>91</a>    <span class="kw">let </span>value = <span class="kw">match </span><span class="kw-2">&amp;</span>reading.state {
+<a href=#92 id=92 data-nosnippet>92</a>        Availability::Available(Value::Array(items)) =&gt; items.len().to_string(),
+<a href=#93 id=93 data-nosnippet>93</a>        Availability::Available(Value::Object(map)) =&gt; map.len().to_string(),
+<a href=#94 id=94 data-nosnippet>94</a>        <span class="kw">_ </span>=&gt; shown(reading),
+<a href=#95 id=95 data-nosnippet>95</a>    };
+<a href=#96 id=96 data-nosnippet>96</a>    kpi_with(label, reading, value, <span class="prelude-val">None</span>)
+<a href=#97 id=97 data-nosnippet>97</a>}
+<a href=#98 id=98 data-nosnippet>98</a>
+<a href=#99 id=99 data-nosnippet>99</a><span class="doccomment">/// A KPI tile whose value is a state word, drawn with its status.
+<a href=#100 id=100 data-nosnippet>100</a></span><span class="kw">pub fn </span>kpi_state(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading) -&gt; El {
+<a href=#101 id=101 data-nosnippet>101</a>    <span class="kw">let </span>badge = reading
+<a href=#102 id=102 data-nosnippet>102</a>        .text()
+<a href=#103 id=103 data-nosnippet>103</a>        .filter(|w| !w.is_empty())
+<a href=#104 id=104 data-nosnippet>104</a>        .map(|w| word_badge(<span class="kw-2">&amp;</span>w));
+<a href=#105 id=105 data-nosnippet>105</a>    kpi_with(label, reading, shown(reading), badge)
+<a href=#106 id=106 data-nosnippet>106</a>}
+<a href=#107 id=107 data-nosnippet>107</a>
+<a href=#108 id=108 data-nosnippet>108</a><span class="kw">fn </span>kpi_with(label: <span class="kw-2">&amp;</span>str, reading: <span class="kw-2">&amp;</span>Reading, value: String, badge: <span class="prelude-ty">Option</span>&lt;El&gt;) -&gt; El {
+<a href=#109 id=109 data-nosnippet>109</a>    el(<span class="string">"span"</span>)
+<a href=#110 id=110 data-nosnippet>110</a>        .class(<span class="string">"mj-ui-kpi"</span>)
+<a href=#111 id=111 data-nosnippet>111</a>        .attr(<span class="string">"title"</span>, <span class="macro">format!</span>(<span class="string">"read from {}"</span>, reading.cite()))
+<a href=#112 id=112 data-nosnippet>112</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-label"</span>).text(label))
+<a href=#113 id=113 data-nosnippet>113</a>        .child(<span class="kw">match </span>badge {
+<a href=#114 id=114 data-nosnippet>114</a>            <span class="prelude-val">Some</span>(b) =&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-value"</span>).child(b),
+<a href=#115 id=115 data-nosnippet>115</a>            <span class="prelude-val">None </span>=&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-value"</span>).text(value),
+<a href=#116 id=116 data-nosnippet>116</a>        })
+<a href=#117 id=117 data-nosnippet>117</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-kpi-source"</span>).text(reading.cite()))
+<a href=#118 id=118 data-nosnippet>118</a>}
+<a href=#119 id=119 data-nosnippet>119</a>
+<a href=#120 id=120 data-nosnippet>120</a><span class="doccomment">/// What a reading shows: its value, or which way it is missing. A number is shown as the
+<a href=#121 id=121 data-nosnippet>121</a>/// source gave it, rounded to two places when it is a fraction.
+<a href=#122 id=122 data-nosnippet>122</a></span><span class="kw">pub fn </span>shown(r: <span class="kw-2">&amp;</span>Reading) -&gt; String {
+<a href=#123 id=123 data-nosnippet>123</a>    <span class="kw">match </span><span class="kw-2">&amp;</span>r.state {
+<a href=#124 id=124 data-nosnippet>124</a>        Availability::Available(Value::String(s)) =&gt; s.clone(),
+<a href=#125 id=125 data-nosnippet>125</a>        Availability::Available(Value::Number(n)) =&gt; number(n),
+<a href=#126 id=126 data-nosnippet>126</a>        Availability::Available(Value::Bool(b)) =&gt; <span class="kw">if </span><span class="kw-2">*</span>b { <span class="string">"yes" </span>} <span class="kw">else </span>{ <span class="string">"no" </span>}.into(),
+<a href=#127 id=127 data-nosnippet>127</a>        Availability::Available(v) =&gt; v.to_string(),
+<a href=#128 id=128 data-nosnippet>128</a>        Availability::Absent =&gt; <span class="string">"none"</span>.into(),
+<a href=#129 id=129 data-nosnippet>129</a>        Availability::Failed(<span class="kw">_</span>) =&gt; <span class="string">"not answered"</span>.into(),
+<a href=#130 id=130 data-nosnippet>130</a>    }
+<a href=#131 id=131 data-nosnippet>131</a>}
+<a href=#132 id=132 data-nosnippet>132</a>
+<a href=#133 id=133 data-nosnippet>133</a><span class="kw">fn </span>number(n: <span class="kw-2">&amp;</span>serde_json::Number) -&gt; String {
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="comment">// an integer is written as the source wrote it; only a fraction is rounded
+<a href=#135 id=135 data-nosnippet>135</a>    </span><span class="kw">match </span>n.as_f64() {
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="prelude-val">Some</span>(f) <span class="kw">if </span>n.is_f64() =&gt; {
+<a href=#137 id=137 data-nosnippet>137</a>            <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">"{f:.2}"</span>);
+<a href=#138 id=138 data-nosnippet>138</a>            s.trim_end_matches(<span class="string">'0'</span>).trim_end_matches(<span class="string">'.'</span>).to_string()
+<a href=#139 id=139 data-nosnippet>139</a>        }
+<a href=#140 id=140 data-nosnippet>140</a>        <span class="kw">_ </span>=&gt; n.to_string(),
+<a href=#141 id=141 data-nosnippet>141</a>    }
+<a href=#142 id=142 data-nosnippet>142</a>}
+<a href=#143 id=143 data-nosnippet>143</a>
+<a href=#144 id=144 data-nosnippet>144</a><span class="comment">// ---------------------------------------------------------------- panels
+<a href=#145 id=145 data-nosnippet>145</a>
+<a href=#146 id=146 data-nosnippet>146</a></span><span class="doccomment">/// A panel: a heading, one line under it, the body, and the line naming its sources.
+<a href=#147 id=147 data-nosnippet>147</a></span><span class="kw">pub fn </span>panel(title: <span class="kw-2">&amp;</span>str, sub: <span class="kw-2">&amp;</span>str, body: El, answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
+<a href=#148 id=148 data-nosnippet>148</a>    panel_to(title, sub, <span class="prelude-val">None</span>, body, answers)
+<a href=#149 id=149 data-nosnippet>149</a>}
+<a href=#150 id=150 data-nosnippet>150</a>
+<a href=#151 id=151 data-nosnippet>151</a><span class="doccomment">/// A panel that leads to the screen holding the whole of what it summarises: its heading
+<a href=#152 id=152 data-nosnippet>152</a>/// carries "View all", as every panel of the owner's references does.
+<a href=#153 id=153 data-nosnippet>153</a></span><span class="kw">pub fn </span>panel_to(title: <span class="kw-2">&amp;</span>str, sub: <span class="kw-2">&amp;</span>str, more: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, body: El, answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
+<a href=#154 id=154 data-nosnippet>154</a>    <span class="kw">let </span><span class="kw-2">mut </span>head = el(<span class="string">"header"</span>).class(<span class="string">"mj-ui-panel-head"</span>).child(
+<a href=#155 id=155 data-nosnippet>155</a>        el(<span class="string">"div"</span>)
+<a href=#156 id=156 data-nosnippet>156</a>            .class(<span class="string">"mj-ui-panel-heading"</span>)
+<a href=#157 id=157 data-nosnippet>157</a>            .child(el(<span class="string">"h2"</span>).class(<span class="string">"mj-ui-panel-title"</span>).text(title))
+<a href=#158 id=158 data-nosnippet>158</a>            .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-panel-sub"</span>).text(sub)),
+<a href=#159 id=159 data-nosnippet>159</a>    );
+<a href=#160 id=160 data-nosnippet>160</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(href) = more {
+<a href=#161 id=161 data-nosnippet>161</a>        head = head.child(
+<a href=#162 id=162 data-nosnippet>162</a>            el(<span class="string">"a"</span>)
+<a href=#163 id=163 data-nosnippet>163</a>                .class(<span class="string">"mj-ui-more"</span>)
+<a href=#164 id=164 data-nosnippet>164</a>                .attr(<span class="string">"href"</span>, href)
+<a href=#165 id=165 data-nosnippet>165</a>                .attr(<span class="string">"aria-label"</span>, <span class="macro">format!</span>(<span class="string">"View all: {title}"</span>))
+<a href=#166 id=166 data-nosnippet>166</a>                .child(el(<span class="string">"span"</span>).text(<span class="string">"View all"</span>))
+<a href=#167 id=167 data-nosnippet>167</a>                .child(icon(<span class="string">"arrow-right"</span>)),
+<a href=#168 id=168 data-nosnippet>168</a>        );
+<a href=#169 id=169 data-nosnippet>169</a>    }
+<a href=#170 id=170 data-nosnippet>170</a>    el(<span class="string">"section"</span>)
+<a href=#171 id=171 data-nosnippet>171</a>        .class(<span class="string">"mj-ui-panel"</span>)
+<a href=#172 id=172 data-nosnippet>172</a>        .attr(<span class="string">"aria-label"</span>, title)
+<a href=#173 id=173 data-nosnippet>173</a>        .child(head)
+<a href=#174 id=174 data-nosnippet>174</a>        .child(el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-panel-body"</span>).child(body))
+<a href=#175 id=175 data-nosnippet>175</a>        .child(sources(answers))
+<a href=#176 id=176 data-nosnippet>176</a>}
+<a href=#177 id=177 data-nosnippet>177</a>
+<a href=#178 id=178 data-nosnippet>178</a><span class="doccomment">/// A KPI tile that leads to the screen explaining its value.
+<a href=#179 id=179 data-nosnippet>179</a></span><span class="kw">pub fn </span>kpi_to(tile: El, href: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#180 id=180 data-nosnippet>180</a>    el(<span class="string">"a"</span>)
+<a href=#181 id=181 data-nosnippet>181</a>        .class(<span class="string">"mj-ui-kpi-anchor"</span>)
+<a href=#182 id=182 data-nosnippet>182</a>        .attr(<span class="string">"href"</span>, href)
+<a href=#183 id=183 data-nosnippet>183</a>        .child(tile)
+<a href=#184 id=184 data-nosnippet>184</a>}
+<a href=#185 id=185 data-nosnippet>185</a>
+<a href=#186 id=186 data-nosnippet>186</a><span class="doccomment">/// A row of KPI tiles outside a hero, each in its own list item.
+<a href=#187 id=187 data-nosnippet>187</a></span><span class="kw">pub fn </span>strip(tiles: Vec&lt;El&gt;) -&gt; El {
+<a href=#188 id=188 data-nosnippet>188</a>    el(<span class="string">"ul"</span>).class(<span class="string">"mj-ui-strip"</span>).children(
+<a href=#189 id=189 data-nosnippet>189</a>        tiles
+<a href=#190 id=190 data-nosnippet>190</a>            .into_iter()
+<a href=#191 id=191 data-nosnippet>191</a>            .map(|k| el(<span class="string">"li"</span>).class(<span class="string">"mj-ui-kpi-item"</span>).child(k)),
+<a href=#192 id=192 data-nosnippet>192</a>    )
+<a href=#193 id=193 data-nosnippet>193</a>}
+<a href=#194 id=194 data-nosnippet>194</a>
+<a href=#195 id=195 data-nosnippet>195</a><span class="doccomment">/// A wide panel, spanning the grid.
+<a href=#196 id=196 data-nosnippet>196</a></span><span class="kw">pub fn </span>wide(panel: El) -&gt; El {
+<a href=#197 id=197 data-nosnippet>197</a>    el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-span"</span>).child(panel)
+<a href=#198 id=198 data-nosnippet>198</a>}
+<a href=#199 id=199 data-nosnippet>199</a>
+<a href=#200 id=200 data-nosnippet>200</a><span class="doccomment">/// The sources of a panel: for each, the capability and how long it took, then every other
+<a href=#201 id=201 data-nosnippet>201</a>/// way to ask it the same question — the API route a browser opens, the command a person
+<a href=#202 id=202 data-nosnippet>202</a>/// types, the MCP tool an agent calls — and its technical reference in the Cockpit. Each is
+<a href=#203 id=203 data-nosnippet>203</a>/// the capability's own declaration, as `capabilities.describe` answered it.
+<a href=#204 id=204 data-nosnippet>204</a></span><span class="kw">pub fn </span>sources(answers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Answer]) -&gt; El {
+<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">let </span><span class="kw-2">mut </span>box_ = el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-sources"</span>);
+<a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">for </span>a <span class="kw">in </span>answers {
+<a href=#207 id=207 data-nosnippet>207</a>        <span class="kw">let </span><span class="kw-2">mut </span>line = el(<span class="string">"p"</span>)
+<a href=#208 id=208 data-nosnippet>208</a>            .class(<span class="string">"mj-ui-source"</span>)
+<a href=#209 id=209 data-nosnippet>209</a>            .child(
+<a href=#210 id=210 data-nosnippet>210</a>                el(<span class="string">"span"</span>)
+<a href=#211 id=211 data-nosnippet>211</a>                    .class(<span class="string">"mj-ui-source-name"</span>)
+<a href=#212 id=212 data-nosnippet>212</a>                    .text(a.source.capability),
+<a href=#213 id=213 data-nosnippet>213</a>            )
+<a href=#214 id=214 data-nosnippet>214</a>            .child(
+<a href=#215 id=215 data-nosnippet>215</a>                el(<span class="string">"span"</span>)
+<a href=#216 id=216 data-nosnippet>216</a>                    .class(<span class="string">"mj-ui-dim"</span>)
+<a href=#217 id=217 data-nosnippet>217</a>                    .text(<span class="macro">format!</span>(<span class="string">"{} ms"</span>, a.took.as_millis())),
+<a href=#218 id=218 data-nosnippet>218</a>            );
+<a href=#219 id=219 data-nosnippet>219</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = <span class="kw-2">&amp;</span>a.exposure.get {
+<a href=#220 id=220 data-nosnippet>220</a>            line = line.child(chip_link(<span class="string">"API"</span>, path, <span class="string">"open the same answer as JSON"</span>));
+<a href=#221 id=221 data-nosnippet>221</a>        }
+<a href=#222 id=222 data-nosnippet>222</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(cli) = <span class="kw-2">&amp;</span>a.exposure.cli {
+<a href=#223 id=223 data-nosnippet>223</a>            line = line.child(chip(<span class="string">"CLI"</span>, cli));
+<a href=#224 id=224 data-nosnippet>224</a>        }
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(tool) = <span class="kw-2">&amp;</span>a.exposure.mcp {
+<a href=#226 id=226 data-nosnippet>226</a>            line = line.child(chip(<span class="string">"MCP"</span>, tool));
+<a href=#227 id=227 data-nosnippet>227</a>        }
+<a href=#228 id=228 data-nosnippet>228</a>        line = line.child(
+<a href=#229 id=229 data-nosnippet>229</a>            el(<span class="string">"a"</span>)
+<a href=#230 id=230 data-nosnippet>230</a>                .class(<span class="string">"mj-ui-technical"</span>)
+<a href=#231 id=231 data-nosnippet>231</a>                .attr(<span class="string">"href"</span>, technical(a.source.capability))
+<a href=#232 id=232 data-nosnippet>232</a>                .attr(<span class="string">"title"</span>, <span class="string">"the capability behind this value, in the Cockpit"</span>)
+<a href=#233 id=233 data-nosnippet>233</a>                .text(<span class="string">"technical view"</span>),
+<a href=#234 id=234 data-nosnippet>234</a>        );
+<a href=#235 id=235 data-nosnippet>235</a>        box_ = box_.child(line);
+<a href=#236 id=236 data-nosnippet>236</a>    }
+<a href=#237 id=237 data-nosnippet>237</a>    box_
+<a href=#238 id=238 data-nosnippet>238</a>}
+<a href=#239 id=239 data-nosnippet>239</a>
+<a href=#240 id=240 data-nosnippet>240</a><span class="kw">fn </span>chip(kind: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#241 id=241 data-nosnippet>241</a>    el(<span class="string">"span"</span>)
+<a href=#242 id=242 data-nosnippet>242</a>        .class(<span class="string">"mj-ui-chip"</span>)
+<a href=#243 id=243 data-nosnippet>243</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-chip-kind"</span>).text(kind))
+<a href=#244 id=244 data-nosnippet>244</a>        .child(el(<span class="string">"code"</span>).class(<span class="string">"mj-ui-chip-value"</span>).text(value))
+<a href=#245 id=245 data-nosnippet>245</a>}
+<a href=#246 id=246 data-nosnippet>246</a>
+<a href=#247 id=247 data-nosnippet>247</a><span class="kw">fn </span>chip_link(kind: <span class="kw-2">&amp;</span>str, href: <span class="kw-2">&amp;</span>str, title: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#248 id=248 data-nosnippet>248</a>    el(<span class="string">"a"</span>)
+<a href=#249 id=249 data-nosnippet>249</a>        .class(<span class="string">"mj-ui-chip mj-ui-chip--link"</span>)
+<a href=#250 id=250 data-nosnippet>250</a>        .attr(<span class="string">"href"</span>, href)
+<a href=#251 id=251 data-nosnippet>251</a>        .attr(<span class="string">"title"</span>, title)
+<a href=#252 id=252 data-nosnippet>252</a>        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-chip-kind"</span>).text(kind))
+<a href=#253 id=253 data-nosnippet>253</a>        .child(el(<span class="string">"code"</span>).class(<span class="string">"mj-ui-chip-value"</span>).text(href))
+<a href=#254 id=254 data-nosnippet>254</a>}
+<a href=#255 id=255 data-nosnippet>255</a>
+<a href=#256 id=256 data-nosnippet>256</a><span class="doccomment">/// The Cockpit's page for a capability: the low-level reference behind a value.
+<a href=#257 id=257 data-nosnippet>257</a></span><span class="kw">pub fn </span>technical(capability: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="macro">format!</span>(<span class="string">"{}/capabilities/{capability}"</span>, <span class="kw">crate</span>::cockpit::PREFIX)
+<a href=#259 id=259 data-nosnippet>259</a>}
+<a href=#260 id=260 data-nosnippet>260</a>
+<a href=#261 id=261 data-nosnippet>261</a><span class="doccomment">/// The Cockpit's page for one object of the index: the technical view of something a screen
+<a href=#262 id=262 data-nosnippet>262</a>/// names and has no screen of its own for.
+<a href=#263 id=263 data-nosnippet>263</a></span><span class="kw">pub fn </span>object_href(uri: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#264 id=264 data-nosnippet>264</a>    <span class="macro">format!</span>(
+<a href=#265 id=265 data-nosnippet>265</a>        <span class="string">"{}/object?uri={}"</span>,
+<a href=#266 id=266 data-nosnippet>266</a>        <span class="kw">crate</span>::cockpit::PREFIX,
+<a href=#267 id=267 data-nosnippet>267</a>        <span class="kw">crate</span>::http::router::percent_encode(uri)
+<a href=#268 id=268 data-nosnippet>268</a>    )
+<a href=#269 id=269 data-nosnippet>269</a>}
+<a href=#270 id=270 data-nosnippet>270</a>
+<a href=#271 id=271 data-nosnippet>271</a><span class="doccomment">/// An object the index holds, as a link to its technical view, labelled as the screen names
+<a href=#272 id=272 data-nosnippet>272</a>/// it. The caller knows the index holds it, because the source that named it said so (a
+<a href=#273 id=273 data-nosnippet>273</a>/// rule's own `uri`, a test reported `present`); [`object_if`] asks when nothing said.
+<a href=#274 id=274 data-nosnippet>274</a></span><span class="kw">pub fn </span>object(uri: <span class="kw-2">&amp;</span>str, label: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; El {
+<a href=#275 id=275 data-nosnippet>275</a>    el(<span class="string">"a"</span>)
+<a href=#276 id=276 data-nosnippet>276</a>        .class(<span class="string">"mj-ui-link mj-ui-mono"</span>)
+<a href=#277 id=277 data-nosnippet>277</a>        .attr(<span class="string">"href"</span>, object_href(uri))
+<a href=#278 id=278 data-nosnippet>278</a>        .attr(
+<a href=#279 id=279 data-nosnippet>279</a>            <span class="string">"title"</span>,
+<a href=#280 id=280 data-nosnippet>280</a>            <span class="macro">format!</span>(<span class="string">"{uri}: its technical view, in the Cockpit"</span>),
+<a href=#281 id=281 data-nosnippet>281</a>        )
+<a href=#282 id=282 data-nosnippet>282</a>        .text(label)
 <a href=#283 id=283 data-nosnippet>283</a>}
 <a href=#284 id=284 data-nosnippet>284</a>
-<a href=#285 id=285 data-nosnippet>285</a><span class="doccomment">/// A string field of an entry, or the empty string.
-<a href=#286 id=286 data-nosnippet>286</a></span><span class="kw">pub fn </span>text(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#287 id=287 data-nosnippet>287</a>    entry
-<a href=#288 id=288 data-nosnippet>288</a>        .get(key)
-<a href=#289 id=289 data-nosnippet>289</a>        .and_then(Value::as_str)
-<a href=#290 id=290 data-nosnippet>290</a>        .unwrap_or_default()
-<a href=#291 id=291 data-nosnippet>291</a>        .to_string()
-<a href=#292 id=292 data-nosnippet>292</a>}
-<a href=#293 id=293 data-nosnippet>293</a>
-<a href=#294 id=294 data-nosnippet>294</a><span class="doccomment">/// The list at `pointer` in an answer, or none.
-<a href=#295 id=295 data-nosnippet>295</a></span><span class="kw">pub fn </span>list(answer: <span class="kw-2">&amp;</span>Answer, pointer: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;Value&gt; {
-<a href=#296 id=296 data-nosnippet>296</a>    answer
-<a href=#297 id=297 data-nosnippet>297</a>        .ok()
-<a href=#298 id=298 data-nosnippet>298</a>        .and_then(|v| v.pointer(pointer))
-<a href=#299 id=299 data-nosnippet>299</a>        .and_then(Value::as_array)
-<a href=#300 id=300 data-nosnippet>300</a>        .cloned()
-<a href=#301 id=301 data-nosnippet>301</a>        .unwrap_or_default()
-<a href=#302 id=302 data-nosnippet>302</a>}
-<a href=#303 id=303 data-nosnippet>303</a>
-<a href=#304 id=304 data-nosnippet>304</a><span class="doccomment">/// The Cockpit's table, reused: its wrapper scrolls and is therefore in the tab order. An
-<a href=#305 id=305 data-nosnippet>305</a>/// empty list says so instead of drawing an empty table.
-<a href=#306 id=306 data-nosnippet>306</a></span><span class="kw">pub fn </span>table(headers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], rows: Vec&lt;El&gt;, empty: <span class="kw-2">&amp;</span>str) -&gt; El {
-<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">if </span>rows.is_empty() {
-<a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">return </span>nothing(empty);
-<a href=#309 id=309 data-nosnippet>309</a>    }
-<a href=#310 id=310 data-nosnippet>310</a>    <span class="kw">crate</span>::cockpit::view::table(headers, rows)
-<a href=#311 id=311 data-nosnippet>311</a>}
-<a href=#312 id=312 data-nosnippet>312</a>
-<a href=#313 id=313 data-nosnippet>313</a><span class="doccomment">/// A meter of `done` out of `total`, with both numbers as text: the bar is a picture of the
-<a href=#314 id=314 data-nosnippet>314</a>/// two numbers the source gave, not a percentage of its own.
-<a href=#315 id=315 data-nosnippet>315</a></span><span class="kw">pub fn </span>meter(done: <span class="prelude-ty">Option</span>&lt;u64&gt;, total: <span class="prelude-ty">Option</span>&lt;u64&gt;) -&gt; El {
-<a href=#316 id=316 data-nosnippet>316</a>    <span class="kw">match </span>(done, total) {
-<a href=#317 id=317 data-nosnippet>317</a>        (<span class="prelude-val">Some</span>(d), <span class="prelude-val">Some</span>(t)) <span class="kw">if </span>t &gt; <span class="number">0 </span>=&gt; {
-<a href=#318 id=318 data-nosnippet>318</a>            <span class="kw">let </span>width = (d.min(t) * <span class="number">100 </span>/ t).to_string();
-<a href=#319 id=319 data-nosnippet>319</a>            el(<span class="string">"span"</span>)
-<a href=#320 id=320 data-nosnippet>320</a>                .class(<span class="string">"mj-ui-meter"</span>)
-<a href=#321 id=321 data-nosnippet>321</a>                .child(
-<a href=#322 id=322 data-nosnippet>322</a>                    el(<span class="string">"span"</span>)
-<a href=#323 id=323 data-nosnippet>323</a>                        .class(<span class="string">"mj-ui-meter-track"</span>)
-<a href=#324 id=324 data-nosnippet>324</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
-<a href=#325 id=325 data-nosnippet>325</a>                        .child(
-<a href=#326 id=326 data-nosnippet>326</a>                            el(<span class="string">"span"</span>)
-<a href=#327 id=327 data-nosnippet>327</a>                                .class(<span class="string">"mj-ui-meter-fill"</span>)
-<a href=#328 id=328 data-nosnippet>328</a>                                .attr(<span class="string">"style"</span>, <span class="macro">format!</span>(<span class="string">"width:{width}%"</span>)),
-<a href=#329 id=329 data-nosnippet>329</a>                        ),
-<a href=#330 id=330 data-nosnippet>330</a>                )
-<a href=#331 id=331 data-nosnippet>331</a>                .child(
-<a href=#332 id=332 data-nosnippet>332</a>                    el(<span class="string">"span"</span>)
-<a href=#333 id=333 data-nosnippet>333</a>                        .class(<span class="string">"mj-ui-meter-text"</span>)
-<a href=#334 id=334 data-nosnippet>334</a>                        .text(<span class="macro">format!</span>(<span class="string">"{d} of {t}"</span>)),
-<a href=#335 id=335 data-nosnippet>335</a>                )
-<a href=#336 id=336 data-nosnippet>336</a>        }
-<a href=#337 id=337 data-nosnippet>337</a>        (<span class="prelude-val">Some</span>(d), <span class="prelude-val">Some</span>(t)) =&gt; el(<span class="string">"span"</span>)
-<a href=#338 id=338 data-nosnippet>338</a>            .class(<span class="string">"mj-ui-meter-text"</span>)
-<a href=#339 id=339 data-nosnippet>339</a>            .text(<span class="macro">format!</span>(<span class="string">"{d} of {t}"</span>)),
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="kw">_ </span>=&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-meter-text"</span>).text(<span class="string">"unknown"</span>),
-<a href=#341 id=341 data-nosnippet>341</a>    }
-<a href=#342 id=342 data-nosnippet>342</a>}
-<a href=#343 id=343 data-nosnippet>343</a>
-<a href=#344 id=344 data-nosnippet>344</a><span class="comment">// ---------------------------------------------------------------- graphs
-<a href=#345 id=345 data-nosnippet>345</a>
-<a href=#346 id=346 data-nosnippet>346</a></span><span class="doccomment">/// A node of a relationship graph: an entity the source named, its label, the tone its
-<a href=#347 id=347 data-nosnippet>347</a>/// state is drawn in, and where clicking it leads.
-<a href=#348 id=348 data-nosnippet>348</a></span><span class="kw">pub struct </span>GraphNode {
-<a href=#349 id=349 data-nosnippet>349</a>    <span class="doccomment">/// The entity's id, as the source gave it.
-<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">pub </span>id: String,
-<a href=#351 id=351 data-nosnippet>351</a>    <span class="doccomment">/// The label drawn on the node.
-<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="kw">pub </span>label: String,
-<a href=#353 id=353 data-nosnippet>353</a>    <span class="doccomment">/// The tone of the design system it is drawn in.
-<a href=#354 id=354 data-nosnippet>354</a>    </span><span class="kw">pub </span>tone: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#355 id=355 data-nosnippet>355</a>    <span class="doccomment">/// Where it leads.
-<a href=#356 id=356 data-nosnippet>356</a>    </span><span class="kw">pub </span>href: String,
-<a href=#357 id=357 data-nosnippet>357</a>    <span class="doccomment">/// `leaf` for a node drawn small and labelled only when selected; anything else is a
-<a href=#358 id=358 data-nosnippet>358</a>    /// node of the graph's main kind.
-<a href=#359 id=359 data-nosnippet>359</a>    </span><span class="kw">pub </span>kind: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#360 id=360 data-nosnippet>360</a>}
-<a href=#361 id=361 data-nosnippet>361</a>
-<a href=#362 id=362 data-nosnippet>362</a><span class="doccomment">/// How a graph is laid out: `directed` for a dependency order, `force` for a topology.
-<a href=#363 id=363 data-nosnippet>363</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-<a href=#364 id=364 data-nosnippet>364</a></span><span class="kw">pub enum </span>Layout {
-<a href=#365 id=365 data-nosnippet>365</a>    <span class="doccomment">/// Breadth-first along the edges' direction.
-<a href=#366 id=366 data-nosnippet>366</a>    </span>Directed,
-<a href=#367 id=367 data-nosnippet>367</a>    <span class="doccomment">/// Force-directed, for a topology with no order.
-<a href=#368 id=368 data-nosnippet>368</a>    </span>Force,
-<a href=#369 id=369 data-nosnippet>369</a>}
-<a href=#370 id=370 data-nosnippet>370</a>
-<a href=#371 id=371 data-nosnippet>371</a><span class="doccomment">/// A relationship graph: the nodes and the typed edges a source answered, drawn by the
-<a href=#372 id=372 data-nosnippet>372</a>/// vendored Cytoscape once the screen has painted. Without JavaScript the `fallback` — a
-<a href=#373 id=373 data-nosnippet>373</a>/// table of the same edges — is what the reader gets, and with it the graph is a second view
-<a href=#374 id=374 data-nosnippet>374</a>/// of the same data, never a different one. An edge whose end is not a node is dropped
-<a href=#375 id=375 data-nosnippet>375</a>/// rather than drawn to nothing.
-<a href=#376 id=376 data-nosnippet>376</a>///
-<a href=#377 id=377 data-nosnippet>377</a>/// Only nodes that take part in an edge are drawn: a node with no relation says nothing in a
-<a href=#378 id=378 data-nosnippet>378</a>/// graph that its row in the fallback does not say better.
-<a href=#379 id=379 data-nosnippet>379</a></span><span class="kw">pub fn </span>graph(
-<a href=#380 id=380 data-nosnippet>380</a>    label: <span class="kw-2">&amp;</span>str,
-<a href=#381 id=381 data-nosnippet>381</a>    layout: Layout,
-<a href=#382 id=382 data-nosnippet>382</a>    nodes: <span class="kw-2">&amp;</span>[GraphNode],
-<a href=#383 id=383 data-nosnippet>383</a>    edges: <span class="kw-2">&amp;</span>[(String, String)],
-<a href=#384 id=384 data-nosnippet>384</a>    fallback: El,
-<a href=#385 id=385 data-nosnippet>385</a>) -&gt; El {
-<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">let </span>ids: std::collections::BTreeSet&lt;<span class="kw-2">&amp;</span>str&gt; = nodes.iter().map(|n| n.id.as_str()).collect();
-<a href=#387 id=387 data-nosnippet>387</a>    <span class="kw">let </span>related: std::collections::BTreeSet&lt;<span class="kw-2">&amp;</span>str&gt; = edges
-<a href=#388 id=388 data-nosnippet>388</a>        .iter()
-<a href=#389 id=389 data-nosnippet>389</a>        .filter(|(a, b)| ids.contains(a.as_str()) &amp;&amp; ids.contains(b.as_str()))
-<a href=#390 id=390 data-nosnippet>390</a>        .flat_map(|(a, b)| [a.as_str(), b.as_str()])
-<a href=#391 id=391 data-nosnippet>391</a>        .collect();
-<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">let </span>data = <span class="macro">serde_json::json!</span>({
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="string">"layout"</span>: <span class="kw">match </span>layout { Layout::Directed =&gt; <span class="string">"directed"</span>, Layout::Force =&gt; <span class="string">"force" </span>},
-<a href=#394 id=394 data-nosnippet>394</a>        <span class="string">"nodes"</span>: nodes.iter().filter(|n| related.contains(n.id.as_str())).map(|n| <span class="macro">serde_json::json!</span>({
-<a href=#395 id=395 data-nosnippet>395</a>            <span class="string">"id"</span>: n.id, <span class="string">"label"</span>: n.label, <span class="string">"tone"</span>: n.tone, <span class="string">"href"</span>: n.href, <span class="string">"kind"</span>: n.kind,
-<a href=#396 id=396 data-nosnippet>396</a>        })).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="string">"edges"</span>: edges.iter()
-<a href=#398 id=398 data-nosnippet>398</a>            .filter(|(a, b)| ids.contains(a.as_str()) &amp;&amp; ids.contains(b.as_str()))
-<a href=#399 id=399 data-nosnippet>399</a>            .map(|(a, b)| <span class="macro">serde_json::json!</span>({ <span class="string">"source"</span>: a, <span class="string">"target"</span>: b }))
-<a href=#400 id=400 data-nosnippet>400</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-<a href=#401 id=401 data-nosnippet>401</a>    });
-<a href=#402 id=402 data-nosnippet>402</a>    el(<span class="string">"div"</span>)
-<a href=#403 id=403 data-nosnippet>403</a>        .class(<span class="string">"mj-ui-graph"</span>)
-<a href=#404 id=404 data-nosnippet>404</a>        .attr(<span class="string">"data-graph"</span>, data.to_string())
-<a href=#405 id=405 data-nosnippet>405</a>        .child(
-<a href=#406 id=406 data-nosnippet>406</a>            el(<span class="string">"div"</span>)
-<a href=#407 id=407 data-nosnippet>407</a>                .class(<span class="string">"mj-ui-graph-canvas"</span>)
-<a href=#408 id=408 data-nosnippet>408</a>                .attr(<span class="string">"role"</span>, <span class="string">"img"</span>)
-<a href=#409 id=409 data-nosnippet>409</a>                .attr(<span class="string">"aria-label"</span>, label)
-<a href=#410 id=410 data-nosnippet>410</a>                .flag(<span class="string">"hidden"</span>),
-<a href=#411 id=411 data-nosnippet>411</a>        )
-<a href=#412 id=412 data-nosnippet>412</a>        .child(el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-graph-fallback"</span>).child(fallback))
-<a href=#413 id=413 data-nosnippet>413</a>}
-<a href=#414 id=414 data-nosnippet>414</a>
-<a href=#415 id=415 data-nosnippet>415</a><span class="doccomment">/// The tone a plan status is drawn in: presentation of the status word the source gave, so
-<a href=#416 id=416 data-nosnippet>416</a>/// an unknown word gets the neutral tone rather than a meaning.
-<a href=#417 id=417 data-nosnippet>417</a></span><span class="kw">pub fn </span>status_tone(status: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
-<a href=#418 id=418 data-nosnippet>418</a>    <span class="kw">match </span>status.to_ascii_uppercase().as_str() {
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="string">"DONE" </span>=&gt; <span class="string">"green"</span>,
-<a href=#420 id=420 data-nosnippet>420</a>        <span class="string">"ACTIVE" </span>| <span class="string">"VERIFY" </span>=&gt; <span class="string">"blue"</span>,
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="string">"READY" </span>=&gt; <span class="string">"cyan"</span>,
-<a href=#422 id=422 data-nosnippet>422</a>        <span class="string">"BLOCKED" </span>=&gt; <span class="string">"rose"</span>,
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="string">"PLANNED" </span>=&gt; <span class="string">"violet"</span>,
-<a href=#424 id=424 data-nosnippet>424</a>        <span class="kw">_ </span>=&gt; <span class="string">"orange"</span>,
+<a href=#285 id=285 data-nosnippet>285</a><span class="doccomment">/// [`object`] when the index holds `uri`, the label as text when it does not, so no link
+<a href=#286 id=286 data-nosnippet>286</a>/// leads to a page that answers 404, and `none` when there is no label at all. Whether the
+<a href=#287 id=287 data-nosnippet>287</a>/// index holds it is asked of `objects.get`, the capability every surface resolves a URI with
+<a href=#288 id=288 data-nosnippet>288</a>/// (ADR 0012), never read from the index beside it.
+<a href=#289 id=289 data-nosnippet>289</a></span><span class="kw">pub fn </span>object_if(ctx: <span class="kw-2">&amp;</span>Context, uri: <span class="kw-2">&amp;</span>str, label: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#290 id=290 data-nosnippet>290</a>    <span class="kw">if </span>label.is_empty() {
+<a href=#291 id=291 data-nosnippet>291</a>        <span class="kw">return </span>none();
+<a href=#292 id=292 data-nosnippet>292</a>    }
+<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">match </span>ctx.execute(<span class="string">"objects.get"</span>, <span class="macro">serde_json::json!</span>({ <span class="string">"uri"</span>: uri })) {
+<a href=#294 id=294 data-nosnippet>294</a>        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; object(uri, label),
+<a href=#295 id=295 data-nosnippet>295</a>        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-mono"</span>).text(label),
+<a href=#296 id=296 data-nosnippet>296</a>    }
+<a href=#297 id=297 data-nosnippet>297</a>}
+<a href=#298 id=298 data-nosnippet>298</a>
+<a href=#299 id=299 data-nosnippet>299</a><span class="doccomment">/// An object as its source names it: a link to its technical view when the source gave its
+<a href=#300 id=300 data-nosnippet>300</a>/// URI, its label as text when it gave none, and `none` when it gave no label either.
+<a href=#301 id=301 data-nosnippet>301</a></span><span class="kw">pub fn </span>object_or(uri: <span class="kw-2">&amp;</span>str, label: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#302 id=302 data-nosnippet>302</a>    <span class="kw">match </span>(uri.is_empty(), label.is_empty()) {
+<a href=#303 id=303 data-nosnippet>303</a>        (<span class="kw">_</span>, <span class="bool-val">true</span>) =&gt; none(),
+<a href=#304 id=304 data-nosnippet>304</a>        (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-mono"</span>).text(label),
+<a href=#305 id=305 data-nosnippet>305</a>        (<span class="bool-val">false</span>, <span class="bool-val">false</span>) =&gt; object(uri, label),
+<a href=#306 id=306 data-nosnippet>306</a>    }
+<a href=#307 id=307 data-nosnippet>307</a>}
+<a href=#308 id=308 data-nosnippet>308</a>
+<a href=#309 id=309 data-nosnippet>309</a><span class="doccomment">/// A link inside the UI, labelled.
+<a href=#310 id=310 data-nosnippet>310</a></span><span class="kw">pub fn </span>link(href: <span class="kw">impl </span>Into&lt;String&gt;, label: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; El {
+<a href=#311 id=311 data-nosnippet>311</a>    el(<span class="string">"a"</span>)
+<a href=#312 id=312 data-nosnippet>312</a>        .class(<span class="string">"mj-ui-link"</span>)
+<a href=#313 id=313 data-nosnippet>313</a>        .attr(<span class="string">"href"</span>, href.into())
+<a href=#314 id=314 data-nosnippet>314</a>        .text(label)
+<a href=#315 id=315 data-nosnippet>315</a>}
+<a href=#316 id=316 data-nosnippet>316</a>
+<a href=#317 id=317 data-nosnippet>317</a><span class="doccomment">/// A link whose label is an identifier, set as code.
+<a href=#318 id=318 data-nosnippet>318</a></span><span class="kw">pub fn </span>code_link(href: <span class="kw">impl </span>Into&lt;String&gt;, label: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; El {
+<a href=#319 id=319 data-nosnippet>319</a>    el(<span class="string">"a"</span>)
+<a href=#320 id=320 data-nosnippet>320</a>        .class(<span class="string">"mj-ui-link mj-ui-mono"</span>)
+<a href=#321 id=321 data-nosnippet>321</a>        .attr(<span class="string">"href"</span>, href.into())
+<a href=#322 id=322 data-nosnippet>322</a>        .text(label)
+<a href=#323 id=323 data-nosnippet>323</a>}
+<a href=#324 id=324 data-nosnippet>324</a>
+<a href=#325 id=325 data-nosnippet>325</a><span class="doccomment">/// A value a source does not have, said: `none`, never a blank cell.
+<a href=#326 id=326 data-nosnippet>326</a></span><span class="kw">pub fn </span>none() -&gt; El {
+<a href=#327 id=327 data-nosnippet>327</a>    el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-dim"</span>).text(<span class="string">"none"</span>)
+<a href=#328 id=328 data-nosnippet>328</a>}
+<a href=#329 id=329 data-nosnippet>329</a>
+<a href=#330 id=330 data-nosnippet>330</a><span class="doccomment">/// A string field of an entry, or `none` when the entry has no such field or it is empty:
+<a href=#331 id=331 data-nosnippet>331</a>/// [`text`] for a cell a reader reads, where a blank would say nothing.
+<a href=#332 id=332 data-nosnippet>332</a></span><span class="kw">pub fn </span>value(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#333 id=333 data-nosnippet>333</a>    <span class="prelude-val">Some</span>(text(entry, key))
+<a href=#334 id=334 data-nosnippet>334</a>        .filter(|s| !s.is_empty())
+<a href=#335 id=335 data-nosnippet>335</a>        .unwrap_or_else(|| <span class="string">"none"</span>.into())
+<a href=#336 id=336 data-nosnippet>336</a>}
+<a href=#337 id=337 data-nosnippet>337</a>
+<a href=#338 id=338 data-nosnippet>338</a><span class="doccomment">/// What a list cut short leaves out: "the first `shown` of `total`", and where the whole list
+<a href=#339 id=339 data-nosnippet>339</a>/// is when there is a place that shows it. Nothing when nothing was left out.
+<a href=#340 id=340 data-nosnippet>340</a></span><span class="kw">pub fn </span>more(shown: usize, total: usize, whole: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;El&gt; {
+<a href=#341 id=341 data-nosnippet>341</a>    (total &gt; shown).then(|| {
+<a href=#342 id=342 data-nosnippet>342</a>        <span class="kw">let </span>line = el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-line mj-ui-dim"</span>).text(<span class="macro">format!</span>(
+<a href=#343 id=343 data-nosnippet>343</a>            <span class="string">"The first {shown} of {total}; {} more not shown here. "</span>,
+<a href=#344 id=344 data-nosnippet>344</a>            total - shown
+<a href=#345 id=345 data-nosnippet>345</a>        ));
+<a href=#346 id=346 data-nosnippet>346</a>        <span class="kw">match </span>whole {
+<a href=#347 id=347 data-nosnippet>347</a>            <span class="prelude-val">Some</span>(href) =&gt; line.child(link(href, <span class="string">"Open the whole list"</span>)),
+<a href=#348 id=348 data-nosnippet>348</a>            <span class="prelude-val">None </span>=&gt; line,
+<a href=#349 id=349 data-nosnippet>349</a>        }
+<a href=#350 id=350 data-nosnippet>350</a>    })
+<a href=#351 id=351 data-nosnippet>351</a>}
+<a href=#352 id=352 data-nosnippet>352</a>
+<a href=#353 id=353 data-nosnippet>353</a><span class="doccomment">/// An identifier as a fragment a page can carry: letters, digits, `-`, `_` and `.` kept,
+<a href=#354 id=354 data-nosnippet>354</a>/// anything else a `-`, so an id a source writes never breaks out of the attribute.
+<a href=#355 id=355 data-nosnippet>355</a></span><span class="kw">pub fn </span>anchor(id: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#356 id=356 data-nosnippet>356</a>    id.chars()
+<a href=#357 id=357 data-nosnippet>357</a>        .map(|c| {
+<a href=#358 id=358 data-nosnippet>358</a>            <span class="kw">if </span>c.is_ascii_alphanumeric() || <span class="macro">matches!</span>(c, <span class="string">'-' </span>| <span class="string">'_' </span>| <span class="string">'.'</span>) {
+<a href=#359 id=359 data-nosnippet>359</a>                c
+<a href=#360 id=360 data-nosnippet>360</a>            } <span class="kw">else </span>{
+<a href=#361 id=361 data-nosnippet>361</a>                <span class="string">'-'
+<a href=#362 id=362 data-nosnippet>362</a>            </span>}
+<a href=#363 id=363 data-nosnippet>363</a>        })
+<a href=#364 id=364 data-nosnippet>364</a>        .collect()
+<a href=#365 id=365 data-nosnippet>365</a>}
+<a href=#366 id=366 data-nosnippet>366</a>
+<a href=#367 id=367 data-nosnippet>367</a><span class="doccomment">/// The body of a panel whose source could not answer.
+<a href=#368 id=368 data-nosnippet>368</a></span><span class="kw">pub fn </span>unanswered(a: <span class="kw-2">&amp;</span>Answer) -&gt; <span class="prelude-ty">Option</span>&lt;El&gt; {
+<a href=#369 id=369 data-nosnippet>369</a>    a.value.as_ref().err().map(|reason| {
+<a href=#370 id=370 data-nosnippet>370</a>        el(<span class="string">"p"</span>)
+<a href=#371 id=371 data-nosnippet>371</a>            .class(<span class="string">"mj-ui-empty"</span>)
+<a href=#372 id=372 data-nosnippet>372</a>            .child(word_badge(<span class="string">"unknown"</span>))
+<a href=#373 id=373 data-nosnippet>373</a>            .text(<span class="macro">format!</span>(
+<a href=#374 id=374 data-nosnippet>374</a>                <span class="string">" {} could not answer: {reason}"</span>,
+<a href=#375 id=375 data-nosnippet>375</a>                a.source.capability
+<a href=#376 id=376 data-nosnippet>376</a>            ))
+<a href=#377 id=377 data-nosnippet>377</a>    })
+<a href=#378 id=378 data-nosnippet>378</a>}
+<a href=#379 id=379 data-nosnippet>379</a>
+<a href=#380 id=380 data-nosnippet>380</a><span class="doccomment">/// An empty list, said in words.
+<a href=#381 id=381 data-nosnippet>381</a></span><span class="kw">pub fn </span>nothing(what: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#382 id=382 data-nosnippet>382</a>    el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-empty"</span>).text(what)
+<a href=#383 id=383 data-nosnippet>383</a>}
+<a href=#384 id=384 data-nosnippet>384</a>
+<a href=#385 id=385 data-nosnippet>385</a><span class="doccomment">/// A state word an entry carries, or `unknown` when it carries none: an absent status is
+<a href=#386 id=386 data-nosnippet>386</a>/// never an empty badge, and never a healthy one (project.ui-derived-state).
+<a href=#387 id=387 data-nosnippet>387</a></span><span class="kw">pub fn </span>state_word(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#388 id=388 data-nosnippet>388</a>    entry
+<a href=#389 id=389 data-nosnippet>389</a>        .get(key)
+<a href=#390 id=390 data-nosnippet>390</a>        .and_then(Value::as_str)
+<a href=#391 id=391 data-nosnippet>391</a>        .filter(|w| !w.is_empty())
+<a href=#392 id=392 data-nosnippet>392</a>        .unwrap_or(<span class="string">"unknown"</span>)
+<a href=#393 id=393 data-nosnippet>393</a>        .to_string()
+<a href=#394 id=394 data-nosnippet>394</a>}
+<a href=#395 id=395 data-nosnippet>395</a>
+<a href=#396 id=396 data-nosnippet>396</a><span class="doccomment">/// A state word as its badge.
+<a href=#397 id=397 data-nosnippet>397</a></span><span class="kw">pub fn </span>state(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#398 id=398 data-nosnippet>398</a>    word_badge(<span class="kw-2">&amp;</span>state_word(entry, key).to_lowercase())
+<a href=#399 id=399 data-nosnippet>399</a>}
+<a href=#400 id=400 data-nosnippet>400</a>
+<a href=#401 id=401 data-nosnippet>401</a><span class="doccomment">/// A string field of an entry, or the empty string.
+<a href=#402 id=402 data-nosnippet>402</a></span><span class="kw">pub fn </span>text(entry: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#403 id=403 data-nosnippet>403</a>    entry
+<a href=#404 id=404 data-nosnippet>404</a>        .get(key)
+<a href=#405 id=405 data-nosnippet>405</a>        .and_then(Value::as_str)
+<a href=#406 id=406 data-nosnippet>406</a>        .unwrap_or_default()
+<a href=#407 id=407 data-nosnippet>407</a>        .to_string()
+<a href=#408 id=408 data-nosnippet>408</a>}
+<a href=#409 id=409 data-nosnippet>409</a>
+<a href=#410 id=410 data-nosnippet>410</a><span class="doccomment">/// The list at `pointer` in an answer, or none.
+<a href=#411 id=411 data-nosnippet>411</a></span><span class="kw">pub fn </span>list(answer: <span class="kw-2">&amp;</span>Answer, pointer: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;Value&gt; {
+<a href=#412 id=412 data-nosnippet>412</a>    answer
+<a href=#413 id=413 data-nosnippet>413</a>        .ok()
+<a href=#414 id=414 data-nosnippet>414</a>        .and_then(|v| v.pointer(pointer))
+<a href=#415 id=415 data-nosnippet>415</a>        .and_then(Value::as_array)
+<a href=#416 id=416 data-nosnippet>416</a>        .cloned()
+<a href=#417 id=417 data-nosnippet>417</a>        .unwrap_or_default()
+<a href=#418 id=418 data-nosnippet>418</a>}
+<a href=#419 id=419 data-nosnippet>419</a>
+<a href=#420 id=420 data-nosnippet>420</a><span class="doccomment">/// The Cockpit's table, reused: its wrapper scrolls and is therefore in the tab order. An
+<a href=#421 id=421 data-nosnippet>421</a>/// empty list says so instead of drawing an empty table.
+<a href=#422 id=422 data-nosnippet>422</a></span><span class="kw">pub fn </span>table(headers: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], rows: Vec&lt;El&gt;, empty: <span class="kw-2">&amp;</span>str) -&gt; El {
+<a href=#423 id=423 data-nosnippet>423</a>    <span class="kw">if </span>rows.is_empty() {
+<a href=#424 id=424 data-nosnippet>424</a>        <span class="kw">return </span>nothing(empty);
 <a href=#425 id=425 data-nosnippet>425</a>    }
-<a href=#426 id=426 data-nosnippet>426</a>}
-<a href=#427 id=427 data-nosnippet>427</a>
-<a href=#428 id=428 data-nosnippet>428</a><span class="comment">// ---------------------------------------------------------------- charts
-<a href=#429 id=429 data-nosnippet>429</a>
-<a href=#430 id=430 data-nosnippet>430</a></span><span class="doccomment">/// A donut of named counts, each in a tone of the design system, with the counts beside it
-<a href=#431 id=431 data-nosnippet>431</a>/// as a legend: a reader without the picture reads the same numbers. Segments that are
-<a href=#432 id=432 data-nosnippet>432</a>/// zero are listed and not drawn; a donut of nothing says so.
-<a href=#433 id=433 data-nosnippet>433</a></span><span class="kw">pub fn </span>donut(center: <span class="kw-2">&amp;</span>str, segments: <span class="kw-2">&amp;</span>[(String, u64)]) -&gt; El {
-<a href=#434 id=434 data-nosnippet>434</a>    <span class="kw">let </span>total: u64 = segments.iter().map(|(<span class="kw">_</span>, n)| n).sum();
-<a href=#435 id=435 data-nosnippet>435</a>    <span class="kw">if </span>total == <span class="number">0 </span>{
-<a href=#436 id=436 data-nosnippet>436</a>        <span class="kw">return </span>nothing(<span class="string">"Nothing has been counted yet."</span>);
-<a href=#437 id=437 data-nosnippet>437</a>    }
-<a href=#438 id=438 data-nosnippet>438</a>    <span class="comment">// a circle of circumference 100, so a segment's dash is its share in percent
-<a href=#439 id=439 data-nosnippet>439</a>    </span><span class="kw">let </span>radius = <span class="number">15.915_494_309</span>;
-<a href=#440 id=440 data-nosnippet>440</a>    <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">25.0_f64</span>;
-<a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">let </span><span class="kw-2">mut </span>svg = el(<span class="string">"svg"</span>)
-<a href=#442 id=442 data-nosnippet>442</a>        .class(<span class="string">"mj-ui-donut-svg"</span>)
-<a href=#443 id=443 data-nosnippet>443</a>        .attr(<span class="string">"viewBox"</span>, <span class="string">"0 0 42 42"</span>)
-<a href=#444 id=444 data-nosnippet>444</a>        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
-<a href=#445 id=445 data-nosnippet>445</a>        .child(
-<a href=#446 id=446 data-nosnippet>446</a>            el(<span class="string">"circle"</span>)
-<a href=#447 id=447 data-nosnippet>447</a>                .class(<span class="string">"mj-ui-donut-track"</span>)
-<a href=#448 id=448 data-nosnippet>448</a>                .attr(<span class="string">"cx"</span>, <span class="string">"21"</span>)
-<a href=#449 id=449 data-nosnippet>449</a>                .attr(<span class="string">"cy"</span>, <span class="string">"21"</span>)
-<a href=#450 id=450 data-nosnippet>450</a>                .attr(<span class="string">"r"</span>, <span class="macro">format!</span>(<span class="string">"{radius}"</span>)),
-<a href=#451 id=451 data-nosnippet>451</a>        );
-<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">for </span>(i, (<span class="kw">_</span>, n)) <span class="kw">in </span>segments.iter().enumerate() {
-<a href=#453 id=453 data-nosnippet>453</a>        <span class="kw">if </span><span class="kw-2">*</span>n == <span class="number">0 </span>{
-<a href=#454 id=454 data-nosnippet>454</a>            <span class="kw">continue</span>;
-<a href=#455 id=455 data-nosnippet>455</a>        }
-<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">let </span>share = <span class="kw-2">*</span>n <span class="kw">as </span>f64 * <span class="number">100.0 </span>/ total <span class="kw">as </span>f64;
-<a href=#457 id=457 data-nosnippet>457</a>        svg = svg.child(
-<a href=#458 id=458 data-nosnippet>458</a>            el(<span class="string">"circle"</span>)
-<a href=#459 id=459 data-nosnippet>459</a>                .class(<span class="macro">format!</span>(
-<a href=#460 id=460 data-nosnippet>460</a>                    <span class="string">"mj-ui-donut-segment mj-tone--{}"</span>,
-<a href=#461 id=461 data-nosnippet>461</a>                    TONES[i % TONES.len()]
-<a href=#462 id=462 data-nosnippet>462</a>                ))
-<a href=#463 id=463 data-nosnippet>463</a>                .attr(<span class="string">"cx"</span>, <span class="string">"21"</span>)
-<a href=#464 id=464 data-nosnippet>464</a>                .attr(<span class="string">"cy"</span>, <span class="string">"21"</span>)
-<a href=#465 id=465 data-nosnippet>465</a>                .attr(<span class="string">"r"</span>, <span class="macro">format!</span>(<span class="string">"{radius}"</span>))
-<a href=#466 id=466 data-nosnippet>466</a>                .attr(
-<a href=#467 id=467 data-nosnippet>467</a>                    <span class="string">"stroke-dasharray"</span>,
-<a href=#468 id=468 data-nosnippet>468</a>                    <span class="macro">format!</span>(<span class="string">"{share:.3} {:.3}"</span>, <span class="number">100.0 </span>- share),
-<a href=#469 id=469 data-nosnippet>469</a>                )
-<a href=#470 id=470 data-nosnippet>470</a>                .attr(<span class="string">"stroke-dashoffset"</span>, <span class="macro">format!</span>(<span class="string">"{offset:.3}"</span>)),
-<a href=#471 id=471 data-nosnippet>471</a>        );
-<a href=#472 id=472 data-nosnippet>472</a>        offset -= share;
-<a href=#473 id=473 data-nosnippet>473</a>    }
-<a href=#474 id=474 data-nosnippet>474</a>    <span class="kw">let </span>legend = el(<span class="string">"ul"</span>)
-<a href=#475 id=475 data-nosnippet>475</a>        .class(<span class="string">"mj-ui-legend"</span>)
-<a href=#476 id=476 data-nosnippet>476</a>        .children(segments.iter().enumerate().map(|(i, (label, n))| {
-<a href=#477 id=477 data-nosnippet>477</a>            el(<span class="string">"li"</span>)
-<a href=#478 id=478 data-nosnippet>478</a>                .class(<span class="macro">format!</span>(
-<a href=#479 id=479 data-nosnippet>479</a>                    <span class="string">"mj-ui-legend-item mj-tone--{}"</span>,
-<a href=#480 id=480 data-nosnippet>480</a>                    TONES[i % TONES.len()]
-<a href=#481 id=481 data-nosnippet>481</a>                ))
-<a href=#482 id=482 data-nosnippet>482</a>                .child(
-<a href=#483 id=483 data-nosnippet>483</a>                    el(<span class="string">"span"</span>)
-<a href=#484 id=484 data-nosnippet>484</a>                        .class(<span class="string">"mj-ui-legend-dot"</span>)
-<a href=#485 id=485 data-nosnippet>485</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>),
-<a href=#486 id=486 data-nosnippet>486</a>                )
-<a href=#487 id=487 data-nosnippet>487</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-name"</span>).text(label))
-<a href=#488 id=488 data-nosnippet>488</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-value"</span>).text(n.to_string()))
-<a href=#489 id=489 data-nosnippet>489</a>        }));
-<a href=#490 id=490 data-nosnippet>490</a>    el(<span class="string">"div"</span>)
-<a href=#491 id=491 data-nosnippet>491</a>        .class(<span class="string">"mj-ui-donut"</span>)
-<a href=#492 id=492 data-nosnippet>492</a>        .child(
-<a href=#493 id=493 data-nosnippet>493</a>            el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-donut-figure"</span>).child(svg).child(
-<a href=#494 id=494 data-nosnippet>494</a>                el(<span class="string">"span"</span>)
-<a href=#495 id=495 data-nosnippet>495</a>                    .class(<span class="string">"mj-ui-donut-center"</span>)
-<a href=#496 id=496 data-nosnippet>496</a>                    .child(el(<span class="string">"strong"</span>).text(total.to_string()))
-<a href=#497 id=497 data-nosnippet>497</a>                    .child(el(<span class="string">"span"</span>).text(center)),
-<a href=#498 id=498 data-nosnippet>498</a>            ),
-<a href=#499 id=499 data-nosnippet>499</a>        )
-<a href=#500 id=500 data-nosnippet>500</a>        .child(legend)
-<a href=#501 id=501 data-nosnippet>501</a>}
-<a href=#502 id=502 data-nosnippet>502</a>
-<a href=#503 id=503 data-nosnippet>503</a><span class="doccomment">/// The counts of an object at `pointer`, as donut segments in the order the source gave.
-<a href=#504 id=504 data-nosnippet>504</a></span><span class="kw">pub fn </span>counts(answer: <span class="kw-2">&amp;</span>Answer, pointer: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;(String, u64)&gt; {
-<a href=#505 id=505 data-nosnippet>505</a>    answer
-<a href=#506 id=506 data-nosnippet>506</a>        .ok()
-<a href=#507 id=507 data-nosnippet>507</a>        .and_then(|v| v.pointer(pointer))
-<a href=#508 id=508 data-nosnippet>508</a>        .and_then(Value::as_object)
-<a href=#509 id=509 data-nosnippet>509</a>        .map(|m| {
-<a href=#510 id=510 data-nosnippet>510</a>            m.iter()
-<a href=#511 id=511 data-nosnippet>511</a>                .filter_map(|(k, v)| v.as_u64().map(|n| (k.to_lowercase(), n)))
-<a href=#512 id=512 data-nosnippet>512</a>                .collect()
-<a href=#513 id=513 data-nosnippet>513</a>        })
-<a href=#514 id=514 data-nosnippet>514</a>        <span class="comment">// ui-integrity: an absent object is no segments, never a zero; the donut then says nothing was counted
-<a href=#515 id=515 data-nosnippet>515</a>        </span>.unwrap_or_default()
-<a href=#516 id=516 data-nosnippet>516</a>}
-<a href=#517 id=517 data-nosnippet>517</a>
-<a href=#518 id=518 data-nosnippet>518</a><span class="doccomment">/// A vertical timeline of dated entries, newest first, as the source ordered them.
-<a href=#519 id=519 data-nosnippet>519</a></span><span class="kw">pub fn </span>timeline(entries: Vec&lt;(String, String, El)&gt;) -&gt; El {
-<a href=#520 id=520 data-nosnippet>520</a>    el(<span class="string">"ol"</span>)
-<a href=#521 id=521 data-nosnippet>521</a>        .class(<span class="string">"mj-ui-timeline"</span>)
-<a href=#522 id=522 data-nosnippet>522</a>        .children(entries.into_iter().map(|(when, title, detail)| {
-<a href=#523 id=523 data-nosnippet>523</a>            el(<span class="string">"li"</span>)
-<a href=#524 id=524 data-nosnippet>524</a>                .class(<span class="string">"mj-ui-timeline-item"</span>)
-<a href=#525 id=525 data-nosnippet>525</a>                .child(
-<a href=#526 id=526 data-nosnippet>526</a>                    el(<span class="string">"span"</span>)
-<a href=#527 id=527 data-nosnippet>527</a>                        .class(<span class="string">"mj-ui-timeline-dot"</span>)
-<a href=#528 id=528 data-nosnippet>528</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>),
-<a href=#529 id=529 data-nosnippet>529</a>                )
-<a href=#530 id=530 data-nosnippet>530</a>                .child(
-<a href=#531 id=531 data-nosnippet>531</a>                    el(<span class="string">"div"</span>)
-<a href=#532 id=532 data-nosnippet>532</a>                        .class(<span class="string">"mj-ui-timeline-body"</span>)
-<a href=#533 id=533 data-nosnippet>533</a>                        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-timeline-title"</span>).text(title))
-<a href=#534 id=534 data-nosnippet>534</a>                        .child(detail),
-<a href=#535 id=535 data-nosnippet>535</a>                )
-<a href=#536 id=536 data-nosnippet>536</a>                .child(
-<a href=#537 id=537 data-nosnippet>537</a>                    el(<span class="string">"time"</span>)
-<a href=#538 id=538 data-nosnippet>538</a>                        .class(<span class="string">"mj-ui-timeline-when"</span>)
-<a href=#539 id=539 data-nosnippet>539</a>                        .attr(<span class="string">"datetime"</span>, when.clone())
-<a href=#540 id=540 data-nosnippet>540</a>                        .text(day(<span class="kw-2">&amp;</span>when)),
-<a href=#541 id=541 data-nosnippet>541</a>                )
-<a href=#542 id=542 data-nosnippet>542</a>        }))
-<a href=#543 id=543 data-nosnippet>543</a>}
-<a href=#544 id=544 data-nosnippet>544</a>
-<a href=#545 id=545 data-nosnippet>545</a><span class="doccomment">/// The day of an RFC 3339 timestamp, as written: no clock, no zone arithmetic.
-<a href=#546 id=546 data-nosnippet>546</a></span><span class="kw">pub fn </span>day(at: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#547 id=547 data-nosnippet>547</a>    at.split(<span class="string">'T'</span>).next().unwrap_or(at).to_string()
-<a href=#548 id=548 data-nosnippet>548</a>}
-<a href=#549 id=549 data-nosnippet>549</a>
-<a href=#550 id=550 data-nosnippet>550</a><span class="attr">#[cfg(test)]
-<a href=#551 id=551 data-nosnippet>551</a></span><span class="kw">mod </span>tests {
-<a href=#552 id=552 data-nosnippet>552</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#553 id=553 data-nosnippet>553</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::source::{Exposure, Source};
-<a href=#554 id=554 data-nosnippet>554</a>    <span class="kw">use </span>std::time::Duration;
-<a href=#555 id=555 data-nosnippet>555</a>
-<a href=#556 id=556 data-nosnippet>556</a>    <span class="kw">fn </span>answer(value: <span class="prelude-ty">Result</span>&lt;Value, String&gt;) -&gt; Answer {
-<a href=#557 id=557 data-nosnippet>557</a>        Answer {
-<a href=#558 id=558 data-nosnippet>558</a>            source: Source::of(<span class="string">"plan.status"</span>),
-<a href=#559 id=559 data-nosnippet>559</a>            route: <span class="prelude-val">Some</span>(<span class="string">"GET /api/v1/plan/status"</span>.into()),
-<a href=#560 id=560 data-nosnippet>560</a>            exposure: Exposure::default(),
-<a href=#561 id=561 data-nosnippet>561</a>            value,
-<a href=#562 id=562 data-nosnippet>562</a>            took: Duration::from_millis(<span class="number">5</span>),
-<a href=#563 id=563 data-nosnippet>563</a>        }
-<a href=#564 id=564 data-nosnippet>564</a>    }
-<a href=#565 id=565 data-nosnippet>565</a>
-<a href=#566 id=566 data-nosnippet>566</a>    <span class="kw">fn </span>reading(value: Value) -&gt; Reading {
-<a href=#567 id=567 data-nosnippet>567</a>        answer(<span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"v"</span>: value }))).read(<span class="string">"/v"</span>)
-<a href=#568 id=568 data-nosnippet>568</a>    }
-<a href=#569 id=569 data-nosnippet>569</a>
-<a href=#570 id=570 data-nosnippet>570</a>    <span class="doccomment">/// A count tile counts the list or the map at its pointer, and says which way it is
-<a href=#571 id=571 data-nosnippet>571</a>    /// missing otherwise; a state tile draws the word as a badge.
-<a href=#572 id=572 data-nosnippet>572</a>    </span><span class="attr">#[test]
-<a href=#573 id=573 data-nosnippet>573</a>    </span><span class="kw">fn </span>a_count_tile_counts_the_answers_own_list_or_map() {
-<a href=#574 id=574 data-nosnippet>574</a>        <span class="kw">let </span>list = kpi_count(<span class="string">"Items"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]))).render();
-<a href=#575 id=575 data-nosnippet>575</a>        <span class="macro">assert!</span>(list.contains(<span class="string">"&gt;3&lt;"</span>), <span class="string">"{list}"</span>);
-<a href=#576 id=576 data-nosnippet>576</a>        <span class="kw">let </span>map = kpi_count(<span class="string">"Keys"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>({ <span class="string">"a"</span>: <span class="number">1</span>, <span class="string">"b"</span>: <span class="number">2 </span>}))).render();
-<a href=#577 id=577 data-nosnippet>577</a>        <span class="macro">assert!</span>(map.contains(<span class="string">"&gt;2&lt;"</span>), <span class="string">"{map}"</span>);
-<a href=#578 id=578 data-nosnippet>578</a>        <span class="kw">let </span>failed = answer(<span class="prelude-val">Err</span>(<span class="string">"refused"</span>.into())).read(<span class="string">"/v"</span>);
-<a href=#579 id=579 data-nosnippet>579</a>        <span class="macro">assert!</span>(kpi_count(<span class="string">"Items"</span>, <span class="kw-2">&amp;</span>failed)
-<a href=#580 id=580 data-nosnippet>580</a>            .render()
-<a href=#581 id=581 data-nosnippet>581</a>            .contains(<span class="string">"not answered"</span>));
-<a href=#582 id=582 data-nosnippet>582</a>        <span class="kw">let </span>state = kpi_state(<span class="string">"Health"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="string">"warn"</span>))).render();
-<a href=#583 id=583 data-nosnippet>583</a>        <span class="macro">assert!</span>(
-<a href=#584 id=584 data-nosnippet>584</a>            state.contains(<span class="string">"mj-badge"</span>) &amp;&amp; state.contains(<span class="string">"warn"</span>),
-<a href=#585 id=585 data-nosnippet>585</a>            <span class="string">"{state}"
-<a href=#586 id=586 data-nosnippet>586</a>        </span>);
-<a href=#587 id=587 data-nosnippet>587</a>        <span class="kw">let </span>blank = kpi_state(<span class="string">"Health"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="string">""</span>))).render();
-<a href=#588 id=588 data-nosnippet>588</a>        <span class="macro">assert!</span>(
-<a href=#589 id=589 data-nosnippet>589</a>            !blank.contains(<span class="string">"mj-badge"</span>),
-<a href=#590 id=590 data-nosnippet>590</a>            <span class="string">"an empty word is no badge: {blank}"
-<a href=#591 id=591 data-nosnippet>591</a>        </span>);
-<a href=#592 id=592 data-nosnippet>592</a>    }
-<a href=#593 id=593 data-nosnippet>593</a>
-<a href=#594 id=594 data-nosnippet>594</a>    <span class="doccomment">/// Every kind of value has one way of being shown, and a negative integer is not
-<a href=#595 id=595 data-nosnippet>595</a>    /// rounded as if it were a fraction.
-<a href=#596 id=596 data-nosnippet>596</a>    </span><span class="attr">#[test]
-<a href=#597 id=597 data-nosnippet>597</a>    </span><span class="kw">fn </span>every_kind_of_value_is_shown_one_way() {
-<a href=#598 id=598 data-nosnippet>598</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="bool-val">true</span>))), <span class="string">"yes"</span>);
-<a href=#599 id=599 data-nosnippet>599</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="bool-val">false</span>))), <span class="string">"no"</span>);
-<a href=#600 id=600 data-nosnippet>600</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(-<span class="number">4</span>))), <span class="string">"-4"</span>);
-<a href=#601 id=601 data-nosnippet>601</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="number">0.5</span>))), <span class="string">"0.5"</span>);
-<a href=#602 id=602 data-nosnippet>602</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="number">2.0</span>))), <span class="string">"2"</span>);
-<a href=#603 id=603 data-nosnippet>603</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>([<span class="string">"a"</span>]))), <span class="string">"[\"a\"]"</span>);
-<a href=#604 id=604 data-nosnippet>604</a>    }
-<a href=#605 id=605 data-nosnippet>605</a>
-<a href=#606 id=606 data-nosnippet>606</a>    <span class="doccomment">/// A meter of a total of zero draws no bar, only the two numbers.
-<a href=#607 id=607 data-nosnippet>607</a>    </span><span class="attr">#[test]
-<a href=#608 id=608 data-nosnippet>608</a>    </span><span class="kw">fn </span>a_meter_of_nothing_draws_the_numbers_and_no_bar() {
-<a href=#609 id=609 data-nosnippet>609</a>        <span class="kw">let </span>html = meter(<span class="prelude-val">Some</span>(<span class="number">0</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>)).render();
-<a href=#610 id=610 data-nosnippet>610</a>        <span class="macro">assert!</span>(
-<a href=#611 id=611 data-nosnippet>611</a>            html.contains(<span class="string">"0 of 0"</span>) &amp;&amp; !html.contains(<span class="string">"mj-ui-meter-fill"</span>),
-<a href=#612 id=612 data-nosnippet>612</a>            <span class="string">"{html}"
-<a href=#613 id=613 data-nosnippet>613</a>        </span>);
-<a href=#614 id=614 data-nosnippet>614</a>        <span class="kw">let </span>full = meter(<span class="prelude-val">Some</span>(<span class="number">5</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render();
-<a href=#615 id=615 data-nosnippet>615</a>        <span class="macro">assert!</span>(
-<a href=#616 id=616 data-nosnippet>616</a>            full.contains(<span class="string">"width:100%"</span>),
-<a href=#617 id=617 data-nosnippet>617</a>            <span class="string">"a meter never overflows: {full}"
-<a href=#618 id=618 data-nosnippet>618</a>        </span>);
-<a href=#619 id=619 data-nosnippet>619</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"unknown"</span>));
-<a href=#620 id=620 data-nosnippet>620</a>    }
-<a href=#621 id=621 data-nosnippet>621</a>
-<a href=#622 id=622 data-nosnippet>622</a>    <span class="doccomment">/// A graph draws only the nodes that take part in an edge between known nodes, and an
-<a href=#623 id=623 data-nosnippet>623</a>    /// edge to a node it does not have is left out rather than drawn to nowhere.
-<a href=#624 id=624 data-nosnippet>624</a>    </span><span class="attr">#[test]
-<a href=#625 id=625 data-nosnippet>625</a>    </span><span class="kw">fn </span>a_graph_draws_only_related_nodes_and_known_edges() {
-<a href=#626 id=626 data-nosnippet>626</a>        <span class="kw">let </span>node = |id: <span class="kw-2">&amp;</span>str| GraphNode {
-<a href=#627 id=627 data-nosnippet>627</a>            id: id.into(),
-<a href=#628 id=628 data-nosnippet>628</a>            label: id.to_uppercase(),
-<a href=#629 id=629 data-nosnippet>629</a>            tone: <span class="string">"blue"</span>,
-<a href=#630 id=630 data-nosnippet>630</a>            href: <span class="macro">format!</span>(<span class="string">"/ui/roadmap#{id}"</span>),
-<a href=#631 id=631 data-nosnippet>631</a>            kind: <span class="string">"milestone"</span>,
-<a href=#632 id=632 data-nosnippet>632</a>        };
-<a href=#633 id=633 data-nosnippet>633</a>        <span class="kw">let </span>html = graph(
-<a href=#634 id=634 data-nosnippet>634</a>            <span class="string">"Milestones"</span>,
-<a href=#635 id=635 data-nosnippet>635</a>            Layout::Directed,
-<a href=#636 id=636 data-nosnippet>636</a>            <span class="kw-2">&amp;</span>[node(<span class="string">"a"</span>), node(<span class="string">"b"</span>), node(<span class="string">"lonely"</span>)],
-<a href=#637 id=637 data-nosnippet>637</a>            <span class="kw-2">&amp;</span>[(<span class="string">"a"</span>.into(), <span class="string">"b"</span>.into()), (<span class="string">"b"</span>.into(), <span class="string">"ghost"</span>.into())],
-<a href=#638 id=638 data-nosnippet>638</a>            el(<span class="string">"p"</span>).text(<span class="string">"the table"</span>),
-<a href=#639 id=639 data-nosnippet>639</a>        )
-<a href=#640 id=640 data-nosnippet>640</a>        .render();
-<a href=#641 id=641 data-nosnippet>641</a>        <span class="kw">let </span>data: Value = serde_json::from_str(
-<a href=#642 id=642 data-nosnippet>642</a>            <span class="kw-2">&amp;</span>html
-<a href=#643 id=643 data-nosnippet>643</a>                .split(<span class="string">"data-graph=\""</span>)
-<a href=#644 id=644 data-nosnippet>644</a>                .nth(<span class="number">1</span>)
-<a href=#645 id=645 data-nosnippet>645</a>                .and_then(|r| r.split(<span class="string">'"'</span>).next())
-<a href=#646 id=646 data-nosnippet>646</a>                .expect(<span class="string">"the graph's data"</span>)
-<a href=#647 id=647 data-nosnippet>647</a>                .replace(<span class="string">"&amp;quot;"</span>, <span class="string">"\""</span>)
-<a href=#648 id=648 data-nosnippet>648</a>                .replace(<span class="string">"&amp;amp;"</span>, <span class="string">"&amp;"</span>),
-<a href=#649 id=649 data-nosnippet>649</a>        )
-<a href=#650 id=650 data-nosnippet>650</a>        .expect(<span class="string">"the graph's data is JSON"</span>);
-<a href=#651 id=651 data-nosnippet>651</a>        <span class="macro">assert_eq!</span>(data[<span class="string">"layout"</span>], <span class="string">"directed"</span>);
-<a href=#652 id=652 data-nosnippet>652</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = data[<span class="string">"nodes"</span>]
-<a href=#653 id=653 data-nosnippet>653</a>            .as_array()
-<a href=#654 id=654 data-nosnippet>654</a>            .expect(<span class="string">"nodes"</span>)
-<a href=#655 id=655 data-nosnippet>655</a>            .iter()
-<a href=#656 id=656 data-nosnippet>656</a>            .filter_map(|n| n[<span class="string">"id"</span>].as_str())
-<a href=#657 id=657 data-nosnippet>657</a>            .collect();
-<a href=#658 id=658 data-nosnippet>658</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"a"</span>, <span class="string">"b"</span>], <span class="string">"only nodes on a known edge: {html}"</span>);
-<a href=#659 id=659 data-nosnippet>659</a>        <span class="macro">assert_eq!</span>(data[<span class="string">"edges"</span>].as_array().map(Vec::len), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-<a href=#660 id=660 data-nosnippet>660</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the table"</span>), <span class="string">"the fallback stays beneath"</span>);
-<a href=#661 id=661 data-nosnippet>661</a>        <span class="kw">let </span>force = graph(<span class="string">"Mesh"</span>, Layout::Force, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], el(<span class="string">"p"</span>)).render();
-<a href=#662 id=662 data-nosnippet>662</a>        <span class="macro">assert!</span>(force.contains(<span class="string">"force"</span>), <span class="string">"{force}"</span>);
-<a href=#663 id=663 data-nosnippet>663</a>    }
-<a href=#664 id=664 data-nosnippet>664</a>
-<a href=#665 id=665 data-nosnippet>665</a>    <span class="doccomment">/// A plan status is drawn in its word's tone, and an unknown word in the neutral one.
-<a href=#666 id=666 data-nosnippet>666</a>    </span><span class="attr">#[test]
-<a href=#667 id=667 data-nosnippet>667</a>    </span><span class="kw">fn </span>a_status_is_drawn_in_its_words_tone() {
-<a href=#668 id=668 data-nosnippet>668</a>        <span class="kw">for </span>(word, tone) <span class="kw">in </span>[
-<a href=#669 id=669 data-nosnippet>669</a>            (<span class="string">"done"</span>, <span class="string">"green"</span>),
-<a href=#670 id=670 data-nosnippet>670</a>            (<span class="string">"ACTIVE"</span>, <span class="string">"blue"</span>),
-<a href=#671 id=671 data-nosnippet>671</a>            (<span class="string">"verify"</span>, <span class="string">"blue"</span>),
-<a href=#672 id=672 data-nosnippet>672</a>            (<span class="string">"ready"</span>, <span class="string">"cyan"</span>),
-<a href=#673 id=673 data-nosnippet>673</a>            (<span class="string">"blocked"</span>, <span class="string">"rose"</span>),
-<a href=#674 id=674 data-nosnippet>674</a>            (<span class="string">"planned"</span>, <span class="string">"violet"</span>),
-<a href=#675 id=675 data-nosnippet>675</a>            (<span class="string">"something-new"</span>, <span class="string">"orange"</span>),
-<a href=#676 id=676 data-nosnippet>676</a>        ] {
-<a href=#677 id=677 data-nosnippet>677</a>            <span class="macro">assert_eq!</span>(status_tone(word), tone, <span class="string">"{word}"</span>);
-<a href=#678 id=678 data-nosnippet>678</a>        }
-<a href=#679 id=679 data-nosnippet>679</a>    }
-<a href=#680 id=680 data-nosnippet>680</a>
-<a href=#681 id=681 data-nosnippet>681</a>    <span class="doccomment">/// A timeline keeps the source's order and shows each entry's day, with the full
-<a href=#682 id=682 data-nosnippet>682</a>    /// timestamp in its datetime.
-<a href=#683 id=683 data-nosnippet>683</a>    </span><span class="attr">#[test]
-<a href=#684 id=684 data-nosnippet>684</a>    </span><span class="kw">fn </span>a_timeline_keeps_the_order_and_shows_the_day() {
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">let </span>html = timeline(<span class="macro">vec!</span>[
-<a href=#686 id=686 data-nosnippet>686</a>            (
-<a href=#687 id=687 data-nosnippet>687</a>                <span class="string">"2026-10-11T09:00:00Z"</span>.into(),
-<a href=#688 id=688 data-nosnippet>688</a>                <span class="string">"second"</span>.into(),
-<a href=#689 id=689 data-nosnippet>689</a>                el(<span class="string">"p"</span>).text(<span class="string">"b"</span>),
-<a href=#690 id=690 data-nosnippet>690</a>            ),
-<a href=#691 id=691 data-nosnippet>691</a>            (
-<a href=#692 id=692 data-nosnippet>692</a>                <span class="string">"2026-10-10T09:00:00Z"</span>.into(),
-<a href=#693 id=693 data-nosnippet>693</a>                <span class="string">"first"</span>.into(),
-<a href=#694 id=694 data-nosnippet>694</a>                el(<span class="string">"p"</span>).text(<span class="string">"a"</span>),
-<a href=#695 id=695 data-nosnippet>695</a>            ),
-<a href=#696 id=696 data-nosnippet>696</a>        ])
-<a href=#697 id=697 data-nosnippet>697</a>        .render();
-<a href=#698 id=698 data-nosnippet>698</a>        <span class="macro">assert!</span>(html.find(<span class="string">"second"</span>) &lt; html.find(<span class="string">"first"</span>), <span class="string">"{html}"</span>);
-<a href=#699 id=699 data-nosnippet>699</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"datetime=\"2026-10-11T09:00:00Z\""</span>));
-<a href=#700 id=700 data-nosnippet>700</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;2026-10-11&lt;"</span>));
-<a href=#701 id=701 data-nosnippet>701</a>    }
-<a href=#702 id=702 data-nosnippet>702</a>
-<a href=#703 id=703 data-nosnippet>703</a>    <span class="attr">#[test]
-<a href=#704 id=704 data-nosnippet>704</a>    </span><span class="kw">fn </span>a_number_is_shown_as_the_source_gave_it_rounded_only_when_fractional() {
-<a href=#705 id=705 data-nosnippet>705</a>        <span class="kw">let </span>a = answer(<span class="prelude-val">Ok</span>(
-<a href=#706 id=706 data-nosnippet>706</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"n"</span>: <span class="number">16</span>, <span class="string">"r"</span>: <span class="number">2.2857142857142856</span>, <span class="string">"z"</span>: <span class="number">0 </span>}),
-<a href=#707 id=707 data-nosnippet>707</a>        ));
-<a href=#708 id=708 data-nosnippet>708</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/n"</span>)), <span class="string">"16"</span>);
-<a href=#709 id=709 data-nosnippet>709</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/r"</span>)), <span class="string">"2.29"</span>);
-<a href=#710 id=710 data-nosnippet>710</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/z"</span>)), <span class="string">"0"</span>, <span class="string">"a measured zero is a zero"</span>);
-<a href=#711 id=711 data-nosnippet>711</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/missing"</span>)), <span class="string">"none"</span>);
-<a href=#712 id=712 data-nosnippet>712</a>    }
-<a href=#713 id=713 data-nosnippet>713</a>
-<a href=#714 id=714 data-nosnippet>714</a>    <span class="attr">#[test]
-<a href=#715 id=715 data-nosnippet>715</a>    </span><span class="kw">fn </span>a_donut_draws_the_counts_it_lists_and_says_when_there_are_none() {
-<a href=#716 id=716 data-nosnippet>716</a>        <span class="kw">let </span>html = donut(<span class="string">"issues"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"ready"</span>.into(), <span class="number">3</span>), (<span class="string">"blocked"</span>.into(), <span class="number">1</span>)]).render();
-<a href=#717 id=717 data-nosnippet>717</a>        <span class="macro">assert!</span>(
-<a href=#718 id=718 data-nosnippet>718</a>            html.contains(<span class="string">"stroke-dasharray=\"75.000 25.000\""</span>),
-<a href=#719 id=719 data-nosnippet>719</a>            <span class="string">"{html}"
-<a href=#720 id=720 data-nosnippet>720</a>        </span>);
-<a href=#721 id=721 data-nosnippet>721</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;ready&lt;"</span>) &amp;&amp; html.contains(<span class="string">"&gt;3&lt;"</span>));
-<a href=#722 id=722 data-nosnippet>722</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;strong&gt;4&lt;/strong&gt;"</span>));
-<a href=#723 id=723 data-nosnippet>723</a>        <span class="macro">assert!</span>(donut(<span class="string">"issues"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"ready"</span>.into(), <span class="number">0</span>)])
-<a href=#724 id=724 data-nosnippet>724</a>            .render()
-<a href=#725 id=725 data-nosnippet>725</a>            .contains(<span class="string">"Nothing has been counted"</span>));
-<a href=#726 id=726 data-nosnippet>726</a>    }
-<a href=#727 id=727 data-nosnippet>727</a>
-<a href=#728 id=728 data-nosnippet>728</a>    <span class="attr">#[test]
-<a href=#729 id=729 data-nosnippet>729</a>    </span><span class="kw">fn </span>a_meter_shows_its_two_numbers_and_never_invents_a_total() {
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">Some</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"3 of 4"</span>));
-<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">Some</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"width:75%"</span>));
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="macro">assert_eq!</span>(
-<a href=#733 id=733 data-nosnippet>733</a>            meter(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>)).render(),
-<a href=#734 id=734 data-nosnippet>734</a>            <span class="string">"&lt;span class=\"mj-ui-meter-text\"&gt;unknown&lt;/span&gt;"
-<a href=#735 id=735 data-nosnippet>735</a>        </span>);
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="kw">crate</span>::cockpit::view::table(headers, rows)
+<a href=#427 id=427 data-nosnippet>427</a>}
+<a href=#428 id=428 data-nosnippet>428</a>
+<a href=#429 id=429 data-nosnippet>429</a><span class="doccomment">/// A meter of `done` out of `total`, with both numbers as text: the bar is a picture of the
+<a href=#430 id=430 data-nosnippet>430</a>/// two numbers the source gave, not a percentage of its own.
+<a href=#431 id=431 data-nosnippet>431</a></span><span class="kw">pub fn </span>meter(done: <span class="prelude-ty">Option</span>&lt;u64&gt;, total: <span class="prelude-ty">Option</span>&lt;u64&gt;) -&gt; El {
+<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">match </span>(done, total) {
+<a href=#433 id=433 data-nosnippet>433</a>        (<span class="prelude-val">Some</span>(d), <span class="prelude-val">Some</span>(t)) <span class="kw">if </span>t &gt; <span class="number">0 </span>=&gt; {
+<a href=#434 id=434 data-nosnippet>434</a>            <span class="kw">let </span>width = (d.min(t) * <span class="number">100 </span>/ t).to_string();
+<a href=#435 id=435 data-nosnippet>435</a>            el(<span class="string">"span"</span>)
+<a href=#436 id=436 data-nosnippet>436</a>                .class(<span class="string">"mj-ui-meter"</span>)
+<a href=#437 id=437 data-nosnippet>437</a>                .child(
+<a href=#438 id=438 data-nosnippet>438</a>                    el(<span class="string">"span"</span>)
+<a href=#439 id=439 data-nosnippet>439</a>                        .class(<span class="string">"mj-ui-meter-track"</span>)
+<a href=#440 id=440 data-nosnippet>440</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
+<a href=#441 id=441 data-nosnippet>441</a>                        .child(
+<a href=#442 id=442 data-nosnippet>442</a>                            el(<span class="string">"span"</span>)
+<a href=#443 id=443 data-nosnippet>443</a>                                .class(<span class="string">"mj-ui-meter-fill"</span>)
+<a href=#444 id=444 data-nosnippet>444</a>                                .attr(<span class="string">"style"</span>, <span class="macro">format!</span>(<span class="string">"width:{width}%"</span>)),
+<a href=#445 id=445 data-nosnippet>445</a>                        ),
+<a href=#446 id=446 data-nosnippet>446</a>                )
+<a href=#447 id=447 data-nosnippet>447</a>                .child(
+<a href=#448 id=448 data-nosnippet>448</a>                    el(<span class="string">"span"</span>)
+<a href=#449 id=449 data-nosnippet>449</a>                        .class(<span class="string">"mj-ui-meter-text"</span>)
+<a href=#450 id=450 data-nosnippet>450</a>                        .text(<span class="macro">format!</span>(<span class="string">"{d} of {t}"</span>)),
+<a href=#451 id=451 data-nosnippet>451</a>                )
+<a href=#452 id=452 data-nosnippet>452</a>        }
+<a href=#453 id=453 data-nosnippet>453</a>        (<span class="prelude-val">Some</span>(d), <span class="prelude-val">Some</span>(t)) =&gt; el(<span class="string">"span"</span>)
+<a href=#454 id=454 data-nosnippet>454</a>            .class(<span class="string">"mj-ui-meter-text"</span>)
+<a href=#455 id=455 data-nosnippet>455</a>            .text(<span class="macro">format!</span>(<span class="string">"{d} of {t}"</span>)),
+<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">_ </span>=&gt; el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-meter-text"</span>).text(<span class="string">"unknown"</span>),
+<a href=#457 id=457 data-nosnippet>457</a>    }
+<a href=#458 id=458 data-nosnippet>458</a>}
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a><span class="comment">// ---------------------------------------------------------------- graphs
+<a href=#461 id=461 data-nosnippet>461</a>
+<a href=#462 id=462 data-nosnippet>462</a></span><span class="doccomment">/// A node of a relationship graph: an entity the source named, its label, the tone its
+<a href=#463 id=463 data-nosnippet>463</a>/// state is drawn in, and where clicking it leads.
+<a href=#464 id=464 data-nosnippet>464</a></span><span class="kw">pub struct </span>GraphNode {
+<a href=#465 id=465 data-nosnippet>465</a>    <span class="doccomment">/// The entity's id, as the source gave it.
+<a href=#466 id=466 data-nosnippet>466</a>    </span><span class="kw">pub </span>id: String,
+<a href=#467 id=467 data-nosnippet>467</a>    <span class="doccomment">/// The label drawn on the node.
+<a href=#468 id=468 data-nosnippet>468</a>    </span><span class="kw">pub </span>label: String,
+<a href=#469 id=469 data-nosnippet>469</a>    <span class="doccomment">/// The tone of the design system it is drawn in.
+<a href=#470 id=470 data-nosnippet>470</a>    </span><span class="kw">pub </span>tone: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#471 id=471 data-nosnippet>471</a>    <span class="doccomment">/// Where it leads.
+<a href=#472 id=472 data-nosnippet>472</a>    </span><span class="kw">pub </span>href: String,
+<a href=#473 id=473 data-nosnippet>473</a>    <span class="doccomment">/// `leaf` for a node drawn small and labelled only when selected; anything else is a
+<a href=#474 id=474 data-nosnippet>474</a>    /// node of the graph's main kind.
+<a href=#475 id=475 data-nosnippet>475</a>    </span><span class="kw">pub </span>kind: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#476 id=476 data-nosnippet>476</a>}
+<a href=#477 id=477 data-nosnippet>477</a>
+<a href=#478 id=478 data-nosnippet>478</a><span class="doccomment">/// How a graph is laid out: `directed` for a dependency order, `force` for a topology.
+<a href=#479 id=479 data-nosnippet>479</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#480 id=480 data-nosnippet>480</a></span><span class="kw">pub enum </span>Layout {
+<a href=#481 id=481 data-nosnippet>481</a>    <span class="doccomment">/// Breadth-first along the edges' direction.
+<a href=#482 id=482 data-nosnippet>482</a>    </span>Directed,
+<a href=#483 id=483 data-nosnippet>483</a>    <span class="doccomment">/// Force-directed, for a topology with no order.
+<a href=#484 id=484 data-nosnippet>484</a>    </span>Force,
+<a href=#485 id=485 data-nosnippet>485</a>}
+<a href=#486 id=486 data-nosnippet>486</a>
+<a href=#487 id=487 data-nosnippet>487</a><span class="doccomment">/// A relationship graph: the nodes and the typed edges a source answered, drawn by the
+<a href=#488 id=488 data-nosnippet>488</a>/// vendored Cytoscape once the screen has painted. Without JavaScript the `fallback` — a
+<a href=#489 id=489 data-nosnippet>489</a>/// table of the same edges — is what the reader gets, and with it the graph is a second view
+<a href=#490 id=490 data-nosnippet>490</a>/// of the same data, never a different one. An edge whose end is not a node is dropped
+<a href=#491 id=491 data-nosnippet>491</a>/// rather than drawn to nothing.
+<a href=#492 id=492 data-nosnippet>492</a>///
+<a href=#493 id=493 data-nosnippet>493</a>/// Only nodes that take part in an edge are drawn: a node with no relation says nothing in a
+<a href=#494 id=494 data-nosnippet>494</a>/// graph that its row in the fallback does not say better.
+<a href=#495 id=495 data-nosnippet>495</a></span><span class="kw">pub fn </span>graph(
+<a href=#496 id=496 data-nosnippet>496</a>    label: <span class="kw-2">&amp;</span>str,
+<a href=#497 id=497 data-nosnippet>497</a>    layout: Layout,
+<a href=#498 id=498 data-nosnippet>498</a>    nodes: <span class="kw-2">&amp;</span>[GraphNode],
+<a href=#499 id=499 data-nosnippet>499</a>    edges: <span class="kw-2">&amp;</span>[(String, String)],
+<a href=#500 id=500 data-nosnippet>500</a>    fallback: El,
+<a href=#501 id=501 data-nosnippet>501</a>) -&gt; El {
+<a href=#502 id=502 data-nosnippet>502</a>    <span class="kw">let </span>ids: std::collections::BTreeSet&lt;<span class="kw-2">&amp;</span>str&gt; = nodes.iter().map(|n| n.id.as_str()).collect();
+<a href=#503 id=503 data-nosnippet>503</a>    <span class="kw">let </span>related: std::collections::BTreeSet&lt;<span class="kw-2">&amp;</span>str&gt; = edges
+<a href=#504 id=504 data-nosnippet>504</a>        .iter()
+<a href=#505 id=505 data-nosnippet>505</a>        .filter(|(a, b)| ids.contains(a.as_str()) &amp;&amp; ids.contains(b.as_str()))
+<a href=#506 id=506 data-nosnippet>506</a>        .flat_map(|(a, b)| [a.as_str(), b.as_str()])
+<a href=#507 id=507 data-nosnippet>507</a>        .collect();
+<a href=#508 id=508 data-nosnippet>508</a>    <span class="kw">let </span>data = <span class="macro">serde_json::json!</span>({
+<a href=#509 id=509 data-nosnippet>509</a>        <span class="string">"layout"</span>: <span class="kw">match </span>layout { Layout::Directed =&gt; <span class="string">"directed"</span>, Layout::Force =&gt; <span class="string">"force" </span>},
+<a href=#510 id=510 data-nosnippet>510</a>        <span class="string">"nodes"</span>: nodes.iter().filter(|n| related.contains(n.id.as_str())).map(|n| <span class="macro">serde_json::json!</span>({
+<a href=#511 id=511 data-nosnippet>511</a>            <span class="string">"id"</span>: n.id, <span class="string">"label"</span>: n.label, <span class="string">"tone"</span>: n.tone, <span class="string">"href"</span>: n.href, <span class="string">"kind"</span>: n.kind,
+<a href=#512 id=512 data-nosnippet>512</a>        })).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="string">"edges"</span>: edges.iter()
+<a href=#514 id=514 data-nosnippet>514</a>            .filter(|(a, b)| ids.contains(a.as_str()) &amp;&amp; ids.contains(b.as_str()))
+<a href=#515 id=515 data-nosnippet>515</a>            .map(|(a, b)| <span class="macro">serde_json::json!</span>({ <span class="string">"source"</span>: a, <span class="string">"target"</span>: b }))
+<a href=#516 id=516 data-nosnippet>516</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+<a href=#517 id=517 data-nosnippet>517</a>    });
+<a href=#518 id=518 data-nosnippet>518</a>    el(<span class="string">"div"</span>)
+<a href=#519 id=519 data-nosnippet>519</a>        .class(<span class="string">"mj-ui-graph"</span>)
+<a href=#520 id=520 data-nosnippet>520</a>        .attr(<span class="string">"data-graph"</span>, data.to_string())
+<a href=#521 id=521 data-nosnippet>521</a>        .child(
+<a href=#522 id=522 data-nosnippet>522</a>            el(<span class="string">"div"</span>)
+<a href=#523 id=523 data-nosnippet>523</a>                .class(<span class="string">"mj-ui-graph-canvas"</span>)
+<a href=#524 id=524 data-nosnippet>524</a>                .attr(<span class="string">"role"</span>, <span class="string">"img"</span>)
+<a href=#525 id=525 data-nosnippet>525</a>                .attr(<span class="string">"aria-label"</span>, label)
+<a href=#526 id=526 data-nosnippet>526</a>                .flag(<span class="string">"hidden"</span>),
+<a href=#527 id=527 data-nosnippet>527</a>        )
+<a href=#528 id=528 data-nosnippet>528</a>        .child(el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-graph-fallback"</span>).child(fallback))
+<a href=#529 id=529 data-nosnippet>529</a>}
+<a href=#530 id=530 data-nosnippet>530</a>
+<a href=#531 id=531 data-nosnippet>531</a><span class="doccomment">/// The tone a plan status is drawn in: presentation of the status word the source gave, so
+<a href=#532 id=532 data-nosnippet>532</a>/// an unknown word gets the neutral tone rather than a meaning.
+<a href=#533 id=533 data-nosnippet>533</a></span><span class="kw">pub fn </span>status_tone(status: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#534 id=534 data-nosnippet>534</a>    <span class="kw">match </span>status.to_ascii_uppercase().as_str() {
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="string">"DONE" </span>=&gt; <span class="string">"green"</span>,
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="string">"ACTIVE" </span>| <span class="string">"VERIFY" </span>=&gt; <span class="string">"blue"</span>,
+<a href=#537 id=537 data-nosnippet>537</a>        <span class="string">"READY" </span>=&gt; <span class="string">"cyan"</span>,
+<a href=#538 id=538 data-nosnippet>538</a>        <span class="string">"BLOCKED" </span>=&gt; <span class="string">"rose"</span>,
+<a href=#539 id=539 data-nosnippet>539</a>        <span class="string">"PLANNED" </span>=&gt; <span class="string">"violet"</span>,
+<a href=#540 id=540 data-nosnippet>540</a>        <span class="kw">_ </span>=&gt; <span class="string">"orange"</span>,
+<a href=#541 id=541 data-nosnippet>541</a>    }
+<a href=#542 id=542 data-nosnippet>542</a>}
+<a href=#543 id=543 data-nosnippet>543</a>
+<a href=#544 id=544 data-nosnippet>544</a><span class="comment">// ---------------------------------------------------------------- charts
+<a href=#545 id=545 data-nosnippet>545</a>
+<a href=#546 id=546 data-nosnippet>546</a></span><span class="doccomment">/// A donut of named counts, each in a tone of the design system, with the counts beside it
+<a href=#547 id=547 data-nosnippet>547</a>/// as a legend: a reader without the picture reads the same numbers. Segments that are
+<a href=#548 id=548 data-nosnippet>548</a>/// zero are listed and not drawn; a donut of nothing says so.
+<a href=#549 id=549 data-nosnippet>549</a></span><span class="kw">pub fn </span>donut(center: <span class="kw-2">&amp;</span>str, segments: <span class="kw-2">&amp;</span>[(String, u64)]) -&gt; El {
+<a href=#550 id=550 data-nosnippet>550</a>    <span class="kw">let </span>total: u64 = segments.iter().map(|(<span class="kw">_</span>, n)| n).sum();
+<a href=#551 id=551 data-nosnippet>551</a>    <span class="kw">if </span>total == <span class="number">0 </span>{
+<a href=#552 id=552 data-nosnippet>552</a>        <span class="kw">return </span>nothing(<span class="string">"Nothing has been counted yet."</span>);
+<a href=#553 id=553 data-nosnippet>553</a>    }
+<a href=#554 id=554 data-nosnippet>554</a>    <span class="comment">// a circle of circumference 100, so a segment's dash is its share in percent
+<a href=#555 id=555 data-nosnippet>555</a>    </span><span class="kw">let </span>radius = <span class="number">15.915_494_309</span>;
+<a href=#556 id=556 data-nosnippet>556</a>    <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">25.0_f64</span>;
+<a href=#557 id=557 data-nosnippet>557</a>    <span class="kw">let </span><span class="kw-2">mut </span>svg = el(<span class="string">"svg"</span>)
+<a href=#558 id=558 data-nosnippet>558</a>        .class(<span class="string">"mj-ui-donut-svg"</span>)
+<a href=#559 id=559 data-nosnippet>559</a>        .attr(<span class="string">"viewBox"</span>, <span class="string">"0 0 42 42"</span>)
+<a href=#560 id=560 data-nosnippet>560</a>        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>)
+<a href=#561 id=561 data-nosnippet>561</a>        .child(
+<a href=#562 id=562 data-nosnippet>562</a>            el(<span class="string">"circle"</span>)
+<a href=#563 id=563 data-nosnippet>563</a>                .class(<span class="string">"mj-ui-donut-track"</span>)
+<a href=#564 id=564 data-nosnippet>564</a>                .attr(<span class="string">"cx"</span>, <span class="string">"21"</span>)
+<a href=#565 id=565 data-nosnippet>565</a>                .attr(<span class="string">"cy"</span>, <span class="string">"21"</span>)
+<a href=#566 id=566 data-nosnippet>566</a>                .attr(<span class="string">"r"</span>, <span class="macro">format!</span>(<span class="string">"{radius}"</span>)),
+<a href=#567 id=567 data-nosnippet>567</a>        );
+<a href=#568 id=568 data-nosnippet>568</a>    <span class="kw">for </span>(i, (<span class="kw">_</span>, n)) <span class="kw">in </span>segments.iter().enumerate() {
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">if </span><span class="kw-2">*</span>n == <span class="number">0 </span>{
+<a href=#570 id=570 data-nosnippet>570</a>            <span class="kw">continue</span>;
+<a href=#571 id=571 data-nosnippet>571</a>        }
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">let </span>share = <span class="kw-2">*</span>n <span class="kw">as </span>f64 * <span class="number">100.0 </span>/ total <span class="kw">as </span>f64;
+<a href=#573 id=573 data-nosnippet>573</a>        svg = svg.child(
+<a href=#574 id=574 data-nosnippet>574</a>            el(<span class="string">"circle"</span>)
+<a href=#575 id=575 data-nosnippet>575</a>                .class(<span class="macro">format!</span>(
+<a href=#576 id=576 data-nosnippet>576</a>                    <span class="string">"mj-ui-donut-segment mj-tone--{}"</span>,
+<a href=#577 id=577 data-nosnippet>577</a>                    TONES[i % TONES.len()]
+<a href=#578 id=578 data-nosnippet>578</a>                ))
+<a href=#579 id=579 data-nosnippet>579</a>                .attr(<span class="string">"cx"</span>, <span class="string">"21"</span>)
+<a href=#580 id=580 data-nosnippet>580</a>                .attr(<span class="string">"cy"</span>, <span class="string">"21"</span>)
+<a href=#581 id=581 data-nosnippet>581</a>                .attr(<span class="string">"r"</span>, <span class="macro">format!</span>(<span class="string">"{radius}"</span>))
+<a href=#582 id=582 data-nosnippet>582</a>                .attr(
+<a href=#583 id=583 data-nosnippet>583</a>                    <span class="string">"stroke-dasharray"</span>,
+<a href=#584 id=584 data-nosnippet>584</a>                    <span class="macro">format!</span>(<span class="string">"{share:.3} {:.3}"</span>, <span class="number">100.0 </span>- share),
+<a href=#585 id=585 data-nosnippet>585</a>                )
+<a href=#586 id=586 data-nosnippet>586</a>                .attr(<span class="string">"stroke-dashoffset"</span>, <span class="macro">format!</span>(<span class="string">"{offset:.3}"</span>)),
+<a href=#587 id=587 data-nosnippet>587</a>        );
+<a href=#588 id=588 data-nosnippet>588</a>        offset -= share;
+<a href=#589 id=589 data-nosnippet>589</a>    }
+<a href=#590 id=590 data-nosnippet>590</a>    <span class="kw">let </span>legend = el(<span class="string">"ul"</span>)
+<a href=#591 id=591 data-nosnippet>591</a>        .class(<span class="string">"mj-ui-legend"</span>)
+<a href=#592 id=592 data-nosnippet>592</a>        .children(segments.iter().enumerate().map(|(i, (label, n))| {
+<a href=#593 id=593 data-nosnippet>593</a>            el(<span class="string">"li"</span>)
+<a href=#594 id=594 data-nosnippet>594</a>                .class(<span class="macro">format!</span>(
+<a href=#595 id=595 data-nosnippet>595</a>                    <span class="string">"mj-ui-legend-item mj-tone--{}"</span>,
+<a href=#596 id=596 data-nosnippet>596</a>                    TONES[i % TONES.len()]
+<a href=#597 id=597 data-nosnippet>597</a>                ))
+<a href=#598 id=598 data-nosnippet>598</a>                .child(
+<a href=#599 id=599 data-nosnippet>599</a>                    el(<span class="string">"span"</span>)
+<a href=#600 id=600 data-nosnippet>600</a>                        .class(<span class="string">"mj-ui-legend-dot"</span>)
+<a href=#601 id=601 data-nosnippet>601</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>),
+<a href=#602 id=602 data-nosnippet>602</a>                )
+<a href=#603 id=603 data-nosnippet>603</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-name"</span>).text(label))
+<a href=#604 id=604 data-nosnippet>604</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-value"</span>).text(n.to_string()))
+<a href=#605 id=605 data-nosnippet>605</a>        }));
+<a href=#606 id=606 data-nosnippet>606</a>    el(<span class="string">"div"</span>)
+<a href=#607 id=607 data-nosnippet>607</a>        .class(<span class="string">"mj-ui-donut"</span>)
+<a href=#608 id=608 data-nosnippet>608</a>        .child(
+<a href=#609 id=609 data-nosnippet>609</a>            el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-donut-figure"</span>).child(svg).child(
+<a href=#610 id=610 data-nosnippet>610</a>                el(<span class="string">"span"</span>)
+<a href=#611 id=611 data-nosnippet>611</a>                    .class(<span class="string">"mj-ui-donut-center"</span>)
+<a href=#612 id=612 data-nosnippet>612</a>                    .child(el(<span class="string">"strong"</span>).text(total.to_string()))
+<a href=#613 id=613 data-nosnippet>613</a>                    .child(el(<span class="string">"span"</span>).text(center)),
+<a href=#614 id=614 data-nosnippet>614</a>            ),
+<a href=#615 id=615 data-nosnippet>615</a>        )
+<a href=#616 id=616 data-nosnippet>616</a>        .child(legend)
+<a href=#617 id=617 data-nosnippet>617</a>}
+<a href=#618 id=618 data-nosnippet>618</a>
+<a href=#619 id=619 data-nosnippet>619</a><span class="doccomment">/// The counts of an object at `pointer`, as donut segments in the order the source gave.
+<a href=#620 id=620 data-nosnippet>620</a></span><span class="kw">pub fn </span>counts(answer: <span class="kw-2">&amp;</span>Answer, pointer: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;(String, u64)&gt; {
+<a href=#621 id=621 data-nosnippet>621</a>    answer
+<a href=#622 id=622 data-nosnippet>622</a>        .ok()
+<a href=#623 id=623 data-nosnippet>623</a>        .and_then(|v| v.pointer(pointer))
+<a href=#624 id=624 data-nosnippet>624</a>        .and_then(Value::as_object)
+<a href=#625 id=625 data-nosnippet>625</a>        .map(|m| {
+<a href=#626 id=626 data-nosnippet>626</a>            m.iter()
+<a href=#627 id=627 data-nosnippet>627</a>                .filter_map(|(k, v)| v.as_u64().map(|n| (k.to_lowercase(), n)))
+<a href=#628 id=628 data-nosnippet>628</a>                .collect()
+<a href=#629 id=629 data-nosnippet>629</a>        })
+<a href=#630 id=630 data-nosnippet>630</a>        <span class="comment">// ui-integrity: an absent object is no segments, never a zero; the donut then says nothing was counted
+<a href=#631 id=631 data-nosnippet>631</a>        </span>.unwrap_or_default()
+<a href=#632 id=632 data-nosnippet>632</a>}
+<a href=#633 id=633 data-nosnippet>633</a>
+<a href=#634 id=634 data-nosnippet>634</a><span class="doccomment">/// A vertical timeline of dated entries, newest first, as the source ordered them.
+<a href=#635 id=635 data-nosnippet>635</a></span><span class="kw">pub fn </span>timeline(entries: Vec&lt;(String, String, El)&gt;) -&gt; El {
+<a href=#636 id=636 data-nosnippet>636</a>    el(<span class="string">"ol"</span>)
+<a href=#637 id=637 data-nosnippet>637</a>        .class(<span class="string">"mj-ui-timeline"</span>)
+<a href=#638 id=638 data-nosnippet>638</a>        .children(entries.into_iter().map(|(when, title, detail)| {
+<a href=#639 id=639 data-nosnippet>639</a>            el(<span class="string">"li"</span>)
+<a href=#640 id=640 data-nosnippet>640</a>                .class(<span class="string">"mj-ui-timeline-item"</span>)
+<a href=#641 id=641 data-nosnippet>641</a>                .child(
+<a href=#642 id=642 data-nosnippet>642</a>                    el(<span class="string">"span"</span>)
+<a href=#643 id=643 data-nosnippet>643</a>                        .class(<span class="string">"mj-ui-timeline-dot"</span>)
+<a href=#644 id=644 data-nosnippet>644</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>),
+<a href=#645 id=645 data-nosnippet>645</a>                )
+<a href=#646 id=646 data-nosnippet>646</a>                .child(
+<a href=#647 id=647 data-nosnippet>647</a>                    el(<span class="string">"div"</span>)
+<a href=#648 id=648 data-nosnippet>648</a>                        .class(<span class="string">"mj-ui-timeline-body"</span>)
+<a href=#649 id=649 data-nosnippet>649</a>                        .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-timeline-title"</span>).text(title))
+<a href=#650 id=650 data-nosnippet>650</a>                        .child(detail),
+<a href=#651 id=651 data-nosnippet>651</a>                )
+<a href=#652 id=652 data-nosnippet>652</a>                .child(
+<a href=#653 id=653 data-nosnippet>653</a>                    el(<span class="string">"time"</span>)
+<a href=#654 id=654 data-nosnippet>654</a>                        .class(<span class="string">"mj-ui-timeline-when"</span>)
+<a href=#655 id=655 data-nosnippet>655</a>                        .attr(<span class="string">"datetime"</span>, when.clone())
+<a href=#656 id=656 data-nosnippet>656</a>                        .text(day(<span class="kw-2">&amp;</span>when)),
+<a href=#657 id=657 data-nosnippet>657</a>                )
+<a href=#658 id=658 data-nosnippet>658</a>        }))
+<a href=#659 id=659 data-nosnippet>659</a>}
+<a href=#660 id=660 data-nosnippet>660</a>
+<a href=#661 id=661 data-nosnippet>661</a><span class="doccomment">/// The day of an RFC 3339 timestamp, as written: no clock, no zone arithmetic.
+<a href=#662 id=662 data-nosnippet>662</a></span><span class="kw">pub fn </span>day(at: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#663 id=663 data-nosnippet>663</a>    at.split(<span class="string">'T'</span>).next().unwrap_or(at).to_string()
+<a href=#664 id=664 data-nosnippet>664</a>}
+<a href=#665 id=665 data-nosnippet>665</a>
+<a href=#666 id=666 data-nosnippet>666</a><span class="attr">#[cfg(test)]
+<a href=#667 id=667 data-nosnippet>667</a></span><span class="kw">mod </span>tests {
+<a href=#668 id=668 data-nosnippet>668</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::source::{Exposure, Source};
+<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw">use </span>std::time::Duration;
+<a href=#671 id=671 data-nosnippet>671</a>
+<a href=#672 id=672 data-nosnippet>672</a>    <span class="kw">fn </span>answer(value: <span class="prelude-ty">Result</span>&lt;Value, String&gt;) -&gt; Answer {
+<a href=#673 id=673 data-nosnippet>673</a>        Answer {
+<a href=#674 id=674 data-nosnippet>674</a>            source: Source::of(<span class="string">"plan.status"</span>),
+<a href=#675 id=675 data-nosnippet>675</a>            route: <span class="prelude-val">Some</span>(<span class="string">"GET /api/v1/plan/status"</span>.into()),
+<a href=#676 id=676 data-nosnippet>676</a>            exposure: Exposure::default(),
+<a href=#677 id=677 data-nosnippet>677</a>            value,
+<a href=#678 id=678 data-nosnippet>678</a>            took: Duration::from_millis(<span class="number">5</span>),
+<a href=#679 id=679 data-nosnippet>679</a>        }
+<a href=#680 id=680 data-nosnippet>680</a>    }
+<a href=#681 id=681 data-nosnippet>681</a>
+<a href=#682 id=682 data-nosnippet>682</a>    <span class="kw">fn </span>reading(value: Value) -&gt; Reading {
+<a href=#683 id=683 data-nosnippet>683</a>        answer(<span class="prelude-val">Ok</span>(<span class="macro">serde_json::json!</span>({ <span class="string">"v"</span>: value }))).read(<span class="string">"/v"</span>)
+<a href=#684 id=684 data-nosnippet>684</a>    }
+<a href=#685 id=685 data-nosnippet>685</a>
+<a href=#686 id=686 data-nosnippet>686</a>    <span class="doccomment">/// A count tile counts the list or the map at its pointer, and says which way it is
+<a href=#687 id=687 data-nosnippet>687</a>    /// missing otherwise; a state tile draws the word as a badge.
+<a href=#688 id=688 data-nosnippet>688</a>    </span><span class="attr">#[test]
+<a href=#689 id=689 data-nosnippet>689</a>    </span><span class="kw">fn </span>a_count_tile_counts_the_answers_own_list_or_map() {
+<a href=#690 id=690 data-nosnippet>690</a>        <span class="kw">let </span>list = kpi_count(<span class="string">"Items"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]))).render();
+<a href=#691 id=691 data-nosnippet>691</a>        <span class="macro">assert!</span>(list.contains(<span class="string">"&gt;3&lt;"</span>), <span class="string">"{list}"</span>);
+<a href=#692 id=692 data-nosnippet>692</a>        <span class="kw">let </span>map = kpi_count(<span class="string">"Keys"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>({ <span class="string">"a"</span>: <span class="number">1</span>, <span class="string">"b"</span>: <span class="number">2 </span>}))).render();
+<a href=#693 id=693 data-nosnippet>693</a>        <span class="macro">assert!</span>(map.contains(<span class="string">"&gt;2&lt;"</span>), <span class="string">"{map}"</span>);
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="kw">let </span>failed = answer(<span class="prelude-val">Err</span>(<span class="string">"refused"</span>.into())).read(<span class="string">"/v"</span>);
+<a href=#695 id=695 data-nosnippet>695</a>        <span class="macro">assert!</span>(kpi_count(<span class="string">"Items"</span>, <span class="kw-2">&amp;</span>failed)
+<a href=#696 id=696 data-nosnippet>696</a>            .render()
+<a href=#697 id=697 data-nosnippet>697</a>            .contains(<span class="string">"not answered"</span>));
+<a href=#698 id=698 data-nosnippet>698</a>        <span class="kw">let </span>state = kpi_state(<span class="string">"Health"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="string">"warn"</span>))).render();
+<a href=#699 id=699 data-nosnippet>699</a>        <span class="macro">assert!</span>(
+<a href=#700 id=700 data-nosnippet>700</a>            state.contains(<span class="string">"mj-badge"</span>) &amp;&amp; state.contains(<span class="string">"warn"</span>),
+<a href=#701 id=701 data-nosnippet>701</a>            <span class="string">"{state}"
+<a href=#702 id=702 data-nosnippet>702</a>        </span>);
+<a href=#703 id=703 data-nosnippet>703</a>        <span class="kw">let </span>blank = kpi_state(<span class="string">"Health"</span>, <span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="string">""</span>))).render();
+<a href=#704 id=704 data-nosnippet>704</a>        <span class="macro">assert!</span>(
+<a href=#705 id=705 data-nosnippet>705</a>            !blank.contains(<span class="string">"mj-badge"</span>),
+<a href=#706 id=706 data-nosnippet>706</a>            <span class="string">"an empty word is no badge: {blank}"
+<a href=#707 id=707 data-nosnippet>707</a>        </span>);
+<a href=#708 id=708 data-nosnippet>708</a>    }
+<a href=#709 id=709 data-nosnippet>709</a>
+<a href=#710 id=710 data-nosnippet>710</a>    <span class="doccomment">/// Every kind of value has one way of being shown, and a negative integer is not
+<a href=#711 id=711 data-nosnippet>711</a>    /// rounded as if it were a fraction.
+<a href=#712 id=712 data-nosnippet>712</a>    </span><span class="attr">#[test]
+<a href=#713 id=713 data-nosnippet>713</a>    </span><span class="kw">fn </span>every_kind_of_value_is_shown_one_way() {
+<a href=#714 id=714 data-nosnippet>714</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="bool-val">true</span>))), <span class="string">"yes"</span>);
+<a href=#715 id=715 data-nosnippet>715</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="bool-val">false</span>))), <span class="string">"no"</span>);
+<a href=#716 id=716 data-nosnippet>716</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(-<span class="number">4</span>))), <span class="string">"-4"</span>);
+<a href=#717 id=717 data-nosnippet>717</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="number">0.5</span>))), <span class="string">"0.5"</span>);
+<a href=#718 id=718 data-nosnippet>718</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>(<span class="number">2.0</span>))), <span class="string">"2"</span>);
+<a href=#719 id=719 data-nosnippet>719</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>reading(<span class="macro">serde_json::json!</span>([<span class="string">"a"</span>]))), <span class="string">"[\"a\"]"</span>);
+<a href=#720 id=720 data-nosnippet>720</a>    }
+<a href=#721 id=721 data-nosnippet>721</a>
+<a href=#722 id=722 data-nosnippet>722</a>    <span class="doccomment">/// A meter of a total of zero draws no bar, only the two numbers.
+<a href=#723 id=723 data-nosnippet>723</a>    </span><span class="attr">#[test]
+<a href=#724 id=724 data-nosnippet>724</a>    </span><span class="kw">fn </span>a_meter_of_nothing_draws_the_numbers_and_no_bar() {
+<a href=#725 id=725 data-nosnippet>725</a>        <span class="kw">let </span>html = meter(<span class="prelude-val">Some</span>(<span class="number">0</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>)).render();
+<a href=#726 id=726 data-nosnippet>726</a>        <span class="macro">assert!</span>(
+<a href=#727 id=727 data-nosnippet>727</a>            html.contains(<span class="string">"0 of 0"</span>) &amp;&amp; !html.contains(<span class="string">"mj-ui-meter-fill"</span>),
+<a href=#728 id=728 data-nosnippet>728</a>            <span class="string">"{html}"
+<a href=#729 id=729 data-nosnippet>729</a>        </span>);
+<a href=#730 id=730 data-nosnippet>730</a>        <span class="kw">let </span>full = meter(<span class="prelude-val">Some</span>(<span class="number">5</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render();
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert!</span>(
+<a href=#732 id=732 data-nosnippet>732</a>            full.contains(<span class="string">"width:100%"</span>),
+<a href=#733 id=733 data-nosnippet>733</a>            <span class="string">"a meter never overflows: {full}"
+<a href=#734 id=734 data-nosnippet>734</a>        </span>);
+<a href=#735 id=735 data-nosnippet>735</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"unknown"</span>));
 <a href=#736 id=736 data-nosnippet>736</a>    }
 <a href=#737 id=737 data-nosnippet>737</a>
-<a href=#738 id=738 data-nosnippet>738</a>    <span class="attr">#[test]
-<a href=#739 id=739 data-nosnippet>739</a>    </span><span class="kw">fn </span>a_panel_names_its_source_and_its_technical_reference_once() {
-<a href=#740 id=740 data-nosnippet>740</a>        <span class="kw">let </span>a = answer(<span class="prelude-val">Ok</span>(Value::Null));
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="kw">let </span>html = panel(<span class="string">"Plan"</span>, <span class="string">"sub"</span>, el(<span class="string">"p"</span>), <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>a]).render();
-<a href=#742 id=742 data-nosnippet>742</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;plan.status&lt;"</span>) &amp;&amp; html.contains(<span class="string">"5 ms"</span>));
-<a href=#743 id=743 data-nosnippet>743</a>        <span class="comment">// the Cockpit is the low-level reference: one link per source, and nowhere else
-<a href=#744 id=744 data-nosnippet>744</a>        </span><span class="macro">assert_eq!</span>(html.matches(<span class="string">"/cockpit/"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
-<a href=#745 id=745 data-nosnippet>745</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"href=\"/cockpit/capabilities/plan.status\""</span>));
-<a href=#746 id=746 data-nosnippet>746</a>    }
-<a href=#747 id=747 data-nosnippet>747</a>
-<a href=#748 id=748 data-nosnippet>748</a>    <span class="attr">#[test]
-<a href=#749 id=749 data-nosnippet>749</a>    </span><span class="kw">fn </span>an_absent_state_word_is_unknown() {
-<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">assert_eq!</span>(state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({}), <span class="string">"status"</span>), <span class="string">"unknown"</span>);
-<a href=#751 id=751 data-nosnippet>751</a>        <span class="macro">assert_eq!</span>(
-<a href=#752 id=752 data-nosnippet>752</a>            state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"status"</span>: <span class="string">"" </span>}), <span class="string">"status"</span>),
-<a href=#753 id=753 data-nosnippet>753</a>            <span class="string">"unknown"
-<a href=#754 id=754 data-nosnippet>754</a>        </span>);
-<a href=#755 id=755 data-nosnippet>755</a>        <span class="macro">assert_eq!</span>(
-<a href=#756 id=756 data-nosnippet>756</a>            state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"status"</span>: <span class="string">"warn" </span>}), <span class="string">"status"</span>),
-<a href=#757 id=757 data-nosnippet>757</a>            <span class="string">"warn"
-<a href=#758 id=758 data-nosnippet>758</a>        </span>);
-<a href=#759 id=759 data-nosnippet>759</a>    }
-<a href=#760 id=760 data-nosnippet>760</a>}
+<a href=#738 id=738 data-nosnippet>738</a>    <span class="doccomment">/// A graph draws only the nodes that take part in an edge between known nodes, and an
+<a href=#739 id=739 data-nosnippet>739</a>    /// edge to a node it does not have is left out rather than drawn to nowhere.
+<a href=#740 id=740 data-nosnippet>740</a>    </span><span class="attr">#[test]
+<a href=#741 id=741 data-nosnippet>741</a>    </span><span class="kw">fn </span>a_graph_draws_only_related_nodes_and_known_edges() {
+<a href=#742 id=742 data-nosnippet>742</a>        <span class="kw">let </span>node = |id: <span class="kw-2">&amp;</span>str| GraphNode {
+<a href=#743 id=743 data-nosnippet>743</a>            id: id.into(),
+<a href=#744 id=744 data-nosnippet>744</a>            label: id.to_uppercase(),
+<a href=#745 id=745 data-nosnippet>745</a>            tone: <span class="string">"blue"</span>,
+<a href=#746 id=746 data-nosnippet>746</a>            href: <span class="macro">format!</span>(<span class="string">"/ui/roadmap#{id}"</span>),
+<a href=#747 id=747 data-nosnippet>747</a>            kind: <span class="string">"milestone"</span>,
+<a href=#748 id=748 data-nosnippet>748</a>        };
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">let </span>html = graph(
+<a href=#750 id=750 data-nosnippet>750</a>            <span class="string">"Milestones"</span>,
+<a href=#751 id=751 data-nosnippet>751</a>            Layout::Directed,
+<a href=#752 id=752 data-nosnippet>752</a>            <span class="kw-2">&amp;</span>[node(<span class="string">"a"</span>), node(<span class="string">"b"</span>), node(<span class="string">"lonely"</span>)],
+<a href=#753 id=753 data-nosnippet>753</a>            <span class="kw-2">&amp;</span>[(<span class="string">"a"</span>.into(), <span class="string">"b"</span>.into()), (<span class="string">"b"</span>.into(), <span class="string">"ghost"</span>.into())],
+<a href=#754 id=754 data-nosnippet>754</a>            el(<span class="string">"p"</span>).text(<span class="string">"the table"</span>),
+<a href=#755 id=755 data-nosnippet>755</a>        )
+<a href=#756 id=756 data-nosnippet>756</a>        .render();
+<a href=#757 id=757 data-nosnippet>757</a>        <span class="kw">let </span>data: Value = serde_json::from_str(
+<a href=#758 id=758 data-nosnippet>758</a>            <span class="kw-2">&amp;</span>html
+<a href=#759 id=759 data-nosnippet>759</a>                .split(<span class="string">"data-graph=\""</span>)
+<a href=#760 id=760 data-nosnippet>760</a>                .nth(<span class="number">1</span>)
+<a href=#761 id=761 data-nosnippet>761</a>                .and_then(|r| r.split(<span class="string">'"'</span>).next())
+<a href=#762 id=762 data-nosnippet>762</a>                .expect(<span class="string">"the graph's data"</span>)
+<a href=#763 id=763 data-nosnippet>763</a>                .replace(<span class="string">"&amp;quot;"</span>, <span class="string">"\""</span>)
+<a href=#764 id=764 data-nosnippet>764</a>                .replace(<span class="string">"&amp;amp;"</span>, <span class="string">"&amp;"</span>),
+<a href=#765 id=765 data-nosnippet>765</a>        )
+<a href=#766 id=766 data-nosnippet>766</a>        .expect(<span class="string">"the graph's data is JSON"</span>);
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">assert_eq!</span>(data[<span class="string">"layout"</span>], <span class="string">"directed"</span>);
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = data[<span class="string">"nodes"</span>]
+<a href=#769 id=769 data-nosnippet>769</a>            .as_array()
+<a href=#770 id=770 data-nosnippet>770</a>            .expect(<span class="string">"nodes"</span>)
+<a href=#771 id=771 data-nosnippet>771</a>            .iter()
+<a href=#772 id=772 data-nosnippet>772</a>            .filter_map(|n| n[<span class="string">"id"</span>].as_str())
+<a href=#773 id=773 data-nosnippet>773</a>            .collect();
+<a href=#774 id=774 data-nosnippet>774</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"a"</span>, <span class="string">"b"</span>], <span class="string">"only nodes on a known edge: {html}"</span>);
+<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">assert_eq!</span>(data[<span class="string">"edges"</span>].as_array().map(Vec::len), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"the table"</span>), <span class="string">"the fallback stays beneath"</span>);
+<a href=#777 id=777 data-nosnippet>777</a>        <span class="kw">let </span>force = graph(<span class="string">"Mesh"</span>, Layout::Force, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], el(<span class="string">"p"</span>)).render();
+<a href=#778 id=778 data-nosnippet>778</a>        <span class="macro">assert!</span>(force.contains(<span class="string">"force"</span>), <span class="string">"{force}"</span>);
+<a href=#779 id=779 data-nosnippet>779</a>    }
+<a href=#780 id=780 data-nosnippet>780</a>
+<a href=#781 id=781 data-nosnippet>781</a>    <span class="doccomment">/// A plan status is drawn in its word's tone, and an unknown word in the neutral one.
+<a href=#782 id=782 data-nosnippet>782</a>    </span><span class="attr">#[test]
+<a href=#783 id=783 data-nosnippet>783</a>    </span><span class="kw">fn </span>a_status_is_drawn_in_its_words_tone() {
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="kw">for </span>(word, tone) <span class="kw">in </span>[
+<a href=#785 id=785 data-nosnippet>785</a>            (<span class="string">"done"</span>, <span class="string">"green"</span>),
+<a href=#786 id=786 data-nosnippet>786</a>            (<span class="string">"ACTIVE"</span>, <span class="string">"blue"</span>),
+<a href=#787 id=787 data-nosnippet>787</a>            (<span class="string">"verify"</span>, <span class="string">"blue"</span>),
+<a href=#788 id=788 data-nosnippet>788</a>            (<span class="string">"ready"</span>, <span class="string">"cyan"</span>),
+<a href=#789 id=789 data-nosnippet>789</a>            (<span class="string">"blocked"</span>, <span class="string">"rose"</span>),
+<a href=#790 id=790 data-nosnippet>790</a>            (<span class="string">"planned"</span>, <span class="string">"violet"</span>),
+<a href=#791 id=791 data-nosnippet>791</a>            (<span class="string">"something-new"</span>, <span class="string">"orange"</span>),
+<a href=#792 id=792 data-nosnippet>792</a>        ] {
+<a href=#793 id=793 data-nosnippet>793</a>            <span class="macro">assert_eq!</span>(status_tone(word), tone, <span class="string">"{word}"</span>);
+<a href=#794 id=794 data-nosnippet>794</a>        }
+<a href=#795 id=795 data-nosnippet>795</a>    }
+<a href=#796 id=796 data-nosnippet>796</a>
+<a href=#797 id=797 data-nosnippet>797</a>    <span class="doccomment">/// A timeline keeps the source's order and shows each entry's day, with the full
+<a href=#798 id=798 data-nosnippet>798</a>    /// timestamp in its datetime.
+<a href=#799 id=799 data-nosnippet>799</a>    </span><span class="attr">#[test]
+<a href=#800 id=800 data-nosnippet>800</a>    </span><span class="kw">fn </span>a_timeline_keeps_the_order_and_shows_the_day() {
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="kw">let </span>html = timeline(<span class="macro">vec!</span>[
+<a href=#802 id=802 data-nosnippet>802</a>            (
+<a href=#803 id=803 data-nosnippet>803</a>                <span class="string">"2026-10-11T09:00:00Z"</span>.into(),
+<a href=#804 id=804 data-nosnippet>804</a>                <span class="string">"second"</span>.into(),
+<a href=#805 id=805 data-nosnippet>805</a>                el(<span class="string">"p"</span>).text(<span class="string">"b"</span>),
+<a href=#806 id=806 data-nosnippet>806</a>            ),
+<a href=#807 id=807 data-nosnippet>807</a>            (
+<a href=#808 id=808 data-nosnippet>808</a>                <span class="string">"2026-10-10T09:00:00Z"</span>.into(),
+<a href=#809 id=809 data-nosnippet>809</a>                <span class="string">"first"</span>.into(),
+<a href=#810 id=810 data-nosnippet>810</a>                el(<span class="string">"p"</span>).text(<span class="string">"a"</span>),
+<a href=#811 id=811 data-nosnippet>811</a>            ),
+<a href=#812 id=812 data-nosnippet>812</a>        ])
+<a href=#813 id=813 data-nosnippet>813</a>        .render();
+<a href=#814 id=814 data-nosnippet>814</a>        <span class="macro">assert!</span>(html.find(<span class="string">"second"</span>) &lt; html.find(<span class="string">"first"</span>), <span class="string">"{html}"</span>);
+<a href=#815 id=815 data-nosnippet>815</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"datetime=\"2026-10-11T09:00:00Z\""</span>));
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;2026-10-11&lt;"</span>));
+<a href=#817 id=817 data-nosnippet>817</a>    }
+<a href=#818 id=818 data-nosnippet>818</a>
+<a href=#819 id=819 data-nosnippet>819</a>    <span class="attr">#[test]
+<a href=#820 id=820 data-nosnippet>820</a>    </span><span class="kw">fn </span>a_number_is_shown_as_the_source_gave_it_rounded_only_when_fractional() {
+<a href=#821 id=821 data-nosnippet>821</a>        <span class="kw">let </span>a = answer(<span class="prelude-val">Ok</span>(
+<a href=#822 id=822 data-nosnippet>822</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"n"</span>: <span class="number">16</span>, <span class="string">"r"</span>: <span class="number">2.2857142857142856</span>, <span class="string">"z"</span>: <span class="number">0 </span>}),
+<a href=#823 id=823 data-nosnippet>823</a>        ));
+<a href=#824 id=824 data-nosnippet>824</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/n"</span>)), <span class="string">"16"</span>);
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/r"</span>)), <span class="string">"2.29"</span>);
+<a href=#826 id=826 data-nosnippet>826</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/z"</span>)), <span class="string">"0"</span>, <span class="string">"a measured zero is a zero"</span>);
+<a href=#827 id=827 data-nosnippet>827</a>        <span class="macro">assert_eq!</span>(shown(<span class="kw-2">&amp;</span>a.read(<span class="string">"/missing"</span>)), <span class="string">"none"</span>);
+<a href=#828 id=828 data-nosnippet>828</a>    }
+<a href=#829 id=829 data-nosnippet>829</a>
+<a href=#830 id=830 data-nosnippet>830</a>    <span class="attr">#[test]
+<a href=#831 id=831 data-nosnippet>831</a>    </span><span class="kw">fn </span>a_donut_draws_the_counts_it_lists_and_says_when_there_are_none() {
+<a href=#832 id=832 data-nosnippet>832</a>        <span class="kw">let </span>html = donut(<span class="string">"issues"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"ready"</span>.into(), <span class="number">3</span>), (<span class="string">"blocked"</span>.into(), <span class="number">1</span>)]).render();
+<a href=#833 id=833 data-nosnippet>833</a>        <span class="macro">assert!</span>(
+<a href=#834 id=834 data-nosnippet>834</a>            html.contains(<span class="string">"stroke-dasharray=\"75.000 25.000\""</span>),
+<a href=#835 id=835 data-nosnippet>835</a>            <span class="string">"{html}"
+<a href=#836 id=836 data-nosnippet>836</a>        </span>);
+<a href=#837 id=837 data-nosnippet>837</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;ready&lt;"</span>) &amp;&amp; html.contains(<span class="string">"&gt;3&lt;"</span>));
+<a href=#838 id=838 data-nosnippet>838</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;strong&gt;4&lt;/strong&gt;"</span>));
+<a href=#839 id=839 data-nosnippet>839</a>        <span class="macro">assert!</span>(donut(<span class="string">"issues"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"ready"</span>.into(), <span class="number">0</span>)])
+<a href=#840 id=840 data-nosnippet>840</a>            .render()
+<a href=#841 id=841 data-nosnippet>841</a>            .contains(<span class="string">"Nothing has been counted"</span>));
+<a href=#842 id=842 data-nosnippet>842</a>    }
+<a href=#843 id=843 data-nosnippet>843</a>
+<a href=#844 id=844 data-nosnippet>844</a>    <span class="attr">#[test]
+<a href=#845 id=845 data-nosnippet>845</a>    </span><span class="kw">fn </span>a_meter_shows_its_two_numbers_and_never_invents_a_total() {
+<a href=#846 id=846 data-nosnippet>846</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">Some</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"3 of 4"</span>));
+<a href=#847 id=847 data-nosnippet>847</a>        <span class="macro">assert!</span>(meter(<span class="prelude-val">Some</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)).render().contains(<span class="string">"width:75%"</span>));
+<a href=#848 id=848 data-nosnippet>848</a>        <span class="macro">assert_eq!</span>(
+<a href=#849 id=849 data-nosnippet>849</a>            meter(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>)).render(),
+<a href=#850 id=850 data-nosnippet>850</a>            <span class="string">"&lt;span class=\"mj-ui-meter-text\"&gt;unknown&lt;/span&gt;"
+<a href=#851 id=851 data-nosnippet>851</a>        </span>);
+<a href=#852 id=852 data-nosnippet>852</a>    }
+<a href=#853 id=853 data-nosnippet>853</a>
+<a href=#854 id=854 data-nosnippet>854</a>    <span class="attr">#[test]
+<a href=#855 id=855 data-nosnippet>855</a>    </span><span class="kw">fn </span>a_panel_names_its_source_and_its_technical_reference_once() {
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw">let </span>a = answer(<span class="prelude-val">Ok</span>(Value::Null));
+<a href=#857 id=857 data-nosnippet>857</a>        <span class="kw">let </span>html = panel(<span class="string">"Plan"</span>, <span class="string">"sub"</span>, el(<span class="string">"p"</span>), <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>a]).render();
+<a href=#858 id=858 data-nosnippet>858</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&gt;plan.status&lt;"</span>) &amp;&amp; html.contains(<span class="string">"5 ms"</span>));
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="comment">// the Cockpit is the low-level reference: one link per source, and nowhere else
+<a href=#860 id=860 data-nosnippet>860</a>        </span><span class="macro">assert_eq!</span>(html.matches(<span class="string">"/cockpit/"</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#861 id=861 data-nosnippet>861</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"href=\"/cockpit/capabilities/plan.status\""</span>));
+<a href=#862 id=862 data-nosnippet>862</a>    }
+<a href=#863 id=863 data-nosnippet>863</a>
+<a href=#864 id=864 data-nosnippet>864</a>    <span class="attr">#[test]
+<a href=#865 id=865 data-nosnippet>865</a>    </span><span class="kw">fn </span>an_absent_state_word_is_unknown() {
+<a href=#866 id=866 data-nosnippet>866</a>        <span class="macro">assert_eq!</span>(state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({}), <span class="string">"status"</span>), <span class="string">"unknown"</span>);
+<a href=#867 id=867 data-nosnippet>867</a>        <span class="macro">assert_eq!</span>(
+<a href=#868 id=868 data-nosnippet>868</a>            state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"status"</span>: <span class="string">"" </span>}), <span class="string">"status"</span>),
+<a href=#869 id=869 data-nosnippet>869</a>            <span class="string">"unknown"
+<a href=#870 id=870 data-nosnippet>870</a>        </span>);
+<a href=#871 id=871 data-nosnippet>871</a>        <span class="macro">assert_eq!</span>(
+<a href=#872 id=872 data-nosnippet>872</a>            state_word(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"status"</span>: <span class="string">"warn" </span>}), <span class="string">"status"</span>),
+<a href=#873 id=873 data-nosnippet>873</a>            <span class="string">"warn"
+<a href=#874 id=874 data-nosnippet>874</a>        </span>);
+<a href=#875 id=875 data-nosnippet>875</a>    }
+<a href=#876 id=876 data-nosnippet>876</a>
+<a href=#877 id=877 data-nosnippet>877</a>    <span class="doccomment">/// A value a source does not have reads `none`, never a blank; one it has is itself.
+<a href=#878 id=878 data-nosnippet>878</a>    </span><span class="attr">#[test]
+<a href=#879 id=879 data-nosnippet>879</a>    </span><span class="kw">fn </span>a_missing_value_reads_none() {
+<a href=#880 id=880 data-nosnippet>880</a>        <span class="kw">let </span>e = <span class="macro">serde_json::json!</span>({ <span class="string">"title"</span>: <span class="string">"A"</span>, <span class="string">"empty"</span>: <span class="string">"" </span>});
+<a href=#881 id=881 data-nosnippet>881</a>        <span class="macro">assert_eq!</span>(value(<span class="kw-2">&amp;</span>e, <span class="string">"title"</span>), <span class="string">"A"</span>);
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="macro">assert_eq!</span>(value(<span class="kw-2">&amp;</span>e, <span class="string">"empty"</span>), <span class="string">"none"</span>);
+<a href=#883 id=883 data-nosnippet>883</a>        <span class="macro">assert_eq!</span>(value(<span class="kw-2">&amp;</span>e, <span class="string">"absent"</span>), <span class="string">"none"</span>);
+<a href=#884 id=884 data-nosnippet>884</a>        <span class="macro">assert_eq!</span>(none().render(), <span class="string">"&lt;span class=\"mj-ui-dim\"&gt;none&lt;/span&gt;"</span>);
+<a href=#885 id=885 data-nosnippet>885</a>    }
+<a href=#886 id=886 data-nosnippet>886</a>
+<a href=#887 id=887 data-nosnippet>887</a>    <span class="doccomment">/// A list cut short says how many it leaves out and where the whole list is; one that
+<a href=#888 id=888 data-nosnippet>888</a>    /// was not cut says nothing.
+<a href=#889 id=889 data-nosnippet>889</a>    </span><span class="attr">#[test]
+<a href=#890 id=890 data-nosnippet>890</a>    </span><span class="kw">fn </span>a_cut_list_says_what_it_leaves_out() {
+<a href=#891 id=891 data-nosnippet>891</a>        <span class="macro">assert!</span>(more(<span class="number">8</span>, <span class="number">8</span>, <span class="prelude-val">Some</span>(<span class="string">"/ui/roadmap"</span>)).is_none());
+<a href=#892 id=892 data-nosnippet>892</a>        <span class="macro">assert!</span>(more(<span class="number">3</span>, <span class="number">2</span>, <span class="prelude-val">None</span>).is_none());
+<a href=#893 id=893 data-nosnippet>893</a>        <span class="kw">let </span>html = more(<span class="number">8</span>, <span class="number">31</span>, <span class="prelude-val">Some</span>(<span class="string">"/ui/roadmap"</span>))
+<a href=#894 id=894 data-nosnippet>894</a>            .expect(<span class="string">"a cut list"</span>)
+<a href=#895 id=895 data-nosnippet>895</a>            .render();
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"The first 8 of 31; 23 more"</span>), <span class="string">"{html}"</span>);
+<a href=#897 id=897 data-nosnippet>897</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"href=\"/ui/roadmap\""</span>), <span class="string">"{html}"</span>);
+<a href=#898 id=898 data-nosnippet>898</a>        <span class="kw">let </span>nowhere = more(<span class="number">10</span>, <span class="number">12</span>, <span class="prelude-val">None</span>).expect(<span class="string">"a cut list"</span>).render();
+<a href=#899 id=899 data-nosnippet>899</a>        <span class="macro">assert!</span>(
+<a href=#900 id=900 data-nosnippet>900</a>            nowhere.contains(<span class="string">"2 more"</span>) &amp;&amp; !nowhere.contains(<span class="string">"href"</span>),
+<a href=#901 id=901 data-nosnippet>901</a>            <span class="string">"{nowhere}"
+<a href=#902 id=902 data-nosnippet>902</a>        </span>);
+<a href=#903 id=903 data-nosnippet>903</a>    }
+<a href=#904 id=904 data-nosnippet>904</a>
+<a href=#905 id=905 data-nosnippet>905</a>    <span class="doccomment">/// An object leads to its technical view by its URI, percent-encoded; an id becomes a
+<a href=#906 id=906 data-nosnippet>906</a>    /// fragment that cannot break out of its attribute.
+<a href=#907 id=907 data-nosnippet>907</a>    </span><span class="attr">#[test]
+<a href=#908 id=908 data-nosnippet>908</a>    </span><span class="kw">fn </span>an_object_leads_to_its_technical_view() {
+<a href=#909 id=909 data-nosnippet>909</a>        <span class="macro">assert_eq!</span>(
+<a href=#910 id=910 data-nosnippet>910</a>            object_href(<span class="string">"majordomus://test/test/cases/1_a.sh"</span>),
+<a href=#911 id=911 data-nosnippet>911</a>            <span class="string">"/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F1_a.sh"
+<a href=#912 id=912 data-nosnippet>912</a>        </span>);
+<a href=#913 id=913 data-nosnippet>913</a>        <span class="kw">let </span>html = object(<span class="string">"majordomus://adr/adr-0135"</span>, <span class="string">"ADR 0135"</span>).render();
+<a href=#914 id=914 data-nosnippet>914</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"href=\"/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0135\""</span>));
+<a href=#915 id=915 data-nosnippet>915</a>        <span class="macro">assert!</span>(
+<a href=#916 id=916 data-nosnippet>916</a>            html.contains(<span class="string">"&gt;ADR 0135&lt;"</span>) &amp;&amp; html.contains(<span class="string">"technical view"</span>),
+<a href=#917 id=917 data-nosnippet>917</a>            <span class="string">"{html}"
+<a href=#918 id=918 data-nosnippet>918</a>        </span>);
+<a href=#919 id=919 data-nosnippet>919</a>        <span class="macro">assert_eq!</span>(anchor(<span class="string">"shell-suite"</span>), <span class="string">"shell-suite"</span>);
+<a href=#920 id=920 data-nosnippet>920</a>        <span class="macro">assert_eq!</span>(anchor(<span class="string">"a b\"c/d@1"</span>), <span class="string">"a-b-c-d-1"</span>);
+<a href=#921 id=921 data-nosnippet>921</a>        <span class="macro">assert_eq!</span>(
+<a href=#922 id=922 data-nosnippet>922</a>            link(<span class="string">"/ui/docs"</span>, <span class="string">"Docs"</span>).render(),
+<a href=#923 id=923 data-nosnippet>923</a>            <span class="string">"&lt;a class=\"mj-ui-link\" href=\"/ui/docs\"&gt;Docs&lt;/a&gt;"
+<a href=#924 id=924 data-nosnippet>924</a>        </span>);
+<a href=#925 id=925 data-nosnippet>925</a>        <span class="macro">assert!</span>(code_link(<span class="string">"/ui/x"</span>, <span class="string">"x"</span>).render().contains(<span class="string">"mj-ui-mono"</span>));
+<a href=#926 id=926 data-nosnippet>926</a>    }
+<a href=#927 id=927 data-nosnippet>927</a>
+<a href=#928 id=928 data-nosnippet>928</a>    <span class="doccomment">/// Whether an object is a link is asked of the index: one it holds leads to its technical
+<a href=#929 id=929 data-nosnippet>929</a>    /// view, one it does not is its label as text, and no label at all is `none`.
+<a href=#930 id=930 data-nosnippet>930</a>    </span><span class="attr">#[test]
+<a href=#931 id=931 data-nosnippet>931</a>    </span><span class="kw">fn </span>an_object_is_a_link_only_when_the_index_holds_it() {
+<a href=#932 id=932 data-nosnippet>932</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().expect(<span class="string">"a synthetic repository"</span>);
+<a href=#933 id=933 data-nosnippet>933</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#934 id=934 data-nosnippet>934</a>        <span class="kw">let </span>held = object_if(<span class="kw-2">&amp;</span>ctx, <span class="string">"majordomus://document/docs/DOC_0.md"</span>, <span class="string">"docs/DOC_0.md"</span>).render();
+<a href=#935 id=935 data-nosnippet>935</a>        <span class="macro">assert!</span>(held.contains(<span class="string">"href=\"/cockpit/object?uri="</span>), <span class="string">"{held}"</span>);
+<a href=#936 id=936 data-nosnippet>936</a>        <span class="kw">let </span>absent = object_if(<span class="kw-2">&amp;</span>ctx, <span class="string">"majordomus://document/docs/NOPE.md"</span>, <span class="string">"docs/NOPE.md"</span>).render();
+<a href=#937 id=937 data-nosnippet>937</a>        <span class="macro">assert_eq!</span>(absent, <span class="string">"&lt;span class=\"mj-ui-mono\"&gt;docs/NOPE.md&lt;/span&gt;"</span>);
+<a href=#938 id=938 data-nosnippet>938</a>        <span class="macro">assert_eq!</span>(
+<a href=#939 id=939 data-nosnippet>939</a>            object_if(<span class="kw-2">&amp;</span>ctx, <span class="string">"majordomus://document/"</span>, <span class="string">""</span>).render(),
+<a href=#940 id=940 data-nosnippet>940</a>            none().render()
+<a href=#941 id=941 data-nosnippet>941</a>        );
+<a href=#942 id=942 data-nosnippet>942</a>    }
+<a href=#943 id=943 data-nosnippet>943</a>
+<a href=#944 id=944 data-nosnippet>944</a>    <span class="doccomment">/// An object a source names with its URI is a link, one named without is text, and one
+<a href=#945 id=945 data-nosnippet>945</a>    /// not named at all is `none`.
+<a href=#946 id=946 data-nosnippet>946</a>    </span><span class="attr">#[test]
+<a href=#947 id=947 data-nosnippet>947</a>    </span><span class="kw">fn </span>an_object_is_drawn_as_its_source_names_it() {
+<a href=#948 id=948 data-nosnippet>948</a>        <span class="macro">assert!</span>(object_or(<span class="string">"majordomus://rule/a@1"</span>, <span class="string">"a.md"</span>)
+<a href=#949 id=949 data-nosnippet>949</a>            .render()
+<a href=#950 id=950 data-nosnippet>950</a>            .contains(<span class="string">"href="</span>));
+<a href=#951 id=951 data-nosnippet>951</a>        <span class="macro">assert_eq!</span>(
+<a href=#952 id=952 data-nosnippet>952</a>            object_or(<span class="string">""</span>, <span class="string">"a.md"</span>).render(),
+<a href=#953 id=953 data-nosnippet>953</a>            <span class="string">"&lt;span class=\"mj-ui-mono\"&gt;a.md&lt;/span&gt;"
+<a href=#954 id=954 data-nosnippet>954</a>        </span>);
+<a href=#955 id=955 data-nosnippet>955</a>        <span class="macro">assert_eq!</span>(
+<a href=#956 id=956 data-nosnippet>956</a>            object_or(<span class="string">"majordomus://rule/a@1"</span>, <span class="string">""</span>).render(),
+<a href=#957 id=957 data-nosnippet>957</a>            none().render()
+<a href=#958 id=958 data-nosnippet>958</a>        );
+<a href=#959 id=959 data-nosnippet>959</a>        <span class="macro">assert_eq!</span>(object_or(<span class="string">""</span>, <span class="string">""</span>).render(), none().render());
+<a href=#960 id=960 data-nosnippet>960</a>    }
+<a href=#961 id=961 data-nosnippet>961</a>}
 </code></pre></div></section></main></body></html>

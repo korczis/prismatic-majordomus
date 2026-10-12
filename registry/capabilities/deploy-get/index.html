@@ -52,7 +52,7 @@
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.21.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.21.0">v0.21.0</span>
       
     </a>
     <div class="flex items-center gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -233,7 +233,7 @@
         <td class="px-3 py-2 font-mono text-heading">application</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The application's name at the provider.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The application's name: what the deployment is known by in a listing.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">budgets</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -284,11 +284,6 @@
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many machines run.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">provider</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The provider and its own facts.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">region</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -456,25 +451,6 @@
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;Concurrency&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;When the edge considers a machine loaded, in requests.&quot;,
-      &quot;properties&quot;: {
-        &quot;hard_limit&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;Where it stops sending requests to this one.&quot;
-        },
-        &quot;soft_limit&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;Where the edge starts preferring another machine.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;soft_limit&quot;,
-        &quot;hard_limit&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;CpuKind&quot;: {
       &quot;description&quot;: &quot;What a machine&#39;s CPU is.&quot;,
       &quot;oneOf&quot;: [
@@ -509,41 +485,6 @@
           &quot;type&quot;: &quot;string&quot;
         }
       ]
-    },
-    &quot;Fly&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;Fly.io&#39;s own facts: what has no meaning for any other provider.&quot;,
-      &quot;properties&quot;: {
-        &quot;concurrency&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Concurrency&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;When the edge considers a machine loaded.&quot;
-        },
-        &quot;force_https&quot;: {
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Whether the edge redirects plain HTTP to HTTPS.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;org&quot;: {
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;The organisation the application belongs to.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
     },
     &quot;HealthRoutes&quot;: {
       &quot;additionalProperties&quot;: false,
@@ -623,7 +564,7 @@
         },
         &quot;port&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Port&quot;,
-          &quot;description&quot;: &quot;The port, stated once for the process, the image and the provider configuration.&quot;
+          &quot;description&quot;: &quot;The port, stated once for the process and the image.&quot;
         }
       },
       &quot;required&quot;: [
@@ -676,42 +617,6 @@
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;Provider&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;The provider and the facts that belong to it alone.&quot;,
-      &quot;properties&quot;: {
-        &quot;fly&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Fly&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Fly&#39;s own block, when the provider is Fly.&quot;
-        },
-        &quot;name&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ProviderName&quot;,
-          &quot;description&quot;: &quot;Which provider.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ProviderName&quot;: {
-      &quot;description&quot;: &quot;The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;fly&quot;,
-          &quot;description&quot;: &quot;Fly.io.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;Resources&quot;: {
       &quot;additionalProperties&quot;: false,
       &quot;description&quot;: &quot;What one machine is granted.&quot;,
@@ -744,7 +649,7 @@
   &quot;description&quot;: &quot;One deployment as this process reads it, with where it came from.&quot;,
   &quot;properties&quot;: {
     &quot;application&quot;: {
-      &quot;description&quot;: &quot;The application&#39;s name at the provider.&quot;,
+      &quot;description&quot;: &quot;The application&#39;s name: what the deployment is known by in a listing.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;budgets&quot;: {
@@ -804,10 +709,6 @@
       &quot;$ref&quot;: &quot;#/$defs/Machines&quot;,
       &quot;description&quot;: &quot;How many machines run.&quot;
     },
-    &quot;provider&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Provider&quot;,
-      &quot;description&quot;: &quot;The provider and its own facts.&quot;
-    },
     &quot;region&quot;: {
       &quot;description&quot;: &quot;The region they run in.&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -857,8 +758,7 @@
     &quot;health&quot;,
     &quot;resources&quot;,
     &quot;machines&quot;,
-    &quot;region&quot;,
-    &quot;provider&quot;
+    &quot;region&quot;
   ],
   &quot;title&quot;: &quot;DeploymentView&quot;,
   &quot;type&quot;: &quot;object&quot;
@@ -892,7 +792,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::deploy</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">GetDeploymentInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">DeploymentView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">8c07b57718f0fe738b6c5615b481c889dd3c664b592878ce8b9f2d186b129d76</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.21.0</dd></div>
       </dl>
     </div>
@@ -948,9 +848,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81178f5362ea7ef4948a951d7604bce298fed012/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -958,7 +858,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012" class="font-mono underline">81178f5</a> · inputs <span class="font-mono">4c89f3e1eee9</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["KIND","SCHEMA_VERSION"],"enum":["CpuKind","Interface","ProviderName","Status"],"mod":["render"],"struct":["Budgets","Build","Concurrency","Deployment","Fly","HealthRoutes","Listen","Machines","Port","Positive","Provider","Refusal","Resources","Route","Workspace"]};
+window.SIDEBAR_ITEMS = {"constant":["KIND","SCHEMA_VERSION"],"enum":["CpuKind","Interface","Status"],"mod":["render"],"struct":["Budgets","Build","Deployment","HealthRoutes","Listen","Machines","Port","Positive","Refusal","Resources","Route","Workspace"]};
