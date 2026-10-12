@@ -279,7 +279,7 @@ pub(crate) mod tests {
         let html = view.main.render();
         assert_eq!(view.status, 200);
         assert!(
-            html.contains("The Majordomus layer, served from one machine"),
+            html.contains("The Majordomus layer, served from its container image"),
             "{html}"
         );
         assert!(html.contains(">majordomus<"), "{html}");

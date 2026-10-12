@@ -72,8 +72,8 @@ module's own tests, not by this case.
 The credential check matches the prefixes of known token formats. A secret in a format it
 does not know, written into a field the contract allows, is not recognised as one.
 
-It does not prove that the generated container definition and provider configuration match
-the object; `majordomus generate --check` holds that, and its own case proves it. Nothing
+It does not prove that the generated container definition and its ignore file match the
+object; `majordomus generate --check` holds that, and its own case proves it. Nothing
 here contacts a hosting provider or proves that a deployment, once accepted, will start.
 
 ## Why it exists

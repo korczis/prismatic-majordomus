@@ -4014,7 +4014,7 @@ pub enum GenerateTarget {
     /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
     /// release records, its decisions and the repository's commits
     Changelog,
-    /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
+    /// deploy/Dockerfile and .dockerignore, from the deployment objects
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,

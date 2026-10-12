@@ -436,9 +436,6 @@ machines:
   autostop: true
 
 region: fra
-
-provider:
-  name: fly
 ";
 
 pub const MOMENT: &str = "---

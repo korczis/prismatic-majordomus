@@ -7797,7 +7797,7 @@ capabilities:
             default: null
           application:
             type: string
-            description: "The application's name at the provider."
+            description: "The application's name: what the deployment is known by in a listing."
           build:
             "$ref": "#/$defs/Build"
             description: What is shipped and what it is built from.
@@ -7827,9 +7827,6 @@ capabilities:
               resident_memory_mb: null
               blocking_check_ms: null
               request_p99_ms: null
-          provider:
-            "$ref": "#/$defs/Provider"
-            description: The provider and its own facts.
           created_at:
             type:
               - string
@@ -7855,7 +7852,6 @@ capabilities:
           - resources
           - machines
           - region
-          - provider
         description: "One deployment as this process reads it, with where it came from."
         title: DeploymentView
         "$defs":
@@ -7907,7 +7903,7 @@ capabilities:
             properties:
               port:
                 "$ref": "#/$defs/Port"
-                description: "The port, stated once for the process, the image and the provider configuration."
+                description: "The port, stated once for the process and the image."
               interface:
                 "$ref": "#/$defs/Interface"
                 description: Which interface.
@@ -8070,65 +8066,6 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-          Provider:
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                "$ref": "#/$defs/ProviderName"
-                description: Which provider.
-              fly:
-                anyOf:
-                  - "$ref": "#/$defs/Fly"
-                  - type: "null"
-                description: "Fly's own block, when the provider is Fly."
-                default: null
-            required:
-              - name
-            description: The provider and the facts that belong to it alone.
-          ProviderName:
-            oneOf:
-              - type: string
-                const: fly
-                description: Fly.io.
-            description: "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-          Fly:
-            type: object
-            additionalProperties: false
-            properties:
-              org:
-                type:
-                  - string
-                  - "null"
-                description: The organisation the application belongs to.
-                default: null
-              force_https:
-                type:
-                  - boolean
-                  - "null"
-                description: Whether the edge redirects plain HTTP to HTTPS.
-                default: null
-              concurrency:
-                anyOf:
-                  - "$ref": "#/$defs/Concurrency"
-                  - type: "null"
-                description: When the edge considers a machine loaded.
-                default: null
-            description: "Fly.io's own facts: what has no meaning for any other provider."
-          Concurrency:
-            type: object
-            additionalProperties: false
-            properties:
-              soft_limit:
-                "$ref": "#/$defs/Positive"
-                description: Where the edge starts preferring another machine.
-              hard_limit:
-                "$ref": "#/$defs/Positive"
-                description: Where it stops sending requests to this one.
-            required:
-              - soft_limit
-              - hard_limit
-            description: "When the edge considers a machine loaded, in requests."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::deploy
@@ -8156,7 +8093,7 @@ capabilities:
     module: deploy
     kind: query
     title: Deployments
-    description: "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped."
+    description: "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped."
     input:
       name: Empty
       schema:
@@ -8222,7 +8159,7 @@ capabilities:
                 default: null
               application:
                 type: string
-                description: "The application's name at the provider."
+                description: "The application's name: what the deployment is known by in a listing."
               build:
                 "$ref": "#/$defs/Build"
                 description: What is shipped and what it is built from.
@@ -8252,9 +8189,6 @@ capabilities:
                   resident_memory_mb: null
                   blocking_check_ms: null
                   request_p99_ms: null
-              provider:
-                "$ref": "#/$defs/Provider"
-                description: The provider and its own facts.
               created_at:
                 type:
                   - string
@@ -8280,7 +8214,6 @@ capabilities:
               - resources
               - machines
               - region
-              - provider
             description: "One deployment as this process reads it, with where it came from."
           DeploymentStatus:
             oneOf:
@@ -8330,7 +8263,7 @@ capabilities:
             properties:
               port:
                 "$ref": "#/$defs/Port"
-                description: "The port, stated once for the process, the image and the provider configuration."
+                description: "The port, stated once for the process and the image."
               interface:
                 "$ref": "#/$defs/Interface"
                 description: Which interface.
@@ -8493,65 +8426,6 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-          Provider:
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                "$ref": "#/$defs/ProviderName"
-                description: Which provider.
-              fly:
-                anyOf:
-                  - "$ref": "#/$defs/Fly"
-                  - type: "null"
-                description: "Fly's own block, when the provider is Fly."
-                default: null
-            required:
-              - name
-            description: The provider and the facts that belong to it alone.
-          ProviderName:
-            oneOf:
-              - type: string
-                const: fly
-                description: Fly.io.
-            description: "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-          Fly:
-            type: object
-            additionalProperties: false
-            properties:
-              org:
-                type:
-                  - string
-                  - "null"
-                description: The organisation the application belongs to.
-                default: null
-              force_https:
-                type:
-                  - boolean
-                  - "null"
-                description: Whether the edge redirects plain HTTP to HTTPS.
-                default: null
-              concurrency:
-                anyOf:
-                  - "$ref": "#/$defs/Concurrency"
-                  - type: "null"
-                description: When the edge considers a machine loaded.
-                default: null
-            description: "Fly.io's own facts: what has no meaning for any other provider."
-          Concurrency:
-            type: object
-            additionalProperties: false
-            properties:
-              soft_limit:
-                "$ref": "#/$defs/Positive"
-                description: Where the edge starts preferring another machine.
-              hard_limit:
-                "$ref": "#/$defs/Positive"
-                description: Where it stops sending requests to this one.
-            required:
-              - soft_limit
-              - hard_limit
-            description: "When the edge considers a machine loaded, in requests."
           Refusal:
             type: object
             properties:

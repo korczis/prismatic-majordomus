@@ -2801,7 +2801,7 @@
       "get": {
         "operationId": "deploy.list",
         "summary": "Deployments",
-        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
         "tags": [
           "deploy"
         ],
@@ -24938,25 +24938,6 @@
         ],
         "description": "One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &str, supersedes: Option<&str>| {\n    json!({\n        \"kind\": \"conclusion\", \"assessment\": \"assessment-0\", \"decision\": decision,\n        \"rationale\": \"r\", \"supersedes\": supersedes,\n        \"reviewed_by\": [], \"independent_review_count\": 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"conclusion-1\", 1, conclusion(\"A\", None)));\nloaded.records.push(rec(\"validation-2\", 2, json!({\n    \"kind\": \"validation\", \"conclusion\": \"conclusion-1\", \"check\": \"x\", \"outcome\": \"fail\",\n})));\nloaded.records.push(rec(\"conclusion-3\", 3, conclusion(\"B\", Some(\"conclusion-1\"))));\n\nlet state = derive(&loaded, None);\nlet first: &ConclusionView = &state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\"conclusion-3\"));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```"
       },
-      "Concurrency": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "soft_limit": {
-            "$ref": "#/components/schemas/Positive",
-            "description": "Where the edge starts preferring another machine."
-          },
-          "hard_limit": {
-            "$ref": "#/components/schemas/Positive",
-            "description": "Where it stops sending requests to this one."
-          }
-        },
-        "required": [
-          "soft_limit",
-          "hard_limit"
-        ],
-        "description": "When the edge considers a machine loaded, in requests."
-      },
       "ConditionState": {
         "oneOf": [
           {
@@ -26997,7 +26978,7 @@
           },
           "application": {
             "type": "string",
-            "description": "The application's name at the provider."
+            "description": "The application's name: what the deployment is known by in a listing."
           },
           "build": {
             "$ref": "#/components/schemas/Build",
@@ -27036,10 +27017,6 @@
               "request_p99_ms": null
             }
           },
-          "provider": {
-            "$ref": "#/components/schemas/Provider",
-            "description": "The provider and its own facts."
-          },
           "created_at": {
             "type": [
               "string",
@@ -27069,8 +27046,7 @@
           "health",
           "resources",
           "machines",
-          "region",
-          "provider"
+          "region"
         ],
         "description": "One deployment as this process reads it, with where it came from."
       },
@@ -33984,41 +33960,6 @@
         ],
         "description": "The `fixtures` category: where fixtures live and how large one may be."
       },
-      "Fly": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "org": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "The organisation the application belongs to.",
-            "default": null
-          },
-          "force_https": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "Whether the edge redirects plain HTTP to HTTPS.",
-            "default": null
-          },
-          "concurrency": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Concurrency"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "When the edge considers a machine loaded.",
-            "default": null
-          }
-        },
-        "description": "Fly.io's own facts: what has no meaning for any other provider."
-      },
       "Fonts": {
         "type": "object",
         "additionalProperties": false,
@@ -39561,7 +39502,7 @@
         "properties": {
           "port": {
             "$ref": "#/components/schemas/Port",
-            "description": "The port, stated once for the process, the image and the provider configuration."
+            "description": "The port, stated once for the process and the image."
           },
           "interface": {
             "$ref": "#/components/schemas/Interface",
@@ -46241,32 +46182,6 @@
         ],
         "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code."
       },
-      "Provider": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "$ref": "#/components/schemas/ProviderName",
-            "description": "Which provider."
-          },
-          "fly": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Fly"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Fly's own block, when the provider is Fly.",
-            "default": null
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "description": "The provider and the facts that belong to it alone."
-      },
       "ProviderBootstrap": {
         "type": "object",
         "properties": {
@@ -46388,16 +46303,6 @@
           "providers"
         ],
         "description": "Every provider."
-      },
-      "ProviderName": {
-        "oneOf": [
-          {
-            "type": "string",
-            "const": "fly",
-            "description": "Fly.io."
-          }
-        ],
-        "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
       },
       "ProviderOffers": {
         "type": "object",
