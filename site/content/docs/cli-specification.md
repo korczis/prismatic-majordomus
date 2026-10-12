@@ -2083,6 +2083,20 @@ names the run to do next. `scaffold` writes a draft use case for a gap from what
 registry, the command's fixture and the claims already know; a draft validates and runs
 and never counts.
 
+A live step is judged on its whole argument vector, not on its first word. A command's
+`class` in `share/commands.yaml` is the worst thing any of its argument vectors does, so
+`knowledge` is `state-mutating` as a whole although `knowledge edges`, `nodes`, `sources`,
+`candidates` and `check` write nothing, and `check` is `read-only` although `check
+--checkpoint` records a checkpoint. Where a command's subcommands or flags differ, the
+registry carries an `effects` list: a `subcommand` entry replaces the command's class for
+that subcommand, and a `flag` entry raises it for any vector the flag appears in; a flag
+never lowers a class. `usecase validate` refuses a live step whose vector is not
+`read-only` and names what decided it (`by command`, `by subcommand 'derive'` or `by flag
+'--checkpoint'`), and `usecase run --live` asks the same question again before it runs a
+step, so a step that would write is reported unmet and is not run. `doctor` reconciles each
+effect with the command it is declared on: a subcommand must be a word of the command's
+syntax, a flag must be written in it, and a flag may not be declared `read-only`.
+
 Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
 gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario
 repository cannot be created.

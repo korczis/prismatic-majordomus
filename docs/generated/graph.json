@@ -6816,6 +6816,23 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0139",
+        "kind": "adr",
+        "label": "adr-0139",
+        "summary": "Worktrees share what cargo compiles on the way, and keep their own finished artifacts",
+        "route": "/cockpit/objects/adr/adr-0139",
+        "source": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "tags": [
+            "operations",
+            "worktrees",
+            "disk"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -30188,11 +30205,15 @@
             "test/fixtures/commands"
           ],
           "slug": "the-effect-class-is-judged-per-subcommand",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-11T05:05:14Z",
+          "started_event": "sha256:cd71eed1d51dcb4c9c9319284076b1b44771e1d25587065ecb155dec73b6332a",
+          "updated_at": "2026-10-11T05:05:29Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-11T05:05:29Z",
+          "verified_event": "sha256:adaad72749b7cb06b9074717dccc9b025d84f1d33943fd189ab78d681f94f247"
         }
       },
       {
@@ -42338,6 +42359,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "kind": "rule",
+        "label": "project.worktrees-share-build-intermediates@1",
+        "summary": "Worktrees share what cargo compiles on the way, and never the finished artifact",
+        "route": "/cockpit/objects/rule/project-worktrees-share-build-intermediates-1",
+        "source": ".ai/repo/rules/project/worktrees-share-build-intermediates.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.worktree-topology@1",
+            "project.reclaim-only-what-you-own@1",
+            "project.accumulation-is-measured@2",
+            "project.destructive-sweeps-fail-closed@1"
+          ],
+          "tags": [
+            "operations",
+            "worktrees",
+            "disk",
+            "build"
+          ]
+        }
+      },
+      {
         "id": "majordomus://scope/.ai/repo/scope.yaml",
         "kind": "scope",
         "label": ".ai/repo/scope.yaml",
@@ -46775,6 +46820,13 @@
         "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
         "route": "/cockpit/objects/test/test-cases-1022-a-remote-caller-cannot-write-sh",
         "source": "test/cases/1022_a_remote_caller_cannot_write.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
+        "kind": "test",
+        "label": "test/cases/1022_worktrees_share_build_intermediates.sh",
+        "route": "/cockpit/objects/test/test-cases-1022-worktrees-share-build-intermediates-sh",
+        "source": "test/cases/1022_worktrees_share_build_intermediates.sh"
       },
       {
         "id": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
@@ -59294,6 +59346,11 @@
         "source": "majordomus://adr/adr-0138",
         "target": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
         "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "kind:adr",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -74546,6 +74603,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://scope/.ai/repo/scope.yaml",
         "target": "kind:scope",
         "kind": "is_a"
@@ -75197,6 +75279,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -81102,8 +81189,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2649,
-      "edges": 5787,
+      "nodes": 2652,
+      "edges": 5794,
       "acyclic": false,
       "truncated": false
     }
