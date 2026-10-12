@@ -11,7 +11,7 @@ depends_on: []
 tags: [derived]
 
 x-majordomus:
-  tests: [test/cases/56_derived_current_gate.sh, scripts/derive-check, test/cases/51_derived_artifacts_committed.sh, test/cases/95_executable_reference.sh]
+  tests: [test/cases/56_derived_current_gate.sh, scripts/derive-check, test/cases/51_derived_artifacts_committed.sh, test/cases/95_executable_reference.sh, test/cases/1100_a_derive_skips_only_what_did_not_change.sh]
 ---
 
 # Rationale
@@ -26,6 +26,8 @@ The check itself was never the difficulty: `scripts/pages current` compares the 
 
 A generated file is changed by changing its canonical source and rerunning the generator, and both are committed together.
 
+A derive that leaves a generator alone is still a derivation, and is held to the same bytes. `scripts/derive --incremental` skips stage B only when the key of everything the stage can read — the whole tracked tree but its own outputs, the executable, the tools, the environment, git's configuration and the local evidence it reads — equals the key of the last successful run, and every output is on disk as that run left it (ADR 0143). A result proves nothing until its bytes are verified against the tree, a failed or interrupted run leaves no record, and `scripts/derive-check` never consults one.
+
 # Failure behaviour
 
 `scripts/pages current` exits 10 and the commit does not happen, naming both hashes and the command that repairs it. The gate is declared in the policy's `enforcement` list as `derived-current`, wired by `git-hook:pre-commit`, so `doctor` reports it as a wiring finding and exits 10 when the hook stops invoking it or swallows its exit code — the rule is therefore enforced twice over: the gate refuses the stale commit, and the doctrine refuses the repository that unwires the gate.
@@ -36,4 +38,4 @@ The validator stays out of `lib/`: which files are canonical inputs, and where t
 
 # Verification
 
-`test/cases/56_derived_current_gate.sh` proves it by mutation: a canonical input moved without a regeneration makes `scripts/pages current` exit 10 and name both hashes, the same tree regenerated passes, and a hook that stops invoking the gate makes `doctor` exit 10 with the wiring finding. `scripts/derive-check` — `majordomus generate --check` and `scripts/generate-site-data --check` together — runs in CI and in front of every Pages deploy, and `scripts/derive` regenerates every derived file in dependency order; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources and that none embeds the commit it lands in; test/cases/95_executable_reference.sh proves a capability that joins or leaves the registry manifest gains or loses its site route from the generator alone; the majordomus.projection-integrity rule covers the generated instruction files.
+`test/cases/56_derived_current_gate.sh` proves it by mutation: a canonical input moved without a regeneration makes `scripts/pages current` exit 10 and name both hashes, the same tree regenerated passes, and a hook that stops invoking the gate makes `doctor` exit 10 with the wiring finding. `scripts/derive-check` — `majordomus generate --check` and `scripts/generate-site-data --check` together — runs in CI and in front of every Pages deploy, and `scripts/derive` regenerates every derived file in dependency order; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources and that none embeds the commit it lands in; test/cases/95_executable_reference.sh proves a capability that joins or leaves the registry manifest gains or loses its site route from the generator alone; test/cases/1100_a_derive_skips_only_what_did_not_change.sh proves an incremental derive and a full one leave byte-identical trees after a no-op, an edit to a listed and to an unlisted input, a deleted and a tampered output, a staged new file and an unstaged change, that a failed stage B records nothing, and that a shadow derive refuses a stage B that changed what the skip would have kept; the majordomus.projection-integrity rule covers the generated instruction files.

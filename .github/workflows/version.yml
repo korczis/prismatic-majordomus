@@ -106,7 +106,7 @@ jobs:
           fi
           git checkout -b "$branch"
           "$BIN" release bump
-          scripts/derive
+          scripts/derive --full
           scripts/derive-check
           {
             echo "chore(release): the version rises to $REQUIRED, which the surface requires"

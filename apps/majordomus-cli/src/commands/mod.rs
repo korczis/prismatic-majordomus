@@ -39,6 +39,7 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod derive;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -93,6 +94,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Worktree(args) => worktree::run(args),
         Command::Prs(args) => prs::run(args),
         Command::Offload(args) => offload::run(args),
+        Command::Derive(args) => derive::run(args),
         Command::Convergence(args) => convergence::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
@@ -173,6 +175,9 @@ mod tests {
             }),
             (&["majordomus", "distribution", "show"], |c| {
                 matches!(c, Command::Distribution(_))
+            }),
+            (&["majordomus", "derive", "plan"], |c| {
+                matches!(c, Command::Derive(_))
             }),
             (&["majordomus", "worktree", "status"], |c| {
                 matches!(c, Command::Worktree(_))

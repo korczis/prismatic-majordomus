@@ -51,6 +51,17 @@ DEST_DATA="$ROOT/site/data/generated"
 # --out writes the data somewhere else and publishes nothing: no content pages, no
 # docs/SITE_CLAIMS.md. It is how a caller gets a fresh generation without touching the tree.
 [ "${1:-}" = --out ] && { DEST_DATA="$2"; PUBLISH=0; }
+# --outputs prints what this script owns and exits: one repository-relative path per line, a
+# trailing slash for a tree it replaces whole. It is read by the incremental derive
+# (apps/majordomus-cli/src/derive/key.rs), which verifies these bytes before it leaves the stage
+# alone and keeps them out of the stage's key. It exits before the staging directory below
+# exists, so asking writes nothing. A wider answer than the truth only costs skips; a narrower
+# one would let an edited output pass, so every destination of the publish block is here.
+if [ "${1:-}" = --outputs ]; then
+  printf '%s/\nsite/content/\n' "${DEST_DATA#"$ROOT"/}"
+  printf 'docs/%s.md\n' SITE_CLAIMS PLAN_STATUS PAGES_STATUS
+  exit 0
+fi
 # The staging directory lives beside its destination so that publishing is a same-filesystem
 # rename rather than a copy; the trap removes it on every exit path, including failure.
 STAGE="$(mktemp -d "$ROOT/.mj-stage.XXXXXX")"

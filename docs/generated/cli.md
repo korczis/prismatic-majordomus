@@ -112,6 +112,11 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus offload hosts`](#majordomus-offload-hosts) | `/docs/cli/offload/hosts/` | The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0 |
 | [`majordomus offload probe`](#majordomus-offload-probe) | `/docs/cli/offload/probe/` | Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one |
 | [`majordomus offload derive`](#majordomus-offload-derive) | `/docs/cli/offload/derive/` | Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out |
+| [`majordomus derive`](#majordomus-derive) | `/docs/cli/derive/` | Whether a derive may leave stage B (the site data) alone: the decision `scripts/derive --incremental` acts on, made against this checkout's record of its last successful stage B, and the record itself. The default derive is the full one and never asks (ADR 0143) |
+| [`majordomus derive plan`](#majordomus-derive-plan) | `/docs/cli/derive/plan/` | What an incremental derive would do with stage B now, and why: the key of the tree, the recorded key, and every reason; writes nothing. Exit 0 whatever the decision |
+| [`majordomus derive begin`](#majordomus-derive-begin) | `/docs/cli/derive/begin/` | Open stage B for `scripts/derive`: exit 0 when it is proven current (inputs and outputs as the recorded run had and left them), 10 when it must run; marks a run as in flight when one is |
+| [`majordomus derive record`](#majordomus-derive-record) | `/docs/cli/derive/record/` | Close stage B for `scripts/derive` after it exited 0: record its key and its outputs, or say why nothing is recorded; exit 13 when a shadow run changed what the skip would have kept |
+| [`majordomus derive forget`](#majordomus-derive-forget) | `/docs/cli/derive/forget/` | Drop this checkout's record of stage B, so the next incremental derive runs it |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
@@ -246,7 +251,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus derive`](#majordomus-derive), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -3171,6 +3176,134 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-derive"></a>
+## `majordomus derive`
+
+Whether a derive may leave stage B (the site data) alone: the decision `scripts/derive --incremental` acts on, made against this checkout's record of its last successful stage B, and the record itself. The default derive is the full one and never asks (ADR 0143)
+
+Subcommands: [`majordomus derive plan`](#majordomus-derive-plan), [`majordomus derive begin`](#majordomus-derive-begin), [`majordomus derive record`](#majordomus-derive-record), [`majordomus derive forget`](#majordomus-derive-forget).
+
+```text
+majordomus derive [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-derive-plan"></a>
+## `majordomus derive plan`
+
+What an incremental derive would do with stage B now, and why: the key of the tree, the recorded key, and every reason; writes nothing. Exit 0 whatever the decision
+
+```text
+majordomus derive plan [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What an incremental derive would do with stage B, and why** — The key of the tree as it stands (every tracked path with its work-tree bytes minus the stage's own outputs, the executable, the tools, the environment, git's configuration and the local use-case evidence), the key of the checkout's last successful stage B, and the decision with every reason. This fixture has no site generator and no MAJORDOMUS_BIN, so it has no key: the plan says the stage must run and why, and writes nothing.
+
+  ```console
+  $ majordomus derive plan --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /state, /cacheable, /reasons.
+
+<a id="majordomus-derive-begin"></a>
+## `majordomus derive begin`
+
+Open stage B for `scripts/derive`: exit 0 when it is proven current (inputs and outputs as the recorded run had and left them), 10 when it must run; marks a run as in flight when one is
+
+```text
+majordomus derive begin [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--mode` | `incremental` \| `shadow` | required | The mode the derive runs in — `incremental`: Skip stage B when it is proven current; `shadow`: Decide as incremental does, run stage B regardless, and refuse a run that changed what the skip would have kept |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A stage that cannot be proven current must run** — What `scripts/derive --incremental` asks before stage B. Exit 0 means the stage is proven current and is skipped; 10 means it must run, and the line on stderr says why. A tree with no key, as here, always runs and is never recorded.
+
+  ```console
+  $ majordomus derive begin --mode incremental
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-derive-record"></a>
+## `majordomus derive record`
+
+Close stage B for `scripts/derive` after it exited 0: record its key and its outputs, or say why nothing is recorded; exit 13 when a shadow run changed what the skip would have kept
+
+```text
+majordomus derive record [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Nothing is recorded for a run that was never begun** — What `scripts/derive --incremental` asks after stage B exited 0. With no run begun in this checkout there is nothing to vouch for, so nothing is recorded and the answer says so; a failed stage never reaches this call, so a failure can never be recorded as a success.
+
+  ```console
+  $ majordomus derive record
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-derive-forget"></a>
+## `majordomus derive forget`
+
+Drop this checkout's record of stage B, so the next incremental derive runs it
+
+```text
+majordomus derive forget [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Drop the record, so the next incremental derive runs stage B** — Removes this checkout's record of its last stage B and any marker of a run in flight. Losing the record is always safe: the next incremental derive finds none and runs the stage.
+
+  ```console
+  $ majordomus derive forget
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-convergence"></a>
 ## `majordomus convergence`

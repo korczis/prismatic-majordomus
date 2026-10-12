@@ -6833,6 +6833,22 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0143",
+        "kind": "adr",
+        "label": "adr-0143",
+        "summary": "A derive leaves stage B alone only when nothing it can read changed",
+        "route": "/cockpit/objects/adr/adr-0143",
+        "source": ".ai/repo/adrs/0143-a-derive-leaves-stage-b-alone-only-when-nothing-it-can-read-changed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "tags": [
+            "derivation",
+            "performance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -33664,6 +33680,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I2490",
+        "kind": "issue",
+        "label": "I2490",
+        "summary": "An incremental derive skips stage B only when nothing it can read changed and every output is as the last run left it",
+        "route": "/cockpit/objects/issue/i2490",
+        "source": ".ai/repo/project/issues/I2490.yaml",
+        "facts": {
+          "created_at": "2026-10-12",
+          "current_state": "scripts/derive runs build, stage A, stage B, stage C and stage D on every call; stage B regenerates and rewrites every output each time.",
+          "depends_on": [],
+          "evidence_required": [
+            "derive_incremental_equals_full_fixture",
+            "derive_no_op_measured_seconds"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "Making incremental the default: rollout steps 1-2 of the pack (DESIGN-11-12 §2.2) need a shadow window with zero divergences first.",
+            "A policy key derive.mode: the flag and MAJORDOMUS_DERIVE_MODE suffice for an opt-in mode; the policy switch comes with the default.",
+            "Splitting stage B into a scenario node and a projection node, a content-addressed store, skipping stages A and C or the build: later slices of the pack.",
+            "scripts/derive-check, scripts/pages current, release.yml and version.yml consulting the record: they stay the full oracle."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            "scripts/generate-site-data",
+            "apps/majordomus-cli/src/derive",
+            "apps/majordomus-cli/src/commands/derive.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "test/cases/400_derivation_is_one_graph.sh",
+            "test/cases/87_release_pipeline.sh",
+            "test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
+            ".github/workflows/release.yml",
+            ".github/workflows/version.yml",
+            ".ai/repo/rules/project/derived-files-regenerated.v1.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md"
+          ],
+          "slug": "derive-skips-what-did-not-change",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derive::",
+            "bash test/run.sh 400_derivation_is_one_graph 1100_a_derive_skips_only_what_did_not_change 87_release_pipeline",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -47139,6 +47204,13 @@
         "source": "test/cases/10_site_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
+        "kind": "test",
+        "label": "test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
+        "route": "/cockpit/objects/test/test-cases-1100-a-derive-skips-only-what-did-not-change-sh",
+        "source": "test/cases/1100_a_derive_skips_only_what_did_not_change.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/110_lease_reader.sh",
         "kind": "test",
         "label": "test/cases/110_lease_reader.sh",
@@ -59372,6 +59444,11 @@
       },
       {
         "source": "majordomus://adr/adr-0139",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0143",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -72116,6 +72193,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2490",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2490",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -75517,6 +75604,11 @@
       },
       {
         "source": "majordomus://test/test/cases/10_site_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -81217,8 +81309,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2653,
-      "edges": 5795,
+      "nodes": 2656,
+      "edges": 5799,
       "acyclic": false,
       "truncated": false
     }

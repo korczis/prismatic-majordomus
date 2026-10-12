@@ -26,6 +26,7 @@ pub(crate) mod continuity;
 pub mod convergence;
 pub(crate) mod delivery;
 pub mod deploy;
+pub(crate) mod derive;
 pub(crate) mod design;
 pub mod devcontext;
 pub mod devtask;

@@ -41,6 +41,24 @@
 #                                             the-commit-will); MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
 #                                             lets a derive run past it
 #   (lib/machine_lock.sh lists the MAJORDOMUS_DERIVE_* variables that move or bound them)
+#
+# How stage B is derived (ADR 0143). The default is the full derive, every stage every time;
+# the other two modes ask the executable whether stage B may be left alone and are opt-in:
+#
+#   scripts/derive --full          every stage, every time: the default, and what release,
+#                                  version and scripts/derive-check rely on
+#   scripts/derive --incremental   stage B is skipped when `majordomus derive begin` proves it
+#                                  current: the key of everything it can read equals the key
+#                                  of this checkout's last successful stage B, and every one
+#                                  of its outputs is on disk as that run left it
+#   scripts/derive --shadow        decides as --incremental does, runs stage B regardless, and
+#                                  exits 13 after the last stage when the run changed a byte
+#                                  the skip would have kept (the tree holds the full bytes)
+#   MAJORDOMUS_DERIVE_MODE=full|incremental|shadow   the same, when no flag is given; anything
+#                                  else is read as full, and said
+#
+# The decision, the key and the record are the executable's (apps/majordomus-cli/src/derive/);
+# this script only asks before stage B, acts on the exit code, and asks it to record after.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
@@ -74,9 +92,11 @@ mj_lock_init "$ROOT" derive
 mj_lock_traps
 # The arguments are judged before anything else, so a mistyped flag is a usage error and never
 # a refusal of the tree it happened to be typed in.
+USAGE='usage: scripts/derive [--full | --incremental | --shadow | --locked -- <command>... | --orphans | --preflight]'
 case "${1:-}" in
   ''|--locked|--orphans|--preflight) ;;
-  *) printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight]\n' >&2; exit 2 ;;
+  --full|--incremental|--shadow) [ $# = 1 ] || { printf '%s\n' "$USAGE" >&2; exit 2; } ;;
+  *) printf '%s\n' "$USAGE" >&2; exit 2 ;;
 esac
 if [ "${1:-}" = --orphans ]; then
   [ $# = 1 ] || { printf 'usage: scripts/derive --orphans\n' >&2; exit 2; }
@@ -122,7 +142,20 @@ if [ "${1:-}" = --locked ]; then
   rc=0; mj_lock_run "$@" || rc=$?
   exit "$rc"
 fi
-[ $# = 0 ] || { printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight]\n' >&2; exit 2; }
+# The mode: a flag, else MAJORDOMUS_DERIVE_MODE, else full. A value nobody declared is read
+# as full and said, because the safe direction of a typo is the derive that skips nothing.
+MODE=full; MODE_FROM=default
+case "${1:-}" in
+  --full|--incremental|--shadow) MODE="${1#--}"; MODE_FROM=flag; shift ;;
+  *) case "${MAJORDOMUS_DERIVE_MODE:-}" in
+       '') ;;
+       full|incremental|shadow) MODE="$MAJORDOMUS_DERIVE_MODE"; MODE_FROM=MAJORDOMUS_DERIVE_MODE ;;
+       *) printf '==> derive: MAJORDOMUS_DERIVE_MODE=%s is not full, incremental or shadow; deriving in full\n' \
+            "$MAJORDOMUS_DERIVE_MODE" >&2 ;;
+     esac ;;
+esac
+[ $# = 0 ] || { printf '%s\n' "$USAGE" >&2; exit 2; }
+printf '==> derive: mode %s (%s)\n' "$MODE" "$MODE_FROM" >&2
 
 # Which executable is about to rewrite every committed artifact, said out loud. A derivation
 # run with a borrowed binary looks exactly like one that built its own, and on 2026-09-10 a
@@ -175,7 +208,30 @@ if [ "$rc" != 0 ]; then
 fi
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
-mj_lock_run "$ROOT/scripts/generate-site-data"
+# In the full mode nothing is asked and nothing is recorded: the four stages are what they
+# always were. In the other two, the executable decides (exit 0 proven current, 10 must run;
+# anything else is its own failure and ends the derive) and says why on stderr. It records
+# only after the stage exited 0, so a failed or killed stage leaves no record to reuse.
+SHADOW_RC=0
+if [ "$MODE" = full ]; then
+  mj_lock_run "$ROOT/scripts/generate-site-data"
+else
+  rc=0; mj_lock_run "$RB" derive begin --repo "$ROOT" --mode "$MODE" || rc=$?
+  case "$rc" in
+    0|10) ;;
+    *) printf '==> derive: the incremental decision failed (exit %s); nothing was derived past stage A\n' "$rc" >&2
+       exit "$rc" ;;
+  esac
+  if [ "$rc" = 10 ] || [ "$MODE" = shadow ]; then
+    mj_lock_run "$ROOT/scripts/generate-site-data"
+    rc=0; mj_lock_run "$RB" derive record --repo "$ROOT" || rc=$?
+    case "$rc" in
+      0) ;;
+      13) SHADOW_RC=13 ;;
+      *) printf '==> derive: stage B ran and could not be recorded (exit %s); the next incremental derive runs it again\n' "$rc" >&2 ;;
+    esac
+  fi
+fi
 step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
 mj_lock_run "$RB" generate --repo "$ROOT" --strict >/dev/null
@@ -187,3 +243,9 @@ step "stage D: scripts/gitattributes (the merge policy, from the generators)"
 mj_lock_run "$ROOT/scripts/gitattributes" >/dev/null
 step_done
 printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2
+# A shadow divergence ends the run as a failure only now: the tree is the full derive's, and
+# the stages after B were owed to it just the same.
+if [ "$SHADOW_RC" != 0 ]; then
+  printf '==> derive: shadow: the incremental mode would have left stale output; see the divergence above\n' >&2
+  exit "$SHADOW_RC"
+fi

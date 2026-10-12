@@ -254,7 +254,10 @@ jobs:
       - name: every projection of the new record, regenerated in dependency order
         env:
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
-        run: scripts/derive
+        # --full whatever the runner's environment says: a fresh clone has no record of an
+        # earlier stage B to reuse, and the record pull request is judged by the full oracle
+        # (ADR 0143)
+        run: scripts/derive --full
 
       # The verdict CI will give the record's pull request, given here, where a red one can
       # still be withheld. It is taken over the index as it will be committed, because that is

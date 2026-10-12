@@ -102,6 +102,12 @@
           "route": "/docs/cli/offload/"
         },
         {
+          "about": "Whether a derive may leave stage B (the site data) alone: the decision `scripts/derive --incremental` acts on, made against this checkout's record of its last successful stage B, and the record itself. The default derive is the full one and never asks (ADR 0143)",
+          "command": "majordomus derive",
+          "name": "derive",
+          "route": "/docs/cli/derive/"
+        },
+        {
           "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
           "command": "majordomus convergence",
           "name": "convergence",
@@ -16125,6 +16131,682 @@
       ],
       "route": "/docs/cli/offload/derive/",
       "usage": "majordomus offload derive [OPTIONS] [WORKTREE]"
+    },
+    {
+      "about": "Whether a derive may leave stage B (the site data) alone: the decision `scripts/derive --incremental` acts on, made against this checkout's record of its last successful stage B, and the record itself. The default derive is the full one and never asks (ADR 0143)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "What an incremental derive would do with stage B now, and why: the key of the tree, the recorded key, and every reason; writes nothing. Exit 0 whatever the decision",
+          "command": "majordomus derive plan",
+          "name": "plan",
+          "route": "/docs/cli/derive/plan/"
+        },
+        {
+          "about": "Open stage B for `scripts/derive`: exit 0 when it is proven current (inputs and outputs as the recorded run had and left them), 10 when it must run; marks a run as in flight when one is",
+          "command": "majordomus derive begin",
+          "name": "begin",
+          "route": "/docs/cli/derive/begin/"
+        },
+        {
+          "about": "Close stage B for `scripts/derive` after it exited 0: record its key and its outputs, or say why nothing is recorded; exit 13 when a shadow run changed what the skip would have kept",
+          "command": "majordomus derive record",
+          "name": "record",
+          "route": "/docs/cli/derive/record/"
+        },
+        {
+          "about": "Drop this checkout's record of stage B, so the next incremental derive runs it",
+          "command": "majordomus derive forget",
+          "name": "forget",
+          "route": "/docs/cli/derive/forget/"
+        }
+      ],
+      "command": "majordomus derive",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "derive",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "derive"
+      ],
+      "route": "/docs/cli/derive/",
+      "usage": "majordomus derive [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "What an incremental derive would do with stage B now, and why: the key of the tree, the recorded key, and every reason; writes nothing. Exit 0 whatever the decision",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus derive",
+          "name": "derive",
+          "route": "/docs/cli/derive/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus derive plan",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "derive",
+            "plan",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus derive plan --format json",
+          "description": "The key of the tree as it stands (every tracked path with its work-tree bytes minus the stage's own outputs, the executable, the tools, the environment, git's configuration and the local use-case evidence), the key of the checkout's last successful stage B, and the decision with every reason. This fixture has no site generator and no MAJORDOMUS_BIN, so it has no key: the plan says the stage must run and why, and writes nothing.",
+          "expectation": "exits 0; prints one JSON document carrying /state, /cacheable, /reasons",
+          "id": "derive-plan-json",
+          "setup": [],
+          "title": "What an incremental derive would do with stage B, and why"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "plan",
+      "parent_route": "/docs/cli/derive/",
+      "path": [
+        "majordomus",
+        "derive",
+        "plan"
+      ],
+      "route": "/docs/cli/derive/plan/",
+      "usage": "majordomus derive plan [OPTIONS]"
+    },
+    {
+      "about": "Open stage B for `scripts/derive`: exit 0 when it is proven current (inputs and outputs as the recorded run had and left them), 10 when it must run; marks a run as in flight when one is",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus derive",
+          "name": "derive",
+          "route": "/docs/cli/derive/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The mode the derive runs in",
+          "long": "mode",
+          "name": "mode",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Skip stage B when it is proven current",
+              "name": "incremental"
+            },
+            {
+              "help": "Decide as incremental does, run stage B regardless, and refuse a run that changed what the skip would have kept",
+              "name": "shadow"
+            }
+          ],
+          "required": true,
+          "takes_value": true,
+          "value_name": "MODE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus derive begin",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "derive",
+            "begin",
+            "--mode",
+            "incremental"
+          ],
+          "command": "majordomus derive begin --mode incremental",
+          "description": "What `scripts/derive --incremental` asks before stage B. Exit 0 means the stage is proven current and is skipped; 10 means it must run, and the line on stderr says why. A tree with no key, as here, always runs and is never recorded.",
+          "expectation": "exits 10",
+          "id": "derive-begin-must-run",
+          "setup": [],
+          "title": "A stage that cannot be proven current must run"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "begin",
+      "parent_route": "/docs/cli/derive/",
+      "path": [
+        "majordomus",
+        "derive",
+        "begin"
+      ],
+      "route": "/docs/cli/derive/begin/",
+      "usage": "majordomus derive begin [OPTIONS]"
+    },
+    {
+      "about": "Close stage B for `scripts/derive` after it exited 0: record its key and its outputs, or say why nothing is recorded; exit 13 when a shadow run changed what the skip would have kept",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus derive",
+          "name": "derive",
+          "route": "/docs/cli/derive/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus derive record",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "derive",
+            "record"
+          ],
+          "command": "majordomus derive record",
+          "description": "What `scripts/derive --incremental` asks after stage B exited 0. With no run begun in this checkout there is nothing to vouch for, so nothing is recorded and the answer says so; a failed stage never reaches this call, so a failure can never be recorded as a success.",
+          "expectation": "exits 0",
+          "id": "derive-record-nothing-begun",
+          "setup": [],
+          "title": "Nothing is recorded for a run that was never begun"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "record",
+      "parent_route": "/docs/cli/derive/",
+      "path": [
+        "majordomus",
+        "derive",
+        "record"
+      ],
+      "route": "/docs/cli/derive/record/",
+      "usage": "majordomus derive record [OPTIONS]"
+    },
+    {
+      "about": "Drop this checkout's record of stage B, so the next incremental derive runs it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus derive",
+          "name": "derive",
+          "route": "/docs/cli/derive/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus derive forget",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "derive",
+            "forget"
+          ],
+          "command": "majordomus derive forget",
+          "description": "Removes this checkout's record of its last stage B and any marker of a run in flight. Losing the record is always safe: the next incremental derive finds none and runs the stage.",
+          "expectation": "exits 0",
+          "id": "derive-forget",
+          "setup": [],
+          "title": "Drop the record, so the next incremental derive runs stage B"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "forget",
+      "parent_route": "/docs/cli/derive/",
+      "path": [
+        "majordomus",
+        "derive",
+        "forget"
+      ],
+      "route": "/docs/cli/derive/forget/",
+      "usage": "majordomus derive forget [OPTIONS]"
     },
     {
       "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
@@ -35995,10 +36677,10 @@
     }
   ],
   "counts": {
-    "arguments": 1564,
-    "commands": 226,
-    "examples": 227,
-    "runnable": 199
+    "arguments": 1590,
+    "commands": 231,
+    "examples": 231,
+    "runnable": 203
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.21.0",

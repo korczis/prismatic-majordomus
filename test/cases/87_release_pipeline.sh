@@ -107,7 +107,9 @@ job_line() { # <job> <awk regex>: the first command line of the job that matches
 }
 recorded="$(job_line publish 'scripts/release-record --tag')"
 staged="$(job_line publish 'git add -- "[.]ai/repo/releases/[$]tag[.]yaml"')"
-derived="$(job_line publish '^[ \t]*(run:[ \t]*)?scripts/derive[ \t]*$')"
+# --full, never a mode the runner's environment could choose: a fresh clone has nothing an
+# incremental derive could reuse, and the record pull request is judged by the full oracle
+derived="$(job_line publish '^[ \t]*(run:[ \t]*)?scripts/derive --full[ \t]*$')"
 staged_all="$(job_line publish 'git add -A')"
 checked="$(job_line publish 'scripts/derive-check')"
 pushed="$(job_line publish 'git push')"

@@ -69,6 +69,8 @@ pub enum Command {
     Prs(PrsArgs),
     /// A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed
     Offload(OffloadArgs),
+    /// Whether a derive may leave stage B (the site data) alone: the decision `scripts/derive --incremental` acts on, made against this checkout's record of its last successful stage B, and the record itself. The default derive is the full one and never asks (ADR 0143)
+    Derive(DeriveArgs),
     /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
     Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
@@ -1807,6 +1809,91 @@ pub struct QualityRustdocArgs {
     /// Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc
     #[arg(long, value_name = "DIR")]
     pub tree: Option<std::path::PathBuf>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus derive`: the incremental decision behind `scripts/derive --incremental`.
+/// The script calls `begin` before stage B and `record` after it; a person reads `plan`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeriveArgs, DeriveCommand, DeriveMode, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "derive", "plan", "--format", "json"]).unwrap();
+/// let Command::Derive(args) = cli.command else { panic!("expected `derive`") };
+/// let args: DeriveArgs = args;
+/// assert!(matches!(args.command, DeriveCommand::Plan));
+/// assert_eq!(args.format, OutputFormat::Json);
+///
+/// // a stage is begun in a mode, and there is no default: the script always says which
+/// let cli = Cli::try_parse_from(["majordomus", "derive", "begin", "--mode", "shadow"]).unwrap();
+/// let Command::Derive(args) = cli.command else { panic!("expected `derive`") };
+/// assert!(matches!(args.command, DeriveCommand::Begin { mode: DeriveMode::Shadow }));
+/// assert!(Cli::try_parse_from(["majordomus", "derive", "begin"]).is_err());
+/// ```
+pub struct DeriveArgs {
+    #[command(flatten)]
+    /// Where the repository is found. The index is not built.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand.
+    pub command: DeriveCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus derive`: `plan` for a person, `begin` and `record` for
+/// `scripts/derive`, `forget` to drop the record.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeriveCommand};
+///
+/// for (word, want) in [("plan", "Plan"), ("record", "Record"), ("forget", "Forget")] {
+///     let cli = Cli::try_parse_from(["majordomus", "derive", word]).unwrap();
+///     let Command::Derive(args) = cli.command else { panic!("expected `derive`") };
+///     assert_eq!(format!("{:?}", args.command), want);
+/// }
+/// // there is no default subcommand: the derive names what it asks
+/// assert!(Cli::try_parse_from(["majordomus", "derive"]).is_err());
+/// assert!(matches!(DeriveCommand::Plan, DeriveCommand::Plan));
+/// ```
+pub enum DeriveCommand {
+    /// What an incremental derive would do with stage B now, and why: the key of the tree, the recorded key, and every reason; writes nothing. Exit 0 whatever the decision
+    Plan,
+    /// Open stage B for `scripts/derive`: exit 0 when it is proven current (inputs and outputs as the recorded run had and left them), 10 when it must run; marks a run as in flight when one is
+    Begin {
+        /// The mode the derive runs in
+        #[arg(long, value_enum)]
+        mode: DeriveMode,
+    },
+    /// Close stage B for `scripts/derive` after it exited 0: record its key and its outputs, or say why nothing is recorded; exit 13 when a shadow run changed what the skip would have kept
+    Record,
+    /// Drop this checkout's record of stage B, so the next incremental derive runs it
+    Forget,
+}
+
+/// The modes of `scripts/derive` that ask about stage B. The full derive never does, so it
+/// is not one of them.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::DeriveMode;
+///
+/// assert_eq!(DeriveMode::from_str("incremental", false), Ok(DeriveMode::Incremental));
+/// assert_eq!(DeriveMode::from_str("shadow", false), Ok(DeriveMode::Shadow));
+/// assert!(DeriveMode::from_str("full", false).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum DeriveMode {
+    /// Skip stage B when it is proven current
+    Incremental,
+    /// Decide as incremental does, run stage B regardless, and refuse a run that changed what the skip would have kept
+    Shadow,
 }
 
 #[derive(Debug, Args)]
@@ -6652,6 +6739,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["devcontext", "policy"],
             setup: &[],
             expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
+    },
+    CommandExamples {
+        command: "derive plan",
+        examples: &[ExampleDoc {
+            id: "derive-plan-json",
+            title: "What an incremental derive would do with stage B, and why",
+            description: "The key of the tree as it stands (every tracked path with its work-tree bytes minus the stage's own outputs, the executable, the tools, the environment, git's configuration and the local use-case evidence), the key of the checkout's last successful stage B, and the decision with every reason. This fixture has no site generator and no MAJORDOMUS_BIN, so it has no key: the plan says the stage must run and why, and writes nothing.",
+            argv: &["derive", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/state", "/cacheable", "/reasons"]),
+        }],
+    },
+    CommandExamples {
+        command: "derive begin",
+        examples: &[ExampleDoc {
+            id: "derive-begin-must-run",
+            title: "A stage that cannot be proven current must run",
+            description: "What `scripts/derive --incremental` asks before stage B. Exit 0 means the stage is proven current and is skipped; 10 means it must run, and the line on stderr says why. A tree with no key, as here, always runs and is never recorded.",
+            argv: &["derive", "begin", "--mode", "incremental"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "derive record",
+        examples: &[ExampleDoc {
+            id: "derive-record-nothing-begun",
+            title: "Nothing is recorded for a run that was never begun",
+            description: "What `scripts/derive --incremental` asks after stage B exited 0. With no run begun in this checkout there is nothing to vouch for, so nothing is recorded and the answer says so; a failed stage never reaches this call, so a failure can never be recorded as a success.",
+            argv: &["derive", "record"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "derive forget",
+        examples: &[ExampleDoc {
+            id: "derive-forget",
+            title: "Drop the record, so the next incremental derive runs stage B",
+            description: "Removes this checkout's record of its last stage B and any marker of a run in flight. Losing the record is always safe: the next incremental derive finds none and runs the stage.",
+            argv: &["derive", "forget"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

@@ -1,7 +1,7 @@
 +++
 title = "majordomus intent coverage"
 description = "Which work carries which criterion, and the reason every issue exists"
-weight = 183
+weight = 188
 [extra]
 route = "/docs/cli/intent/coverage/"
 command = "majordomus intent coverage"

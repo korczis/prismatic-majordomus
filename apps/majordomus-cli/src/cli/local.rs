@@ -279,6 +279,26 @@ pub const LOCAL: &[LocalCommand] = &[
     },
     // ---------------------------------------------------------------- the caller's own checkout
     LocalCommand {
+        command: "derive begin",
+        reason: LocalReason::WritesRepository,
+        note: "marks stage B as in flight in this checkout's derive state and drops a record it is about to invalidate; scripts/derive calls it under the machine's derive lock.",
+    },
+    LocalCommand {
+        command: "derive record",
+        reason: LocalReason::WritesRepository,
+        note: "records the key and the output digests of a stage B that just succeeded in this checkout's derive state; scripts/derive calls it under the machine's derive lock.",
+    },
+    LocalCommand {
+        command: "derive forget",
+        reason: LocalReason::WritesRepository,
+        note: "removes this checkout's record of stage B, which only makes the next incremental derive run the stage.",
+    },
+    LocalCommand {
+        command: "derive plan",
+        reason: LocalReason::SessionLocal,
+        note: "answers with a key that covers the invoking shell's PATH tools, environment and MAJORDOMUS_BIN, which a networked caller does not share.",
+    },
+    LocalCommand {
         command: "offload probe",
         reason: LocalReason::SessionLocal,
         note: "measures the declared hosts over the invoking user's ssh keys and network, which a networked caller does not share.",

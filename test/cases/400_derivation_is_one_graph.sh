@@ -28,10 +28,16 @@ cp "$ROOT/scripts/derive" "$ROOT/scripts/derive-check" "$G/scripts/"
 cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/machine_lock.sh" "$G/lib/"
 printf 'v1\n' > "$G/src/model.txt"
 
-# stage A and C: majordomus generate [--check] --repo R --strict
+# stage A and C: majordomus generate [--check] --repo R --strict; and, asked only by the
+# incremental and shadow modes, `majordomus derive begin|record`, answering $STUB_BEGIN (10:
+# stage B must run, 0: it is proven current) and $STUB_RECORD
 cat > "$TOOL/majordomus" <<'SH'
 #!/usr/bin/env bash
 set -eu
+if [ "${1:-}" = derive ]; then
+  printf 'derive %s\n' "$2" >> "$STUB_LOG"
+  case "$2" in begin) exit "${STUB_BEGIN:-10}" ;; record) exit "${STUB_RECORD:-0}" ;; *) exit 0 ;; esac
+fi
 check=0; repo=""
 while [ $# -gt 0 ]; do case "$1" in
   --check) check=1; shift ;; --repo) repo="$2"; shift 2 ;; *) shift ;; esac; done
@@ -80,7 +86,7 @@ STUB_LOG="$LOG"; export STUB_LOG
 # The fixture's files are untracked in the case's scratch repository by construction.
 export MAJORDOMUS_DERIVE_LOCK="$T/derive.lock" MAJORDOMUS_DERIVE_PRIORITY="$T/derive.priority"
 export MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
-derive()       { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive"; }
+derive()       { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive" "$@"; }
 derive_check() { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive-check"; }
 tree_state()   { ( cd "$G" && git status --porcelain --untracked-files=all && git diff && cat .gitattributes out/*.txt 2>/dev/null ) || true; }
 
@@ -144,6 +150,42 @@ expect_grep 'refused before anything was written'
 STUB_REFUSE=1 expect_exit 15 derive_check
 expect_grep 'the tree is not stale'
 [ "$(cat "$LOG")" = "generate --check" ] || { echo "    scripts/derive-check judged the site after a refusal: $(tr '\n' ' ' < "$LOG")"; exit 1; }
+
+# --- the mode decides only whether stage B is asked about (ADR 0143). The default is the full
+#     graph above and asks nothing; --incremental asks before stage B and, when it runs,
+#     records after it; a stage proven current is skipped and nothing else is; --shadow runs
+#     stage B regardless and carries a divergence out as 13 after the last stage.
+order() { # order <want...>: the calls the last derive made, one per line
+  local want; want="$(printf '%s\n' "$@")"
+  [ "$(cat "$LOG")" = "$want" ] \
+    || { printf '    %s\n    want:\n%s\n    got:\n%s\n' "$ORDER_WHAT" "$want" "$(cat "$LOG")"; exit 1; }
+}
+: > "$LOG"; STUB_BEGIN=10 expect_exit 0 derive --incremental
+expect_grep 'mode incremental \(flag\)'
+ORDER_WHAT='an incremental derive whose stage B must run' order generate 'derive begin' site-data 'derive record' generate gitattributes
+: > "$LOG"; STUB_BEGIN=0 expect_exit 0 derive --incremental
+ORDER_WHAT='an incremental derive whose stage B is proven current' order generate 'derive begin' generate gitattributes
+: > "$LOG"; STUB_BEGIN=12 expect_exit 12 derive --incremental
+expect_grep 'the incremental decision failed \(exit 12\)'
+ORDER_WHAT='a decision that failed' order generate 'derive begin'
+: > "$LOG"; STUB_BEGIN=0 STUB_RECORD=13 expect_exit 13 derive --shadow
+expect_grep 'shadow: the incremental mode would have left stale output'
+ORDER_WHAT='a shadow derive' order generate 'derive begin' site-data 'derive record' generate gitattributes
+: > "$LOG"; STUB_BEGIN=0 MAJORDOMUS_DERIVE_MODE=incremental expect_exit 0 derive --full
+expect_grep 'mode full \(flag\)'
+ORDER_WHAT='--full over MAJORDOMUS_DERIVE_MODE' order generate site-data generate gitattributes
+: > "$LOG"; STUB_BEGIN=0 MAJORDOMUS_DERIVE_MODE=incremental expect_exit 0 derive
+expect_grep 'mode incremental \(MAJORDOMUS_DERIVE_MODE\)'
+: > "$LOG"; STUB_BEGIN=0 MAJORDOMUS_DERIVE_MODE=incremntal expect_exit 0 derive
+expect_grep 'MAJORDOMUS_DERIVE_MODE=incremntal is not full, incremental or shadow; deriving in full'
+ORDER_WHAT='a misspelt mode' order generate site-data generate gitattributes
+: > "$LOG"; expect_exit 2 derive --incremental --shadow
+expect_grep '^usage: scripts/derive \[--full \| --incremental \| --shadow'
+[ ! -s "$LOG" ] || { echo "    a mistyped mode ran something: $(tr '\n' ' ' < "$LOG")"; exit 1; }
+# the check is the full oracle in every mode: it asks the executable nothing about records
+if grep -qE 'derive (begin|record)' "$G/scripts/derive-check"; then
+  echo "    scripts/derive-check consults the incremental record; it must stay the full oracle"; exit 1
+fi
 
 # --- a person reaches the same two scripts
 JF="$(just_declaration)"

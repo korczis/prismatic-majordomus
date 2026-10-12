@@ -2424,6 +2424,26 @@
     },
     {
       "kind": "command",
+      "subject": "command:derive begin",
+      "path": "/evidence/commands/derive-begin/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:derive forget",
+      "path": "/evidence/commands/derive-forget/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:derive plan",
+      "path": "/evidence/commands/derive-plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:derive record",
+      "path": "/evidence/commands/derive-record/"
+    },
+    {
+      "kind": "command",
       "subject": "command:devcontext compile",
       "path": "/evidence/commands/devcontext-compile/"
     },
@@ -12757,6 +12777,82 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:derive begin": {
+      "kind": "command",
+      "id": "derive begin",
+      "page": "/evidence/commands/derive-begin/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:derive forget": {
+      "kind": "command",
+      "id": "derive forget",
+      "page": "/evidence/commands/derive-forget/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:derive plan": {
+      "kind": "command",
+      "id": "derive plan",
+      "page": "/evidence/commands/derive-plan/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:derive record": {
+      "kind": "command",
+      "id": "derive record",
+      "page": "/evidence/commands/derive-record/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:devcontext compile": {
       "kind": "command",
       "id": "devcontext compile",
@@ -22485,6 +22581,16 @@
       "programs": [],
       "members": [],
       "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1100_a_derive_skips_only_what_did_not_change",
+          "path": "test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1100_a_derive_skips_only_what_did_not_change.sh",
+            ".ai/repo/rules/project/derived-files-regenerated.v1.md"
+          ]
+        },
         {
           "via": "rule",
           "test": "suite:51_derived_artifacts_committed",

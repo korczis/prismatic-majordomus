@@ -196,6 +196,21 @@ flowchart TB
 </div>
 
 
+### Leaving stage B alone
+
+`scripts/derive` derives in full by default. Two opt-in modes ask the executable first
+whether stage B may be left alone (ADR 0143): `--incremental` skips it when the key of
+everything it can read equals the key of this checkout's last successful stage B and every
+output the generator declares (`scripts/generate-site-data --outputs`) is on disk as that
+run left it; `--shadow` decides the same way, runs it regardless, and exits 13 after the
+last stage when the run changed a byte the skip would have kept. `MAJORDOMUS_DERIVE_MODE`
+chooses a mode when no flag does. The key is a superset of the generator's reads, never its
+own input list: `source_hash` misses the generator's code, its libraries, its awk and jq
+programs and the executable its scenarios run, so it decides nothing here. The record lives
+in the checkout's git directory; `majordomus derive plan` says what the next incremental
+derive would do and why, and `majordomus derive forget` drops the record. `scripts/derive-check`,
+`scripts/pages current`, the release job and the version job never read it.
+
 The boundary between the executable and the site is data, in both directions of reading:
 the site generator reads the registry manifest for the ids it turns into routes and never
 parses Rust; the templates read the registry dataset for every fact about a capability and
