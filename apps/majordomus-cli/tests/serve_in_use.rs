@@ -9,10 +9,10 @@ mod common;
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, BIN};
+use common::{dist_share, Fixture};
 
 fn get_home(address: &str) -> bool {
     let Ok(mut stream) = TcpStream::connect(address) else {
@@ -30,12 +30,11 @@ fn get_home(address: &str) -> bool {
 #[test]
 fn a_server_read_over_http_outlives_its_idle_timeout_and_ends_when_left_alone() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["serve", "--port", "0", "--idle", "2"])
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "info")
         .env("MAJORDOMUS_SHARE", dist_share())
-        .env_remove("MAJORDOMUS_HTTP_HOST")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())

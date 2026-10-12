@@ -26,8 +26,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::{Duration, Instant};
 
-const BIN: &str = env!("CARGO_BIN_EXE_majordomus");
-
 // ------------------------------------------------------------------------- the command line
 
 /// A cluster on disk: an origin, a session's clone, and hosts with homes, a stand-in `df`,
@@ -213,7 +211,7 @@ impl Cluster {
     }
 
     fn offload(&self, args: &[&str], signal: Option<&Path>) -> Output {
-        let mut cmd = Command::new(BIN);
+        let mut cmd = common::majordomus();
         cmd.arg("offload").args(args).current_dir(self.session());
         self.env(&mut cmd);
         if let Some(s) = signal {
@@ -224,7 +222,7 @@ impl Cluster {
 
     /// `offload derive .` with these extra arguments and this environment.
     fn derive(&self, decl: &Path, extra: &[&str], env: &[(&str, String)]) -> Output {
-        let mut cmd = Command::new(BIN);
+        let mut cmd = common::majordomus();
         cmd.args(["offload", "derive", ".", "--declaration"])
             .arg(decl)
             .args(extra)
@@ -926,7 +924,7 @@ fn the_command_refuses_what_it_cannot_read_or_write() {
     let closed = |args: &[&str]| {
         let (reader, writer) = std::io::pipe().unwrap();
         drop(reader);
-        let mut cmd = Command::new(BIN);
+        let mut cmd = common::majordomus();
         cmd.arg("offload").args(args).current_dir(c.session());
         c.env(&mut cmd);
         cmd.stdout(writer).output().unwrap()

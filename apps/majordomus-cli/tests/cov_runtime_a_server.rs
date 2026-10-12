@@ -5,10 +5,10 @@
 mod common;
 
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, BIN};
+use common::{dist_share, Fixture};
 use majordomus_cli::lease::LeaseFile;
 use serde_json::{json, Value};
 
@@ -41,12 +41,11 @@ fn replace_lease(path: &Path, text: &str) {
 fn an_unbounded_server_whose_lease_is_taken_over_ends_by_itself() {
     let f = Fixture::new();
     let log = f.path("serve.log");
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["serve", "--port", "0", "--idle", "0"])
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", dist_share())
         .env("MAJORDOMUS_LOG", "info")
-        .env_remove("MAJORDOMUS_HTTP_HOST")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(std::fs::File::create(&log).unwrap())

@@ -2001,7 +2001,12 @@ mod tests {
         assert!(!ran, "nothing past the lock ran");
         assert_eq!(token_on_disk(&path).as_deref(), Some("stale"));
         drop(held);
-        take_over_with(&path, &seen, Duration::ZERO, || {}).unwrap();
+        // Not a single attempt: closing `held` releases the flock only once no process holds
+        // its open file description, and a sibling test that forks (`pre_exec`,
+        // `process_group`) gives its child a copy of every descriptor until that child execs.
+        // A zero patience then met the lock still held and left the lease, under a parallel
+        // run alone. The wait ends as soon as the copy is gone; the bound is only a backstop.
+        take_over_with(&path, &seen, Duration::from_secs(30), || {}).unwrap();
         assert_eq!(
             LeaseFile::read(&path),
             LeaseFile::Absent,

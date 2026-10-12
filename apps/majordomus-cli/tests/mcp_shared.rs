@@ -18,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{without_observation_times, Fixture, BIN};
+use common::{without_observation_times, Fixture};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -37,7 +37,7 @@ impl Mcp {
     fn spawn(cwd: &Path, args: &[&str]) -> Self {
         let mut all = vec!["mcp"];
         all.extend_from_slice(args);
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(&all)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")
