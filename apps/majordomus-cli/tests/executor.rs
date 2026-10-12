@@ -755,3 +755,325 @@ fn every_checkout_capability_answers_fresh_after_the_state_it_reads_changed() {
         assert_ne!(pair[0], pair[1], "every change moved evidence.report");
     }
 }
+
+// ---- the latest reading of a source (capability::readings) ---------------------------
+
+/// A second context over the same index, registry and executor with a reading of its own:
+/// what a reload of the repository hands a long-lived process.
+fn moved(first: &Context) -> Context {
+    let second = Context::new(first.index.clone(), first.registry.clone());
+    assert_ne!(second.reading, first.reading);
+    Context {
+        executor: Arc::clone(&first.executor),
+        ..second
+    }
+}
+
+/// Wait until `done` holds, for at most ten seconds: the bound of a worker of this file's
+/// fixtures on a loaded machine, never a timing the test asserts.
+fn eventually(what: &str, mut done: impl FnMut() -> bool) {
+    let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while !done() {
+        assert!(std::time::Instant::now() < until, "{what} did not happen");
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+}
+
+/// A source that has never been read and is slower than the caller's patience is handed
+/// over as pending, at once, and its first reading arrives behind the caller: one handler
+/// run for the caller that did not wait and the one that then did.
+#[test]
+fn a_first_reading_slower_than_the_patience_is_pending_and_arrives_behind_the_caller() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::readings::{read, Freshness, Patience, PENDING};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{Duration, Instant};
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let slow = handler::<Value, Value, _>(|_, _| {
+        std::thread::sleep(Duration::from_millis(1500));
+        Ok(json!({ "n": RAN.fetch_add(1, Ordering::SeqCst) + 1 }))
+    });
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.slow_first",
+            CachePolicy::Disabled,
+            slow,
+        )],
+    );
+    let impatient = Patience {
+        cold: Duration::from_millis(20),
+        moved: Duration::from_millis(20),
+    };
+    let asked = Instant::now();
+    let pending = read(&ctx, "fixture.slow_first", json!({}), impatient);
+    assert!(
+        asked.elapsed() < Duration::from_millis(1000),
+        "the caller was handed something before the handler finished: {:?}",
+        asked.elapsed()
+    );
+    assert_eq!(pending.freshness, Freshness::Pending);
+    assert!(pending.refreshing, "its first reading is on its way");
+    assert_eq!(pending.value, Err(PENDING.to_string()));
+    assert_eq!(pending.age, None, "nothing was read, so nothing has an age");
+
+    let arrived = read(&ctx, "fixture.slow_first", json!({}), Patience::WAIT);
+    assert_eq!(arrived.freshness, Freshness::Current);
+    assert_eq!(arrived.value, Ok(json!({ "n": 1 })));
+    assert!(arrived.took >= Duration::from_millis(1500));
+    assert_eq!(
+        RAN.load(Ordering::SeqCst),
+        1,
+        "the caller that waited joined the reading the first one started"
+    );
+    assert_eq!(ctx.executor.readings_remembered(), 1);
+}
+
+/// A source that has been read is handed over at once from then on, however slow it is,
+/// and is read again behind the caller once the reading is older than `REVALIDATE`.
+#[test]
+fn a_known_source_is_handed_over_at_once_and_read_again_behind_the_caller() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::readings::{read, Freshness, Patience, REVALIDATE};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{Duration, Instant};
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let slow = handler::<Value, Value, _>(|_, _| {
+        std::thread::sleep(Duration::from_millis(1500));
+        Ok(json!({ "n": RAN.fetch_add(1, Ordering::SeqCst) + 1 }))
+    });
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.slow_known",
+            CachePolicy::Disabled,
+            slow,
+        )],
+    );
+    let first = read(&ctx, "fixture.slow_known", json!({}), Patience::WAIT);
+    assert_eq!(first.value, Ok(json!({ "n": 1 })));
+
+    std::thread::sleep(REVALIDATE + Duration::from_millis(100));
+    let asked = Instant::now();
+    let again = read(&ctx, "fixture.slow_known", json!({}), Patience::PAGE);
+    assert!(
+        asked.elapsed() < Duration::from_millis(1000),
+        "a known source is not waited for: {:?}",
+        asked.elapsed()
+    );
+    assert_eq!(again.value, Ok(json!({ "n": 1 })), "what is known now");
+    assert_eq!(
+        again.freshness,
+        Freshness::Current,
+        "the repository did not move"
+    );
+    assert!(again.age.is_some_and(|age| age >= REVALIDATE));
+    assert!(again.refreshing, "it is being read again behind the caller");
+
+    eventually("the second reading", || RAN.load(Ordering::SeqCst) == 2);
+    eventually("the second reading landing", || {
+        read(&ctx, "fixture.slow_known", json!({}), Patience::PAGE).value == Ok(json!({ "n": 2 }))
+    });
+    // a different input is a different source
+    let other = read(
+        &ctx,
+        "fixture.slow_known",
+        json!({ "k": 1 }),
+        Patience::WAIT,
+    );
+    assert_eq!(other.value, Ok(json!({ "n": 3 })));
+    assert_eq!(ctx.executor.readings_remembered(), 2);
+}
+
+/// When the repository has moved, a slow source is handed over as it was, marked stale,
+/// within the caller's patience; a caller that waits gets the reading of the repository as
+/// it is; and every other source read lately is read again without being asked for.
+#[test]
+fn a_reading_the_repository_moved_past_is_stale_at_once_and_everything_known_is_read_again() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::readings::{read, Freshness, Patience};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{Duration, Instant};
+    static SLOW: AtomicU64 = AtomicU64::new(0);
+    static OTHER: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let slow = handler::<Value, Value, _>(|_, _| {
+        std::thread::sleep(Duration::from_millis(1500));
+        Ok(json!({ "n": SLOW.fetch_add(1, Ordering::SeqCst) + 1 }))
+    });
+    let other = handler::<Value, Value, _>(|_, _| {
+        Ok(json!({ "n": OTHER.fetch_add(1, Ordering::SeqCst) + 1 }))
+    });
+    let first = context_with(
+        &app,
+        vec![
+            fixture_query("fixture.slow_moved", CachePolicy::Disabled, slow),
+            fixture_query("fixture.other", CachePolicy::Disabled, other),
+        ],
+    );
+    assert_eq!(
+        read(&first, "fixture.slow_moved", json!({}), Patience::WAIT).value,
+        Ok(json!({ "n": 1 }))
+    );
+    assert_eq!(
+        read(&first, "fixture.other", json!({}), Patience::WAIT).value,
+        Ok(json!({ "n": 1 }))
+    );
+
+    let second = moved(&first);
+    let impatient = Patience {
+        cold: Duration::from_millis(20),
+        moved: Duration::from_millis(20),
+    };
+    let asked = Instant::now();
+    let stale = read(&second, "fixture.slow_moved", json!({}), impatient);
+    assert!(
+        asked.elapsed() < Duration::from_millis(1000),
+        "a moved repository is not waited for past the patience: {:?}",
+        asked.elapsed()
+    );
+    assert_eq!(stale.freshness, Freshness::Stale);
+    assert_eq!(stale.value, Ok(json!({ "n": 1 })), "as it was");
+    assert!(stale.refreshing);
+    assert!(stale.catching_up());
+
+    // the other source was not asked for in the moved repository, and is read again
+    eventually("the other source read again", || {
+        OTHER.load(Ordering::SeqCst) == 2
+    });
+
+    let current = read(&second, "fixture.slow_moved", json!({}), Patience::WAIT);
+    assert_eq!(current.freshness, Freshness::Current);
+    assert_eq!(current.value, Ok(json!({ "n": 2 })));
+    assert!(!current.catching_up());
+    // a fast source is current within the patience of a page
+    eventually("the other source current", || {
+        let other = read(&second, "fixture.other", json!({}), Patience::PAGE);
+        other.freshness == Freshness::Current && other.value == Ok(json!({ "n": 2 }))
+    });
+}
+
+/// A source that cannot answer is a reading that says why, with an age like any other, and
+/// it is read again; a handler that panics leaves a reading that says so, never a source
+/// nobody reads any more.
+#[test]
+fn a_source_that_fails_or_panics_is_a_reading_that_says_so_and_is_read_again() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::readings::{read, Freshness, Patience, REVALIDATE};
+    use majordomus_cli::capability::CapabilityError;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::Duration;
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let troubled = handler::<Value, Value, _>(|_, _| match RAN.fetch_add(1, Ordering::SeqCst) {
+        0 => Err(CapabilityError::Internal("the first reading fails".into())),
+        1 => panic!("the second reading panics"),
+        n => Ok(json!({ "n": n + 1 })),
+    });
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.troubled",
+            CachePolicy::Disabled,
+            troubled,
+        )],
+    );
+    let failed = read(&ctx, "fixture.troubled", json!({}), Patience::WAIT);
+    assert_eq!(
+        failed.freshness,
+        Freshness::Current,
+        "a failure is a reading"
+    );
+    assert!(
+        failed
+            .value
+            .as_ref()
+            .is_err_and(|e| e.contains("the first reading fails")),
+        "{:?}",
+        failed.value
+    );
+    assert!(failed.age.is_some());
+
+    std::thread::sleep(REVALIDATE + Duration::from_millis(100));
+    read(&ctx, "fixture.troubled", json!({}), Patience::PAGE);
+    eventually("the panic said as a reading", || {
+        read(&ctx, "fixture.troubled", json!({}), Patience::PAGE)
+            .value
+            .is_err_and(|e| e.contains("panicked"))
+    });
+    std::thread::sleep(REVALIDATE + Duration::from_millis(100));
+    eventually("the third reading", || {
+        read(&ctx, "fixture.troubled", json!({}), Patience::PAGE).value == Ok(json!({ "n": 3 }))
+    });
+}
+
+/// A change of the repository that sends many remembered sources to be read again starts
+/// no more than `WORKERS` readers at once, and a reading a caller waits for is taken before
+/// the ones nobody is waiting for.
+#[test]
+fn a_moved_repository_is_read_again_by_a_bounded_number_of_workers_and_a_waiting_caller_goes_first()
+{
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::readings::{read, Freshness, Patience, WORKERS};
+    use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+    use std::time::Duration;
+    static RUNNING: AtomicUsize = AtomicUsize::new(0);
+    static MOST: AtomicUsize = AtomicUsize::new(0);
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let busy = handler::<Value, Value, _>(|_, v| {
+        let now = RUNNING.fetch_add(1, Ordering::SeqCst) + 1;
+        MOST.fetch_max(now, Ordering::SeqCst);
+        std::thread::sleep(Duration::from_millis(40));
+        RUNNING.fetch_sub(1, Ordering::SeqCst);
+        Ok(json!({ "k": v, "n": RAN.fetch_add(1, Ordering::SeqCst) }))
+    });
+    let quick = handler::<Value, Value, _>(|_, _| Ok(json!({ "quick": true })));
+    let first = context_with(
+        &app,
+        vec![
+            fixture_query("fixture.busy", CachePolicy::Disabled, busy),
+            fixture_query("fixture.quick", CachePolicy::Disabled, quick),
+        ],
+    );
+    const SOURCES: u64 = 40;
+    for k in 0..SOURCES {
+        read(&first, "fixture.busy", json!({ "k": k }), Patience::WAIT);
+    }
+    read(&first, "fixture.quick", json!({}), Patience::WAIT);
+    MOST.store(0, Ordering::SeqCst);
+    let ran = RAN.load(Ordering::SeqCst);
+
+    // the repository moves: the busy sources go to the back of the queue, and the source a
+    // caller then waits for is taken first
+    let second = moved(&first);
+    read(&second, "fixture.busy", json!({ "k": 0 }), Patience::PAGE);
+    let quick = read(&second, "fixture.quick", json!({}), Patience::WAIT);
+    assert_eq!(quick.freshness, Freshness::Current);
+    let behind_it = RAN.load(Ordering::SeqCst) - ran;
+    assert!(
+        behind_it < SOURCES / 2,
+        "the waiting caller went before most of the background ({behind_it} of {SOURCES} read first)"
+    );
+
+    eventually("every busy source read again", || {
+        RAN.load(Ordering::SeqCst) - ran == SOURCES
+    });
+    let most = MOST.load(Ordering::SeqCst);
+    assert!(
+        (1..=WORKERS).contains(&most),
+        "{most} readers at once, never more than {WORKERS}"
+    );
+}

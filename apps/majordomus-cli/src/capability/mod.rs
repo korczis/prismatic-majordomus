@@ -41,6 +41,7 @@ pub mod executor;
 pub mod handler;
 pub mod model;
 pub(crate) mod module;
+pub mod readings;
 pub mod registry;
 pub mod rustdoc;
 pub mod schema;

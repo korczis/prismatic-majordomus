@@ -150,9 +150,42 @@ refuses, in the UI, a read of the index or the registry and an absent count draw
 
 ## Fast, and current
 
-A screen asks all of its sources at once, each on a thread of its own, so it costs its slowest
-source rather than the sum of them (`source::ask_all`; the Cockpit's overview does the same
-since I2460).
+**A screen does not wait for its sources** (ADR 0142, rule
+`project.no-screen-waits-for-a-source`). It asks for the *latest reading* of each one
+(`Context::read`, `capability::readings`): what the process knows now, handed over from
+memory. Handlers, git and files are touched by a worker behind the reader, never on the path
+of the request.
+
+| The source was | What the reader gets | What happens behind them |
+|---|---|---|
+| read in the repository as it is now | the reading, at once | read again once it is older than a second |
+| read before the repository last changed | the new reading if it lands within 50 ms, otherwise the old one, marked stale | read again, with every other source read in the last five minutes |
+| never read in this process | the first reading, waited for | nothing more; past a minute it is said to be pending |
+
+The repository's own reload is not waited for either. When the repository has changed, a
+screen is drawn from the generation the server has, opens with "The repository changed: this
+screen shows it as it was, and is being read again", and the next generation loads behind it.
+An answer over the API, MCP or the command line still waits for the generation its caller
+saw.
+
+A reading says how it stands on its source line. A current one older than five seconds says
+its age ("read 12 s ago"). A stale one says "read 12 s ago, before the repository changed;
+reading again", and its line carries `data-catching-up`. `ui.js` reads a screen with such a
+line again after 0.4 s, then after twice that, up to 6.4 s, until none is left. A stale value
+is never drawn as current.
+
+The first reader of the UI starts one pass over every screen and panel in the background, so
+the screen opened next has its sources read before it is asked for. The pass walks `SCREENS`
+and `PANELS`; no other list of sources exists.
+
+An answer is not a reading. `execute`, and so the API, MCP and the command line, still run
+the handler or return exactly what it would return. Two switches settle a doubt:
+- `MAJORDOMUS_CAPABILITY_CACHE=off` makes every reading run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS=wait` keeps the readings and makes every read wait for a
+  current one. A number sets the 50 ms.
+
+Sources that have no reading yet are asked at once, each on a thread of its own, so a first
+paint costs its slowest source rather than the sum of them (`source::ask_all`).
 
 A source too slow for a first paint is a **panel with a route of its own**. The pull-request
 queue (`integration.queue`) is `/ui/panels/pull-requests`:
@@ -161,8 +194,10 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 - without JavaScript the placeholder is a link to the same route.
 
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
-rendering in place, and updates the time in the top bar. That time is when the sources were
-read. This is a refresh and is said as one; nothing claims a live stream.
+rendering in place, and updates the time in the top bar. That time is when the page was
+rendered; each source line says when its own reading is older. This is a refresh and is said
+as one; nothing claims a live stream. A streamed page and one stream of changed readings
+replace it in I2487.
 
 How fast is measured, not written here. `majordomus bench` derives a target from every
 screen in `SCREENS` and every panel in `PANELS`, cold and warm:
