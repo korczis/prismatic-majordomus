@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 170,
+      "count": 171,
       "dir": "rules",
       "statuses": [
         "active"
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 170
+      "count": 171
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 456
+      "count": 457
     },
     {
       "kind": "use-case",
@@ -7404,6 +7404,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
           "kind": "test",
           "route": null,
@@ -7412,6 +7419,13 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1096_the_published_ui_is_the_trunks.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -11903,6 +11917,13 @@
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
         }
       ]
     },
@@ -13195,6 +13216,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
           "external": false
         },
         {
@@ -15129,6 +15157,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0086/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
         }
       ]
     },
@@ -15176,6 +15211,68 @@
           "label": "project.entry-converges@2",
           "kind": "rule",
           "route": "/rules/project-entry-converges-2/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+      "identity": "project.the-published-ui-is-the-trunks@1",
+      "slug": "project-the-published-ui-is-the-trunks-1",
+      "cockpit": "/cockpit/objects/rule/project-the-published-ui-is-the-trunks-1",
+      "title": "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication",
+      "status": "active",
+      "tags": [
+        "ui",
+        "publication",
+        "web",
+        "pages"
+      ],
+      "source": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
           "external": false
         }
       ]
@@ -15492,6 +15589,13 @@
           "kind": "rule",
           "route": "/rules/project-no-screen-waits-for-a-source-1/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
         }
       ]
     },
@@ -15599,6 +15703,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
           "external": false
         },
         {

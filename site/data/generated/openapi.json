@@ -27,6 +27,7 @@
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
+    "op-deploy-observed": "docs/api/deploy/",
     "op-design-contrast": "docs/api/design/",
     "op-design-explain": "docs/api/design/",
     "op-design-system": "docs/api/design/",
@@ -475,6 +476,7 @@
     "schema-EntryProvenance": "docs/api/devcontext/",
     "schema-Envelope": "docs/api/mesh/",
     "schema-EnvironmentProvenance": "docs/api/environment/",
+    "schema-EnvironmentSummary": "docs/api/deploy/",
     "schema-EnvrcApproval": "docs/api/worktree/",
     "schema-Episode": "docs/api/lifecycle/",
     "schema-EpisodeList": "docs/api/episodes/",
@@ -760,6 +762,9 @@
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
     "schema-ObservedClassification": "docs/api/integration/",
+    "schema-ObservedDeployment": "docs/api/deploy/",
+    "schema-ObservedDeployments": "docs/api/deploy/",
+    "schema-ObservedRelease": "docs/api/deploy/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -1204,8 +1209,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 190,
-    "schemas": 955,
+    "operations": 191,
+    "schemas": 959,
     "tags": 56
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1324,6 +1329,7 @@
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
+    "deploy.observed": "deploy",
     "design.contrast": "design",
     "design.explain": "design",
     "design.system": "design",
@@ -1776,6 +1782,7 @@
     "EntryProvenance": "devcontext",
     "Envelope": "mesh",
     "EnvironmentProvenance": "environment",
+    "EnvironmentSummary": "deploy",
     "EnvrcApproval": "worktree",
     "Episode": "lifecycle",
     "EpisodeList": "episodes",
@@ -2061,6 +2068,9 @@
     "ObligationState": "obligations",
     "Observation": "served",
     "ObservedClassification": "integration",
+    "ObservedDeployment": "deploy",
+    "ObservedDeployments": "deploy",
+    "ObservedRelease": "deploy",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -18303,6 +18313,70 @@
       "variants": []
     },
     {
+      "description": "One environment, as its deployments describe it.",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "EnvironmentSummary",
+      "properties": [
+        {
+          "description": "The environment.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of the observed deployments went to it.",
+          "name": "deployments",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The state of its newest deployment.",
+          "name": "state",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit its newest deployment put there.",
+          "name": "sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When that was.",
+          "name": "deployed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is served, when its newest deployment says.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The environment's activity on the forge.",
+          "name": "activity_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedDeployments"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What became of the `.envrc` of a worktree that was just created, found, or moved.",
       "home": "worktree",
       "is_enum": false,
@@ -18773,6 +18847,7 @@
         "deploy.get",
         "deploy.list",
         "deploy.check",
+        "deploy.observed",
         "design.system",
         "design.contrast",
         "design.explain",
@@ -34184,6 +34259,218 @@
       "used_by": [],
       "used_by_schemas": [
         "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One deployment the forge recorded.",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "ObservedDeployment",
+      "properties": [
+        {
+          "description": "The forge's identity of the deployment.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The environment it went to, in the forge's words (`github-pages`, `production`, ...).",
+          "name": "environment",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit that was deployed.",
+          "name": "sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ref it was deployed from, when the forge still names one.",
+          "name": "git_ref",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was created, RFC 3339.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who or what created it.",
+          "name": "creator",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all.",
+          "name": "state",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the environment is served, when the deployment says.",
+          "name": "environment_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The run that performed it, when the deployment says.",
+          "name": "log_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedDeployments"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here.",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "ObservedDeployments",
+      "properties": [
+        {
+          "description": "Whether this checkout holds an observation at all.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, and what to run, when it holds none or cannot read it.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`owner/name`, when observed.",
+          "name": "repository",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository's address on the forge, when observed.",
+          "name": "repository_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the forge was asked, when observed.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every environment something was deployed to, by name.",
+          "name": "environments",
+          "refs": [
+            "EnvironmentSummary"
+          ],
+          "required": true,
+          "type": "array of EnvironmentSummary"
+        },
+        {
+          "description": "The observed deployments, newest first.",
+          "name": "deployments",
+          "refs": [
+            "ObservedDeployment"
+          ],
+          "required": true,
+          "type": "array of ObservedDeployment"
+        },
+        {
+          "description": "The observed releases, newest first.",
+          "name": "releases",
+          "refs": [
+            "ObservedRelease"
+          ],
+          "required": true,
+          "type": "array of ObservedRelease"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "deploy.observed"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One release the forge published.",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "ObservedRelease",
+      "properties": [
+        {
+          "description": "The tag.",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release's title, when it has one.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was published; absent for a draft.",
+          "name": "published_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its page on the forge.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the forge marks it a pre-release.",
+          "name": "prerelease",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it is still a draft.",
+          "name": "draft",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservedDeployments"
       ],
       "values": [],
       "variants": []
@@ -57607,6 +57894,60 @@
           "result_schema": "DeploymentCheck",
           "stability": "behaviorally_verified",
           "summary": "Would these deployments work"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments/observed\"",
+          "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+          "home": "deploy",
+          "id": "deploy.observed",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_deployments_observed",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/deployments/observed",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::deploy",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What was deployed, and where: the result.",
+              "schema": "ObservedDeployments",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservedDeployments",
+          "stability": "behaviorally_verified",
+          "summary": "What was deployed, and where"
         }
       ],
       "slug": "deploy"

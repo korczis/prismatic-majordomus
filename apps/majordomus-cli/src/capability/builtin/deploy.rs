@@ -8,6 +8,10 @@
 //! No capability here contacts the provider. Live provider state costs a network call, and
 //! a network call on a read that a client may poll is not an ordinary read; it belongs to
 //! an explicit operation with its own cost, not behind `deploy.list`.
+//!
+//! `deploy.observed` keeps to that: it answers from the record `majordomus prs refresh` wrote
+//! when it last asked the forge ([`crate::deploy::observed`]) — every deployment to every
+//! environment and every release — and says so when this checkout has never asked.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -99,6 +103,14 @@ fn deploy_list(ctx: &Context, _: Empty) -> Result<DeploymentList, CapabilityErro
         deployments,
         unreadable,
     })
+}
+
+fn deploy_observed(
+    ctx: &Context,
+    _: Empty,
+) -> Result<crate::deploy::observed::ObservedDeployments, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    Ok(crate::deploy::observed::report(&root))
 }
 
 fn deploy_get(ctx: &Context, input: GetDeploymentInput) -> Result<DeploymentView, CapabilityError> {
@@ -207,6 +219,17 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) },
                 handler: deploy_check,
             },
+            capability! {
+                id: "deploy.observed",
+                title: "What was deployed, and where",
+                description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+                input: Empty,
+                output: crate::deploy::observed::ObservedDeployments,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: mcp("majordomus_deployments_observed"), http: get("/api/v1/deployments/observed"), cli: None },
+                tags: ["deployment", "delivery"],
+                handler: deploy_observed,
+            },
         ],
     }
 }
@@ -251,7 +274,41 @@ mod tests {
             .iter()
             .map(|c| c.capability.id.to_string())
             .collect();
-        assert_eq!(ids, ["deploy.list", "deploy.get", "deploy.check"]);
+        assert_eq!(
+            ids,
+            [
+                "deploy.list",
+                "deploy.get",
+                "deploy.check",
+                "deploy.observed"
+            ]
+        );
+    }
+
+    /// What was observed is read from the record and nothing else: a repository nobody has
+    /// asked the forge about answers that, with the command that asks.
+    #[test]
+    fn what_was_deployed_is_read_from_the_record_and_absent_is_said() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let answer = deploy_observed(&ctx, Empty {}).unwrap();
+        assert!(!answer.observed);
+        assert!(answer.reason.unwrap().contains("prs refresh"));
+
+        let observation = crate::deploy::observed::parse(
+            "o/r",
+            "2026-10-12T14:00:00Z",
+            &serde_json::json!({"data": {"repository": {"url": "https://forge.example/o/r",
+                "deployments": {"nodes": [{"databaseId": 1, "environment": "github-pages",
+                    "createdAt": "2026-10-12T10:00:00Z", "commitOid": "aaa",
+                    "latestStatus": {"state": "SUCCESS"}}]},
+                "releases": {"nodes": []}}}}),
+        );
+        crate::deploy::observed::store(repo.root(), &observation).unwrap();
+        let answer = deploy_observed(&ctx, Empty {}).unwrap();
+        assert!(answer.observed);
+        assert_eq!(answer.environments[0].name, "github-pages");
+        assert_eq!(answer.deployments[0].state, "success");
     }
 
     /// A deployment id the layer does not have is refused by name rather than answered

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.22.0"
   },
-  "fingerprint": "6bc99d896280ada0f251befb2a6dbb7a1f04a19d906a69b0a5ad054b27d33aeb",
+  "fingerprint": "efe753af6f020dda7ce54b038be865d733689a0379b21a1e772087887153f497",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3194,7 +3194,7 @@
         "use_cases": 9,
         "rules": 14,
         "enforced_rules": 13,
-        "capabilities": 117,
+        "capabilities": 118,
         "moments": 38
       },
       "evidence": {
@@ -7707,7 +7707,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 170
+          "objects": 171
         }
       ],
       "rule_refs": [
@@ -8083,11 +8083,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 172,
+        "mcp_resources": 173,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 170,
+        "objects": 171,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9844,6 +9844,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.observed",
+              "title": "What was deployed, and where",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deployments_observed",
+              "route": "GET /api/v1/deployments/observed"
             }
           ]
         },
@@ -10466,10 +10474,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 95,
-        "mcp_tools": 88,
+        "capabilities": 96,
+        "mcp_tools": 89,
         "mcp_resources": 16,
-        "http_routes": 92,
+        "http_routes": 93,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -14198,6 +14206,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.observed",
+              "title": "What was deployed, and where",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deployments_observed",
+              "route": "GET /api/v1/deployments/observed"
             }
           ]
         },
@@ -14274,10 +14290,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 6,
+        "mcp_tools": 6,
         "mcp_resources": 2,
-        "http_routes": 5,
+        "http_routes": 6,
         "cli_paths": 2,
         "commands": 0,
         "objects": 1,
@@ -15938,7 +15954,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (170)",
+        "title": "rule (171)",
         "features": [
           "doctrine"
         ]
@@ -16880,17 +16896,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2284,
-    "builtin": 194,
-    "declarative": 2090,
+    "capabilities": 2287,
+    "builtin": 195,
+    "declarative": 2092,
     "modules": 56,
-    "mcp_tools": 186,
-    "mcp_resources": 2145,
-    "http_routes": 190,
+    "mcp_tools": 187,
+    "mcp_resources": 2147,
+    "http_routes": 191,
     "cli_commands": 202,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2090,
+    "objects": 2092,
     "by_kind": {
       "adr": 99,
       "application": 5,
@@ -16918,12 +16934,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 170,
+      "rule": 171,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 456,
+      "test": 457,
       "use-case": 48,
       "workspace": 1
     },

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 194 | 165 | 0 | 29 |
-| http | 190 | 165 | 0 | 25 |
-| mcp | 186 | 161 | 0 | 25 |
+| direct | 195 | 166 | 0 | 29 |
+| http | 191 | 166 | 0 | 25 |
+| mcp | 187 | 162 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 584 | 505 | 0 | 79 |
+| total | 587 | 508 | 0 | 79 |
 
 ## Capabilities
 
@@ -46,6 +46,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `deploy.observed` | deploy | query | — | covered | covered | covered | `default` |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |

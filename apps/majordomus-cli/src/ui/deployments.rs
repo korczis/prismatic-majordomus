@@ -1,6 +1,11 @@
 //! Deployments: where the product runs and whether what is live is what was built. Read
-//! from `deploy.list`; the delivery report (`delivery.report`), which probes the public site
-//! and judges every feature's delivery, is slow enough to be a panel of its own.
+//! from `deploy.list` (what the layer declares) and `deploy.observed` (what the forge
+//! recorded: every deployment to every environment, and every release); the delivery report
+//! (`delivery.report`), which probes the public site and judges every feature's delivery, is
+//! slow enough to be a panel of its own.
+//!
+//! Every commit, ref, environment, run and release here is a link, built from the
+//! repository's address as the forge itself gave it — no host is written in this file.
 
 use serde_json::Value;
 
@@ -10,8 +15,8 @@ use crate::cockpit::html::{el, El};
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Source};
 use super::view::{
-    anchor, hero, kpi, kpi_count, link, list, none, object_if, panel, panel_to, state, strip,
-    table, text, unanswered, value, wide,
+    anchor, hero, kpi, kpi_count, link, list, none, nothing, object_if, panel, panel_to, state,
+    strip, table, text, unanswered, value, wide,
 };
 
 /// The route of the screen.
@@ -54,22 +59,167 @@ pub fn summary_row(ctx: &Context, d: &Value) -> El {
 pub const DELIVERY_PANEL: &str = "/ui/panels/delivery";
 
 const DEPLOYMENTS: Source = Source::of("deploy.list");
+const OBSERVED: Source = Source::of("deploy.observed");
+
+/// A link that leaves the UI: the forge, a run, a served environment.
+fn outside(href: &str, label: &str) -> El {
+    el("a")
+        .class("mj-ui-link")
+        .attr("href", href)
+        .attr("rel", "noopener noreferrer")
+        .text(label)
+}
+
+/// A field of an entry as a link out, or `none` when the entry has no such field.
+fn outside_field(entry: &Value, key: &str, label: &str) -> El {
+    match text(entry, key) {
+        href if href.is_empty() => none(),
+        href => outside(&href, label),
+    }
+}
+
+/// A commit as its short name, leading to the commit on the forge.
+fn commit(repository_url: &str, sha: &str) -> El {
+    let short = &sha[..sha.len().min(10)];
+    el("span")
+        .class("mj-ui-mono")
+        .child(outside(&format!("{repository_url}/commit/{sha}"), short))
+}
+
+/// The three tables of what the forge recorded: where each environment stands, every
+/// deployment observed, and every release. A checkout that has never asked the forge shows
+/// the reason in their place — the command that asks is in it.
+fn observed_panels(observed: &Answer) -> Vec<El> {
+    if let Some(unread) = unanswered(observed) {
+        return vec![unread];
+    }
+    let root = observed.ok().cloned().unwrap_or(Value::Null);
+    if root.get("observed").and_then(Value::as_bool) != Some(true) {
+        return vec![nothing(&value(&root, "reason"))];
+    }
+    let forge = text(&root, "repository_url");
+    let environments = list(observed, "/environments")
+        .iter()
+        .map(|e| {
+            el("tr")
+                .child(el("td").child(outside(&text(e, "activity_url"), &text(e, "name"))))
+                .child(el("td").child(state(e, "state")))
+                .child(el("td").child(commit(&forge, &text(e, "sha"))))
+                .child(el("td").class("mj-ui-mono").text(value(e, "deployed_at")))
+                .child(el("td").child(outside_field(e, "url", &text(e, "url"))))
+                .child(
+                    el("td").class("mj-ui-mono").text(
+                        e.get("deployments")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0)
+                            .to_string(),
+                    ),
+                )
+        })
+        .collect::<Vec<_>>();
+    let deployments = list(observed, "/deployments")
+        .iter()
+        .map(|d| {
+            let git_ref = text(d, "git_ref");
+            el("tr")
+                .child(el("td").class("mj-ui-mono").text(value(d, "created_at")))
+                .child(el("td").class("mj-ui-mono").text(value(d, "environment")))
+                .child(el("td").child(state(d, "state")))
+                .child(el("td").child(commit(&forge, &text(d, "sha"))))
+                .child(
+                    el("td")
+                        .class("mj-ui-mono")
+                        .child(match git_ref.is_empty() {
+                            true => none(),
+                            false => outside(&format!("{forge}/tree/{git_ref}"), &git_ref),
+                        }),
+                )
+                .child(el("td").class("mj-ui-mono").text(value(d, "creator")))
+                .child(el("td").child(outside_field(d, "log_url", "the run")))
+        })
+        .collect::<Vec<_>>();
+    let releases = list(observed, "/releases")
+        .iter()
+        .map(|r| {
+            let kind = match (
+                r.get("draft").and_then(Value::as_bool) == Some(true),
+                r.get("prerelease").and_then(Value::as_bool) == Some(true),
+            ) {
+                (true, _) => "draft",
+                (false, true) => "pre-release",
+                (false, false) => "release",
+            };
+            el("tr")
+                .child(
+                    el("td")
+                        .class("mj-ui-mono")
+                        .child(outside(&text(r, "url"), &text(r, "tag"))),
+                )
+                .child(el("td").text(value(r, "name")))
+                .child(el("td").class("mj-ui-mono").text(value(r, "published_at")))
+                .child(el("td").text(kind))
+        })
+        .collect::<Vec<_>>();
+    vec![
+        el("h3")
+            .class("mj-ui-panel-title")
+            .text("Where each environment stands"),
+        table(
+            &[
+                "Environment",
+                "State",
+                "Commit",
+                "Deployed",
+                "Served at",
+                "Deployments",
+            ],
+            environments,
+            "The forge has recorded no deployment.",
+        ),
+        el("h3")
+            .class("mj-ui-panel-title")
+            .text("Every deployment observed"),
+        table(
+            &[
+                "Deployed",
+                "Environment",
+                "State",
+                "Commit",
+                "Ref",
+                "By",
+                "Run",
+            ],
+            deployments,
+            "The forge has recorded no deployment.",
+        ),
+        el("h3").class("mj-ui-panel-title").text("Releases"),
+        table(
+            &["Tag", "Title", "Published", "Kind"],
+            releases,
+            "The forge has published no release.",
+        ),
+    ]
+}
 const DELIVERY: Source = Source::of("delivery.report");
 
 /// The Deployments screen.
 pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[DEPLOYMENTS]);
+    let answers = ask_all(ctx, &[DEPLOYMENTS, OBSERVED]);
     let deployments = &answers[&DEPLOYMENTS];
+    let observed = &answers[&OBSERVED];
 
     let top = hero(
         "server",
         "green",
         "Deployments",
         "What is live, and whether it is what was built.",
-        "Every declared deployment, and — asked on its own — whether the public site serves the trunk and how far each feature has been delivered.",
+        "Every declared deployment, every deployment and release the forge recorded, and — asked on its own — whether the public site serves the trunk and how far each feature has been delivered.",
         vec![
             kpi("Deployments", &deployments.read("/count")),
             kpi_count("Declared", &deployments.read("/deployments")),
+            kpi_count("Environments", &observed.read("/environments")),
+            kpi_count("Observed", &observed.read("/deployments")),
+            kpi_count("Releases", &observed.read("/releases")),
         ],
     );
 
@@ -115,6 +265,14 @@ pub fn screen(ctx: &Context) -> View {
             "Where the product is declared to run.",
             declared,
             &[deployments],
+        )))
+        .child(wide(panel(
+            "What was deployed",
+            "Every deployment the forge recorded, to every environment, and every release — as it was last observed.",
+            observed_panels(observed)
+                .into_iter()
+                .fold(el("div").class("mj-ui-stack"), El::child),
+            &[observed],
         )))
         .child(wide(placeholder));
 
@@ -301,6 +459,73 @@ pub(crate) mod tests {
             took: Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }
+    }
+
+    /// What the forge recorded is drawn as rows whose every commit, ref, environment, run
+    /// and release is a link built from the address the forge gave — and a checkout that has
+    /// never asked says what to run instead of drawing empty tables.
+    #[test]
+    fn what_the_forge_recorded_is_rows_of_links_and_never_asked_is_said() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let unasked = screen(&ctx).main.render();
+        assert!(unasked.contains("majordomus prs refresh"), "{unasked}");
+        assert!(
+            !unasked.contains("Where each environment stands"),
+            "{unasked}"
+        );
+
+        let observation = crate::deploy::observed::parse(
+            "o/r",
+            "2026-10-12T14:00:00Z",
+            &json!({"data": {"repository": {"url": "https://forge.example/o/r",
+            "deployments": {"nodes": [
+                {"databaseId": 7, "environment": "github-pages", "createdAt": "2026-10-12T10:00:00Z",
+                 "commitOid": "0123456789abcdef", "ref": {"name": "gh-pages"}, "creator": {"login": "bot"},
+                 "latestStatus": {"state": "SUCCESS", "environmentUrl": "https://site.example/",
+                                  "logUrl": "https://forge.example/o/r/actions/runs/1"}},
+                {"databaseId": 8, "environment": "production", "createdAt": "2026-10-12T11:00:00Z",
+                 "commitOid": "fedcba9876543210"}
+            ]},
+            "releases": {"nodes": [
+                {"tagName": "v1.0.0", "name": "One", "publishedAt": "2026-10-12T09:00:00Z",
+                 "url": "https://forge.example/o/r/releases/tag/v1.0.0", "isPrerelease": false, "isDraft": false},
+                {"tagName": "v1.1.0-rc1", "url": "https://forge.example/o/r/releases/tag/v1.1.0-rc1",
+                 "isPrerelease": true, "isDraft": false},
+                {"tagName": "v2.0.0", "url": "https://forge.example/o/r/releases/tag/v2.0.0",
+                 "isPrerelease": false, "isDraft": true}
+            ]}}}}),
+        );
+        crate::deploy::observed::store(repo.root(), &observation).expect("stored");
+        // a context of its own: the first one remembers its reading of the source, as a
+        // running server does until the reading is renewed
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        for expected in [
+            "Where each environment stands",
+            "href=\"https://forge.example/o/r/deployments/github-pages\"",
+            "href=\"https://forge.example/o/r/commit/0123456789abcdef\"",
+            ">0123456789<",
+            "href=\"https://forge.example/o/r/tree/gh-pages\"",
+            "href=\"https://site.example/\"",
+            "href=\"https://forge.example/o/r/actions/runs/1\"",
+            "href=\"https://forge.example/o/r/releases/tag/v1.0.0\"",
+            ">pre-release<",
+            ">draft<",
+            ">release<",
+        ] {
+            assert!(html.contains(expected), "{expected} is missing from {html}");
+        }
+        // a deployment with no status, no ref and no run says so, cell by cell
+        assert!(html.contains("unknown"), "{html}");
+    }
+
+    /// A source that did not answer is drawn as unanswered, not as "never asked".
+    #[test]
+    fn an_unanswered_observation_is_drawn_as_unanswered() {
+        let drawn = observed_panels(&answer(OBSERVED, Err("no such capability".into())));
+        assert_eq!(drawn.len(), 1);
+        assert!(drawn[0].render().contains("no such capability"));
     }
 
     /// Every declared deployment is a row: its identity, its title, the application it
