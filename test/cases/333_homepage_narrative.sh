@@ -12,8 +12,12 @@
 # a provider of the model the page does not name, a name the model does not carry, the worker
 # tools named nowhere, a trust card that disagrees with its dataset, a trust card missing, and a
 # trust card reading as known when its dataset is gone,
-# the homepage's scripts or inline JSON over the declared budget, no budget declared, and a
-# linked asset the build did not produce. Rule: project.homepage-tells-a-declared-story.
+# the homepage's HTML, scripts or inline JSON over the declared budget, no budget declared, a
+# budget that leaves the HTML out, and a linked asset the build did not produce; and the
+# working interfaces: an interface of the data the page does not list, one it lists that the
+# data does not give, a link to a published copy the topology does not carry, a published
+# surface the page still calls local, and a local one whose mount is not stated.
+# Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
@@ -21,7 +25,7 @@ CHECK="$ROOT/scripts/ci/homepage-check"
 F="$PWD/fixture"
 fresh() {
   rm -rf "$F"; mkdir -p "$F/site/data/registry" "$F/site/public/plan/i0001" "$F/site/public/features/good" "$F/site/public/features/draft"
-  printf 'order = ["hero", "how", "install"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  printf 'order = ["hero", "how", "install"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
   mkdir -p "$F/site/public/js" "$F/site/public/docs/plain" "$F/site/public/docs/diagram"
   printf 'x%.0s' $(seq 1 40) > "$F/site/public/js/app.js"
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
@@ -80,7 +84,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces interfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -132,8 +136,40 @@ fresh; sed -i.bak 's#<section id="hero">#<script type="application/json" id="g">
 expect_finding 10 'bytes of inline JSON, over the declared 20' "inline JSON over budget"
 fresh; printf 'order = ["hero", "how", "install"]\n' > "$F/site/data/homepage.toml"
 expect_finding 10 'declares no \[budget\]' "no budget declared"
+# the HTML is budgeted too: a page over it fails, and a budget that names the other two and
+# leaves the HTML out is no budget — which is what this file declared until 2026-10-12
+fresh; printf 'order = ["hero", "how", "install"]\n\n[budget]\nhtml_bytes = 300\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+expect_finding 10 'bytes of HTML, over the declared 300' "HTML over budget"
+fresh; printf 'order = ["hero", "how", "install"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+expect_finding 10 'declares no \[budget\] html_bytes' "a budget without the HTML"
 fresh; rm "$F/site/public/js/app.js"
 expect_finding 10 'links asset\(s\) the build did not produce: /js/app.js' "a linked asset missing"
+
+# --- interfaces: the list is the data's, and where each runs is the topology's. The model
+#     gives one surface (cli); the topology gives the stable feature `good` an interface at
+#     /good that only a process serves, so the page lists good, then cli, states the mount
+#     and links no published copy
+faces() {
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":5},{"id":"draft","route":"/features/draft/","status":"draft"}],"surfaces":[{"id":"cli","title":"Command line","route":"/docs/cli/"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"}]}' > "$F/site/data/generated/web.json"
+  sed -i.bak 's#<section id="how">#<section id="how"><ul><li data-interface="good">Good, at <code>/good</code></li><li data-interface="cli">Command line</li></ul>#' "$F/site/public/index.html"
+}
+fresh; faces
+expect_finding 0 '^OK   interfaces +the homepage lists the 2 interface' "an interface list that is the data's"
+fresh; faces; sed -i.bak 's#<li data-interface="cli">Command line</li>##' "$F/site/public/index.html"
+expect_finding 10 'lists the interfaces \[good\] and the data gives \[good, cli\]' "an interface of the model the page does not list"
+fresh; faces; sed -i.bak 's#<li data-interface="cli">#<li data-interface="typed">typed</li><li data-interface="cli">#' "$F/site/public/index.html"
+expect_finding 10 'lists the interfaces \[good, typed, cli\]' "an interface typed into the template"
+fresh; faces; sed -i.bak 's#Good, at <code>/good</code>#<a data-published="good" href="/good/">open</a>#' "$F/site/public/index.html"
+expect_finding 10 'good is linked as published at /good, and the topology gives that mount to no surface a publication carries' "a link to a copy nobody publishes"
+fresh; faces; sed -i.bak 's#Good, at <code>/good</code>#Good#' "$F/site/public/index.html"
+expect_finding 10 'its entry does not state its mount /good' "a local interface with no address"
+fresh; faces; printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"},{"id":"good-snapshot","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"published-only"}]}' > "$F/site/data/generated/web.json"
+expect_finding 10 'the topology publishes good-snapshot at /good, and the homepage still describes good as running only locally' "a published surface the page calls local"
+sed -i.bak 's#Good, at <code>/good</code>#<a data-published="good" href="/good/">open the snapshot</a>#' "$F/site/public/index.html"
+expect_finding 0 '1 of them published by the topology' "a published surface linked as one"
+fresh; faces; rm "$F/site/data/generated/web.json"
+expect_finding 10 'site/data/generated/web.json is missing' "an interface list with no topology to hold it to"
 
 # --- indexing, each direction
 fresh; printf '<html><head><title>i</title></head><body>i</body></html>\n' > "$F/site/public/plan/i0001/index.html"
@@ -163,7 +199,7 @@ expect_finding 12 'web.json is missing' "a topology that cannot be read"
 #     or a declared problem that is not a shown domain each fail
 domains() { # the model shows domain alpha, whose one member is the stable feature `good`
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
-  printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
   sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol>#' "$F/site/public/index.html"
 }
 fresh; domains
@@ -176,6 +212,6 @@ fresh; domains; sed -i.bak 's#data-domain="alpha"><a href="/features/good/">good
 expect_finding 10 'member good is not linked from its own map entry' "a member linked elsewhere on the page and not in its entry"
 fresh; sed -i.bak 's#"domains":\[\],##' "$F/site/data/registry/product.json"
 expect_finding 10 'carries no domains key' "a model with no domains key is not a model with no domains"
-fresh; domains; printf 'order = ["hero", "how", "install"]\nproblems = ["empty"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+fresh; domains; printf 'order = ["hero", "how", "install"]\nproblems = ["empty"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
 expect_finding 10 "problem 'empty', which is not a domain the map shows" "a problem whose domain is not shown"
 exit 0

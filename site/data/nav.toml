@@ -1,8 +1,18 @@
 # Site navigation: four top-level user intents and one call to action. Rendered by
-# templates/partials/navbar.html as dropdowns on desktop and as labelled flat lists inside the
-# collapsed mobile menu, and by templates/partials/footer.html as the footer's columns. Every
-# href must resolve; scripts/site-check verifies it, and scripts/ci/nav-check verifies that no
-# href is written twice and that every projection of this file derives from it.
+# templates/partials/navbar.html as the bar's menus — one list per group, a dropdown on a wide
+# screen and an accordion inside the collapsed menu on a narrow one — and by
+# templates/partials/footer.html as the site map every page ends with. Every href must
+# resolve; scripts/site-check verifies it, and scripts/ci/nav-check verifies that no href is
+# written twice and that every projection of this file derives from it.
+#
+# # The bar and the map
+#
+# An item marked `bar = true` is one of the few its group shows in the bar; every item, marked
+# or not, is in the footer's site map, and each menu ends with a link to its group there. The
+# bar once rendered all of this file twice (a dropdown and a flat mobile list) and the footer
+# a third time: a hundred and four links inside <nav> on every page, and a menu a visitor had
+# to read like an index. The bar is for the questions a visitor arrives with; the map is for
+# finding a page whose name they already know.
 #
 # Nothing here enumerates a feature, a domain, a module, a capability or a command: those
 # routes are the generator's, and site-check refuses a feature route named by hand here.
@@ -35,27 +45,29 @@
 label = "Product"
 href = "/domains/"
 items = [
-  { label = "The product, by domain", href = "/domains/" },
-  { label = "Why it exists: the failure modes", href = "/why/" },
-  { label = "Features", href = "/features/" },
+  { label = "The product, by domain", href = "/domains/", bar = true },
+  { label = "Why it exists: the failure modes", href = "/why/", bar = true },
+  { label = "Features", href = "/features/", bar = true },
   { label = "Features against interfaces", href = "/features/matrix/" },
-  { label = "Use cases", href = "/use-cases/" },
+  { label = "Use cases", href = "/use-cases/", bar = true },
   { label = "Applications", href = "/applications/" },
   { label = "Skills", href = "/skills/" },
   { label = "What it supervises", href = "/supervises/" },
+  { label = "Product UI", href = "/docs/majordomus-ui/", bar = true },
+  { label = "Cockpit", href = "/docs/cockpit/", bar = true },
 ]
 
 [[groups]]
 label = "How it works"
 href = "/method/"
 items = [
-  { label = "Doctrine, policy, rule, enforcement", href = "/method/" },
+  { label = "Doctrine, policy, rule, enforcement", href = "/method/", bar = true },
   { label = "Four axes", href = "/method/axes/" },
-  { label = "The full argument", href = "/method/argument/" },
-  { label = "Vocabulary", href = "/docs/concepts/" },
+  { label = "The full argument", href = "/method/argument/", bar = true },
+  { label = "Vocabulary", href = "/docs/concepts/", bar = true },
   { label = "Canonical policy", href = "/policy/" },
   { label = "Directory contracts", href = "/context/" },
-  { label = "Sessions", href = "/sessions/" },
+  { label = "Sessions", href = "/sessions/", bar = true },
   { label = "How planning works", href = "/docs/planning/" },
   { label = "Design", href = "/docs/design/" },
   { label = "Component kit", href = "/kit/" },
@@ -71,17 +83,17 @@ items = [
 label = "Evidence"
 href = "/challenge/"
 items = [
-  { label = "The challenge: watch it refuse an agent", href = "/challenge/" },
-  { label = "Guarantees", href = "/guarantees/" },
-  { label = "Evidence graph", href = "/evidence/" },
+  { label = "The challenge: watch it refuse an agent", href = "/challenge/", bar = true },
+  { label = "Guarantees", href = "/guarantees/", bar = true },
+  { label = "Evidence graph", href = "/evidence/", bar = true },
   { label = "The finish contract", href = "/contract/" },
   { label = "Doctrine", href = "/doctrines/" },
   { label = "Decisions", href = "/adrs/" },
   { label = "Rules in force", href = "/rules/" },
   { label = "Benchmarks", href = "/registry/benchmarks/" },
   { label = "Token economics", href = "/economics/" },
-  { label = "Limitations", href = "/limitations/" },
-  { label = "Roadmap", href = "/roadmap/" },
+  { label = "Limitations", href = "/limitations/", bar = true },
+  { label = "Roadmap", href = "/roadmap/", bar = true },
   { label = "Milestones and issues", href = "/plan/" },
   { label = "Dependency graph", href = "/plan/dag/" },
   { label = "Changelog", href = "/changelog/" },
@@ -92,14 +104,14 @@ items = [
 label = "Docs"
 href = "/docs/"
 items = [
-  { label = "All documents", href = "/docs/" },
-  { label = "Install", href = "/docs/install/" },
-  { label = "Commands", href = "/commands/" },
+  { label = "All documents", href = "/docs/", bar = true },
+  { label = "Install", href = "/docs/install/", bar = true },
+  { label = "Commands", href = "/commands/", bar = true },
   { label = "Execution profiles", href = "/profiles/" },
   { label = "Command reference", href = "/docs/cli/" },
-  { label = "HTTP API", href = "/docs/api/" },
+  { label = "HTTP API", href = "/docs/api/", bar = true },
   { label = "Rust API", href = "/rustdoc/" },
-  { label = "MCP surface", href = "/registry/mcp/" },
+  { label = "MCP surface", href = "/registry/mcp/", bar = true },
   { label = "File schemas", href = "/docs/schemas/" },
   { label = "Registry", href = "/registry/" },
   { label = "Program map", href = "/map/" },

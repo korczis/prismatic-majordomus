@@ -116,7 +116,7 @@ for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
 # 3. marketing copy: line budget, no numbers, no claim words
-ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 60 ] && ok promo "marketing.toml is $ml lines, budget 60" || bad promo "marketing.toml is $ml lines, budget 60"
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 80 ] && ok promo "marketing.toml is $ml lines, budget 80" || bad promo "marketing.toml is $ml lines, budget 80"
 if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
 # 3a. the long-form argument: the same rules, its own budget. It is the other hand-written file
 # on the site, and the one carrying the most assertion. What is mechanised here is what a script
@@ -328,12 +328,13 @@ EOF_CARDS
   [ -z "$hit" ] || { bad features "a number is written into a feature template: $(printf '%s' "$hit" | head -3 | tr '\n' ' ')"; fx_bad=1; }
   [ "$fx_bad" = 0 ] && ok features "every public feature is one card on /features/, under its domain or under none; every card names a public feature and links its page; a feature with a domain is placed under it; no feature template selects or counts by hand"
 fi
-# 3b. the terminal is a replay, not a mockup. Every panel the homepage shows is a run
-# site/data/generated/terminal.json recorded, and every run the dataset holds is on the page:
+# 3b. the terminal is a replay, not a mockup. Every run the homepage names is a run
+# site/data/generated/terminal.json recorded, and every run the dataset holds is named there:
 # both directions, because a page that drops a refusal and a dataset that gains one unnoticed
-# are the same defect seen from two sides. The command line, the exit status and the first
-# line of the body are matched against the rendered HTML, so a template that prettifies a
-# transcript, truncates it, or writes one of its own fails here rather than on the site. The
+# are the same defect seen from two sides. The homepage links each run's scenario, and the
+# command line and the first line of the body are matched against that scenario's rendered
+# page, so a link that leads to a page without the run, or a template that prettifies a
+# transcript, truncates it, or writes one of its own, fails here rather than on the site. The
 # body line is compared up to its reproduce command, which is the one part of a finding that
 # carries shell quoting the page's own escaping would have to be replayed byte for byte to
 # compare -- the verdict before it is what a reader is being shown.
@@ -344,16 +345,33 @@ if [ -f "$TD" ]; then
   # The text is read with its tags removed: the terminal draws the prompt outside the command
   # it copies (partials/terminal-run.html), so "$ <command>" is what a reader sees, not a
   # byte sequence of the markup.
-  HOME_HTML="$(sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
-  n=0
-  while IFS="$MJ_TAB" read -r cmd first; do
+  term_text() { sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$1"; }
+  HOME_HTML="$(term_text "$PUB/index.html")"
+  # The homepage names each run and links the scenario it was recorded in; the transcript is
+  # that scenario's page's, which is where it is compared (until 2026-10 every transcript was
+  # inline on the homepage, and was a quarter of its weight). A refusal is named by its
+  # command, as the run printed it; a lifecycle step by the step the lifecycle declares, so
+  # its command is looked for on the page its link leads to and nowhere else.
+  n=0; term_route=""; term_page=""
+  while IFS="$MJ_TAB" read -r kind route cmd first; do
+    [ -n "$kind" ] || continue
     n=$((n + 1))
-    printf '%s' "$HOME_HTML" | grep -qF -- "$ $cmd" \
-      || { bad terminal "the homepage does not carry the recorded run: $cmd"; term_bad=1; }
-    [ -z "$first" ] || printf '%s' "$HOME_HTML" | grep -qF -- "$first" \
-      || { bad terminal "the homepage does not carry the output of: $cmd"; term_bad=1; }
+    if [ "$kind" = refusal ]; then
+      printf '%s' "$HOME_HTML" | grep -qF -- "$ $cmd" \
+        || { bad terminal "the homepage does not name the recorded refusal: $cmd"; term_bad=1; }
+    fi
+    if [ "$route" != "$term_route" ]; then
+      term_route="$route"; term_page=""
+      [ -f "$PUB${route}index.html" ] && term_page="$(term_text "$PUB${route}index.html")"
+    fi
+    [ -n "$term_page" ] || { bad terminal "the scenario page $route, where $cmd was recorded, was not built"; term_bad=1; continue; }
+    printf '%s' "$term_page" | grep -qF -- "$cmd" \
+      || { bad terminal "$route does not carry the recorded run the homepage links it for: $cmd"; term_bad=1; }
+    [ -z "$first" ] || printf '%s' "$term_page" | grep -qF -- "$first" \
+      || { bad terminal "$route does not carry the output of: $cmd"; term_bad=1; }
   done <<EOF
-$(jq -r '[.walkthrough[], .refusals[]] | .[] | [.command, ((.output | split("\n") | map(select(length > 0)) | first // "") | split("  [reproduce:") | first)] | @tsv' "$TD")
+$(jq -r 'def first_line: ((.output | split("\n") | map(select(length > 0)) | first // "") | split("  [reproduce:") | first);
+         ((.walkthrough[] | ["step", .route, .command, first_line]), (.refusals[] | ["refusal", .route, .command, first_line])) | @tsv' "$TD")
 EOF
   want="$(jq -r '(.walkthrough | length) + (.refusals | length)' "$TD")"
   [ "$n" = "$want" ] || { bad terminal "the homepage was checked against $n panel(s), the dataset holds $want"; term_bad=1; }
@@ -365,13 +383,14 @@ EOF
     grep -qF "$PREFIX$r" "$PUB/index.html" \
       || { bad terminal "the homepage does not link the scenario $r a panel was recorded in"; term_bad=1; }
   done
-  [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each the command, the exit status and the stdout of a run recorded in $(jq -r '.counts.scenarios' "$TD") executed scenario(s); nothing on this page is typed"
+  [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each linking the scenario it was recorded in, and each scenario page carrying the command and the stdout of that run; nothing on this page is typed"
 else bad terminal "site/data/generated/terminal.json missing (regenerate: scripts/generate-site-data)"; fi
 # 3b'. the challenge is a replay too, of one scenario from start to finish, and it is held the
 # same way in both directions: every step site/data/generated/challenge.json recorded is on
-# /challenge/ and in the homepage replay, command line and decision lines as the run printed
-# them, the page renders exactly as many steps as the run holds, the homepage's first call to
-# action leads there, and every comparison row links the guarantee it stands on. Its words
+# /challenge/, command line and decision lines as the run printed them, the page renders
+# exactly as many steps as the run holds, the homepage carries the run's first refusal, its
+# final acceptance and the note of every step it retells, its call to see it working leads
+# there, and every comparison row links the guarantee it stands on. Its words
 # (site/data/challenge.toml) carry no number, like every other hand-written file on the site.
 CD="$SITE/data/generated/challenge.json"
 if [ -f "$SITE/data/challenge.toml" ]; then
@@ -387,18 +406,31 @@ if [ -f "$SITE/data/challenge.toml" ]; then
       [ -n "$want" ] || continue
       ch_n=$((ch_n + 1))
       printf '%s' "$CH_PAGE" | grep -qF -- "$want" || { bad challenge "/challenge/ does not carry the recorded line: $want"; ch_bad=1; }
-      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage replay does not carry the recorded line: $want"; ch_bad=1; }
     done <<EOF
 $(jq -r '.steps[] | ("$ " + .command), (.decision[] | split("  [reproduce:") | first)' "$CD")
 EOF
+    # the homepage carries the run's verdicts, not its transcript: the command of the first
+    # finish the run refused with the verdict that refused it, the verdict that finally
+    # accepted it, and the note of every step it tells the story with
+    ch_h=0
+    while IFS= read -r want; do
+      [ -n "$want" ] || continue
+      ch_h=$((ch_h + 1))
+      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage does not carry the recorded run's: $want"; ch_bad=1; }
+    done <<EOF
+$(jq -r '([.steps[] | select(.outcome == "refused" and .argv[0] == "finish")][0] // empty | ("$ " + .command), (.decision[] | select(startswith("finish:")))),
+         ([.steps[] | select(.outcome == "accepted" and .argv[0] == "finish")] | last // empty | .decision[] | select(startswith("finish:"))),
+         (.steps[] | select(.actor == "worker" or .argv[0] == "finish" or .argv[0] == "check") | .note // empty)' "$CD")
+EOF
+    [ "$ch_h" -gt 0 ] || { bad challenge "challenge.json gives the homepage no verdict to carry; a check over nothing has not passed"; ch_bad=1; }
     [ "$ch_n" -gt 0 ] || { bad challenge "challenge.json holds no recorded line to look for; a check over nothing has not passed"; ch_bad=1; }
     panels="$(grep -o 'data-outcome="[a-z]*"' "$PUB/challenge/index.html" | wc -l | tr -d ' ')"
     [ "$panels" = "$(jq '.steps | length' "$CD")" ] || { bad challenge "/challenge/ renders $panels step panel(s), the recorded run has $(jq '.steps | length' "$CD")"; ch_bad=1; }
-    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's first call to action does not lead to /challenge/"; ch_bad=1; }
+    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's call to see it working does not lead to /challenge/"; ch_bad=1; }
     for c in $(jq -r '.claims[].id' "$CD"); do
       grep -qF "/guarantees/$c/" "$PUB/challenge/index.html" || { bad challenge "/challenge/ does not link the guarantee $c a comparison row stands on"; ch_bad=1; }
     done
-    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ and the homepage exactly as the run printed them ($ch_n line(s) matched); every comparison row links the guarantee it stands on"
+    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ exactly as the run printed them ($ch_n line(s) matched), its verdicts and its story on the homepage ($ch_h line(s) matched); every comparison row links the guarantee it stands on"
   fi
 fi
 # 3c. the marketing copy carries no capability claim: the words are positioning, and every

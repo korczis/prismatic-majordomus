@@ -22,7 +22,7 @@ being maintained separately from the repository that backs it.
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
-| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 80-line budget | `site/data/marketing.toml` | yes |
 | navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
 | product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/<id>.md` | yes |

@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-{#- The homepage is a story with a declared order, told overview first: what this is, what
-    goes wrong without it, what it controls, how one task moves through it, the proof that
-    "done" can be refused, how one declaration reaches every interface, the evidence, and how
-    to start. Detail is one click away, never one screen down.
+{#- The homepage answers five questions, in the order a visitor asks them: what this is
+    (hero), why they should care (recognise), how it works (how), what they can do with it
+    (map, surfaces) and how they know it works (refuses, proof) — and then how to start
+    (install). The first screen uses no word a reader must already know the product to
+    understand. Detail is one click away, never one screen down: a recorded run, a transcript
+    or a catalogue is linked where the story points at it, not carried inline.
 
     The order is site/data/homepage.toml's; scripts/ci/homepage-check holds this page to it in
     both directions under the blocking rule project.homepage-tells-a-declared-story. The words
@@ -20,6 +22,10 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set why = load_data(path="data/registry/why.json") -%}
 {%- set cat = load_data(path="data/generated/catalogue.json") -%}
+{#- the web topology: every surface a server or a publication has, its mount and where it is
+    available (docs/generated/web.json, projected by the generator). The interfaces block reads
+    a mount and an availability from it and types neither. -#}
+{%- set web = load_data(path="data/generated/web.json") -%}
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
@@ -37,23 +43,24 @@
 {%- set refusals = [s for s in ch.steps if s.outcome == "refused" and s.argv[0] == "finish"] -%}
 {%- set accepted = [s for s in ch.steps if s.outcome == "accepted" and s.argv[0] == "finish"] -%}
 
-{#- 1. hero — what this is, who does the work, what it controls, and the one action. Beside
-    it, the answer the tool gave to a worker that said it was done: the finish contract of
-    the recorded run, line by line, with its verdict. -#}
+{#- 1. hero — what this is, in plain words, and the two actions: start, or see it working.
+    Beside it, the answer the tool gave to a worker that said it was done: the finish contract
+    of the recorded run, line by line, with its verdict. "See it working" leads to that run,
+    replayed step by step on /challenge/ — a recording, and labelled as one. -#}
 <section id="hero" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--mj-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--mj-line)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
-  <div class="mx-auto grid max-w-screen-xl gap-12 px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-20">
+  <div class="mx-auto grid max-w-screen-xl gap-12 px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-12">
     <div class="flex min-w-0 flex-col">
       <p class="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-xs font-medium text-body">
         <span aria-hidden="true" class="h-2 w-2 rounded-full bg-success"></span>
         {%- if offered %}<a href="{{ offered.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
         <span class="truncate font-mono uppercase tracking-[0.18em]">{{ m.hero.eyebrow }}</span>
       </p>
-      <h1 class="mt-7 font-serif text-5xl font-medium leading-[1.02] tracking-tight text-balance text-heading sm:text-6xl xl:text-[4.25rem]">{{ m.hero.title }}<span class="mt-3 block italic text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
-      <p class="mt-7 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
-      <div class="mt-9 flex flex-col gap-3 sm:flex-row">
-        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="group inline-flex items-center justify-center rounded-base bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
-        <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_install }}</a>
+      <h1 class="mt-5 font-serif text-5xl font-medium leading-[1.02] tracking-tight text-balance text-heading sm:text-6xl">{{ m.hero.title }}<span class="mt-3 block italic text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
+      <p class="mt-5 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
+      <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+        <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_install }}</a>
+        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="group inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
       </div>
       <div class="mt-6 max-w-xl">{% <code label="install" wrap={true}> %}{{ dist.install_command }}{% </code> %}</div>
     </div>
@@ -81,16 +88,16 @@
         {%- if verdict | length %}<p class="mt-4 rounded-base border border-danger-subtle bg-danger-soft px-3 py-2 font-mono text-sm font-semibold text-fg-danger-strong">{{ verdict[0] }}</p>{% endif %}
         {%- if accepted | length %}<p class="mt-3 text-sm leading-relaxed text-body">{{ m.hero.verdict_after }} <span class="font-mono text-xs text-fg-success-strong">{% set done = accepted | last %}{{ [line for line in done.decision if line is starting_with(pat="finish:")] | first }}</span></p>{% endif %}
       </div>
-      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="#refuses" class="text-fg-brand hover:underline">{{ m.hero.verdict_link }} &rarr;</a></p>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.verdict_link }} &rarr;</a></p>
     </figure>
     {%- endif %}
   </div>
 
-  {#- the strip: what this repository measures about itself today, each figure derived from the
-      product model or the recorded corpus, none typed here. -#}
+  {#- the strip: what this repository measures about itself today, in a visitor's words, each
+      figure derived from the product model or the recorded corpus, none typed here. -#}
   <div class="border-t border-default bg-neutral-primary-soft">
     <dl class="mx-auto grid max-w-screen-xl grid-cols-2 gap-px px-4 sm:px-6 md:grid-cols-4 lg:px-8" data-hero-figures>
-      {%- set figures = [{"l": "rules that stop the command", "v": blocking | length, "h": "/doctrines/"}, {"l": "executable use cases, run to build this page", "v": cat.use_cases | length, "h": "/use-cases/"}, {"l": "interfaces from one registry", "v": model.surfaces | length, "h": "/features/matrix/"}, {"l": "worker tools it generates instructions for", "v": model.telemetry.providers, "h": "/docs/install/"}] -%}
+      {%- set figures = [{"l": "rules a machine enforces, not a reviewer", "v": blocking | length, "h": "/doctrines/"}, {"l": "worked examples, each run to build this page", "v": cat.use_cases | length, "h": "/use-cases/"}, {"l": "ways to work with it, from one source", "v": model.surfaces | length, "h": "/features/matrix/"}, {"l": "AI coding tools it writes instructions for", "v": model.telemetry.providers, "h": "/docs/install/"}] -%}
       {%- for f in figures %}
       <div class="min-w-0 px-2 py-5 sm:px-4"><dt class="text-xs leading-snug text-body"><a href="{{ get_url(path=f.h, trailing_slash=true) }}" class="hover:underline">{{ f.l }}</a></dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">{{ f.v }}</dd></div>
       {%- endfor %}
@@ -98,9 +105,12 @@
   </div>
 </section>
 
-{#- 2. recognise — what goes wrong without it, in three sentences the reader recognises. Each
-    is the `problem` of a domain homepage.toml names, linking to that domain on the map below;
-    the whole catalogue of failure modes is one disclosure away. -#}
+{#- 2. recognise — why a visitor should care: what goes wrong without it, in three sentences
+    the reader recognises. Each is the `problem` of a domain homepage.toml names, linking to
+    that domain on the map below. Under them, who meets these failures: the audiences of the
+    catalogue (data/registry/why.json), each with its own page — the way in for a reader who
+    wants "what is in it for someone like me" rather than the argument. The whole catalogue
+    of failure modes is one disclosure away. -#}
 <section id="recognise" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="01" kicker={x.problem.kicker} title={m.recognise.title} lead={m.recognise.lead} /> }}
@@ -113,6 +123,15 @@
       {%- endif %}{% endfor %}
     </ul>
     <p class="mt-8 max-w-3xl text-lg font-semibold leading-snug text-fg-brand-strong">{{ m.recognise.closing }}</p>
+    <h3 class="mt-10 text-base font-semibold tracking-tight text-heading">{{ m.recognise.who }}</h3>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-audiences>
+      {%- for a in why.audiences %}
+      <li class="min-w-0"><a href="{{ base }}{{ a.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-4 hover:border-brand-subtle hover:bg-neutral-secondary-medium" data-audience="{{ a.id }}">
+        <span class="text-sm font-semibold text-heading">{{ a.title }}</span>
+        <span class="mt-1 text-sm leading-snug text-body">{{ a.summary }}</span>
+      </a></li>
+      {%- endfor %}
+    </ul>
     <details class="mt-6 min-w-0 rounded-base border border-default bg-neutral-primary">
       <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.recognise.more }}</summary>
       <div class="border-t border-default p-4">{% include "partials/why-cards.html" %}</div>
@@ -120,12 +139,34 @@
   </div>
 </section>
 
-{#- 3. map — what it controls: the domains the product is filed under, each opening onto
+{#- 3. how — how it works: one task through its lifecycle, the steps the lifecycle declares,
+    in its order, each with what it does and a link to a recorded run of it — the scenario's
+    own page, which carries the command and its output as the run printed them
+    (site/data/generated/terminal.json; scripts/site-check holds each link to that). The
+    transcripts were inline here until 2026-10 and are one click away now. -#}
+<section id="how" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    {{ <landing_head number="02" kicker={m.workflow.kicker} title={m.workflow.title} lead={m.workflow.lead} /> }}
+    <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6" aria-label="The task lifecycle">
+      {%- for w in term.walkthrough %}
+      <li class="relative flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-4">
+        <span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>
+        <span class="mt-1 font-mono text-base font-semibold text-heading">{{ w.label }}</span>
+        <span class="mt-2 text-sm leading-snug text-body">{{ w.what }}</span>
+        <a href="{{ base }}{{ w.route }}" class="mt-3 text-xs font-medium text-fg-brand hover:underline" data-recorded-run="{{ w.label }}">{{ m.workflow.recorded }} &rarr;</a>
+      </li>
+      {%- endfor %}
+    </ol>
+    <p class="mt-6 max-w-3xl text-base leading-relaxed text-heading">{{ m.workflow.closing }}</p>
+  </div>
+</section>
+
+{#- 4. map — what a visitor can do with it, first half: what it controls, the domains the product is filed under, each opening onto
     the failure it answers, its features and the evidence behind them. The domains and their
     members are the layer's (ADR 0104); the partial names none of them. -#}
 <section id="map" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="02" kicker={m.map.kicker} title={m.map.title} lead={m.map.lead} /> }}
+    {{ <landing_head number="03" kicker={m.map.kicker} title={m.map.title} lead={m.map.lead} /> }}
     <p class="mb-6 flex flex-wrap items-center gap-2 font-mono text-xs text-body" aria-hidden="true">
       <span class="rounded-base border border-default bg-neutral-primary-soft px-2 py-1">{{ m.map.from }}</span><span class="text-body-subtle">&rarr;</span>
       <span class="rounded-base border border-brand-subtle bg-brand-softer px-2 py-1 font-semibold text-fg-brand-strong">Majordomus</span><span class="text-body-subtle">&rarr;</span>
@@ -141,107 +182,61 @@
   </div>
 </section>
 
-{#- 4. how — one task through its lifecycle: the commands the lifecycle declares, in its
-    order, each with what it does. The recorded runs behind every step are one disclosure
-    away (site/data/generated/terminal.json). -#}
-<section id="how" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="03" kicker={m.workflow.kicker} title={m.workflow.title} lead={m.workflow.lead} /> }}
-    <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6" aria-label="The task lifecycle">
-      {%- for w in term.walkthrough %}
-      <li class="relative flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-4">
-        <span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>
-        <span class="mt-1 font-mono text-base font-semibold text-heading">{{ w.label }}</span>
-        <span class="mt-2 text-sm leading-snug text-body">{{ w.what }}</span>
-      </li>
-      {%- endfor %}
-    </ol>
-    <p class="mt-6 max-w-3xl text-base leading-relaxed text-heading">{{ m.workflow.closing }}</p>
-    <details class="{{ stage }} mt-8 min-w-0 overflow-hidden rounded-xl border border-default bg-neutral-primary">
-      <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.workflow.inspect }}</summary>
-      <div class="border-t border-default p-4 sm:p-5">
-        {%- set tx = term.walkthrough -%}
-        {%- set tx_id = "how-term" -%}
-        {%- set tx_label = m.hero.console_caption -%}
-        {%- set tx_default = term.default -%}
-        {% include "partials/terminal.html" %}
-        <p class="mt-3 text-sm text-body-subtle">{{ m.hero.console_caption }}</p>
-      </div>
-    </details>
-  </div>
-</section>
+{#- 5. surfaces — what a visitor can do with it, second half: the working interfaces, in
+    plain words. One list, and none of it typed: the interfaces a person opens are the stable
+    features the web topology gives an `interface` surface (data/generated/web.json: the UI,
+    the Cockpit), in the features' own order, and the rest are the product model's surfaces
+    (data/registry/product.json: the command line, the HTTP API, MCP, the documentation). A
+    title is the model's, a mount and an availability are the topology's; the one sentence
+    beside each says who it is for and is marketing.toml's, keyed by the id the data gives.
 
-{#- 5. refuses — the proof that "done" can be refused. The challenge's recorded run, stepped
-    through: a worker strays, says it is done, is refused, is refused again, and is accepted
-    only when every line of the contract passes. Every other refusal the lifecycle recorded is
-    one disclosure away; none of it is written here. -#}
-<section id="refuses" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="04" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-      <ol class="min-w-0 space-y-3" aria-label="What happened in the recorded run">
-        {%- for s in ch.steps %}{% if s.actor == "worker" or s.argv[0] == "finish" or s.argv[0] == "check" %}
-        <li class="flex min-w-0 gap-3">
-          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center">{% if s.actor == "worker" %}<span class="font-mono text-xs text-body-subtle">worker</span>{% else %}{{ <badge status={s.outcome} /> }}{% endif %}</span>
-          <span class="min-w-0 text-sm leading-relaxed text-heading">{{ s.note }}</span>
-        </li>
-        {%- endif %}{% endfor %}
-      </ol>
-      <div class="min-w-0 overflow-hidden rounded-xl border border-default bg-neutral-primary-soft p-4 shadow-2xl ring-1 ring-brand-subtle sm:p-5">
-        {%- set rp_id = "home-replay" -%}
-        {% include "partials/challenge-replay.html" %}
-      </div>
-    </div>
-    <p class="mt-8 max-w-3xl text-base leading-relaxed text-body">{{ m.refuses.closing }}</p>
-    <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-      <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The whole challenge, and how to run it yourself &rarr;</a>
-      <a href="{{ get_url(path="/contract/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The contract every refusal is evaluated against &rarr;</a>
-    </p>
-    <details class="mt-8 min-w-0 rounded-xl border border-default bg-neutral-primary-soft">
-      <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.refuses.more }} ({{ term.counts.refusals }})</summary>
-      <ol class="grid gap-4 border-t border-default p-4 lg:grid-cols-2" aria-label="Recorded refusals">
-        {%- for r in term.refusals %}
-        <li class="min-w-0">
-          <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary ring-1 ring-danger-subtle">
-            <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-              <span class="min-w-0 break-all font-mono text-xs text-heading">$ {{ r.command }}</span>
-              <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">{{ r.exit }}</span></span>
-            </figcaption>
-            <div class="max-h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{{ r.output }}</pre></div>
-            <figcaption class="border-t border-default px-4 py-2 text-xs">
-              <a href="{{ base }}{{ r.route }}" class="text-fg-brand hover:underline">{{ r.use_case_title }} &rarr;</a>
-            </figcaption>
-          </figure>
-        </li>
-        {%- endfor %}
-      </ol>
-    </details>
-  </div>
-</section>
-
-{#- 6. surfaces — one declaration, every interface: the interfaces the registry projects to,
-    the size of the model behind them, the worker tools the policy is generated for, and one
-    capability shown on all three of its surfaces. -#}
+    Where an interface runs is the topology's answer and nothing else's. A surface only a
+    running process answers (`served-only`) is said to run on the reader's machine, at its
+    mount, and links how to open it; a link to a published copy is rendered only when the
+    topology gives that mount to a surface a publication carries, and is then labelled as a
+    snapshot read at this build's commit. scripts/ci/homepage-check holds both directions
+    (`interfaces`). -#}
+{%- set face_ids = [w.feature for w in web.surfaces if w.category == "interface" and w.feature] -%}
 <section id="surfaces" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="05" kicker={m.surfaces.kicker} title={m.surfaces.title} lead={m.surfaces.lead} /> }}
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <div class="min-w-0 rounded-xl border border-default bg-neutral-primary-soft p-5">
-        <ol class="space-y-3 font-mono text-sm" aria-label="From declaration to interface">
-          <li class="rounded-base border border-default bg-neutral-primary px-3 py-2 text-heading">{{ m.surfaces.source }}</li>
-          <li aria-hidden="true" class="ps-4 text-body-subtle">&darr;</li>
-          <li class="rounded-base border border-brand-subtle bg-brand-softer px-3 py-2 font-semibold text-fg-brand-strong">{{ m.surfaces.registry }}</li>
-          <li aria-hidden="true" class="ps-4 text-body-subtle">&darr;</li>
-          <li><ul class="flex flex-wrap gap-2" aria-label="The interfaces it is projected to">
-            {%- for s in model.surfaces %}<li><a href="{{ base }}{{ s.route }}" class="inline-flex rounded-base border border-default bg-neutral-primary px-3 py-2 text-heading hover:bg-neutral-secondary-medium">{{ s.title }}</a></li>{% endfor %}
-          </ul></li>
-        </ol>
-        <dl class="mt-5 grid grid-cols-2 gap-3 border-t border-default pt-4 sm:grid-cols-4">
-          {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
-          <div class="min-w-0"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
-          {%- endfor %}
-        </dl>
-      </div>
+    {{ <landing_head number="04" kicker={m.surfaces.kicker} title={m.surfaces.title} lead={m.surfaces.lead} /> }}
+    <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-interfaces>
+      {%- for f in model.features | sort(attribute="weight") %}{% if f.status == "stable" and f.id in face_ids %}
+      {%- set w = [w for w in web.surfaces if w.category == "interface" and w.feature == f.id][0] %}
+      {%- set published = [p for p in web.surfaces if p.mount == w.mount and p.visibility == "public" and p.availability != "served-only"] %}
+      {%- set doc = [s for s in model.surfaces if s.id == f.id] %}
+      <li class="flex min-w-0 flex-col rounded-xl border border-brand-subtle bg-neutral-primary-soft p-5" data-interface="{{ f.id }}" data-availability="{% if published | length %}published{% else %}{{ w.availability }}{% endif %}">
+        <h3 class="text-lg font-bold tracking-tight text-heading">{{ f.short_title }}</h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ m.interfaces[f.id] or f.headline }}</p>
+        {%- if published | length %}
+        <p class="mt-3 text-sm"><a href="{{ base }}{{ w.mount }}/" class="font-semibold text-fg-brand underline" data-published="{{ f.id }}">{{ m.interfaces.published }} &rarr;</a></p>
+        <p class="mt-1 text-xs leading-relaxed text-body-subtle">{{ m.interfaces.snapshot }}{% if build and build.commit and build.commit != "unknown" %} <span class="font-mono">{{ build.commit | truncate(length=7, end="") }}</span>{% endif %}</p>
+        {%- else %}
+        <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.local }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
+        {%- endif %}
+        <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{% if doc | length %}{{ doc[0].route }}{% else %}{{ f.route }}{% endif %}" class="text-fg-brand hover:underline">What it shows, and how to open it &rarr;</a></p>
+      </li>
+      {%- endif %}{% endfor %}
+      {%- for s in model.surfaces %}{% if s.id not in face_ids %}
+      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary-soft p-5" data-interface="{{ s.id }}">
+        <h3 class="text-lg font-bold tracking-tight text-heading">{{ s.title }}</h3>
+        {%- if m.interfaces[s.id] or false %}<p class="mt-2 text-sm leading-relaxed text-body">{{ m.interfaces[s.id] }}</p>{% endif %}
+        <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{{ s.route }}" class="text-fg-brand hover:underline">Reference &rarr;</a></p>
+      </li>
+      {%- endif %}{% endfor %}
+    </ul>
+    {#- the size of the one model every interface above is generated from: the product model's
+        telemetry, none of it typed (scripts/site-check holds each figure to the dataset) -#}
+    <dl class="mt-6 grid grid-cols-2 gap-3 rounded-base border border-default bg-neutral-primary-soft p-4 sm:grid-cols-4" data-model-size>
+      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
+      <div class="min-w-0"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
+      {%- endfor %}
+    </dl>
+    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature against every interface &rarr;</a>
+      <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry every interface is generated from &rarr;</a>
+    </p>
+    <div class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div class="min-w-0 rounded-xl border border-brand-subtle bg-brand-softer p-5">
         <h3 class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong">{{ m.providers.title }}</h3>
         <p class="mt-3 text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
@@ -257,7 +252,6 @@
         </dl>
         <p class="mt-4 text-sm"><a href="{{ get_url(path="/limitations/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What it does not do &rarr;</a></p>
       </div>
-    </div>
     {#- one declaration, every surface: the one shown without JavaScript is derived — the first,
         in the registry's own order, that reaches all three — and the picker fetches the
         published slice (graphs/surfaces.json) instead of carrying the registry. -#}
@@ -266,7 +260,7 @@
     {%- set everywhere = [c for c in reg.registry.builtin if c.exposure.cli and c.exposure.http and c.exposure.mcp] -%}
     {%- if everywhere %}{% set shown = everywhere[0] %}{% else %}{% set shown = reg.registry.builtin[0] %}{% endif -%}
     {%- set shown_e = [e for e in exe.capabilities if e.id == shown.id][0] -%}
-    <div class="mt-6 min-w-0 rounded-xl border border-default bg-neutral-primary-soft p-5" data-surfaces
+    <div class="min-w-0 rounded-xl border border-default bg-neutral-primary-soft p-5" data-surfaces
          x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }">
       <h3 class="text-base font-semibold tracking-tight text-heading">One declaration, every surface</h3>
       <label class="mt-3 block text-xs text-body">capability
@@ -274,7 +268,7 @@
           {%- for c in reg.registry.builtin %}<option value="{{ c.id }}"{% if c.id == shown.id %} selected{% endif %}>{{ c.id }}</option>{% endfor %}
         </select>
       </label>
-      <dl class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <dl class="mt-4 grid gap-3 sm:grid-cols-2">
         <div class="min-w-0"><dt class="text-xs text-body">declared as</dt><dd class="mt-1 break-all font-mono text-sm text-heading"><a data-surface-id="{{ shown.id }}" x-bind:data-surface-id="cap ? cap.id : '{{ shown.id }}'" href="{{ base }}{{ shown_e.route }}" x-effect="if (cap) { $el.textContent = cap.id; $el.href = '{{ base }}' + cap.route }" class="hover:underline">{{ shown.id }}</a></dd></div>
         <div class="min-w-0"><dt class="text-xs text-body">command line</dt><dd class="mt-1 break-all font-mono text-sm text-heading" data-surface="cli" x-effect="if (cap) $el.textContent = cap.cli || 'not exposed'">{% if shown.exposure.cli %}{{ shown_e.cli }}{% else %}not exposed{% endif %}</dd></div>
         <div class="min-w-0"><dt class="text-xs text-body">HTTP</dt><dd class="mt-1 break-all font-mono text-sm text-heading"><a data-surface="http" href="{{ base }}{% if shown.exposure.http %}{{ shown_e.api_anchor }}{% else %}/docs/api/{% endif %}" x-effect="if (cap) { $el.textContent = cap.http ? cap.http.method + ' ' + cap.http.path : 'not exposed'; $el.href = '{{ base }}' + (cap.http ? cap.http.anchor : '/docs/api/') }" class="hover:underline">{% if shown.exposure.http %}{{ shown.exposure.http.method }} {{ shown.exposure.http.path }}{% else %}not exposed{% endif %}</a></dd></div>
@@ -282,18 +276,57 @@
       </dl>
       <p class="mt-4 text-sm"><a href="{{ get_url(path="/registry/capabilities/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every capability, with the surfaces it reaches &rarr;</a></p>
     </div>
+    </div>
   </div>
 </section>
 
-{#- 7. proof — evidence in place of testimonials: the claims counted by what they declare,
-    with the ones a recorded run supports counted apart; where this page came from; and what is
-    not built, under the title the data gives it. -#}
+{#- 6. refuses — how a visitor knows it works, first half: the proof that "done" can be
+    refused. The challenge's recorded run, told step by step in the run's own sentences: a
+    worker strays, says it is done, is refused, is refused again, and is accepted only when
+    every line of the contract passes. The replay of that run — every command and its output
+    — is /challenge/'s, one click away; the hero carries its first verdict. Every other
+    refusal the lifecycle recorded is listed behind a disclosure, each with its command, its
+    exit status and the scenario page that carries its output. None of it is written here. -#}
+<section id="refuses" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    {{ <landing_head number="05" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
+    <ol class="max-w-3xl min-w-0 space-y-3" aria-label="What happened in the recorded run" data-recorded-story="{{ ch.use_case.id }}">
+      {%- for s in ch.steps %}{% if s.actor == "worker" or s.argv[0] == "finish" or s.argv[0] == "check" %}
+      <li class="flex min-w-0 gap-3">
+        <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center">{% if s.actor == "worker" %}<span class="font-mono text-xs text-body-subtle">worker</span>{% else %}{{ <badge status={s.outcome} /> }}{% endif %}</span>
+        <span class="min-w-0 text-sm leading-relaxed text-heading">{{ s.note }}</span>
+      </li>
+      {%- endif %}{% endfor %}
+    </ol>
+    <p class="mt-8"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="group inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.refuses.replay }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a></p>
+    <p class="mt-8 max-w-3xl text-base leading-relaxed text-body">{{ m.refuses.closing }}</p>
+    <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The whole challenge, and how to run it yourself &rarr;</a>
+      <a href="{{ get_url(path="/contract/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The contract every refusal is evaluated against &rarr;</a>
+    </p>
+    <details class="mt-8 min-w-0 rounded-xl border border-default bg-neutral-primary-soft">
+      <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.refuses.more }} ({{ term.counts.refusals }})</summary>
+      <ol class="divide-y divide-default border-t border-default" aria-label="Recorded refusals">
+        {%- for r in term.refusals %}
+        <li class="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3">
+          <span class="min-w-0 break-all font-mono text-xs text-heading">$ {{ r.command }}</span>
+          <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">{{ r.exit }}</span></span>
+          <a href="{{ base }}{{ r.route }}" class="min-w-0 text-xs font-medium text-fg-brand hover:underline">{{ r.use_case_title }} &rarr;</a>
+        </li>
+        {%- endfor %}
+      </ol>
+    </details>
+  </div>
+</section>
+
+{#- 7. proof — how a visitor knows it works, second half: evidence in place of testimonials.
+    First one sentence a manager can act on — what "declared" and "supported by a recorded
+    run" each mean — then the two figures, counted apart; then the chain behind them, where
+    this page came from, and what is not built, under the title the data gives it. -#}
 <section id="proof" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="06" kicker={x.proof.kicker} title={x.proof.title} lead={x.proof.lead} /> }}
-    {#- the evidence chain, stepped through: what is declared, what a machine holds, what a
-        recorded run supports — every figure derived, every node one click from its detail -#}
-    <div class="mb-8">{% include "partials/evidence-chain.html" %}</div>
+    <p class="mb-6 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading" data-proof-plain>{{ m.proof.plain }}</p>
     {#- A status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
         evidence verdict `majordomus evidence show` derives (product.json `evidence`), counted
         apart and never folded into the declared figure. No dataset reads as unknown. -#}
@@ -304,8 +337,11 @@
         <dd class="mt-2 text-xs leading-relaxed text-body">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
     </dl>
+    {#- the evidence chain, stepped through: what is declared, what a machine holds, what a
+        recorded run supports — every figure derived, every node one click from its detail -#}
+    <div class="mt-8 mb-8">{% include "partials/evidence-chain.html" %}</div>
     {#- where this page came from, and what a reader can check for themselves -#}
-    <dl class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
+    <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"{% if offered %} data-release="{{ offered.version }}"{% endif %}><dt class="text-xs text-body">latest release the installer resolves</dt>
         {%- if offered %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ offered.notes_url }}" class="hover:underline">{{ offered.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ offered.published_at | truncate(length=10, end="") }}</dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
@@ -348,7 +384,7 @@
   </div>
 </section>
 
-{#- 8. install — the one action. The commands are data/registry/distribution.json's, which
+{#- 8. install — how to start: the one action. The commands are data/registry/distribution.json's, which
     the executable generates from share/distribution.yaml; homepage-check holds this section
     to carrying all of them. -#}
 <section id="install" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden bg-neutral-primary">
