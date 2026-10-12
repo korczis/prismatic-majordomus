@@ -304,7 +304,11 @@ jobs:
         timeout-minutes: 5
         env:
           GH_TOKEN: ${{ github.token }}
-        run: apps/majordomus-cli/target/debug/majordomus prs refresh
+        run: |
+          # two questions, each its own command: the pull requests, then what was deployed
+          # and released
+          apps/majordomus-cli/target/debug/majordomus prs refresh
+          apps/majordomus-cli/target/debug/majordomus served forge
       # Every page the screens link to, not the first few: the default budget is sized for a
       # person waiting at a terminal and left most inspectors out of the published snapshot.
       # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.

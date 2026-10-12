@@ -1671,6 +1671,10 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
         .and_then(Value::as_str)
         .unwrap_or_default();
     let generated = content.contains(generate::HEADER) || path.starts_with(generate::OUT_DIR);
+    let media_type = value
+        .get("media_type")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
 
     let facts_card = card(
         "What it is",
@@ -1687,15 +1691,7 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
                     badge("declared", "declared")
                 }),
             ),
-            (
-                "Media type",
-                Node::Element(mono(
-                    value
-                        .get("media_type")
-                        .and_then(Value::as_str)
-                        .unwrap_or_default(),
-                )),
-            ),
+            ("Media type", Node::Element(mono(media_type))),
             (
                 "As a capability",
                 Node::Element(link(
@@ -1733,7 +1729,7 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
                 ))
             })
             .child(metadata)
-            .child(card("Content", pre(content))),
+            .child(content_card(ctx, media_type, &path, content)),
     )
     .subtitle(if title.is_empty() {
         format!("An object of kind {kind}")
@@ -1745,6 +1741,87 @@ pub fn object(ctx: &Context, uri: &str) -> Page {
         ("Objects", Some("/cockpit/objects")),
         (&identity, None),
     ])
+}
+
+/// The repository path a link in a body names: `to`, read from the directory of the file the
+/// body is in, with its fragment and query dropped. `None` for an address that is not a path
+/// inside the repository — one with a scheme, one that climbs out, an empty one.
+pub(crate) fn linked_path(from: &str, to: &str) -> Option<String> {
+    let to = to.split(['#', '?']).next().unwrap_or_default();
+    if to.is_empty() || to.contains(':') {
+        return None;
+    }
+    let mut parts: Vec<&str> = match to.strip_prefix('/') {
+        Some(_) => Vec::new(),
+        None => from
+            .rsplit_once('/')
+            .map_or(Vec::new(), |(dir, _)| dir.split('/').collect()),
+    };
+    for part in to.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            name => parts.push(name),
+        }
+    }
+    (!parts.is_empty()).then(|| parts.join("/"))
+}
+
+/// Where a link in an object's body leads, when the index holds what it names: another
+/// object by its `majordomus://` URI, or the object at the path the link gives, read from
+/// the body's own directory. The index is asked through `objects.list` and `objects.get`, the
+/// capabilities every surface resolves an object with, so a link is drawn only to a page that
+/// answers.
+pub(crate) fn body_links<'a>(
+    ctx: &'a Context,
+    from: &'a str,
+) -> impl Fn(&str) -> Option<String> + 'a {
+    let by_path: std::collections::BTreeMap<String, String> = ctx
+        .execute("objects.list", json!({}))
+        .ok()
+        .and_then(|list| list.get("objects").and_then(Value::as_array).cloned())
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|o| {
+            Some((
+                o.get("path")?.as_str()?.to_string(),
+                o.get("uri")?.as_str()?.to_string(),
+            ))
+        })
+        .collect();
+    let href = |uri: &str| format!("/cockpit/object?uri={}", percent_encode(uri));
+    move |address: &str| match address.starts_with("majordomus://") {
+        true => ctx
+            .execute("objects.get", json!({ "uri": address }))
+            .ok()
+            .map(|_| href(address)),
+        false => linked_path(from, address)
+            .and_then(|path| by_path.get(&path))
+            .map(|uri| href(uri)),
+    }
+}
+
+/// An object's content as a reader reads it: a Markdown body drawn as the document it is,
+/// below the page's own headings, with every link the index can follow; anything else as the
+/// text it is.
+fn content_card(ctx: &Context, media_type: &str, path: &str, content: &str) -> El {
+    if media_type != "text/markdown" {
+        return card("Content", pre(content));
+    }
+    let links = body_links(ctx, path);
+    card(
+        "Content",
+        crate::markdown::render(
+            crate::markdown::body(content),
+            &crate::markdown::Options {
+                heading: 3,
+                link: &links,
+                word: &crate::markdown::nowhere,
+            },
+        ),
+    )
 }
 
 // --------------------------------------------------------------------- graphs
@@ -8164,5 +8241,84 @@ mod titled_tests {
         value["store"].as_object_mut().unwrap().remove("remote");
         let alone: domain::Status = serde_json::from_value(value).unwrap();
         assert!(machines_card(&alone).render().contains("no remote"));
+    }
+
+    // ---- an object's Markdown body, drawn
+
+    fn body_fixture() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        std::fs::write(
+            repo.root().join("docs/DOC_0.md"),
+            "# Document 0\n\nSee [the next one](DOC_1.md#part), [the rule](../.ai/repo/rules/project/rule-0.v1.md), \
+             [nothing](NONE.md), [the web](https://example.org) and [itself](majordomus://document/docs/DOC_0.md).\n\n\
+             | name | count |\n|---|---:|\n| a | 1 |\n\n```mermaid\ngraph TD; a-->b\n```\n\n<script>alert(1)</script>\n",
+        )
+        .expect("a document");
+        repo
+    }
+
+    #[test]
+    fn an_objects_markdown_body_is_drawn_and_its_links_lead_to_objects_the_index_holds() {
+        let repo = body_fixture();
+        let ctx = repo.context().expect("a context");
+        let page = object(&ctx, "majordomus://document/docs/DOC_0.md");
+        let html = page.main.render();
+        for expected in [
+            "<div class=\"mj-md\">",
+            "<h3 class=\"mj-md-heading\">Document 0</h3>",
+            "href=\"/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDOC_1.md\">the next one</a>",
+            "<span class=\"mj-md-unlinked\" title=\"NONE.md\">nothing</span>",
+            "href=\"https://example.org\" rel=\"noopener noreferrer\">the web</a>",
+            "href=\"/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDOC_0.md\">itself</a>",
+            "<td class=\"mj-md-right\">1</td>",
+            "data-mj-diagram=\"mermaid\"",
+            "&lt;script&gt;alert(1)&lt;/script&gt;",
+        ] {
+            assert!(html.contains(expected), "{expected} is missing from {html}");
+        }
+        // a path that is another kind of object is that object's page
+        assert!(html.contains("\">the rule</a>"), "{html}");
+        assert!(!html.contains("<script>alert"), "{html}");
+        assert!(!html.contains("style="), "no inline style: {html}");
+    }
+
+    #[test]
+    fn an_object_that_is_not_markdown_is_shown_as_the_text_it_is() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let drawn = content_card(
+            &ctx,
+            "application/yaml",
+            "a.yaml",
+            "# not a heading\nkey: **v**\n",
+        )
+        .render();
+        assert!(drawn.contains("<pre class=\"mj-pre\""), "{drawn}");
+        assert!(drawn.contains("# not a heading"), "{drawn}");
+        assert!(!drawn.contains("mj-md"), "{drawn}");
+    }
+
+    #[test]
+    fn a_link_is_read_from_the_bodys_own_directory_and_never_climbs_out() {
+        for (from, to, expected) in [
+            ("docs/A.md", "B.md", Some("docs/B.md")),
+            ("docs/A.md", "./sub/../B.md#part", Some("docs/B.md")),
+            ("docs/A.md", "../README.md?x=1", Some("README.md")),
+            (
+                "docs/deep/A.md",
+                "../../.ai/repo/rules/r.md",
+                Some(".ai/repo/rules/r.md"),
+            ),
+            ("docs/A.md", "/docs/C.md", Some("docs/C.md")),
+            ("A.md", "B.md", Some("B.md")),
+            ("docs/A.md", "../../etc/passwd", None),
+            ("docs/A.md", "https://example.org", None),
+            ("docs/A.md", "mailto:a@b.c", None),
+            ("docs/A.md", "#part", None),
+            ("docs/A.md", "", None),
+            ("docs/A.md", "..", None),
+        ] {
+            assert_eq!(linked_path(from, to).as_deref(), expected, "{from} -> {to}");
+        }
     }
 }

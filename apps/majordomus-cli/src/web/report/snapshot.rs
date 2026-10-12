@@ -16,6 +16,10 @@
 //!   topology says which surfaces are published), and otherwise leads to the snapshot's one
 //!   page about the live UI, carrying the path it named, because only a running process
 //!   answers it: never a link to nothing;
+//! - **a panel a screen asks for after it has painted** (`data-panel-src`) is written into
+//!   the page. A running UI defers a slow panel so that no screen waits for a source (ADR
+//!   0142); a snapshot has no reader waiting and no process to ask later, so the placeholder
+//!   would be all a reader ever saw: a pull-request screen with no pull request on it;
 //! - **the script** is told it is in a snapshot (`data-snapshot` on the body), so it reads
 //!   nothing again and fetches no panel: a static page that refreshed itself would replace
 //!   what was read with whatever the host answers for a query it ignores;
@@ -121,6 +125,8 @@ pub fn render(
     let mut pages: BTreeMap<String, String> = BTreeMap::new();
     let mut rendered: Vec<(String, String)> = Vec::new();
     let mut assets: BTreeSet<String> = BTreeSet::new();
+    // one reading of a panel serves every page that asks for it
+    let mut panels: BTreeMap<String, Option<String>> = BTreeMap::new();
     while pages.len() < limit.max(1) {
         let target = match seeds.pop_front() {
             Some(seed) => seed,
@@ -154,7 +160,20 @@ pub fn render(
         if response.status != 200 {
             continue;
         }
-        let html = response.body.text().into_owned();
+        let html = with_panels(&response.body.text(), |src| {
+            panels
+                .entry(src.to_string())
+                .or_insert_with(|| {
+                    let asked = format!(
+                        "{src}{}{}",
+                        if src.contains('?') { '&' } else { '?' },
+                        crate::ui::FRAGMENT
+                    );
+                    let panel = ui.handle(&Request::parse_target("GET", &asked, Vec::new()));
+                    (panel.status == 200).then(|| panel.body.text().into_owned())
+                })
+                .clone()
+        });
         for link in links(&html) {
             let link = unescape(&link);
             if let Some(name) = asset_name(&link) {
@@ -452,6 +471,71 @@ fn attribute_pattern() -> regex::Regex {
 /// The link a graph's node carries, inside its JSON in an attribute.
 fn graph_href_pattern() -> regex::Regex {
     regex::Regex::new(r#"&quot;href&quot;:&quot;(.*?)&quot;"#).expect("the graph pattern compiles")
+}
+
+/// The element a screen leaves where a panel will be: the tag the UI's screens write it
+/// with, and the attribute that names the panel's own route.
+const PLACEHOLDER_TAG: &str = "section";
+const PLACEHOLDER_ATTRIBUTE: &str = "data-panel-src";
+
+/// A page with every panel it asks for written in place of the placeholder.
+///
+/// `panel` answers a panel's route with the panel's own rendering, or nothing when it could
+/// not be read — and then the placeholder stays, with its link to the panel's page, exactly
+/// as a reader without the script sees it on a running UI.
+fn with_panels(html: &str, mut panel: impl FnMut(&str) -> Option<String>) -> String {
+    let open = format!("<{PLACEHOLDER_TAG}");
+    let close = format!("</{PLACEHOLDER_TAG}>");
+    let named = format!("{PLACEHOLDER_ATTRIBUTE}=\"");
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(at) = rest.find(&named) {
+        // the tag this attribute is in, and where the element it opens ends
+        let Some(start) = rest[..at].rfind('<') else {
+            break;
+        };
+        let value = &rest[at + named.len()..];
+        let (Some(quote), true) = (value.find('"'), rest[start..].starts_with(&open)) else {
+            out.push_str(&rest[..at + named.len()]);
+            rest = value;
+            continue;
+        };
+        let src = unescape(&value[..quote]);
+        let Some(end) = element_end(&rest[start..], &open, &close) else {
+            break;
+        };
+        out.push_str(&rest[..start]);
+        match panel(&src) {
+            Some(drawn) => out.push_str(&drawn),
+            None => out.push_str(&rest[start..start + end]),
+        }
+        rest = &rest[start + end..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Where the element that `html` opens with ends: past the closing tag that balances it.
+fn element_end(html: &str, open: &str, close: &str) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut at = 0usize;
+    loop {
+        let next_open = html[at..].find(open).map(|i| at + i);
+        let next_close = html[at..].find(close).map(|i| at + i)?;
+        match next_open {
+            Some(opened) if opened < next_close => {
+                depth += 1;
+                at = opened + open.len();
+            }
+            _ => {
+                depth = depth.checked_sub(1)?;
+                at = next_close + close.len();
+                if depth == 0 {
+                    return Some(at);
+                }
+            }
+        }
+    }
 }
 
 /// Every URL a page names, as written (still escaped).
@@ -788,6 +872,49 @@ mod tests {
     }
 
     #[test]
+    fn a_panel_a_screen_asks_for_is_written_into_the_page() {
+        let page = concat!(
+            "<main><h1>Drain</h1>",
+            "<section class=\"mj-ui-panel\" data-panel-src=\"/ui/panels/drain?issue=I1&amp;lane=held\" aria-busy=\"false\">",
+            "<header><h2>Drain</h2></header><section>inner</section><a href=\"/ui/panels/drain\">open</a></section>",
+            "<section class=\"mj-ui-panel\" data-panel-src=\"/ui/panels/slow\"><a href=\"/ui/panels/slow\">open</a></section>",
+            "<section>kept</section></main>",
+        );
+        let mut asked = Vec::new();
+        let drawn = with_panels(page, |src| {
+            asked.push(src.to_string());
+            (src != "/ui/panels/slow").then(|| "<div class=\"drawn\">34 open</div>".to_string())
+        });
+        // the route is asked as it was written, unescaped; the element is replaced whole,
+        // the section inside it included
+        assert_eq!(
+            asked,
+            ["/ui/panels/drain?issue=I1&lane=held", "/ui/panels/slow"]
+        );
+        assert!(
+            drawn.starts_with("<main><h1>Drain</h1><div class=\"drawn\">34 open</div><section"),
+            "{drawn}"
+        );
+        assert!(!drawn.contains("inner"), "{drawn}");
+        // a panel that did not answer keeps its placeholder and the link in it
+        assert!(
+            drawn.contains(
+                "data-panel-src=\"/ui/panels/slow\"><a href=\"/ui/panels/slow\">open</a></section>"
+            ),
+            "{drawn}"
+        );
+        assert!(drawn.ends_with("<section>kept</section></main>"), "{drawn}");
+        // a page that asks for nothing is the page
+        assert_eq!(with_panels("<p>plain</p>", |_| None), "<p>plain</p>");
+        // an unbalanced page is left as it is, never cut
+        let torn = "<section data-panel-src=\"/ui/panels/drain\"><p>no end";
+        assert_eq!(with_panels(torn, |_| Some("x".into())), torn);
+        // the attribute on another element is not a placeholder
+        let other = "<div data-panel-src=\"/ui/x\">a</div><p>b</p>";
+        assert_eq!(with_panels(other, |_| Some("x".into())), other);
+    }
+
+    #[test]
     fn the_snapshot_writes_every_screen_with_no_link_to_nothing() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
             .expect("a synthetic repository");
@@ -851,6 +978,15 @@ mod tests {
                     "{file} links {link}, which is not in the snapshot"
                 );
             }
+        }
+        // no screen of a snapshot waits for a panel nobody will fetch: each one is in the page
+        for screen in crate::ui::SCREENS {
+            let html = std::fs::read_to_string(dir.join(&snapshot.pages[screen.route])).unwrap();
+            assert!(
+                !html.contains(PLACEHOLDER_ATTRIBUTE),
+                "{} still asks for a panel after it has painted",
+                screen.route
+            );
         }
         let declared: Declaration =
             serde_json::from_str(&std::fs::read_to_string(dir.join(DECLARATION_FILE)).unwrap())

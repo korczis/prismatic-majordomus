@@ -1,11 +1,15 @@
 //! The `served` module: whether a deployment serves the commit it was meant to, observed
 //! from outside and recorded as evidence a later reader can re-judge.
 //!
-//! Two operations, deliberately unequal:
+//! Three operations, deliberately unequal:
 //!
 //! - `served.observe` reaches the network and appends a record, so it is a command of the
 //!   trusted command line only. A browser or an MCP client that could make this process
 //!   probe an arbitrary URL would have been handed a request forger.
+//! - `served.forge` asks the forge which deployments and releases it recorded, through the
+//!   forge's own tool, and keeps the answer for `deploy.observed` to read. It reaches the
+//!   network and spends the caller's credential, so it too is a command line and nothing
+//!   else.
 //! - `served.show` is a read: it asks no network, writes nothing and re-judges what was
 //!   recorded against the commit asked about, which is what makes an old observation go
 //!   stale without anyone deciding it has (see [`crate::served`]).
@@ -106,6 +110,42 @@ pub struct Observed {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub recorded: Option<String>,
     /// The exit status the command line reports: 0 served, 10 a measured no, 12 unanswered.
+    pub exit_code: i32,
+}
+
+/// What `served.forge` came to: whether the forge answered, and what its answer held. The
+/// answer itself is read through `deploy.observed`; this is the receipt of having asked.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::ForgeObserved;
+/// // a forge that could not be asked is said, with the reason, and is exit 12: not answered
+/// let json = r#"{"observed":false,"reason":"gh repo view failed: no network",
+///   "deployments":0,"releases":0,"environments":0,"exit_code":12}"#;
+/// let got: ForgeObserved = serde_json::from_str(json).unwrap();
+/// assert!(!got.observed);
+/// assert_eq!(got.exit_code, 12);
+/// assert!(got.repository.is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ForgeObserved {
+    /// Whether the forge answered and the answer was recorded.
+    pub observed: bool,
+    /// Why not, in the words of whatever refused; absent when it answered.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// `owner/name`, as the forge named the repository.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
+    /// When the forge was asked, RFC 3339.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub observed_at: Option<String>,
+    /// How many deployments the answer held.
+    pub deployments: usize,
+    /// How many releases the answer held.
+    pub releases: usize,
+    /// How many environments those deployments went to.
+    pub environments: usize,
+    /// The exit status the command line reports: 0 observed, 12 not answered.
     pub exit_code: i32,
 }
 
@@ -277,6 +317,38 @@ fn observe(ctx: &Context, input: ObserveInput) -> Result<Observed, CapabilityErr
     })
 }
 
+fn forge(ctx: &Context, _: super::Empty) -> Result<ForgeObserved, CapabilityError> {
+    Ok(forge_with(crate::deploy::observed::GH, &root_of(ctx)))
+}
+
+/// Ask the forge through `program`, record what it said, and say what that came to. A forge
+/// that could not be asked is an answer of its own, never an error: the caller is a job that
+/// goes on to read whatever was last recorded.
+fn forge_with(program: &str, root: &Path) -> ForgeObserved {
+    match crate::deploy::observed::refresh_with(program, root) {
+        Ok(o) => ForgeObserved {
+            observed: true,
+            reason: None,
+            environments: crate::deploy::observed::environments(&o).len(),
+            deployments: o.deployments.len(),
+            releases: o.releases.len(),
+            repository: Some(o.repository),
+            observed_at: Some(o.observed_at),
+            exit_code: 0,
+        },
+        Err(reason) => ForgeObserved {
+            observed: false,
+            reason: Some(reason),
+            repository: None,
+            observed_at: None,
+            deployments: 0,
+            releases: 0,
+            environments: 0,
+            exit_code: 12,
+        },
+    }
+}
+
 fn show(ctx: &Context, input: ShowInput) -> Result<ServedStanding, CapabilityError> {
     let root = root_of(ctx);
     let expected = resolve(&root, input.commit.as_deref().unwrap_or("HEAD"))?;
@@ -407,6 +479,24 @@ pub fn module() -> ModuleDescriptor {
                 handler: observe,
             },
             capability! {
+                id: "served.forge",
+                kind: CapabilityKind::Command,
+                title: "Ask the forge what it recorded as deployed and released",
+                description: "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age.",
+                input: super::Empty,
+                output: ForgeObserved,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["served".into(), "forge".into()] }),
+                },
+                tags: ["deployment", "evidence", "forge"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: forge,
+            },
+            capability! {
                 id: "served.show",
                 title: "What each deployment was last seen serving",
                 description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
@@ -468,6 +558,73 @@ mod tests {
         }
     }
 
+    /// Asking the forge is a receipt either way: what it held when it answered, and the
+    /// reason when it could not be asked, which is exit 12 and never an error.
+    #[cfg(unix)]
+    #[test]
+    fn asking_the_forge_says_what_it_held_or_why_it_could_not_be_asked() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let program = dir.path().join("fake-gh");
+        std::fs::write(
+            &program,
+            "#!/bin/sh\ncase \"$1\" in\n  repo) echo '{\"nameWithOwner\": \"o/r\"}' ;;\n  api) cat \"$(dirname \"$0\")/answer.json\" ;;\nesac\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        std::fs::write(
+            dir.path().join("answer.json"),
+            serde_json::json!({"data": {"repository": {
+                "url": "https://forge.example/o/r",
+                "deployments": {"nodes": [
+                    {"databaseId": 2, "environment": "github-pages", "createdAt": "2026-10-12T21:00:00Z",
+                     "commitOid": A, "latestStatus": {"state": "SUCCESS"}},
+                    {"databaseId": 1, "environment": "preview", "createdAt": "2026-10-11T21:00:00Z",
+                     "commitOid": B, "latestStatus": {"state": "SUCCESS"}}
+                ]},
+                "releases": {"nodes": [{"tagName": "v1.0.0", "name": "1.0.0",
+                     "publishedAt": "2026-10-10T00:00:00Z", "url": "https://forge.example/o/r/releases/tag/v1.0.0"}]}
+            }}})
+            .to_string(),
+        )
+        .unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let asked = forge_with(&program.to_string_lossy(), root.path());
+        assert!(asked.observed, "{asked:?}");
+        assert_eq!(asked.repository.as_deref(), Some("o/r"));
+        assert_eq!(
+            (
+                asked.deployments,
+                asked.environments,
+                asked.releases,
+                asked.exit_code
+            ),
+            (2, 2, 1, 0)
+        );
+        assert!(asked.observed_at.is_some() && asked.reason.is_none());
+        // recorded: the read every surface has answers from it
+        assert!(crate::deploy::observed::report(root.path()).observed);
+
+        let refused = forge_with("/no/such/program", root.path());
+        assert!(!refused.observed);
+        assert_eq!(refused.exit_code, 12);
+        assert!(refused.reason.unwrap().contains("could not run"));
+        // and what was recorded before stands
+        assert!(crate::deploy::observed::report(root.path()).observed);
+    }
+
+    /// The capability itself, in a repository the forge does not know: the same receipt.
+    #[test]
+    fn the_capability_answers_a_receipt_where_the_forge_knows_nothing() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let asked = forge(&ctx, super::super::Empty {}).unwrap();
+        assert!(!asked.observed, "{asked:?}");
+        assert_eq!(asked.exit_code, 12);
+        assert!(asked.reason.is_some());
+    }
+
     /// The asymmetry is the security property: the operation that reaches the network is on
     /// no surface a browser or an MCP client can call.
     #[test]
@@ -486,6 +643,13 @@ mod tests {
         assert_eq!(
             observe.exposure.cli.as_ref().unwrap().path,
             ["served", "observe"]
+        );
+        let forge = &by_id("served.forge").capability;
+        assert_eq!(forge.kind, CapabilityKind::Command);
+        assert!(forge.exposure.http.is_none() && forge.exposure.mcp.is_none());
+        assert_eq!(
+            forge.exposure.cli.as_ref().unwrap().path,
+            ["served", "forge"]
         );
         let show = &by_id("served.show").capability;
         assert_eq!(show.kind, CapabilityKind::Query);

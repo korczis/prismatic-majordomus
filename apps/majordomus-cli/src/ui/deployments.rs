@@ -108,11 +108,11 @@ fn observed_panels(observed: &Answer) -> Vec<El> {
                 .child(el("td").class("mj-ui-mono").text(value(e, "deployed_at")))
                 .child(el("td").child(outside_field(e, "url", &text(e, "url"))))
                 .child(
+                    // a count the forge did not give is unknown, never none
                     el("td").class("mj-ui-mono").text(
                         e.get("deployments")
                             .and_then(Value::as_u64)
-                            .unwrap_or(0)
-                            .to_string(),
+                            .map_or_else(|| "unknown".to_string(), |n| n.to_string()),
                     ),
                 )
         })
@@ -469,7 +469,7 @@ pub(crate) mod tests {
         let repo = furnished();
         let ctx = repo.context().expect("a context");
         let unasked = screen(&ctx).main.render();
-        assert!(unasked.contains("majordomus prs refresh"), "{unasked}");
+        assert!(unasked.contains("majordomus served forge"), "{unasked}");
         assert!(
             !unasked.contains("Where each environment stands"),
             "{unasked}"

@@ -6,28 +6,28 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "cd694630e29f8e8afca23ce6ac58fc76c20e3732a4dca955789607a2ff3ab209",
+    "fingerprint": "677f2274e377c62ccbb729c8d895c6adcac72934e81bf0b1c4ea7b1c6220b93d",
     "summary": {
-      "total": 2288,
-      "builtin": 195,
-      "declarative": 2093,
+      "total": 2294,
+      "builtin": 196,
+      "declarative": 2098,
       "by_kind": {
-        "command": 29,
+        "command": 30,
         "query": 166,
-        "resource": 2093
+        "resource": 2098
       },
       "by_stability": {
-        "behaviorally_verified": 135,
+        "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2102
+        "implemented": 2107
       },
       "mcp_tools": 187,
-      "mcp_resources": 2148,
+      "mcp_resources": 2153,
       "http_routes": 191,
-      "cli_commands": 106,
+      "cli_commands": 107,
       "modules": 90,
       "benchmark_required": 166,
-      "benchmark_waived": 29,
+      "benchmark_waived": 30,
       "cached": 54
     },
     "builtin": [
@@ -11839,7 +11839,7 @@
         "module": "deploy",
         "kind": "query",
         "title": "What was deployed, and where",
-        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -71539,6 +71539,120 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs"
       },
       {
+        "id": "served.forge",
+        "module": "served",
+        "kind": "command",
+        "title": "Ask the forge what it recorded as deployed and released",
+        "description": "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ForgeObserved",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "boolean",
+                "description": "Whether the forge answered and the answer was recorded."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, in the words of whatever refused; absent when it answered."
+              },
+              "repository": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`owner/name`, as the forge named the repository."
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the forge was asked, RFC 3339."
+              },
+              "deployments": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many deployments the answer held."
+              },
+              "releases": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many releases the answer held."
+              },
+              "environments": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many environments those deployments went to."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The exit status the command line reports: 0 observed, 12 not answered."
+              }
+            },
+            "required": [
+              "observed",
+              "deployments",
+              "releases",
+              "environments",
+              "exit_code"
+            ],
+            "description": "What `served.forge` came to: whether the forge answered, and what its answer held. The\nanswer itself is read through `deploy.observed`; this is the receipt of having asked.\n\n```\nuse majordomus_cli::capability::builtin::served::ForgeObserved;\n// a forge that could not be asked is said, with the reason, and is exit 12: not answered\nlet json = r#\"{\"observed\":false,\"reason\":\"gh repo view failed: no network\",\n  \"deployments\":0,\"releases\":0,\"environments\":0,\"exit_code\":12}\"#;\nlet got: ForgeObserved = serde_json::from_str(json).unwrap();\nassert!(!got.observed);\nassert_eq!(got.exit_code, 12);\nassert!(got.repository.is_none());\n```",
+            "title": "ForgeObserved"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::served"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "served",
+              "forge"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "evidence",
+          "forge"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
+      },
+      {
         "id": "served.observe",
         "module": "served",
         "kind": "command",
@@ -79919,7 +80033,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 99,
+        "capabilities": 100,
         "capability_ids": []
       },
       {
@@ -80937,7 +81051,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 171,
+        "capabilities": 173,
         "capability_ids": []
       },
       {
@@ -80973,8 +81087,9 @@
         "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
+          "served.forge",
           "served.observe",
           "served.show"
         ],
@@ -81080,7 +81195,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 457,
+        "capabilities": 459,
         "capability_ids": []
       },
       {
@@ -81170,7 +81285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3e5aa2bb0c56e5d27811fa1bbd53db07e13531e43f6ba518453d79279dce7042",
+    "fingerprint": "505ea85301e2c32e1e19edb077370ea5ef99b35142060ba7400d050ffe622b87",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81193,7 +81308,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 99,
+      "adr": 100,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81219,12 +81334,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 171,
+      "rule": 173,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 457,
+      "test": 459,
       "use-case": 48,
       "workspace": 1
     },
@@ -82863,6 +82978,25 @@
           "intent",
           "project",
           "capabilities"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "identity": "adr-0148",
+        "title": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "description": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "path": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7024,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "cockpit",
+          "markdown",
+          "visualisation"
         ]
       },
       {
@@ -86691,7 +86825,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 48166
+        "bytes": 51453
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -86988,7 +87122,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 23534
+        "bytes": 23922
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -96591,6 +96725,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "identity": "project.a-visualisation-is-interactive@1",
+        "title": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "description": "Every drawing a served surface makes — a relationship graph, a chart, a diagram drawn from a Markdown body, a scene — binds a way from its marks to the records they stand for, is drawn from data the server derived and put on the page, and has a text form a reader without the script reads instead; the drawings that predate the rule are a named debt that may shrink and may not grow.",
+        "path": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4493,
+        "tags": [
+          "ui",
+          "cockpit",
+          "visualisation",
+          "accessibility"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "identity": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -97271,6 +97422,24 @@
           "integration",
           "deployment",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "identity": "project.markdown-is-rendered-once@1",
+        "title": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "description": "Every Markdown body a served surface shows — a rule, a decision record, a skill, a use case, a document, a field of a plan record, a pull request's description — is drawn by the crate's one renderer, which writes nothing a record holds as markup, follows only the links it was told lead somewhere, and draws a diagram as its source until the page's script draws the figure.",
+        "path": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4655,
+        "tags": [
+          "ui",
+          "cockpit",
+          "markdown",
+          "projections",
+          "security"
         ]
       },
       {
@@ -97990,7 +98159,7 @@
         "path": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8486,
+        "bytes": 8821,
         "tags": [
           "ui",
           "publication",
@@ -99947,14 +100116,6 @@
         "bytes": 4294
       },
       {
-        "uri": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "kind": "test",
-        "identity": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "source_class": "case",
-        "bytes": 19251
-      },
-      {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "identity": "test/cases/109_design_system.sh",
@@ -99969,6 +100130,22 @@
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
         "bytes": 7119
+      },
+      {
+        "uri": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "identity": "test/cases/1101_markdown_is_rendered_once.sh",
+        "path": "test/cases/1101_markdown_is_rendered_once.sh",
+        "source_class": "case",
+        "bytes": 4879
+      },
+      {
+        "uri": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "identity": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "source_class": "case",
+        "bytes": 6097
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -100713,6 +100890,14 @@
         "path": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
         "source_class": "case",
         "bytes": 7564
+      },
+      {
+        "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "kind": "test",
+        "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "source_class": "case",
+        "bytes": 19816
       },
       {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -103623,7 +103808,7 @@
       "identity": [
         "id"
       ],
-      "objects": 99
+      "objects": 100
     },
     {
       "name": "application",
@@ -103883,7 +104068,7 @@
         "id",
         "version"
       ],
-      "objects": 171
+      "objects": 173
     },
     {
       "name": "scope",
@@ -103938,7 +104123,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 457
+      "objects": 459
     },
     {
       "name": "use-case",
@@ -128751,6 +128936,118 @@
             "path": [
               "majordomus",
               "served",
+              "forge"
+            ],
+            "route": "/docs/cli/served/forge/",
+            "executable": true,
+            "usage": "majordomus served forge [OPTIONS]",
+            "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "served-forge-unknown-repository",
+                "title": "A forge that cannot be asked is said, and what was recorded before stands",
+                "description": "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+                "argv": [
+                  "served",
+                  "forge"
+                ],
+                "command": "majordomus served forge",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "served",
               "show"
             ],
             "route": "/docs/cli/served/show/",
@@ -135914,7 +136211,7 @@
         "name": "majordomus_deployments_observed",
         "id": "deploy.observed",
         "title": "What was deployed, and where",
-        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -150924,6 +151221,14 @@
           "cases": 1
         },
         {
+          "subject": "served.forge",
+          "module": "served",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "served.observe",
           "module": "served",
           "transport": "direct",
@@ -151494,10 +151799,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 195,
+          "required": 196,
           "covered": 166,
           "missing": 0,
-          "waived": 29,
+          "waived": 30,
           "inapplicable": 0
         },
         "http": {
@@ -151522,10 +151827,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 587,
+          "required": 588,
           "covered": 508,
           "missing": 0,
-          "waived": 79,
+          "waived": 80,
           "inapplicable": 0
         }
       }

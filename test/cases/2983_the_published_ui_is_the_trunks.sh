@@ -14,8 +14,9 @@
 #                        workflow builds and uploads what that entry says
 #   2. the probe         `scripts/pages verify-ui` passes a snapshot read at the commit, with
 #                        and without --commit; refuses by name a stale built_from, a missing
-#                        surface.json, a listed page that is absent, a record of another run
-#                        and one that does not say what ended its reading; states what a cut
+#                        surface.json, a listed page that is absent, a record of another run,
+#                        a first screen still waiting for a panel, and a record that does not
+#                        say what ended its reading; states what a cut
 #                        short snapshot left out and what --max-pages did not ask; and is 12,
 #                        never a pass, for a site that does not answer
 #   3. the gate          `scripts/ci/pages-check` asks it of the published commit: ok for the
@@ -28,7 +29,7 @@
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj1096.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj2983.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
 gitq() { git -c user.email=t@example.com -c user.name=t -c core.hooksPath=/dev/null "$@"; }
 TAB="$(printf '\t')"
 pages() { env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE "$ROOT/scripts/pages" "$@"; }
@@ -125,6 +126,13 @@ site "$A" "$A"; rm "$W$mount/snapshot.json"
 expect_exit 10 probe --commit "$A"
 expect_grep 'snapshot\.json is absent or is not a snapshot.s record \(status 404\)'
 echo "    a record of another run, a banner of another commit, no record at all: refused"
+
+# a screen published with a panel still to be fetched: no process will fetch it
+site "$A" "$A"
+sed 's|<body|<body><section data-panel-src="panels/drain/index.html">open the drain</section><i|' "$W$mount/index.html" > "$S/h" && cp "$S/h" "$W$mount/index.html"
+expect_exit 10 probe --commit "$A"
+expect_grep "FAIL $HTTP_BASE$mount/ still carries data-panel-src: the snapshot left a panel as a request no process answers"
+echo "    a first screen that still waits for a panel: refused by name"
 
 # cut short: saying so is a pass that states it, not saying so is a refusal
 site "$A" "$A"
@@ -279,7 +287,7 @@ awk '/^  - id: pages-live$/{f=1} f && /^    summary:/{print; exit}' "$ROOT/.ai/r
   || { echo "    the pages-live gate's summary does not state the UI"; exit 1; }
 RULE="$ROOT/.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
 grep -q '^class: blocking$' "$RULE" || { echo "    the rule is missing or not blocking"; exit 1; }
-grep -q 'test/cases/1096_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
+grep -q 'test/cases/2983_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
   || { echo "    the rule's tests do not name this case and the gate"; exit 1; }
 echo "    the workflow, the gate, the deploy, the gate's summary and the rule carry it"
 

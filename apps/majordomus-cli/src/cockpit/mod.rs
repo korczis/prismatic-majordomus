@@ -67,6 +67,7 @@ pub(crate) const VENDOR: &[&str] = &[
     "cytoscape.min.js",
     "three.module.min.js",
     "p5.min.js",
+    "mermaid.min.js",
 ];
 
 /// The Cockpit over the repository as it is now. Cheap to clone into every worker thread:

@@ -17,7 +17,6 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::cli::{OutputFormat, PrsArgs, PrsCommand};
-use crate::deploy::observed::DeploymentObservation;
 use crate::error::{Error, Result};
 use crate::integration::{
     self,
@@ -66,20 +65,6 @@ fn w(out: &mut impl Write, line: impl AsRef<str>) -> Result<()> {
 
 fn short(sha: &str) -> &str {
     &sha[..sha.len().min(10)]
-}
-
-/// Say what observing the deployments came to. In the log and not on standard output, which
-/// belongs to the observation `refresh` prints and may be JSON.
-fn note_deployments(observed: std::result::Result<DeploymentObservation, String>) {
-    match observed {
-        Ok(o) => tracing::info!(
-            deployments = o.deployments.len(),
-            releases = o.releases.len(),
-            repository = %o.repository,
-            "the forge's deployments and releases were observed"
-        ),
-        Err(reason) => tracing::warn!(%reason, "the forge's deployments were not observed"),
-    }
 }
 
 fn trunc(s: &str, n: usize) -> String {
@@ -467,13 +452,6 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             diagnosed(&q, format)
         }
         PrsCommand::Refresh => {
-            // the deployments and releases, asked of the same forge with the same tool and
-            // recorded beside the queue's observation; said either way, and never what
-            // stops the pull requests from being observed
-            note_deployments(crate::deploy::observed::refresh_with(
-                crate::deploy::observed::GH,
-                &root,
-            ));
             // observed just now: what the queue learns from it is kept for the readers
             let obs = integration::refresh(&root)
                 .and_then(|obs| integration::queue_and_record(&root).map(|_| obs))
@@ -2093,203 +2071,5 @@ mod tests {
             run(args(empty.path(), OutputFormat::Text)).unwrap(),
             FINDING
         );
-    }
-}
-
-#[cfg(test)]
-mod refresh_tests {
-    //! `refresh` observes the deployments beside the queue: either outcome is said, and a
-    //! forge that cannot be asked about deployments still lets the pull requests be asked.
-
-    use super::*;
-
-    #[test]
-    fn observing_the_deployments_is_said_whether_it_worked_or_not() {
-        let observed = crate::deploy::observed::parse(
-            "o/r",
-            "2026-10-12T14:00:00Z",
-            &serde_json::json!({"data": {"repository": {"url": "https://forge.example/o/r"}}}),
-        );
-        note_deployments(Ok(observed));
-        note_deployments(Err("no network".into()));
-    }
-
-    /// In a repository the forge does not know, both observations fail: the deployments'
-    /// failure is a note, and the queue's is the refusal the command ends with.
-    #[test]
-    fn a_refresh_the_forge_cannot_answer_ends_on_the_queues_refusal() {
-        let dir = tempfile::tempdir().unwrap();
-        let git = |args: &[&str]| {
-            assert!(std::process::Command::new("git")
-                .arg("-C")
-                .arg(dir.path())
-                .args(args)
-                .output()
-                .unwrap()
-                .status
-                .success());
-        };
-        git(&["init", "-q", "-b", "master"]);
-        let refused = run(PrsArgs {
-            repo: crate::cli::RepoArgs {
-                repo: Some(dir.path().to_path_buf()),
-                discovery: crate::cli::DiscoveryMode::Vcs,
-                strict: false,
-                share: None,
-            },
-            command: Some(PrsCommand::Refresh),
-            format: OutputFormat::Text,
-        })
-        .unwrap_err();
-        assert!(
-            matches!(refused, Error::Refused { code: UNUSABLE, .. }),
-            "{refused}"
-        );
-        assert!(crate::deploy::observed::load(dir.path()).unwrap().is_none());
-    }
-}
-
-#[cfg(test)]
-mod issue_line_tests {
-    use super::*;
-
-    #[test]
-    fn the_issue_line_names_the_milestone_when_there_is_one() {
-        let q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
-        let mut a = q.assessments[0].clone();
-        assert_eq!(issue_line(&a), None);
-        a.issue = Some("I0810".into());
-        assert_eq!(issue_line(&a).as_deref(), Some("I0810"));
-        a.milestone = Some("M003".into());
-        assert_eq!(issue_line(&a).as_deref(), Some("I0810 · milestone M003"));
-    }
-
-    #[test]
-    fn explain_says_the_issue_and_milestone() {
-        let mut q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
-        q.assessments[0].issue = Some("I0810".into());
-        q.assessments[0].milestone = Some("M003".into());
-        let a = q.assessments[0].clone();
-        let mut out = Vec::new();
-        explain(&q, &a, 1, OutputFormat::Text, &mut out).unwrap();
-        let text = String::from_utf8(out).unwrap();
-        assert!(
-            text.contains("issue:        I0810 · milestone M003"),
-            "{text}"
-        );
-    }
-}
-
-#[cfg(test)]
-mod issue_write_tests {
-    use super::*;
-
-    /// A writer that refuses the write carrying `needle`.
-    struct RefuseOn(&'static str);
-
-    impl Write for RefuseOn {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            if String::from_utf8_lossy(buf).contains(self.0) {
-                Err(std::io::Error::other("refused"))
-            } else {
-                Ok(buf.len())
-            }
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-
-    #[test]
-    fn a_refused_issue_line_is_an_error() {
-        let mut q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
-        q.assessments[0].issue = Some("I0810".into());
-        let a = q.assessments[0].clone();
-        assert!(explain(&q, &a, 1, OutputFormat::Text, &mut RefuseOn("issue:")).is_err());
-    }
-}
-
-#[cfg(test)]
-mod left_branch_render_tests {
-    use super::*;
-
-    fn rendered(left: &Option<Vec<drain::LeftBranch>>) -> String {
-        let mut out = Vec::new();
-        left_branches(left, &mut out).unwrap();
-        String::from_utf8(out).unwrap()
-    }
-
-    #[test]
-    fn every_answer_of_the_report_is_said() {
-        assert!(rendered(&None).contains("merged branches: unread"));
-        assert!(rendered(&Some(Vec::new())).contains("none left on origin"));
-        let b = drain::LeftBranch {
-            branch: "fix/a".into(),
-            tip: "0123456789abcdef".into(),
-            pr: 7,
-            merged_at: "t".into(),
-            action: "left_for_a_person".into(),
-            next_step: "delete it".into(),
-        };
-        let text = rendered(&Some(vec![b]));
-        assert!(text.contains("left on origin (1)"), "{text}");
-        assert!(
-            text.contains("fix/a") && text.contains("#7") && text.contains("0123456789ab"),
-            "{text}"
-        );
-        assert!(text.contains("next: delete it"), "{text}");
-    }
-
-    /// A writer that refuses the write carrying `needle`, so each line's refusal is reached.
-    struct RefuseOn(&'static str);
-
-    impl Write for RefuseOn {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            if String::from_utf8_lossy(buf).contains(self.0) {
-                Err(std::io::Error::other("refused"))
-            } else {
-                Ok(buf.len())
-            }
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-
-    #[test]
-    fn a_refused_write_is_an_error_on_every_line() {
-        let b = drain::LeftBranch {
-            branch: "fix/a".into(),
-            tip: "0123456789abcdef".into(),
-            pr: 7,
-            merged_at: "t".into(),
-            action: "left_for_a_person".into(),
-            next_step: "delete it".into(),
-        };
-        for needle in ["left on origin", "fix/a", "next:"] {
-            assert!(
-                left_branches(&Some(vec![b.clone()]), &mut RefuseOn(needle)).is_err(),
-                "{needle}"
-            );
-        }
-    }
-
-    #[test]
-    fn an_unreadable_observation_fails_the_branch_report() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, "not an observation").unwrap();
-        assert!(cleanup_branches(dir.path(), &mut Vec::new()).is_err());
-    }
-
-    #[test]
-    fn cleanup_with_nothing_observed_reports_unread() {
-        let dir = tempfile::tempdir().unwrap();
-        let mut out = Vec::new();
-        cleanup_branches(dir.path(), &mut out).unwrap();
-        assert!(String::from_utf8(out)
-            .unwrap()
-            .contains("merged branches: unread"));
     }
 }

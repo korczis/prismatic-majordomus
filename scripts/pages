@@ -1176,6 +1176,9 @@ cmd_verify_ui() {
 }
 
 # one finding of a round: what is wrong, and the command that shows it again
+# The attribute a screen's placeholder names its panel's route with (ui/mod.rs FRAGMENT's
+# counterpart on the page; web/report/snapshot.rs writes the panel in its place).
+UI_DEFERRED=data-panel-src
 ui_finding() { printf 'pages verify-ui: FAIL %s  [reproduce: %s]\n' "$1" "$2" >> "$VR_WORK/findings"; }
 # two statements of one commit agree when one begins with the other and both can name a commit
 ui_same_commit() { [ "${#1}" -ge 7 ] && [ "${#2}" -ge 7 ] && { vr_names "$1" "$2" || vr_names "$2" "$1"; }; }
@@ -1211,6 +1214,13 @@ ui_round() {
       else
         vr_line fail "does not state $marker=$v"; bad=1
         ui_finding "$VR_REQ does not state $marker=\"$v\": the page is not the snapshot its declaration names" "curl -fsS $VR_REQ | grep -o '$marker=\"[^\"]*\"'"
+      fi
+      # a running UI asks for a slow panel after the screen has painted ($UI_DEFERRED); a
+      # snapshot has no process to ask, so a page that still carries the request shows its
+      # reader the placeholder for ever: a pull-request screen with no pull request on it
+      if grep -qF "$UI_DEFERRED=" "$VR_WORK/body"; then
+        vr_line fail "still asks for a panel after it has painted ($UI_DEFERRED)"; bad=1
+        ui_finding "$VR_REQ still carries $UI_DEFERRED: the snapshot left a panel as a request no process answers, so the screen is published without it" "curl -fsS $VR_REQ | grep -o '$UI_DEFERRED=\"[^\"]*\"'"
       fi ;;
     *) vr_line fail "want 200 text/html"; bad=1
        ui_finding "$VR_REQ answered $VR_STATUS ${VR_TYPE:-with no content type}, not the UI's first screen" "curl -fsSI $VR_REQ" ;;

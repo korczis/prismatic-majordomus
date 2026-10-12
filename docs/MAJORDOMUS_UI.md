@@ -102,7 +102,7 @@ since no capability the other screens ask at first paint states the forge's addr
 Drain, which asks the queue, and Deployments, which asks what was observed, do link the
 forge), and a path that is not an object of the index.
 
-What the forge recorded is read from one observation, taken by `majordomus prs refresh` — the
+What the forge recorded is read from one observation, taken by `majordomus served forge` — the
 one command that asks the forge — and kept beside the pull-request observation. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
@@ -308,12 +308,15 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
-| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| a slow panel is a placeholder the script fills once the screen has painted (`data-panel-src`) | the panel is written into the page: no process will answer later, so the placeholder would be all a reader ever saw |
+| the script reads the screen again every minute | it does not: the body carries `data-snapshot` |
 | "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,
@@ -331,7 +334,7 @@ publication model declares that a publication holds it (`deploy.snapshots` in
 page the record lists. A snapshot that stopped at its bound passes and the probe states what
 it left out; one that is missing, names an older commit or does not say what ended its
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
-`test/cases/1096_the_published_ui_is_the_trunks.sh` holds them.
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
 ## What it does not do yet
 

@@ -904,6 +904,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:served.forge",
+      "path": "/evidence/capabilities/served-forge/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:served.observe",
       "path": "/evidence/capabilities/served-observe/"
     },
@@ -3156,6 +3161,11 @@
       "kind": "command",
       "subject": "command:serve",
       "path": "/evidence/commands/serve/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:served forge",
+      "path": "/evidence/commands/served-forge/"
     },
     {
       "kind": "command",
@@ -5719,6 +5729,18 @@
       "programs": [],
       "members": [
         "command:rules show"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:served.forge": {
+      "kind": "capability",
+      "id": "served.forge",
+      "page": "/evidence/capabilities/served-forge/",
+      "programs": [],
+      "members": [
+        "command:served forge"
       ],
       "routes": [],
       "mechanisms": [],
@@ -16574,6 +16596,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:served forge": {
+      "kind": "command",
+      "id": "served forge",
+      "page": "/evidence/commands/served-forge/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:served observe": {
       "kind": "command",
       "id": "served observe",
@@ -22303,6 +22344,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-visualisation-is-interactive": {
+      "kind": "rule",
+      "id": "project.a-visualisation-is-interactive",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1102_a_visualisation_is_interactive",
+          "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1102_a_visualisation_is_interactive.sh",
+            ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/visualisation-check"
+      ],
+      "findings": []
+    },
     "rule:project.a-worker-that-stops-leaves-its-work-behind": {
       "kind": "rule",
       "id": "project.a-worker-that-stops-leaves-its-work-behind",
@@ -23747,6 +23811,37 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.markdown-is-rendered-once": {
+      "kind": "rule",
+      "id": "project.markdown-is-rendered-once",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:markdown_bodies",
+          "path": "apps/majordomus-cli/tests/markdown_bodies.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/markdown_bodies.rs",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1101_markdown_is_rendered_once",
+          "path": "test/cases/1101_markdown_is_rendered_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1101_markdown_is_rendered_once.sh",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.mesh-cooperation-is-authenticated": {
       "kind": "rule",
       "id": "project.mesh-cooperation-is-authenticated",
@@ -24953,21 +25048,21 @@
         },
         {
           "via": "rule",
-          "test": "suite:1096_the_published_ui_is_the_trunks",
-          "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/1096_the_published_ui_is_the_trunks.sh",
-            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:180_publication_is_observed",
           "path": "test/cases/180_publication_is_observed.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/180_publication_is_observed.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2983_the_published_ui_is_the_trunks",
+          "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2983_the_published_ui_is_the_trunks.sh",
             ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
           ]
         },

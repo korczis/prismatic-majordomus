@@ -302,6 +302,103 @@ export function designCheck() {
 }
 designCheck();
 
+// A Markdown body's diagrams. The server draws a fenced `mermaid` block as its source
+// (`data-mj-diagram`), which is what a reader without this script reads; with it, and with
+// the library vendored, each source becomes the figure it describes. The source is passed
+// as text and the library is told to trust none of it, so a record cannot script the page.
+// A diagram the library refuses keeps its source and says why in its title.
+//
+// A figure is not a picture (project.a-visualisation-is-interactive): every node that names
+// something the server could resolve — `data-mj-links`, the JSON object of name to address
+// the renderer derived from the source — is a link to it, reachable by keyboard, and the
+// source the figure was drawn from is one press away.
+const SVG = 'http://www.w3.org/2000/svg';
+
+/** The address a node's label names, when the server resolved one for it. */
+function leadOf(label, leads) {
+  const text = label.replace(/\s+/g, ' ').trim();
+  if (leads[text]) return leads[text];
+  // a label is often a sentence that names one record: the longest name it contains
+  const named = Object.keys(leads)
+    .filter((name) => text.split(/[^A-Za-z0-9_./:-]+/).includes(name))
+    .sort((x, y) => y.length - x.length)[0];
+  return named ? leads[named] : null;
+}
+
+/** Make every node that names something a link to it. Returns how many it linked. */
+function linkNodes(figure, leads) {
+  let linked = 0;
+  for (const node of figure.querySelectorAll('g.node, g.cluster, g.actor, g.classGroup, g.statediagram-state')) {
+    const href = leadOf(node.textContent || '', leads);
+    if (!href || node.closest('a')) continue;
+    const anchor = document.createElementNS(SVG, 'a');
+    anchor.setAttribute('href', href);
+    anchor.setAttribute('class', 'mj-diagram-link');
+    anchor.setAttribute('aria-label', (node.textContent || '').replace(/\s+/g, ' ').trim());
+    node.parentNode.insertBefore(anchor, node);
+    anchor.appendChild(node);
+    linked += 1;
+  }
+  return linked;
+}
+
+/** The control that shows a drawn diagram's source again, and the figure after it. */
+function sourceToggle(holder, figure, source) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'mj-diagram-toggle';
+  button.setAttribute('aria-pressed', 'false');
+  button.textContent = 'Source';
+  const text = document.createElement('code');
+  text.textContent = source;
+  text.hidden = true;
+  button.addEventListener('click', () => {
+    const showing = button.getAttribute('aria-pressed') === 'true';
+    button.setAttribute('aria-pressed', String(!showing));
+    button.textContent = showing ? 'Source' : 'Figure';
+    text.hidden = showing;
+    figure.classList.toggle('mj-hidden', !showing);
+  });
+  holder.replaceChildren(button, figure, text);
+}
+
+async function drawDiagrams() {
+  const sources = [...document.querySelectorAll('[data-mj-diagram="mermaid"]:not([data-mj-drawn])')];
+  if (!sources.length) return;
+  let mermaid;
+  try {
+    mermaid = await vendor('mermaid.min.js', 'mermaid');
+  } catch (error) {
+    return; // the sources stand
+  }
+  // which of the library's two palettes: the page's theme, by the class the page names
+  const inverted = document.documentElement.classList.contains(THEME_CLASS);
+  mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: inverted ? 'dark' : 'neutral' });
+  let n = 0;
+  for (const holder of sources) {
+    const source = holder.textContent;
+    try {
+      const { svg } = await mermaid.render('mj-diagram-' + n++, source);
+      const figure = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+      if (figure.nodeName !== 'svg') throw new Error('the library drew no figure');
+      figure.setAttribute('role', 'img');
+      figure.setAttribute('aria-label', 'Diagram: ' + source.trim().split('\n')[0]);
+      let leads = {};
+      try {
+        leads = JSON.parse(holder.dataset.mjLinks || '{}') || {};
+      } catch (error) {
+        leads = {};
+      }
+      sourceToggle(holder, figure, source);
+      holder.dataset.mjDrawn = '';
+      holder.dataset.mjLinked = String(linkNodes(figure, leads));
+    } catch (error) {
+      holder.title = 'This diagram could not be drawn: ' + error.message;
+    }
+  }
+}
+drawDiagrams();
+
 // the ES module build: it exports Alpine and starts nothing, so the component is
 // registered before the first element is initialised. The CDN build starts itself on a
 // microtask, which is earlier than this module runs, and every attribute then names a

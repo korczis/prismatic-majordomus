@@ -180,6 +180,12 @@ jobs:
         with:
           fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
+      # `generation-converges` runs the generator, and the editor projection is one of its
+      # targets: it reads the tracked justfile's recipes through `just --dump` (ADR 0140) and
+      # refuses without it, so this job owes `just` exactly as the jobs that set Rust up do.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       - name: pinned actionlint
         env:
           ACTIONLINT_VERSION: "1.7.7"
