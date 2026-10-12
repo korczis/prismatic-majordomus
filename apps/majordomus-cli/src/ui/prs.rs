@@ -1335,6 +1335,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(5),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -1392,6 +1393,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
@@ -1621,6 +1623,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 

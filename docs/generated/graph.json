@@ -2370,6 +2370,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/readings.rs",
+        "kind": "file",
+        "label": "readings.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/readings.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/registry.rs",
         "kind": "file",
         "label": "registry.rs",
@@ -3231,6 +3239,14 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/ui/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/ui/source.rs",
+        "kind": "file",
+        "label": "source.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/source.rs",
         "external": true
       },
       {
@@ -6935,6 +6951,35 @@
             "interface",
             "ui",
             "pages"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0142",
+        "kind": "adr",
+        "label": "adr-0142",
+        "summary": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+        "route": "/cockpit/objects/adr/adr-0142",
+        "source": ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
+            "file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:apps/majordomus-cli/src/capability/readings.rs",
+            "file:apps/majordomus-cli/src/capability/executor.rs",
+            "file:apps/majordomus-cli/src/ui/source.rs",
+            "file:docs/MAJORDOMUS_UI.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "performance",
+            "cache"
           ]
         }
       },
@@ -34145,6 +34190,189 @@
         }
       },
       {
+        "id": "majordomus://issue/I2486",
+        "kind": "issue",
+        "label": "I2486",
+        "summary": "No screen waits for a source: a page shows the latest reading with its age, read again behind the reader",
+        "route": "/cockpit/objects/issue/i2486",
+        "source": ".ai/repo/project/issues/I2486.yaml",
+        "facts": {
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2461"
+          ],
+          "evidence_required": [
+            "readings_executor_tests",
+            "ui_standing_unit_tests",
+            "no_screen_waits_case_1096",
+            "ui_latency_before_after"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/src/capability/handler.rs",
+            "apps/majordomus-cli/src/capability/mod.rs",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/tests/executor.rs",
+            "share/ui/ui.js",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/CLI.md",
+            "test/cases/1096_no_screen_waits_for_a_source.sh",
+            ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+            ".ai/repo/project/issues/I2486.yaml"
+          ],
+          "slug": "no-screen-waits-for-a-source",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test executor",
+            "cargo test --lib ui::",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2487",
+        "kind": "issue",
+        "label": "I2487",
+        "summary": "A screen is streamed, and one stream tells an open page which readings changed",
+        "route": "/cockpit/objects/issue/i2487",
+        "source": ".ai/repo/project/issues/I2487.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The first bytes of a screen whose slowest source is pending arrive before that source answers, and the response ends with that panel in its place",
+            "With scripts off, every screen is complete HTML once the response ends",
+            "A change of a reading reaches a subscribed page as one typed event naming the source, and the page replaces the panels that cite it without reading the whole screen again",
+            "A subscriber that fell behind is told so and reads the screen again; it is never left showing a value it was not told had changed",
+            "The UI's script holds no timer that reads a screen again"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2486"
+          ],
+          "evidence_required": [
+            "streamed_response_tests",
+            "reading_changed_event_tests",
+            "a_screen_is_streamed_case_1097",
+            "browser_probe_no_poll"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "share/ui/ui.js",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1097_a_screen_is_streamed.sh",
+            ".ai/repo/project/issues/I2487.yaml"
+          ],
+          "slug": "a-screen-is-streamed-and-follows-its-readings",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib http::",
+            "cargo test --lib ui::",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1097_a_screen_is_streamed"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2488",
+        "kind": "issue",
+        "label": "I2488",
+        "summary": "The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum",
+        "route": "/cockpit/objects/issue/i2488",
+        "source": ".ai/repo/project/issues/I2488.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One bench target times the same three routes on both stacks, with and without N idle subscribers, and its results are recorded with the commit, the host and the build profile",
+            "The decision record states the numbers it was decided from and what the move costs, and proposes one stack",
+            "No second HTTP stack is left in the default build"
+          ],
+          "created_at": "2026-10-12",
+          "current_state": "tiny_http 0.12, synchronous, four accept threads, a thread per request, 64 handlers at most, WebSocket upgrades on threads of their own, no compression, Content-Length always.",
+          "depends_on": [
+            "I2486"
+          ],
+          "evidence_required": [
+            "http_stack_benchmark_results",
+            "http_stack_decision_record"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "apps/majordomus-cli/src/bench",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/Cargo.toml",
+            ".ai/repo/adrs",
+            "docs/PERFORMANCE.md",
+            "test/cases/1098_the_http_stack_is_measured.sh",
+            ".ai/repo/project/issues/I2488.yaml"
+          ],
+          "slug": "the-http-stack-is-chosen-by-measurement",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus bench system.http --profile quick --no-write"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2489",
+        "kind": "issue",
+        "label": "I2489",
+        "summary": "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
+        "route": "/cockpit/objects/issue/i2489",
+        "source": ".ai/repo/project/issues/I2489.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A screen made slower than its budget in a fixture fails the gate, which names the screen, the measured p95 and the budget",
+            "The budget is read from the policy, and a policy without the key is a policy error and not a default",
+            "The bench measures the request after the repository moved as well as the warm one",
+            "The gate's verdict on a shared runner uses the same tolerance rule the existing bench-check does, and says which rule it applied"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2486"
+          ],
+          "evidence_required": [
+            "ui_budget_gate_case_1099",
+            "ui_budget_bench_results"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/ci",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+            "scripts/ci",
+            "docs/PERFORMANCE.md",
+            "test/cases/1099_a_screen_over_its_budget_fails.sh",
+            ".ai/repo/project/issues/I2489.yaml"
+          ],
+          "slug": "a-screen-over-its-budget-fails-the-build",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -41988,6 +42216,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "kind": "rule",
+        "label": "project.no-screen-waits-for-a-source@1",
+        "summary": "A screen shows the latest reading of its sources at once, and never waits for a handler",
+        "route": "/cockpit/objects/rule/project-no-screen-waits-for-a-source-1",
+        "source": ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-derived-state@1",
+            "project.cache-is-invisible@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "ui",
+            "performance",
+            "cache",
+            "derivation",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "rule",
         "label": "project.one-derive-at-a-time@1",
@@ -47683,6 +47935,13 @@
         "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "route": "/cockpit/objects/test/test-cases-1093-the-ui-snapshot-links-nothing-absent-sh",
         "source": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1096_no_screen_waits_for_a_source.sh",
+        "kind": "test",
+        "label": "test/cases/1096_no_screen_waits_for_a_source.sh",
+        "route": "/cockpit/objects/test/test-cases-1096-no-screen-waits-for-a-source-sh",
+        "source": "test/cases/1096_no_screen_waits_for_a_source.sh"
       },
       {
         "id": "majordomus://test/test/cases/109_design_system.sh",
@@ -60050,6 +60309,51 @@
       {
         "source": "majordomus://adr/adr-0141",
         "target": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "file:apps/majordomus-cli/src/capability/executor.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "file:apps/majordomus-cli/src/capability/readings.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "file:apps/majordomus-cli/src/ui/source.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "majordomus://adr/adr-0033",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "majordomus://adr/adr-0088",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0142",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
         "kind": "put_in_force"
       },
       {
@@ -72928,6 +73232,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2486",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2486",
+        "target": "majordomus://issue/I2461",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2486",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2487",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2487",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2487",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2488",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2488",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2488",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2489",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2489",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2489",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -74923,6 +75287,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "target": "majordomus://rule/project.cache-is-invisible@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.one-derive-at-a-time@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -76379,6 +76763,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1096_no_screen_waits_for_a_source.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -82109,8 +82498,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2682,
-      "edges": 5859,
+      "nodes": 2691,
+      "edges": 5885,
       "acyclic": false,
       "truncated": false
     }

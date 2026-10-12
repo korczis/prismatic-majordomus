@@ -336,6 +336,14 @@ impl Context {
     pub fn execute_observed(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
         self.executor.execute_uncached(self, id, input)
     }
+
+    /// The latest reading of a capability, at once, with how old it is: what a page shows.
+    ///
+    /// Never an answer: see [`crate::capability::readings`] for what it is instead, and
+    /// what it costs.
+    pub fn read(&self, id: &str, input: Value) -> super::readings::Latest {
+        super::readings::read(self, id, input, super::readings::Patience::of_process())
+    }
 }
 
 /// The topology of the repository the index was read from.
