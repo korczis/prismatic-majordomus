@@ -1150,7 +1150,11 @@ cmd_release_live() {
   [ -n "$window" ] || window="$(m deploy.release_window)"
   case "$window" in ''|*[!0-9]*) echo "pages release-live: no numeric deploy.release_window in ${MODEL#"$ROOT"/} and no --window" >&2; return 12 ;; esac
   case "$wait" in *[!0-9]*) echo "pages release-live: --wait takes seconds" >&2; exit 2 ;; esac
+  # Where the releases are published is the distribution model's `repository`; a tree without
+  # that projection is asked the way `pages built` asks, so pages-check has one slug for both.
   [ -n "$repo" ] || repo="$(jq -r '.repository // empty' "$ROOT/site/data/registry/distribution.json" 2>/dev/null || true)"
+  [ -n "$repo" ] || repo="${GITHUB_REPOSITORY:-}"
+  [ -n "$repo" ] || repo="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
   command -v curl >/dev/null || { echo "pages release-live: curl is required" >&2; return 12; }
   url="${url%/}"
   local home_url="$url/"
