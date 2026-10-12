@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CONTEXT_KIND","GLOB_PREFIX","SOURCES_FILE","SOURCES_VERSION"],"enum":["DiscoveryKind"],"fn":["discover"],"mod":["glob"],"struct":["DiscoveredFile","FileSystem","SourceClass","Sources","VcsIndex"],"trait":["DiscoverySource"]};
+window.SIDEBAR_ITEMS = {"constant":["CONTEXT_KIND","GLOB_PREFIX","SOURCES_FILE","SOURCES_VERSION"],"enum":["DiscoveryKind"],"fn":["discover","layer_is_untracked"],"mod":["glob"],"struct":["DiscoveredFile","FileSystem","SourceClass","Sources","VcsIndex"],"trait":["DiscoverySource"]};

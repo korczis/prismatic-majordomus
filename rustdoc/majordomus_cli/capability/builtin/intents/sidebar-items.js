@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["INTENTS_URI"],"fn":["module"],"struct":["IntentBindingInput","IntentList","IntentPreflightInput","IntentRecordInput","IntentValidation"]};
+window.SIDEBAR_ITEMS = {"constant":["INTENTS_URI"],"fn":["module"],"struct":["IntentBindingInput","IntentList","IntentPreflightInput","IntentProposeInput","IntentRecordInput","IntentValidation"]};

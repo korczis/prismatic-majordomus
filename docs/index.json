@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "92cc480679bb092d81d9acf4d7a818638bfa8e8d",
+  "commit": "23c5c31be3d595e1a2163246f984cbbbd2ec55ea",
   "source_version": "0.22.0",
-  "registry_fingerprint": "5b5053f8de8104a7b864770bc35634503c7d4c71f11ed2f9e1722302249f88de"
+  "registry_fingerprint": "29d73e33e3d5e084ea20d488e1a8d106a78a74d009d323db9f8ea27d0638fb2a"
  },
  "counts": {
-  "pages": 2136,
-  "capabilities": 2285,
-  "cli_commands": 105,
-  "http_routes": 190,
-  "mcp_tools": 186,
-  "mcp_resources": 2146,
+  "pages": 2144,
+  "capabilities": 2295,
+  "cli_commands": 106,
+  "http_routes": 191,
+  "mcp_tools": 187,
+  "mcp_resources": 2155,
   "modules": 90
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 98
+   "count": 100
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 244
+   "count": 245
   },
   {
    "kind": "command",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 340
+   "count": 341
   },
   {
    "kind": "domain",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 336
+   "count": 337
   },
   {
    "kind": "knowledge",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 171
+   "count": 172
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 456
+   "count": 458
   },
   {
    "kind": "use-case",
@@ -278,7 +278,7 @@
    "route": "/use-cases/",
    "title": null,
    "reason": null,
-   "count": 48
+   "count": 49
   },
   {
    "kind": "workspace",
@@ -1182,6 +1182,24 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0142",
    "source": ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0144/",
+   "title": "An intent is proposed by a capability, and its stage stays derived",
+   "description": "An intent is proposed by a capability, and its stage stays derived",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0144",
+   "source": ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0145/",
+   "title": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+   "description": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0145",
+   "source": ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md",
    "section": "Decisions"
   },
   {
@@ -2412,6 +2430,12 @@
    "route": "/docs/cli/intent/preflight/",
    "title": "majordomus intent preflight",
    "description": "Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/intent/propose/",
+   "title": "majordomus intent propose",
+   "description": "Write a new, unplanned intent: what must become true (ADR 0144)",
    "section": "Documentation"
   },
   {
@@ -5094,6 +5118,12 @@
    "route": "/guarantees/overlap-report/",
    "title": "Overlap between parallel workers is computed on claimed paths in both containment directions",
    "description": "When a task starts, Majordomus looks at every other worktree of the same repository, reads its active task record if it has one, and reports any scope entry that contains or is contained by yours: lib/auth overlaps lib/auth/oauth in both directions. It is a report, not a block.",
+   "section": "Guaranteed, advisory, planned"
+  },
+  {
+   "route": "/guarantees/personal-layer-changes-nothing-shared/",
+   "title": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+   "description": "majordomus init --personal, and the installer's --personal, create the same layer a",
    "section": "Guaranteed, advisory, planned"
   },
   {
@@ -7815,6 +7845,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2491/",
+   "title": "I2491 — A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team",
+   "description": "Let one person use the tool on real work in a repository other people share without changing anything shared: one flag on init and on the installer, every later writer covered by the same mechanism, the result verified at install and on every doctor, the executable reading an untracked layer without being told to, and one command that hands the layer to the team.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
@@ -8538,6 +8574,12 @@
    "route": "/registry/capabilities/intents-preflight/",
    "title": "intents.preflight",
    "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/intents-propose/",
+   "title": "intents.propose",
+   "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
    "section": "Registry"
   },
   {
@@ -10140,6 +10182,15 @@
    "section": "Rules"
   },
   {
+   "route": "/rules/project-a-personal-layer-changes-nothing-shared-1/",
+   "title": "A personal layer changes nothing shared",
+   "description": "A personal layer changes nothing shared",
+   "kind": "rule",
+   "id": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+   "source": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md",
+   "section": "Rules"
+  },
+  {
    "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
    "title": "A plan carries the intent it serves, and is reviewed before it is executed",
    "description": "A plan carries the intent it serves, and is reviewed before it is executed",
@@ -11096,7 +11147,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.22.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 92cc480679bb092d81d9acf4d7a818638bfa8e8d: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 23c5c31be3d595e1a2163246f984cbbbd2ec55ea: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.22.0 — Rust API reference"
   },
   {
@@ -13545,6 +13596,12 @@
    "route": "/use-cases/trust-the-policy-before-reading-it/",
    "title": "Trust the policy and the profiles only after they are validated",
    "description": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
+   "section": "Use cases"
+  },
+  {
+   "route": "/use-cases/use-the-tool-as-your-own-in-a-shared-repository/",
+   "title": "Use the tool as your own in a shared repository, and propose it to the team when it has made its case",
+   "description": "One flag installs the same layer as yours alone: no tracked file changes, nothing is added to .gitignore, git status reads the same — the command checks it — and one more command hands the layer to the team.",
    "section": "Use cases"
   },
   {

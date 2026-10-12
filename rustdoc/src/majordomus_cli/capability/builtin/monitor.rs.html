@@ -382,52 +382,56 @@
 <a href=#382 id=382 data-nosnippet>382</a>
 <a href=#383 id=383 data-nosnippet>383</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().unwrap();
 <a href=#384 id=384 data-nosnippet>384</a>        <span class="kw">let </span>ctx = context(<span class="kw-2">&amp;</span>repo);
-<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>config: MeshConfig = serde_json::from_value(<span class="macro">json!</span>({
-<a href=#386 id=386 data-nosnippet>386</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh"</span>, <span class="string">"id"</span>: <span class="string">"majordomus"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true</span>,
-<a href=#387 id=387 data-nosnippet>387</a>            <span class="string">"multicast"</span>: { <span class="string">"enabled"</span>: <span class="bool-val">false </span>},
-<a href=#388 id=388 data-nosnippet>388</a>        }))
-<a href=#389 id=389 data-nosnippet>389</a>        .unwrap();
-<a href=#390 id=390 data-nosnippet>390</a>        ctx.mesh
-<a href=#391 id=391 data-nosnippet>391</a>            .activate_as(
-<a href=#392 id=392 data-nosnippet>392</a>                <span class="kw-2">&amp;</span>config,
-<a href=#393 id=393 data-nosnippet>393</a>                Arc::new(NodeIdentity::ephemeral().unwrap()),
-<a href=#394 id=394 data-nosnippet>394</a>                <span class="string">"0000000000000001"</span>,
-<a href=#395 id=395 data-nosnippet>395</a>                <span class="macro">vec!</span>[],
-<a href=#396 id=396 data-nosnippet>396</a>                <span class="macro">vec!</span>[<span class="string">"root"</span>.into()],
-<a href=#397 id=397 data-nosnippet>397</a>                <span class="string">"test"</span>,
-<a href=#398 id=398 data-nosnippet>398</a>            )
-<a href=#399 id=399 data-nosnippet>399</a>            .unwrap();
-<a href=#400 id=400 data-nosnippet>400</a>        <span class="kw">let </span>other = NodeIdentity::ephemeral().unwrap();
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">let </span>envelope = advertise(<span class="kw-2">&amp;</span>other, <span class="number">1</span>, <span class="kw-2">&amp;</span>[<span class="string">"127.0.0.1:1"</span>.into()], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="string">"test"</span>);
-<a href=#402 id=402 data-nosnippet>402</a>        ctx.mesh
-<a href=#403 id=403 data-nosnippet>403</a>            .register(<span class="kw-2">&amp;</span>serde_json::to_value(<span class="kw-2">&amp;</span>envelope).unwrap(), <span class="string">"test"</span>);
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="macro">assert_eq!</span>(ctx.mesh.nodes().len(), <span class="number">1</span>, <span class="string">"the other node was heard"</span>);
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>c = cooperation();
-<a href=#406 id=406 data-nosnippet>406</a>        session(<span class="kw-2">&amp;</span>c, <span class="string">"s1"</span>, <span class="string">"3d"</span>, <span class="string">"the runtime train"</span>);
-<a href=#407 id=407 data-nosnippet>407</a>        ctx.mesh.attach_cooperation(Arc::clone(<span class="kw-2">&amp;</span>c));
-<a href=#408 id=408 data-nosnippet>408</a>
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">let </span>page = monitor(<span class="kw-2">&amp;</span>ctx, input(<span class="string">"mesh"</span>)).unwrap();
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="macro">assert_eq!</span>(state(<span class="kw-2">&amp;</span>page, MonitorSource::Mesh).<span class="number">0</span>, MonitorSourceHealth::Ok);
-<a href=#411 id=411 data-nosnippet>411</a>        <span class="macro">assert_eq!</span>(
-<a href=#412 id=412 data-nosnippet>412</a>            state(<span class="kw-2">&amp;</span>page, MonitorSource::Executor).<span class="number">0</span>,
-<a href=#413 id=413 data-nosnippet>413</a>            MonitorSourceHealth::Skipped
-<a href=#414 id=414 data-nosnippet>414</a>        );
-<a href=#415 id=415 data-nosnippet>415</a>        <span class="kw">let </span>page = monitor(<span class="kw-2">&amp;</span>ctx, input(<span class="string">"executor"</span>)).unwrap();
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="macro">assert_eq!</span>(
-<a href=#417 id=417 data-nosnippet>417</a>            state(<span class="kw-2">&amp;</span>page, MonitorSource::Mesh).<span class="number">0</span>,
-<a href=#418 id=418 data-nosnippet>418</a>            MonitorSourceHealth::Skipped
-<a href=#419 id=419 data-nosnippet>419</a>        );
-<a href=#420 id=420 data-nosnippet>420</a>        ctx.mesh.stop();
-<a href=#421 id=421 data-nosnippet>421</a>    }
-<a href=#422 id=422 data-nosnippet>422</a>
-<a href=#423 id=423 data-nosnippet>423</a>    <span class="attr">#[test]
-<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">fn </span>the_benchmark_cases_never_reach_the_network() {
-<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>cases = cases();
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="macro">assert_eq!</span>(cases.len(), <span class="number">2</span>);
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">for </span>case <span class="kw">in </span>cases {
-<a href=#428 id=428 data-nosnippet>428</a>            <span class="kw">let </span>sources = wanted(case.input.sources.as_deref()).unwrap();
-<a href=#429 id=429 data-nosnippet>429</a>            <span class="macro">assert!</span>(!sources.contains(<span class="kw-2">&amp;</span>MonitorSource::Github), <span class="string">"{}"</span>, case.name);
-<a href=#430 id=430 data-nosnippet>430</a>        }
-<a href=#431 id=431 data-nosnippet>431</a>    }
-<a href=#432 id=432 data-nosnippet>432</a>}
+<a href=#385 id=385 data-nosnippet>385</a>        <span class="comment">// this machine's own key is listed: a machine its trust list does not name keeps its
+<a href=#386 id=386 data-nosnippet>386</a>        // mesh closed and hears nobody
+<a href=#387 id=387 data-nosnippet>387</a>        </span><span class="kw">let </span>this = NodeIdentity::ephemeral().unwrap();
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">let </span>config: MeshConfig = serde_json::from_value(<span class="macro">json!</span>({
+<a href=#389 id=389 data-nosnippet>389</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh"</span>, <span class="string">"id"</span>: <span class="string">"majordomus"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true</span>,
+<a href=#390 id=390 data-nosnippet>390</a>            <span class="string">"multicast"</span>: { <span class="string">"enabled"</span>: <span class="bool-val">false </span>},
+<a href=#391 id=391 data-nosnippet>391</a>            <span class="string">"trust"</span>: { <span class="string">"allow"</span>: [this.public.public_key.clone()] },
+<a href=#392 id=392 data-nosnippet>392</a>        }))
+<a href=#393 id=393 data-nosnippet>393</a>        .unwrap();
+<a href=#394 id=394 data-nosnippet>394</a>        ctx.mesh
+<a href=#395 id=395 data-nosnippet>395</a>            .activate_as(
+<a href=#396 id=396 data-nosnippet>396</a>                <span class="kw-2">&amp;</span>config,
+<a href=#397 id=397 data-nosnippet>397</a>                Arc::new(this),
+<a href=#398 id=398 data-nosnippet>398</a>                <span class="string">"0000000000000001"</span>,
+<a href=#399 id=399 data-nosnippet>399</a>                <span class="macro">vec!</span>[],
+<a href=#400 id=400 data-nosnippet>400</a>                <span class="macro">vec!</span>[<span class="string">"root"</span>.into()],
+<a href=#401 id=401 data-nosnippet>401</a>                <span class="string">"test"</span>,
+<a href=#402 id=402 data-nosnippet>402</a>            )
+<a href=#403 id=403 data-nosnippet>403</a>            .unwrap();
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>other = NodeIdentity::ephemeral().unwrap();
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>envelope = advertise(<span class="kw-2">&amp;</span>other, <span class="number">1</span>, <span class="kw-2">&amp;</span>[<span class="string">"127.0.0.1:1"</span>.into()], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="string">"test"</span>);
+<a href=#406 id=406 data-nosnippet>406</a>        ctx.mesh
+<a href=#407 id=407 data-nosnippet>407</a>            .register(<span class="kw-2">&amp;</span>serde_json::to_value(<span class="kw-2">&amp;</span>envelope).unwrap(), <span class="string">"test"</span>);
+<a href=#408 id=408 data-nosnippet>408</a>        <span class="macro">assert_eq!</span>(ctx.mesh.nodes().len(), <span class="number">1</span>, <span class="string">"the other node was heard"</span>);
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">let </span>c = cooperation();
+<a href=#410 id=410 data-nosnippet>410</a>        session(<span class="kw-2">&amp;</span>c, <span class="string">"s1"</span>, <span class="string">"3d"</span>, <span class="string">"the runtime train"</span>);
+<a href=#411 id=411 data-nosnippet>411</a>        ctx.mesh.attach_cooperation(Arc::clone(<span class="kw-2">&amp;</span>c));
+<a href=#412 id=412 data-nosnippet>412</a>
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="kw">let </span>page = monitor(<span class="kw-2">&amp;</span>ctx, input(<span class="string">"mesh"</span>)).unwrap();
+<a href=#414 id=414 data-nosnippet>414</a>        <span class="macro">assert_eq!</span>(state(<span class="kw-2">&amp;</span>page, MonitorSource::Mesh).<span class="number">0</span>, MonitorSourceHealth::Ok);
+<a href=#415 id=415 data-nosnippet>415</a>        <span class="macro">assert_eq!</span>(
+<a href=#416 id=416 data-nosnippet>416</a>            state(<span class="kw-2">&amp;</span>page, MonitorSource::Executor).<span class="number">0</span>,
+<a href=#417 id=417 data-nosnippet>417</a>            MonitorSourceHealth::Skipped
+<a href=#418 id=418 data-nosnippet>418</a>        );
+<a href=#419 id=419 data-nosnippet>419</a>        <span class="kw">let </span>page = monitor(<span class="kw-2">&amp;</span>ctx, input(<span class="string">"executor"</span>)).unwrap();
+<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert_eq!</span>(
+<a href=#421 id=421 data-nosnippet>421</a>            state(<span class="kw-2">&amp;</span>page, MonitorSource::Mesh).<span class="number">0</span>,
+<a href=#422 id=422 data-nosnippet>422</a>            MonitorSourceHealth::Skipped
+<a href=#423 id=423 data-nosnippet>423</a>        );
+<a href=#424 id=424 data-nosnippet>424</a>        ctx.mesh.stop();
+<a href=#425 id=425 data-nosnippet>425</a>    }
+<a href=#426 id=426 data-nosnippet>426</a>
+<a href=#427 id=427 data-nosnippet>427</a>    <span class="attr">#[test]
+<a href=#428 id=428 data-nosnippet>428</a>    </span><span class="kw">fn </span>the_benchmark_cases_never_reach_the_network() {
+<a href=#429 id=429 data-nosnippet>429</a>        <span class="kw">let </span>cases = cases();
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="macro">assert_eq!</span>(cases.len(), <span class="number">2</span>);
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">for </span>case <span class="kw">in </span>cases {
+<a href=#432 id=432 data-nosnippet>432</a>            <span class="kw">let </span>sources = wanted(case.input.sources.as_deref()).unwrap();
+<a href=#433 id=433 data-nosnippet>433</a>            <span class="macro">assert!</span>(!sources.contains(<span class="kw-2">&amp;</span>MonitorSource::Github), <span class="string">"{}"</span>, case.name);
+<a href=#434 id=434 data-nosnippet>434</a>        }
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>}
 </code></pre></div></section></main></body></html>

@@ -316,6 +316,10 @@ The GitHub projection closes a milestone without reading the intents it realises
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/registry/capabilities/intents-propose/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Propose an intent: what must become true</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
               <a href="https://majordomus.dev/registry/capabilities/intents-record/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One intent, with everything derived about it</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
@@ -348,7 +352,7 @@ The GitHub projection closes a milestone without reading the intents it realises
       <p class="mt-1 text-sm text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
       <ul class="mt-3 flex flex-wrap gap-2">
         <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">35</span></li>
-        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">336</span></li>
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">337</span></li>
         <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">intent</code><span class="font-mono text-xs text-body-subtle">4</span></li>
       </ul>
     </section><section id="relationships" class="mt-12 scroll-mt-24" aria-labelledby="relationships-h">
@@ -493,6 +497,12 @@ The GitHub projection closes a milestone without reading the intents it realises
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/cli/intent/preflight/" class="text-fg-brand hover:underline">majordomus intent preflight</a></td>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/intents/#op-intents-preflight" class="text-fg-brand hover:underline">GET /api/v1/intents/preflight</a></td>
               <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_preflight</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/intents-propose/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.propose</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/cli/intent/propose/" class="text-fg-brand hover:underline">majordomus intent propose</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/intents/#op-intents-propose" class="text-fg-brand hover:underline">POST /api/v1/intents/propose</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_propose</span></td>
             </tr>
             <tr class="align-baseline">
               <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/intents-record/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.record</a></th>
@@ -698,6 +708,9 @@ The GitHub projection closes a milestone without reading the intents it realises
         <li class="p-3">
           <a href="https://majordomus.dev/docs/cli/intent/explain/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent explain [OPTIONS] &lt;ID&gt;</a><p class="mt-1 text-sm text-body">Why an intent stands where it stands: its stage, each criterion, the work realising it</p>
         </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/docs/cli/intent/propose/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent propose [OPTIONS]</a><p class="mt-1 text-sm text-body">Write a new, unplanned intent: what must become true (ADR 0144)</p>
+        </li>
       </ul>
     </section><section id="provenance" class="mt-12 scroll-mt-24" aria-labelledby="provenance-h">
       <h2 id="provenance-h" class="text-xl font-semibold tracking-tight text-heading">Where this page comes from</h2>
@@ -791,11 +804,11 @@ The GitHub projection closes a milestone without reading the intents it realises
     </nav>
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">22</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">22</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">22</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">10</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">375</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">23</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">23</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">23</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">11</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">376</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">15</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">use cases</dt><dd class="font-mono text-sm text-heading">3</dd></div>
@@ -850,9 +863,9 @@ The GitHub projection closes a milestone without reading the intents it realises
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/23c5c31be3d595e1a2163246f984cbbbd2ec55ea/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/23c5c31be3d595e1a2163246f984cbbbd2ec55ea/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/23c5c31be3d595e1a2163246f984cbbbd2ec55ea/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -860,7 +873,7 @@ The GitHub projection closes a milestone without reading the intents it realises
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/92cc480679bb092d81d9acf4d7a818638bfa8e8d" class="font-mono underline">92cc480</a> · inputs <span class="font-mono">6a1a7cd766cf</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/23c5c31be3d595e1a2163246f984cbbbd2ec55ea" class="font-mono underline">23c5c31</a> · inputs <span class="font-mono">e599b21bdc40</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
