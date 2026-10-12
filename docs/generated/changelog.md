@@ -12,6 +12,15 @@ Current version: **0.21.0**
 ### Decisions
 
 - **ADR-0139** Worktrees share what cargo compiles on the way, and keep their own finished artifacts _(proposed)_
+- **ADR-0138** A train of pull requests is a typed object that can be seen _(proposed)_
+- **ADR-0136** Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it _(proposed)_
+- **ADR-0135** `majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it _(accepted)_
+- **ADR-0134** The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor _(proposed)_
+- **ADR-0133** Everything that happens in the repository is followed in one stream, folded and addressed _(proposed)_
+- **ADR-0131** A release publishes its metadata to the site before its record lands, and the site never goes back a release _(proposed)_
+- **ADR-0129** A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has _(proposed)_
+- **ADR-0126** A caller beyond loopback reads, and changes nothing it cannot authenticate _(proposed)_
+- **ADR-0118** A session leaves what it observed, and the boundary keeps one routed candidate per defect _(proposed)_
 
 ### Added
 

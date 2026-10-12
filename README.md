@@ -505,7 +505,6 @@ just build                      # cargo build of apps/majordomus-cli (or: cargo 
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
 just serve                      # the shared server alone: the home page at /, the UI at /ui, the docs at /docs/, the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
 just home                       # open the running server's home page: every surface it serves
-just open ui                    # open the running server's UI (majordomus ui) in a browser
 just cockpit                    # open the running server's Cockpit in a browser
 just site-docs                  # build the documentation for the running server's /docs/ mount
 just cockpit-assets             # build the Cockpit's stylesheet and vendor its pinned libraries (needs npm ci)

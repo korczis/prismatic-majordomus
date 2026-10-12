@@ -129,6 +129,20 @@ pub enum Scope {
 ///
 /// The event is still the same typed event, with its sequence, so nothing about the
 /// execution's story is lost — only the value is read elsewhere, from the snapshot.
+///
+/// ```
+/// use majordomus_cli::http::events::Withheld;
+/// let w = Withheld {
+///     withheld: "too_large".into(),
+///     bytes: 2_000_000,
+///     limit: 1_048_576,
+///     itself: "/api/v1/executions/get?id=e1".into(),
+/// };
+/// let json = serde_json::to_value(&w).unwrap();
+/// assert_eq!(json["self"], "/api/v1/executions/get?id=e1", "the reference is `self` on the wire");
+/// assert!(json.get("itself").is_none());
+/// assert_eq!(serde_json::from_value::<Withheld>(json).unwrap(), w);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Withheld {
     /// Why: always `too_large`.
