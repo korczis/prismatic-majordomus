@@ -1796,63 +1796,7 @@ mod tests {
     /// Two runtimes of one process, linked over an in-memory transport: the socket is the
     /// only thing replaced.
     mod mesh_world {
-        use std::collections::BTreeMap;
-        use std::sync::{Arc, Mutex, Weak};
-
-        use crate::mesh::config::{CooperationConfig, TrustConfig};
-        use crate::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-        use crate::mesh::identity::NodeIdentity;
-        use crate::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
-        use crate::mesh::registry::MeshRegistry;
-        use crate::mesh::repository::{of_root_commits, runtime_id};
-        use crate::mesh::trust::TrustPolicy;
-
-        #[derive(Default)]
-        pub struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
-
-        impl LinkTransport for Net {
-            fn post(&self, endpoint: &str, path: &str, m: &Signed) -> Result<LinkReply, String> {
-                let peer = (self.0.lock().unwrap().get(endpoint).and_then(Weak::upgrade))
-                    .ok_or_else(|| format!("{endpoint}: nobody there"))?;
-                Ok(if path == HELLO_PATH {
-                    peer.accept_hello(m)
-                } else {
-                    peer.accept_sync(m)
-                })
-            }
-        }
-
-        /// A runtime at `endpoint` whose links expire three seconds after their last
-        /// exchange: the shortest expiry the declaration admits (three heartbeats).
-        pub fn runtime(net: &Arc<Net>, endpoint: &str) -> Arc<Cooperation> {
-            let c = Cooperation::new(CooperationSetup {
-                identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
-                runtime: runtime_id(endpoint),
-                repository: of_root_commits(&["root".into()]),
-                endpoints: vec![endpoint.into()],
-                version: "test".into(),
-                config: CooperationConfig {
-                    heartbeat_seconds: 1,
-                    expiry_seconds: 3,
-                    ..CooperationConfig::default()
-                },
-                trust: TrustConfig {
-                    policy: TrustPolicy::Tofu,
-                    allow: vec![],
-                },
-                journal_path: None,
-                registry: Arc::new(MeshRegistry::new()),
-                transport: Arc::clone(net) as Arc<dyn LinkTransport>,
-                board: None,
-                checkout: CheckoutFacts::default(),
-            })
-            .unwrap();
-            net.0
-                .lock()
-                .unwrap()
-                .insert(endpoint.into(), Arc::downgrade(&c));
-            c
-        }
+        pub(super) use crate::mesh::testing::{runtime, Net};
     }
 
     #[test]

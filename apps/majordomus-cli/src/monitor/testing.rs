@@ -4,13 +4,8 @@
 use std::sync::Arc;
 
 use crate::capability::Context;
-use crate::mesh::config::{CooperationConfig, TrustConfig};
-use crate::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-use crate::mesh::identity::NodeIdentity;
+use crate::mesh::cooperation::Cooperation;
 use crate::mesh::journal::SessionInfo;
-use crate::mesh::link::HttpTransport;
-use crate::mesh::registry::MeshRegistry;
-use crate::mesh::repository::of_root_commits;
 use crate::synthetic::SyntheticRepository;
 
 /// A context over `repo`, made a git repository first so the executor's trail has a place.
@@ -30,21 +25,7 @@ pub(crate) fn context(repo: &SyntheticRepository) -> Context {
 
 /// A cooperation runtime with an ephemeral identity and no journal file.
 pub(crate) fn cooperation() -> Arc<Cooperation> {
-    Cooperation::new(CooperationSetup {
-        identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
-        runtime: "0000000000000001".into(),
-        repository: of_root_commits(&["root".into()]),
-        endpoints: vec!["127.0.0.1:9".into()],
-        version: "test".into(),
-        config: CooperationConfig::default(),
-        trust: TrustConfig::default(),
-        journal_path: None,
-        registry: Arc::new(MeshRegistry::new()),
-        transport: Arc::new(HttpTransport),
-        board: None,
-        checkout: CheckoutFacts::default(),
-    })
-    .unwrap()
+    crate::mesh::testing::cooperation()
 }
 
 /// Open `session` for `worker`, saying `intent`.

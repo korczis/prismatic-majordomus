@@ -182,7 +182,7 @@ mod tests {
         session(&c, "s1", "3d", "the runtime train");
         c.request_review("s1", "1b, read #885".into(), vec![], None, None)
             .unwrap();
-        ctx.mesh.attach_cooperation(c);
+        crate::mesh::testing::attach(&ctx, c);
 
         let for_1b = page(&ctx, &[("for".into(), "1b".into())]);
         let html = body(&for_1b);

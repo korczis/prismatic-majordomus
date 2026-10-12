@@ -21,7 +21,7 @@ command -v curl >/dev/null 2>&1 || skip "no curl"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; MAJORDOMUS_LOG=error; export MAJORDOMUS_SHARE MAJORDOMUS_LOG
 unset MAJORDOMUS_HTTP_HOST
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj1022.XXXXXX")"
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj1086.XXXXXX")"
 PID=""
 trap '[ -n "$PID" ] && kill "$PID" 2>/dev/null; rm -rf "$S"' EXIT
 
