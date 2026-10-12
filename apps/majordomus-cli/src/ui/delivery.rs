@@ -12,10 +12,18 @@ use serde_json::Value;
 use super::dashboard::releases_panel;
 use super::shell::View;
 use super::source::{ask_all, Source};
-use super::view::{hero, kpi, list, panel, state, table, text, unanswered, wide};
+use super::view::{
+    anchor, code_link, hero, kpi, list, none, panel, table, text, unanswered, value, wide,
+};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/delivery";
+
+/// Where one gate of the CI model is: its row on this screen. A rule's proof and a pull
+/// request's checks name gates by id, and lead here.
+pub fn gate_href(id: &str) -> String {
+    format!("{ROUTE}#gate-{}", anchor(id))
+}
 
 const RELEASES: Source = Source::of("distribution.releases");
 const VERSION: Source = Source::of("release.version");
@@ -58,16 +66,7 @@ pub fn screen(ctx: &Context) -> View {
     let deployed = unanswered(deployments).unwrap_or_else(|| {
         let rows = list(deployments, "/deployments")
             .iter()
-            .map(|d| {
-                el("tr")
-                    .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(d, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(d, "title"))),
-                    )
-                    .child(el("td").class("mj-ui-mono").text(text(d, "application")))
-                    .child(el("td").child(state(d, "status")))
-            })
+            .map(|d| super::deployments::summary_row(ctx, d))
             .collect::<Vec<_>>();
         table(
             &["Deployment", "Application", "State"],
@@ -87,15 +86,18 @@ pub fn screen(ctx: &Context) -> View {
                 } else {
                     "when its paths change"
                 };
+                let id = text(g, "id");
                 el("tr")
-                    .child(el("td").class("mj-ui-mono").text(text(g, "id")))
-                    .child(el("td").text(text(g, "job")))
+                    .attr("id", format!("gate-{}", anchor(&id)))
+                    .child(el("td").child(code_link(gate_href(&id), value(g, "id"))))
+                    .child(el("td").text(value(g, "job")))
                     .child(el("td").class("mj-ui-dim").text(when))
-                    .child(el("td").class("mj-ui-dim").text(text(g, "summary")))
+                    .child(el("td").class("mj-ui-dim").text(value(g, "summary")))
+                    .child(el("td").child(gates_named(g, "implies")))
             })
             .collect::<Vec<_>>();
         table(
-            &["Gate", "Job", "Runs", "What it holds"],
+            &["Gate", "Job", "Runs", "What it holds", "Implies"],
             rows,
             "The CI model declares no gate.",
         )
@@ -103,7 +105,7 @@ pub fn screen(ctx: &Context) -> View {
 
     let grid = el("div")
         .class("mj-ui-grid")
-        .child(releases_panel(releases, version))
+        .child(releases_panel(releases, version, None))
         .child(panel(
             "Deployments",
             "Where the product is declared to run.",
@@ -124,6 +126,21 @@ pub fn screen(ctx: &Context) -> View {
         "CI/CD & Releases",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+/// The gates an entry names under `key`, each a link to its own row; `none` when it names none.
+fn gates_named(g: &Value, key: &str) -> crate::cockpit::html::El {
+    let ids: Vec<String> = g
+        .get(key)
+        .and_then(Value::as_array)
+        .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .unwrap_or_default();
+    if ids.is_empty() {
+        return none();
+    }
+    el("span")
+        .class("mj-ui-badges")
+        .children(ids.iter().map(|id| code_link(gate_href(id), id.clone())))
 }
 
 #[cfg(test)]

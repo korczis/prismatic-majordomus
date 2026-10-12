@@ -17,8 +17,8 @@ use crate::cockpit::view::word_badge;
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Availability, Source};
 use super::view::{
-    counts, day, donut, hero, kpi, kpi_count, kpi_state, kpi_to, list, meter, nothing, panel_to,
-    shown, state, strip, table, text, timeline, unanswered, wide,
+    counts, day, donut, hero, kpi, kpi_count, kpi_state, kpi_to, list, meter, more, nothing,
+    panel_to, shown, state, strip, table, text, timeline, unanswered, value, wide,
 };
 
 /// The route of the pull-request queue panel.
@@ -92,7 +92,7 @@ pub fn screen(ctx: &Context) -> View {
         .child(plan_panel(a(ROADMAP), a(PLAN)))
         .child(issues_panel(a(PLAN)))
         .child(wide(queue_placeholder()))
-        .child(releases_panel(a(RELEASES), a(VERSION)))
+        .child(releases_panel(a(RELEASES), a(VERSION), Some(ROWS)))
         .child(mesh_panel(a(MESH)))
         .child(health_panel(a(HEALTH)));
 
@@ -119,12 +119,11 @@ pub fn pull_requests_panel(ctx: &Context, query: &[(String, String)]) -> View {
 /// out of those it holds.
 pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
     let body = unanswered(roadmap).unwrap_or_else(|| {
-        let rows = list(roadmap, "/milestones")
-            .iter()
+        let open: Vec<Value> = list(roadmap, "/milestones")
+            .into_iter()
             .filter(|m| m.get("status").and_then(Value::as_str) != Some("DONE"))
-            .take(ROWS)
-            .map(milestone_row)
-            .collect::<Vec<_>>();
+            .collect();
+        let rows = open.iter().take(ROWS).map(milestone_row).collect::<Vec<_>>();
         el("div")
             .child(el("p").class("mj-ui-line").text(format!(
                 "Now {} · next {}",
@@ -136,6 +135,7 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
                 rows,
                 "No milestone is open.",
             ))
+            .children(more(ROWS.min(open.len()), open.len(), Some(super::roadmap::ROUTE)))
     });
     panel_to(
         "Roadmap",
@@ -179,22 +179,55 @@ pub fn issues_panel(plan: &Answer) -> El {
     )
 }
 
-/// What was published, newest first, as a timeline.
-pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
+/// The label of the tile counting merges: the window is the queue's own (`throughput/
+/// window_days`), so the label says what the queue counted rather than a window of its own.
+pub fn merged_label(queue: &Answer) -> String {
+    match queue.read("/throughput/window_days").count() {
+        Some(days) => format!("Merged, {days} days"),
+        None => "Merged, over a window the queue does not state".into(),
+    }
+}
+
+/// The first two reasons of a pull request, and how many more there are: a row has room for
+/// two, and its inspector holds them all.
+pub fn first_reasons(reasons: &[String]) -> String {
+    match reasons.len() {
+        0 => "none".into(),
+        1 | 2 => reasons.join(", "),
+        n => format!("{} and {} more", reasons[..2].join(", "), n - 2),
+    }
+}
+
+/// What was published, newest first, as a timeline: the first `limit` of them, saying how
+/// many more there are, or every one of them when there is no limit.
+pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>) -> El {
     let body = unanswered(releases).unwrap_or_else(|| {
-        let entries = list(releases, "/releases")
+        let all = list(releases, "/releases");
+        let limit = limit.unwrap_or(all.len());
+        let entries = all
             .iter()
-            .take(ROWS)
+            .take(limit)
             .map(|r| {
                 let commit = text(r, "commit");
+                let record = text(r, "metadata_url");
                 (
                     text(r, "published_at"),
-                    format!("v{}", text(r, "version")),
-                    el("span").class("mj-ui-dim").text(format!(
-                        "{} · {}",
-                        text(r, "channel"),
-                        &commit[..10.min(commit.len())]
-                    )),
+                    format!("v{}", value(r, "version")),
+                    el("span")
+                        .class("mj-ui-dim")
+                        .text(format!(
+                            "{} · {} ",
+                            value(r, "channel"),
+                            commit.get(..10).unwrap_or(if commit.is_empty() {
+                                "no commit"
+                            } else {
+                                &commit
+                            })
+                        ))
+                        // the release's own record, at the address the distribution gives
+                        .when(!record.is_empty(), |s| {
+                            s.child(super::view::link(record.clone(), "its record"))
+                        }),
                 )
             })
             .collect::<Vec<_>>();
@@ -209,6 +242,7 @@ pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
             } else {
                 timeline(entries)
             })
+            .children(more(limit.min(all.len()), all.len(), Some(super::delivery::ROUTE)))
     });
     panel_to(
         "Releases",
@@ -222,16 +256,15 @@ pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
 /// The machines this runtime knows, with the liveness of each runtime.
 pub fn mesh_panel(mesh: &Answer) -> El {
     let body = unanswered(mesh).unwrap_or_else(|| {
-        let rows = list(mesh, "/machines")
-            .iter()
-            .take(ROWS)
-            .map(machine_row)
-            .collect::<Vec<_>>();
-        table(
-            &["Machine", "Where", "Runtimes"],
-            rows,
-            "No machine is known to the mesh runtime.",
-        )
+        let machines = list(mesh, "/machines");
+        let rows = machines.iter().take(ROWS).map(machine_row).collect::<Vec<_>>();
+        el("div")
+            .child(table(
+                &["Machine", "Where", "Runtimes"],
+                rows,
+                "No machine is known to the mesh runtime.",
+            ))
+            .children(more(ROWS.min(machines.len()), machines.len(), Some(super::mesh::ROUTE)))
     });
     panel_to(
         "Mesh",
@@ -351,10 +384,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                 "Conflicting",
                 &tally("/queue/tallies/by_disposition/conflicting"),
             ),
-            kpi("Merged, 7 days", &tally("/throughput/merges")),
+            kpi(&merged_label(queue), &tally("/throughput/merges")),
             kpi("Merges per day", &tally("/throughput/merges_per_day")),
         ]);
-        let rows = list(queue, "/queue/assessments")
+        let assessments = list(queue, "/queue/assessments");
+        let rows = assessments
             .iter()
             .take(ROWS * 2)
             .map(|a| {
@@ -368,7 +402,6 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                     .map(|rs| {
                         rs.iter()
                             .filter_map(Value::as_str)
-                            .take(2)
                             .map(str::to_string)
                             .collect()
                     })
@@ -392,12 +425,8 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                         ),
                     )
                     .child(el("td").child(state(a, "disposition")))
-                    .child(el("td").text(text(a, "lane")))
-                    .child(
-                        el("td")
-                            .class("mj-ui-mono mj-ui-dim")
-                            .text(reasons.join(", ")),
-                    )
+                    .child(el("td").text(value(a, "lane")))
+                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(first_reasons(&reasons)))
             })
             .collect::<Vec<_>>();
         let observed = queue
@@ -426,6 +455,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                 &["PR", "Title", "Disposition", "Lane", "Why"],
                 rows,
                 "No pull request is open.",
+            ))
+            .children(more(
+                (ROWS * 2).min(assessments.len()),
+                assessments.len(),
+                Some(super::prs::ROUTE),
             ))
             .child(
                 el("p")
@@ -710,7 +744,7 @@ mod tests {
                   "published_at": "2026-10-09T10:00:00Z" }
             ]}),
         );
-        let html = releases_panel(&releases, &version).render();
+        let html = releases_panel(&releases, &version, Some(ROWS)).render();
         assert!(
             html.contains("v0.20.0") && html.contains("v0.19.1"),
             "{html}"
@@ -725,7 +759,7 @@ mod tests {
         );
         assert!(html.contains("Declared 0.21.0"), "{html}");
         let none = answer(RELEASES, serde_json::json!({ "releases": [] }));
-        assert!(releases_panel(&none, &version)
+        assert!(releases_panel(&none, &version, Some(ROWS))
             .render()
             .contains("Nothing has been released yet."));
     }

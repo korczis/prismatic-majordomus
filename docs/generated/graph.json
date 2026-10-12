@@ -33664,6 +33664,93 @@
         }
       },
       {
+        "id": "majordomus://issue/I2481",
+        "kind": "issue",
+        "label": "I2481",
+        "summary": "The UI links every entity it names, and says none where a source has no value",
+        "route": "/cockpit/objects/issue/i2481",
+        "source": ".ai/repo/project/issues/I2481.yaml",
+        "facts": {
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2478"
+          ],
+          "evidence_required": [
+            "ui_links_unit_tests"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/source.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "apps/majordomus-cli/src/ui/deployments.rs",
+            "apps/majordomus-cli/src/ui/command.rs",
+            "apps/majordomus-cli/src/ui/docs.rs",
+            "apps/majordomus-cli/src/ui/prs.rs",
+            "apps/majordomus-cli/src/ui/rule.rs",
+            "apps/majordomus-cli/src/ui/claim.rs",
+            "apps/majordomus-cli/src/ui/evidence.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            ".ai/repo/project/issues/I2481.yaml",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "slug": "the-ui-links-every-entity",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib ui::",
+            "scripts/ci/cockpit-projection-check --ui-integrity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2482",
+        "kind": "issue",
+        "label": "I2482",
+        "summary": "Every screen of the UI has a case, and no link on the UI is dead",
+        "route": "/cockpit/objects/issue/i2482",
+        "source": ".ai/repo/project/issues/I2482.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "every screen of the navigation is read by a case through a real server",
+            "governance.rs has unit tests",
+            "every link under /ui and /cockpit/object the screens draw answers 200, and a test fails when one does not"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2481"
+          ],
+          "evidence_required": [
+            "ui_screen_cases_1088_1091",
+            "ui_links_integration_test"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/governance.rs",
+            "apps/majordomus-cli/tests/ui_links.rs",
+            "test/cases/1088_the_command_and_capability_screens_answer.sh",
+            "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+            "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+            "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+            ".ai/repo/project/issues/I2482.yaml"
+          ],
+          "slug": "every-ui-screen-has-a-case",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib ui::governance",
+            "cargo test --test ui_links",
+            "test/run.sh 1088_the_command_and_capability_screens_answer"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -72093,6 +72180,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2481",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2481",
+        "target": "majordomus://issue/I2478",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2481",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "majordomus://issue/I2481",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81189,8 +81306,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2652,
-      "edges": 5794,
+      "nodes": 2654,
+      "edges": 5800,
       "acyclic": false,
       "truncated": false
     }

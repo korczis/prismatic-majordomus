@@ -5,7 +5,16 @@
 //! The source of a value is shown in the UI itself — a tile's title, a panel's "Source"
 //! line. The UI is its own product; the Cockpit is its low-level reference, so each source
 //! carries one quiet "technical view" link to the Cockpit's page for that capability, for the
-//! reader who wants the registry behind a value. Nothing else leads there (ADR 0135).
+//! reader who wants the registry behind a value. An object a screen names and the UI has no
+//! screen of its own for — a document, a test, a declaring file, an ADR — leads to the
+//! Cockpit's page for that object, its technical view, and only when the index holds it.
+//! Nothing else leads there (ADR 0135: the diagnostic view of the capability, object or graph
+//! a panel read).
+//!
+//! Every entity a screen names is a link: to the UI's own screen or inspector for it when
+//! there is one, to its technical view when there is not, and to the address its source gives
+//! when it lives elsewhere. A value a source does not have is said as `none`, never left blank,
+//! and a list cut short says how much is left out and where the rest is.
 //!
 //! Charts are drawn here as SVG, on the server: they are complete without JavaScript, they
 //! carry their numbers as text beside them, and they draw only what a capability answered —
@@ -13,6 +22,7 @@
 
 use serde_json::Value;
 
+use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
@@ -246,6 +256,99 @@ fn chip_link(kind: &str, href: &str, title: &str) -> El {
 /// The Cockpit's page for a capability: the low-level reference behind a value.
 pub fn technical(capability: &str) -> String {
     format!("{}/capabilities/{capability}", crate::cockpit::PREFIX)
+}
+
+/// The Cockpit's page for one object of the index: the technical view of something a screen
+/// names and has no screen of its own for.
+pub fn object_href(uri: &str) -> String {
+    format!(
+        "{}/object?uri={}",
+        crate::cockpit::PREFIX,
+        crate::http::router::percent_encode(uri)
+    )
+}
+
+/// An object the index holds, as a link to its technical view, labelled as the screen names
+/// it. The caller knows the index holds it, because the source that named it said so (a
+/// rule's own `uri`, a test reported `present`); [`object_if`] asks when nothing said.
+pub fn object(uri: &str, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", object_href(uri))
+        .attr("title", format!("{uri}: its technical view, in the Cockpit"))
+        .text(label)
+}
+
+/// [`object`] when the index holds `uri`, the label as text when it does not, so no link
+/// leads to a page that answers 404, and `none` when there is no label at all. Whether the
+/// index holds it is asked of `objects.get`, the capability every surface resolves a URI with
+/// (ADR 0012), never read from the index beside it.
+pub fn object_if(ctx: &Context, uri: &str, label: &str) -> El {
+    if label.is_empty() {
+        return none();
+    }
+    match ctx.execute("objects.get", serde_json::json!({ "uri": uri })) {
+        Ok(_) => object(uri, label),
+        Err(_) => el("span").class("mj-ui-mono").text(label),
+    }
+}
+
+/// A link inside the UI, labelled.
+pub fn link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A link whose label is an identifier, set as code.
+pub fn code_link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A value a source does not have, said: `none`, never a blank cell.
+pub fn none() -> El {
+    el("span").class("mj-ui-dim").text("none")
+}
+
+/// A string field of an entry, or `none` when the entry has no such field or it is empty:
+/// [`text`] for a cell a reader reads, where a blank would say nothing.
+pub fn value(entry: &Value, key: &str) -> String {
+    Some(text(entry, key))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "none".into())
+}
+
+/// What a list cut short leaves out: "the first `shown` of `total`", and where the whole list
+/// is when there is a place that shows it. Nothing when nothing was left out.
+pub fn more(shown: usize, total: usize, whole: Option<&str>) -> Option<El> {
+    (total > shown).then(|| {
+        let line = el("p").class("mj-ui-line mj-ui-dim").text(format!(
+            "The first {shown} of {total}; {} more not shown here. ",
+            total - shown
+        ));
+        match whole {
+            Some(href) => line.child(link(href, "Open the whole list")),
+            None => line,
+        }
+    })
+}
+
+/// An identifier as a fragment a page can carry: letters, digits, `-`, `_` and `.` kept,
+/// anything else a `-`, so an id a source writes never breaks out of the attribute.
+pub fn anchor(id: &str) -> String {
+    id.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.') {
+                c
+            } else {
+                '-'
+            }
+        })
+        .collect()
 }
 
 /// The body of a panel whose source could not answer.
