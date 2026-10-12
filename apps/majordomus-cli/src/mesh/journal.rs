@@ -2541,7 +2541,6 @@ fn owner_only(options: &mut std::fs::OpenOptions) -> &mut std::fs::OpenOptions {
 /// newline — the tail a crash tore — gets one first, so the torn line stays one unreadable
 /// line and the events appended after it read.
 fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
-    use std::io::{Read, Seek, SeekFrom};
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
     }
@@ -2552,18 +2551,25 @@ fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
             .append(true),
     )
     .open(path)?;
-    let mut torn = false;
-    if file.metadata()?.len() > 0 {
+    append_mended(&mut file, text).and_then(|()| file.sync_data())
+}
+
+/// Append `text` to `file`, open for reading and appending, after a newline first when its
+/// last byte is not one: the torn tail [`append_synced`] mends.
+fn append_mended<F>(file: &mut F, text: &str) -> std::io::Result<()>
+where
+    F: std::io::Read + std::io::Write + std::io::Seek,
+{
+    use std::io::SeekFrom;
+    if file.seek(SeekFrom::End(0))? > 0 {
         let mut last = [0u8; 1];
         file.seek(SeekFrom::End(-1))?;
         file.read_exact(&mut last)?;
-        torn = last[0] != b'\n';
+        if last[0] != b'\n' {
+            file.write_all(b"\n")?;
+        }
     }
-    if torn {
-        file.write_all(b"\n")?;
-    }
-    file.write_all(text.as_bytes())?;
-    file.sync_data()
+    file.write_all(text.as_bytes())
 }
 
 /// Write `text` to a new file at `path`, owner-only, and sync it before it is renamed anywhere.
@@ -2575,8 +2581,8 @@ fn write_synced(path: &Path, text: &str) -> std::io::Result<()> {
             .truncate(true),
     )
     .open(path)?;
-    file.write_all(text.as_bytes())?;
-    file.sync_all()
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
 }
 
 /// Sync the directory holding `path`, so a rename into it survives a crash too.
@@ -2662,6 +2668,113 @@ fn unneeded(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A file in memory whose `fail_at`-th seek, read or write fails, counted from one.
+    struct Faulty {
+        inner: std::io::Cursor<Vec<u8>>,
+        ops: usize,
+        fail_at: usize,
+    }
+
+    impl Faulty {
+        fn new(content: &[u8], fail_at: usize) -> Self {
+            Self {
+                inner: std::io::Cursor::new(content.to_vec()),
+                ops: 0,
+                fail_at,
+            }
+        }
+
+        fn step(&mut self) -> std::io::Result<()> {
+            self.ops += 1;
+            if self.ops == self.fail_at {
+                return Err(std::io::Error::other(format!(
+                    "operation {} fails",
+                    self.ops
+                )));
+            }
+            Ok(())
+        }
+    }
+
+    impl std::io::Read for Faulty {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            self.step()?;
+            self.inner.read(buf)
+        }
+    }
+
+    impl std::io::Write for Faulty {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.step()?;
+            self.inner.write(buf)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl std::io::Seek for Faulty {
+        fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+            self.step()?;
+            self.inner.seek(to)
+        }
+    }
+
+    #[test]
+    fn a_torn_tail_is_mended_before_the_append_and_every_failing_step_is_an_error() {
+        let mut empty = Faulty::new(b"", 0);
+        append_mended(&mut empty, "a\n").unwrap();
+        std::io::Write::flush(&mut empty).unwrap();
+        assert_eq!(
+            empty.inner.get_ref(),
+            b"a\n",
+            "an empty file takes the text as it is"
+        );
+        let mut whole = Faulty::new(b"a\n", 0);
+        append_mended(&mut whole, "b\n").unwrap();
+        assert_eq!(
+            whole.inner.get_ref(),
+            b"a\nb\n",
+            "a whole last line needs no newline"
+        );
+        let mut torn = Faulty::new(b"a\n{\"to", 0);
+        append_mended(&mut torn, "b\n").unwrap();
+        assert_eq!(
+            torn.inner.get_ref(),
+            b"a\n{\"to\nb\n",
+            "the torn line stays one line"
+        );
+        // the length, the last byte's seek, its read, the mending newline, the text
+        for step in 1..=5 {
+            let mut file = Faulty::new(b"torn", step);
+            let failed = append_mended(&mut file, "b\n").expect_err("the step fails");
+            assert_eq!(failed.to_string(), format!("operation {step} fails"));
+        }
+    }
+
+    #[test]
+    fn a_journal_path_that_cannot_be_written_is_an_error_not_a_panic() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("file");
+        std::fs::write(&file, "x").unwrap();
+        // a parent that is a file cannot be created
+        assert!(append_synced(&file.join("sub").join("journal"), "a\n").is_err());
+        // a path without a parent is opened as it is, and the empty path does not open
+        assert!(append_synced(Path::new(""), "a\n").is_err());
+        assert!(write_synced(&dir.path().join("missing").join("snapshot"), "a").is_err());
+        // a path without a parent has no directory to sync, and that is not an error
+        sync_parent(Path::new(""));
+        let written = dir.path().join("snapshot");
+        write_synced(&written, "a").unwrap();
+        sync_parent(&written);
+        assert_eq!(std::fs::read_to_string(&written).unwrap(), "a");
+        let appended = dir.path().join("journal");
+        append_synced(&appended, "a").unwrap();
+        append_synced(&appended, "b\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&appended).unwrap(), "a\nb\n");
+    }
 
     fn journal(runtime: &str) -> Journal {
         Journal::open(

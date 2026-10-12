@@ -672,6 +672,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
+        let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true,
+        }))
+        .unwrap();
+        let server = super::super::manager::MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = runtime_verdict(Some(Ok(enabled)), Some(&server.status()));
+        assert_eq!(declined.check, "runtime");
+        assert!(
+            !declined.ok,
+            "a declared mesh the server declined is owed: {declined:?}"
+        );
+        let undeclared = runtime_verdict(None, Some(&server.status()));
+        assert!(
+            undeclared.ok,
+            "no declaration, nothing owed: {undeclared:?}"
+        );
+    }
+
+    #[test]
     fn the_self_check_runs_without_a_declaration_and_without_a_network() {
         let report = doctor(None);
         let names: Vec<&str> = report.checks.iter().map(|c| c.check.as_str()).collect();

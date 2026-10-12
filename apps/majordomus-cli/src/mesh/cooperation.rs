@@ -2236,11 +2236,10 @@ impl Cooperation {
         message: impl Fn(Vec<MeshEvent>) -> T,
     ) -> Result<(Signed, usize), String> {
         let signed = |events: Vec<MeshEvent>| -> Result<(Signed, usize), String> {
-            let body = serde_json::to_value(message(events)).map_err(|e| e.to_string())?;
+            let body = serde_json::to_value(message(events)).map_err(json_text)?;
             let signed = sign(&self.identity, domain, body);
-            let size = serde_json::to_vec(&signed)
-                .map_err(|e| e.to_string())?
-                .len();
+            // a message that cannot be written out is no message under the bound
+            let size = serde_json::to_vec(&signed).map_or(usize::MAX, |b| b.len());
             Ok((signed, size))
         };
         let (bare, overhead) = signed(Vec::new())?;
@@ -2781,31 +2780,42 @@ impl Cooperation {
                     }
                 }
             };
-            let delay = match outcome {
-                Ok(()) => {
-                    failures = 0;
-                    unknown_in_a_row = 0;
+            let delay = self.after_round(&outcome, &mut failures, &mut unknown_in_a_row);
+            self.sleep(delay);
+        }
+    }
+
+    /// How long [`Self::work`] waits after a round that ended in `outcome`, with the counts of
+    /// failed rounds and of `unknown_link` answers in a row carried from round to round.
+    fn after_round(
+        &self,
+        outcome: &Result<(), RoundError>,
+        failures: &mut u32,
+        unknown_in_a_row: &mut u32,
+    ) -> Duration {
+        match outcome {
+            Ok(()) => {
+                *failures = 0;
+                *unknown_in_a_row = 0;
+                self.heartbeat()
+            }
+            Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
+                *failures = 0;
+                *unknown_in_a_row = unknown_in_a_row.saturating_add(1);
+                if *unknown_in_a_row == 1 {
+                    Duration::ZERO
+                } else {
                     self.heartbeat()
                 }
-                Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
-                    failures = 0;
-                    unknown_in_a_row = unknown_in_a_row.saturating_add(1);
-                    if unknown_in_a_row == 1 {
-                        Duration::ZERO
-                    } else {
-                        self.heartbeat()
-                    }
-                }
-                Err(RoundError::Refused(_)) => {
-                    failures = failures.saturating_add(3).min(6);
-                    self.backoff(failures)
-                }
-                Err(_) => {
-                    failures = failures.saturating_add(1).min(6);
-                    self.backoff(failures)
-                }
-            };
-            self.sleep(delay);
+            }
+            Err(RoundError::Refused(_)) => {
+                *failures = failures.saturating_add(3).min(6);
+                self.backoff(*failures)
+            }
+            Err(_) => {
+                *failures = failures.saturating_add(1).min(6);
+                self.backoff(*failures)
+            }
         }
     }
 
@@ -3834,6 +3844,11 @@ impl Cooperation {
     }
 }
 
+/// A JSON error as the text a refusal or a round error carries.
+fn json_text(error: serde_json::Error) -> String {
+    error.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3939,6 +3954,171 @@ mod tests {
 
     fn session(name: &str) -> SessionInfo {
         SessionInfo::named(name, "test")
+    }
+
+    #[test]
+    fn retrust_ends_a_link_this_runtime_dialed_as_well_as_one_it_answered() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        b.dial(&["a:1".into()]).expect("linked under tofu");
+        // B dialed: it holds A outbound only, and A's key loses its trust all the same
+        let ended = b.retrust(TrustConfig::default());
+        assert_eq!(ended, vec![a.runtime_key().to_string()]);
+        let synced = b.sync_with(a.runtime_key());
+        assert!(matches!(synced, Err(RoundError::NoLink)), "{synced:?}");
+    }
+
+    /// A body whose serialization fails once it carries an event.
+    struct RefusesEvents(usize);
+
+    impl Serialize for RefusesEvents {
+        fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            if self.0 > 0 {
+                return Err(serde::ser::Error::custom("no events here"));
+            }
+            serializer.serialize_unit()
+        }
+    }
+
+    #[test]
+    fn a_sync_message_over_the_bound_or_unwritable_is_an_error_and_a_heavy_one_drops_events() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        for name in ["s1", "s2"] {
+            a.open_session(session(name)).unwrap();
+        }
+        let nothing = Marks::new();
+        let over = a.sync_within_bound(Domain::SyncRequest, &nothing, |_| {
+            "x".repeat(MAX_LINK_MESSAGE)
+        });
+        assert!(over.unwrap_err().contains("link bound"), "no event fits");
+        let refused = a.sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+            RefusesEvents(events.len())
+        });
+        assert_eq!(refused.unwrap_err(), "no events here");
+        let bare = a.sync_within_bound(Domain::SyncRequest, &nothing, |_| RefusesEvents(1));
+        assert_eq!(
+            bare.unwrap_err(),
+            "no events here",
+            "not even the bare message"
+        );
+        // a message that grows faster than its events loses events from the end until it fits
+        let half = MAX_LINK_MESSAGE / 2;
+        let (_, kept) = a
+            .sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+                "x".repeat(events.len() * half)
+            })
+            .unwrap();
+        assert_eq!(kept, 1, "one event fits beside its padding");
+        let (bare, kept) = a
+            .sync_within_bound(Domain::SyncRequest, &nothing, |events| {
+                "x".repeat(events.len() * MAX_LINK_MESSAGE)
+            })
+            .unwrap();
+        assert_eq!(kept, 0, "not one event fits, and the bare message goes");
+        assert_eq!(bare.body, serde_json::json!(""));
+    }
+
+    #[test]
+    fn a_sync_over_the_link_bound_is_unreachable_and_an_answer_over_it_is_refused() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).unwrap();
+        a.sync_with(&key).unwrap();
+        b.open_session(session("s1")).unwrap();
+        let link = {
+            let mut table = a.table.lock().unwrap();
+            let out = table
+                .peers
+                .get_mut(&key)
+                .unwrap()
+                .outbound
+                .as_mut()
+                .unwrap();
+            std::mem::replace(&mut out.link, "x".repeat(MAX_LINK_MESSAGE))
+        };
+        let synced = a.sync_with(&key);
+        assert!(
+            matches!(synced, Err(RoundError::Unreachable(ref e)) if e.contains("link bound")),
+            "{synced:?}"
+        );
+        // a request exactly at the bound whose answer, carrying B's marks, is over it
+        let request = |link: String| SyncRequest {
+            link,
+            counter: 1_000_000,
+            instance: a.card.instance.clone(),
+            marks: Marks::new(),
+            events: vec![],
+        };
+        let signed = |r: &SyncRequest| {
+            sign(
+                &a.identity,
+                Domain::SyncRequest,
+                serde_json::to_value(r).unwrap(),
+            )
+        };
+        let base = serde_json::to_vec(&signed(&request(String::new())))
+            .unwrap()
+            .len();
+        let long = "y".repeat(MAX_LINK_MESSAGE - base);
+        let message = signed(&request(long.clone()));
+        assert_eq!(
+            serde_json::to_vec(&message).unwrap().len(),
+            MAX_LINK_MESSAGE
+        );
+        {
+            let mut table = b.table.lock().unwrap();
+            let peer = table.inbound_links[&link].clone();
+            table.inbound_links.insert(long, peer);
+        }
+        let reply = b.accept_sync(&message);
+        assert_eq!(
+            reply.refusal.map(|r| r.code),
+            Some(RefusalCode::Oversized),
+            "the answer cannot be built under the bound"
+        );
+    }
+
+    #[test]
+    fn a_round_s_outcome_sets_the_pause_before_the_next() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let refusal = |code| {
+            Err(RoundError::Refused(LinkRefusal {
+                code,
+                detail: "test".into(),
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+            }))
+        };
+        let (mut failures, mut unknown) = (0u32, 0u32);
+        let beat = a.heartbeat();
+        let unknown_link = refusal(RefusalCode::UnknownLink);
+        assert_eq!(
+            a.after_round(&unknown_link, &mut failures, &mut unknown),
+            Duration::ZERO,
+            "a restarted answerer is greeted again at once"
+        );
+        assert_eq!(
+            a.after_round(&unknown_link, &mut failures, &mut unknown),
+            beat,
+            "and no faster than a heartbeat after that"
+        );
+        assert_eq!(unknown, 2);
+        let replay = refusal(RefusalCode::Replay);
+        assert_eq!(
+            a.after_round(&replay, &mut failures, &mut unknown),
+            a.backoff(3)
+        );
+        assert_eq!(
+            a.after_round(&Err(RoundError::NoLink), &mut failures, &mut unknown),
+            a.backoff(4)
+        );
+        assert_eq!(failures, 4);
+        assert_eq!(a.after_round(&Ok(()), &mut failures, &mut unknown), beat);
+        assert_eq!((failures, unknown), (0, 0));
     }
 
     #[test]
