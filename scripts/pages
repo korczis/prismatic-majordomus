@@ -1213,7 +1213,7 @@ cmd_release_live() {
   newer_than_gh=""
   for v in "$home_v" "$latest_v"; do
     [ "$v" = "$gh_v" ] && continue
-    if [ "$(printf '%s\n%s\n' "$v" "$gh_v" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$v" ]; then
+    if [ "$(printf '%s\n%s\n' "$v" "$gh_v" | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$v" ]; then
       newer_than_gh="$v"
     fi
   done
