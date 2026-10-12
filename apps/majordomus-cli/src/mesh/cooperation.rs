@@ -1383,7 +1383,10 @@ impl Cooperation {
         for peer in peers.iter().filter(|p| p.attached) {
             let session = format!("board-{}", peer.id);
             seen.push(session.clone());
-            let intent = peer.claims.first().map(|c| c.intent.clone());
+            // clipped before it is compared: the projection holds what the journal accepted,
+            // so comparing the board's whole text with it would differ on every pass for an
+            // intent past the bound, and reopen the session each time
+            let intent = peer.claims.first().map(|c| clip(&c.intent, 512));
             let entry = projected.entry(session.clone()).or_default();
             let fresh = entry.info.session.is_empty();
             if fresh || entry.info.intent != intent {
@@ -1396,7 +1399,7 @@ impl Cooperation {
                         .clone()
                         .filter(|t| !t.is_empty())
                         .map(|t| clip(&t, 128)),
-                    intent: intent.clone().map(|i| clip(&i, 512)),
+                    intent: intent.clone(),
                     checkout: self.checkout.id.clone(),
                     branch: self.checkout.git(&["symbolic-ref", "--short", "HEAD"]),
                     head: self.checkout.git(&["rev-parse", "--verify", "HEAD"]),
@@ -3278,7 +3281,9 @@ impl Cooperation {
                         .map(|o| o.remote_marks.clone())
                 };
                 let converged = remote.map(|remote| {
-                    let local = self.journal.marks();
+                    // Compare the marks this peer can be told. A tombstone for a stream
+                    // it never held is local retirement history, not a replication gap.
+                    let local = self.journal.marks_for(&remote);
                     local.keys().chain(remote.keys()).all(|s| {
                         local.get(s).map(|m| m.seq).unwrap_or(0)
                             == remote.get(s).map(|m| m.seq).unwrap_or(0)
@@ -3340,6 +3345,21 @@ impl Cooperation {
             }),
             remediation: starved.then(|| {
                 "read the refusals above; an unreachable seed is a network or bind problem — is the peer served beyond loopback?".into()
+            }),
+        });
+        let unconverged = peers
+            .iter()
+            .filter(|p| p.state != LinkState::Expired && p.converged == Some(false))
+            .count();
+        checks.push(MeshVerifyCheck {
+            check: "convergence".into(),
+            ok: unconverged == 0,
+            detail: format!("{unconverged} dialed peer(s) still have different journal marks"),
+            impact: (unconverged > 0).then(|| {
+                "a successful exchange has not replicated all coordination events".into()
+            }),
+            remediation: (unconverged > 0).then(|| {
+                "run mesh verify again after the bounded backlog drains; if marks remain different, compare the peers' journal rejection and pending counters".into()
             }),
         });
         // An expired peer is listed with its state and does not fail the verification: a
@@ -3950,6 +3970,81 @@ mod tests {
             .unwrap()
             .insert(endpoint.into(), Arc::downgrade(&c));
         c
+    }
+
+    #[test]
+    fn verification_refuses_a_successful_round_that_has_not_converged() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        a.dial(&["b:1".into()]).unwrap();
+        a.journal().beat_own();
+        b.journal().beat_own();
+        // More than one bounded sync round: successful transport alone cannot prove
+        // that claims and handovers reached the other runtime.
+        for i in 0..32 {
+            let body = format!("# Objective\n{i} {}", "x".repeat(30_000));
+            a.publish_handover(HandoverBody {
+                id: HandoverBody::digest_of(&body),
+                task: None,
+                issue: None,
+                milestone: None,
+                branch: None,
+                head: None,
+                created_at: None,
+                name: None,
+                body,
+            })
+            .unwrap();
+        }
+        let incomplete = a.verify();
+        assert_eq!(incomplete.peers[0].round_trip, Some(true));
+        assert_eq!(incomplete.peers[0].converged, Some(false));
+        assert!(
+            !incomplete.ok,
+            "a connected but incomplete journal must fail verification"
+        );
+        let complete = a.verify();
+        assert_eq!(complete.peers[0].converged, Some(true));
+        assert!(
+            complete.ok,
+            "verification recovers once both journals agree"
+        );
+        assert_eq!(a.state().digest, b.state().digest);
+    }
+
+    #[test]
+    fn verification_does_not_require_a_peer_to_learn_unshared_tombstones() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let retired = runtime(&net, "retired:1", "root", TrustPolicy::Tofu);
+        let event = retired
+            .journal()
+            .append_own(EventBody::SessionClosed {
+                session: "old".into(),
+            })
+            .unwrap();
+        a.journal().ingest(&[event], &|_| Ok(()));
+        let zero = Duration::ZERO;
+        assert_eq!(a.journal().compact(zero, zero, zero, true), 1);
+        assert!(a
+            .journal()
+            .marks()
+            .contains_key(retired.journal().own_stream()));
+        a.dial(&["b:1".into()]).unwrap();
+        a.journal().beat_own();
+        b.journal().beat_own();
+        let report = a.verify();
+        assert_eq!(report.peers[0].converged, Some(true));
+        assert!(
+            report.ok,
+            "retired history is not missing live coordination data"
+        );
+        assert!(!b
+            .journal()
+            .marks()
+            .contains_key(retired.journal().own_stream()));
     }
 
     fn session(name: &str) -> SessionInfo {
@@ -4665,6 +4760,28 @@ mod tests {
         let live: Vec<_> = state.claims.iter().filter(|c| c.state.is_live()).collect();
         assert_eq!(live.len(), 1);
         assert_eq!(live[0].scope, vec!["docs".to_string()]);
+
+        // an intent past the journal's bound is projected once, clipped, and then left alone:
+        // compared unclipped it differed from the projection on every pass and reopened the
+        // session each time (986 of 1000 journal events on 2026-10-10)
+        let long = format!("relay the train {}", "x".repeat(600));
+        board.announce(&p, &long, vec!["docs".into()]);
+        a.project_board();
+        let once = a.state();
+        assert_eq!(
+            once.sessions[0].info.intent.as_deref().map(str::len),
+            Some(512),
+            "clipped to the bound"
+        );
+        let events = a.journal().events().len();
+        a.project_board();
+        a.project_board();
+        assert_eq!(
+            a.journal().events().len(),
+            events,
+            "an unchanged long intent writes nothing"
+        );
+        assert_eq!(a.state().digest, once.digest);
 
         board.detach(&p);
         a.project_board();
