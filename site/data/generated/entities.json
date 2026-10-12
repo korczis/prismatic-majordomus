@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 98,
+      "count": 100,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 171,
+      "count": 172,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 98
+      "count": 100
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 244
+      "count": 245
     },
     {
       "kind": "command",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 339
+      "count": 341
     },
     {
       "kind": "domain",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 336
+      "count": 337
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 171
+      "count": 172
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 456
+      "count": 458
     },
     {
       "kind": "use-case",
@@ -293,7 +293,7 @@
       "route": "/use-cases/",
       "title": null,
       "reason": null,
-      "count": 48
+      "count": 49
     },
     {
       "kind": "workspace",
@@ -450,6 +450,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0136/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
         }
       ]
     },
@@ -468,7 +475,15 @@
       ],
       "source": ".ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0145",
+          "kind": "adr",
+          "route": "/adrs/adr-0145/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -1009,7 +1024,15 @@
       ],
       "source": ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0145",
+          "kind": "adr",
+          "route": "/adrs/adr-0145/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -1575,7 +1598,15 @@
       ],
       "source": ".ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0145",
+          "kind": "adr",
+          "route": "/adrs/adr-0145/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -4173,6 +4204,13 @@
           "label": "adr-0111",
           "kind": "adr",
           "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
           "external": false
         }
       ]
@@ -7496,6 +7534,170 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0144",
+      "identity": "adr-0144",
+      "slug": "adr-0144",
+      "cockpit": "/cockpit/objects/adr/adr-0144",
+      "title": "An intent is proposed by a capability, and its stage stays derived",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "project",
+        "capabilities"
+      ],
+      "source": ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "intent-lifecycle",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0145",
+      "identity": "adr-0145",
+      "slug": "adr-0145",
+      "cockpit": "/cockpit/objects/adr/adr-0145",
+      "title": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "distribution",
+        "adoption",
+        "discovery",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/app.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/discovery/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/install/install.sh.in",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0005",
+          "kind": "adr",
+          "route": "/adrs/adr-0005/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0019",
+          "kind": "adr",
+          "route": "/adrs/adr-0019/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0027",
+          "kind": "adr",
+          "route": "/adrs/adr-0027/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/doctor.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/init.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/update.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -7644,6 +7846,13 @@
         {
           "edge": "exercises",
           "label": "trace-a-change-to-the-context-it-affects",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "use-the-tool-as-your-own-in-a-shared-repository",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -10451,6 +10660,46 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+      "identity": "project.a-personal-layer-changes-nothing-shared@1",
+      "slug": "project-a-personal-layer-changes-nothing-shared-1",
+      "cockpit": "/cockpit/objects/rule/project-a-personal-layer-changes-nothing-shared-1",
+      "title": "A personal layer changes nothing shared",
+      "status": "active",
+      "tags": [
+        "install",
+        "adoption",
+        "discovery",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.portable-shell@1",
+          "kind": "rule",
+          "route": "/rules/project-portable-shell-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
       "identity": "project.a-plan-carries-the-intent-it-serves@1",
       "slug": "project-a-plan-carries-the-intent-it-serves-1",
@@ -11774,6 +12023,13 @@
           "label": "adr-0085",
           "kind": "adr",
           "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-personal-layer-changes-nothing-shared@1",
+          "kind": "rule",
+          "route": "/rules/project-a-personal-layer-changes-nothing-shared-1/",
           "external": false
         }
       ]
@@ -13555,6 +13811,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-personal-layer-changes-nothing-shared@1",
+          "kind": "rule",
+          "route": "/rules/project-a-personal-layer-changes-nothing-shared-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.benchmarkable-commands@1",
           "kind": "rule",
           "route": "/rules/project-benchmarkable-commands-1/",
@@ -14185,6 +14448,13 @@
       "source": ".ai/repo/rules/project/portable-shell.v1.md",
       "references": [],
       "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-personal-layer-changes-nothing-shared@1",
+          "kind": "rule",
+          "route": "/rules/project-a-personal-layer-changes-nothing-shared-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.commands-run-non-interactively@2",

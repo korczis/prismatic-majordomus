@@ -1231,9 +1231,9 @@
       "related_ids": [
         "extend-what-the-executable-serves",
         "say-what-the-tool-is-for",
+        "use-the-tool-as-your-own-in-a-shared-repository",
         "serve-the-layer-to-ai-clients",
-        "classify-what-belongs-in-the-context",
-        "migrate-from-the-old-layout"
+        "classify-what-belongs-in-the-context"
       ]
     },
     {
@@ -1437,6 +1437,275 @@
         "read-the-rules-the-tool-applies",
         "adopt-an-existing-repository",
         "plan-a-commit-and-judge-its-message"
+      ]
+    },
+    {
+      "id": "use-the-tool-as-your-own-in-a-shared-repository",
+      "kind": "use-case",
+      "title": "Use the tool as your own in a shared repository, and propose it to the team when it has made its case",
+      "summary": "One flag installs the same layer as yours alone: no tracked file changes, nothing is added to .gitignore, git status reads the same — the command checks it — and one more command hands the layer to the team.",
+      "category": "adoption",
+      "status": "active",
+      "target": "guaranteed",
+      "weight": 3,
+      "actors": [
+        "operator",
+        "maintainer"
+      ],
+      "difficulty": "basic",
+      "commands": [
+        "init",
+        "update",
+        "doctor"
+      ],
+      "mcp_tools": [],
+      "doctrines": [
+        "majordomus.ai-layout-integrity"
+      ],
+      "claims": [
+        "personal-layer-changes-nothing-shared",
+        "local-state-ignored"
+      ],
+      "responsibilities": [
+        "layer",
+        "doctor"
+      ],
+      "applications": [
+        "repository-opened-in-ai-clients"
+      ],
+      "scenario": {
+        "setup": "bare",
+        "given": [
+          "a shared repository with no AI layer"
+        ],
+        "steps": [
+          {
+            "id": "init",
+            "run": [
+              "init",
+              "--personal"
+            ],
+            "note": "the same layer a plain init makes; the difference is whose it is",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   personal",
+                "personal: this layer is yours; nothing the repository shares was changed"
+              ],
+              "files_exist": [
+                ".ai/repo/policy.yaml",
+                ".ai/manifest.yaml"
+              ]
+            }
+          },
+          {
+            "id": "update",
+            "run": [
+              "update"
+            ],
+            "note": "the provider files at the root are covered before they are written",
+            "expect": {
+              "exit": 0,
+              "files_exist": [
+                "AGENTS.md",
+                "CLAUDE.md"
+              ]
+            }
+          },
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "doctor holds the layer to its claim on every run; the two hook lines are still yours to add, which is the one thing its exit code is about",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^OK   personal",
+                "not asked to name AGENTS.md"
+              ]
+            }
+          },
+          {
+            "id": "share",
+            "run": [
+              "init",
+              "--extend",
+              "--shared"
+            ],
+            "note": "the trial made its case: the cover is removed and the layer is the repository's to commit — by you, when you choose to",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "shared: the cover is removed",
+                "git add .ai/"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "until the last step, git status read the same as before the first one",
+          "the tracked .gitignore and README.md were untouched until the layer was shared",
+          "nothing was committed by the tool at any step"
+        ]
+      },
+      "path": ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
+      "maturity": "guaranteed",
+      "evidence": {
+        "schema": "majordomus/use-case-evidence/v1",
+        "use_case": "use-the-tool-as-your-own-in-a-shared-repository",
+        "setup": "bare",
+        "result": "pass",
+        "steps": [
+          {
+            "id": "init",
+            "actor": "tool",
+            "command": "majordomus init --personal",
+            "argv": [
+              "init",
+              "--personal"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "created\n  .ai/README.md\n  .ai/manifest.yaml\n  .ai/repo/README.md\n  .ai/repo/policy.yaml\n  .ai/repo/scope.yaml\n  .ai/repo/profiles/\n  .ai/repo/prompts/\n  .ai/repo/profiles/README.md\n  .ai/repo/prompts/README.md\n  .ai/repo/rules/README.md\n  .ai/repo/rules/project/README.md\n  .ai/repo/rules/vendor/majordomus/\n  .ai/repo/knowledge/\n  .ai/repo/knowledge/curated/README.md\n  .ai/repo/knowledge/candidates/README.md\n  .ai/repo/workflows/\n  .ai/repo/skills/\n  .ai/repo/adrs/\n  .ai/repo/use-cases/\n  .ai/repo/applications/\n  .ai/repo/why/\n  .ai/repo/features/\n  .ai/repo/sessions/README.md\n  .ai/repo/deployments/README.md\n  .ai/repo/project/README.md\n  <repo>/.git/info/exclude:/.ai/\nOK   personal    .ai/ — tracked nowhere, ignored through <repo>/.git/info/exclude, and absent from git status (1 path(s) covered)\npersonal: this layer is yours; nothing the repository shares was changed. The cover is <repo>/.git/info/exclude\npersonal: it stays on this machine. To propose it to the team: majordomus init --extend --shared\nlocal state: .ai/local/state/ (ignored by git; this checkout's own)\nnext: majordomus update      # generate the provider instruction files named in the policy\nnext: majordomus doctor      # verify nothing is declared that is not wired\nhooks are not installed by init; add these two lines yourself, doctor verifies them:\n  pre-commit: majordomus doctor || exit $?\n  pre-push:   majordomus finish --check || exit $?",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "^OK   personal",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "personal: this layer is yours; nothing the repository shares was changed",
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/repo/policy.yaml",
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/manifest.yaml",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "update",
+            "actor": "tool",
+            "command": "majordomus update",
+            "argv": [
+              "update"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "create AGENTS.md\ncreate CLAUDE.md\ncreate GEMINI.md\ngenerated 3 target(s) from policy 514398d30288; each carries its own stamp",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": "AGENTS.md",
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": "CLAUDE.md",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "doctor",
+            "actor": "tool",
+            "command": "majordomus doctor",
+            "argv": [
+              "doctor"
+            ],
+            "stdin": null,
+            "exit": 10,
+            "expected_exit": 10,
+            "output": "OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]\nOK   knowledge   candidates — 0 await review, cap 40\nOK   layout      .ai/manifest.yaml — schema ai-repository/v1\nOK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares\nOK   layout      .ai/local/ — ignored, and nothing under it is tracked\nOK   personal    .ai/ — tracked nowhere, ignored through <repo>/.git/info/exclude, and absent from git status (7 path(s) covered)\nOK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool\nOK   layout      .ai/repo/prompts — present\nOK   layout      .ai/local/state/handovers — present, 0 record(s)\nOK   layout      .ai/local/state/checkpoints — present, 0 record(s)\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   policy      37 key(s) — every policy value the code reads is declared, with no reader-side default\nINFO bootstrap   README.md — not asked to name AGENTS.md: the layer is personal, and the README is the project's\nOK   bootstrap   3 projection(s) — each points at .ai/README.md, carries no rule of its own and names only rules in force\nOK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions\nOK   context     .ai/ — 19 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]\nOK   policy      .ai/repo/policy.yaml — parsed, version 1\nOK   profiles    4 files — parsed; default 'implementation' exists\nINFO adr         .ai/repo/adrs/ — no decisions; nothing to validate\nOK   records     decisions.md — every entry is attributable\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]\nOK   doctrine    48 of 59 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 48; the remaining 11 declare no validator and this check does not examine them\nFAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]\nFAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]\nOK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]\nOK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]\nOK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped\nOK   knowledge   wiring — the close path and the compaction adapter call the deriver\nOK   knowledge   deriver — no episode has closed here; nothing to judge\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   projection  AGENTS.md — content matches its stamp\nOK   projection  CLAUDE.md — content matches its stamp\nOK   projection  GEMINI.md — content matches its stamp\nOK   budget      AGENTS.md — 42 lines, budget 150\nOK   links       AGENTS.md — all references resolve\nOK   counts      AGENTS.md — no hardcoded counts\nOK   context     builder — 21 lines, budget 300  [reproduce: majordomus context]\nOK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) describe majordomus.capture/v1 at the path the identifier derives: the record as JSON Schema, the document as protobuf\nOK   capture     .ai/local/prompts — ignored and untracked\nOK   capture     .ai/local/prompts — no records yet; the archive is empty\nOK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML\nOK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only\nOK   prompts     .ai/local/prompts — no records yet; the archive is empty\nOK   prompt      4 asset(s) — front matter valid, every token known\nOK   records     open-questions.md — every entry parses\nOK   retention   ledger — 1 lines, cap 5000\nOK   retention   handovers — 0 files, cap 200\nOK   retention   checkpoints — 0 files, cap 500\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))\nOK   rules       59 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 49 carry a validator, 10 are normative text this tool does not check\nOK   rules       blocking — all 43 blocking rule(s) carry a validator\nOK   schema      rules — 59 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph\nOK   schema      share/kinds.yaml — 36 kind(s); every one that carries metadata declares a schema\nOK   schema      share/schemas — 53 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract (15)\nOK   records     0 record(s) — every changed_files names work, not generated or local state\nOK   session     .ai/local/session-contexts — ignored and untracked\nOK   session     .ai/local/session-contexts — no working contexts yet; the store is empty\nINFO skill       .ai/repo/skills/ — no skills; nothing to validate\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO env         - — bash <version>, git <version>, jq <version>, shellcheck present\nWARN clone       unpushed — commits on no remote: main(2) — work on one disk is invisible to every other session and cannot be integrated  [reproduce: git push -u origin <branch>]\n·    reasoning   <decided by the advisors and the executable of the recording machine>\n·    budget      doctor — <timed against the policy budget>\ndoctor: 2 failure(s)",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 10,
+                "observed": 10,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "^OK   personal",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "not asked to name AGENTS.md",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "share",
+            "actor": "tool",
+            "command": "majordomus init --extend --shared",
+            "argv": [
+              "init",
+              "--extend",
+              "--shared"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "created\n  .gitignore:.ai/local/\n  .gitignore:.ai/repo/**/.tmp.*\nshared: the cover is removed; these paths are now the repository's to commit, when you choose to:\n  git add .ai/\n  git add AGENTS.md\n  git add CLAUDE.md\n  git add GEMINI.md\n  git add .gitignore\nshared: .ai/local/ stays this checkout's own, as in every layer\nlocal state: .ai/local/state/ (ignored by git; this checkout's own)\nnext: majordomus update      # generate the provider instruction files named in the policy\nnext: majordomus doctor      # verify nothing is declared that is not wired\nhooks are not installed by init; add these two lines yourself, doctor verifies them:\n  pre-commit: majordomus doctor || exit $?\n  pre-push:   majordomus finish --check || exit $?",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "shared: the cover is removed",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "git add .ai/",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          }
+        ]
+      },
+      "related_ids": [
+        "extend-what-the-executable-serves",
+        "classify-what-belongs-in-the-context",
+        "install-the-tool-in-one-command",
+        "say-what-the-tool-is-for",
+        "serve-the-layer-to-ai-clients"
       ]
     },
     {
@@ -3406,7 +3675,7 @@
         "see-what-the-repository-holds-without-reading-it",
         "serve-the-layer-to-ai-clients",
         "adopt-an-existing-repository",
-        "classify-what-belongs-in-the-context"
+        "use-the-tool-as-your-own-in-a-shared-repository"
       ]
     },
     {
@@ -12219,6 +12488,7 @@
       ],
       "use_cases": [
         "install-the-tool-in-one-command",
+        "use-the-tool-as-your-own-in-a-shared-repository",
         "serve-the-layer-to-ai-clients",
         "extend-what-the-executable-serves",
         "classify-what-belongs-in-the-context",
@@ -12248,15 +12518,16 @@
       "title": "Getting started and adoption",
       "summary": "Bringing Majordomus into a repository, new or old, without losing what people already wrote.",
       "order": 10,
-      "count": 4,
+      "count": 5,
       "use_cases": [
         "adopt-an-existing-repository",
         "install-the-tool-in-one-command",
         "know-which-tool-is-running",
-        "migrate-from-the-old-layout"
+        "migrate-from-the-old-layout",
+        "use-the-tool-as-your-own-in-a-shared-repository"
       ],
       "maturity": {
-        "guaranteed": 4
+        "guaranteed": 5
       },
       "applications": [
         "ci-gated-project",
@@ -12493,27 +12764,27 @@
       {
         "class": "command",
         "id": "init",
-        "use_cases": 5,
-        "executable": 5,
-        "evidence": 5,
+        "use_cases": 6,
+        "executable": 6,
+        "evidence": 6,
         "status": "covered",
         "policy": "required"
       },
       {
         "class": "command",
         "id": "update",
-        "use_cases": 4,
-        "executable": 3,
-        "evidence": 3,
+        "use_cases": 5,
+        "executable": 4,
+        "evidence": 4,
         "status": "covered",
         "policy": "required"
       },
       {
         "class": "command",
         "id": "doctor",
-        "use_cases": 18,
-        "executable": 14,
-        "evidence": 14,
+        "use_cases": 19,
+        "executable": 15,
+        "evidence": 15,
         "status": "covered",
         "policy": "required"
       },
@@ -13248,10 +13519,19 @@
       },
       {
         "class": "claim",
+        "id": "personal-layer-changes-nothing-shared",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
         "id": "local-state-ignored",
-        "use_cases": 2,
-        "executable": 2,
-        "evidence": 2,
+        "use_cases": 3,
+        "executable": 3,
+        "evidence": 3,
         "status": "covered",
         "policy": "advisory"
       },
@@ -14562,6 +14842,15 @@
       },
       {
         "class": "mcp_tool",
+        "id": "majordomus_intent_propose",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
         "id": "majordomus_intent_realization",
         "use_cases": 0,
         "executable": 0,
@@ -15551,19 +15840,19 @@
         "policy": "advisory"
       }
     ],
-    "total": 340,
-    "covered": 147,
+    "total": 342,
+    "covered": 148,
     "partial": 3,
     "gaps_required": 0
   },
   "counts": {
-    "use_cases": 48,
+    "use_cases": 49,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
       "executable": 2,
-      "guaranteed": 44,
+      "guaranteed": 45,
       "verified": 2
     }
   },
@@ -15573,49 +15862,50 @@
     "hand-work-between-sessions": 2,
     "install-the-tool-in-one-command": 3,
     "prove-a-rule-is-enforced": 4,
-    "run-several-workers-at-once": 5,
-    "accept-or-refuse-finished-work": 6,
-    "recover-an-episode-nobody-closed": 7,
-    "find-out-what-drifted": 8,
-    "see-what-the-repository-holds-without-reading-it": 9,
-    "know-whether-this-work-is-finished": 10,
-    "serve-the-layer-to-ai-clients": 11,
-    "work-on-a-branch-in-its-canonical-worktree": 12,
-    "prove-performance-with-benchmarks": 13,
-    "extend-what-the-executable-serves": 14,
-    "say-what-the-tool-is-for": 15,
-    "checkpoint-long-work": 16,
-    "read-only-the-context-that-fits": 17,
-    "carry-a-blocker-across-a-handover": 18,
-    "resume-in-the-right-worktree": 19,
-    "prove-what-a-task-owed-before-calling-it-done": 20,
-    "say-what-reached-the-remote-and-what-did-not": 21,
-    "trust-the-policy-before-reading-it": 22,
-    "keep-the-bootstrap-thin-and-within-budget": 23,
-    "gate-ci-on-the-tool-itself": 24,
-    "plan-a-commit-and-judge-its-message": 25,
-    "block-acceptance-on-an-open-question": 26,
-    "complete-an-issue-only-with-its-evidence": 27,
-    "hand-the-repository-to-a-reader": 28,
-    "document-every-directory-of-the-layer": 29,
-    "trace-a-change-to-the-context-it-affects": 30,
-    "read-back-what-happened": 31,
-    "deliver-issues-in-waves": 32,
-    "classify-what-belongs-in-the-context": 33,
-    "find-an-object-without-reading-everything": 34,
-    "add-a-use-case-and-prove-it": 35,
-    "capture-the-prompts-that-started-the-work": 36,
-    "follow-a-skill-the-repository-defines": 37,
-    "keep-decisions-out-of-the-transcript": 38,
-    "keep-what-an-episode-learned": 39,
-    "know-which-tool-is-running": 40,
-    "let-the-provider-draw-the-episode-boundary": 41,
-    "migrate-from-the-old-layout": 42,
-    "open-and-close-a-session": 43,
-    "plan-the-work-as-data": 44,
-    "read-the-rules-the-tool-applies": 45,
-    "record-a-decision-before-it-is-forgotten": 46,
-    "resume-from-a-prompt-asset": 47
+    "use-the-tool-as-your-own-in-a-shared-repository": 5,
+    "run-several-workers-at-once": 6,
+    "accept-or-refuse-finished-work": 7,
+    "recover-an-episode-nobody-closed": 8,
+    "find-out-what-drifted": 9,
+    "see-what-the-repository-holds-without-reading-it": 10,
+    "know-whether-this-work-is-finished": 11,
+    "serve-the-layer-to-ai-clients": 12,
+    "work-on-a-branch-in-its-canonical-worktree": 13,
+    "prove-performance-with-benchmarks": 14,
+    "extend-what-the-executable-serves": 15,
+    "say-what-the-tool-is-for": 16,
+    "checkpoint-long-work": 17,
+    "read-only-the-context-that-fits": 18,
+    "carry-a-blocker-across-a-handover": 19,
+    "resume-in-the-right-worktree": 20,
+    "prove-what-a-task-owed-before-calling-it-done": 21,
+    "say-what-reached-the-remote-and-what-did-not": 22,
+    "trust-the-policy-before-reading-it": 23,
+    "keep-the-bootstrap-thin-and-within-budget": 24,
+    "gate-ci-on-the-tool-itself": 25,
+    "plan-a-commit-and-judge-its-message": 26,
+    "block-acceptance-on-an-open-question": 27,
+    "complete-an-issue-only-with-its-evidence": 28,
+    "hand-the-repository-to-a-reader": 29,
+    "document-every-directory-of-the-layer": 30,
+    "trace-a-change-to-the-context-it-affects": 31,
+    "read-back-what-happened": 32,
+    "deliver-issues-in-waves": 33,
+    "classify-what-belongs-in-the-context": 34,
+    "find-an-object-without-reading-everything": 35,
+    "add-a-use-case-and-prove-it": 36,
+    "capture-the-prompts-that-started-the-work": 37,
+    "follow-a-skill-the-repository-defines": 38,
+    "keep-decisions-out-of-the-transcript": 39,
+    "keep-what-an-episode-learned": 40,
+    "know-which-tool-is-running": 41,
+    "let-the-provider-draw-the-episode-boundary": 42,
+    "migrate-from-the-old-layout": 43,
+    "open-and-close-a-session": 44,
+    "plan-the-work-as-data": 45,
+    "read-the-rules-the-tool-applies": 46,
+    "record-a-decision-before-it-is-forgotten": 47,
+    "resume-from-a-prompt-asset": 48
   },
   "ap_index": {
     "repository-with-authored-governance": 0,

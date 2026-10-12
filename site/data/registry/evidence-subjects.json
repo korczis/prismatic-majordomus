@@ -484,6 +484,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intents.propose",
+      "path": "/evidence/capabilities/intents-propose/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intents.record",
       "path": "/evidence/capabilities/intents-record/"
     },
@@ -1804,6 +1809,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:personal-layer-changes-nothing-shared",
+      "path": "/evidence/claims/personal-layer-changes-nothing-shared/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:pointer-integrity",
       "path": "/evidence/claims/pointer-integrity/"
     },
@@ -2716,6 +2726,11 @@
       "kind": "command",
       "subject": "command:intent preflight",
       "path": "/evidence/commands/intent-preflight/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent propose",
+      "path": "/evidence/commands/intent-propose/"
     },
     {
       "kind": "command",
@@ -3759,6 +3774,11 @@
     },
     {
       "kind": "use_case",
+      "subject": "use_case:use-the-tool-as-your-own-in-a-shared-repository",
+      "path": "/evidence/use-cases/use-the-tool-as-your-own-in-a-shared-repository/"
+    },
+    {
+      "kind": "use_case",
       "subject": "use_case:work-on-a-branch-in-its-canonical-worktree",
       "path": "/evidence/use-cases/work-on-a-branch-in-its-canonical-worktree/"
     }
@@ -4758,6 +4778,18 @@
       "programs": [],
       "members": [
         "command:intent preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.propose": {
+      "kind": "capability",
+      "id": "intents.propose",
+      "page": "/evidence/capabilities/intents-propose/",
+      "programs": [],
+      "members": [
+        "command:intent propose"
       ],
       "routes": [],
       "mechanisms": [],
@@ -9574,6 +9606,29 @@
             "docs/DESIGN.md",
             "lib/check.sh",
             "test/cases/04_start_check.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:personal-layer-changes-nothing-shared": {
+      "kind": "claim",
+      "id": "personal-layer-changes-nothing-shared",
+      "status": "guaranteed",
+      "page": "/evidence/claims/personal-layer-changes-nothing-shared/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/INSTALL.md",
+            "lib/common.sh",
+            "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
           ]
         }
       ],
@@ -14429,9 +14484,21 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
           "category": "e2e"
         }
       ],
@@ -14518,6 +14585,25 @@
       "kind": "command",
       "id": "intent preflight",
       "page": "/evidence/commands/intent-preflight/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent propose": {
+      "kind": "command",
+      "id": "intent propose",
+      "page": "/evidence/commands/intent-propose/",
       "programs": [
         "native"
       ],
@@ -18234,6 +18320,7 @@
         "claim:installer-verifies-before-installing",
         "claim:legacy-migration",
         "claim:no-network",
+        "claim:personal-layer-changes-nothing-shared",
         "claim:release-is-complete-or-absent",
         "claim:rust-binary-artifact",
         "claim:tool-location-independent",
@@ -18241,13 +18328,15 @@
         "command:init",
         "command:migrate",
         "command:version",
+        "rule:project.a-personal-layer-changes-nothing-shared",
         "rule:project.distribution-canonical",
         "rule:project.no-network-no-eval",
         "rule:project.portable-shell",
         "use_case:hand-the-repository-to-a-reader",
         "use_case:install-the-tool-in-one-command",
         "use_case:know-which-tool-is-running",
-        "use_case:migrate-from-the-old-layout"
+        "use_case:migrate-from-the-old-layout",
+        "use_case:use-the-tool-as-your-own-in-a-shared-repository"
       ],
       "routes": [],
       "mechanisms": [],
@@ -19480,6 +19569,18 @@
       "programs": [],
       "members": [
         "capability:intents.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_propose": {
+      "kind": "mcp",
+      "id": "majordomus_intent_propose",
+      "alias_of": "capability:intents.propose",
+      "programs": [],
+      "members": [
+        "capability:intents.propose"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22148,6 +22249,37 @@
           "inputs": [
             "test/cases/560_a_case_number_names_one_case.sh",
             ".ai/repo/rules/project/a-number-names-one-case.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-personal-layer-changes-nothing-shared": {
+      "kind": "rule",
+      "id": "project.a-personal-layer-changes-nothing-shared",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+            ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:86_installer_platform",
+          "path": "test/cases/86_installer_platform.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/86_installer_platform.sh",
+            ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
           ]
         }
       ],
@@ -26656,6 +26788,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "use_case:use-the-tool-as-your-own-in-a-shared-repository": {
+      "kind": "use_case",
+      "id": "use-the-tool-as-your-own-in-a-shared-repository",
+      "status": "active",
+      "page": "/evidence/use-cases/use-the-tool-as-your-own-in-a-shared-repository/",
+      "programs": [],
+      "members": [
+        "claim:local-state-ignored",
+        "claim:personal-layer-changes-nothing-shared",
+        "command:doctor",
+        "command:init",
+        "command:update",
+        "rule:majordomus.ai-layout-integrity"
+      ],
+      "routes": [
+        {
+          "via": "scenario",
+          "path": ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
+          "category": "scenario"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "use_case:work-on-a-branch-in-its-canonical-worktree": {
       "kind": "use_case",
       "id": "work-on-a-branch-in-its-canonical-worktree",
@@ -26820,6 +26976,7 @@
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
+    "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",
