@@ -228,6 +228,12 @@ mj_validate_projection() {
       file|region) ;;
       *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' $(mj_rel "$MJ_POLICY_FILE")"; j=$((j+1)); continue ;;
     esac
+    # Under a personal layer a target git tracks is the project's own file. It was not
+    # written by update and will not be, so it is not held to a stamp it never had.
+    if mj_personal_is_the_projects "$tgt"; then
+      mj_doctrine_skip projection "$tgt" "tracked, so it is the project's; a personal layer leaves it alone (point this projection at a file of your own)"
+      j=$((j+1)); continue
+    fi
     st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
     case "$st" in
       # update would die on this; doctor is the command that is supposed to say so first
@@ -252,13 +258,19 @@ mj_validate_projection() {
 # distilled from, so a generated target that holds a rule corpus fails here.
 mj_validate_bootstrap() {
   local j=0 tgt mode bad=0
-  if [ -f "$MJ_ROOT/README.md" ]; then
+  if mj_personal_active; then
+    # The chain starts at the project's README, and a personal layer changes nothing the
+    # project shares: the README is the repository's, the layer is one person's. The agent
+    # finds AGENTS.md beside it all the same.
+    mj_doctrine_skip bootstrap "README.md" "not asked to name AGENTS.md: the layer is personal, and the README is the project's"
+  elif [ -f "$MJ_ROOT/README.md" ]; then
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
+    mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
     if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
     elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
@@ -586,6 +598,8 @@ mj_validate_ai_layout() {
   elif [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
     mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
   else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
+  # a personal layer is held to what it claims on every doctor, not only when it was made
+  if mj_personal_active; then mj_personal_verify mj_doctrine_ok mj_doctrine_fail || bad=1; fi
   if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
     mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
   fi

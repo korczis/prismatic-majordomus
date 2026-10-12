@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.22.0
 coverage:
   - scope: direct
-    required: 193
-    covered: 165
+    required: 195
+    covered: 166
     missing: 0
-    waived: 28
+    waived: 29
     inapplicable: 0
   - scope: http
-    required: 189
-    covered: 165
+    required: 191
+    covered: 166
     missing: 0
-    waived: 24
+    waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 185
-    covered: 161
+    required: 187
+    covered: 162
     missing: 0
-    waived: 24
+    waived: 25
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 581
-    covered: 505
+    required: 587
+    covered: 508
     missing: 0
-    waived: 76
+    waived: 79
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -273,6 +273,15 @@ capabilities:
     cases:
       - first-deployment
   - id: deploy.list
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: deploy.observed
     module: deploy
     kind: query
     cache: "—"
@@ -840,6 +849,14 @@ capabilities:
     http: covered
     cases:
       - first-issue
+  - id: intents.propose
+    module: intents
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: intents.record
     module: intents
     kind: query

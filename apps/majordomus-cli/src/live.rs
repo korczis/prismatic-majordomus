@@ -493,6 +493,20 @@ impl Live {
     /// when the repository has moved, this starts the reload on a thread of its own, unless
     /// one is already running, and returns the existing generation with `behind` set.
     /// Nothing about [`Live::view`] changes for any other caller.
+    ///
+    /// ```
+    /// use majordomus_cli::live::Live;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let live = Arc::new(Live::pinned(repo.context().unwrap()));
+    /// // a pinned view follows nothing, so the generation there is is the one to show and
+    /// // the repository has never moved past it
+    /// let (view, behind) = live.view_without_waiting();
+    /// assert!(!behind);
+    /// assert_eq!(view.generation, live.view().generation);
+    /// ```
     pub fn view_without_waiting(self: &Arc<Self>) -> (View, bool) {
         let Some(watch) = self.watch.as_ref() else {
             return (self.view(), false);

@@ -396,6 +396,22 @@
     @apply text-sm;
     color: var(--mj-muted);
   }
+
+  /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of
+     acceptance criteria. Read as text, at a measure a sentence can be read at. */
+  .mj-ui-prose {
+    @apply mb-3 max-w-prose text-sm leading-relaxed;
+    color: var(--mj-body);
+  }
+  .mj-ui-prose-list {
+    @apply mb-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed;
+    color: var(--mj-body);
+  }
+  .mj-ui-code {
+    @apply rounded px-1 py-0.5 font-mono text-small;
+    background: var(--mj-sunken);
+    color: var(--mj-body);
+  }
   .mj-ui-line {
     @apply mb-3 text-sm;
     color: var(--mj-muted);

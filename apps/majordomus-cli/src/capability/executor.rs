@@ -327,6 +327,23 @@ impl CapabilityExecutor {
     /// runs, nothing is stored, and a miss is not counted: it is how the latest reading of a
     /// source learns that the answer for a moved repository is already at hand
     /// (`capability::readings`).
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use serde_json::json;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let describe = json!({ "id": "plan.status" });
+    /// // nothing is held before the capability was asked, and asking this way runs nothing
+    /// assert_eq!(ctx.executor.cached(&ctx, "capabilities.describe", &describe), None);
+    /// assert_eq!(ctx.executor.handler_invocations(), 0);
+    /// // once it was asked, what it answered is at hand
+    /// let answer = ctx.execute("capabilities.describe", describe.clone()).unwrap();
+    /// assert_eq!(ctx.executor.cached(&ctx, "capabilities.describe", &describe), Some(answer));
+    /// // a capability that does not exist holds nothing
+    /// assert_eq!(ctx.executor.cached(&ctx, "no.such.capability", &json!({})), None);
+    /// ```
     pub fn cached(&self, ctx: &Context, id: &str, input: &Value) -> Option<Value> {
         if bypassed() {
             return None;

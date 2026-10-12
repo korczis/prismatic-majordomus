@@ -228,6 +228,24 @@ fn the_editor_projection_answers_over_mcp_as_over_http() {
     );
 }
 
+/// What was deployed is one value on every machine surface, and a repository nobody has
+/// asked the forge about says so over MCP exactly as over HTTP, with the command that asks.
+#[test]
+fn what_was_deployed_answers_over_mcp_as_over_http() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (status, via_http) = s.get("/api/v1/deployments/observed");
+    assert_eq!(status, 200, "{via_http}");
+    let via_mcp = mcp_call(&f.root(), "majordomus_deployments_observed", json!({}));
+    assert_eq!(via_http, via_mcp, "HTTP and MCP must not be two opinions");
+    assert_eq!(via_mcp["observed"], false);
+    assert!(
+        via_mcp["reason"].as_str().unwrap().contains("prs refresh"),
+        "{via_mcp}"
+    );
+    assert_eq!(via_mcp["deployments"], json!([]));
+}
+
 /// The release analysis is one value, and every machine surface renders that one.
 ///
 /// The whole subsystem rests on there being a single verdict: if HTTP and MCP could answer

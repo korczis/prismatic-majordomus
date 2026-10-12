@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.22.0"
   },
-  "fingerprint": "3232c8ad280d26d580d2f1d552147952e12588b2779bcbb25a30677771fbdec9",
+  "fingerprint": "3de7536d7262766baabc7f1ee07a78966b00aa52c5e80c49dbbd364cec86edb3",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 68,
+        "capabilities": 69,
         "moments": 17
       },
       "evidence": {
@@ -2680,9 +2680,9 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 8,
-          "tested": 8,
-          "use_cases": 4
+          "claims": 9,
+          "tested": 9,
+          "use_cases": 5
         },
         {
           "id": "why",
@@ -3080,6 +3080,12 @@
           "test": "test/cases/92_openapi_reference.sh"
         },
         {
+          "id": "personal-layer-changes-nothing-shared",
+          "claim": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+          "status": "guaranteed",
+          "test": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+        },
+        {
           "id": "release-is-complete-or-absent",
           "claim": "A release publishes an artifact for every supported target or it is not published",
           "status": "guaranteed",
@@ -3185,21 +3191,26 @@
           "id": "serve-the-layer-to-ai-clients",
           "title": "Serve the repository's AI layer to every AI client through one shared server",
           "category": "mcp"
+        },
+        {
+          "id": "use-the-tool-as-your-own-in-a-shared-repository",
+          "title": "Use the tool as your own in a shared repository, and propose it to the team when it has made its case",
+          "category": "adoption"
         }
       ],
       "counts": {
         "features": 6,
-        "claims": 33,
-        "tested": 33,
-        "use_cases": 9,
-        "rules": 14,
-        "enforced_rules": 13,
-        "capabilities": 116,
+        "claims": 34,
+        "tested": 34,
+        "use_cases": 10,
+        "rules": 15,
+        "enforced_rules": 14,
+        "capabilities": 118,
         "moments": 38
       },
       "evidence": {
         "claims": {
-          "guaranteed": 33
+          "guaranteed": 34
         },
         "modules": {}
       }
@@ -3474,7 +3485,7 @@
         },
         {
           "name": "claim",
-          "objects": 244
+          "objects": 245
         }
       ],
       "rule_refs": [
@@ -3747,11 +3758,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 316,
+        "mcp_resources": 317,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 309,
+        "objects": 310,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -7206,7 +7217,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 98
+          "objects": 100
         },
         {
           "name": "knowledge",
@@ -7214,7 +7225,7 @@
         },
         {
           "name": "document",
-          "objects": 339
+          "objects": 341
         }
       ],
       "rule_refs": [
@@ -7487,11 +7498,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 441,
+        "mcp_resources": 445,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 438,
+        "objects": 442,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7707,7 +7718,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 174
+          "objects": 176
         }
       ],
       "rule_refs": [
@@ -8083,11 +8094,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 176,
+        "mcp_resources": 178,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 174,
+        "objects": 176,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9513,6 +9524,15 @@
               "cli": "majordomus intent preflight"
             },
             {
+              "id": "intents.propose",
+              "title": "Propose an intent: what must become true",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_intent_propose",
+              "route": "POST /api/v1/intents/propose",
+              "cli": "majordomus intent propose"
+            },
+            {
               "id": "intents.record",
               "title": "One intent, with everything derived about it",
               "kind": "query",
@@ -9835,6 +9855,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.observed",
+              "title": "What was deployed, and where",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deployments_observed",
+              "route": "GET /api/v1/deployments/observed"
             }
           ]
         },
@@ -10457,11 +10485,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 94,
-        "mcp_tools": 87,
+        "capabilities": 96,
+        "mcp_tools": 89,
         "mcp_resources": 16,
-        "http_routes": 91,
-        "cli_paths": 40,
+        "http_routes": 93,
+        "cli_paths": 41,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -11239,19 +11267,23 @@
       "rules": [
         "project.distribution-canonical",
         "project.portable-shell",
-        "project.no-network-no-eval"
+        "project.no-network-no-eval",
+        "project.a-personal-layer-changes-nothing-shared"
       ],
       "docs": [
         "docs/INSTALL.md",
-        "docs/DISTRIBUTION.md"
+        "docs/DISTRIBUTION.md",
+        "docs/PERSONAL_MODE.md"
       ],
       "adrs": [
-        "adr-0019"
+        "adr-0019",
+        "adr-0145"
       ],
       "claims": [
         "distribution-canonical-model",
         "install-command-is-derived",
         "installer-verifies-before-installing",
+        "personal-layer-changes-nothing-shared",
         "release-is-complete-or-absent",
         "legacy-migration",
         "tool-location-independent",
@@ -11260,6 +11292,7 @@
       ],
       "use_cases": [
         "install-the-tool-in-one-command",
+        "use-the-tool-as-your-own-in-a-shared-repository",
         "migrate-from-the-old-layout",
         "know-which-tool-is-running",
         "hand-the-repository-to-a-reader"
@@ -11441,6 +11474,14 @@
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/project/no-network-no-eval.v1.md"
+        },
+        {
+          "id": "project.a-personal-layer-changes-nothing-shared",
+          "identity": "project.a-personal-layer-changes-nothing-shared@1",
+          "title": "A personal layer changes nothing shared",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
         }
       ],
       "doc_refs": [
@@ -11451,6 +11492,10 @@
         {
           "path": "docs/DISTRIBUTION.md",
           "title": "Distribution"
+        },
+        {
+          "path": "docs/PERSONAL_MODE.md",
+          "title": "Personal mode: Majordomus as one person's instrument"
         }
       ],
       "adr_refs": [
@@ -11459,6 +11504,12 @@
           "title": "Distribution is one model, and every surface that ships the tool is a projection of it",
           "status": "proposed",
           "path": ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md"
+        },
+        {
+          "id": "adr-0145",
+          "title": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md"
         }
       ],
       "claim_refs": [
@@ -11479,6 +11530,12 @@
           "claim": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
           "status": "guaranteed",
           "test": "test/cases/85_installer.sh"
+        },
+        {
+          "id": "personal-layer-changes-nothing-shared",
+          "claim": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+          "status": "guaranteed",
+          "test": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
         },
         {
           "id": "release-is-complete-or-absent",
@@ -11515,6 +11572,11 @@
         {
           "id": "install-the-tool-in-one-command",
           "title": "Install the tool in one command, on a machine with no toolchain",
+          "category": "adoption"
+        },
+        {
+          "id": "use-the-tool-as-your-own-in-a-shared-repository",
+          "title": "Use the tool as your own in a shared repository, and propose it to the team when it has made its case",
           "category": "adoption"
         },
         {
@@ -11558,17 +11620,17 @@
         "cli_paths": 5,
         "commands": 4,
         "objects": 22,
-        "rules": 3,
-        "enforced_rules": 3,
-        "docs": 2,
-        "adrs": 1,
-        "claims": 8,
-        "use_cases": 4,
+        "rules": 4,
+        "enforced_rules": 4,
+        "docs": 3,
+        "adrs": 2,
+        "claims": 9,
+        "use_cases": 5,
         "moments": 2
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 9
         },
         "modules": {
           "behaviorally_verified": 1,
@@ -11853,6 +11915,15 @@
               "cli": "majordomus intent preflight"
             },
             {
+              "id": "intents.propose",
+              "title": "Propose an intent: what must become true",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_intent_propose",
+              "route": "POST /api/v1/intents/propose",
+              "cli": "majordomus intent propose"
+            },
+            {
               "id": "intents.record",
               "title": "One intent, with everything derived about it",
               "kind": "query",
@@ -11915,7 +11986,7 @@
         },
         {
           "name": "issue",
-          "objects": 339
+          "objects": 340
         },
         {
           "name": "intent",
@@ -12115,13 +12186,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 22,
-        "mcp_tools": 22,
-        "mcp_resources": 381,
-        "http_routes": 22,
-        "cli_paths": 10,
+        "capabilities": 23,
+        "mcp_tools": 23,
+        "mcp_resources": 382,
+        "http_routes": 23,
+        "cli_paths": 11,
         "commands": 1,
-        "objects": 378,
+        "objects": 379,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -12721,7 +12792,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 48
+          "objects": 49
         },
         {
           "name": "application",
@@ -12837,11 +12908,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 63,
+        "mcp_resources": 64,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 63,
+        "objects": 64,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14180,6 +14251,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.observed",
+              "title": "What was deployed, and where",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deployments_observed",
+              "route": "GET /api/v1/deployments/observed"
             }
           ]
         },
@@ -14256,10 +14335,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 6,
+        "mcp_tools": 6,
         "mcp_resources": 2,
-        "http_routes": 5,
+        "http_routes": 6,
         "cli_paths": 2,
         "commands": 0,
         "objects": 1,
@@ -14923,8 +15002,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 8,
-        "claims": 8
+        "proven": 9,
+        "claims": 9
       },
       {
         "id": "planning",
@@ -15760,7 +15839,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (98)",
+        "title": "adr (100)",
         "features": [
           "knowledge"
         ]
@@ -15788,7 +15867,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (244)",
+        "title": "claim (245)",
         "features": [
           "declare-once"
         ]
@@ -15857,7 +15936,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (339)",
+        "title": "issue (340)",
         "features": [
           "planning"
         ]
@@ -15920,7 +15999,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (174)",
+        "title": "rule (176)",
         "features": [
           "doctrine"
         ]
@@ -15956,7 +16035,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (48)",
+        "title": "use-case (49)",
         "features": [
           "use-cases"
         ]
@@ -16404,6 +16483,14 @@
       "class": "advisory",
       "enforced": false,
       "path": ".ai/repo/rules/vendor/majordomus/rules/principle-08-verify-outcomes.v1.md"
+    },
+    {
+      "id": "project.a-personal-layer-changes-nothing-shared",
+      "identity": "project.a-personal-layer-changes-nothing-shared@1",
+      "title": "A personal layer changes nothing shared",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
     },
     {
       "id": "project.advisors-are-optional",
@@ -16862,36 +16949,36 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2295,
-    "builtin": 193,
-    "declarative": 2102,
+    "capabilities": 2309,
+    "builtin": 195,
+    "declarative": 2114,
     "modules": 56,
-    "mcp_tools": 185,
-    "mcp_resources": 2157,
-    "http_routes": 189,
-    "cli_commands": 201,
+    "mcp_tools": 187,
+    "mcp_resources": 2169,
+    "http_routes": 191,
+    "cli_commands": 202,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2102,
+    "objects": 2114,
     "by_kind": {
-      "adr": 98,
+      "adr": 100,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 244,
+      "claim": 245,
       "command": 31,
       "context": 37,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 339,
+      "document": 341,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 339,
+      "issue": 340,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16900,13 +16987,13 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 174,
+      "rule": 176,
       "scope": 1,
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 458,
-      "use-case": 48,
+      "test": 461,
+      "use-case": 49,
       "workspace": 1
     },
     "providers": 6,
@@ -16923,7 +17010,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 226,
+    "declared": 227,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -17869,6 +17956,12 @@
         "supported": false
       },
       "overlap-report": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "personal-layer-changes-nothing-shared": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

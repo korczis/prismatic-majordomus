@@ -38,9 +38,9 @@
       "requires_repository": true,
       "requires_installed": false,
       "json_output": false,
-      "syntax": "majordomus init [--extend]",
+      "syntax": "majordomus init [--extend] [--personal | --shared]",
       "demo": "init-refusal",
-      "note": "The only command that runs before the .ai/ layer exists. It refuses an existing layer; --extend adds only what is missing and overwrites nothing.",
+      "note": "The only command that runs before the .ai/ layer exists. It refuses an existing layer; --extend adds only what is missing and overwrites nothing. With --personal the layer is one person's own in a shared repository: no .gitignore line is written, the layer is covered in the git directory's info/exclude instead, and init exits 10 unless git status reads the same after it as before. --shared hands a personal layer to the team by removing that cover.",
       "reads": [
         "share/skeleton/ai"
       ],
@@ -49,11 +49,13 @@
         ".ai/README.md",
         ".ai/repo/",
         ".ai/local/state/",
-        ".gitignore"
+        ".gitignore",
+        ".git/info/exclude"
       ],
       "exit_codes": [
         0,
         2,
+        10,
         13,
         15
       ],
@@ -61,10 +63,12 @@
         "behaviour": [
           "01_init",
           "15_command_surface",
-          "284_a_record_reads_the_whole_declaration"
+          "284_a_record_reads_the_whole_declaration",
+          "2979_a_personal_layer_changes_nothing_shared"
         ],
         "negative": [
-          "01_init"
+          "01_init",
+          "2979_a_personal_layer_changes_nothing_shared"
         ]
       },
       "demo_data": {

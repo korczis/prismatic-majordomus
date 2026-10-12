@@ -81,7 +81,7 @@
       "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 3
+      "capabilities": 4
     },
     {
       "id": "design",
@@ -225,7 +225,7 @@
       "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 6
+      "capabilities": 7
     },
     {
       "id": "knowledge_base",
@@ -12242,6 +12242,275 @@
       "stability": "behaviorally_verified",
       "tags": [
         "deployment"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+    },
+    {
+      "id": "deploy.observed",
+      "module": "deploy",
+      "kind": "query",
+      "title": "What was deployed, and where",
+      "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservedDeployments",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "observed": {
+              "type": "boolean",
+              "description": "Whether this checkout holds an observation at all."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, and what to run, when it holds none or cannot read it."
+            },
+            "repository": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "`owner/name`, when observed."
+            },
+            "repository_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The repository's address on the forge, when observed."
+            },
+            "observed_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "When the forge was asked, when observed."
+            },
+            "environments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EnvironmentSummary"
+              },
+              "description": "Every environment something was deployed to, by name."
+            },
+            "deployments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ObservedDeployment"
+              },
+              "description": "The observed deployments, newest first."
+            },
+            "releases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ObservedRelease"
+              },
+              "description": "The observed releases, newest first."
+            }
+          },
+          "required": [
+            "observed",
+            "environments",
+            "deployments",
+            "releases"
+          ],
+          "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here.",
+          "title": "ObservedDeployments",
+          "$defs": {
+            "EnvironmentSummary": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The environment."
+                },
+                "deployments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many of the observed deployments went to it."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "The state of its newest deployment."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The commit its newest deployment put there."
+                },
+                "deployed_at": {
+                  "type": "string",
+                  "description": "When that was."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where it is served, when its newest deployment says."
+                },
+                "activity_url": {
+                  "type": "string",
+                  "description": "The environment's activity on the forge."
+                }
+              },
+              "required": [
+                "name",
+                "deployments",
+                "state",
+                "sha",
+                "deployed_at",
+                "activity_url"
+              ],
+              "description": "One environment, as its deployments describe it."
+            },
+            "ObservedDeployment": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The forge's identity of the deployment."
+                },
+                "environment": {
+                  "type": "string",
+                  "description": "The environment it went to, in the forge's words (`github-pages`, `production`, ...)."
+                },
+                "sha": {
+                  "type": "string",
+                  "description": "The commit that was deployed."
+                },
+                "git_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The ref it was deployed from, when the forge still names one."
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "When it was created, RFC 3339."
+                },
+                "creator": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Who or what created it."
+                },
+                "state": {
+                  "type": "string",
+                  "description": "How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all."
+                },
+                "environment_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where the environment is served, when the deployment says."
+                },
+                "log_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The run that performed it, when the deployment says."
+                }
+              },
+              "required": [
+                "id",
+                "environment",
+                "sha",
+                "created_at",
+                "state"
+              ],
+              "description": "One deployment the forge recorded."
+            },
+            "ObservedRelease": {
+              "type": "object",
+              "properties": {
+                "tag": {
+                  "type": "string",
+                  "description": "The tag."
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The release's title, when it has one."
+                },
+                "published_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was published; absent for a draft."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Its page on the forge."
+                },
+                "prerelease": {
+                  "type": "boolean",
+                  "description": "Whether the forge marks it a pre-release."
+                },
+                "draft": {
+                  "type": "boolean",
+                  "description": "Whether it is still a draft."
+                }
+              },
+              "required": [
+                "tag",
+                "url",
+                "prerelease",
+                "draft"
+              ],
+              "description": "One release the forge published."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::deploy"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_deployments_observed"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/deployments/observed"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "deployment",
+        "delivery"
       ],
       "benchmark": {
         "policy": "required"
@@ -40999,6 +41268,116 @@
         "effect": "read",
         "cancellable": false,
         "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+    },
+    {
+      "id": "intents.propose",
+      "module": "intents",
+      "kind": "command",
+      "title": "Propose an intent: what must become true",
+      "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+      "input": {
+        "name": "IntentProposeInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "statement": {
+              "type": "string",
+              "description": "What must become true, in the proposer's words; kept verbatim."
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One line naming it; the statement's first line when absent."
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The identity and file name; the title's slug when absent."
+            }
+          },
+          "required": [
+            "statement"
+          ],
+          "description": "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```",
+          "title": "IntentProposeInput"
+        }
+      },
+      "output": {
+        "name": "Proposed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The identity, which is also the file name."
+            },
+            "path": {
+              "type": "string",
+              "description": "Repository-relative path of the record written."
+            },
+            "title": {
+              "type": "string",
+              "description": "One line."
+            },
+            "statement": {
+              "type": "string",
+              "description": "What must become true, as it was given."
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "title",
+            "statement"
+          ],
+          "description": "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```",
+          "title": "Proposed"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::intents"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_intent_propose"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/intents/propose"
+        },
+        "cli": {
+          "path": [
+            "intent",
+            "propose"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "intent",
+        "project"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
     },

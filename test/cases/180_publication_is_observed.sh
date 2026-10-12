@@ -50,6 +50,9 @@ fixture() {
   cp "$ROOT/.ai/manifest.yaml" "$ROOT/.ai/README.md" "$dir/.ai/"
   cp "$ROOT/.ai/repo/ci/pages.yaml" "$dir/.ai/repo/ci/pages.yaml"
   cp "$ROOT/.ai/repo/ci/gates.yaml" "$dir/.ai/repo/ci/gates.yaml"
+  # the topology, which is where the mount of a snapshot the model declares is read from
+  mkdir -p "$dir/docs/generated"
+  cp "$ROOT/docs/generated/web.json" "$dir/docs/generated/web.json"
   printf 'base_url = "%s"\n' "$base" > "$dir/site/config.toml"
   (
     cd "$dir" || exit 1
@@ -87,6 +90,11 @@ serve() {
   printf '<html><body><dl data-trust><div data-trust-key="release" data-release="%s"><dd>%s</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' \
     "$offer" "$offer" "$footer_commit" "$footer_commit" > "$dir/index.html"
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$dir/releases/latest.json"
+  # and what the model says a publication holds beside its pages (the UI's snapshot), read at
+  # the commit the identity names: a whole site, so that every refusal below is the one asked
+  # for. test/cases/1096_the_published_ui_is_the_trunks.sh holds the gate's refusal of a UI
+  # that is missing or another commit's.
+  publication_snapshots "$ROOT" "$dir" "$identity_commit"
 }
 
 # GitHub's Pages build API, as a stub: the one endpoint the gate reads, answering what this

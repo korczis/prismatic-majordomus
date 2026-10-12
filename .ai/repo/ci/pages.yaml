@@ -99,6 +99,27 @@ deploy:
       marker: data-challenge-replay
     - route: /challenge/
       marker: /guarantees/
+  # What a publication holds that the site build does not compose: a surface a process serves,
+  # read once at the published commit by that commit's own executable and written as files
+  # (ADR 0141). `surface` is the topology's id of the served surface (docs/generated/web.json),
+  # and its mount there is where the publication holds the snapshot, so no mount is written
+  # here; `artifact` is where the producer writes it, `producer` is the command that does, and
+  # `marker` is the attribute every page of it states the commit it was read at with.
+  #
+  # Declared here because until 2026-10-12 only .github/workflows/pages.yml knew: its deploy
+  # job placed the snapshot and nothing else could tell that a site without one was short of a
+  # surface. A person's `scripts/site-deploy` published the site without it, the public probes
+  # read /build.json and never the mount, and a snapshot read at an older commit than the
+  # pages beside it was nobody's finding. `scripts/pages snapshots` resolves these rows;
+  # `scripts/site-deploy` refuses a tree that lacks one, `scripts/pages verify-ui` asks the
+  # public site for it, and section 2c of scripts/ci/pages-check holds the live site to it
+  # (project.the-published-ui-is-the-trunks). test/cases/1096_the_published_ui_is_the_trunks.sh
+  # holds the workflow to this entry, so the two cannot drift.
+  snapshots:
+    - surface: ui
+      artifact: target/web/ui-snapshot
+      producer: majordomus web report ui-snapshot
+      marker: data-snapshot-of
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from
