@@ -1,0 +1,29 @@
+id: I2474
+milestone: development-runtime
+title: "The drain draws its merge throughput: each day's merges over the fortnight its trail ends on"
+slug: the-drain-draws-its-throughput
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Draw on the PR Drain how many pull requests the executor merged on each of the fourteen days that end on the day of its trail's newest event, as a chart whose counts are written in its label and in a table beside it."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots (reference 03-pr-drain shows a merge throughput chart; pack v3 M04-03, measured time series). The executor's trail records every merge_succeeded with its time, and the queue already folds a seven-day merge count, but nothing showed the series."
+current_state: "The drain shows merges in seven days and merges per day as two numbers."
+desired_state: "The drain panel, which asks integration.events, draws 'Merge throughput': the fourteen days ending on the trail's newest event's day (the record's end, not the reader's clock), each with its count of merge_succeeded events, as a server-side SVG chart labelled with every day's count and a table of the same numbers. An attempt is no merge, a merge outside the window is not drawn, and a trail with no merge in the window says so and draws no chart."
+scope:
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - ".ai/repo/project/issues/I2474.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1079_the_drain_draws_its_throughput.sh"
+depends_on: ["I2473"]
+acceptance_criteria:
+  - "the chart covers fourteen days ending on the trail's newest event's day"
+  - "each day counts merge_succeeded events only, and the counts are in the chart's label and a table"
+  - "a trail with no merge in the window draws no chart and says so"
+validation:
+  - "cargo test --lib ui::prs"
+  - "test/run.sh 1079_the_drain_draws_its_throughput"
+evidence_required:
+  - "ui_throughput_unit_test"
+  - "ui_throughput_case_1079"
+created_at: 2026-10-11
+updated_at: 2026-10-11

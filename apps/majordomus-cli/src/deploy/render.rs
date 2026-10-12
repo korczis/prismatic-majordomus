@@ -30,11 +30,24 @@ pub const ALPINE: &str = "3.21";
 pub const TOOLCHAIN_FILE: &str = "rust-toolchain.toml";
 
 /// The builder image for an exact Rust version: `rust:<version>-alpine<ALPINE>`.
+///
+/// ```
+/// use majordomus_cli::deploy::render::{rust_image, ALPINE};
+///
+/// assert_eq!(rust_image("1.98.1"), format!("rust:1.98.1-alpine{ALPINE}"));
+/// ```
 pub fn rust_image(rust: &str) -> String {
     format!("rust:{rust}-alpine{ALPINE}")
 }
 
 /// The runtime base: the same Alpine release as the builder.
+///
+/// ```
+/// use majordomus_cli::deploy::render::{runtime_image, rust_image};
+///
+/// let alpine = runtime_image().strip_prefix("alpine:").unwrap().to_string();
+/// assert!(rust_image("1.98.1").ends_with(&format!("-alpine{alpine}")));
+/// ```
 pub fn runtime_image() -> String {
     format!("alpine:{ALPINE}")
 }
@@ -44,6 +57,15 @@ pub fn runtime_image() -> String {
 /// declaration at all is refused, with the correction: an image built from a floating
 /// channel is not reproducible, and guessing a version would be the second pin this
 /// function exists to prevent.
+///
+/// ```
+/// use majordomus_cli::deploy::render::builder_rust;
+///
+/// let repo = tempfile::tempdir().unwrap();
+/// assert!(builder_rust(repo.path()).is_err(), "no pin, no builder");
+/// std::fs::write(repo.path().join("rust-toolchain.toml"), "[toolchain]\nchannel = \"1.98.1\"\n").unwrap();
+/// assert_eq!(builder_rust(repo.path()).unwrap(), "1.98.1");
+/// ```
 pub fn builder_rust(root: &std::path::Path) -> Result<String, String> {
     let declared = crate::environment::toolchain::declared(root)
         .into_iter()

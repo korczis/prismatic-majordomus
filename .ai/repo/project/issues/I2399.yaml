@@ -1,0 +1,66 @@
+id: I2399
+milestone: development-runtime
+title: "Every session briefs itself on an interval, without being asked"
+slug: sessions-brief-themselves
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give every worker of a supervised repository one short, typed brief of what surrounds it (its own episode and task, the peers of every board, the mesh, the integration queue and the derive queue), projected to the command line, HTTP, MCP and the Cockpit, and have a Claude Code provider mod the policy switches keep that brief in front of the session on its own: as the status line, injected on an interval, and with the session told at its start how to keep itself awake."
+why: "The owner ordered on 2026-10-11 that every Claude Code session working in this repository keeps itself alive and gives brief periodic reports without anyone asking. The facts already exist in five places (`peers.list`, `mesh.cooperation`, `mesh.state`, `majordomus prs brief`, the derive lock beside the primary checkout) and a session reads none of them unless it remembers to; the sessions of 2026-10-10 relayed board state to each other by hand, and a superseded server's board was silently missing from every gather. A session that is not told goes quiet, and a quiet session is indistinguishable from a dead one."
+current_state: "No capability composes the brief: `prs brief` is a private function of the command line, `peers.list` run from the command line reads an empty board of its own process instead of the server's, and the mesh runtime answers only inside a server. The only provider mod is majordomus-handover (ADR 0123). Nothing refreshes a status line, nothing reminds a session of its surroundings on an interval, and the SessionStart briefing says nothing about staying awake."
+desired_state: "`brief.session` (CLI `majordomus brief`, `GET /api/v1/brief`, MCP `majordomus_brief`) answers one line and a multi-line form from the leaseholder's view: the command line asks the server its checkout's lease names and composes locally only when none answers, and a superseded server says that its own board is unreachable by the repository's gather. The Cockpit overview shows it. `session.brief_on_interval` switches a second provider mod, majordomus-brief, installed by `capture install` beside the handover mod: it renders the line as the status line on a clock, injects the multi-line brief into the conversation when the last one is older than the declared interval, and at session start tells the worker to schedule its own periodic self-report. ADR 0136 records the decision."
+scope:
+  - ".ai/repo/project/issues/I2399.yaml"
+  - ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/commands/brief.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/brief.rs"
+  - "share/mods/claude-code/majordomus-brief/hooks/register.ts"
+  - "share/mods/claude-code/majordomus-brief/hooks/register.test.ts"
+  - "share/mods/claude-code/majordomus-brief/hooks/hooks.json"
+  - "share/mods/claude-code/majordomus-brief/README.md"
+  - "share/mods/claude-code/majordomus-brief/.claude-plugin/plugin.json"
+  - "share/mods/claude-code/majordomus-brief/.gitignore"
+  - "lib/capture.sh"
+  - "share/allow/policy.txt"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/skeleton/policy.yaml"
+  - ".ai/repo/policy.yaml"
+  - "test/cases/1065_a_session_briefs_itself.sh"
+  - "docs/BRIEF.md"
+  - "docs/README.md"
+  - "docs/generated"
+  - "docs/PLAN_STATUS.md"
+  - "docs/PAGES_STATUS.md"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Editing .claude/settings.json or any person's settings: installing the mod's folder is `capture install`'s; any settings change is the owner's decision."
+  - "A brief for providers other than Claude Code: the capability is provider-neutral, the mod is Claude Code's alone until another provider exposes a status line and a timer."
+  - "The mesh briefing of ADR 0128 (I2285, not on master): when it lands, the brief's mesh section may read it instead of mesh.state."
+acceptance_criteria:
+  - "`brief.session` answers a one-line and a multi-line brief with sections for the session, peers, mesh, integration and derive, each section saying when it could not be read rather than omitting itself"
+  - "Run from the command line beside a ready server, the brief carries the server's board, not the empty board of the command's own process"
+  - "A server that is not its checkout's leaseholder says its board is unreachable by the repository's gather"
+  - "The Cockpit overview renders the brief"
+  - "`capture install` writes .claude/skills/majordomus-brief when `session.brief_on_interval` is true and removes a copy it wrote when it is not"
+  - "The mod renders the status line, injects the multi-line brief once per interval, and prints the keep-awake instruction at session start (claude plugin test)"
+  - "ADR 0136 is proposed and docs/BRIEF.md documents the surface"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib brief"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test brief"
+  - "bash test/run.sh 1065_a_session_briefs_itself"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "session_brief_case"
+  - "decision_recorded"
+created_at: 2026-10-11
+updated_at: 2026-10-11

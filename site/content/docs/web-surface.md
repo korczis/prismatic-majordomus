@@ -39,6 +39,7 @@ documentation arrived the name meant two things; the rule
 | The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | both | `capability registry` |
 | The Rust crate's documentation, as rustdoc renders it | `/rustdoc` | static-directory | documentation | public | both | `scripts/rust-check --doc` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |
+| The delivery, for a person: majordomus ui | `/ui` | native-route | interface | public | served-only | `ui` |
 | The site as it is deployed | `/` | static-directory | documentation | public | published-only | `scripts/site-build` |
 | This process, and everything it serves | `/` | native-route | interface | public | served-only | `web::home` |
 

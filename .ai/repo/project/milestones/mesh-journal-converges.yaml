@@ -1,0 +1,48 @@
+id: mesh-journal-converges
+title: "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win"
+slug: mesh-journal-converges
+order: 137
+priority: p0
+problem: "The signed journal's grammar and fold are sound where tested: events are signed over canonical JSON (apps/majordomus-cli/src/mesh/journal.rs:934-948), the fold orders by (lamport, stream, seq) (apps/majordomus-cli/src/mesh/state.rs:508-513), and proptests permute deliveries. Its durability and its claims are not. Journal::persist ignores write errors (apps/majordomus-cli/src/mesh/journal.rs:1984), never fsyncs, and reload drops unparsable lines silently (apps/majordomus-cli/src/mesh/journal.rs:1407-1413); an append after a torn tail fuses the next event into the corrupt line. Claims have no fencing: expiry is a fold-time verdict that reverses when the same stream beats again after a sleep or partition (apps/majordomus-cli/src/mesh/journal.rs:1681-1697, apps/majordomus-cli/src/mesh/state.rs:656-661), and the revived claim then beats a claim admitted legitimately in its absence. Release is checked per run, not per session (apps/majordomus-cli/src/mesh/cooperation.rs:3373-3390). The sync budget ignores the size of the marks (apps/majordomus-cli/src/mesh/journal.rs:1734-1766), so a busy journal can exceed MAX_LINK_MESSAGE (apps/majordomus-cli/src/mesh/link.rs:67,70). mesh.events paging returns the journal's maximum lamport as the cursor and skips events (apps/majordomus-cli/src/capability/builtin/mesh.rs:594-596, apps/majordomus-cli/src/mesh/journal.rs:2124-2133). docs/MESH.md:189-190 claims permutation testing that covers one stream of six events. Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once."
+current_state: "Durable: the node key and every accepted event, with no fsync and ignored write errors. Memory only: registry, links, nonces, tombstones, beats. Exclusivity is local admission plus deterministic post-hoc naming of the winner, with no fencing token and no notification on Held to Conflicted. The journal reload trust check and the Lamport forward bound are I2124 (milestone runtime-trust, in progress on fix/a-remote-caller-cannot-write) and are not repeated here; runtime-trust's criterion that 'an expired claim does not return as live' is met by I2138 in this milestone."
+desired_state: "Every row of the audit's consistency contract (plan/RUNTIME_BASELINE.md) names a test: torn tail, failed write, crash during compaction, revived claim, release by another session, sync at the mark bound, paging across shared lamports, and a randomized multi-stream property test with permutation and duplication. docs/MESH.md states exclusivity as local admission with announced conflicts, not as a lock."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_compaction.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "test/cases"
+  - "test/mesh-lab"
+  - "docs/MESH.md"
+non_scope:
+  - "A global lock, quorum or coordinator. Pack invariant 5 allows refusing strong guarantees instead; the docs already disclaim linearizability (docs/MESH.md:26-27,612-613) and this milestone keeps that position unless an ADR decides otherwise."
+  - "The journal reload trust check and the Lamport bound, which are I2124."
+  - "Persisting tombstones, which the docs record as a deliberate limit."
+acceptance_criteria:
+  - "A torn or unreadable journal line is counted and reported by mesh doctor, and no complete event before or after it is lost"
+  - "A write failure is reported and the event is not acknowledged as stored"
+  - "A claim that expired and revived after a partition is Conflicted, not Held, against a claim admitted during its absence, on every runtime"
+  - "Two replicas fed the same authenticated events in any order and with duplicates report equal digests, by a multi-stream property test"
+  - "No sync message exceeds MAX_LINK_MESSAGE, and mesh.events pages return every event once"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh"
+  - "cargo test --test mesh_cooperation --test mesh_compaction --test mesh"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
+evidence_required:
+  - "journal_durability_tests"
+  - "claim_fencing_tests"
+  - "multi_stream_convergence_proptest"
+depends_on: []
+risks:
+  - "Adding an epoch to ClaimAcquired is a wire change; it needs the link or event schema version handled as I2164 prices it, or old runtimes will refuse or misread the new field."
+  - "fsync on every append costs latency on the heartbeat path; the bound chosen must be measured, not assumed."
+  - "I2124 edits the same reload path in apps/majordomus-cli/src/mesh/journal.rs; I2137 should land after it."
+created_at: 2026-10-09
+updated_at: 2026-10-09

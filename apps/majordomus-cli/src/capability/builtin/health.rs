@@ -195,6 +195,12 @@ pub struct Readiness {
     /// holding nothing but this answer (I1502).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stale: Option<String>,
+    /// Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and
+    /// `stale` make `ready` false: another process holds this checkout's lease, or this one
+    /// serves code that is gone. `layer_degraded` does not: the layer is served with its
+    /// diagnostics, and a client decides whether that is enough.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reasons: Vec<String>,
 }
 
 /// Liveness. No filesystem, no index traversal, no network: two fields this process can
@@ -215,8 +221,23 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     let capabilities = ctx.registry.summary().total;
     let objects = ctx.index.objects.len();
     let stale = crate::lease::serving_replaced_code();
+    let lost = crate::lease::was_lost();
+    let mut reasons = Vec::new();
+    if lost {
+        reasons.push("lease_lost: another process holds this checkout's lease; this one serves the sessions it had and takes on nobody new".to_string());
+    }
+    if let Some(why) = &stale {
+        reasons.push(format!("stale: {why}"));
+    }
+    if ctx.index.state == State::Degraded {
+        reasons.push(format!(
+            "layer_degraded: the layer was read with {} diagnostic(s); it is served as read",
+            ctx.index.diagnostics.len()
+        ));
+    }
     Ok(Readiness {
-        ready: capabilities > 0 && stale.is_none(),
+        ready: capabilities > 0 && stale.is_none() && !lost,
+        reasons,
         version: crate::VERSION.into(),
         commit: crate::COMMIT.into(),
         dirty: crate::DIRTY,
@@ -637,6 +658,39 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         ),
     );
 
+    // --- the mesh, as the server running it decided: only a process a shared server runs in
+    // decided anything, and in any other the answer is unknown, never a guess
+    let mesh = if ctx.mesh.decided() {
+        let verdict = crate::mesh::doctor::runtime_verdict(
+            super::mesh::declaration(ctx),
+            Some(&ctx.mesh.status()),
+        );
+        HealthCheck {
+            id: "mesh".into(),
+            title: "The mesh runtime".into(),
+            status: if verdict.ok {
+                HealthStatus::Ok
+            } else {
+                HealthStatus::Fail
+            },
+            detail: verdict.detail,
+            decided_by: "mesh doctor's runtime check, over this server's mesh.status".into(),
+            evidence: Vec::new(),
+            findings: verdict.remediation.into_iter().collect(),
+        }
+    } else {
+        HealthCheck {
+            id: "mesh".into(),
+            title: "The mesh runtime".into(),
+            status: HealthStatus::Unknown,
+            detail: "this process runs no shared server, so no mesh was activated or declined here; ask the server (GET /api/v1/health) or run `majordomus mesh doctor`".into(),
+            decided_by: "whether a shared server decided the mesh in this process".into(),
+            evidence: Vec::new(),
+            findings: Vec::new(),
+        }
+    };
+    record(&mut checks, &ctx.progress, mesh);
+
     let status = checks
         .iter()
         .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status));
@@ -924,5 +978,86 @@ mod tests {
         assert_eq!(status, HealthStatus::Unknown);
         assert_eq!(detail, "the continuity store could not be read: no device");
         assert!(findings.is_empty());
+    }
+
+    /// A layer read with an error diagnostic is served as read: readiness names it as a
+    /// reason, reports the layer as a warning, and is still ready.
+    #[test]
+    fn readiness_names_a_degraded_layer_and_is_still_ready() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let mut index = repo.index().expect("an index");
+        index.diagnostics.push(crate::model::Diagnostic {
+            severity: Severity::Error,
+            code: "unknown_key".into(),
+            path: Some("docs/x.md".into()),
+            message: "key(s) not in schema".into(),
+        });
+        index.state = State::Degraded;
+        let mut degraded = (*ctx).clone();
+        degraded.index = std::sync::Arc::new(index);
+        let r = readiness(&degraded, Empty {}).expect("ready");
+        assert!(r.ready, "a degraded layer is served: {r:?}");
+        assert_eq!(r.layer, HealthStatus::Warn);
+        let expected = format!(
+            "layer_degraded: the layer was read with {} diagnostic(s); it is served as read",
+            degraded.index.diagnostics.len()
+        );
+        assert!(r.reasons.contains(&expected), "{:?}", r.reasons);
+    }
+
+    /// The variable that makes a run of this test binary the child of the test below.
+    const STALE_CHILD: &str = "MAJORDOMUS_HEALTH_TEST_STALE_CHILD";
+
+    /// A process whose executable was removed under it is serving code that is no longer on
+    /// disk: readiness says it is not ready, and why. Shown in a copy of this test binary,
+    /// run as a process of its own, which removes its own executable once it has pinned it.
+    #[test]
+    fn readiness_refuses_a_process_whose_executable_was_removed_under_it() {
+        if std::env::var_os(STALE_CHILD).is_some() {
+            let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+            let ctx = repo.context().expect("a context");
+            assert_eq!(
+                crate::lease::serving_replaced_code(),
+                None,
+                "pinned while the file is there"
+            );
+            std::fs::remove_file(std::env::current_exe().expect("this executable"))
+                .expect("the copy is removed");
+            let r = readiness(&ctx, Empty {}).expect("an answer");
+            assert!(!r.ready, "{r:?}");
+            assert!(r.stale.is_some(), "{r:?}");
+            assert!(
+                r.reasons
+                    .iter()
+                    .any(|x| x.starts_with("stale: ") && x.contains("has been removed")),
+                "{:?}",
+                r.reasons
+            );
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let copy = dir.path().join("health-tests");
+        std::fs::copy(std::env::current_exe().expect("this test binary"), &copy)
+            .expect("a copy of this test binary");
+        let out = std::process::Command::new(&copy)
+            .args([
+                "--exact",
+                "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(STALE_CHILD, "1")
+            .output()
+            .expect("the copy runs");
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+        assert!(!copy.exists(), "the child removed its own executable");
     }
 }

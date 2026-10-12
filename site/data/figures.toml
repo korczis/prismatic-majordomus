@@ -1,0 +1,145 @@
+# figures.toml — the one declaration of the numbers hand-written prose may state.
+#
+# A sentence under site/content-src/ that states a count does not type it: it cites a figure
+# declared here, `{{ <cite_figure name="capabilities" /> }}`, and the build resolves it from data
+# the repository generates. The number on the page is then the repository's, on every build;
+# a typed one is the author's, on the day it was typed, and nothing would notice it going
+# stale. The shortcode is site/templates/shortcodes/cite_figure.html; it fails the build, naming
+# the figure, when a name is not declared here, its source does not load or its path does not
+# resolve. Check 19 of scripts/site-check ("prose states no count by hand") refuses a count
+# typed beside a counted noun in site/content-src/ or site/data/*.toml.
+#
+# Each [[figure]]:
+#   name             what the prose cites
+#   source           a file under site/data/, written by the generator, never by hand
+#   path             the keys walked from the top of that file
+#   measure          "value": the number at the path
+#                    "length": how many elements the array (or entries the map) at the path holds
+#   where_attribute  with "length" only, optional: count only the elements whose attribute ...
+#   where_value      ... equals this value
+#   description      one sentence: what it counts
+#
+# A figure is added here when prose needs one and the data already holds it; when the data
+# does not hold it, the prose says it without the number, or names the command that measures it.
+
+[[figure]]
+name = "capabilities"
+source = "registry/product.json"
+path = ["telemetry", "capabilities"]
+measure = "value"
+description = "The capabilities the executable's registry declares, built in and declarative together."
+
+[[figure]]
+name = "mcp_tools"
+source = "registry/product.json"
+path = ["telemetry", "mcp_tools"]
+measure = "value"
+description = "The capabilities the registry exposes to an MCP client as tools."
+
+[[figure]]
+name = "mcp_resources"
+source = "registry/product.json"
+path = ["telemetry", "mcp_resources"]
+measure = "value"
+description = "The capabilities the registry exposes to an MCP client as resources."
+
+[[figure]]
+name = "http_routes"
+source = "registry/product.json"
+path = ["telemetry", "http_routes"]
+measure = "value"
+description = "The capabilities the registry exposes as HTTP operations, each with a route."
+
+[[figure]]
+name = "cli_commands"
+source = "registry/product.json"
+path = ["telemetry", "cli_commands"]
+measure = "value"
+description = "The commands of the executable's command line that run, rather than only group others."
+
+[[figure]]
+name = "rule_objects"
+source = "registry/product.json"
+path = ["telemetry", "by_kind", "rule"]
+measure = "value"
+description = "The rule documents the repository's object graph indexes."
+
+[[figure]]
+name = "claims_total"
+source = "generated/capabilities.json"
+path = ["claims"]
+measure = "length"
+description = "The claims of docs/CLAIMS.yaml, whatever their status."
+
+[[figure]]
+name = "claims_guaranteed"
+source = "generated/capabilities.json"
+path = ["claims"]
+where_attribute = "status"
+where_value = "guaranteed"
+measure = "length"
+description = "The claims of docs/CLAIMS.yaml whose status is guaranteed: implemented, and proven by a behavioural test."
+
+[[figure]]
+name = "evidence_executions"
+source = "registry/product.json"
+path = ["evidence", "ledger", "executions"]
+measure = "value"
+description = "The test executions recorded in the evidence ledger, .ai/repo/evidence/ledger.json."
+
+[[figure]]
+name = "evidence_claims"
+source = "registry/product.json"
+path = ["evidence", "claims"]
+measure = "length"
+description = "The claims the evidence report gives a proof state."
+
+[[figure]]
+name = "claims_proven"
+source = "registry/product.json"
+path = ["evidence", "claims"]
+where_attribute = "state"
+where_value = "proven"
+measure = "length"
+description = "The claims whose proof state is proven: a passing run is recorded, and nothing the run measured has changed since."
+
+[[figure]]
+name = "claims_not_run"
+source = "registry/product.json"
+path = ["evidence", "claims"]
+where_attribute = "state"
+where_value = "not-run"
+measure = "length"
+description = "The claims that name a test of which no run has ever been recorded."
+
+[[figure]]
+name = "claims_stale"
+source = "registry/product.json"
+path = ["evidence", "claims"]
+where_attribute = "state"
+where_value = "stale"
+measure = "length"
+description = "The claims with a passing run recorded, and a file the claim names changed since."
+
+[[figure]]
+name = "claims_no_test"
+source = "registry/product.json"
+path = ["evidence", "claims"]
+where_attribute = "state"
+where_value = "no-test"
+measure = "length"
+description = "The claims that name no test."
+
+[[figure]]
+name = "doctrines_declared"
+source = "generated/doctrines.json"
+path = ["counts", "declared"]
+measure = "value"
+description = "The rules of the standard package the distribution ships."
+
+[[figure]]
+name = "doctrines_blocking"
+source = "generated/doctrines.json"
+path = ["counts", "blocking"]
+measure = "value"
+description = "The rules of the standard package whose class is blocking: a violation refuses the work."

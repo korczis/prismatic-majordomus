@@ -100,7 +100,7 @@ fn continuous(r: &Repo) -> (i32, String) {
         r.bin.display(),
         std::env::var("PATH").unwrap_or_default()
     );
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .args(["prs", "--repo"])
         .arg(&r.work)
         .args(["drain", "--continuous", "--interval", "30"])

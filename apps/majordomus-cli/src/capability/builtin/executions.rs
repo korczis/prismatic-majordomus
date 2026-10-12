@@ -600,7 +600,12 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_execution_start"), http: post("/api/v1/executions/start"), cli: Some(crate::capability::CliExposure { path: vec!["run".into()] }) },
                 tags: ["executions", "control-plane"],
                 handler: executions_start,
-            },
+            }
+            // It runs any executable capability, writers included, so its effect is the
+            // strongest of what it can start: a client that asks before running a writer
+            // asks before this too, instead of being told it changes only this process's
+            // memory while it transitions a tracked record (ADR 0126).
+            .writes_repository(),
             capability! {
                 id: "executions.list",
                 title: "List executions",
@@ -760,8 +765,12 @@ mod tests {
             );
             assert_eq!(c.kind, *kind, "{id} changed kind");
             let base = crate::capability::ExecutionPolicy::classify(*kind);
+            // executions.start may run a writer, so it is declared one (ADR 0126)
+            let writes = c.id.as_str() == "executions.start";
             assert!(
-                c.execution == base || c.execution == base.stoppable(),
+                c.execution == base
+                    || c.execution == base.stoppable()
+                    || (writes && c.execution == base.writes_repository()),
                 "{id} carries a policy neither its kind nor a cancellation declaration gives it"
             );
         }

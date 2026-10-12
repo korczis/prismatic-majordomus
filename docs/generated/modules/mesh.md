@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 21.
+Stability: experimental. Capabilities: 23.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
@@ -94,6 +94,52 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
 
 Output: `EventList`.
+
+## `mesh.firewall` — The host firewall, as the mesh needs it
+
+What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_firewall` |
+| HTTP | `GET /api/v1/mesh/firewall` |
+| CLI | `majordomus mesh firewall` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, diagnostics, firewall |
+
+| input | type | required | description |
+|---|---|---|---|
+| `port` | integer or null | no | The port this checkout's server listens on beyond loopback, when it does: a peer
+dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+holds the discovery ports and the hub ports the declaration gives this machine. |
+
+Output: `FirewallReport`.
+
+## `mesh.firewall.apply` — Admit the mesh through the host firewall
+
+Run the commands mesh.firewall renders, on this host, as root: one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall; nothing else is touched, and every rule written carries the comment `majordomus mesh` so it can be told from an operator's own. Refuses, running nothing, without root or without a backend; records every command with its exit and output; and asks the firewall again afterwards, so the verdict is the firewall's. Offered on the command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh firewall apply` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, firewall |
+
+| input | type | required | description |
+|---|---|---|---|
+| `port` | integer or null | no | The port this checkout's server listens on beyond loopback, when it does: a peer
+dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+holds the discovery ports and the hub ports the declaration gives this machine. |
+
+Output: `FirewallApplyReport`.
 
 ## `mesh.handover.consume` — Consume a handover from the mesh
 
@@ -248,7 +294,7 @@ Output: `PeerDetail`.
 
 ## `mesh.peers` — Who cooperates, machine by machine
 
-Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.
+Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.
 
 | | |
 |---|---|
@@ -261,7 +307,22 @@ Machine → runtime → session → claim: every runtime this one is linked to o
 | provenance | builtin majordomus_cli::capability::builtin::mesh |
 | tags | mesh, coordination, cooperation |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `view` | object | no | `summary` (the default) or `full`. |
+| `claims` | object | no | `all` (the default) or `live`: whether ended claims are kept. |
+| `after` | integer or null | no | Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews
+and overlaps carry no stamp of their own and are kept or dropped with their sessions. |
+| `session` | string or null | no | Only what belongs to this session: its key (`<stream>/<session>`) or its bare id. |
+| `runtime` | string or null | no | Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime
+of that machine. |
+| `kind` | object | no | Only this collection; the others are answered empty. |
+| `limit` | integer or null | no | At most this many of each collection: the newest by Lamport stamp where it has one,
+kept in the fold's own order. |
+| `open` | boolean or null | no | Only what is still open: active sessions, live claims, review requests nobody has
+answered and handovers nobody has taken. |
+| `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
+request, a word of an intent or a subject. |
 
 Output: `PeerTree`.
 
@@ -411,7 +472,7 @@ Output: `Written`.
 
 ## `mesh.state` — The state every linked runtime converges on
 
-The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.
+The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.
 
 | | |
 |---|---|
@@ -424,7 +485,22 @@ The journal folded: every session, every claim with its standing (held, released
 | provenance | builtin majordomus_cli::capability::builtin::mesh |
 | tags | mesh, coordination, cooperation |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `view` | object | no | `summary` (the default) or `full`. |
+| `claims` | object | no | `all` (the default) or `live`: whether ended claims are kept. |
+| `after` | integer or null | no | Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews
+and overlaps carry no stamp of their own and are kept or dropped with their sessions. |
+| `session` | string or null | no | Only what belongs to this session: its key (`<stream>/<session>`) or its bare id. |
+| `runtime` | string or null | no | Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime
+of that machine. |
+| `kind` | object | no | Only this collection; the others are answered empty. |
+| `limit` | integer or null | no | At most this many of each collection: the newest by Lamport stamp where it has one,
+kept in the fold's own order. |
+| `open` | boolean or null | no | Only what is still open: active sessions, live claims, review requests nobody has
+answered and handovers nobody has taken. |
+| `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
+request, a word of an intent or a subject. |
 
 Output: `MeshStateAnswer`.
 

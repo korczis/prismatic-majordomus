@@ -96,6 +96,12 @@
           "route": "/docs/cli/prs/"
         },
         {
+          "about": "A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed",
+          "command": "majordomus offload",
+          "name": "offload",
+          "route": "/docs/cli/offload/"
+        },
+        {
           "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
           "command": "majordomus convergence",
           "name": "convergence",
@@ -148,6 +154,12 @@
           "command": "majordomus mesh",
           "name": "mesh",
           "route": "/docs/cli/mesh/"
+        },
+        {
+          "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
+          "command": "majordomus monitor",
+          "name": "monitor",
+          "route": "/docs/cli/monitor/"
         },
         {
           "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
@@ -220,6 +232,12 @@
           "command": "majordomus dashboard",
           "name": "dashboard",
           "route": "/docs/cli/dashboard/"
+        },
+        {
+          "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+          "command": "majordomus brief",
+          "name": "brief",
+          "route": "/docs/cli/brief/"
         },
         {
           "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
@@ -13872,6 +13890,12 @@
           "route": "/docs/cli/prs/events/"
         },
         {
+          "about": "The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent",
+          "command": "majordomus prs trains",
+          "name": "trains",
+          "route": "/docs/cli/prs/trains/"
+        },
+        {
           "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed",
           "command": "majordomus prs brief",
           "name": "brief",
@@ -15110,6 +15134,135 @@
       "usage": "majordomus prs events [OPTIONS]"
     },
     {
+      "about": "The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs trains",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "trains"
+          ],
+          "command": "majordomus prs trains",
+          "description": "Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.",
+          "expectation": "exits 10",
+          "id": "prs-trains-unobserved",
+          "setup": [],
+          "title": "The trains of stacked pull requests, where nothing is observed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "trains",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "trains"
+      ],
+      "route": "/docs/cli/prs/trains/",
+      "usage": "majordomus prs trains [OPTIONS]"
+    },
+    {
       "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed",
       "ancestors": [
         {
@@ -15366,6 +15519,612 @@
       ],
       "route": "/docs/cli/prs/prove-dry-run/",
       "usage": "majordomus prs prove-dry-run [OPTIONS]"
+    },
+    {
+      "about": "A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Read this derive-offload declaration file instead of the repository's",
+          "long": "declaration",
+          "name": "declaration",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0",
+          "command": "majordomus offload hosts",
+          "name": "hosts",
+          "route": "/docs/cli/offload/hosts/"
+        },
+        {
+          "about": "Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one",
+          "command": "majordomus offload probe",
+          "name": "probe",
+          "route": "/docs/cli/offload/probe/"
+        },
+        {
+          "about": "Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out",
+          "command": "majordomus offload derive",
+          "name": "derive",
+          "route": "/docs/cli/offload/derive/"
+        }
+      ],
+      "command": "majordomus offload",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "offload",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "offload"
+      ],
+      "route": "/docs/cli/offload/",
+      "usage": "majordomus offload [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus offload",
+          "name": "offload",
+          "route": "/docs/cli/offload/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Read this derive-offload declaration file instead of the repository's",
+          "long": "declaration",
+          "name": "declaration",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus offload hosts",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "offload",
+            "hosts",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus offload hosts --format json",
+          "description": "Reads the repository's derive-offload declaration (.ai/repo/offload/*.yaml) and prints it with every default filled in: the hosts in tie-break order, each one's free-space minimum and ssh identity file, the queue's paths and the layout on a host. No host is contacted. This fixture declares none, which is an answer, not an error: `declared` is false and the declaration is null.",
+          "expectation": "exits 0; prints one JSON document carrying /declared, /declaration",
+          "id": "offload-hosts-json",
+          "setup": [],
+          "title": "The declared hosts, or the answer that there are none"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "hosts",
+      "parent_route": "/docs/cli/offload/",
+      "path": [
+        "majordomus",
+        "offload",
+        "hosts"
+      ],
+      "route": "/docs/cli/offload/hosts/",
+      "usage": "majordomus offload hosts [OPTIONS]"
+    },
+    {
+      "about": "Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus offload",
+          "name": "offload",
+          "route": "/docs/cli/offload/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Read this derive-offload declaration file instead of the repository's",
+          "long": "declaration",
+          "name": "declaration",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus offload probe",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "offload",
+            "probe"
+          ],
+          "command": "majordomus offload probe",
+          "description": "Measures every declared host over ssh — free space under its home, derives running or waiting in its queue — and names the one a derive would take: the eligible host with the fewest, ties to the one declared first. A repository that declares no host has nothing to measure, and the probe refuses with 12 rather than reporting an empty success.",
+          "expectation": "exits 12",
+          "id": "offload-probe-undeclared",
+          "setup": [],
+          "title": "No declared host, no probe"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "probe",
+      "parent_route": "/docs/cli/offload/",
+      "path": [
+        "majordomus",
+        "offload",
+        "probe"
+      ],
+      "route": "/docs/cli/offload/probe/",
+      "usage": "majordomus offload probe [OPTIONS]"
+    },
+    {
+      "about": "Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus offload",
+          "name": "offload",
+          "route": "/docs/cli/offload/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "."
+          ],
+          "global": false,
+          "help": "The worktree to derive",
+          "name": "worktree",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "WORKTREE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A declared host, by id or address, instead of the one the probe chooses",
+          "long": "host",
+          "name": "host",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "HOST"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)",
+          "long": "keep",
+          "name": "keep",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "KEEP"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Read this derive-offload declaration file instead of the repository's",
+          "long": "declaration",
+          "name": "declaration",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus offload derive",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "offload",
+            "derive",
+            "."
+          ],
+          "command": "majordomus offload derive .",
+          "description": "Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.",
+          "expectation": "exits 12",
+          "id": "offload-derive-undeclared",
+          "setup": [],
+          "title": "A derive with nowhere to go is refused before anything travels"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "derive",
+      "parent_route": "/docs/cli/offload/",
+      "path": [
+        "majordomus",
+        "offload",
+        "derive"
+      ],
+      "route": "/docs/cli/offload/derive/",
+      "usage": "majordomus offload derive [OPTIONS] [WORKTREE]"
     },
     {
       "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
@@ -18011,6 +18770,12 @@
           "route": "/docs/cli/release/analyze/"
         },
         {
+          "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+          "command": "majordomus release next",
+          "name": "next",
+          "route": "/docs/cli/release/next/"
+        },
+        {
           "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
           "command": "majordomus release bump",
           "name": "bump",
@@ -18461,6 +19226,165 @@
       ],
       "route": "/docs/cli/release/analyze/",
       "usage": "majordomus release analyze [OPTIONS]"
+    },
+    {
+      "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "origin/master"
+          ],
+          "global": false,
+          "help": "The trunk the landing raises from",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "HEAD"
+          ],
+          "global": false,
+          "help": "What lands",
+          "long": "head",
+          "name": "head",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release next",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "next",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release next --format json",
+          "description": "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
+          "expectation": "exits 12",
+          "id": "release-next",
+          "setup": [],
+          "title": "What a landing would raise the version to"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "next",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "next"
+      ],
+      "route": "/docs/cli/release/next/",
+      "usage": "majordomus release next [OPTIONS]"
     },
     {
       "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
@@ -20913,13 +21837,19 @@
           "route": "/docs/cli/mesh/identity/"
         },
         {
-          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
           "command": "majordomus mesh doctor",
           "name": "doctor",
           "route": "/docs/cli/mesh/doctor/"
         },
         {
-          "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+          "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
+        },
+        {
+          "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
           "command": "majordomus mesh peers",
           "name": "peers",
           "route": "/docs/cli/mesh/peers/"
@@ -20931,7 +21861,7 @@
           "route": "/docs/cli/mesh/peer/"
         },
         {
-          "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+          "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
           "command": "majordomus mesh state",
           "name": "state",
           "route": "/docs/cli/mesh/state/"
@@ -21381,7 +22311,7 @@
       "usage": "majordomus mesh identity [OPTIONS]"
     },
     {
-      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21510,7 +22440,7 @@
       "usage": "majordomus mesh doctor [OPTIONS]"
     },
     {
-      "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+      "about": "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21524,6 +22454,416 @@
         }
       ],
       "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+          "command": "majordomus mesh firewall apply",
+          "name": "apply",
+          "route": "/docs/cli/mesh/firewall/apply/"
+        }
+      ],
+      "command": "majordomus mesh firewall",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall"
+          ],
+          "command": "majordomus mesh firewall",
+          "description": "The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10.",
+          "expectation": "exits 0; prints backend, verdict",
+          "id": "mesh-firewall",
+          "setup": [],
+          "title": "What the host firewall must admit for the declared mesh, and whether it does"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "firewall",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall"
+      ],
+      "route": "/docs/cli/mesh/firewall/",
+      "usage": "majordomus mesh firewall [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh firewall",
+          "name": "firewall",
+          "route": "/docs/cli/mesh/firewall/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port this checkout's server listens on beyond loopback, when it does",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh firewall apply",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "firewall",
+            "apply"
+          ],
+          "command": "majordomus mesh firewall apply",
+          "description": "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.",
+          "expectation": "exits 10",
+          "id": "mesh-firewall-apply",
+          "setup": [],
+          "title": "Admit the mesh through the host firewall, as root"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "apply",
+      "parent_route": "/docs/cli/mesh/firewall/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "firewall",
+        "apply"
+      ],
+      "route": "/docs/cli/mesh/firewall/apply/",
+      "usage": "majordomus mesh firewall apply [OPTIONS]"
+    },
+    {
+      "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
         {
           "defaults": [],
           "global": true,
@@ -21780,7 +23120,7 @@
       "usage": "majordomus mesh peer [OPTIONS] <RUNTIME>"
     },
     {
-      "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+      "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21794,6 +23134,120 @@
         }
       ],
       "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
         {
           "defaults": [],
           "global": true,
@@ -21894,6 +23348,20 @@
           "id": "mesh-state",
           "setup": [],
           "title": "The state every linked runtime converges on"
+        },
+        {
+          "argv": [
+            "mesh",
+            "state",
+            "--full",
+            "--live-claims"
+          ],
+          "command": "majordomus mesh state --full --live-claims",
+          "description": "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+          "expectation": "exits 0; prints cooperation inactive",
+          "id": "mesh-state-live-claims",
+          "setup": [],
+          "title": "Every claim still held"
         }
       ],
       "executable": true,
@@ -23822,6 +25290,288 @@
       ],
       "route": "/docs/cli/mesh/review/answer/",
       "usage": "majordomus mesh review answer [OPTIONS] <REQUEST>"
+    },
+    {
+      "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Keep following: ask again every `--interval` seconds and print only what is new",
+          "long": "follow",
+          "name": "follow",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FOLLOW"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Start after this cursor (a page's `cursor`), instead of the newest signals",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many signals per page (default 50, at most 500)",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A comma-separated subset of mesh, executor and github (default: all three)",
+          "long": "sources",
+          "name": "sources",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SOURCES"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR",
+          "long": "for",
+          "name": "reader",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "READER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h)",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SINCE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Keep only signals whose summary contains this text (case-insensitive)",
+          "long": "match",
+          "name": "pattern",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATTERN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Stop following after this many signals",
+          "long": "count",
+          "name": "count",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COUNT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)",
+          "long": "until",
+          "name": "until",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "UNTIL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d",
+          "long": "timeout",
+          "name": "timeout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TIMEOUT"
+        },
+        {
+          "defaults": [
+            "2"
+          ],
+          "global": false,
+          "help": "Seconds between two asks while following",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus monitor",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "monitor",
+            "--since",
+            "30m",
+            "--for",
+            "1b"
+          ],
+          "command": "majordomus monitor --since 30m --for 1b",
+          "description": "One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.",
+          "expectation": "exits 0; prints no running server",
+          "id": "monitor-page",
+          "setup": [],
+          "title": "What happened in the last half hour"
+        },
+        {
+          "argv": [
+            "monitor",
+            "--follow",
+            "--match",
+            "#885",
+            "--until",
+            "merged",
+            "--timeout",
+            "1s",
+            "--interval",
+            "1"
+          ],
+          "command": "majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1",
+          "description": "Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.",
+          "expectation": "exits 10",
+          "id": "monitor-wait",
+          "setup": [],
+          "title": "Wait for a pull request to merge"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "monitor",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "monitor"
+      ],
+      "route": "/docs/cli/monitor/",
+      "usage": "majordomus monitor [OPTIONS]"
     },
     {
       "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
@@ -31842,6 +33592,184 @@
       "usage": "majordomus dashboard overview [OPTIONS]"
     },
     {
+      "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print the one-line brief alone: the status line's text",
+          "long": "line",
+          "name": "line",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LINE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print what a session is told at its start about keeping itself awake, then the one-line brief",
+          "long": "keep-awake",
+          "name": "keep_awake",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "KEEP_AWAKE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The provider's own session identity: the brief names the open episode it owns",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Read this checkout's board alone instead of every checkout's",
+          "long": "this-checkout",
+          "name": "this_checkout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "THIS_CHECKOUT"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus brief",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "brief",
+            "--line",
+            "--this-checkout"
+          ],
+          "command": "majordomus brief --line --this-checkout",
+          "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+          "expectation": "exits 0",
+          "id": "brief-line",
+          "setup": [],
+          "title": "The one-line brief, composed here when no server answers"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "brief",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "brief"
+      ],
+      "route": "/docs/cli/brief/",
+      "usage": "majordomus brief [OPTIONS]"
+    },
+    {
       "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
       "ancestors": [
         {
@@ -34067,10 +35995,10 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1564,
+    "commands": 226,
+    "examples": 227,
+    "runnable": 199
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.21.0",

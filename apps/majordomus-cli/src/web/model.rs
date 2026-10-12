@@ -151,6 +151,8 @@ pub enum Feature {
     Mcp,
     /// This process serves the Cockpit.
     Cockpit,
+    /// This process serves the UI: `majordomus ui`, the primary surface (ADR 0135).
+    Ui,
 }
 
 impl fmt::Display for Feature {
@@ -158,6 +160,7 @@ impl fmt::Display for Feature {
         f.write_str(match self {
             Feature::Mcp => "mcp",
             Feature::Cockpit => "cockpit",
+            Feature::Ui => "ui",
         })
     }
 }
@@ -647,6 +650,7 @@ mod tests {
         assert_eq!(Visibility::Internal.to_string(), "internal");
         assert_eq!(Feature::Mcp.to_string(), "mcp");
         assert_eq!(Feature::Cockpit.to_string(), "cockpit");
+        assert_eq!(Feature::Ui.to_string(), "ui");
     }
 
     #[test]

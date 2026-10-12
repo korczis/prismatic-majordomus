@@ -1,0 +1,33 @@
+id: I2471
+milestone: development-runtime
+title: "The roadmap opens a milestone: what it holds, what can start, its critical path, and what it waits for"
+slug: the-roadmap-opens-a-milestone
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a reader of majordomus ui open any milestone of the plan (/ui/roadmap?milestone=M004) into an inspector that shows its issues and where each stands, the issues that can start now, the longest chain of open work through it, the intents its issues serve, and the milestones it waits for, is blocked by and unblocks, every one of them a link."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive and clickable (reference campaigns/majordomus-ui-unified-real-data-v2-20261011/reference/10-roadmap-detail.png; pack v3 M06-02 and M06-03, assigned to f9 by d3). I2462 draws the milestones as a sequence and a dependency graph whose nodes lead to an anchor of the same page and no further. plan.roadmap already answers each milestone's status, order, priority, depends_on, blocked_by, dependents, counts by status and its issues, and plan.issues answers every issue with its dependencies and the intents it serves."
+current_state: "A milestone is a row and a graph node; neither opens anything."
+desired_state: "?milestone=ID opens the inspector above the roadmap, asked from plan.roadmap and plan.issues in the same first paint (plan.issues only when a milestone is picked). It shows the milestone's order, priority and status, how many of its issues are done as a meter, the issues ready now, how many are blocked, the milestones it waits for, is blocked by and unblocks, the intents its issues serve, its critical path (the longest chain of open issues by depends_on within it; a cycle ends a chain), and its issues with status, priority, wave and what blocks each. Every issue leads to its inspector on the PR Drain and every milestone to its own. The roadmap's graph nodes and the milestone rows of the Roadmap and the Dashboard lead to the inspector. An id the plan does not hold is said to be unknown; a value that is not a milestone id is dropped."
+scope:
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2471.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1076_the_roadmap_opens_a_milestone.sh"
+depends_on: ["I2470"]
+acceptance_criteria:
+  - "/ui/roadmap?milestone=<id> answers 200 with the milestone's inspector, its issues each a link to /ui/prs?issue=<id>, and its neighbouring milestones each a link to their own inspector"
+  - "the critical path is the longest chain of open issues within the milestone, in dependency order"
+  - "an id the plan does not hold says so, and a value that is not a milestone id opens nothing"
+  - "the roadmap's graph nodes and milestone rows lead to the inspector"
+validation:
+  - "cargo test --lib ui::"
+  - "test/run.sh 1076_the_roadmap_opens_a_milestone"
+evidence_required:
+  - "ui_milestone_unit_tests"
+  - "ui_milestone_case_1076"
+created_at: 2026-10-11
+updated_at: 2026-10-11
