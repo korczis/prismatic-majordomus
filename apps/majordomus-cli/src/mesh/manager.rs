@@ -634,9 +634,7 @@ impl MeshRuntime {
         // repositories (I2133).
         let mut candidates = Vec::with_capacity(MAX_CANDIDATES + 1);
         if refusal.is_none() {
-            if let Ok(own_value) = serde_json::to_value(&own_envelope) {
-                candidates.push(own_value);
-            }
+            candidates.extend(serde_json::to_value(&own_envelope).ok());
             let repos: Vec<String> = envelope
                 .get("repos")
                 .and_then(|r| r.as_array())

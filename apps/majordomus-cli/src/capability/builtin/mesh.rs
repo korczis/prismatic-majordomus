@@ -434,7 +434,8 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
         node.link = links.get(key).cloned();
     }
     for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
-        if let Some(runtime) = runtimes.get_mut(&claim.runtime) {
+        // every claim's runtime is a node: each stream of the journal was touched above
+        runtimes.entry(claim.runtime.clone()).and_modify(|runtime| {
             let newer = runtime
                 .newest_claim
                 .as_ref()
@@ -450,7 +451,7 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
                     acquired_lamport: claim.acquired_lamport,
                 });
             }
-        }
+        });
     }
     for session in &state.sessions {
         if summary && session.state != SessionState::Active {
@@ -1754,5 +1755,198 @@ mod tests {
                 c.id
             );
         }
+    }
+
+    /// A cooperation runtime that dials nobody until it is started, which these never are.
+    fn cooperation() -> std::sync::Arc<Cooperation> {
+        use crate::mesh::config::{CooperationConfig, TrustConfig};
+        use crate::mesh::cooperation::{CheckoutFacts, CooperationSetup};
+        Cooperation::new(CooperationSetup {
+            identity: std::sync::Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "0000000000000001".into(),
+            repository: crate::mesh::repository::of_root_commits(&["root".into()]),
+            endpoints: vec!["127.0.0.1:9".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: std::sync::Arc::new(crate::mesh::registry::MeshRegistry::new()),
+            transport: std::sync::Arc::new(crate::mesh::link::HttpTransport),
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap()
+    }
+
+    /// A context over a synthetic repository, with a mesh declaration in its working tree
+    /// when `declared`.
+    fn context(declared: bool) -> (crate::synthetic::SyntheticRepository, Context) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        if declared {
+            index.objects.push(crate::model::Object {
+                kind: crate::mesh::KIND.into(),
+                identity: "majordomus".into(),
+                uri: "majordomus://mesh-declaration/majordomus".into(),
+                title: None,
+                description: None,
+                metadata: serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus",
+                    "enabled": true, "trust": { "policy": "deny_unknown", "allow": [] },
+                }),
+                body: String::new(),
+                content: String::new(),
+                media_type: "application/yaml",
+                provenance: crate::model::Provenance {
+                    path: ".ai/repo/mesh/majordomus.yaml".into(),
+                    directory: ".ai/repo/mesh".into(),
+                    source_class: "mesh-declaration".into(),
+                    section: None,
+                    bytes: 0,
+                    member: None,
+                },
+            });
+        }
+        let registry = capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        (repo, ctx)
+    }
+
+    #[test]
+    fn retrust_asks_the_running_cooperation_with_the_declaration_in_force() {
+        let (_repo, ctx) = context(true);
+        assert!(
+            matches!(declaration(&ctx), Some(Ok(_))),
+            "the declaration parses"
+        );
+        assert!(retrust(&ctx).is_empty(), "no cooperation, nothing to end");
+        ctx.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&ctx).is_empty(),
+            "a runtime with no links ends none"
+        );
+        let (_repo, undeclared) = context(false);
+        undeclared.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&undeclared).is_empty(),
+            "no declaration, no trust to put in force"
+        );
+    }
+
+    #[test]
+    fn a_peer_asked_of_a_server_without_cooperation_is_not_found_with_the_reason() {
+        let (_repo, ctx) = context(false);
+        ctx.mesh.decline_cooperation("no endpoint to be dialed at");
+        let detail = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "anything".into(),
+            },
+        )
+        .unwrap();
+        assert!(!detail.found);
+        assert_eq!(
+            detail.reason.as_deref(),
+            Some("no endpoint to be dialed at")
+        );
+        assert!(detail.machine.is_none() && detail.runtime.is_none() && detail.refused.is_empty());
+    }
+
+    #[test]
+    fn a_peer_is_found_by_its_runtime_key_in_the_full_tree_and_another_is_not() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let own = c.runtime_key().to_string();
+        let found = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: format!(" {own} "),
+            },
+        )
+        .unwrap();
+        assert!(found.found, "{found:?}");
+        assert_eq!(found.runtime.map(|r| r.runtime), Some(own));
+        let missing = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "nobody".into(),
+            },
+        )
+        .unwrap();
+        assert!(!missing.found);
+        assert_eq!(
+            missing.reason.as_deref(),
+            Some("no runtime nobody is linked or heard here")
+        );
+    }
+
+    #[test]
+    fn the_summary_tree_lists_active_sessions_counted_and_the_full_one_every_claim() {
+        let c = cooperation();
+        let s1 = SessionInfo::named("s1", "test");
+        c.open_session(s1.clone()).unwrap();
+        // the older claim's id sorts last, so the fold lists the newer one first and the
+        // older one meets a newest it does not replace
+        for (claim, path, issue) in [("z1", "apps", "#1"), ("a2", "docs", "#2")] {
+            c.journal()
+                .append_own(crate::mesh::journal::EventBody::ClaimAcquired {
+                    claim: claim.into(),
+                    session: s1.session.clone(),
+                    scope: vec![path.into()],
+                    intent: Some("a long intent ".repeat(20)),
+                    mode: ClaimMode::Exclusive,
+                    issue: Some(issue.into()),
+                })
+                .unwrap();
+        }
+        c.open_session(SessionInfo::named("s2", "test")).unwrap();
+        c.close_session("s2").unwrap();
+        c.request_review("s1", "feature/x".into(), vec![], None, None)
+            .unwrap();
+        let own = |tree: &PeerTree| -> RuntimeNode {
+            tree.machines
+                .iter()
+                .flat_map(|m| m.runtimes.iter())
+                .find(|r| r.this_runtime)
+                .cloned()
+                .expect("this runtime is in its own tree")
+        };
+
+        let summary = own(&peer_tree(&c, &Query::default()));
+        assert_eq!(
+            summary
+                .newest_claim
+                .as_ref()
+                .and_then(|b| b.issue.as_deref()),
+            Some("#2"),
+            "the newest live claim"
+        );
+        assert_eq!(summary.sessions.len(), 1, "only the active session");
+        let s = &summary.sessions[0];
+        assert_eq!(s.state, SessionState::Active);
+        assert!(s.claims.is_empty(), "counted, not listed");
+        assert_eq!(s.claims_held, 2);
+        assert_eq!(s.reviews.len(), 1, "the review the session asked for");
+
+        let full = own(&peer_tree(
+            &c,
+            &Query {
+                view: Some(View::Full),
+                ..Query::default()
+            },
+        ));
+        assert_eq!(full.sessions.len(), 2, "every session");
+        let s1 = full
+            .sessions
+            .iter()
+            .find(|s| s.state == SessionState::Active)
+            .unwrap();
+        assert_eq!(s1.claims.len(), 2, "every claim listed");
+        assert_eq!(s1.claims_held, 2);
     }
 }

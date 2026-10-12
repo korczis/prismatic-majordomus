@@ -932,6 +932,106 @@ mod tests {
         )]
     }
 
+    /// Claims with no session: an advisory one, an exclusive one it overlaps, and an
+    /// exclusive one the second beats to its scope; and a review with a scope.
+    fn overlapping() -> CooperationState {
+        let j = journal();
+        for (claim, session, path, mode) in [
+            ("c1", "s1", "apps", ClaimMode::Advisory),
+            ("c2", "s2", "apps/x", ClaimMode::Exclusive),
+            ("c3", "s3", "apps/x/y", ClaimMode::Exclusive),
+        ] {
+            j.append_own(EventBody::ClaimAcquired {
+                claim: claim.into(),
+                session: session.into(),
+                scope: vec![path.into()],
+                intent: None,
+                mode,
+                issue: None,
+            })
+            .unwrap();
+        }
+        j.append_own(EventBody::ReviewRequested {
+            review: "r1".into(),
+            session: "s1".into(),
+            subject: "feature/r1".into(),
+            scope: vec!["apps/x".into()],
+            issue: None,
+            reviewer: None,
+        })
+        .unwrap();
+        fold(&j.events(), &|_| StreamLiveness::Own)
+    }
+
+    #[test]
+    fn a_conflict_and_a_runtime_known_only_by_its_claims_are_counted() {
+        let state = overlapping();
+        let summary = summarize(&state, &[]);
+        assert_eq!(
+            summary.runtimes.len(),
+            1,
+            "a runtime heard of only through claims"
+        );
+        assert_eq!(summary.runtimes[0].claims.held, 2);
+        assert_eq!(summary.claims.conflicted, 1);
+        assert_eq!(summary.runtimes[0].claims.conflicted, 1);
+        assert!(
+            summary.overlaps > 0,
+            "the advisory claim meets the exclusive ones"
+        );
+    }
+
+    #[test]
+    fn an_expired_stream_counts_its_sessions_and_claims_as_expired() {
+        let (j, _) = history();
+        let gone = fold(&j.events(), &|_| StreamLiveness::Expired);
+        let summary = summarize(&gone, &[]);
+        assert_eq!(summary.sessions.expired, 2, "the two sessions still open");
+        assert_eq!(summary.claims.expired, 2, "the two claims still held");
+        assert_eq!(summary.claims.released, 38, "a release stays a release");
+    }
+
+    #[test]
+    fn overlaps_follow_the_matched_claims_and_a_review_matches_by_its_scope() {
+        let state = overlapping();
+        let matched = narrow(
+            &state,
+            &Query {
+                matching: Some("apps/x".into()),
+                ..Query::default()
+            },
+        );
+        assert_eq!(
+            matched.reviews.len(),
+            1,
+            "the review's scope names the path"
+        );
+        assert!(!matched.overlaps.is_empty());
+        assert!(matched.overlaps.iter().all(|o| matched
+            .claims
+            .iter()
+            .any(|c| c.key == o.first || c.key == o.second)));
+        let overlaps = narrow(
+            &state,
+            &Query {
+                kind: Some(Kind::Overlaps),
+                ..Query::default()
+            },
+        );
+        assert_eq!(overlaps.overlaps.len(), state.overlaps.len());
+        assert!(overlaps.claims.is_empty() && overlaps.reviews.is_empty());
+        // after the first stamp: every review whose session moved since is kept
+        let (_j, history) = history();
+        let after = narrow(
+            &history,
+            &Query {
+                after: Some(0),
+                ..Query::default()
+            },
+        );
+        assert_eq!(after.reviews.len(), history.reviews.len());
+    }
+
     #[test]
     fn the_summary_counts_the_history_and_lists_only_what_is_live_or_waiting() {
         let (_j, state) = history();
