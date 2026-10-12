@@ -404,6 +404,15 @@ mj_validate_retention() {
   if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
   hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
+  # The sessions section is tracked and shared where the three above are local, and it is
+  # capped for the same reason: a store nothing bounds grows until a reader pays for it. A
+  # layer that declares no sessions section owes no cap for one. What `session archive`
+  # moved aside is not counted — that is what the command is for.
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
+  if ! cap="$(mj_pol_req session.retention_max_files)"; then mj_doctrine_fail retention "sessions" "policy declares no session.retention_max_files" "add it under session: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(mj_session_record_names | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "sessions" "$hc records, cap $cap"; else mj_doctrine_fail retention "sessions" "$hc records over cap $cap" "majordomus session archive --dry-run"; fi; fi
+  fi
 
   return 0
 }
