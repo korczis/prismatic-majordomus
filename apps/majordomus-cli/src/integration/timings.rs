@@ -359,4 +359,24 @@ mod tests {
         assert_eq!(rank(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 90), 9);
         assert_eq!(rank(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50), 5);
     }
+
+    /// A run that ends before and takes less than one already seen moves neither the head's
+    /// last completion nor its slowest check.
+    #[test]
+    fn a_run_inside_another_moves_neither_the_end_nor_the_slowest() {
+        let o = observation(vec![pr(
+            8,
+            vec![
+                check("site", CheckRunState::Passed, &at(0), &at(40)),
+                check("rust", CheckRunState::Passed, &at(5), &at(10)),
+            ],
+        )]);
+        let h = &timings(&o).heads[0];
+        assert_eq!(h.wall_seconds, 40 * 60);
+        assert_eq!(h.completed_at, at(40));
+        assert_eq!(
+            (h.slowest_check.as_str(), h.slowest_seconds),
+            ("site", 40 * 60)
+        );
+    }
 }

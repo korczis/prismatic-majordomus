@@ -341,7 +341,18 @@ pub fn trains_of(root: &Path) -> TrainsView {
         Ok(q) => q,
         Err(reason) => return TrainsView::unobserved(reason),
     };
-    let facts = match super::load_observation(root) {
+    trains(
+        &queue,
+        &link_facts(super::load_observation(root)),
+        &prep_refs(root),
+    )
+}
+
+/// The bodies and checks of a loaded observation; none when it could not be read. The queue
+/// [`trains_of`] read a moment before came from the same file, so only a file replaced in
+/// between leaves the links without them.
+fn link_facts(observation: Result<Option<super::ForgeObservation>, String>) -> LinkFacts {
+    match observation {
         Ok(Some(obs)) => LinkFacts {
             bodies: obs
                 .pull_requests
@@ -365,8 +376,7 @@ pub fn trains_of(root: &Path) -> TrainsView {
                 .collect(),
         },
         _ => LinkFacts::default(),
-    };
-    trains(&queue, &facts, &prep_refs(root))
+    }
 }
 
 /// The pull request's page on the forge, for an `owner/name` repository.
@@ -1305,6 +1315,45 @@ mod tests {
         assert_eq!(
             t.links[1].prep.as_ref().map(|p| (p.sha.as_str(), p.state)),
             Some((one.as_str(), PrepState::Pending))
+        );
+    }
+
+    /// An observation that could not be read, or is not recorded, gives the links no body
+    /// and no check; a recorded one gives each pull request its own.
+    #[test]
+    fn the_facts_of_an_unreadable_observation_are_none() {
+        assert_eq!(link_facts(Ok(None)), LinkFacts::default());
+        assert_eq!(
+            link_facts(Err("replaced in between".into())),
+            LinkFacts::default()
+        );
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "owner/repo".into(),
+            base: "master".into(),
+            base_sha: "0".repeat(40),
+            observed_at: "2026-10-01T00:00:00Z".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![observed(
+                3,
+                &"3".repeat(40),
+                "Stacked on #1.",
+                CheckRunState::Failed,
+            )],
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        let facts = link_facts(Ok(Some(obs)));
+        assert_eq!(
+            facts.bodies.get(&3).map(String::as_str),
+            Some("Stacked on #1.")
+        );
+        assert_eq!(
+            facts.checks.get(&3).map(|c| c[0].state),
+            Some(CheckRunState::Failed)
         );
     }
 }

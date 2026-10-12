@@ -400,4 +400,24 @@ mod tests {
         assert_eq!(picked(&q("M0\" onclick=\"x")), None);
         assert_eq!(picked(&q("")), None);
     }
+
+    /// An issue that names the milestone is one of its own even when the milestone's list
+    /// leaves it out; an issue of another milestone is not.
+    #[test]
+    fn an_issue_naming_the_milestone_is_its_own_though_the_list_omits_it() {
+        let (roadmap, _) = plan();
+        let mut stray = issue("I0099", "READY", &[]);
+        stray["milestone"] = serde_json::json!("M003");
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [
+                issue("I0001", "DONE", &[]),
+                issue("I0005", "READY", &[]),
+                stray,
+            ]}),
+        );
+        let html = inspector(&roadmap, &issues, "M004").render();
+        assert!(html.contains("/ui/prs?issue=I0005#issue"), "{html}");
+        assert!(!html.contains("I0099"), "{html}");
+    }
 }
