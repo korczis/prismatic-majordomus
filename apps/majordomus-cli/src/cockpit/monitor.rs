@@ -57,7 +57,12 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
                     s.signals, s.suppressed
                 )));
             if let Some(reason) = &s.reason {
-                item = item.child(el("span").class("mj-muted").text(format!(" — {reason}")));
+                // `mj-identity`: a source's reason may name a key with no break in it
+                item = item.child(
+                    el("span")
+                        .class("mj-muted mj-identity")
+                        .text(format!(" — {reason}")),
+                );
             }
             item
         }));

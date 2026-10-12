@@ -588,7 +588,12 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         trust: Default::default(),
         cooperation: Default::default(),
     };
-    config.trust.allow = vec![trusted_id.public.public_key.clone()];
+    // the hub lists its own key beside the trusted node's: a machine its trust list does not
+    // name keeps its mesh closed and admits nobody
+    config.trust.allow = vec![
+        hub_id.public.public_key.clone(),
+        trusted_id.public.public_key.clone(),
+    ];
     let hub = MeshRuntime::new();
     hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
         .unwrap();
