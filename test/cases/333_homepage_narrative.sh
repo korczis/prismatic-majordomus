@@ -39,7 +39,7 @@ fresh() {
   # the claims matrix, the design tones and no recorded evidence: the proof band says unknown
   printf '%s\n' '{"status_order":["guaranteed"],"claims":[]}' > "$F/site/data/generated/capabilities.json"
   printf '%s\n' '{"states":{"guaranteed":"neutral","unknown":"neutral"}}' > "$F/site/data/registry/design.json"
-  printf '%s\n' '{"commit":"abcdef1234567890","dirty":false}' > "$F/site/data/build.json"
+  printf '%s\n' '{"commit":"abcdef1234567890","dirty":false,"release":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/build.json"
   cat > "$F/site/public/index.html" <<'HTML'
 <html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
 <section id="hero"><h1>t</h1><a href="/features/good/">good</a>

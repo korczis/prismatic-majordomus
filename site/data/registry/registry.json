@@ -6,23 +6,23 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe",
+    "fingerprint": "8c07b57718f0fe738b6c5615b481c889dd3c664b592878ce8b9f2d186b129d76",
     "summary": {
-      "total": 2256,
+      "total": 2268,
       "builtin": 191,
-      "declarative": 2065,
+      "declarative": 2077,
       "by_kind": {
         "command": 27,
         "query": 164,
-        "resource": 2065
+        "resource": 2077
       },
       "by_stability": {
         "behaviorally_verified": 133,
         "experimental": 49,
-        "implemented": 2074
+        "implemented": 2086
       },
       "mcp_tools": 183,
-      "mcp_resources": 2119,
+      "mcp_resources": 2131,
       "http_routes": 187,
       "cli_commands": 105,
       "modules": 89,
@@ -10839,7 +10839,7 @@
               },
               "application": {
                 "type": "string",
-                "description": "The application's name at the provider."
+                "description": "The application's name: what the deployment is known by in a listing."
               },
               "build": {
                 "$ref": "#/$defs/Build",
@@ -10878,10 +10878,6 @@
                   "request_p99_ms": null
                 }
               },
-              "provider": {
-                "$ref": "#/$defs/Provider",
-                "description": "The provider and its own facts."
-              },
               "created_at": {
                 "type": [
                   "string",
@@ -10911,8 +10907,7 @@
               "health",
               "resources",
               "machines",
-              "region",
-              "provider"
+              "region"
             ],
             "description": "One deployment as this process reads it, with where it came from.",
             "title": "DeploymentView",
@@ -10983,7 +10978,7 @@
                 "properties": {
                   "port": {
                     "$ref": "#/$defs/Port",
-                    "description": "The port, stated once for the process, the image and the provider configuration."
+                    "description": "The port, stated once for the process and the image."
                   },
                   "interface": {
                     "$ref": "#/$defs/Interface",
@@ -11241,96 +11236,6 @@
                   }
                 },
                 "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-              },
-              "Provider": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/ProviderName",
-                    "description": "Which provider."
-                  },
-                  "fly": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Fly"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Fly's own block, when the provider is Fly.",
-                    "default": null
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "description": "The provider and the facts that belong to it alone."
-              },
-              "ProviderName": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "fly",
-                    "description": "Fly.io."
-                  }
-                ],
-                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-              },
-              "Fly": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "org": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "The organisation the application belongs to.",
-                    "default": null
-                  },
-                  "force_https": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                    "default": null
-                  },
-                  "concurrency": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Concurrency"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "When the edge considers a machine loaded.",
-                    "default": null
-                  }
-                },
-                "description": "Fly.io's own facts: what has no meaning for any other provider."
-              },
-              "Concurrency": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "soft_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where the edge starts preferring another machine."
-                  },
-                  "hard_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where it stops sending requests to this one."
-                  }
-                },
-                "required": [
-                  "soft_limit",
-                  "hard_limit"
-                ],
-                "description": "When the edge considers a machine loaded, in requests."
               }
             }
           }
@@ -11372,7 +11277,7 @@
         "module": "deploy",
         "kind": "query",
         "title": "Deployments",
-        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -11460,7 +11365,7 @@
                   },
                   "application": {
                     "type": "string",
-                    "description": "The application's name at the provider."
+                    "description": "The application's name: what the deployment is known by in a listing."
                   },
                   "build": {
                     "$ref": "#/$defs/Build",
@@ -11499,10 +11404,6 @@
                       "request_p99_ms": null
                     }
                   },
-                  "provider": {
-                    "$ref": "#/$defs/Provider",
-                    "description": "The provider and its own facts."
-                  },
                   "created_at": {
                     "type": [
                       "string",
@@ -11532,8 +11433,7 @@
                   "health",
                   "resources",
                   "machines",
-                  "region",
-                  "provider"
+                  "region"
                 ],
                 "description": "One deployment as this process reads it, with where it came from."
               },
@@ -11603,7 +11503,7 @@
                 "properties": {
                   "port": {
                     "$ref": "#/$defs/Port",
-                    "description": "The port, stated once for the process, the image and the provider configuration."
+                    "description": "The port, stated once for the process and the image."
                   },
                   "interface": {
                     "$ref": "#/$defs/Interface",
@@ -11861,96 +11761,6 @@
                   }
                 },
                 "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-              },
-              "Provider": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/ProviderName",
-                    "description": "Which provider."
-                  },
-                  "fly": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Fly"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Fly's own block, when the provider is Fly.",
-                    "default": null
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "description": "The provider and the facts that belong to it alone."
-              },
-              "ProviderName": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "fly",
-                    "description": "Fly.io."
-                  }
-                ],
-                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-              },
-              "Fly": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "org": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "The organisation the application belongs to.",
-                    "default": null
-                  },
-                  "force_https": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                    "default": null
-                  },
-                  "concurrency": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Concurrency"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "When the edge considers a machine loaded.",
-                    "default": null
-                  }
-                },
-                "description": "Fly.io's own facts: what has no meaning for any other provider."
-              },
-              "Concurrency": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "soft_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where the edge starts preferring another machine."
-                  },
-                  "hard_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where it stops sending requests to this one."
-                  }
-                },
-                "required": [
-                  "soft_limit",
-                  "hard_limit"
-                ],
-                "description": "When the edge considers a machine loaded, in requests."
               },
               "Refusal": {
                 "type": "object",
@@ -79214,7 +79024,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 95,
+        "capabilities": 96,
         "capability_ids": []
       },
       {
@@ -79810,7 +79620,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 328,
+        "capabilities": 331,
         "capability_ids": []
       },
       {
@@ -80217,7 +80027,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 168,
+        "capabilities": 169,
         "capability_ids": []
       },
       {
@@ -80360,7 +80170,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 446,
+        "capabilities": 453,
         "capability_ids": []
       },
       {
@@ -80450,7 +80260,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e59a27862c156c47651aa550b3e8946172a4329bfb0c8d7497df3a12b9e3c62",
+    "fingerprint": "4e4179fbce1ce7802784740dc4cfc11468c204ca9dc093db334dbc18711f2395",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80473,7 +80283,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 95,
+      "adr": 96,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -80490,7 +80300,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 328,
+      "issue": 331,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -80499,12 +80309,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 168,
+      "rule": 169,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 446,
+      "test": 453,
       "use-case": 48,
       "workspace": 1
     },
@@ -82075,6 +81885,23 @@
           "operations",
           "worktrees",
           "disk"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0141",
+        "kind": "adr",
+        "identity": "adr-0141",
+        "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "description": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "path": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7337,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "pages"
         ]
       },
       {
@@ -85153,7 +84980,7 @@
         "description": "The tracked half of the layer and what each section under it is for.",
         "path": ".ai/repo/README.md",
         "source_class": "context",
-        "bytes": 2413
+        "bytes": 2402
       },
       {
         "uri": "majordomus://context/ai.repo.adrs",
@@ -85242,11 +85069,11 @@
         "kind": "context",
         "identity": "ai.repo.deployments",
         "title": "Deployments",
-        "description": "One canonical object per deployment of this repository's executable; every container and provider artifact is generated from it and none of them is authoritative.",
+        "description": "One canonical object per deployment of this repository's executable; every artifact built from it — the container image definition and its ignore file — is generated from it and none of them is authoritative.",
         "path": ".ai/repo/deployments/README.md",
         "section": "deployments",
         "source_class": "context",
-        "bytes": 2780
+        "bytes": 2848
       },
       {
         "uri": "majordomus://context/ai.repo.evidence",
@@ -85566,12 +85393,12 @@
         "uri": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "identity": "majordomus",
-        "title": "The Majordomus layer, served from one machine",
-        "description": "One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.",
+        "title": "The Majordomus layer, served from its container image",
+        "description": "The container image of this repository's executable, published to GHCR, serving the AI layer over HTTP and MCP; no hosting provider runs it.",
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 2877
+        "bytes": 3773
       },
       {
         "uri": "majordomus://derive-offload/derive",
@@ -85912,7 +85739,7 @@
         "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
         "path": "docs/COCKPIT_IDE_AUDIT.md",
         "source_class": "document",
-        "bytes": 50160
+        "bytes": 50148
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -86011,7 +85838,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 30388
+        "bytes": 31690
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -86110,7 +85937,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 52225
+        "bytes": 54988
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -86191,7 +86018,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 14132
+        "bytes": 19340
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -86272,7 +86099,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232613
+        "bytes": 233627
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -86326,7 +86153,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 40181
+        "bytes": 41219
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -86353,7 +86180,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 79788
+        "bytes": 79957
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -86929,7 +86756,7 @@
         "title": "A deployment that breaks its closed contract is refused by doctor with the reason named",
         "path": "docs/claims/deployment-contract-refuses-by-name.md",
         "source_class": "claim_page",
-        "bytes": 4238
+        "bytes": 4231
       },
       {
         "uri": "majordomus://document/docs/claims/derivation-one-graph.md",
@@ -88888,12 +88715,12 @@
         "uri": "majordomus://feature/deployments",
         "kind": "feature",
         "identity": "deployments",
-        "title": "A deployment is one canonical object, and every provider artifact is generated from it",
-        "description": "One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.",
+        "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
+        "description": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
         "path": ".ai/repo/features/deployments.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1558,
+        "bytes": 1706,
         "tags": [
           "deployment"
         ]
@@ -89353,7 +89180,7 @@
         "identity": "lib/deployment.sh",
         "path": "lib/deployment.sh",
         "source_class": "library",
-        "bytes": 5576
+        "bytes": 5567
       },
       {
         "uri": "majordomus://implementation/lib/derive.sh",
@@ -90766,7 +90593,7 @@
         "path": ".ai/repo/project/issues/I0909.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2932
+        "bytes": 3181
       },
       {
         "uri": "majordomus://issue/I0910",
@@ -90810,7 +90637,7 @@
         "path": ".ai/repo/project/issues/I0913.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2902
+        "bytes": 3084
       },
       {
         "uri": "majordomus://issue/I0914",
@@ -93277,6 +93104,39 @@
         "bytes": 3530
       },
       {
+        "uri": "majordomus://issue/I2481",
+        "kind": "issue",
+        "identity": "I2481",
+        "title": "The UI links every entity it names, and says none where a source has no value",
+        "description": "Make every entity a screen of majordomus ui names lead somewhere: to the UI's own screen or inspector for it, to its technical view when the UI has no screen for it, or to the address its source gives when it lives elsewhere; say none where a source has no value; say how much a cut list leaves out; and count throughput over the window the queue states rather than one the screen chooses.",
+        "path": ".ai/repo/project/issues/I2481.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4271
+      },
+      {
+        "uri": "majordomus://issue/I2482",
+        "kind": "issue",
+        "identity": "I2482",
+        "title": "Every screen of the UI has a case, and no link on the UI is dead",
+        "description": "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers.",
+        "path": ".ai/repo/project/issues/I2482.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2314
+      },
+      {
+        "uri": "majordomus://issue/I2483",
+        "kind": "issue",
+        "identity": "I2483",
+        "title": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+        "description": "Let a person who has not cloned the repository open majordomus ui on the public site: the UI's own answers for every screen and panel, and for the inspectors they link to up to a bound, written as static files at the commit the site publishes, every page saying it is a snapshot and none of them leading to nothing.",
+        "path": ".ai/repo/project/issues/I2483.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4045
+      },
+      {
         "uri": "majordomus://issue/I2484",
         "kind": "issue",
         "identity": "I2484",
@@ -94894,12 +94754,12 @@
         "uri": "majordomus://rule/majordomus.deployment-contract@1",
         "kind": "rule",
         "identity": "majordomus.deployment-contract@1",
-        "title": "A deployment is described once, and every provider artifact is generated from it",
-        "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and the provider configuration are projections of it, never a second description.",
+        "title": "A deployment is described once, and every artifact built from it is generated from it",
+        "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and its ignore file are projections of it, never a second description.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4176,
+        "bytes": 4067,
         "tags": [
           "deployment",
           "schema",
@@ -97103,6 +96963,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "rule",
+        "identity": "project.the-site-offers-the-release-it-published@1",
+        "title": "The site offers the release that was published, on every surface at once",
+        "description": "Which release is the latest is derived once, by the site build, as the newer of the newest release record and the release metadata the published site already serves, and every page that names it reads that one derivation; the homepage, /releases/latest.json and the newest GitHub release are held to one version, at build time and against the live site, beyond a bounded window after a publication.",
+        "path": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7019,
+        "tags": [
+          "release",
+          "publication",
+          "web",
+          "distribution"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "rule",
         "identity": "project.the-version-is-measured@2",
@@ -98846,7 +98723,7 @@
         "identity": "test/cases/1079_the_drain_draws_its_throughput.sh",
         "path": "test/cases/1079_the_drain_draws_its_throughput.sh",
         "source_class": "case",
-        "bytes": 3480
+        "bytes": 4154
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -98905,6 +98782,30 @@
         "bytes": 3603
       },
       {
+        "uri": "majordomus://test/test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "kind": "test",
+        "identity": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "source_class": "case",
+        "bytes": 14473
+      },
+      {
+        "uri": "majordomus://test/test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "path": "test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2498
+      },
+      {
+        "uri": "majordomus://test/test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "path": "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2085
+      },
+      {
         "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
         "kind": "test",
         "identity": "test/cases/108_entry_converges_on_a_server.sh",
@@ -98927,6 +98828,38 @@
         "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
         "source_class": "case",
         "bytes": 3619
+      },
+      {
+        "uri": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "path": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2402
+      },
+      {
+        "uri": "majordomus://test/test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "kind": "test",
+        "identity": "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "path": "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "source_class": "case",
+        "bytes": 2321
+      },
+      {
+        "uri": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "test",
+        "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "source_class": "case",
+        "bytes": 4703
+      },
+      {
+        "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "test",
+        "identity": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "source_class": "case",
+        "bytes": 4063
       },
       {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
@@ -99342,7 +99275,7 @@
         "identity": "test/cases/180_publication_is_observed.sh",
         "path": "test/cases/180_publication_is_observed.sh",
         "source_class": "case",
-        "bytes": 14215
+        "bytes": 16819
       },
       {
         "uri": "majordomus://test/test/cases/181_local_is_never_published.sh",
@@ -99806,7 +99739,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 16554
+        "bytes": 16622
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -99910,7 +99843,7 @@
         "identity": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "source_class": "case",
-        "bytes": 5098
+        "bytes": 5733
       },
       {
         "uri": "majordomus://test/test/cases/353_the_version_bump_has_an_actor.sh",
@@ -100654,7 +100587,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 10789
+        "bytes": 11932
       },
       {
         "uri": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
@@ -101310,7 +101243,7 @@
         "identity": "test/cases/84_deployment_contract.sh",
         "path": "test/cases/84_deployment_contract.sh",
         "source_class": "case",
-        "bytes": 5006
+        "bytes": 5356
       },
       {
         "uri": "majordomus://test/test/cases/84_distribution_model.sh",
@@ -101382,7 +101315,7 @@
         "identity": "test/cases/85_deployment_bind.sh",
         "path": "test/cases/85_deployment_bind.sh",
         "source_class": "case",
-        "bytes": 4629
+        "bytes": 4607
       },
       {
         "uri": "majordomus://test/test/cases/85_installer.sh",
@@ -101414,7 +101347,7 @@
         "identity": "test/cases/86_deployment_projections.sh",
         "path": "test/cases/86_deployment_projections.sh",
         "source_class": "case",
-        "bytes": 10254
+        "bytes": 10537
       },
       {
         "uri": "majordomus://test/test/cases/86_installer_platform.sh",
@@ -102589,7 +102522,7 @@
       "identity": [
         "id"
       ],
-      "objects": 95
+      "objects": 96
     },
     {
       "name": "application",
@@ -102752,7 +102685,7 @@
       "identity": [
         "id"
       ],
-      "objects": 328
+      "objects": 331
     },
     {
       "name": "knowledge",
@@ -102849,7 +102782,7 @@
         "id",
         "version"
       ],
-      "objects": 168
+      "objects": 169
     },
     {
       "name": "scope",
@@ -102904,7 +102837,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 446
+      "objects": 453
     },
     {
       "name": "use-case",
@@ -104571,7 +104504,7 @@
               },
               {
                 "name": "deployment",
-                "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+                "help": "deploy/Dockerfile and .dockerignore, from the deployment objects"
               },
               {
                 "name": "graph",
@@ -106673,6 +106606,174 @@
                     "command": "majordomus web report ui --from target/web/run-ui.json",
                     "setup": [],
                     "expectation": "exits 13"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "ui-snapshot"
+                ],
+                "route": "/docs/cli/web/report/ui-snapshot/",
+                "executable": true,
+                "usage": "majordomus web report ui-snapshot [OPTIONS]",
+                "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+                "args": [
+                  {
+                    "name": "limit",
+                    "long": "limit",
+                    "positional": false,
+                    "help": "The most pages to write: every screen and panel first, then what they link to",
+                    "value_name": "LIMIT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "240"
+                    ]
+                  },
+                  {
+                    "name": "budget_seconds",
+                    "long": "budget-seconds",
+                    "positional": false,
+                    "help": "The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost",
+                    "value_name": "BUDGET_SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "180"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-ui-snapshot",
+                    "title": "Read the UI once and write it as the pages a publication carries at /ui",
+                    "description": "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "ui-snapshot",
+                      "--limit",
+                      "20"
+                    ],
+                    "command": "majordomus web report ui-snapshot --limit 20",
+                    "setup": [],
+                    "expectation": "exits 0; prints web report, ui-snapshot"
                   }
                 ],
                 "subcommands": []
@@ -134375,7 +134476,7 @@
         "name": "majordomus_deployments",
         "id": "deploy.list",
         "title": "Deployments",
-        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

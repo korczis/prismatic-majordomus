@@ -113,8 +113,8 @@ pub enum Target {
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
     Manifest,
-    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
-    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    /// The artifacts of every deployment object: `deploy/Dockerfile` and `.dockerignore`
+    /// (see [`crate::deploy::render`]).
     Deployment,
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.

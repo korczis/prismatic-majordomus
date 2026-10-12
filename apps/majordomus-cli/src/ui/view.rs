@@ -5,7 +5,16 @@
 //! The source of a value is shown in the UI itself — a tile's title, a panel's "Source"
 //! line. The UI is its own product; the Cockpit is its low-level reference, so each source
 //! carries one quiet "technical view" link to the Cockpit's page for that capability, for the
-//! reader who wants the registry behind a value. Nothing else leads there (ADR 0135).
+//! reader who wants the registry behind a value. An object a screen names and the UI has no
+//! screen of its own for — a document, a test, a declaring file, an ADR — leads to the
+//! Cockpit's page for that object, its technical view, and only when the index holds it.
+//! Nothing else leads there (ADR 0135: the diagnostic view of the capability, object or graph
+//! a panel read).
+//!
+//! Every entity a screen names is a link: to the UI's own screen or inspector for it when
+//! there is one, to its technical view when there is not, and to the address its source gives
+//! when it lives elsewhere. A value a source does not have is said as `none`, never left blank,
+//! and a list cut short says how much is left out and where the rest is.
 //!
 //! Charts are drawn here as SVG, on the server: they are complete without JavaScript, they
 //! carry their numbers as text beside them, and they draw only what a capability answered —
@@ -13,6 +22,7 @@
 
 use serde_json::Value;
 
+use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
@@ -246,6 +256,112 @@ fn chip_link(kind: &str, href: &str, title: &str) -> El {
 /// The Cockpit's page for a capability: the low-level reference behind a value.
 pub fn technical(capability: &str) -> String {
     format!("{}/capabilities/{capability}", crate::cockpit::PREFIX)
+}
+
+/// The Cockpit's page for one object of the index: the technical view of something a screen
+/// names and has no screen of its own for.
+pub fn object_href(uri: &str) -> String {
+    format!(
+        "{}/object?uri={}",
+        crate::cockpit::PREFIX,
+        crate::http::router::percent_encode(uri)
+    )
+}
+
+/// An object the index holds, as a link to its technical view, labelled as the screen names
+/// it. The caller knows the index holds it, because the source that named it said so (a
+/// rule's own `uri`, a test reported `present`); [`object_if`] asks when nothing said.
+pub fn object(uri: &str, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", object_href(uri))
+        .attr(
+            "title",
+            format!("{uri}: its technical view, in the Cockpit"),
+        )
+        .text(label)
+}
+
+/// [`object`] when the index holds `uri`, the label as text when it does not, so no link
+/// leads to a page that answers 404, and `none` when there is no label at all. Whether the
+/// index holds it is asked of `objects.get`, the capability every surface resolves a URI with
+/// (ADR 0012), never read from the index beside it.
+pub fn object_if(ctx: &Context, uri: &str, label: &str) -> El {
+    if label.is_empty() {
+        return none();
+    }
+    match ctx.execute("objects.get", serde_json::json!({ "uri": uri })) {
+        Ok(_) => object(uri, label),
+        Err(_) => el("span").class("mj-ui-mono").text(label),
+    }
+}
+
+/// An object as its source names it: a link to its technical view when the source gave its
+/// URI, its label as text when it gave none, and `none` when it gave no label either.
+pub fn object_or(uri: &str, label: &str) -> El {
+    match (uri.is_empty(), label.is_empty()) {
+        (_, true) => none(),
+        (true, false) => el("span").class("mj-ui-mono").text(label),
+        (false, false) => object(uri, label),
+    }
+}
+
+/// A link inside the UI, labelled.
+pub fn link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A link whose label is an identifier, set as code.
+pub fn code_link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A value a source does not have, said: `none`, never a blank cell.
+pub fn none() -> El {
+    el("span").class("mj-ui-dim").text("none")
+}
+
+/// A string field of an entry, or `none` when the entry has no such field or it is empty:
+/// [`text`] for a cell a reader reads, where a blank would say nothing.
+pub fn value(entry: &Value, key: &str) -> String {
+    Some(text(entry, key))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "none".into())
+}
+
+/// What a list cut short leaves out: "the first `shown` of `total`", and where the whole list
+/// is when there is a place that shows it. Nothing when nothing was left out.
+pub fn more(shown: usize, total: usize, whole: Option<&str>) -> Option<El> {
+    (total > shown).then(|| {
+        let line = el("p").class("mj-ui-line mj-ui-dim").text(format!(
+            "The first {shown} of {total}; {} more not shown here. ",
+            total - shown
+        ));
+        match whole {
+            Some(href) => line.child(link(href, "Open the whole list")),
+            None => line,
+        }
+    })
+}
+
+/// An identifier as a fragment a page can carry: letters, digits, `-`, `_` and `.` kept,
+/// anything else a `-`, so an id a source writes never breaks out of the attribute.
+pub fn anchor(id: &str) -> String {
+    id.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.') {
+                c
+            } else {
+                '-'
+            }
+        })
+        .collect()
 }
 
 /// The body of a panel whose source could not answer.
@@ -756,5 +872,90 @@ mod tests {
             state_word(&serde_json::json!({ "status": "warn" }), "status"),
             "warn"
         );
+    }
+
+    /// A value a source does not have reads `none`, never a blank; one it has is itself.
+    #[test]
+    fn a_missing_value_reads_none() {
+        let e = serde_json::json!({ "title": "A", "empty": "" });
+        assert_eq!(value(&e, "title"), "A");
+        assert_eq!(value(&e, "empty"), "none");
+        assert_eq!(value(&e, "absent"), "none");
+        assert_eq!(none().render(), "<span class=\"mj-ui-dim\">none</span>");
+    }
+
+    /// A list cut short says how many it leaves out and where the whole list is; one that
+    /// was not cut says nothing.
+    #[test]
+    fn a_cut_list_says_what_it_leaves_out() {
+        assert!(more(8, 8, Some("/ui/roadmap")).is_none());
+        assert!(more(3, 2, None).is_none());
+        let html = more(8, 31, Some("/ui/roadmap"))
+            .expect("a cut list")
+            .render();
+        assert!(html.contains("The first 8 of 31; 23 more"), "{html}");
+        assert!(html.contains("href=\"/ui/roadmap\""), "{html}");
+        let nowhere = more(10, 12, None).expect("a cut list").render();
+        assert!(
+            nowhere.contains("2 more") && !nowhere.contains("href"),
+            "{nowhere}"
+        );
+    }
+
+    /// An object leads to its technical view by its URI, percent-encoded; an id becomes a
+    /// fragment that cannot break out of its attribute.
+    #[test]
+    fn an_object_leads_to_its_technical_view() {
+        assert_eq!(
+            object_href("majordomus://test/test/cases/1_a.sh"),
+            "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F1_a.sh"
+        );
+        let html = object("majordomus://adr/adr-0135", "ADR 0135").render();
+        assert!(html.contains("href=\"/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0135\""));
+        assert!(
+            html.contains(">ADR 0135<") && html.contains("technical view"),
+            "{html}"
+        );
+        assert_eq!(anchor("shell-suite"), "shell-suite");
+        assert_eq!(anchor("a b\"c/d@1"), "a-b-c-d-1");
+        assert_eq!(
+            link("/ui/docs", "Docs").render(),
+            "<a class=\"mj-ui-link\" href=\"/ui/docs\">Docs</a>"
+        );
+        assert!(code_link("/ui/x", "x").render().contains("mj-ui-mono"));
+    }
+
+    /// Whether an object is a link is asked of the index: one it holds leads to its technical
+    /// view, one it does not is its label as text, and no label at all is `none`.
+    #[test]
+    fn an_object_is_a_link_only_when_the_index_holds_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let held = object_if(&ctx, "majordomus://document/docs/DOC_0.md", "docs/DOC_0.md").render();
+        assert!(held.contains("href=\"/cockpit/object?uri="), "{held}");
+        let absent = object_if(&ctx, "majordomus://document/docs/NOPE.md", "docs/NOPE.md").render();
+        assert_eq!(absent, "<span class=\"mj-ui-mono\">docs/NOPE.md</span>");
+        assert_eq!(
+            object_if(&ctx, "majordomus://document/", "").render(),
+            none().render()
+        );
+    }
+
+    /// An object a source names with its URI is a link, one named without is text, and one
+    /// not named at all is `none`.
+    #[test]
+    fn an_object_is_drawn_as_its_source_names_it() {
+        assert!(object_or("majordomus://rule/a@1", "a.md")
+            .render()
+            .contains("href="));
+        assert_eq!(
+            object_or("", "a.md").render(),
+            "<span class=\"mj-ui-mono\">a.md</span>"
+        );
+        assert_eq!(
+            object_or("majordomus://rule/a@1", "").render(),
+            none().render()
+        );
+        assert_eq!(object_or("", "").render(), none().render());
     }
 }

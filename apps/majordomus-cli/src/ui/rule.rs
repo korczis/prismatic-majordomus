@@ -12,7 +12,9 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::source::{ask_input, Answer};
-use super::view::{panel, state, table, text, unanswered};
+use super::view::{
+    code_link, none, object, object_or, panel, state, table, text, unanswered, value,
+};
 
 /// A rule id as the index writes them (`project.worktree-topology`, `majordomus.adr-integrity@1`):
 /// letters, digits, `.`, `-`, `_` and `@`, and nothing a link could carry anything else in.
@@ -103,10 +105,22 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
             .unwrap_or_default()
             .iter()
             .map(|t| {
+                let path = text(t, "path");
+                // a test the report found on disk is an object of the index: its technical
+                // view; one it did not find is its path, said as text
+                let test = if path.is_empty() {
+                    none()
+                } else if t.get("present").and_then(Value::as_bool) == Some(true) {
+                    object(&format!("majordomus://test/{path}"), path)
+                } else {
+                    el("span")
+                        .class("mj-ui-mono")
+                        .text(format!("{path} (not found)"))
+                };
                 el("tr")
-                    .child(el("td").class("mj-ui-mono").text(text(t, "path")))
+                    .child(el("td").child(test))
                     .child(el("td").child(state(t, "state")))
-                    .child(el("td").class("mj-ui-dim").text(text(t, "meaning")))
+                    .child(el("td").class("mj-ui-dim").text(value(t, "meaning")))
             })
             .collect::<Vec<_>>();
         let missing = text(&a, "missing");
@@ -120,12 +134,12 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
                     .child(
                         el("p")
                             .class("mj-ui-mono mj-ui-dim")
-                            .text(text(&rule, "identity")),
+                            .text(value(&rule, "identity")),
                     )
                     .child(
                         el("h3")
                             .class("mj-ui-detail-title")
-                            .text(text(&rule, "title")),
+                            .text(value(&rule, "title")),
                     )
                     .child(
                         el("p")
@@ -158,23 +172,24 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
                                 .unwrap_or_else(|| "no validator".into())
                         )),
                     ))
-                    .child(fact(
-                        "Gates",
-                        el("span").class("mj-ui-mono").text({
-                            let g = strings(&proof, "gates");
-                            if g.is_empty() {
-                                "none".into()
-                            } else {
-                                g.join(", ")
-                            }
-                        }),
-                    ))
+                    .child(fact("Gates", {
+                        // each gate leads to its row in the CI model
+                        let g = strings(&proof, "gates");
+                        if g.is_empty() {
+                            none()
+                        } else {
+                            el("span").class("mj-ui-badges").children(
+                                g.into_iter()
+                                    .map(|id| code_link(super::delivery::gate_href(&id), id)),
+                            )
+                        }
+                    }))
                     .child(fact("Depends on", chips(strings(&a, "depends_on"))))
                     .child(fact("Required by", chips(strings(&a, "required_by"))))
-                    .child(fact(
-                        "Declared in",
-                        el("span").class("mj-ui-mono").text(text(&rule, "path")),
-                    )),
+                    .child(fact("Declared in", {
+                        // the rule's own record, which the index holds: rules.show found it
+                        object_or(&text(&rule, "uri"), &text(&rule, "path"))
+                    })),
             )
             .child(el("h4").class("mj-ui-panel-title").text("What proves it"))
             .child(table(
@@ -217,8 +232,10 @@ mod tests {
             "proof": {
                 "rule": { "id": "project.a", "identity": "project.a@1", "title": "A holds", "statement": "A is true.",
                           "class": "blocking", "status": "active", "path": ".ai/repo/rules/project/a.v1.md",
+                          "uri": "majordomus://rule/project.a@1",
                           "enforcement": { "mode": "dispatched", "validator": "adr" } },
-                "tests": [{ "path": "test/cases/96_a.sh", "state": "not_run", "meaning": "never run" }],
+                "tests": [{ "path": "test/cases/96_a.sh", "present": true, "state": "not_run", "meaning": "never run" },
+                          { "path": "test/cases/97_gone.sh", "present": false, "state": "missing" }],
                 "gates": ["shell-suite"], "state": "not_run", "meaning": "No run is recorded."
             },
             "depends_on": ["project.b@1"], "required_by": [{ "id": "project.c" }],
@@ -233,9 +250,17 @@ mod tests {
             "/ui/governance?rule=project.b@1#rule",
             "/ui/governance?rule=project.c#rule",
             "bash test/run.sh 96_a",
+            // every entity it names is a link: the gate to its row in the CI model, the test
+            // and the declaration to their technical views
+            "href=\"/ui/delivery#gate-shell-suite\"",
+            "href=\"/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F96_a.sh\"",
+            "href=\"/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a%401\"",
+            // a test the report did not find is never a link to a page that would answer 404
+            "test/cases/97_gone.sh (not found)",
         ] {
             assert!(html.contains(want), "no {want}: {html}");
         }
+        assert!(!html.contains("97_gone.sh\""), "{html}");
     }
 
     /// A rule its index says little about still opens: no dependency either way, no

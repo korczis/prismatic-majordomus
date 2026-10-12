@@ -593,7 +593,7 @@ gates:
     job: pages
     at-finish: true
     runs: scripts/ci/pages-check
-    summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, and GitHub's own build of that branch did not error
+    summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, GitHub's own build of that branch did not error, and the homepage, /releases/latest.json and the newest GitHub release name one release once the release window has passed
 
   # On demand: half of its matrix is a macOS runner, and `needs.install.result` is one value
   # over both legs, so the whole job is as scarce as its scarcest leg. It loses least by

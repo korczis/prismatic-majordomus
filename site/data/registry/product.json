@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "95e8e18fe1654b601584e441bf276888a0c13c42658fa1c67f2f0de07e956fd9",
+  "fingerprint": "c4ad4fb8eef88baaca9f670156ec1f911be9c68c61e12d8220c243ffbc09754c",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -7198,7 +7198,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 95
+          "objects": 96
         },
         {
           "name": "knowledge",
@@ -7479,11 +7479,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 437,
+        "mcp_resources": 438,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 434,
+        "objects": 435,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7699,7 +7699,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 168
+          "objects": 169
         }
       ],
       "rule_refs": [
@@ -8075,11 +8075,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 170,
+        "mcp_resources": 171,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 168,
+        "objects": 169,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -11899,7 +11899,7 @@
         },
         {
           "name": "issue",
-          "objects": 328
+          "objects": 331
         },
         {
           "name": "intent",
@@ -12101,11 +12101,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 370,
+        "mcp_resources": 373,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 367,
+        "objects": 370,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14084,10 +14084,10 @@
     },
     {
       "id": "deployments",
-      "title": "A deployment is one canonical object, and every provider artifact is generated from it",
+      "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
       "short_title": "Deployments",
-      "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
-      "summary": "One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.",
+      "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
+      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
       "featured": false,
@@ -14206,7 +14206,7 @@
         {
           "id": "majordomus.deployment-contract",
           "identity": "majordomus.deployment-contract@1",
-          "title": "A deployment is described once, and every provider artifact is generated from it",
+          "title": "A deployment is described once, and every artifact built from it is generated from it",
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
@@ -15739,7 +15739,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (95)",
+        "title": "adr (96)",
         "features": [
           "knowledge"
         ]
@@ -15836,7 +15836,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (328)",
+        "title": "issue (331)",
         "features": [
           "planning"
         ]
@@ -15899,7 +15899,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (168)",
+        "title": "rule (169)",
         "features": [
           "doctrine"
         ]
@@ -16841,19 +16841,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2256,
+    "capabilities": 2268,
     "builtin": 191,
-    "declarative": 2065,
+    "declarative": 2077,
     "modules": 55,
     "mcp_tools": 183,
-    "mcp_resources": 2119,
+    "mcp_resources": 2131,
     "http_routes": 187,
-    "cli_commands": 199,
+    "cli_commands": 200,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2065,
+    "objects": 2077,
     "by_kind": {
-      "adr": 95,
+      "adr": 96,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -16870,7 +16870,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 328,
+      "issue": 331,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16879,12 +16879,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 168,
+      "rule": 169,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 446,
+      "test": 453,
       "use-case": 48,
       "workspace": 1
     },

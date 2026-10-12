@@ -3224,6 +3224,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:web report ui-snapshot",
+      "path": "/evidence/commands/web-report-ui-snapshot/"
+    },
+    {
+      "kind": "command",
       "subject": "command:web report ui",
       "path": "/evidence/commands/web-report-ui/"
     },
@@ -17278,6 +17283,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:web report ui-snapshot": {
+      "kind": "command",
+      "id": "web report ui-snapshot",
+      "page": "/evidence/commands/web-report-ui-snapshot/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:web validate": {
       "kind": "command",
       "id": "web validate",
@@ -24751,6 +24775,52 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-site-offers-the-release-it-published": {
+      "kind": "rule",
+      "id": "project.the-site-offers-the-release-it-published",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1041_a_release_publishes_its_metadata",
+          "path": "test/cases/1041_a_release_publishes_its_metadata.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1041_a_release_publishes_its_metadata.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1087_the_site_offers_the_release_it_published",
+          "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1087_the_site_offers_the_release_it_published.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:352_the_version_the_site_shows_is_one_you_can_get",
+          "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/pages-check",
+        "scripts/pages",
+        "scripts/site-build",
+        "scripts/site-check"
+      ],
+      "findings": []
+    },
     "rule:project.the-version-is-measured": {
       "kind": "rule",
       "id": "project.the-version-is-measured",
@@ -26478,6 +26548,7 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_links",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -26485,7 +26556,6 @@
     "suite:102_completion_shell",
     "suite:1036_the_executor_reopens_a_record_pull_request",
     "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
-    "suite:1041_a_release_publishes_its_metadata",
     "suite:1050_the_monitor_folds_the_noise",
     "suite:1051_a_followed_stream_can_be_waited_on",
     "suite:1052_an_absent_source_is_reported",
@@ -26508,6 +26578,12 @@
     "suite:1082_a_claim_opens_its_proof",
     "suite:1083_a_rule_opens_its_proof",
     "suite:1086_a_remote_caller_cannot_write",
+    "suite:1088_the_command_and_capability_screens_answer",
+    "suite:1089_the_work_and_mesh_screens_answer",
+    "suite:1090_the_deployments_and_docs_screens_answer",
+    "suite:1091_no_link_on_the_ui_is_dead",
+    "suite:1092_the_ui_snapshot_holds_every_screen",
+    "suite:1093_the_ui_snapshot_links_nothing_absent",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
     "suite:114_two_worktrees_one_repository",
@@ -26547,7 +26623,6 @@
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
     "suite:350_the_queue_measures_itself",
-    "suite:352_the_version_the_site_shows_is_one_you_can_get",
     "suite:353_the_version_bump_has_an_actor",
     "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
