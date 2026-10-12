@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "c0c235d58fe8e4f60eb1c999a4a8d23f3b2b337cd9a4de0265a48672700ea4be",
+  "fingerprint": "9b27a32575bb518f7a5516c54916ae2be397b09bbb3c33c319232c17140876b5",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -14049,10 +14049,10 @@
     },
     {
       "id": "deployments",
-      "title": "A deployment is one canonical object, and every provider artifact is generated from it",
+      "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
       "short_title": "Deployments",
-      "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
-      "summary": "One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.",
+      "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
+      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
       "featured": false,
@@ -14171,7 +14171,7 @@
         {
           "id": "majordomus.deployment-contract",
           "identity": "majordomus.deployment-contract@1",
-          "title": "A deployment is described once, and every provider artifact is generated from it",
+          "title": "A deployment is described once, and every artifact built from it is generated from it",
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"

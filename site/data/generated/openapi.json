@@ -333,7 +333,6 @@
     "schema-Completion": "docs/api/gates/",
     "schema-Component": "docs/api/continuity/",
     "schema-ConclusionView": "docs/api/reasoning/",
-    "schema-Concurrency": "docs/api/deploy/",
     "schema-ConditionState": "docs/api/intents/",
     "schema-Confidence": "docs/api/environment/",
     "schema-Conflict": "docs/api/devcontext/",
@@ -532,7 +531,6 @@
     "schema-FirewallReport": "docs/api/mesh/",
     "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
-    "schema-Fly": "docs/api/deploy/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
     "schema-GapCondition": "docs/api/intents/",
@@ -829,12 +827,10 @@
     "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
-    "schema-Provider": "docs/api/deploy/",
     "schema-ProviderBootstrap": "docs/api/product/",
     "schema-ProviderLifecycle": "docs/api/lifecycle/",
     "schema-ProviderLifecycles": "docs/api/lifecycle/",
     "schema-ProviderList": "docs/api/product/",
-    "schema-ProviderName": "docs/api/deploy/",
     "schema-ProviderOffers": "docs/api/product/",
     "schema-ProviderState": "docs/api/environment/",
     "schema-ProviderStatus": "docs/api/mesh/",
@@ -1193,7 +1189,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 187,
-    "schemas": 947,
+    "schemas": 943,
     "tags": 55
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1622,7 +1618,6 @@
     "Completion": "gates",
     "Component": "continuity",
     "ConclusionView": "reasoning",
-    "Concurrency": "deploy",
     "ConditionState": "intents",
     "Confidence": "environment",
     "Conflict": "devcontext",
@@ -1821,7 +1816,6 @@
     "FirewallReport": "mesh",
     "FirewallRule": "mesh",
     "Fixtures": "repository",
-    "Fly": "deploy",
     "Fonts": "design",
     "Freshness": "shared",
     "GapCondition": "intents",
@@ -2118,12 +2112,10 @@
     "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
-    "Provider": "deploy",
     "ProviderBootstrap": "product",
     "ProviderLifecycle": "lifecycle",
     "ProviderLifecycles": "lifecycle",
     "ProviderList": "product",
-    "ProviderName": "deploy",
     "ProviderOffers": "product",
     "ProviderState": "environment",
     "ProviderStatus": "mesh",
@@ -10103,39 +10095,6 @@
       "variants": []
     },
     {
-      "description": "When the edge considers a machine loaded, in requests.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Concurrency",
-      "properties": [
-        {
-          "description": "Where the edge starts preferring another machine.",
-          "name": "soft_limit",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        },
-        {
-          "description": "Where it stops sending requests to this one.",
-          "name": "hard_limit",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Fly"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "The state of one criterion as the gap observed it. Four values, because \"not determined\"\nhas to be writable: an omitted criterion is refused, and `Unknown` is never a pass.\n\n```\nuse majordomus_cli::intent_review::ConditionState;\nassert_eq!(serde_json::to_string(&ConditionState::Conflicting).unwrap(), \"\\\"conflicting\\\"\");\nassert_ne!(ConditionState::Unknown, ConditionState::Satisfied);\n```",
       "home": "intents",
       "is_enum": true,
@@ -12698,7 +12657,7 @@
           "type": "DeploymentStatus | null"
         },
         {
-          "description": "The application's name at the provider.",
+          "description": "The application's name: what the deployment is known by in a listing.",
           "name": "application",
           "refs": [],
           "required": true,
@@ -12764,15 +12723,6 @@
           ],
           "required": false,
           "type": "Budgets"
-        },
-        {
-          "description": "The provider and its own facts.",
-          "name": "provider",
-          "refs": [
-            "Provider"
-          ],
-          "required": true,
-          "type": "Provider"
         },
         {
           "description": "When the object was written.",
@@ -21947,44 +21897,6 @@
       "variants": []
     },
     {
-      "description": "Fly.io's own facts: what has no meaning for any other provider.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Fly",
-      "properties": [
-        {
-          "description": "The organisation the application belongs to.",
-          "name": "org",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Whether the edge redirects plain HTTP to HTTPS.",
-          "name": "force_https",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        },
-        {
-          "description": "When the edge considers a machine loaded.",
-          "name": "concurrency",
-          "refs": [
-            "Concurrency"
-          ],
-          "required": false,
-          "type": "Concurrency | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "The two type stacks.",
       "home": "design",
       "is_enum": false,
@@ -29094,7 +29006,7 @@
       "name": "Listen",
       "properties": [
         {
-          "description": "The port, stated once for the process, the image and the provider configuration.",
+          "description": "The port, stated once for the process and the image.",
           "name": "port",
           "refs": [
             "Port"
@@ -36677,7 +36589,6 @@
       "used_by": [],
       "used_by_schemas": [
         "Budgets",
-        "Concurrency",
         "HealthRoutes",
         "Machines",
         "Resources"
@@ -37824,39 +37735,6 @@
       ]
     },
     {
-      "description": "The provider and the facts that belong to it alone.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Provider",
-      "properties": [
-        {
-          "description": "Which provider.",
-          "name": "name",
-          "refs": [
-            "ProviderName"
-          ],
-          "required": true,
-          "type": "ProviderName"
-        },
-        {
-          "description": "Fly's own block, when the provider is Fly.",
-          "name": "fly",
-          "refs": [
-            "Fly"
-          ],
-          "required": false,
-          "type": "Fly | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "One bootstrap a provider renders.",
       "home": "product",
       "is_enum": false,
@@ -38023,25 +37901,6 @@
       ],
       "used_by_schemas": [],
       "values": [],
-      "variants": []
-    },
-    {
-      "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.",
-      "home": "deploy",
-      "is_enum": true,
-      "name": "ProviderName",
-      "properties": [],
-      "type": "\"fly\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
-      ],
-      "values": [
-        {
-          "description": "Fly.io.",
-          "value": "fly"
-        }
-      ],
       "variants": []
     },
     {
@@ -57003,7 +56862,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments\"",
-          "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+          "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
           "home": "deploy",
           "id": "deploy.list",
           "kind": "query",

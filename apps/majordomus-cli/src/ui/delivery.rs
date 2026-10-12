@@ -139,7 +139,7 @@ mod tests {
         let ctx = repo.context().expect("a context");
         let html = screen(&ctx).main.render();
         assert!(
-            html.contains("The Majordomus layer, served from one machine"),
+            html.contains("The Majordomus layer, served from its container image"),
             "{html}"
         );
         assert!(!html.contains("No deployment is declared."), "{html}");
