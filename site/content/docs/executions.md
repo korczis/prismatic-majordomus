@@ -176,21 +176,37 @@ on: one process, one port, one startup path, no second daemon and no Socket.IO. 
 subscription is the request target, so there is nothing to send and nothing to acknowledge.
 
 The server writes one JSON document per text frame: either an execution event, or one of
-three control messages — `stream.ready` (the first frame: what was subscribed to, how much
+four control messages — `stream.ready` (the first frame: what was subscribed to, how much
 was replayed, whether the history before it had already been dropped, the heartbeat
-interval), `stream.lagged` (this client fell behind and events were dropped rather than
-buffered; read the snapshot and the history again from the last sequence seen) and
-`stream.closing`.
+interval), `stream.heartbeat` (the channel is quiet and alive), `stream.lagged` (this client
+fell behind and events were dropped rather than buffered; read the snapshot and the history
+again from the last sequence seen) and `stream.closing`.
 
 **Order and gaps.** A connection subscribes first and replays second, and skips in the live
-stream anything the replay already wrote. There is therefore no gap between the history and
-the stream, and nothing is written twice.
+stream anything the replay already wrote. The replay is read in pages of 1000 until it is
+caught up, so a cursor further behind than one page still receives every retained event
+after it. There is therefore no gap between the history and the stream, and nothing is
+written twice. The Cockpit's client (`share/cockpit/socket.js`) checks both on its side:
+an event at or below the last sequence it saw is dropped, and on a channel that follows one
+execution an event beyond the next one makes it reconnect with `after=<last seen>`, so the
+server replays what was missed; the same gap twice is read from the history over HTTP
+instead.
 
 **Heartbeat and disconnection.** The server pings a quiet connection every twenty seconds
 and never reads: `tiny_http` hands over one `Read + Write` value on upgrade that cannot be
 split, so a reader thread would hold the lock the writer needs. A client that goes away is
 noticed when the next write fails, which the heartbeat guarantees happens; what a client
 sends is ignored. A close is therefore observed within one heartbeat rather than instantly.
+A ping is a control frame a browser never shows to a page, so the same interval also writes
+a `stream.heartbeat` text frame; the Cockpit's client retires a channel that has said
+nothing for two and a half heartbeats and reconnects from its cursor, rather than showing a
+half-open connection as live.
+
+**A value too large for a frame.** One frame is at most 256 KiB. An event whose frame would
+be larger — a completed execution's `output`, a created one's `input` — is written with that
+value replaced by a reference, `{"withheld": "too_large", "bytes": n, "limit": 262144,
+"self": "/api/v1/executions/get?id=…"}`, and the channel stays open; the snapshot it names
+carries the whole value.
 
 **Backpressure.** A subscriber that falls behind its queue is never waited for: events are
 dropped for that client alone, it is told `stream.lagged`, and the execution is not slowed
@@ -199,8 +215,11 @@ by anyone watching it. A subscriber whose reader has gone is forgotten at the ne
 **Refusals.** A plain `GET /events` answers `426` and says where the same events are
 readable over HTTP. A request from another origin is refused `403` before the handshake — a
 page elsewhere can open a WebSocket to a loopback server, and the same-origin policy does
-not stop it. An `execution` parameter that is not an execution id is `400`, refused by
-shape before anything is looked up.
+not stop it. So is an upgrade from this machine addressed to a host name that is neither an
+address nor `localhost`: that is a page whose domain was made to resolve here (DNS
+rebinding), refused before the upgrade as every other route refuses it. An `execution`
+parameter that is not an execution id is `400`, refused by shape before anything is looked
+up.
 
 ## In the Cockpit
 
@@ -297,6 +316,7 @@ origin. The Cockpit's content-security policy allows connections to this origin 
 | executions running at once | 4 | further ones wait `queued`, and `execution.queued` says how many are ahead |
 | a subscriber's queue | 512 | events are dropped for that client, which is told `stream.lagged` |
 | live channels | 64 | a further connection is refused `503` with the reason |
+| one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
 | a serial capability (a command) | one at a time | a second execution of it waits for the first |
 
 </div>
