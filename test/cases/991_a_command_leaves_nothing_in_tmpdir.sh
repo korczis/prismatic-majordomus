@@ -107,9 +107,11 @@ probed "$MJ" context >/dev/null
 [ -d "$PROBE/mj.$$.living" ] || { echo "    a root whose process is alive was removed"; exit 1; }
 rmdir "$PROBE/mj.$$.living"
 
-# a script that sources the library and never asks for a root: `mktemp` answers where it
-# was asked, and a template that is not under TMPDIR is never moved
-out="$(TMPDIR="$PROBE/" MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" MJ_VERSION=0 bash -c '
+# a script that sources the library and defers its root (MJ_TMP_ROOT_DEFER, as the entry
+# point does before an exec): `mktemp` answers where it was asked until the root is made,
+# and a template that is not under TMPDIR is never moved. A script that does not defer gets
+# its root as it sources the library — case 1074 holds that half.
+out="$(TMPDIR="$PROBE/" MJ_TMP_ROOT_DEFER=1 MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" MJ_VERSION=0 bash -c '
   set -eu; . "$MJ_LIB_DIR/common.sh"
   a="$(mktemp "${TMPDIR:-/tmp}/plain.XXXXXX")"; printf "%s\n" "$a"
   mj_tmp_root_init
