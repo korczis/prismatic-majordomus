@@ -152,11 +152,12 @@ impl McpEndpoint {
         // server. Without this, the bridges' pings kept the superseded server alive forever,
         // and its clients on the code it was started from (I2127).
         if crate::lease::lost_for().is_some_and(|age| age >= crate::lease::timings().busy_grace) {
-            if let Some(gone) = self.sessions().remove(&id) {
-                self.surface.context().episodes.detach(&gone.peer);
-                self.surface.context().peers.detach(&gone.peer);
-                tracing::info!(session = %id, peer = %gone.peer, "session handed on: this server lost the lease");
-            }
+            // the session this request holds: one that a concurrent request handed on first is
+            // detached again, which changes nothing
+            self.sessions().remove(&id);
+            self.surface.context().episodes.detach(&session.peer);
+            self.surface.context().peers.detach(&session.peer);
+            tracing::info!(session = %id, peer = %session.peer, "session handed on: this server lost the lease");
             return Response::error(
                 404,
                 "session_not_found",

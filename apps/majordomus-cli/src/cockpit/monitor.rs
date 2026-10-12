@@ -161,6 +161,48 @@ mod tests {
     use super::*;
     use crate::monitor::MonitorSource;
 
+    use crate::monitor::testing::{context, cooperation, session};
+
+    fn body(page: &Page) -> String {
+        page.main.render()
+    }
+
+    /// A reader named in the address sees what names them first, as rows with the action
+    /// marked, and the live list asks for the same reader; a reader named nowhere is told so.
+    #[test]
+    fn a_named_reader_sees_their_signals_first_and_the_live_list_asks_for_them() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let c = cooperation();
+        session(&c, "s1", "3d", "the runtime train");
+        c.request_review("s1", "1b, read #885".into(), vec![], None, None)
+            .unwrap();
+        ctx.mesh.attach_cooperation(c);
+
+        let for_1b = page(&ctx, &[("for".into(), "1b".into())]);
+        let html = body(&for_1b);
+        assert!(html.contains("For you (1)"), "{html}");
+        assert!(html.contains("data-mj-severity=\"action\""), "{html}");
+        assert!(html.contains("1b, read #885"), "{html}");
+        assert!(
+            html.contains("/api/v1/monitor?limit=200&amp;for=1b"),
+            "{html}"
+        );
+        assert!(html.contains("<strong>mesh</strong>"), "{html}");
+        assert!(
+            !html.contains("Nothing happened in the last six hours"),
+            "{html}"
+        );
+
+        let for_nobody = page(&ctx, &[("for".into(), "zz".into())]);
+        assert!(body(&for_nobody).contains("Nothing in this window names you."));
+        let blank = page(&ctx, &[("for".into(), " ".into())]);
+        assert!(
+            body(&blank).contains("Say who you are"),
+            "a blank name is no name"
+        );
+    }
+
     #[test]
     fn a_row_carries_its_time_severity_and_link() {
         let mut s = MonitorSignal::new(

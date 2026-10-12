@@ -218,7 +218,17 @@ impl Watch {
     /// Close every connection of the served socket that has waited for, or been reading, a
     /// request for longer than the deadline, and forget the connections that are gone.
     fn sweep(&self, now: Instant) {
-        let open = sockets::connected_to(self.local);
+        self.sweep_with(now, sockets::connected_to(self.local), sockets::shut_down);
+    }
+
+    /// [`Watch::sweep`] over the connections `open`, closing with `close`: the system's own in
+    /// earnest, a test's in a test.
+    fn sweep_with(
+        &self,
+        now: Instant,
+        open: Vec<(i32, SocketAddr)>,
+        close: impl Fn(i32, SocketAddr, SocketAddr) -> bool,
+    ) {
         let mut peers = self.peers();
         let mut seen = HashSet::new();
         for (descriptor, peer) in open {
@@ -235,7 +245,7 @@ impl Watch {
             if now.saturating_duration_since(since) < self.deadline {
                 continue;
             }
-            if sockets::shut_down(descriptor, self.local, peer) {
+            if close(descriptor, self.local, peer) {
                 *phase = Phase::Closed;
                 CLOSED.fetch_add(1, Ordering::SeqCst);
                 tracing::info!(
@@ -262,10 +272,16 @@ mod sockets {
             .find_map(|dir| std::fs::read_dir(dir).ok())
             .map(|entries| {
                 entries
-                    .filter_map(|e| e.ok()?.file_name().to_str()?.parse().ok())
+                    .filter_map(Result::ok)
+                    .filter_map(|e| descriptor_of(&e.file_name()))
                     .collect()
             })
             .unwrap_or_default()
+    }
+
+    /// The descriptor a directory entry of the system's listing names: only a number does.
+    pub(super) fn descriptor_of(name: &std::ffi::OsStr) -> Option<RawFd> {
+        name.to_str()?.parse().ok()
     }
 
     /// The addresses of `descriptor` when it is a connected TCP socket.
@@ -385,5 +401,212 @@ mod tests {
         assert_eq!(w.interval(), Duration::from_millis(500));
         w.deadline = Duration::from_secs(60);
         assert_eq!(w.interval(), Duration::from_secs(1));
+    }
+
+    #[test]
+    fn a_request_whose_peer_is_unknown_is_answered_and_never_tracked() {
+        let w = watch();
+        // `tiny_http` names no remote address for some connections: nothing is held to the
+        // deadline for them, and their request is never refused as cut short
+        w.reading(None);
+        assert!(w.busy(None));
+        w.live(None);
+        w.answered(None);
+        w.stop_reading(None);
+        assert!(w.peers().is_empty());
+    }
+
+    #[test]
+    fn a_request_read_before_its_head_was_seen_is_busy_from_then_on() {
+        let w = watch();
+        let peer: SocketAddr = "127.0.0.1:5003".parse().unwrap();
+        // the sweeper never listed it and no head was noted: it is answered all the same
+        assert!(w.busy(Some(&peer)));
+        assert_eq!(w.peers()[&peer], Phase::Busy);
+        // an answer for a connection that is not tracked starts nothing
+        let other: SocketAddr = "127.0.0.1:5004".parse().unwrap();
+        w.answered(Some(&other));
+        assert!(!w.peers().contains_key(&other));
+    }
+
+    #[test]
+    fn a_watch_poisoned_by_a_panic_still_tracks_its_connections() {
+        let w = std::sync::Arc::new(watch());
+        let held = std::sync::Arc::clone(&w);
+        let _ = std::thread::spawn(move || {
+            let _guard = held.peers.lock().unwrap();
+            panic!("a handler panicked while it held the watch");
+        })
+        .join();
+        assert!(w.peers.is_poisoned());
+        let peer: SocketAddr = "127.0.0.1:5005".parse().unwrap();
+        w.reading(Some(&peer));
+        assert!(matches!(w.peers()[&peer], Phase::Reading(_)));
+        assert!(w.busy(Some(&peer)));
+    }
+
+    /// Everything a subscriber writes, for a test to read back.
+    #[derive(Clone, Default)]
+    struct Captured(std::sync::Arc<Mutex<Vec<u8>>>);
+
+    impl std::io::Write for Captured {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl Captured {
+        fn text(&self) -> String {
+            String::from_utf8_lossy(&self.0.lock().unwrap_or_else(|e| e.into_inner())).into_owned()
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_connection_idle_past_the_deadline_is_closed_counted_and_logged() {
+        use std::io::Read;
+        use std::net::{TcpListener, TcpStream};
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let local = listener.local_addr().unwrap();
+        let w = Watch::new(local, Duration::from_secs(2));
+        let mut client = TcpStream::connect(local).unwrap();
+        let (accepted, peer) = listener.accept().unwrap();
+        // `tiny_http` holds two descriptors on one connection; one shutdown closes both
+        let twin = accepted.try_clone().unwrap();
+
+        let start = Instant::now();
+        w.sweep(start);
+        assert_eq!(
+            w.peers()[&peer],
+            Phase::Waiting(start),
+            "a connection first seen by the sweeper waits from then on"
+        );
+        w.sweep(start + Duration::from_secs(1));
+        assert_eq!(
+            w.peers()[&peer],
+            Phase::Waiting(start),
+            "within the deadline"
+        );
+
+        let before = CLOSED.load(Ordering::SeqCst);
+        let captured = Captured::default();
+        let writer = captured.clone();
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::INFO)
+            .with_writer(move || writer.clone())
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            w.sweep(start + Duration::from_secs(3));
+        });
+        assert_eq!(w.peers()[&peer], Phase::Closed, "past the deadline");
+        assert!(
+            CLOSED.load(Ordering::SeqCst) > before,
+            "the close is counted"
+        );
+        let log = captured.text();
+        assert!(
+            log.contains("closed a connection that read no request within the deadline"),
+            "{log}"
+        );
+        assert!(log.contains("deadline_seconds=2"), "{log}");
+        assert!(log.contains(&peer.to_string()), "the peer is named: {log}");
+
+        // the client sees its connection end
+        client
+            .set_read_timeout(Some(Duration::from_secs(30)))
+            .unwrap();
+        let mut buffer = [0u8; 16];
+        assert_eq!(client.read(&mut buffer).unwrap_or(0), 0);
+
+        // a connection that is gone is forgotten
+        drop(client);
+        drop(accepted);
+        drop(twin);
+        w.sweep(start + Duration::from_secs(4));
+        assert!(!w.peers().contains_key(&peer));
+    }
+
+    #[test]
+    fn a_connection_the_system_will_not_close_stays_as_it_was_and_a_gone_one_is_forgotten() {
+        let w = watch();
+        let peer: SocketAddr = "127.0.0.1:40000".parse().unwrap();
+        let start = Instant::now();
+        let asked = std::cell::Cell::new(0);
+        let refuse = |descriptor: i32, _: SocketAddr, at: SocketAddr| {
+            assert_eq!((descriptor, at), (7, peer));
+            asked.set(asked.get() + 1);
+            false
+        };
+        // two descriptors of one connection are one connection
+        w.sweep_with(start, vec![(7, peer), (8, peer)], refuse);
+        assert_eq!(asked.get(), 0, "within the deadline nothing is closed");
+        w.sweep_with(start + Duration::from_secs(3), vec![(7, peer)], refuse);
+        assert_eq!(asked.get(), 1, "past the deadline the system is asked once");
+        assert_eq!(
+            w.peers()[&peer],
+            Phase::Waiting(start),
+            "a connection the system did not close is not called closed"
+        );
+        w.sweep_with(start + Duration::from_secs(4), vec![], |_, _, _| {
+            unreachable!("nothing is open")
+        });
+        assert!(
+            w.peers().is_empty(),
+            "a connection that is gone is forgotten"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn only_a_number_names_a_descriptor() {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        assert_eq!(sockets::descriptor_of(OsStr::new("12")), Some(12));
+        assert_eq!(sockets::descriptor_of(OsStr::new("cwd")), None);
+        assert_eq!(sockets::descriptor_of(OsStr::from_bytes(b"\xff")), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_descriptor_that_is_not_the_listed_connection_is_left_alone() {
+        use std::io::{Read, Write};
+        use std::net::{TcpListener, TcpStream};
+        use std::os::fd::AsRawFd;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let local = listener.local_addr().unwrap();
+        let mut client = TcpStream::connect(local).unwrap();
+        let (mut accepted, peer) = listener.accept().unwrap();
+
+        // a descriptor reused by a socket that is not connected (here, the listener)
+        assert!(!sockets::shut_down(listener.as_raw_fd(), local, peer));
+        // the descriptor now connected to another peer than the one that was listed
+        let other: SocketAddr = "127.0.0.1:9".parse().unwrap();
+        assert!(!sockets::shut_down(accepted.as_raw_fd(), local, other));
+        // a descriptor served on another address
+        let elsewhere: SocketAddr = "127.0.0.1:1".parse().unwrap();
+        assert!(!sockets::shut_down(accepted.as_raw_fd(), elsewhere, peer));
+
+        // the connection left alone still carries data both ways
+        accepted.write_all(b"x").unwrap();
+        client
+            .set_read_timeout(Some(Duration::from_secs(30)))
+            .unwrap();
+        let mut byte = [0u8; 1];
+        client.read_exact(&mut byte).unwrap();
+        assert_eq!(&byte, b"x");
+
+        // and the descriptor that is still the listed connection is shut down
+        assert!(sockets::shut_down(accepted.as_raw_fd(), local, peer));
+        assert_eq!(client.read(&mut byte).unwrap_or(0), 0);
     }
 }

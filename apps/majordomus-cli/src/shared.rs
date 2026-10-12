@@ -489,4 +489,145 @@ mod tests {
         )
         .is_err());
     }
+
+    /// The variable that makes a run of this test binary one of the child processes below.
+    #[cfg(unix)]
+    const CHILD: &str = "MAJORDOMUS_SHARED_TEST_CHILD";
+
+    /// Run `test` of this binary in a process of its own, and insist that it ran and passed:
+    /// a filter that matched nothing would pass too.
+    #[cfg(unix)]
+    fn passes_in_a_process_of_its_own(test: &str) {
+        let out = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                &format!("shared::tests::{test}"),
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .expect("the child process runs");
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A shared server over a fresh synthetic repository, holding its lease. The repository
+    /// is handed back too: it is removed when dropped, and the server's lease with it.
+    #[cfg(unix)]
+    fn a_shared_server() -> (SyntheticRepository, SharedServer) {
+        let fixture = SyntheticRepository::small().unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let crate::lease::Role::Server(lease) = crate::lease::elect(&app.repository).unwrap()
+        else {
+            panic!("a fresh repository has no server");
+        };
+        let shared = SharedServer::start(
+            Arc::new(crate::live::Live::pinned(app.context)),
+            crate::VERSION,
+            "127.0.0.1",
+            0,
+            false,
+            None,
+            lease,
+            None,
+        )
+        .unwrap();
+        (fixture, shared)
+    }
+
+    /// A server lingering for its last peer is still a server a stop signal ends: the wait
+    /// returns with the peer still attached, and the ordered stop that follows releases the
+    /// lease. In a process of its own, because the signal is the process's.
+    #[cfg(unix)]
+    #[test]
+    fn a_server_waiting_for_its_last_peer_stops_on_a_signal() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own("a_server_waiting_for_its_last_peer_stops_on_a_signal");
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        shared.take_stop_requests();
+        let init = serde_json::json!({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": { "name": "unit", "version": "0" }
+            }
+        })
+        .to_string();
+        let reply = crate::mcp::bridge::request(
+            &shared.url(),
+            "POST",
+            "/mcp",
+            &[("content-type", "application/json")],
+            Some(&init),
+            Duration::from_secs(10),
+        )
+        .expect("the server answers /mcp");
+        assert_eq!(reply.status, 200, "{}", reply.body);
+        assert_eq!(shared.peers_attached(), 1, "one peer attached");
+        assert_eq!(crate::lease::stop_requested(), None);
+        // SAFETY: raising a signal whose handler, installed by the election, only touches
+        // atomics
+        unsafe { libc::raise(libc::SIGHUP) };
+        assert_eq!(crate::lease::stop_requested(), Some(libc::SIGHUP));
+        shared.wait_until_peers_leave();
+        assert_eq!(
+            shared.peers_attached(),
+            1,
+            "the wait ended on the signal, not because the peer left"
+        );
+        let lease = shared.lease.path().to_path_buf();
+        shared.stop();
+        assert_eq!(
+            LeaseFile::read(&lease),
+            LeaseFile::Absent,
+            "the lease is released"
+        );
+    }
+
+    /// When the reader thread has claimed the ordered stop for a signal, a stop on the owner's
+    /// thread does not run a second one: it closes nothing and releases nothing, and leaves
+    /// the process to the thread that will end it. In a process of its own, because that
+    /// stop never returns.
+    #[cfg(unix)]
+    #[test]
+    fn a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own(
+                "a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it",
+            );
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        // what the reader thread does when it answers a signal itself
+        shared.claimed.store(true, Ordering::SeqCst);
+        let url = shared.url();
+        let lease = shared.lease.path().to_path_buf();
+        let token = shared.lease.token().to_string();
+        let root = shared.lease.root().to_path_buf();
+        let stopper = std::thread::spawn(move || shared.stop());
+        std::thread::sleep(REAP_INTERVAL * 4);
+        assert!(!stopper.is_finished(), "the second stop does not return");
+        assert!(crate::lease::probe(&url, &root), "the server still answers");
+        assert_eq!(
+            LeaseFile::read(&lease).document().map(|d| d.token.clone()),
+            Some(token),
+            "the lease is still this server's"
+        );
+    }
 }

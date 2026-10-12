@@ -27,6 +27,15 @@ const EXIT_REFUSED: u8 = 10;
 
 /// Run `majordomus monitor`.
 pub fn run(args: MonitorArgs) -> Result<u8> {
+    run_with(args, server_url)
+}
+
+/// [`run`], finding the server with `discover`: this checkout's ready server in earnest, a
+/// test's own in a test.
+fn run_with(
+    args: MonitorArgs,
+    discover: impl Fn(&MonitorArgs) -> Result<Option<String>>,
+) -> Result<u8> {
     let color = args.query.format == OutputFormat::Text
         && std::io::stdout().is_terminal()
         && std::env::var_os("NO_COLOR").is_none();
@@ -41,7 +50,7 @@ pub fn run(args: MonitorArgs) -> Result<u8> {
     let mut warned: Option<String> = None;
     let mut first = true;
     loop {
-        let url = server_url(&args)?;
+        let url = discover(&args)?;
         let page = match url {
             None => Err(Asked::NoServer),
             Some(url) => ask(&url, &target(&args, after.as_deref(), reader.as_deref())),
@@ -384,6 +393,171 @@ mod tests {
             "cursor": "m9.1.s~x4",
             "more": false
         })
+    }
+
+    /// A server that answers the requests it gets with `replies`, in order, the last one
+    /// for ever after; it lives as long as the test process.
+    fn scripted(replies: Vec<(u16, String)>) -> String {
+        let server = tiny_http::Server::http("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", server.server_addr().to_ip().unwrap());
+        std::thread::spawn(move || {
+            let mut replies = replies.into_iter().peekable();
+            for request in server.incoming_requests() {
+                let (status, body) = match replies.next() {
+                    Some(r) if replies.peek().is_some() => r,
+                    Some(last) => {
+                        replies = vec![last.clone()].into_iter().peekable();
+                        last
+                    }
+                    None => (500, String::new()),
+                };
+                let _ = request
+                    .respond(tiny_http::Response::from_string(body).with_status_code(status));
+            }
+        });
+        url
+    }
+
+    fn signal(at: u64, kind: &str, summary: &str) -> Value {
+        json!({"at": at, "source": "mesh", "kind": kind, "severity": "info",
+               "summary": summary, "for_you": false})
+    }
+
+    fn a_page(signals: Vec<Value>, cursor: &str, more: bool) -> String {
+        json!({"signals": signals, "for_you": 0, "suppressed": 0,
+               "sources": [{"source": "mesh", "state": "ok", "signals": 1, "suppressed": 0}],
+               "cursor": cursor, "more": more})
+        .to_string()
+    }
+
+    fn at(url: String) -> impl Fn(&MonitorArgs) -> Result<Option<String>> {
+        move |_| Ok(Some(url.clone()))
+    }
+
+    #[test]
+    fn one_page_is_printed_and_the_command_ends() {
+        let body = a_page(vec![signal(1, "session_joined", "3d joined")], "c1", false);
+        for format in ["text", "json"] {
+            let url = scripted(vec![(200, body.clone())]);
+            let code = run_with(args(&["--format", format, "--match", "3d"]), at(url)).unwrap();
+            assert_eq!(code, 0, "{format}");
+        }
+    }
+
+    #[test]
+    fn a_follow_goes_on_past_a_full_page_and_ends_at_its_count_or_kind() {
+        let first = a_page(vec![signal(1, "session_joined", "3d joined")], "c1", true);
+        let second = a_page(
+            vec![
+                signal(2, "claimed", "3d claims"),
+                signal(3, "merged", "#885 merged"),
+            ],
+            "c2",
+            false,
+        );
+        let url = scripted(vec![(200, first.clone()), (200, second.clone())]);
+        assert_eq!(
+            run_with(args(&["--follow", "--count", "3"]), at(url)).unwrap(),
+            0
+        );
+        let url = scripted(vec![(200, first), (200, second)]);
+        let code = run_with(
+            args(&["--follow", "--until", "merged", "--format", "json"]),
+            at(url),
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+    }
+
+    #[test]
+    fn a_follow_says_once_what_went_wrong_and_goes_on_when_it_answers_again() {
+        let good = a_page(vec![signal(4, "merged", "#885 merged")], "c4", false);
+        let url = scripted(vec![
+            (502, "not json".into()),
+            (502, "not json".into()),
+            (503, json!({"busy": true}).to_string()),
+            (200, good),
+        ]);
+        let code = run_with(
+            args(&[
+                "--follow",
+                "--count",
+                "1",
+                "--interval",
+                "1",
+                "--timeout",
+                "60",
+            ]),
+            at(url),
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+    }
+
+    #[test]
+    fn without_follow_a_bad_answer_is_an_error_and_a_refusal_exits_ten() {
+        let url = scripted(vec![(502, "not json".into())]);
+        let e = run_with(args(&[]), at(url)).unwrap_err();
+        assert!(e.to_string().contains("status 502, not JSON"), "{e}");
+        let url = scripted(vec![(503, json!({"busy": true}).to_string())]);
+        let e = run_with(args(&[]), at(url)).unwrap_err();
+        assert!(e.to_string().ends_with("status 503"), "{e}");
+        let refusal = json!({"error": {"code": "invalid_input", "message": "bad cursor"}});
+        let url = scripted(vec![(400, refusal.to_string())]);
+        assert_eq!(
+            run_with(args(&["--after", "x"]), at(url)).unwrap(),
+            EXIT_REFUSED
+        );
+    }
+
+    #[test]
+    fn no_server_is_an_answer_and_a_follow_waits_for_one_until_its_timeout() {
+        let none = |_: &MonitorArgs| Ok(None);
+        assert_eq!(run_with(args(&[]), none).unwrap(), 0);
+        assert_eq!(run_with(args(&["--format", "json"]), none).unwrap(), 0);
+        let code = run_with(
+            args(&["--follow", "--interval", "1", "--timeout", "2"]),
+            none,
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_REFUSED, "a follow that reaches its timeout");
+        let refused = run_with(args(&[]), |_: &MonitorArgs| {
+            Err(Error::Protocol {
+                reason: "server.status: down".into(),
+            })
+        });
+        assert!(
+            refused.is_err(),
+            "a discovery that fails is the command's failure"
+        );
+    }
+
+    #[test]
+    fn a_server_that_cannot_be_reached_is_unreachable() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        drop(listener);
+        match ask(&url, "/api/v1/monitor") {
+            Err(Asked::Unreachable(reason)) => assert!(reason.starts_with(&url), "{reason}"),
+            _ => panic!("a closed port is unreachable"),
+        }
+    }
+
+    #[test]
+    fn the_server_of_a_repository_without_one_is_none() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        std::process::Command::new("git")
+            .args(["init", "-q"])
+            .current_dir(repo.root())
+            .status()
+            .expect("git");
+        let root = repo.root().to_str().unwrap().to_string();
+        let share = crate::synthetic::crate_share();
+        let share = share.to_str().unwrap();
+        assert_eq!(
+            server_url(&args(&["--repo", &root, "--share", share])).unwrap(),
+            None
+        );
     }
 
     #[test]

@@ -155,7 +155,7 @@ impl Bound {
         let local = self
             .address
             .parse()
-            .unwrap_or_else(|_| std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
+            .unwrap_or(std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
         let watch = Arc::new(Watch::new(local, crate::lease::timings().read_deadline));
         let mut threads: Vec<JoinHandle<()>> = (0..WORKERS)
             .map(|n| {
@@ -268,9 +268,14 @@ fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
             answer(&router, &watch, request);
             HANDLERS.fetch_sub(1, Ordering::SeqCst);
         });
+    released_unless_spawned(spawned, &HANDLERS);
+}
+
+/// A request whose thread could not be spawned went with the closure, and the client sees its
+/// connection close: give back the slot it took in `handlers`, and say so.
+fn released_unless_spawned(spawned: std::io::Result<JoinHandle<()>>, handlers: &AtomicUsize) {
     if let Err(e) = spawned {
-        // the request went with the closure; the client sees its connection close
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        handlers.fetch_sub(1, Ordering::SeqCst);
         tracing::warn!("a request could not be given a thread: {e}");
     }
 }
@@ -447,4 +452,23 @@ pub fn stdin_is_a_pipe() -> bool {
 #[cfg(not(unix))]
 pub fn stdin_is_a_pipe() -> bool {
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_request_that_could_not_be_given_a_thread_gives_back_its_slot() {
+        let handlers = AtomicUsize::new(3);
+        released_unless_spawned(Err(std::io::Error::other("no threads left")), &handlers);
+        assert_eq!(handlers.load(Ordering::SeqCst), 2);
+        let spawned = std::thread::Builder::new().spawn(|| {});
+        released_unless_spawned(spawned, &handlers);
+        assert_eq!(
+            handlers.load(Ordering::SeqCst),
+            2,
+            "a request on its thread keeps its slot until it is answered"
+        );
+    }
 }
