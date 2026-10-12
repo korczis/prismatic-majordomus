@@ -32509,6 +32509,14 @@
             "description": "The pathspecs it covers, in the subset the model's header defines.",
             "default": []
           },
+          "except": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Single paths its patterns cover and the class does not: a data file under an\nescalating directory, read by named gates only. Each one is a path, never a\npattern, so a file that appears under the directory tomorrow still falls in it.",
+            "default": []
+          },
           "gates": {
             "anyOf": [
               {

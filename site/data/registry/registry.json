@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "ceb29000665136414fed9547d09352a6bec71e65137ae282fbe43251f1758b37",
+    "fingerprint": "a346d23a820a9d7b8780f0a562b62fd19fe47ad2cc68dccec2416e08e0c68501",
     "summary": {
       "total": 2121,
       "builtin": 184,
@@ -29176,6 +29176,14 @@
                       "type": "string"
                     },
                     "description": "The pathspecs it covers, in the subset the model's header defines.",
+                    "default": []
+                  },
+                  "except": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Single paths its patterns cover and the class does not: a data file under an\nescalating directory, read by named gates only. Each one is a path, never a\npattern, so a file that appears under the directory tomorrow still falls in it.",
                     "default": []
                   },
                   "gates": {
@@ -76196,7 +76204,7 @@
     ]
   },
   "index": {
-    "fingerprint": "776bd01c440245bc00ab0d20ac006f874378981cef699683c4dc84df1ea34877",
+    "fingerprint": "2fd0f4bf7a2b98935999db709d35e72fd86d1645e2dd716851f678f997c164c9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81381,7 +81389,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 30088
+        "bytes": 30582
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -96200,7 +96208,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 23361
+        "bytes": 25511
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",

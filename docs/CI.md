@@ -81,7 +81,11 @@ Two execution classes, both evidence-driven:
 - **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
   manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
   workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
-  model does not know.
+  model does not know. The pipeline's own data files under `.ai/repo/ci/` — the shard
+  durations, the case-number and GitHub-drift ratchets, the recorded baseline, the
+  directory's README — are not the pipeline: the `ci` class names each one in `except`, one
+  path at a time, and the `ci-data` class plans the gates that read it. A file that appears
+  under `.ai/repo/ci/` without being named still escalates.
 
 A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
 only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
@@ -136,7 +140,8 @@ person runs:
 
 ```bash
 scripts/ci/run-plan --job structure --plan plan.json   # one job's gates of a written plan, as CI runs them
-scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
+scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases;
+                                      # shellcheck in batches over MJ_LINT_JOBS workers (the CPUs)
 scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container

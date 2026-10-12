@@ -89,6 +89,35 @@ printf '%s' "$p" | jq -r .reason | grep -q 'escalates: .github/workflows/validat
 p="$(plan some/new/thing.txt)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    an unclassified path did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .unclassified[0] | grep -qx 'some/new/thing.txt' || { echo "    the plan does not name the unclassified path"; exit 1; }
+
+# --- the pipeline's data files are excepted from the pipeline class by name: each one plans
+#     the gates of the classes it still falls in, never the full plan. The list is read from
+#     the model, so a file added to `except` is held to this the day it is added.
+excepted="$(awk '/^  - id: ci$/{c=1} c && /^    except: /{sub(/^    except: \[/, ""); sub(/\]$/, ""); gsub(/, /, " "); print; exit}' "$MODEL")"
+[ -n "$excepted" ] || { echo "    the ci class excepts nothing; the data-file planning is unasserted"; exit 1; }
+for f in $excepted; do
+  p="$(plan "$f")"
+  [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] || { echo "    the pipeline data file $f escalated: $(printf '%s' "$p" | jq -r .reason)"; exit 1; }
+  s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+  has "$s" shell-suite || { echo "    the pipeline data file $f did not select the suite: $s"; exit 1; }
+done
+s="$(selected .ai/repo/ci/suite-durations.tsv)"
+has "$s" shell-suite || { echo "    the shard deal's durations did not select the suite: $s"; exit 1; }
+s="$(selected .ai/repo/ci/case-numbers-baseline.txt)"
+has "$s" case-numbers || { echo "    the case-number ratchet did not select its gate: $s"; exit 1; }
+s="$(selected .ai/repo/ci/github-drift-baseline.txt)"
+has "$s" github-projection || { echo "    the GitHub drift ratchet did not select its gate: $s"; exit 1; }
+# the pipeline's definitions still escalate, and so does a file nobody has named yet: an
+# exception is one path, and the directory stays escalating around it
+for f in .ai/repo/ci/gates.yaml .ai/repo/ci/suite.yaml .ai/repo/ci/a-file-added-tomorrow.yaml; do
+  [ "$(plan "$f" | jq -r .mode)" = full ] || { echo "    $f under the pipeline class did not escalate"; exit 1; }
+done
+# and an exception that is a pattern is refused: it would carve an open-ended hole
+awk '/^  - id: ci$/{c=1} c && /^    except: /{print "    except: [.ai/repo/ci/*.tsv]"; c=0; next} {print}' "$MODEL" > broad.yaml
+grep -q 'except: \[.ai/repo/ci/\*.tsv\]' broad.yaml || { echo "    the except mutation did not take"; exit 1; }
+expect_exit 10 "$PLAN" --model broad.yaml --check
+expect_grep 'an exception names one path'
+
 p="$(plan .gitignore)"
 # an inert path selects the always-gates and nothing beyond them; how many that is comes
 # from the model, for the same reason as above
