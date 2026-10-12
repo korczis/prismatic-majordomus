@@ -146,7 +146,7 @@
         <div class="grid gap-4 lg:grid-cols-2">
           {% <terminal title={run.label}> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={run.output | trim} /> }}{% </terminal> %}
           {% <terminal title="the layer, counted"> %}
-            {{ <term_box sections={[{"heading": project.name, "aside": "v" ~ project.release}, {"rows": [{"k": "rules", "v": kinds.rule}, {"k": "decisions", "v": kinds.adr}, {"k": "skills", "v": kinds.skill}, {"k": "commands", "v": kinds.command}]}, {"rows": [{"k": "docs", "v": base ~ "docs/", "href": base ~ "docs/"}, {"k": "api", "v": base ~ "docs/api/", "href": base ~ "docs/api/"}]}]} foot="from site/data/registry/registry.json" /> }}
+            {{ <term_box sections={[{"heading": project.name, "aside": ("v" ~ offered.version if offered else "")}, {"rows": [{"k": "rules", "v": kinds.rule}, {"k": "decisions", "v": kinds.adr}, {"k": "skills", "v": kinds.skill}, {"k": "commands", "v": kinds.command}]}, {"rows": [{"k": "docs", "v": base ~ "docs/", "href": base ~ "docs/"}, {"k": "api", "v": base ~ "docs/api/", "href": base ~ "docs/api/"}]}]} foot="from site/data/registry/registry.json" /> }}
           {% </terminal> %}
         </div>
         <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -183,7 +183,7 @@
         {{ <section kicker="07 / dashboard" title="A control plane, pictured" lead="A window with its navigation, counts, a series, what changed and the actions a person takes. The Cockpit is rendered by the executable; these are for a page that describes it." /> }}
         {%- set series = [s.decisions | length for s in cl.sections] | reverse -%}
         {%- set latest = cl.sections | first -%}
-        {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "kit/#dashboard", "icon": "home", "current": true}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}, {"title": "Decisions", "href": base ~ "adrs/", "icon": "book"}, {"title": "Skills", "href": base ~ "skills/", "icon": "box"}, {"title": "Sessions", "href": base ~ "sessions/", "icon": "users"}, {"title": "Registry", "href": base ~ "registry/", "icon": "database"}]}> %}
+        {% <window title="Cockpit" brand={project.short_name} foot={("v" ~ offered.version if offered else "")} nav={[{"title": "Overview", "href": base ~ "kit/#dashboard", "icon": "home", "current": true}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}, {"title": "Decisions", "href": base ~ "adrs/", "icon": "book"}, {"title": "Skills", "href": base ~ "skills/", "icon": "box"}, {"title": "Sessions", "href": base ~ "sessions/", "icon": "users"}, {"title": "Registry", "href": base ~ "registry/", "icon": "database"}]}> %}
           <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-lg font-semibold text-heading">Repository overview</p>
             {{ <state word="declared" label="from the generated registry" /> }}

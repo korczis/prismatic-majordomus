@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 168,
+      "count": 169,
       "dir": "rules",
       "statuses": [
         "active"
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 168
+      "count": 169
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 446
+      "count": 447
     },
     {
       "kind": "use-case",
@@ -12758,6 +12758,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.the-site-offers-the-release-it-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-offers-the-release-it-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-version-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-the-version-is-measured-2/",
@@ -12872,6 +12879,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-site-offers-the-release-it-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-offers-the-release-it-published-1/",
           "external": false
         },
         {
@@ -14192,6 +14206,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.the-site-offers-the-release-it-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-site-offers-the-release-it-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-version-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-the-version-is-measured-2/",
@@ -14860,6 +14881,46 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+      "identity": "project.the-site-offers-the-release-it-published@1",
+      "slug": "project-the-site-offers-the-release-it-published-1",
+      "cockpit": "/cockpit/objects/rule/project-the-site-offers-the-release-it-published-1",
+      "title": "The site offers the release that was published, on every surface at once",
+      "status": "active",
+      "tags": [
+        "release",
+        "publication",
+        "web",
+        "distribution"
+      ],
+      "source": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",

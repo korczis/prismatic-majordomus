@@ -24722,6 +24722,52 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-site-offers-the-release-it-published": {
+      "kind": "rule",
+      "id": "project.the-site-offers-the-release-it-published",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1041_a_release_publishes_its_metadata",
+          "path": "test/cases/1041_a_release_publishes_its_metadata.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1041_a_release_publishes_its_metadata.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1087_the_site_offers_the_release_it_published",
+          "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1087_the_site_offers_the_release_it_published.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:352_the_version_the_site_shows_is_one_you_can_get",
+          "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/pages-check",
+        "scripts/pages",
+        "scripts/site-build",
+        "scripts/site-check"
+      ],
+      "findings": []
+    },
     "rule:project.the-version-is-measured": {
       "kind": "rule",
       "id": "project.the-version-is-measured",
@@ -26456,7 +26502,6 @@
     "suite:102_completion_shell",
     "suite:1036_the_executor_reopens_a_record_pull_request",
     "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
-    "suite:1041_a_release_publishes_its_metadata",
     "suite:1050_the_monitor_folds_the_noise",
     "suite:1051_a_followed_stream_can_be_waited_on",
     "suite:1052_an_absent_source_is_reported",
@@ -26518,7 +26563,6 @@
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
     "suite:350_the_queue_measures_itself",
-    "suite:352_the_version_the_site_shows_is_one_you_can_get",
     "suite:353_the_version_bump_has_an_actor",
     "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",

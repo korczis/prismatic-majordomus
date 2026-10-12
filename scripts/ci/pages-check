@@ -36,8 +36,9 @@
 #
 # So: the branch says which commit it was built from, and this asserts that commit is on
 # master; that master has not moved past it beyond the deploy window; that the live site is
-# serving it, the crate's rustdoc reference composed into it included (ADR 0086); and that
-# GitHub's own build of it did not error.
+# serving it, the crate's rustdoc reference composed into it included (ADR 0086); that
+# GitHub's own build of it did not error; and that the release the homepage offers is the one
+# /releases/latest.json names and GitHub published, once the window after it has passed.
 #
 #   scripts/ci/pages-check                 every check; needs network for two of them
 #   scripts/ci/pages-check --offline       the two decidable from the clone alone
@@ -101,10 +102,24 @@ if ! git rev-parse --verify -q "$REMOTE/$BRANCH" >/dev/null; then
   exit 12
 fi
 
-subject="$(git log -1 --format=%s "$REMOTE/$BRANCH")"
 # The deploy commit names its source: `deploy: site from <sha> (registry <hash>), N routes`.
 # scripts/site-deploy writes it, and this is the only reader; a deploy that stopped saying
 # where it came from is itself the failure, so an unreadable subject is not tolerated.
+#
+# The newest DEPLOY commit, not the head: since ADR 0131 a release's publish job puts its
+# metadata on gh-pages as a commit of its own (`release: vX metadata, published ahead of its
+# record`), which changes two files and leaves every page the previous deploy's. Reading the
+# head made this gate exit 12 after every release, "the head does not name the commit it was
+# built from", for as long as the release stood on top — exactly the hours this gate is for.
+subject="$(git log -1 --format=%s "$REMOTE/$BRANCH")"
+case "$subject" in
+  "deploy: site from "*) ;;
+  *) deploy_subject="$(git log -1 --format=%s --grep='^deploy: site from ' "$REMOTE/$BRANCH" 2>/dev/null || true)"
+     if [ -n "$deploy_subject" ] && printf '%s' "$subject" | grep -q '^release: v[^ ]* metadata'; then
+       say "note  the head of $BRANCH is release metadata ($subject); the pages are the newest deploy's"
+       subject="$deploy_subject"
+     fi ;;
+esac
 source_sha="$(printf '%s' "$subject" | sed -n 's/^deploy: site from \([0-9a-f][0-9a-f]*\).*/\1/p')"
 if [ -z "$source_sha" ]; then
   say "pages-check: the head of $BRANCH does not name the commit it was built from:"
@@ -330,10 +345,34 @@ else
   esac
 fi
 
+# ------------------------------------------------------- 5. the release the site offers
+#
+# One fact on three surfaces: the homepage's offered release, /releases/latest.json and GitHub's
+# newest release (project.the-site-offers-the-release-it-published). Each of the four sections
+# above can be green while the homepage offers the previous release — on 2026-10-12 it did, for
+# hours after v0.21.0 was published, because the pages read the release record and the record
+# lands later than the metadata. The question is `scripts/pages release-live`, the probe the
+# pages workflow runs after a deploy; one probe, two callers. The window is the publication's
+# own (the --owed-after this gate was given), so a release minutes old is a publication in flight.
+if [ "$OFFLINE" = 1 ]; then
+  ok "the release the live site offers was not asked (--offline)"
+else
+  rl_rc=0
+  rl_out="$(scripts/pages release-live --url "$URL" --window "$OWED_AFTER" 2>&1)" || rl_rc=$?
+  case "$rl_rc" in
+    0)  ok "$(printf '%s\n' "$rl_out" | sed -n 's/^pages release-live: ok — //p' | head -n 1)" ;;
+    10) bad "the live site does not offer the release that was published"
+        printf '%s\n' "$rl_out" | awk '{ print "      " $0 }' ;;
+    *)  note "the release the live site offers could not be judged (release-live exit $rl_rc); not measured"
+        printf '%s\n' "$rl_out" | tail -n 2 | awk '{ print "      " $0 }'
+        unmeasured="${unmeasured:+$unmeasured, and }the release the live site offers" ;;
+  esac
+fi
+
 [ "$fail" = 0 ] || exit 10
 if [ -n "$unmeasured" ]; then
   say "pages-check: NOT DETERMINED — nothing measured was wrong, but $unmeasured was not measured;"
   say "             the published site is not shown to be a projection of $TRUNK that is being served"
   exit 12
 fi
-say "pages-check: the published site is a projection of $TRUNK, is current, and is being served"
+say "pages-check: the published site is a projection of $TRUNK, is current, is being served, and offers the release that was published"

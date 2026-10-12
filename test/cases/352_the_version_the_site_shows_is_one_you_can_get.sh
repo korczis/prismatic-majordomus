@@ -18,34 +18,43 @@
 # every width rather than `sm:` and up — so the wrong number was made more prominent, and the
 # change that did it was recorded as a fix.
 #
-# Asserted here: the site data carries the released version separately from the tree's; the
-# badge renders the released one; and — the mutation — a site that shows a version with no
-# release is refused rather than published.
+# Asserted here: the site's offer is a field of its own, apart from the tree's version; the
+# badge renders it; and — the mutation — a site that shows a version with no release is refused
+# rather than published.
+#
+# Since 2026-10-12 the offer is no longer a field of the site data. It was read from the release
+# records alone, and a release's record lands hours after its metadata, so for those hours the
+# homepage offered the previous release; scripts/site-build now derives it into build.json from
+# the record and from what gh-pages already serves (project.the-site-offers-the-release-it-published,
+# test/cases/1087). What this case holds is unchanged: the badge never names the tree's version.
 . "$ROOT/test/lib.sh"
 
 GEN="$ROOT/scripts/generate-site-data"
+BUILD="$ROOT/scripts/site-build"
 NAV="$ROOT/site/templates/partials/navbar.html"
 [ -x "$GEN" ] || { echo "    no scripts/generate-site-data"; exit 1; }
 [ -f "$NAV" ] || { echo "    no navbar template"; exit 1; }
 
-# --- 1. the two versions are two fields
+# --- 1. the two versions are two facts, from two producers
 # The tree's version and the released one answer different questions, so they cannot be one
 # value: a single field forces every reader to guess which question it answered.
-grep -q 'release: \$release' "$GEN" \
-  || { echo "    generate-site-data writes no separate 'release' into project.json;"
-       echo "    the site has only the tree's version to show"; exit 1; }
-grep -qE 'RELEASE=.*\.ai/repo/releases' "$GEN" \
-  || { echo "    the released version is not read from the release records, which are what the"
-       echo "    changelog, the baselines and /releases/latest.json all read"; exit 1; }
-echo "    the site data carries the tree's version and the released one as two fields"
+grep -q 'version: \$version' "$GEN" \
+  || { echo "    generate-site-data writes no tree version into project.json"; exit 1; }
+grep -q 'release: \$release\[0\]' "$BUILD" \
+  || { echo "    site-build writes no release into build.json; the site has only the tree's version"
+       echo "    to show"; exit 1; }
+grep -q 'site/data/registry/distribution.json' "$BUILD" \
+  || { echo "    the release is not read from the records' projection, which is what the changelog,"
+       echo "    the baselines and /releases/latest.json all read"; exit 1; }
+echo "    the tree's version is the site data's, the offered release is the build's"
 
 # --- 2. the badge names the release, and falls back to nothing
-grep -q 'project.release' "$NAV" \
-  || { echo "    the navbar does not render project.release"; exit 1; }
+grep -q 'offered.version' "$NAV" \
+  || { echo "    the navbar does not render the offered release"; exit 1; }
 if grep -qE '^\s*<span[^>]*>v\{\{ *project\.version *\}\}' "$NAV"; then
   echo "    the navbar still renders the tree's version as the product's version"; exit 1
 fi
-grep -q '{% if project.release %}' "$NAV" \
+grep -q '{% if offered %}' "$NAV" \
   || { echo "    the badge is not guarded: a repository with no release would render 'v' and"
        echo "    nothing, or fall back to the tree's version — stating one that does not exist"
        exit 1; }

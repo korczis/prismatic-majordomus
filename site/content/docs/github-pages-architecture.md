@@ -607,6 +607,32 @@ kind, `/openapi.json` and `/build.json`. Run the same command by hand against an
 commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
 against a served fixture.
 
+### The release the site offers
+
+Which release is the latest is one fact with three public surfaces: the homepage (the navbar
+badge, the hero and the trust strip's `data-release`), `/releases/latest.json`, which the
+installer resolves, and the newest GitHub release. A release reaches them in that order — GitHub,
+then `latest.json` from the release's publish job (`scripts/site-deploy --release-metadata`,
+ADR 0131), then the pages from the build of master that job asks for — and the record that
+archives it lands later still, through its own pull request.
+
+So the pages do not read the record. `scripts/site-build` derives the release the site offers as
+the newer of the record's projection (`site/data/registry/distribution.json`) and the
+`releases/latest.json` that `origin/gh-pages` serves, read from git and named in `build.json`
+(`release.source`, `release.published_from`); `base.html` sets `offered` from it and every page
+reads `offered`. When the published release is the newer, the build serves its two documents, so
+the metadata beside the pages names what they offer. `scripts/site-build --release` prints the
+derivation alone.
+
+It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
+`/build.json` and `/releases/latest.json` disagree, or whose newest record and projections do;
+the deploy's `the release it offers` step runs `scripts/pages release-live` once the site serves
+the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
+the schedule and at `finish`. A disagreement younger than `deploy.release_window`
+(`.ai/repo/ci/pages.yaml`) after GitHub's release is a publication in flight; older, or a site
+offering a version GitHub has not published, is a failure. The rule is
+`project.the-site-offers-the-release-it-published`.
+
 ### When a deploy does not happen
 
 Publication is two steps owned by two parties, and either can be missing while everything
