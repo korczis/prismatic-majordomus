@@ -147,6 +147,16 @@ While a screen is visible, `ui.js` asks the server for it again every minute, pu
 rendering in place, and updates the time in the top bar. That time is when the sources were
 read. This is a refresh and is said as one; nothing claims a live stream.
 
+How fast is measured, not written here. `majordomus bench` derives a target from every
+screen in `SCREENS` and every panel in `PANELS`, cold and warm:
+- `system.http.ui.<route>` reads the page over a pinned context.
+- `system.http.live.ui.<route>` reads a screen over the live view that `serve` answers from,
+  so it pays the per-request git stamp. `system.http.live.index` measures that stamp alone,
+  on `/`.
+- A panel is measured only by `--profile full`, because its source is the reason it is a panel.
+
+The targets are listed in [`generated/benchmarks.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/benchmarks.md).
+
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
@@ -214,6 +224,7 @@ part of the screen answers the same question as the rest of it.
 2. Add it to `SCREENS` in `ui/mod.rs` with its icon, and its arm to the dispatcher.
 3. A source too slow for a first paint becomes a panel route in `PANELS`, drawn as a
    placeholder with `data-panel-src`.
+   Either list makes the route a benchmark target; nothing else is edited.
 4. Lead somewhere: a tile with `kpi_to`, a panel with `panel_to`, a row with a link.
 
 ## What it does not do yet
