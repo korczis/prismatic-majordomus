@@ -2459,9 +2459,13 @@ impl Integrator for ForgeIntegrator<'_> {
                 "--no-ff",
                 &master,
             ]) {
-                // under allocation at landing a conflict on the version line alone is ours
+                // under allocation at landing a conflict on the version line alone is ours; a
+                // resolution that cannot be made is no resolution: the merge is aborted and the
+                // unmerged paths are the refusal, rather than a merge left half-done in the
+                // scratch worktree (relation.rs classed the conflict before a refresh is tried,
+                // so only a git or file-system failure in between reaches this)
                 let resolved = policy.allocation == crate::release::landing::Allocation::Landing
-                    && super::allocate::resolve_version_conflict(&dir)?;
+                    && super::allocate::resolve_version_conflict(&dir).unwrap_or(false);
                 if !resolved {
                     let why = unmerged_paths(root, &dir, &master)
                         .unwrap_or(format!("the merge of master conflicts after all: {e}"));
