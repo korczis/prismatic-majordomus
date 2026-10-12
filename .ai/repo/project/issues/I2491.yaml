@@ -1,0 +1,54 @@
+id: I2491
+milestone: adopter-upgrades
+title: "A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team"
+slug: a-personal-layer-changes-nothing-shared
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Let one person use the tool on real work in a repository other people share without changing anything shared: one flag on init and on the installer, every later writer covered by the same mechanism, the result verified at install and on every doctor, the executable reading an untracked layer without being told to, and one command that hands the layer to the team."
+why: "ADR 0145. A plain init writes the tracked .gitignore (lib/init.sh, mj_init_gitignore), update writes AGENTS.md, CLAUDE.md and GEMINI.md at the root (lib/update.sh), capture install writes .claude/ (lib/capture.sh), and doctor fails until README.md names AGENTS.md (lib/doctor.sh, mj_validate_bootstrap). No product code wrote .git/info/exclude. The Rust executable enumerates tracked files only (apps/majordomus-cli/src/discovery/mod.rs), so an untracked layer was an empty one unless --discovery filesystem was passed, and no launcher, hook or client configuration passes it. Case 86 held a hand-written list of the installer's flags, so a new flag could go undocumented and pass."
+current_state: "A person who wants a layer of their own writes an exclude file by hand; update and capture install write past it; nothing verifies it; the executable sees no rule, prompt or record in such a layer; there is no step from a personal layer to a shared one."
+desired_state: "majordomus init --personal and install.sh --personal create the plain layer, cover it in the common git directory's info/exclude, and fail unless git status reads the same after as before. update and capture install cover each path before writing it and refuse a tracked one whole. doctor verifies the cover on every run. Discovery walks the work tree when the manifest is tracked nowhere. init --extend --shared removes the cover and commits nothing. Case 86 reads the installer's flags from its parser."
+scope:
+  - "lib/common.sh"
+  - "lib/init.sh"
+  - "lib/update.sh"
+  - "lib/capture.sh"
+  - "lib/doctor.sh"
+  - "share/install/install.sh.in"
+  - "share/install/INSTALL.md.in"
+  - "share/commands.yaml"
+  - "apps/majordomus-cli/src/discovery/mod.rs"
+  - "apps/majordomus-cli/src/app.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+  - "test/cases/86_installer_platform.sh"
+  - ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md"
+  - ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
+  - ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md"
+  - ".ai/repo/features/install.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/personal-layer-changes-nothing-shared.md"
+  - ".ai/repo/project/issues/I2491.yaml"
+non_scope:
+  - "Access control, or any way around an organisation's rules about tools: the layer is on the disk in plain sight"
+  - "Installing the commit and push hooks: init installs none in either mode"
+  - "Carrying a personal layer to another machine: it is one checkout's, and the mesh is the way across"
+depends_on: []
+acceptance_criteria:
+  - "In a repository with uncommitted work, init --personal leaves git status --porcelain --untracked-files=all byte-identical, writes no tracked file, and exits 10 if it could not"
+  - "update and capture install under a personal layer leave git status identical, and update refuses (15) a projection target git tracks before writing any target"
+  - "doctor reports the personal layer verified, names a file of it that is tracked, and does not fail the tracked README for not naming AGENTS.md"
+  - "The executable lists the rules of an untracked layer with no --discovery option"
+  - "install.sh --personal verifies the result itself and says so; outside a repository it keeps the installed tool and says which half failed"
+  - "init --extend --shared removes the block, writes the two .gitignore lines, prints the paths to commit, commits nothing, and refuses (15) a layer that is not personal"
+  - "A flag accepted by the installer's parser and absent from its --help fails case 86"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2979_a_personal_layer_changes_nothing_shared 86_installer_platform 85_installer 01_init"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc layer_is_untracked"
+evidence_required:
+  - "personal_install_case_2979"
+  - "derived_discovery_doctest"
+created_at: 2026-10-12
+updated_at: 2026-10-12
