@@ -3284,9 +3284,13 @@ impl Cooperation {
                     // Compare the marks this peer can be told. A tombstone for a stream
                     // it never held is local retirement history, not a replication gap.
                     let local = self.journal.marks_for(&remote);
+                    let retained = self.journal.stream_liveness(self.expiry());
                     local.keys().chain(remote.keys()).all(|s| {
-                        local.get(s).map(|m| m.seq).unwrap_or(0)
-                            == remote.get(s).map(|m| m.seq).unwrap_or(0)
+                        // A tombstone can be ahead of a peer that retained only a prefix.
+                        // Its purged events are intentionally no longer replicated.
+                        (local.contains_key(s) && !retained.contains_key(s))
+                            || local.get(s).map(|m| m.seq).unwrap_or(0)
+                                == remote.get(s).map(|m| m.seq).unwrap_or(0)
                     })
                 });
                 peers.push(PeerVerdict {
@@ -4045,6 +4049,42 @@ mod tests {
             .journal()
             .marks()
             .contains_key(retired.journal().own_stream()));
+    }
+
+    #[test]
+    fn verification_accepts_retired_history_ahead_of_a_peers_prefix() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let retired = runtime(&net, "retired:1", "root", TrustPolicy::Tofu);
+        let first = retired
+            .journal()
+            .append_own(EventBody::SessionClosed {
+                session: "old-1".into(),
+            })
+            .unwrap();
+        let second = retired
+            .journal()
+            .append_own(EventBody::SessionClosed {
+                session: "old-2".into(),
+            })
+            .unwrap();
+        b.journal()
+            .ingest(std::slice::from_ref(&first), &|_| Ok(()));
+        a.journal().ingest(&[first, second], &|_| Ok(()));
+        let zero = Duration::ZERO;
+        assert_eq!(a.journal().compact(zero, zero, zero, true), 2);
+        a.dial(&["b:1".into()]).unwrap();
+        a.journal().beat_own();
+        b.journal().beat_own();
+        let report = a.verify();
+        assert_eq!(a.journal().marks()[retired.journal().own_stream()].seq, 2);
+        assert_eq!(b.journal().marks()[retired.journal().own_stream()].seq, 1);
+        assert_eq!(report.peers[0].converged, Some(true));
+        assert!(
+            report.ok,
+            "a purged suffix is not an unresolved replication backlog"
+        );
     }
 
     fn session(name: &str) -> SessionInfo {
