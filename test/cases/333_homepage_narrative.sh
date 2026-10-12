@@ -161,13 +161,22 @@ expect_finding 10 'lists the interfaces \[good\] and the data gives \[good, cli\
 fresh; faces; sed -i.bak 's#<li data-interface="cli">#<li data-interface="typed">typed</li><li data-interface="cli">#' "$F/site/public/index.html"
 expect_finding 10 'lists the interfaces \[good, typed, cli\]' "an interface typed into the template"
 fresh; faces; sed -i.bak 's#Good, at <code>/good</code>#<a data-published="good" href="/good/">open</a>#' "$F/site/public/index.html"
-expect_finding 10 'good is linked as published at /good, and the topology gives that mount to no surface a publication carries' "a link to a copy nobody publishes"
+expect_finding 10 'good is linked as published at /good, and no publication holds it' "a link to a copy nobody publishes"
 fresh; faces; sed -i.bak 's#Good, at <code>/good</code>#Good#' "$F/site/public/index.html"
-expect_finding 10 'its entry does not state its mount /good' "a local interface with no address"
+expect_finding 10 'its entry does not state that mount' "an interface with no address"
 fresh; faces; printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"},{"id":"good-snapshot","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"published-only"}]}' > "$F/site/data/generated/web.json"
-expect_finding 10 'the topology publishes good-snapshot at /good, and the homepage still describes good as running only locally' "a published surface the page calls local"
-sed -i.bak 's#Good, at <code>/good</code>#<a data-published="good" href="/good/">open the snapshot</a>#' "$F/site/public/index.html"
-expect_finding 0 '1 of them published by the topology' "a published surface linked as one"
+expect_finding 10 'the publication holds good-snapshot at /good, and the homepage still describes good as running only locally' "a published surface the page calls local"
+sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+expect_finding 0 '1 of them held by the publication' "a published surface linked as one"
+# the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),
+# which the topology does not carry because it exists only where its producer ran
+snap() { printf '%s\n' '{"commit":"abcdef1234567890","dirty":false,"snapshots":[{"id":"good","mount":"/good"}],"release":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/build.json"; }
+fresh; faces; snap
+expect_finding 10 'the publication holds a snapshot of good at /good, and the homepage still describes good as running only locally' "a snapshot the page does not link"
+sed -i.bak 's#Good, at <code>/good</code>#<a href="/elsewhere/" data-published="good">open</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+expect_finding 10 'the link does not lead to its mount /good/' "a snapshot link that leads somewhere else"
+fresh; faces; snap; sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+expect_finding 0 '1 of them held by the publication' "a snapshot linked as one"
 fresh; faces; rm "$F/site/data/generated/web.json"
 expect_finding 10 'site/data/generated/web.json is missing' "an interface list with no topology to hold it to"
 

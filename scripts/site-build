@@ -204,8 +204,25 @@ cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
 commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ] || dirty=true
 SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"
+SNAPSHOTS="$(mktemp "${TMPDIR:-/tmp}/mj-site-snapshots.XXXXXX")"
 RELDIR="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-release.XXXXXX")"
-trap 'rm -f "$SURFACES"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+trap 'rm -f "$SURFACES" "$SNAPSHOTS"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+# `snapshots` is what the PUBLICATION holds beside this build and this build does not compose:
+# a served surface read once at the published commit and placed at its mount by the deploy
+# (ADR 0141), as the publication model declares it (.ai/repo/ci/pages.yaml deploy.snapshots,
+# read through `scripts/pages snapshots`, its one reading). It is what lets a page link the
+# published copy of a surface a process otherwise serves, without typing a mount: the
+# homepage's interfaces and the bar's menu read it. A build for the running server holds none:
+# there the process answers at the mount itself. A tree with no publication model has none.
+if [ "$SERVE" = 0 ] && [ -x "$ROOT/scripts/pages" ] && [ -f "$ROOT/.ai/repo/ci/pages.yaml" ]; then
+  snap_rows="$("$ROOT/scripts/pages" snapshots)" || { echo "site-build: the publication model's snapshots cannot be read (scripts/pages snapshots)" >&2; exit 12; }
+  while IFS="$MJ_TAB" read -r sn_id sn_mount _; do
+    [ -n "$sn_id" ] || continue
+    jq -n --arg id "$sn_id" --arg mount "$sn_mount" '{id: $id, mount: $mount}' >> "$SNAPSHOTS"
+  done <<EOF
+$snap_rows
+EOF
+fi
 release_offered "$RELDIR"
 echo "== release $(jq -r 'if . == null then "none: no record and nothing published" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
 while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
@@ -219,12 +236,12 @@ $COMPOSED
 EOF
 jq -n --arg commit "$commit" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
-  --slurpfile surfaces "$SURFACES" --slurpfile release "$RELDIR/release.json" \
+  --slurpfile surfaces "$SURFACES" --slurpfile snapshots "$SNAPSHOTS" --slurpfile release "$RELDIR/release.json" \
   '{schema: 1, commit: $commit, dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
     registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
-    surfaces: $surfaces, release: $release[0]}' \
+    surfaces: $surfaces, snapshots: $snapshots, release: $release[0]}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"

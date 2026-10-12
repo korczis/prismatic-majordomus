@@ -14,6 +14,11 @@
 # to read like an index. The bar is for the questions a visitor arrives with; the map is for
 # finding a page whose name they already know.
 #
+# An item may name a `surface`: the id of a web surface (docs/generated/web.json). The bar then
+# leads to the published copy of that surface when the publication holds one, labelled as a
+# snapshot, and to the item's `href` — the page about it — when it does not. The site map
+# always lists the `href`. No mount is written in this file.
+#
 # Nothing here enumerates a feature, a domain, a module, a capability or a command: those
 # routes are the generator's, and site-check refuses a feature route named by hand here.
 #
@@ -53,7 +58,7 @@ items = [
   { label = "Applications", href = "/applications/" },
   { label = "Skills", href = "/skills/" },
   { label = "What it supervises", href = "/supervises/" },
-  { label = "Product UI", href = "/docs/majordomus-ui/", bar = true },
+  { label = "Product UI", href = "/docs/majordomus-ui/", surface = "ui", bar = true },
   { label = "Cockpit", href = "/docs/cockpit/", bar = true },
 ]
 

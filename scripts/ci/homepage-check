@@ -43,8 +43,10 @@
 #   interfaces  the working interfaces the homepage lists are the data's, both ways: the stable
 #               features the web topology gives an `interface` surface, in the features' order,
 #               then the product model's other surfaces — and an interface is linked as
-#               published exactly when the topology gives its mount to a surface a publication
-#               carries; one only a running process answers states its mount and links no copy
+#               published exactly when a publication holds it: the topology gives its mount to
+#               a surface a publication carries, or the build names a snapshot of that surface
+#               (build.json `snapshots`, the publication model's); one only a running process
+#               answers states its mount and links no copy
 #   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
 #               any graph data it carries inline, weigh no more than site/data/homepage.toml's
 #               [budget] declares
@@ -469,10 +471,12 @@ else:
 # The working interfaces are the data's, both ways. Which ones a person opens is the web
 # topology's answer (a public surface of category `interface` that names a feature), which of
 # those are shown is the product model's (the feature is stable), and the rest of the list is
-# the product model's surfaces. Where each runs is the topology's too: a link to a published
-# copy is rendered exactly when a surface a publication carries holds that mount, so a page
-# cannot send a visitor to an address only a running process answers — and cannot keep
-# describing a surface as local once the topology publishes it.
+# the product model's surfaces. Where each runs is the data's too: a link to a published
+# copy is rendered exactly when a publication holds one — a surface a publication carries has
+# that mount, or the build names a snapshot of that surface (build.json `snapshots`, written
+# by scripts/site-build from the publication model, ADR 0141) — so a page cannot send a
+# visitor to an address only a running process answers, and cannot keep describing a surface
+# as local once it is published.
 web_path = os.path.join(root, "site", "data", "generated", "web.json")
 rendered_faces = re.findall(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)
 model_surfaces = product.get("surfaces") or []
@@ -484,6 +488,11 @@ if not os.path.exists(web_path):
 else:
     with open(web_path) as f:
         web_surfaces = json.load(f).get("surfaces") or []
+    snap_path = os.path.join(root, "site", "data", "build.json")
+    snapshots = []
+    if os.path.exists(snap_path):
+        with open(snap_path) as f:
+            snapshots = json.load(f).get("snapshots") or []
     by_feature = {}
     for w in web_surfaces:
         if w.get("category") == "interface" and w.get("feature"):
@@ -501,20 +510,23 @@ else:
         end = starts[i + 1][0] if i + 1 < len(starts) else home.find("</ul>", pos)
         entry = home[pos:end if end != -1 else len(home)]
         mount = by_feature[fid].get("mount") or ""
-        carried = [p for p in web_surfaces if p.get("mount") == mount and p.get("visibility") == "public"
+        carried = [p.get("id") for p in web_surfaces if p.get("mount") == mount and p.get("visibility") == "public"
                    and p.get("availability") in ("both", "published-only")]
+        carried += [f"a snapshot of {s.get('id')}" for s in snapshots if s.get("id") == by_feature[fid].get("id")]
         linked = f'data-published="{fid}"' in entry
         if linked and not carried:
-            problems.append(f"{fid} is linked as published at {mount}, and the topology gives that mount to no surface a publication carries")
+            problems.append(f"{fid} is linked as published at {mount}, and no publication holds it: the topology gives that mount to no published surface and the build names no snapshot of it")
         if carried and not linked:
-            problems.append(f"the topology publishes {carried[0].get('id')} at {mount}, and the homepage still describes {fid} as running only locally")
-        if not carried and mount not in html.unescape(re.sub(r"<[^>]+>", " ", entry)).split():
-            problems.append(f"{fid} runs only where a process serves it, and its entry does not state its mount {mount}")
+            problems.append(f"the publication holds {carried[0]} at {mount}, and the homepage still describes {fid} as running only locally")
+        if linked and not re.search(r'<a\b[^>]*\bhref="[^"]*' + re.escape(mount) + r'/"[^>]*\bdata-published="' + re.escape(fid) + '"', entry):
+            problems.append(f"{fid} is linked as published, and the link does not lead to its mount {mount}/")
+        if mount not in html.unescape(re.sub(r"<[^>]+>", " ", entry)).split():
+            problems.append(f"{fid} is served by a process at {mount}, and its entry does not state that mount")
     for pr in problems:
         bad("interfaces", pr)
     if not problems:
         n_pub = sum(1 for _, fid in starts if f'data-published="{fid}"' in home)
-        ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them published by the topology; the others state the mount a local server answers at)")
+        ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them held by the publication and linked as a snapshot; each states the mount a local server answers at)")
 
 # ---------------------------------------------------------------- weight
 # What this page decides: its own HTML, the same-origin scripts and stylesheets it links, and

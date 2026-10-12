@@ -861,6 +861,20 @@ while IFS="$MJ_TAB" read -r s_id s_mount _ s_producer; do
 done <<EOF
 $COMPOSED_ROWS
 EOF
+# and what the publication holds without this build composing it (ADR 0141): /build.json names
+# exactly the snapshots the publication model declares, each at the topology's mount of the
+# surface it is a snapshot of, and the site itself has built nothing at that mount. The pages
+# link a published copy from this list, so a list that drifted from the declaration is a link
+# to nothing, or a published surface still described as local.
+if [ -x "$ROOT/scripts/pages" ] && [ -f "$ROOT/.ai/repo/ci/pages.yaml" ]; then
+  snap_want="$("$ROOT/scripts/pages" snapshots | cut -f1,2 | LC_ALL=C sort)" || { bad surfaces "the publication model's snapshots cannot be read (scripts/pages snapshots)"; snap_want=""; }
+  snap_got="$(jq -r '.snapshots[]? | [.id, .mount] | @tsv' "$PUB/build.json" 2>/dev/null | LC_ALL=C sort || true)"
+  if [ "$snap_want" != "$snap_got" ]; then
+    bad surfaces "/build.json names the snapshots [$(printf '%s' "$snap_got" | tr '\t\n' ' ,')] and the publication model declares [$(printf '%s' "$snap_want" | tr '\t\n' ' ,')] (.ai/repo/ci/pages.yaml deploy.snapshots)"
+  else
+    ok surfaces "/build.json names the $(printf '%s' "$snap_want" | grep -c . || true) snapshot(s) the publication model declares, each at the topology's mount"
+  fi
+fi
 if [ "$surf_n" = 0 ]; then ok surfaces "docs/generated/web.json declares no published surface to compose; the site is the whole publication"
 elif [ "$surf_bad" = 0 ]; then ok surfaces "$surf_n composed surface(s) ($(printf '%s' "$COMPOSED_MOUNTS" | tr '\n' ' ')) are in the build, each built from ${build_commit:0:12}, the commit this build is"; fi
 # 13j. the build's provenance is served at /build.json and is this build's: the commit is
