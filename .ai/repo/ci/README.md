@@ -22,7 +22,9 @@ every gate, the job that runs it, and the classes of changed paths that can affe
 own. `pages.yaml` does the same for publication: what makes the public site different,
 what the fast path may spend, and how the result is measured. `github.yaml` holds one value
 for the gate of the GitHub projection: how long the trunk may carry a landed change to the
-plan that nobody has applied yet.
+plan that nobody has applied yet. `docker-image.yaml` models the deployment image: when it
+is built, what its smoke proves, the immutable name it is published under, and which build may
+write which cache.
 
 `baseline.json` records what CI cost before the model existed. It is evidence for the
 claim that the overhaul was worth running, not an input to any decision; nothing reads it

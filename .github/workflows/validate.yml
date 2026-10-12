@@ -158,9 +158,12 @@ jobs:
   # offline GitHub projection and the derived site data, through scripts/ci/core-check.
   # A full plan (any change to gates.yaml escalates to one) runs about 1380 s of gates here,
   # core-check 698-714 s and shell-lint about 300 s, so 25 minutes cancelled it at 25:00.
+  # On the v0.21.0 top it ran 36:01 (run 38210149288) and was killed at 40:00 the next time
+  # (run 38214783248): 55 minutes until the structure gates are made cheaper (#972 takes
+  # about 8 minutes off), which is the fix this bound is waiting for.
   structure:
     needs: plan
-    timeout-minutes: 40
+    timeout-minutes: 55
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
