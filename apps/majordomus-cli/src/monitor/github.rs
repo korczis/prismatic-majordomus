@@ -461,6 +461,23 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// A cache poisoned by a reader that panicked is passed by: the fetch asks afresh and
+    /// leaves the cache alone.
+    #[test]
+    fn a_poisoned_cache_is_passed_by_and_the_fetch_asks_afresh() {
+        let _cache = CACHE_TESTS.lock().unwrap_or_else(|e| e.into_inner());
+        let poisoner = std::thread::spawn(|| {
+            let _held = CACHE.lock();
+            panic!("a reader panics holding the cache");
+        });
+        assert!(poisoner.join().is_err());
+        assert!(CACHE.is_poisoned());
+        let fetched = fetch_with("majordomus-no-such-gh-binary", &std::env::temp_dir());
+        CACHE.clear_poison();
+        let (state, _) = fetched.expect_err("no such binary");
+        assert_eq!(state, MonitorSourceHealth::Absent);
+    }
+
     #[test]
     fn a_gh_that_outlives_its_budget_is_killed_and_reported() {
         let dir = std::env::temp_dir();

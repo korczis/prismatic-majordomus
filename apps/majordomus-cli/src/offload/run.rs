@@ -610,6 +610,20 @@ fn apply(
     derived_ref: &str,
     report: &mut OffloadReport,
 ) -> Result<(), Refusal> {
+    apply_with(worktree, input, sha, derived_ref, report, git, git_ok)
+}
+
+/// [`apply`], running `git` and `git_ok` as given: the real ones in earnest, a test's own
+/// failures in a test.
+fn apply_with(
+    worktree: &Path,
+    input: &str,
+    sha: &str,
+    derived_ref: &str,
+    report: &mut OffloadReport,
+    git: impl Fn(&Path, &[&str]) -> Result<String, Refusal>,
+    git_ok: impl Fn(&Path, &[&str]) -> bool,
+) -> Result<(), Refusal> {
     let status = git(worktree, &["diff", "--name-status", input, sha])?;
     let deleted: Vec<&str> = status.lines().filter(|l| l.starts_with('D')).collect();
     if !deleted.is_empty() {
@@ -666,4 +680,78 @@ fn tempfile_dir() -> Result<Scratch, Refusal> {
         EXIT_UNAVAILABLE,
         "no scratch directory could be made",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn report() -> OffloadReport {
+        OffloadReport {
+            host: "h".into(),
+            tag: "t".into(),
+            input: "i".into(),
+            derived: Some("d".into()),
+            staged: Vec::new(),
+            waited_seconds: 0,
+            seconds: 0,
+            probe: Vec::new(),
+        }
+    }
+
+    /// A git that answers `name-only` with `files` and fails the first argument named in
+    /// `failing`.
+    fn fake(
+        files: &'static str,
+        failing: &'static str,
+    ) -> impl Fn(&Path, &[&str]) -> Result<String, Refusal> {
+        move |_, args| {
+            if args.contains(&failing) {
+                return Err(refuse(EXIT_UNAVAILABLE, format!("git {failing} failed")));
+            }
+            Ok(if args.contains(&"--name-only") {
+                files.to_string()
+            } else {
+                String::new()
+            })
+        }
+    }
+
+    fn applied(
+        git: impl Fn(&Path, &[&str]) -> Result<String, Refusal>,
+        matches: bool,
+    ) -> (Result<(), Refusal>, OffloadReport) {
+        let mut r = report();
+        let out = apply_with(Path::new("."), "i", "s", "refs/x", &mut r, git, |_, _| {
+            matches
+        });
+        (out, r)
+    }
+
+    #[test]
+    fn a_derived_tree_is_staged_sorted_when_the_worktree_matches_it() {
+        let (out, r) = applied(fake("b\na\n\n", "never"), true);
+        assert!(out.is_ok());
+        assert_eq!(r.staged, vec!["a".to_string(), "b".to_string()]);
+    }
+
+    #[test]
+    fn every_git_failure_and_a_mismatch_after_applying_is_a_refusal() {
+        for failing in ["--name-only", "checkout"] {
+            let (out, r) = applied(fake("a\n", failing), true);
+            let e = out.expect_err(failing);
+            assert_eq!(e.code, EXIT_UNAVAILABLE);
+            assert!(e.reason.contains(failing), "{}", e.reason);
+            assert!(r.staged.is_empty(), "nothing is staged on a failure");
+        }
+        let (out, r) = applied(fake("a\n", "never"), false);
+        let e = out.expect_err("a worktree that does not match");
+        assert_eq!(e.code, EXIT_UNAVAILABLE);
+        assert!(
+            e.reason.contains("does not match the derived tree"),
+            "{}",
+            e.reason
+        );
+        assert!(r.staged.is_empty());
+    }
 }

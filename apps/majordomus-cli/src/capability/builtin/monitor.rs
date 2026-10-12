@@ -372,6 +372,54 @@ mod tests {
         ));
     }
 
+    /// A mesh that is active and has heard another node names both machines, this one
+    /// included, and a source not asked for is skipped whichever it is.
+    #[test]
+    fn the_machines_are_the_nodes_heard_and_this_one_and_what_is_not_asked_is_skipped() {
+        use crate::mesh::config::MeshConfig;
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::protocol::advertise;
+
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let config: MeshConfig = serde_json::from_value(json!({
+            "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
+            "multicast": { "enabled": false },
+        }))
+        .unwrap();
+        ctx.mesh
+            .activate_as(
+                &config,
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                "0000000000000001",
+                vec![],
+                vec!["root".into()],
+                "test",
+            )
+            .unwrap();
+        let other = NodeIdentity::ephemeral().unwrap();
+        let envelope = advertise(&other, 1, &["127.0.0.1:1".into()], &[], &[], "test");
+        ctx.mesh
+            .register(&serde_json::to_value(&envelope).unwrap(), "test");
+        assert_eq!(ctx.mesh.nodes().len(), 1, "the other node was heard");
+        let c = cooperation();
+        session(&c, "s1", "3d", "the runtime train");
+        ctx.mesh.attach_cooperation(Arc::clone(&c));
+
+        let page = monitor(&ctx, input("mesh")).unwrap();
+        assert_eq!(state(&page, MonitorSource::Mesh).0, MonitorSourceHealth::Ok);
+        assert_eq!(
+            state(&page, MonitorSource::Executor).0,
+            MonitorSourceHealth::Skipped
+        );
+        let page = monitor(&ctx, input("executor")).unwrap();
+        assert_eq!(
+            state(&page, MonitorSource::Mesh).0,
+            MonitorSourceHealth::Skipped
+        );
+        ctx.mesh.stop();
+    }
+
     #[test]
     fn the_benchmark_cases_never_reach_the_network() {
         let cases = cases();

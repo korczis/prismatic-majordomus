@@ -36,9 +36,11 @@ fn run_with(
     args: MonitorArgs,
     discover: impl Fn(&MonitorArgs) -> Result<Option<String>>,
 ) -> Result<u8> {
-    let color = args.query.format == OutputFormat::Text
-        && std::io::stdout().is_terminal()
-        && std::env::var_os("NO_COLOR").is_none();
+    let color = wants_color(
+        args.query.format,
+        std::io::stdout().is_terminal(),
+        std::env::var_os("NO_COLOR").is_none(),
+    );
     let reader = args
         .reader
         .clone()
@@ -146,6 +148,11 @@ fn run_with(
     }
 }
 
+/// Whether the text is painted: text, to a terminal, and `NO_COLOR` unset.
+fn wants_color(format: OutputFormat, terminal: bool, no_color_unset: bool) -> bool {
+    format == OutputFormat::Text && terminal && no_color_unset
+}
+
 /// What a reader is told when no server serves this checkout.
 const NO_SERVER: &str = "no running server for this checkout: the stream lives inside the shared server (majordomus serve ensure starts one)";
 
@@ -167,16 +174,26 @@ fn server_url(args: &MonitorArgs) -> Result<Option<String>> {
     let status = app
         .context
         .execute("server.status", json!({}))
-        .map_err(|e| Error::Protocol {
-            reason: format!("server.status: {e}"),
-        })?;
-    Ok(status["servers"]
+        .map_err(status_failed)?;
+    Ok(ready_url(&status))
+}
+
+/// A `server.status` that could not be asked, as the command's error.
+fn status_failed(e: impl std::fmt::Display) -> Error {
+    Error::Protocol {
+        reason: format!("server.status: {e}"),
+    }
+}
+
+/// The address of this checkout's ready server in a `server.status` answer.
+fn ready_url(status: &Value) -> Option<String> {
+    status["servers"]
         .as_array()
         .into_iter()
         .flatten()
         .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
         .and_then(|s| s["lease"]["url"].as_str())
-        .map(str::to_string))
+        .map(str::to_string)
 }
 
 /// The request target of one page.
@@ -609,6 +626,97 @@ mod tests {
             "/api/v1/monitor?after=m1.2.s~x3&limit=5&sources=mesh%2Cgithub&for=1b%2C%20cd&since=7200"
         );
         assert_eq!(target(&args(&[]), None, None), "/api/v1/monitor");
+    }
+
+    /// A closed port, as a server address nobody answers at.
+    fn closed() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        drop(listener);
+        url
+    }
+
+    #[test]
+    fn a_server_nobody_answers_at_is_an_error_once_and_a_follow_waits_out_its_timeout() {
+        let e = run_with(args(&[]), at(closed())).unwrap_err();
+        assert!(e.to_string().contains("/api/v1/monitor"), "{e}");
+        let code = run_with(
+            args(&["--follow", "--interval", "1", "--timeout", "1"]),
+            at(closed()),
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_REFUSED, "a follow that reaches its timeout");
+    }
+
+    #[test]
+    fn a_follow_over_a_page_without_a_cursor_keeps_its_place_until_its_timeout() {
+        let page = json!({"signals": [signal(1, "merged", "#1 merged")], "for_you": 0,
+                          "suppressed": 0, "sources": [], "more": false})
+        .to_string();
+        let url = scripted(vec![(200, page)]);
+        let code = run_with(
+            args(&[
+                "--follow",
+                "--count",
+                "5",
+                "--interval",
+                "1",
+                "--timeout",
+                "1",
+            ]),
+            at(url),
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_REFUSED, "the count was never met");
+    }
+
+    #[test]
+    fn colour_is_for_text_on_a_terminal_without_no_color() {
+        assert!(wants_color(OutputFormat::Text, true, true));
+        assert!(!wants_color(OutputFormat::Text, false, true));
+        assert!(!wants_color(OutputFormat::Text, true, false));
+        assert!(!wants_color(OutputFormat::Json, true, true));
+    }
+
+    #[test]
+    fn the_ready_server_of_this_checkout_is_the_one_asked() {
+        let status = json!({"servers": [
+            {"this_checkout": false, "standing": "ready", "lease": {"url": "http://other"}},
+            {"this_checkout": true, "standing": "starting", "lease": {"url": "http://young"}},
+            {"this_checkout": true, "standing": "ready", "lease": {"url": "http://here"}}
+        ]});
+        assert_eq!(ready_url(&status).as_deref(), Some("http://here"));
+        let no_url = json!({"servers": [{"this_checkout": true, "standing": "ready"}]});
+        assert_eq!(ready_url(&no_url), None);
+        assert_eq!(ready_url(&json!({})), None);
+        let e = status_failed("down");
+        assert!(e.to_string().contains("server.status: down"), "{e}");
+    }
+
+    #[test]
+    fn a_path_that_is_no_repository_has_no_server_to_ask() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("missing");
+        let missing = missing.to_str().unwrap();
+        assert!(server_url(&args(&["--repo", missing])).is_err());
+    }
+
+    #[test]
+    fn a_source_without_a_state_is_its_name_and_an_empty_cursor_is_no_way_on() {
+        let page = json!({"sources": [{"source": "mesh"},
+                                      {"source": "github", "state": "skipped"}],
+                          "cursor": ""});
+        assert_eq!(
+            render_sources(&page, true),
+            "sources  mesh · github skipped ()\n"
+        );
+        let text = render_page(&page, &[], false);
+        assert!(!text.contains("next "), "{text}");
+        let text = render_page(&json!({}), &[], false);
+        assert!(
+            text.contains("0 signal(s), 0 folded away as noise"),
+            "{text}"
+        );
     }
 
     #[test]
