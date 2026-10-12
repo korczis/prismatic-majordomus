@@ -505,4 +505,15 @@ mod tests {
             "/ui/issues?milestone=M1&priority=p0&q=a%20b"
         );
     }
+
+    /// An issue that leaves a key empty is counted under no value of it.
+    #[test]
+    fn a_tally_skips_an_issue_that_leaves_the_key_empty() {
+        let issues = vec![
+            serde_json::json!({ "id": "I1", "status": "" }),
+            serde_json::json!({ "id": "I2" }),
+            serde_json::json!({ "id": "I3", "status": "READY" }),
+        ];
+        assert_eq!(tally(&issues, "status"), vec![("READY".to_string(), 1)]);
+    }
 }

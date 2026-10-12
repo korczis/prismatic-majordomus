@@ -329,9 +329,7 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
             .child(next_up(queue, filter))
             .child(tabs(queue, filter))
             .child(search(filter))
-            .when(inspected.is_some(), |s| {
-                s.child(inspected.clone().unwrap_or_else(|| el("div")))
-            })
+            .children(inspected)
             .child(rows(&shown, filter))
             .child(el("p").class("mj-ui-line").text(format!(
                 "{} of {} open pull requests shown · observed {}",
@@ -1654,5 +1652,103 @@ mod tests {
             "{html}"
         );
         assert!(html.contains("id=\"issue\"") || html.contains("is not an issue of the plan"));
+    }
+
+    /// The inspector draws each overlap with its own count of shared paths and skips one
+    /// that names no pull request, lists the evidence and names the risk factors; an
+    /// assessment without a number is neither a node nor an edge, and with no repository a
+    /// dependency the queue does not hold leads back to the drain.
+    #[test]
+    fn the_inspector_draws_evidence_risk_and_every_overlap_it_can_name() {
+        let queue = queue(serde_json::json!({
+            "observed": true,
+            "queue": {
+                "repository": "",
+                "assessments": [
+                    { "number": 40, "title": "the fortieth", "author": "a", "head_ref": "f/40",
+                      "disposition": "waiting_for_dependency", "lane": "waiting",
+                      "risk_factors": ["wide_change", "no_tests"],
+                      "evidence": [{ "kind": "ci_run", "status": "PASSED", "detail": "run 12 green" }],
+                      "dependencies": [{ "number": 39, "state": "open", "certainty": "confirmed", "satisfied": false }],
+                      "overlaps": [
+                          { "number": 41, "kind": "authored", "paths": ["a.rs", "b.rs"] },
+                          { "number": 42, "kind": "derived", "paths": ["c.rs"] },
+                          { "kind": "nameless", "paths": ["d.rs"] }
+                      ] },
+                    { "title": "no number at all", "author": "a", "head_ref": "f/none",
+                      "disposition": "needs_refresh", "lane": "waiting",
+                      "dependencies": [{ "number": 40, "state": "open" }] }
+                ]
+            }
+        }));
+        let html = drain(&queue, &Filter::from_query(&q(&[("pr", "40")]))).render();
+        for want in [
+            "authored · 2 shared paths",
+            "derived · 1 shared path<",
+            "ci_run",
+            "run 12 green",
+            "wide_change · no_tests",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        assert!(
+            !html.contains("nameless"),
+            "an overlap without a number: {html}"
+        );
+        assert!(
+            !html.contains("https://github.com"),
+            "no repository, no forge: {html}"
+        );
+        let graph = html.split("data-graph=\"").nth(1).unwrap_or_default();
+        let graph = graph.split('"').next().unwrap_or_default();
+        assert!(
+            graph.contains("39"),
+            "the dependency outside is drawn: {graph}"
+        );
+    }
+
+    /// A drain whose pull requests depend on no open one says so instead of drawing a graph.
+    #[test]
+    fn no_dependency_between_open_pull_requests_draws_no_graph() {
+        let html = dependency_graph(
+            &[serde_json::json!({ "number": 1, "dependencies": [] })],
+            "",
+            &Filter::default(),
+        )
+        .render();
+        assert!(html.contains("No open pull request depends on another open one."));
+        assert!(!html.contains("data-graph"));
+    }
+
+    /// An event about no pull request is titled by its action alone and opens nothing, and a
+    /// key the filter does not carry has no value.
+    #[test]
+    fn an_event_about_no_pull_request_is_its_action_alone() {
+        let html = trail_of(
+            &[
+                serde_json::json!({ "at": "2026-10-11T01:00:00Z", "action": "lane_observed",
+                "pr": null, "detail": "3 open", "reasons": [], "actor": "" }),
+            ],
+            &Filter::default(),
+        )
+        .render();
+        assert!(html.contains("lane observed"), "{html}");
+        assert!(!html.contains("#pr"), "{html}");
+        assert_eq!(Filter::from_query(&q(&[("pr", "1")])).get("wave"), None);
+    }
+
+    /// An issue that gives no wave and serves nothing says so.
+    #[test]
+    fn an_issue_without_a_wave_or_an_intent_says_so() {
+        let issues = plan(serde_json::json!({ "issues": [{
+            "id": "I0007", "title": "The seventh", "milestone": "M1", "priority": "p2",
+            "status": "READY", "serves": []
+        }]}));
+        let html = issue_panel(&issues, "I0007", &Filter::default()).render();
+        assert!(html.contains("I0007 · M1 · p2 · wave ?"), "{html}");
+        assert!(
+            html.contains("<span class=\"mj-ui-mono\">none</span>"),
+            "{html}"
+        );
     }
 }

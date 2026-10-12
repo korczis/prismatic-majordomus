@@ -249,4 +249,20 @@ mod tests {
         assert!(empty.contains("has both a start and an end"));
         assert!(!empty.contains("<svg"));
     }
+
+    /// A head whose checks failed is drawn in the failing tone even when no check's median
+    /// is.
+    #[test]
+    fn a_failed_head_is_drawn_as_one() {
+        let html = panel_of(&answer(serde_json::json!({ "observed": true, "timings": {
+            "observed_at": "2026-10-11T12:00:00Z", "measured_runs": 1, "unmeasured_runs": 0,
+            "checks": [{ "name": "rust", "runs": 1, "passed": 1, "failed": 0, "median_seconds": 600,
+                         "p90_seconds": 600, "slowest_seconds": 600 }],
+            "heads": [{ "number": 960, "head_sha": "a", "wall_seconds": 600,
+                        "slowest_check": "rust", "slowest_seconds": 600, "failed": true }]
+        }})))
+        .render();
+        assert!(html.contains("/ui/prs?pr=960#pr"), "{html}");
+        assert!(html.contains("mj-tone--rose"), "{html}");
+    }
 }
