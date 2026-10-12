@@ -4,24 +4,27 @@
 # Do not edit: `majordomus generate --check` refuses a hand edit. Change
 # the deployment object and regenerate.
 
-FROM rust:1.85-alpine3.21 AS build
+FROM rust:1.98.1-alpine3.21 AS deps
 RUN apk add --no-cache musl-dev
 WORKDIR /src
+COPY apps/majordomus-cli/Cargo.toml ./apps/majordomus-cli/Cargo.toml
+COPY apps/majordomus-cli/Cargo.lock ./apps/majordomus-cli/Cargo.lock
+RUN cargo fetch --locked --manifest-path apps/majordomus-cli/Cargo.toml
+
+FROM deps AS build
 COPY apps/majordomus-cli ./apps/majordomus-cli
-# The commit this image is built from, compiled into the executable so that
-# /api/v1/live and /api/v1/ready can name it. The build context carries no .git,
-# so the builder cannot ask git and the deploy must say it:
-#   fly deploy --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)"
-# Left unset, the deployed process answers `unknown` rather than a guess.
+# Build provenance is passed at execution time, never baked into the deps layer.
 ARG MAJORDOMUS_BUILD_COMMIT=unknown
 ARG MAJORDOMUS_BUILD_DIRTY=unknown
-RUN cargo build --locked --release --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus
+RUN --mount=type=cache,id=majordomus-cargo-target-v1,target=/cargo-target,sharing=locked \
+  CARGO_TARGET_DIR=/cargo-target cargo build --locked --release --offline --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus \
+  && install -Dm755 /cargo-target/release/majordomus /out/majordomus
 
 FROM alpine:3.21
 # An unprivileged user, which is also why the declared port is above 1024.
 RUN adduser -D -H -u 10001 majordomus
 WORKDIR /app
-COPY --from=build /src/apps/majordomus-cli/target/release/majordomus /usr/local/bin/majordomus
+COPY --from=build /out/majordomus /usr/local/bin/majordomus
 COPY share /app/share
 COPY .ai /app/.ai
 COPY docs /app/docs
