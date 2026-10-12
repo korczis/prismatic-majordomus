@@ -341,6 +341,20 @@ impl Context {
     ///
     /// Never an answer: see [`crate::capability::readings`] for what it is instead, and
     /// what it costs.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::readings::Freshness;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let reading = ctx.read("plan.status", serde_json::json!({}));
+    /// // a first reading is waited for, so it holds what `execute` answers, and says how it
+    /// // stands: read just now, in the repository as it is
+    /// assert_eq!(reading.value.ok(), ctx.execute("plan.status", serde_json::json!({})).ok());
+    /// assert_eq!(reading.freshness, Freshness::Current);
+    /// assert!(reading.age.is_some());
+    /// ```
     pub fn read(&self, id: &str, input: Value) -> super::readings::Latest {
         super::readings::read(self, id, input, super::readings::Patience::of_process())
     }
