@@ -193,6 +193,41 @@ fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
     frames[1]["result"]["structuredContent"].clone()
 }
 
+/// The editor projection is one value on every machine surface, and it reads the repository
+/// it is asked about: a hand-written Antigravity rule without a `trigger`, which the product
+/// discards without a word, is a finding over MCP exactly as it is over HTTP.
+#[test]
+fn the_editor_projection_answers_over_mcp_as_over_http() {
+    let f = Fixture::new();
+    f.write(".agents/rules/plain.md", "# a rule with no front matter\n");
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, via_http) = s.get("/api/v1/editors");
+    assert_eq!(status, 200, "{via_http}");
+    let via_mcp = mcp_call(&f.root(), "majordomus_editors", json!({}));
+    assert_eq!(via_http, via_mcp, "HTTP and MCP must not be two opinions");
+
+    assert_eq!(via_mcp["schema"], "majordomus/editor-projection/v1");
+    let adapters: Vec<&str> = via_mcp["adapters"]
+        .as_array()
+        .expect("adapters")
+        .iter()
+        .map(|a| a["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(adapters, ["antigravity", "zed"]);
+    let discarded = via_mcp["diagnostics"]
+        .as_array()
+        .expect("diagnostics")
+        .iter()
+        .find(|d| d["code"] == "antigravity-rule-discarded")
+        .unwrap_or_else(|| panic!("the rule without a trigger is not reported: {via_mcp}"));
+    assert_eq!(discarded["path"], ".agents/rules/plain.md");
+    assert!(
+        !via_mcp.to_string().contains(f.root().to_str().unwrap()),
+        "the answer carries the checkout path"
+    );
+}
+
 /// The release analysis is one value, and every machine surface renders that one.
 ///
 /// The whole subsystem rests on there being a single verdict: if HTTP and MCP could answer

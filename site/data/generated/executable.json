@@ -783,6 +783,23 @@
       "tool": "majordomus_economics"
     },
     {
+      "api_anchor": "/docs/api/editors/#op-editors-status",
+      "claims": [],
+      "cli": null,
+      "id": "editors.status",
+      "kind": "query",
+      "module": "editors",
+      "module_route": "/registry/modules/editors/",
+      "resource": "majordomus://editors",
+      "route": "/registry/capabilities/editors-status/",
+      "slug": "editors-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "tests": [],
+      "title": "Editor and agent projections",
+      "tool": "majordomus_editors"
+    },
+    {
       "api_anchor": "/docs/api/entity/#op-entity-kinds",
       "claims": [],
       "cli": "majordomus entity kinds",
@@ -2084,6 +2101,23 @@
       "tests": [],
       "title": "Ask the mesh for a review",
       "tool": "majordomus_mesh_review_request"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-review-withdraw",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.review.withdraw",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-review-withdraw/",
+      "slug": "mesh-review-withdraw",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Withdraw a review request",
+      "tool": "majordomus_mesh_review_withdraw"
     },
     {
       "api_anchor": "/docs/api/mesh/#op-mesh-session-close",
@@ -4047,11 +4081,11 @@
     ]
   },
   "counts": {
-    "capabilities": 191,
+    "capabilities": 193,
     "claims": 92,
-    "modules": 55
+    "modules": 56
   },
-  "generator": "majordomus-cli 0.21.0",
+  "generator": "majordomus-cli 0.22.0",
   "modules": [
     {
       "capabilities": [
@@ -4458,6 +4492,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
       "title": "Token economics"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "editors.status",
+          "route": "/registry/capabilities/editors-status/",
+          "slug": "editors-status"
+        }
+      ],
+      "claims": [],
+      "id": "editors",
+      "route": "/registry/modules/editors/",
+      "slug": "editors",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "title": "Editor and agent projections"
     },
     {
       "capabilities": [
@@ -4983,6 +5033,11 @@
           "id": "mesh.review.request",
           "route": "/registry/capabilities/mesh-review-request/",
           "slug": "mesh-review-request"
+        },
+        {
+          "id": "mesh.review.withdraw",
+          "route": "/registry/capabilities/mesh-review-withdraw/",
+          "slug": "mesh-review-withdraw"
         },
         {
           "id": "mesh.session.close",
