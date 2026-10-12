@@ -393,6 +393,23 @@ mod tests {
         }
     }
 
+    /// A policy that cannot be read is refused by name, never taken as no allocation.
+    #[test]
+    fn a_landing_under_an_unreadable_policy_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let policy = repo.root().join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).expect("the policy");
+        std::fs::write(&policy, format!("{text}release:\n  allocation: sideways\n"))
+            .expect("the policy");
+        match next(&ctx, NextInput::default()) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(m.contains("the policy could not be read"), "{m}")
+            }
+            other => panic!("not refused as not found: {other:?}"),
+        }
+    }
+
     /// Two capabilities, and every surface that carries them is derived from this
     /// declaration: the MCP tools, the changelog resource, the HTTP routes, the OpenAPI
     /// operations. A refactor that renamed a route, dropped the resource or added a third

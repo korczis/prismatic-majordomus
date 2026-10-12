@@ -206,6 +206,26 @@ fn render_trains(v: &integration::train::TrainsView, out: &mut impl Write) -> Re
     Ok(())
 }
 
+/// `prs trains`: the view of `root` in `format` on `out`, and its exit.
+fn trains(root: &std::path::Path, format: OutputFormat, out: &mut impl Write) -> Result<u8> {
+    let view = integration::train::trains_of(root);
+    if format == OutputFormat::Json {
+        json(out, &view)?;
+    } else {
+        render_trains(&view, out)?;
+    }
+    Ok(trains_exit(&view))
+}
+
+/// A trains view exits 0 only when it is whole: observed, and without a diagnostic.
+fn trains_exit(view: &integration::train::TrainsView) -> u8 {
+    if view.observed && view.diagnostics.is_empty() {
+        0
+    } else {
+        FINDING
+    }
+}
+
 /// Cleanup's second part: what merged pull requests left on origin, read now and recorded
 /// ([`drain::report_left_branches`]), then printed.
 fn cleanup_branches(root: &std::path::Path, out: &mut impl Write) -> Result<()> {
@@ -630,19 +650,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
-        PrsCommand::Trains => {
-            let view = integration::train::trains_of(&root);
-            if format == OutputFormat::Json {
-                json(&mut out, &view)?;
-            } else {
-                render_trains(&view, &mut out)?;
-            }
-            Ok(if view.observed && view.diagnostics.is_empty() {
-                0
-            } else {
-                FINDING
-            })
-        }
+        PrsCommand::Trains => trains(&root, format, &mut out),
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {
@@ -1888,11 +1896,10 @@ mod tests {
         );
     }
 
-    /// `prs trains` says each train's links in landing order, with the turn, the relation,
-    /// the prepared head and what the link stands on; then what lies beneath, the prepared
-    /// heads no train holds, and every diagnostic.
-    #[test]
-    fn the_trains_say_each_link_its_prep_and_what_no_train_holds() {
+    /// The world's trains view with every line `prs trains` can print: a prepared head in
+    /// each state, a link behind and in a cycle, a link beneath, prepared heads no train
+    /// holds, and a diagnostic.
+    fn trains_world() -> (Scratch, integration::train::TrainsView) {
         use crate::integration::{
             train::{BeneathLink, PrepState, PreparedHead, UnattachedPrep},
             DependencyState,
@@ -1933,6 +1940,72 @@ mod tests {
             },
         ];
         v.diagnostics.push("a dependency cycle: #6".into());
+        (s, v)
+    }
+
+    /// A writer that accepts `.0` lines and refuses every write after them.
+    struct RefuseAfter(usize);
+
+    impl Write for RefuseAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("refused"));
+            }
+            self.0 -= buf.iter().filter(|b| **b == b'\n').count().min(self.0);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// Every line `prs trains` prints is a write that may be refused, and each refusal is
+    /// the command's error: with trains, without any, and a train with no next link.
+    #[test]
+    fn a_refused_write_fails_the_trains_on_every_line() {
+        let (_s, mut v) = trains_world();
+        v.trains[0].next = None;
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("next none"), "{t}");
+        for lines in 0..t.lines().count() {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+        v.trains.clear();
+        for lines in 0..2 {
+            assert!(
+                render_trains(&v, &mut RefuseAfter(lines)).is_err(),
+                "{lines}"
+            );
+        }
+    }
+
+    /// The command's own writes are refused in text and JSON alike, and its exit is 0 only
+    /// for a view observed whole.
+    #[test]
+    fn the_trains_command_refuses_a_refused_write_and_exits_by_wholeness() {
+        let (s, mut v) = trains_world();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert!(
+                trains(&s.0, format, &mut RefuseAfter(0)).is_err(),
+                "{format:?}"
+            );
+        }
+        assert_eq!(trains_exit(&v), FINDING, "a diagnostic is a finding");
+        v.diagnostics.clear();
+        assert_eq!(trains_exit(&v), 0, "observed and whole");
+        v.observed = false;
+        assert_eq!(trains_exit(&v), FINDING, "nothing observed is a finding");
+    }
+
+    /// `prs trains` says each train's links in landing order, with the turn, the relation,
+    /// the prepared head and what the link stands on; then what lies beneath, the prepared
+    /// heads no train holds, and every diagnostic.
+    #[test]
+    fn the_trains_say_each_link_its_prep_and_what_no_train_holds() {
+        let (_s, mut v) = trains_world();
         let t = text(|o| render_trains(&v, o));
         assert!(t.contains("train(s)") && t.contains("owner/repo"), "{t}");
         assert!(t.contains("roots #2  tops #6  next #2"), "{t}");

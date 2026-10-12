@@ -78,9 +78,10 @@ fn about<T, E: std::fmt::Display>(
     r.map_err(|e| format!("{what}: {e}"))
 }
 
-fn scratch() -> Result<Scratch, String> {
+/// A fresh directory under `under` for one merge, with the manifest's parent made.
+fn scratch(under: &Path) -> Result<Scratch, String> {
     static NEXT: AtomicU64 = AtomicU64::new(0);
-    let dir = std::env::temp_dir().join(format!(
+    let dir = under.join(format!(
         "majordomus-allocate-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
@@ -91,12 +92,12 @@ fn scratch() -> Result<Scratch, String> {
     Ok(Scratch(dir))
 }
 
-/// `manifest` with its package version set to `to`, by the one writer of that line.
-fn with_version(s: &Scratch, manifest: &str, to: &str) -> Result<String, String> {
-    let path = s.0.join(MANIFEST);
-    about(std::fs::write(&path, manifest), path.display())?;
-    about(version::write(&s.0, to), "the version could not be written")?;
-    about(std::fs::read_to_string(&path), path.display())
+/// `manifest` with its package version set to `to`, by the one writer of that line, in `dir`.
+fn with_version(dir: &Path, manifest: &str, to: &str) -> Result<String, String> {
+    let path = dir.join(MANIFEST);
+    about(std::fs::write(&path, manifest), path.display())
+        .and_then(|()| about(version::write(dir, to), "the version could not be written"))
+        .and_then(|_| about(std::fs::read_to_string(&path), path.display()))
 }
 
 /// The manifest a three-way merge of `branch` and `trunk` over `base` gives once the branch
@@ -117,24 +118,35 @@ pub fn merged_on_trunk_version(
     let Some(to) = version::declared_in(trunk) else {
         return Ok(None);
     };
-    let s = scratch()?;
-    let current = with_version(&s, branch, &to)?;
+    scratch(&std::env::temp_dir()).and_then(|s| merged_in(&s.0, &to, base, branch, trunk))
+}
+
+/// [`merged_on_trunk_version`] in `dir`, the branch carrying `to`: every file the merge
+/// reads is written there, and `git merge-file` runs there.
+fn merged_in(
+    dir: &Path,
+    to: &str,
+    base: &str,
+    branch: &str,
+    trunk: &str,
+) -> Result<Option<String>, String> {
+    let current = with_version(dir, branch, to)?;
     let files = [
         ("current", current.as_str()),
         ("base", base),
         ("other", trunk),
     ];
     for (name, text) in files {
-        about(std::fs::write(s.0.join(name), text), name)?;
+        about(std::fs::write(dir.join(name), text), name)?;
     }
-    let out = about(
+    about(
         Command::new("git")
-            .current_dir(&s.0)
+            .current_dir(dir)
             .args(["merge-file", "-p", "-q", "current", "base", "other"])
             .output(),
         "git merge-file could not run",
-    )?;
-    merge_verdict(out.status.code(), &out.stdout, &out.stderr)
+    )
+    .and_then(|out| merge_verdict(out.status.code(), &out.stdout, &out.stderr))
 }
 
 /// What `git merge-file`'s exit says: the merged text, `None` for a conflict (a positive
@@ -241,13 +253,15 @@ pub fn resolve_version_conflict(dir: &Path) -> Result<bool, String> {
     let (Some(base), Some(branch), Some(trunk)) = (stage(1), stage(2), stage(3)) else {
         return Ok(false);
     };
-    let Some(merged) = merged_on_trunk_version(&base, &branch, &trunk)? else {
-        return Ok(false);
-    };
-    std::fs::write(dir.join(MANIFEST), merged).map_err(|e| format!("{MANIFEST}: {e}"))?;
-    git(&["add", "--", MANIFEST])
-        .map(|_| true)
-        .ok_or_else(|| format!("git add {MANIFEST} failed"))
+    merged_on_trunk_version(&base, &branch, &trunk).and_then(|merged| {
+        let Some(merged) = merged else {
+            return Ok(false);
+        };
+        std::fs::write(dir.join(MANIFEST), merged).map_err(|e| format!("{MANIFEST}: {e}"))?;
+        git(&["add", "--", MANIFEST])
+            .map(|_| true)
+            .ok_or_else(|| format!("git add {MANIFEST} failed"))
+    })
 }
 
 /// In `dir`, where master has just been merged into `head` and nothing is committed yet:
@@ -548,5 +562,128 @@ mod tests {
         let dir = std::env::temp_dir();
         let got = allocate_in(&dir, &dir, "m", "h", &ReleasePolicy::default()).unwrap();
         assert!(got.is_none());
+    }
+
+    /// A path git cannot be started in (it carries a NUL byte): nothing is shown and
+    /// nothing is unmerged, so nothing is resolved.
+    #[test]
+    fn a_directory_git_cannot_start_in_shows_and_resolves_nothing() {
+        let nul = Path::new("/no\0where");
+        assert_eq!(show(nul, "HEAD", MANIFEST), None);
+        assert_eq!(resolve_version_conflict(nul), Ok(false));
+    }
+
+    /// Each step of the merge in a scratch directory refuses by what it was about: no
+    /// directory to make the scratch in, no parent for the manifest, and a merge input that
+    /// is a directory.
+    #[test]
+    fn every_step_of_the_scratch_merge_refuses_by_what_it_was_about() {
+        let tmp = tempfile::tempdir().unwrap();
+        let file = tmp.path().join("a-file");
+        std::fs::write(&file, "").unwrap();
+        assert!(scratch(&file).is_err(), "no directory under a file");
+
+        let branch = BASE.replace("0.1.0", "0.2.0");
+        let trunk = BASE.replace("0.1.0", "0.3.0");
+        let bare = tmp.path().join("bare");
+        std::fs::create_dir_all(&bare).unwrap();
+        let refused = merged_in(&bare, "0.3.0", BASE, &branch, &trunk).expect_err("no parent");
+        assert!(refused.contains("Cargo.toml"), "{refused}");
+
+        let busy = tmp.path().join("busy");
+        std::fs::create_dir_all(busy.join(MANIFEST).parent().unwrap()).unwrap();
+        std::fs::create_dir_all(busy.join("current")).unwrap();
+        let refused = merged_in(&busy, "0.3.0", BASE, &branch, &trunk).expect_err("a directory");
+        assert!(refused.starts_with("current"), "{refused}");
+
+        let fine = tmp.path().join("fine");
+        std::fs::create_dir_all(fine.join(MANIFEST).parent().unwrap()).unwrap();
+        assert_eq!(
+            merged_in(&fine, "0.3.0", BASE, &branch, &trunk),
+            Ok(Some(trunk.clone()))
+        );
+    }
+
+    /// A head and master that both moved the version on `topic` and master, with the head's
+    /// manifest as `head_manifest` and master's as `trunk_manifest`; the merge of master into
+    /// the head is left stopped.
+    fn stopped(
+        head_manifest: Option<&str>,
+        trunk_manifest: Option<&str>,
+    ) -> crate::synthetic::SyntheticRepository {
+        let repo = trunk("  allocation: landing\n  floor: minor\n");
+        let root = repo.root();
+        let commit = |manifest: Option<&str>, message: &str| {
+            match manifest {
+                Some(m) => write(root, MANIFEST, m),
+                None => ok(root, &["rm", "-q", MANIFEST]),
+            }
+            ok(root, &["commit", "-qam", message]);
+        };
+        ok(root, &["checkout", "-q", "-b", "topic"]);
+        commit(head_manifest, "the head");
+        ok(root, &["checkout", "-q", "master"]);
+        commit(trunk_manifest, "master");
+        ok(root, &["checkout", "-q", "topic"]);
+        assert!(
+            !git(root, &["merge", "-q", "master"]).status.success(),
+            "the merge stops"
+        );
+        repo
+    }
+
+    /// A conflict beside the version is no version conflict and stays a person's; a head
+    /// git cannot find owes nothing; an allocation whose directory holds no manifest is
+    /// refused rather than left unwritten.
+    #[test]
+    fn a_conflict_beside_the_version_is_left_and_an_unwritable_allocation_refused() {
+        let head = BASE
+            .replace("0.1.0", "0.1.1")
+            .replace("a = \"1\"", "a = \"2\"");
+        let master = BASE
+            .replace("0.1.0", "0.2.0")
+            .replace("a = \"1\"", "a = \"3\"");
+        let repo = stopped(Some(&head), Some(&master));
+        let root = repo.root();
+        assert!(!version_only_conflict(root, "master", "topic"));
+        assert_eq!(owed_version(root, "master", "no-such-head"), None);
+        assert_eq!(resolve_version_conflict(root), Ok(false));
+        let landing = policy_at(root, "master").unwrap();
+        let empty = tempfile::tempdir().unwrap();
+        let refused =
+            allocate_in(root, empty.path(), "master", "topic", &landing).expect_err("refused");
+        assert!(refused.contains("could not be written"), "{refused}");
+    }
+
+    /// A manifest one side deleted: no version conflict, and a stopped merge missing a stage
+    /// resolves nothing.
+    #[test]
+    fn a_deleted_manifest_is_no_version_conflict_and_resolves_nothing() {
+        let head = BASE.replace("0.1.0", "0.1.1");
+        let repo = stopped(Some(&head), None);
+        let root = repo.root();
+        assert!(!version_only_conflict(root, "topic", "master"));
+        assert_eq!(resolve_version_conflict(root), Ok(false));
+    }
+
+    /// A resolution that cannot be staged, or cannot be written, is an error naming the
+    /// manifest, never a merge left half-resolved in silence.
+    #[test]
+    fn a_resolution_that_cannot_be_staged_or_written_is_refused() {
+        let head = BASE.replace("0.1.0", "0.1.1");
+        let master = BASE.replace("0.1.0", "0.2.0");
+        let repo = stopped(Some(&head), Some(&master));
+        let root = repo.root();
+        let lock = root.join(".git/index.lock");
+        std::fs::write(&lock, "").unwrap();
+        let refused = resolve_version_conflict(root).expect_err("the index is locked");
+        assert!(refused.starts_with("git add"), "{refused}");
+        std::fs::remove_file(&lock).unwrap();
+
+        let manifest = root.join(MANIFEST);
+        std::fs::remove_file(&manifest).unwrap();
+        std::fs::create_dir_all(&manifest).unwrap();
+        let refused = resolve_version_conflict(root).expect_err("a directory");
+        assert!(refused.starts_with(MANIFEST), "{refused}");
     }
 }
