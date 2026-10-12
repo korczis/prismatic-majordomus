@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/telemetry/telemetry.v1.schema.json",
+  "x-majordomus-schema": "majordomus.telemetry/v1",
+  "title": "Telemetry record",
+  "description": "What a provider reported about the execution of one task, under .ai/local/state/telemetry/: the measured facts of the work, each with the party that reported it. Majordomus invokes no model and so measures none of this itself; every number here was handed to it, and the record keeps who handed it. Absence is a value: a fact nobody reported is written as not_reported with the reason, never left out and never written as zero, so no reader can take a gap for a measurement. Nothing derived is stored (a total is arithmetic over these facts, done on every read), and nothing a session said or read has a field here.",
+  "x-majordomus-allow": "telemetry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "task_id", "recorded_at", "facts"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "telemetry/v1"
+    },
+    "kind": {
+      "const": "telemetry"
+    },
+    "task_id": {
+      "description": "The task whose execution the facts describe: the identity `majordomus start` allocated.",
+      "type": "string",
+      "pattern": "^t-[0-9]{14}-[0-9a-f]{4}$"
+    },
+    "session_id": {
+      "description": "The episode the facts were reported in, when they belong to one.",
+      "type": "string",
+      "pattern": "^s-[0-9]{14}-[0-9a-f]{4}$"
+    },
+    "recorded_at": {
+      "description": "When the record was written, UTC, RFC 3339. Not when the work happened: the provider's own clock is not a fact this record carries.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "facts": {
+      "description": "The measured facts. Every one is present in every record, as a value or as an explicit absence: a record that omits a fact is refused, because an omitted key is exactly what a reader takes for zero.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_uncached_tokens",
+        "cache_write_tokens",
+        "cache_read_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "requests",
+        "tool_calls",
+        "cost_microusd"
+      ],
+      "properties": {
+        "input_uncached_tokens": {
+          "description": "Input tokens neither read from nor written to the provider's cache.",
+          "$ref": "#/$defs/Fact"
+        },
+        "cache_write_tokens": {
+          "description": "Input tokens written to the provider's cache.",
+          "$ref": "#/$defs/Fact"
+        },
+        "cache_read_tokens": {
+          "description": "Input tokens read from the provider's cache.",
+          "$ref": "#/$defs/Fact"
+        },
+        "output_tokens": {
+          "description": "Output tokens, reasoning included.",
+          "$ref": "#/$defs/Fact"
+        },
+        "reasoning_tokens": {
+          "description": "The part of the output spent on reasoning, where the provider reports it apart.",
+          "$ref": "#/$defs/Fact"
+        },
+        "requests": {
+          "description": "Requests the provider answered.",
+          "$ref": "#/$defs/Fact"
+        },
+        "tool_calls": {
+          "description": "Tool calls the session made.",
+          "$ref": "#/$defs/Fact"
+        },
+        "cost_microusd": {
+          "description": "What the reporter says the work cost, in millionths of a US dollar. A harness's projection from its price table is a projection and a bill is a bill: the reporter says which, and neither is computed here.",
+          "$ref": "#/$defs/Fact"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Fact": {
+      "description": "One measured fact: a value somebody reported, or the explicit statement that nobody did. Exactly one of `value` and `not_reported`, and always a reporter.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reporter"],
+      "oneOf": [
+        { "required": ["value"] },
+        { "required": ["not_reported"] }
+      ],
+      "properties": {
+        "value": {
+          "description": "The number, exactly as it was reported. Zero is a measurement: the reporter said zero.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_reported": {
+          "description": "Why there is no value: the reason, in a sentence. Its presence is what says the fact is absent, and it is never read as zero.",
+          "type": "string",
+          "minLength": 1
+        },
+        "reporter": {
+          "description": "The party the value came from, or the party that would have reported it and did not: a provider by its id in share/providers.yaml (claude-code, codex), or another named source. A fact with no reporter is refused.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        }
+      }
+    }
+  }
+}

@@ -37,6 +37,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `allow/session-record` | `text` | — | the JSON Schema `majordomus.session-record/v1` of the kind it validates |
 | `allow/skill` | `text` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
 | `allow/taxonomy` | `text` | — | the JSON Schema `majordomus.taxonomy/v1` of the kind it validates |
+| `allow/telemetry` | `text` | — | the JSON Schema `majordomus.telemetry/v1` of the kind it validates |
 | `allow/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
 | `allow/workspace` | `text` | — | the JSON Schema `majordomus.workspace/v1` of the kind it validates |
 | `artifacts` | `json`, `markdown`, `yaml` | `majordomus/generated-artifacts/v1` | the generation plan itself, over every other target |
@@ -311,6 +312,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/session.txt` | `allow/session` | text | 334 | `91d6b02fb7055896` |
 | `share/allow/skill.txt` | `allow/skill` | text | 394 | `21f474f2803bb0ab` |
 | `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 313 | `02ed6fc348193e94` |
+| `share/allow/telemetry.txt` | `allow/telemetry` | text | 1082 | `f23906b828f626af` |
 | `share/allow/use-case.txt` | `allow/use-case` | text | 547 | `fb7d2bf6ce812380` |
 | `share/allow/workspace.txt` | `allow/workspace` | text | 568 | `0aea07661342185f` |
 | `share/cockpit/favicon.svg` | `design-mark` | text | 904 | `6bdf953cdb33f1ac` |
@@ -341,7 +343,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 765081 | `7200fd6899718096` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 96179 | `1f0075fbe3c5d699` |
 | `site/data/registry/product.json` | `site-product` | json | 701835 | `811a9b41badd1a99` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6664971 | `22ef4c456762ce76` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6665174 | `10bb7020670f891c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `d81cd110d778eb73` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `4ed3f34b0e743e0f` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `6bdf953cdb33f1ac` |
