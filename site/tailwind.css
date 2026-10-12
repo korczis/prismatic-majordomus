@@ -31,4 +31,9 @@
 @source not "./templates/kit-page.html";
 @source not "./templates/screen.html";
 @source "./content";
+/* A Markdown table's column alignment (`---:`) is rendered as an inline style, which the
+   content policy refuses; the build's markup pass (scripts/lib/ui-static.mjs, alignCells)
+   draws it with these three utilities instead. They are named here because no template
+   writes them: the pass adds them to pages Tailwind has already scanned. */
+@source inline("text-left text-center text-right");
 @custom-variant dark (&:where(.dark, .dark *));
