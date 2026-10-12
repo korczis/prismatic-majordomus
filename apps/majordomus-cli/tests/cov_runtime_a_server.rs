@@ -58,6 +58,14 @@ fn an_unbounded_server_whose_lease_is_taken_over_ends_by_itself() {
         Duration::from_secs(60),
         || matches!(LeaseFile::read(&lease), LeaseFile::Document(d) if d.url.is_some()),
     );
+    // the loop runs and looks at least once while the lease is still its own, so the server
+    // that ends is one that went on serving until it was superseded
+    wait_until("the serve loop runs", Duration::from_secs(60), || {
+        std::fs::read_to_string(&log)
+            .unwrap_or_default()
+            .contains("the server runs until the process is stopped")
+    });
+    std::thread::sleep(Duration::from_millis(1500));
     let successor = json!({
         "schema": "majordomus-mcp-lease/v1",
         "pid": std::process::id(),

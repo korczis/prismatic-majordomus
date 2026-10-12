@@ -773,13 +773,13 @@ pub enum VersionVerdict {
 /// ```
 pub fn version_verdict(served: Option<&str>, mine: &str) -> VersionVerdict {
     fn release(v: &str) -> Option<(u64, u64, u64)> {
-        let mut parts = v.trim_start_matches('v').split('.');
-        let numbers = (
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-        );
-        parts.next().is_none().then_some(numbers)
+        let (major, rest) = v.trim_start_matches('v').split_once('.')?;
+        let (minor, patch) = rest.split_once('.')?;
+        Some((
+            major.parse().ok()?,
+            minor.parse().ok()?,
+            patch.parse().ok()?,
+        ))
     }
     let Some(served) = served else {
         return VersionVerdict::Unpublished;
@@ -1049,8 +1049,8 @@ fn tmp_path(path: &Path, token: &str) -> PathBuf {
 /// a whole file even across a crash of the machine.
 fn write_synced(tmp: &Path, text: &str) -> std::io::Result<()> {
     let mut file = fs::File::create(tmp)?;
-    file.write_all(text.as_bytes())?;
-    file.sync_all()
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
 }
 
 /// Sync the directory a rename happened in, so that the rename itself is durable. Best
@@ -1988,6 +1988,48 @@ mod tests {
 
     /// A take-over that finds the lock held by another change makes no change: the lease is
     /// left for the next reading, which judges whatever the other change left there.
+    /// Every version that is not exactly three numbers is unordered against a release, and
+    /// three numbers are ordered as numbers.
+    #[test]
+    fn a_version_is_ordered_only_when_it_is_three_numbers() {
+        for served in ["1", "1.2", "x.1.2", "1.x.2", "1.2.x", "1.2.3.4", "1..3"] {
+            assert_eq!(
+                version_verdict(Some(served), "0.20.0"),
+                VersionVerdict::Unordered,
+                "{served}"
+            );
+        }
+        assert_eq!(
+            version_verdict(Some("v0.19.1"), "0.20.0"),
+            VersionVerdict::ServerOlder
+        );
+        assert_eq!(
+            version_verdict(Some("0.21.0"), "0.20.0"),
+            VersionVerdict::ServerNewer
+        );
+    }
+
+    /// A take-over that cannot take the lock says so in the log, naming the lease.
+    #[test]
+    fn a_take_over_that_waits_on_the_lock_names_the_lease_in_the_log() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("stale", None)).unwrap();
+        let seen = LeaseFile::read(&path);
+        let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_writer(std::io::sink)
+            .finish();
+        let mut ran = false;
+        tracing::subscriber::with_default(subscriber, || {
+            take_over_with(&path, &seen, Duration::ZERO, || ran = true).unwrap();
+        });
+        assert!(!ran, "nothing past the lock ran");
+        drop(held);
+        assert_eq!(token_on_disk(&path).as_deref(), Some("stale"));
+    }
+
     #[test]
     fn a_take_over_that_cannot_take_the_lock_leaves_the_lease_for_the_next_reading() {
         let dir = tempfile::tempdir().unwrap();
@@ -2386,6 +2428,12 @@ mod tests {
     #[test]
     fn an_ordered_stop_that_overruns_the_bound_is_ended_and_releases_its_lease() {
         if let Some(dir) = std::env::var_os(CHILD) {
+            // the watcher's warning is written, so that what it says is evaluated too
+            let _ = tracing::subscriber::set_global_default(
+                tracing_subscriber::fmt()
+                    .with_writer(std::io::sink)
+                    .finish(),
+            );
             receive_stop_signals(Path::new(&dir), 1);
             return;
         }

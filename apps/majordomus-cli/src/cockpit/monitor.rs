@@ -47,12 +47,7 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
     let sources = el("ul")
         .class("mj-list")
         .children(page.sources.iter().map(|s| {
-            let state = match s.state {
-                MonitorSourceHealth::Ok => "ok",
-                MonitorSourceHealth::Absent => "absent",
-                MonitorSourceHealth::Error => "error",
-                MonitorSourceHealth::Skipped => "skipped",
-            };
+            let state = health_word(s.state);
             let mut item = el("li")
                 .child(el("strong").text(format!("{:?}", s.source).to_lowercase()))
                 .child(el("span").text(" "))
@@ -156,6 +151,16 @@ fn row(s: &MonitorSignal) -> El {
         .child(el("td").child(summary))
 }
 
+/// The badge word of a source's state.
+fn health_word(state: MonitorSourceHealth) -> &'static str {
+    match state {
+        MonitorSourceHealth::Ok => "ok",
+        MonitorSourceHealth::Absent => "absent",
+        MonitorSourceHealth::Error => "error",
+        MonitorSourceHealth::Skipped => "skipped",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,6 +206,35 @@ mod tests {
             body(&blank).contains("Say who you are"),
             "a blank name is no name"
         );
+    }
+
+    #[test]
+    fn every_source_state_has_its_word() {
+        let words: Vec<&str> = [
+            MonitorSourceHealth::Ok,
+            MonitorSourceHealth::Absent,
+            MonitorSourceHealth::Error,
+            MonitorSourceHealth::Skipped,
+        ]
+        .into_iter()
+        .map(health_word)
+        .collect();
+        assert_eq!(words, vec!["ok", "absent", "error", "skipped"]);
+    }
+
+    /// A server whose registry has no monitor capability shows the failure, not a page.
+    #[test]
+    fn a_stream_that_cannot_be_asked_is_a_failed_page() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .build()
+            .unwrap();
+        let ctx = Context::new(
+            std::sync::Arc::new(repo.index().unwrap()),
+            std::sync::Arc::new(registry),
+        );
+        let html = body(&page(&ctx, &[]));
+        assert!(html.contains("monitor.stream"), "{html}");
     }
 
     #[test]

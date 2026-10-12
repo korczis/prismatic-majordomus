@@ -1949,6 +1949,70 @@ mod tests {
         }
     }
 
+    /// What another runtime holds is not this one's: its handover waits here, its claims
+    /// that meet are no overlap of this runtime's, and an answered review is for nobody.
+    #[test]
+    fn another_runtimes_handover_waits_here_and_its_overlaps_and_answered_reviews_do_not() {
+        use crate::mesh::journal::{ClaimMode, HandoverBody, SessionInfo};
+        let net = std::sync::Arc::new(mesh_world::Net::default());
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
+        let key = a.dial(&["b:1".into()]).expect("B welcomes A");
+        for (session, scope) in [("s1", "apps"), ("s2", "apps/majordomus-cli")] {
+            b.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
+        }
+        let body = "# Objective\nhand it on\n".to_string();
+        b.publish_handover(HandoverBody {
+            id: HandoverBody::digest_of(&body),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: Some("feature/y".into()),
+            head: None,
+            created_at: None,
+            name: None,
+            body,
+        })
+        .unwrap();
+        let me = a.status().runtime.clone().expect("a runtime");
+        a.request_review("s1", "feature/x".into(), vec![], None, Some(me))
+            .unwrap();
+        let request = a.state().reviews[0].key.clone();
+        a.answer_review(&request, "s9", "approved".into(), None)
+            .unwrap();
+        for _ in 0..2 {
+            b.journal().beat_own();
+            a.journal().beat_own();
+            a.sync_with(&key).unwrap();
+        }
+
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
+        let section = mesh_section(&ctx);
+        assert_eq!((section.claims_held, section.own_claims), (2, 0));
+        assert_eq!(
+            (
+                section.reviews_for_you,
+                section.handovers_waiting,
+                section.overlaps_for_you
+            ),
+            (0, 1, 0)
+        );
+        for r in [a, b] {
+            r.stop();
+        }
+    }
+
     #[test]
     fn a_mesh_that_is_not_running_says_why() {
         let repo = SyntheticRepository::small().expect("a repository");

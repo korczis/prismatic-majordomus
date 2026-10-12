@@ -739,6 +739,19 @@ mod tests {
     }
 
     #[test]
+    fn a_withdrawal_whose_request_is_not_a_name_is_no_signal() {
+        let events = vec![event(
+            1,
+            1,
+            json!({"kind": "review_withdrawn", "request": 7, "session": "board-p3"}),
+        )];
+        let reader = Reader::named(Some("1b"));
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert!(read.signals.is_empty(), "{:?}", read.signals);
+    }
+
+    #[test]
     fn a_withdrawn_review_is_news_to_whoever_was_asked_or_answered() {
         let events = vec![
             event(
