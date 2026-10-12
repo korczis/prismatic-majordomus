@@ -2147,6 +2147,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/app.rs",
+        "kind": "file",
+        "label": "app.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/app.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/bench",
         "kind": "file",
         "label": "bench",
@@ -2576,6 +2584,14 @@
         "label": "render.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/design/render.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/discovery/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/discovery/mod.rs",
         "external": true
       },
       {
@@ -7020,6 +7036,39 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0145",
+        "kind": "adr",
+        "label": "adr-0145",
+        "summary": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+        "route": "/cockpit/objects/adr/adr-0145",
+        "source": ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md",
+            "file:.ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
+            "file:.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md",
+            "file:lib/common.sh",
+            "file:lib/init.sh",
+            "file:lib/update.sh",
+            "file:lib/capture.sh",
+            "file:lib/doctor.sh",
+            "file:share/install/install.sh.in",
+            "file:apps/majordomus-cli/src/discovery/mod.rs",
+            "file:apps/majordomus-cli/src/app.rs",
+            "file:test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+          ],
+          "tags": [
+            "architecture",
+            "distribution",
+            "adoption",
+            "discovery",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -7146,6 +7195,7 @@
           ],
           "use_cases": [
             "install-the-tool-in-one-command",
+            "use-the-tool-as-your-own-in-a-shared-repository",
             "serve-the-layer-to-ai-clients",
             "extend-what-the-executable-serves",
             "classify-what-belongs-in-the-context",
@@ -10095,6 +10145,21 @@
         }
       },
       {
+        "id": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "kind": "claim",
+        "label": "personal-layer-changes-nothing-shared",
+        "summary": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+        "route": "/cockpit/objects/claim/personal-layer-changes-nothing-shared",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/common.sh",
+          "responsibility": "layer",
+          "source": "docs/INSTALL.md",
+          "test": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/pointer-integrity",
         "kind": "claim",
         "label": "pointer-integrity",
@@ -12034,11 +12099,11 @@
           "exit_codes": [
             "0",
             "2",
+            "10",
             "13",
             "15"
           ],
           "json": false,
-          "note": "The only command that runs before the .ai/ layer exists. It refuses an existing layer; --extend adds only what is missing and overwrites nothing.",
           "reads": [
             "share/skeleton/ai"
           ],
@@ -12047,14 +12112,15 @@
           "requires_task": "none",
           "stage": "setup",
           "summary": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
-          "syntax": "majordomus init [--extend]",
+          "syntax": "majordomus init [--extend] [--personal | --shared]",
           "visibility": "public",
           "writes": [
             ".ai/manifest.yaml",
             ".ai/README.md",
             ".ai/repo/",
             ".ai/local/state/",
-            ".gitignore"
+            ".gitignore",
+            ".git/info/exclude"
           ]
         }
       },
@@ -15594,6 +15660,14 @@
         "source": "docs/claims/overlap-report.md"
       },
       {
+        "id": "majordomus://document/docs/claims/personal-layer-changes-nothing-shared.md",
+        "kind": "document",
+        "label": "docs/claims/personal-layer-changes-nothing-shared.md",
+        "summary": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+        "route": "/cockpit/objects/document/docs-claims-personal-layer-changes-nothing-shared-md",
+        "source": "docs/claims/personal-layer-changes-nothing-shared.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/pointer-integrity.md",
         "kind": "document",
         "label": "docs/claims/pointer-integrity.md",
@@ -17292,7 +17366,8 @@
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0019"
+            "adr-0019",
+            "adr-0145"
           ],
           "areas": [
             "verification",
@@ -17302,6 +17377,7 @@
             "distribution-canonical-model",
             "install-command-is-derived",
             "installer-verifies-before-installing",
+            "personal-layer-changes-nothing-shared",
             "release-is-complete-or-absent",
             "legacy-migration",
             "tool-location-independent",
@@ -17316,7 +17392,8 @@
           ],
           "docs": [
             "docs/INSTALL.md",
-            "docs/DISTRIBUTION.md"
+            "docs/DISTRIBUTION.md",
+            "docs/PERSONAL_MODE.md"
           ],
           "domain": "surfaces",
           "featured": false,
@@ -17335,7 +17412,8 @@
           "rules": [
             "project.distribution-canonical",
             "project.portable-shell",
-            "project.no-network-no-eval"
+            "project.no-network-no-eval",
+            "project.a-personal-layer-changes-nothing-shared"
           ],
           "short_title": "Install",
           "tags": [
@@ -17345,6 +17423,7 @@
           ],
           "use_cases": [
             "install-the-tool-in-one-command",
+            "use-the-tool-as-your-own-in-a-shared-repository",
             "migrate-from-the-old-layout",
             "know-which-tool-is-running",
             "hand-the-repository-to-a-reader"
@@ -34392,6 +34471,69 @@
         }
       },
       {
+        "id": "majordomus://issue/I2491",
+        "kind": "issue",
+        "label": "I2491",
+        "summary": "A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team",
+        "route": "/cockpit/objects/issue/i2491",
+        "source": ".ai/repo/project/issues/I2491.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a repository with uncommitted work, init --personal leaves git status --porcelain --untracked-files=all byte-identical, writes no tracked file, and exits 10 if it could not",
+            "update and capture install under a personal layer leave git status identical, and update refuses (15) a projection target git tracks before writing any target",
+            "doctor reports the personal layer verified, names a file of it that is tracked, and does not fail the tracked README for not naming AGENTS.md",
+            "The executable lists the rules of an untracked layer with no --discovery option",
+            "install.sh --personal verifies the result itself and says so; outside a repository it keeps the installed tool and says which half failed",
+            "init --extend --shared removes the block, writes the two .gitignore lines, prints the paths to commit, commits nothing, and refuses (15) a layer that is not personal",
+            "A flag accepted by the installer's parser and absent from its --help fails case 86"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [],
+          "evidence_required": [
+            "personal_install_case_2979",
+            "derived_discovery_doctest"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Access control, or any way around an organisation's rules about tools: the layer is on the disk in plain sight",
+            "Installing the commit and push hooks: init installs none in either mode",
+            "Carrying a personal layer to another machine: it is one checkout's, and the mesh is the way across"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/init.sh",
+            "lib/update.sh",
+            "lib/capture.sh",
+            "lib/doctor.sh",
+            "share/install/install.sh.in",
+            "share/install/INSTALL.md.in",
+            "share/commands.yaml",
+            "apps/majordomus-cli/src/discovery/mod.rs",
+            "apps/majordomus-cli/src/app.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+            "test/cases/86_installer_platform.sh",
+            ".ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md",
+            ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md",
+            ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
+            ".ai/repo/features/install.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/personal-layer-changes-nothing-shared.md",
+            ".ai/repo/project/issues/I2491.yaml"
+          ],
+          "slug": "a-personal-layer-changes-nothing-shared",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 2979_a_personal_layer_changes_nothing_shared 86_installer_platform 85_installer 01_init",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc layer_is_untracked"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -40988,6 +41130,29 @@
             "tests",
             "identifiers",
             "coordination"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+        "kind": "rule",
+        "label": "project.a-personal-layer-changes-nothing-shared@1",
+        "summary": "A personal layer changes nothing shared",
+        "route": "/cockpit/objects/rule/project-a-personal-layer-changes-nothing-shared-1",
+        "source": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.distribution-canonical@1",
+            "project.portable-shell@1",
+            "project.no-claim-without-test@1"
+          ],
+          "tags": [
+            "install",
+            "adoption",
+            "discovery",
+            "enforcement"
           ]
         }
       },
@@ -48660,6 +48825,13 @@
         "source": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "kind": "test",
+        "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "route": "/cockpit/objects/test/test-cases-2979-a-personal-layer-changes-nothing-shared-sh",
+        "source": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "label": "test/cases/29_prompt_capture.sh",
@@ -52692,6 +52864,45 @@
           "summary": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
           "target": "guaranteed",
           "weight": 41
+        }
+      },
+      {
+        "id": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "kind": "use-case",
+        "label": "use-the-tool-as-your-own-in-a-shared-repository",
+        "summary": "Use the tool as your own in a shared repository, and propose it to the team when it has made its case",
+        "route": "/cockpit/objects/use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "source": ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "operator",
+            "maintainer"
+          ],
+          "applications": [
+            "repository-opened-in-ai-clients"
+          ],
+          "category": "adoption",
+          "claims": [
+            "personal-layer-changes-nothing-shared",
+            "local-state-ignored"
+          ],
+          "commands": [
+            "init",
+            "update",
+            "doctor"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.ai-layout-integrity"
+          ],
+          "mcp_tools": [],
+          "responsibilities": [
+            "layer",
+            "doctor"
+          ],
+          "target": "guaranteed",
+          "weight": 3
         }
       },
       {
@@ -60468,6 +60679,71 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0145",
+        "target": "file:apps/majordomus-cli/src/app.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "file:apps/majordomus-cli/src/discovery/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "file:share/install/install.sh.in",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://adr/adr-0005",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://adr/adr-0019",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://adr/adr-0027",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://implementation/lib/doctor.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://implementation/lib/init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://implementation/lib/update.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0145",
+        "target": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -63770,6 +64046,26 @@
       {
         "source": "majordomus://claim/overlap-report",
         "target": "majordomus://test/test/cases/04_start_check.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "target": "majordomus://document/docs/INSTALL.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "target": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
         "kind": "tested_by"
       },
       {
@@ -67334,6 +67630,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/overlap-report.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/personal-layer-changes-nothing-shared.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -73373,6 +73674,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2491",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2491",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -74615,6 +74926,26 @@
       {
         "source": "majordomus://rule/project.a-number-names-one-case@1",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+        "target": "majordomus://rule/project.distribution-canonical@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-personal-layer-changes-nothing-shared@1",
+        "target": "majordomus://rule/project.portable-shell@1",
         "kind": "depends_on"
       },
       {
@@ -77359,6 +77690,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -81568,6 +81904,46 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "command:doctor",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "command:init",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "command:update",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "majordomus://application/repository-opened-in-ai-clients",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "majordomus://claim/local-state-ignored",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "majordomus://claim/personal-layer-changes-nothing-shared",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/use-the-tool-as-your-own-in-a-shared-repository",
+        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
         "target": "capability:worktree.inspect",
         "kind": "exercises"
@@ -82619,8 +82995,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2695,
-      "edges": 5899,
+      "nodes": 2704,
+      "edges": 5932,
       "acyclic": false,
       "truncated": false
     }

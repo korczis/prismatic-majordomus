@@ -1,7 +1,7 @@
 +++
 title = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
 description = "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication"
-weight = 156
+weight = 157
 [extra]
 kind = "rule"
 slug = "project-the-published-ui-is-the-trunks-1"

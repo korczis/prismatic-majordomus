@@ -302,6 +302,134 @@ mj_git() { mj_count git; git --no-pager -C "$MJ_ROOT" "$@"; }
 # which every worktree of one repository shares and no two repositories do. $1 names the
 # checkout to ask; the default is MJ_ROOT, and the value records write is that one.
 mj_git_repo_id() { local r="${1:-$MJ_ROOT}"; mj_count git; git -C "$r" rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$r" "$d" ;; esac; }; }
+# ---------------------------------------------------------------- personal
+# A personal layer (ADR 0145): the same layer a plain init makes, kept as one person's own
+# in a repository other people share. Nothing shared is changed — no tracked file, no
+# .gitignore line — because the layer is covered in this repository's own exclude file,
+# $GIT_COMMON_DIR/info/exclude, which git never commits, pushes or clones.
+#
+# There is no setting for it. A layer is personal when that file covers it in the block
+# below: the cover is the mechanism and the record at once, read each time it is asked.
+# Whether the cover still holds is a second question, answered by mj_personal_verify: a
+# file of the layer that got tracked anyway is reported, not read as a change of mind.
+# Proposing the layer to the team is `init --extend --shared`, which removes the block.
+#
+# The common directory, not .git: in a linked worktree .git is a file, and the exclude file
+# every worktree of the repository obeys is the common one.
+MJ_PERSONAL_BEGIN='# >>> majordomus personal >>>'
+MJ_PERSONAL_END='# <<< majordomus personal <<<'
+mj_personal_exclude_file() { printf '%s/info/exclude' "$(mj_git_repo_id)"; }
+# The patterns the block holds now, one a line; nothing when there is no block.
+mj_personal_covered() {
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} inb' "$(mj_personal_exclude_file)" 2>/dev/null
+}
+mj_personal_active() {
+  [ -n "${MJ_AI_DIR:-}" ] && [ -f "$MJ_AI_DIR/manifest.yaml" ] || return 1
+  mj_personal_covered | grep -qxF -- "/$(mj_rel "$MJ_AI_DIR")/"
+}
+# Cover repository-relative paths: each anchored pattern once, inside the block, and every
+# other line of the file left exactly as it was. A directory is given with its slash.
+mj_personal_cover() {
+  local f tmp p have
+  f="$(mj_personal_exclude_file)"
+  mkdir -p "$(dirname "$f")" || return 1
+  [ -f "$f" ] || : > "$f"
+  have="$(mj_personal_covered)"
+  for p in "$@"; do
+    p="/${p#/}"
+    printf '%s\n' "$have" | grep -qxF -- "$p" || have="${have:+$have
+}$p"
+  done
+  # beside the file, so that the rename which publishes it never crosses a filesystem
+  tmp="$f.mj-tmp.$$"
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" || { rm -f "$tmp"; return 1; }
+  { [ -s "$tmp" ] && [ -n "$(tail -c1 "$tmp")" ] && printf '\n'
+    printf '%s\n%s\n%s\n' "$MJ_PERSONAL_BEGIN" "$have" "$MJ_PERSONAL_END"; } >> "$tmp"
+  mv "$tmp" "$f"
+}
+# A writer outside the layer asks before it writes: under a personal layer a path is covered
+# first, and a path git already tracks is refused, because that file is the project's and a
+# change to it would be a change to what everyone shares. Elsewhere this is a no-op, so
+# every writer calls it unconditionally.
+mj_personal_guard() {
+  local p
+  mj_personal_active || return 0
+  mj_personal_refuse_tracked "$@"
+  for p in "$@"; do mj_personal_cover "$p" "$p.mj-tmp" || return 1; done
+}
+# Is this path the project's? Under a personal layer, whatever git tracks is.
+mj_personal_is_the_projects() {
+  mj_personal_active && mj_git ls-files --error-unmatch -- "$1" >/dev/null 2>&1
+}
+# The refusal alone, with nothing written: what a writer asks while it is still planning,
+# so that a dry run says the same thing a real one would and no advice to force is ever
+# printed for a file that is somebody else's.
+mj_personal_refuse_tracked() {
+  local p
+  for p in "$@"; do
+    mj_personal_is_the_projects "$p" || continue
+    mj_die "$MJ_EX_REFUSED" "$p is tracked, so it is the project's, and this layer is personal: writing it would change what everyone shares. Leave it as it is and point that projection at a file of your own in $(mj_rel "$MJ_POLICY_FILE") (CLAUDE.local.md is the one Claude Code reads beside the project's), or share the layer with the team (majordomus init --extend --shared)"
+  done
+}
+# What `init --shared` runs: the cover is lifted from everything except the files that are
+# one person's by their own name — `*.local` and `*.local.*`, the convention CLAUDE.local.md
+# and .envrc.local follow. Those stay covered, because handing the layer to the team is not
+# handing it a personal projection. Prints the lifted paths, then a line `kept <path>` each.
+# With the layer's own pattern gone the layer is no longer personal, whatever stays covered.
+mj_personal_uncover() {
+  local f tmp have keep lift p
+  f="$(mj_personal_exclude_file)"
+  [ -f "$f" ] || return 0
+  have="$(mj_personal_covered)"; keep=''; lift=''
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "${p%.mj-tmp}" in
+      *.local|*.local.*) keep="${keep:+$keep
+}$p" ;;
+      *) lift="${lift:+$lift
+}$p" ;;
+    esac
+  done <<EOF
+$have
+EOF
+  tmp="$f.mj-tmp.$$"
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" || { rm -f "$tmp"; return 1; }
+  if [ -n "$keep" ]; then
+    { [ -s "$tmp" ] && [ -n "$(tail -c1 "$tmp")" ] && printf '\n'
+      printf '%s\n%s\n%s\n' "$MJ_PERSONAL_BEGIN" "$keep" "$MJ_PERSONAL_END"; } >> "$tmp"
+  fi
+  mv "$tmp" "$f" || return 1
+  [ -z "$lift" ] || printf '%s\n' "$lift"
+  [ -z "$keep" ] || printf '%s\n' "$keep" | sed -e '/\.mj-tmp$/d' -e 's/^/kept /'
+}
+# Does the cover hold? One finding a fact, through the callbacks the caller names (doctor's
+# and init's differ only in how a finding is printed). Returns 1 when something shared shows it.
+mj_personal_verify() {
+  local ok_fn="$1" fail_fn="$2" rel bad=0 p seen
+  rel="$(mj_rel "$MJ_AI_DIR")"
+  if [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
+    "$fail_fn" personal "$rel/" "carries tracked files; a personal layer is tracked nowhere (share it with: majordomus init --extend --shared)" "git ls-files $rel"; bad=1
+  fi
+  if ! mj_git check-ignore -q "$rel/manifest.yaml" 2>/dev/null; then
+    "$fail_fn" personal "$rel/" "is not covered; the next 'git add -A' would stage it" "majordomus init --extend --personal"; bad=1
+  fi
+  seen=''
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    p="${p#/}"
+    [ -z "$(mj_git status --porcelain --untracked-files=all -- "$p" 2>/dev/null | head -n 1)" ] || seen="$seen $p"
+  done <<EOF
+$(mj_personal_covered)
+EOF
+  if [ -n "$seen" ]; then
+    "$fail_fn" personal "$(mj_rel "$(mj_personal_exclude_file)")" "git status still shows:$seen" "git status --porcelain --untracked-files=all"; bad=1
+  fi
+  [ "$bad" = 0 ] && "$ok_fn" personal "$rel/" "tracked nowhere, ignored through $(mj_personal_exclude_file), and absent from git status ($(mj_personal_covered | grep -c .) path(s) covered)"
+  return "$bad"
+}
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
 # literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
