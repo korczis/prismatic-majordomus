@@ -22,7 +22,7 @@ pub const FLY_TOML: &str = "fly.toml";
 
 /// The Rust toolchain the builder stage pins. A floating tag would make the image a
 /// different thing on different days, which is the opposite of what a deployment is for.
-pub const RUST_IMAGE: &str = "rust:1.85-alpine3.21";
+pub const RUST_IMAGE: &str = "rust:1.98.1-alpine3.21";
 /// The runtime base, pinned for the same reason.
 pub const RUNTIME_IMAGE: &str = "alpine:3.21";
 /// The build argument that carries the commit into the builder stage. It is the variable the
@@ -84,19 +84,24 @@ pub fn dockerfile(d: &Deployment, source: &str) -> String {
         "The container image of this repository's deployment.",
     );
     let pkg = package_dir(d).unwrap_or("apps");
+    // Cargo dependency download is a stable Docker layer: application source changes do
+    // not invalidate it. The compilation cache mount persists across local BuildKit builds.
+    // Unlike a cache mount, the deps layer is exportable to the GitHub Actions cache.
     out.push_str(&format!(
-        "FROM {RUST_IMAGE} AS build\n\
+        "FROM {RUST_IMAGE} AS deps\n\
          RUN apk add --no-cache musl-dev\n\
          WORKDIR /src\n\
+         COPY {pkg}/Cargo.toml ./{pkg}/Cargo.toml\n\
+         COPY {pkg}/Cargo.lock ./{pkg}/Cargo.lock\n\
+         RUN cargo fetch --locked --manifest-path {pkg}/Cargo.toml\n\n\
+         FROM deps AS build\n\
          COPY {pkg} ./{pkg}\n\
-         # The commit this image is built from, compiled into the executable so that\n\
-         # /api/v1/live and /api/v1/ready can name it. The build context carries no .git,\n\
-         # so the builder cannot ask git and the deploy must say it:\n\
-         #   fly deploy --build-arg {COMMIT_ARG}=\"$(git rev-parse HEAD)\"\n\
-         # Left unset, the deployed process answers `unknown` rather than a guess.\n\
+         # Build provenance is passed at execution time, never baked into the deps layer.\n\
          ARG {COMMIT_ARG}=unknown\n\
          ARG {DIRTY_ARG}=unknown\n\
-         RUN cargo build --locked --{profile} --manifest-path {pkg}/Cargo.toml --package {package} --bin {binary}\n\n",
+         RUN --mount=type=cache,id=majordomus-cargo-target-v1,target=/cargo-target,sharing=locked \\\n\
+         \x20 CARGO_TARGET_DIR=/cargo-target cargo build --locked --{profile} --offline --manifest-path {pkg}/Cargo.toml --package {package} --bin {binary} \\\n\
+         \x20 && install -Dm755 /cargo-target/{profile}/{binary} /out/{binary}\n\n",
         profile = d.build.profile,
         package = d.build.package,
         binary = d.build.binary,
@@ -106,8 +111,7 @@ pub fn dockerfile(d: &Deployment, source: &str) -> String {
          # An unprivileged user, which is also why the declared port is above 1024.\n\
          RUN adduser -D -H -u 10001 {RUN_USER}\n\
          WORKDIR {APP_DIR}\n\
-         COPY --from=build /src/{pkg}/target/{profile}/{binary} /usr/local/bin/{binary}\n",
-        profile = d.build.profile,
+         COPY --from=build /out/{binary} /usr/local/bin/{binary}\n",
         binary = d.build.binary,
     ));
     for input in runtime_inputs(d) {
