@@ -696,6 +696,7 @@ mod tests {
                 }]}
             })),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let html = queue_panel(&queue, Some(7)).render();
         assert!(
@@ -729,6 +730,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Err("no".into()),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         assert!(health_panel(&failed).render().contains("could not answer"));
         let unobserved = Answer {
@@ -749,6 +751,7 @@ mod tests {
             exposure: Exposure::default(),
             value: Ok(value),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 

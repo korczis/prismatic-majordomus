@@ -166,6 +166,7 @@ mod tests {
             exposure: Default::default(),
             value: Ok(value),
             took: Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 

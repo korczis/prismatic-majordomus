@@ -346,6 +346,7 @@ mod tests {
                 "commit": "c8f0e4c50123456789",
             }})),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let line = release_line(
             &releases.read("/latest/version"),

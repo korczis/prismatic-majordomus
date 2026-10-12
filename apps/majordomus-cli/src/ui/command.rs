@@ -284,6 +284,7 @@ mod tests {
             exposure: Default::default(),
             value,
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let many: Vec<serde_json::Value> = (0..ROWS * 2 + 3)
             .map(|i| serde_json::json!({ "id": format!("x-{i}"), "capability": "plan.status", "state": "done" }))

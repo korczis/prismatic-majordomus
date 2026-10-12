@@ -82,6 +82,10 @@ pub struct CapabilityExecutor {
     invocations: AtomicU64,
     /// How many calls of a capability that writes the repository have succeeded here.
     writes: AtomicU64,
+    /// The latest reading of every source a page has asked for, kept current off the path
+    /// of the request (`capability::readings`). Beside the cache and not in it: the cache
+    /// holds answers, and a reading says how old it is.
+    pub(crate) readings: super::readings::Readings,
 }
 
 #[derive(Debug, Default)]
@@ -276,6 +280,13 @@ impl CapabilityExecutor {
         Ok(value)
     }
 
+    /// Count one repository mutation, as a successful mutating call does: what a test of a
+    /// reader of [`Executor::writes`] needs without a layer that a mutation can succeed on.
+    #[cfg(test)]
+    pub(crate) fn count_write(&self) {
+        self.writes.fetch_add(1, Ordering::SeqCst);
+    }
+
     /// How many calls of a capability whose effect is a repository mutation have succeeded
     /// through this executor.
     ///
@@ -309,6 +320,31 @@ impl CapabilityExecutor {
     /// ```
     pub fn handler_invocations(&self) -> u64 {
         self.invocations.load(Ordering::Relaxed)
+    }
+
+    /// The answer this executor holds for `id` asked with `input` in the repository `ctx`
+    /// reads, when its cache has one that is still fresh, and `None` otherwise. No handler
+    /// runs, nothing is stored, and a miss is not counted: it is how the latest reading of a
+    /// source learns that the answer for a moved repository is already at hand
+    /// (`capability::readings`).
+    pub fn cached(&self, ctx: &Context, id: &str, input: &Value) -> Option<Value> {
+        if bypassed() {
+            return None;
+        }
+        let policy = ctx.registry.get(id).map(|c| c.cache)?;
+        let key = key_of(ctx, id, input, policy)?;
+        self.peek(&key, policy.ttl_seconds())
+    }
+
+    /// How many sources this executor remembers the latest reading of
+    /// (`capability::readings`).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::executor::CapabilityExecutor;
+    /// assert_eq!(CapabilityExecutor::new().readings_remembered(), 0);
+    /// ```
+    pub fn readings_remembered(&self) -> usize {
+        self.readings.remembered()
     }
 
     /// Drop every cached entry.

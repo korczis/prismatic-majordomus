@@ -13139,6 +13139,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:130_mesh",
           "path": "test/cases/130_mesh.sh",
           "category": "e2e"
@@ -13267,6 +13273,12 @@
           "via": "behaviour",
           "test": "suite:96_worktree_topology",
           "path": "test/cases/96_worktree_topology.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:999_a_parser_that_cannot_run_is_not_a_verdict",
+          "path": "test/cases/999_a_parser_that_cannot_run_is_not_a_verdict.sh",
           "category": "e2e"
         },
         {
@@ -16254,6 +16266,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:125_rule_proof",
           "path": "test/cases/125_rule_proof.sh",
           "category": "e2e"
@@ -16274,6 +16292,12 @@
           "via": "behaviour",
           "test": "suite:67_rule_dag",
           "path": "test/cases/67_rule_dag.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
           "category": "e2e"
         },
         {
@@ -22106,6 +22130,27 @@
       ],
       "findings": []
     },
+    "rule:project.a-failed-read-is-not-an-empty-answer": {
+      "kind": "rule",
+      "id": "project.a-failed-read-is-not-an-empty-answer",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:894_github_sync_applies_only_the_trunk",
+          "path": "test/cases/894_github_sync_applies_only_the_trunk.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            ".ai/repo/rules/project/a-failed-read-is-not-an-empty-answer.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-number-names-one-case": {
       "kind": "rule",
       "id": "project.a-number-names-one-case",
@@ -22152,6 +22197,27 @@
           "inputs": [
             "test/cases/386_a_plan_is_held_to_its_intent.sh",
             ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-producer-declares-what-it-writes": {
+      "kind": "rule",
+      "id": "project.a-producer-declares-what-it-writes",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:357_ci_records_evidence",
+          "path": "test/cases/357_ci_records_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/357_ci_records_evidence.sh",
+            ".ai/repo/rules/project/a-producer-declares-what-it-writes.v1.md"
           ]
         }
       ],
@@ -24005,6 +24071,37 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.no-screen-waits-for-a-source": {
+      "kind": "rule",
+      "id": "project.no-screen-waits-for-a-source",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:executor",
+          "path": "apps/majordomus-cli/tests/executor.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/executor.rs",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1096_no_screen_waits_for_a_source",
+          "path": "test/cases/1096_no_screen_waits_for_a_source.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.one-derive-at-a-time": {
       "kind": "rule",
       "id": "project.one-derive-at-a-time",
@@ -24652,6 +24749,27 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.ssh-key-access-is-preauthorized": {
+      "kind": "rule",
+      "id": "project.ssh-key-access-is-preauthorized",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:304_a_provider_is_declared_once",
+          "path": "test/cases/304_a_provider_is_declared_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/304_a_provider_is_declared_once.sh",
+            ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.tests-run-in-disposable-repos": {
       "kind": "rule",
       "id": "project.tests-run-in-disposable-repos",
@@ -24807,6 +24925,47 @@
           "inputs": [
             "test/cases/110_lease_reader.sh",
             ".ai/repo/rules/project/the-lease-is-read-once.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.the-projection-is-applied-at-landing": {
+      "kind": "rule",
+      "id": "project.the-projection-is-applied-at-landing",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1097_the_projection_is_applied_at_landing",
+          "path": "test/cases/1097_the_projection_is_applied_at_landing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1097_the_projection_is_applied_at_landing.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:26_ci_wiring",
+          "path": "test/cases/26_ci_wiring.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/26_ci_wiring.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
           ]
         }
       ],
@@ -26696,7 +26855,6 @@
     "suite:190_graph_drawing",
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
-    "suite:26_ci_wiring",
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
@@ -26704,7 +26862,6 @@
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
-    "suite:304_a_provider_is_declared_once",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",

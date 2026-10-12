@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run's executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087's interim rule (decision 1)."
 why: "As PR #577 is written, the collector records first and derives the report after, so the transcript the site publishes as current is a verdict over the run's own rows from a checkout nobody measured. ADR 0087 amends ADR 0068 on exactly those sentences."
-current_state: "PR #577 (feature/ci-records-evidence) records the run's executions, then runs evidence show, and publishes the result as current when the manifest's commit is the published commit. The producing jobs write their reports into their workspaces, and nothing measures those trees. This slice's branch is fix/the-ci-evidence-is-recorded-clean, with its pull request into feature/ci-records-evidence."
+current_state: "Measured 2026-10-08 on master 4090b2b8ae. PR 577 and this slice (PR 645) are on master: the evidence job derives its report before recording and each producing job measures its tree (case 357 passes). Still open: every rust lane measures its tree dirty, because an untracked timings.tsv at the repository root is not among the excluded paths (.github/workflows/validate.yml excludes only apps/majordomus-cli/timings.tsv and apps/majordomus-cli/dist), so the evidence manifest of run 37744906831 carries working_tree dirty for the crate producer and the site cannot publish current from it."
 desired_state: "The evidence job derives its report over the tracked ledger as committed at the run's commit before it records; the suite and rust jobs measure their trees, excluding only their named outputs, and upload the measurement; scripts/pages evidence publishes current only when the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and nothing was absent, refused or failed, and otherwise stale or unknown, naming each reason."
 scope:
   - .github/workflows/validate.yml
@@ -37,4 +37,4 @@ evidence_required:
   - producer_trees_measured
 risk: "Stacked on PR #577, which conflicts with master and so gets no pull-request run of its own: this slice's acceptance is its own pull-request run. A run of #577 after it merges master is a gate of #577's landing, not of this slice."
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-08

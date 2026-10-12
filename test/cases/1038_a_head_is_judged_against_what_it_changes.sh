@@ -2,9 +2,9 @@
 # A head is judged against what it changes, not against GitHub's live state
 # (project.github-projection-gated, claim projected-record-edit-is-landable).
 #
-# `scripts/github-sync --apply` projects the trunk and nothing else, and nothing runs it
-# automatically. So a record a pull request edits is `behind` on GitHub for as long as the
-# pull request is open, and the gate that refused every `behind` made such a pull request red
+# `scripts/github-sync --apply` projects the trunk and nothing else, and it runs when a pull
+# request has landed (.github/workflows/github.yml, test/cases/1097). So a record a pull
+# request edits is `behind` on GitHub for as long as the pull request is open, and the gate that refused every `behind` made such a pull request red
 # from birth: #855 changed one line of I1900 and could not go green on its own head, #820
 # closed eight records and met the same wall. After a landing the trunk itself would have
 # been red until somebody applied by hand.
@@ -176,7 +176,7 @@ git checkout -q -b landed-just-now "$base"
 git merge -q --no-ff the-pull-request -m "land the head" >/dev/null
 expect_exit 0 trunk_push
 expect_grep 'PENDING github-check  3 record\(s\) behind, landed on master less than 1800s ago'
-expect_grep 'the executor applies after landing'
+expect_grep 'the landing applies'
 expect_grep 'PENDING github-check  1 record\(s\) state'
 expect_grep '^github-check: 0 finding\(s\), 2 pending$'
 expect_no_grep 'FAIL'
@@ -192,7 +192,7 @@ GIT_AUTHOR_DATE="$((now - 7200)) +0000" GIT_COMMITTER_DATE="$((now - 7200)) +000
 expect_exit 10 trunk_push
 expect_grep 'FAIL github-check  3 record\(s\) behind'
 expect_grep 'FAIL github-check  1 record\(s\) state'
-expect_grep 'inside the 1800s the executor is given after a landing'
+expect_grep 'inside the 1800s a landing is given to apply them'
 expect_grep 'run: scripts/github-sync --apply from master'
 expect_no_grep 'PENDING'
 

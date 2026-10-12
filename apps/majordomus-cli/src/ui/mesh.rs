@@ -483,6 +483,7 @@ mod tests {
             exposure: Default::default(),
             value: Ok(serde_json::json!({ "machines": [] })),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let html = inspector("nowhere", &[], &peers, &peers).render();
         assert!(html.contains("knows no machine by this name"), "{html}");
@@ -495,6 +496,7 @@ mod tests {
             exposure: Default::default(),
             value,
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 

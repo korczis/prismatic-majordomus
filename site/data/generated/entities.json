@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 97,
+      "count": 98,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 169,
+      "count": 174,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 97
+      "count": 98
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 332
+      "count": 339
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 169
+      "count": 174
     },
     {
       "kind": "scope",
@@ -261,7 +261,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 85
+      "count": 89
     },
     {
       "kind": "skill",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 454
+      "count": 458
     },
     {
       "kind": "use-case",
@@ -767,6 +767,13 @@
           "label": "adr-0135",
           "kind": "adr",
           "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
           "external": false
         }
       ]
@@ -2061,6 +2068,13 @@
           "label": "adr-0038",
           "kind": "adr",
           "route": "/adrs/adr-0038/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
           "external": false
         }
       ]
@@ -5221,6 +5235,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0135/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
         }
       ]
     },
@@ -7123,6 +7144,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0141/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
         }
       ]
     },
@@ -7371,6 +7399,82 @@
           "edge": "put_in_force",
           "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
           "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0142",
+      "identity": "adr-0142",
+      "slug": "adr-0142",
+      "cockpit": "/cockpit/objects/adr/adr-0142",
+      "title": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "performance",
+        "cache"
+      ],
+      "source": ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/executor.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/readings.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/source.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0033",
+          "kind": "adr",
+          "route": "/adrs/adr-0033/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
           "route": null,
           "external": false
         }
@@ -10301,6 +10405,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-failed-read-is-not-an-empty-answer@1",
+      "identity": "project.a-failed-read-is-not-an-empty-answer@1",
+      "slug": "project-a-failed-read-is-not-an-empty-answer-1",
+      "cockpit": "/cockpit/objects/rule/project-a-failed-read-is-not-an-empty-answer-1",
+      "title": "A source that did not answer is not a source with nothing in it",
+      "status": "active",
+      "tags": [
+        "projection",
+        "github",
+        "shell",
+        "failure",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/a-failed-read-is-not-an-empty-answer.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.github-projection-gated@1",
+          "kind": "rule",
+          "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-number-names-one-case@1",
       "identity": "project.a-number-names-one-case@1",
       "slug": "project-a-number-names-one-case-1",
@@ -10359,6 +10497,39 @@
           "label": "project.work-serves-a-declared-intent@1",
           "kind": "rule",
           "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-producer-declares-what-it-writes@1",
+      "identity": "project.a-producer-declares-what-it-writes@1",
+      "slug": "project-a-producer-declares-what-it-writes-1",
+      "cockpit": "/cockpit/objects/rule/project-a-producer-declares-what-it-writes-1",
+      "title": "The program that writes into the checkout says what it wrote, and whoever measures the tree reads that",
+      "status": "active",
+      "tags": [
+        "evidence",
+        "ci",
+        "working-tree",
+        "measurement"
+      ],
+      "source": ".ai/repo/rules/project/a-producer-declares-what-it-writes.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
           "external": false
         }
       ],
@@ -10796,7 +10967,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.no-screen-waits-for-a-source@1",
+          "kind": "rule",
+          "route": "/rules/project-no-screen-waits-for-a-source-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -11259,6 +11438,13 @@
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
           "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-producer-declares-what-it-writes@1",
+          "kind": "rule",
+          "route": "/rules/project-a-producer-declares-what-it-writes-1/",
           "external": false
         },
         {
@@ -12412,7 +12598,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-projection-is-applied-at-landing@1",
+          "kind": "rule",
+          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -12828,6 +13029,13 @@
           "label": "project.navigation-is-declared-once@1",
           "kind": "rule",
           "route": "/rules/project-navigation-is-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-screen-waits-for-a-source@1",
+          "kind": "rule",
+          "route": "/rules/project-no-screen-waits-for-a-source-1/",
           "external": false
         },
         {
@@ -13408,6 +13616,20 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-producer-declares-what-it-writes@1",
+          "kind": "rule",
+          "route": "/rules/project-a-producer-declares-what-it-writes-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.benchmarkable-commands@1",
           "kind": "rule",
           "route": "/rules/project-benchmarkable-commands-1/",
@@ -13460,6 +13682,13 @@
           "label": "project.rust-public-api-quality@1",
           "kind": "rule",
           "route": "/rules/project-rust-public-api-quality-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-projection-is-applied-at-landing@1",
+          "kind": "rule",
+          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
           "external": false
         },
         {
@@ -13803,6 +14032,47 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+      "identity": "project.no-screen-waits-for-a-source@1",
+      "slug": "project-no-screen-waits-for-a-source-1",
+      "cockpit": "/cockpit/objects/rule/project-no-screen-waits-for-a-source-1",
+      "title": "A screen shows the latest reading of its sources at once, and never waits for a handler",
+      "status": "active",
+      "tags": [
+        "ui",
+        "performance",
+        "cache",
+        "derivation",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.cache-is-invisible@1",
+          "kind": "rule",
+          "route": "/rules/project-cache-is-invisible-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -14796,6 +15066,23 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.ssh-key-access-is-preauthorized@1",
+      "identity": "project.ssh-key-access-is-preauthorized@1",
+      "slug": "project-ssh-key-access-is-preauthorized-1",
+      "cockpit": "/cockpit/objects/rule/project-ssh-key-access-is-preauthorized-1",
+      "title": "Owner-authorized SSH access persists across clients",
+      "status": "active",
+      "tags": [
+        "providers",
+        "authorization",
+        "ssh"
+      ],
+      "source": ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.tests-run-in-disposable-repos@1",
       "identity": "project.tests-run-in-disposable-repos@1",
       "slug": "project-tests-run-in-disposable-repos-1",
@@ -14945,6 +15232,40 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+      "identity": "project.the-projection-is-applied-at-landing@1",
+      "slug": "project-the-projection-is-applied-at-landing-1",
+      "cockpit": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-1",
+      "title": "A landing that changes what GitHub shows applies the change itself",
+      "status": "active",
+      "tags": [
+        "projection",
+        "github",
+        "enforcement",
+        "landing",
+        "ci"
+      ],
+      "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.github-projection-gated@1",
+          "kind": "rule",
+          "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -15250,6 +15571,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-screen-waits-for-a-source@1",
+          "kind": "rule",
+          "route": "/rules/project-no-screen-waits-for-a-source-1/",
           "external": false
         }
       ]
