@@ -136,6 +136,15 @@ A key withdrawn from `trust.allow` loses its links as soon as the server reads t
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
+Under `deny_unknown` and `allowlist`, a machine whose own key is not in `trust.allow` keeps the
+mesh **closed**: it binds no multicast socket, registers with no hub, dials no seed and opens no
+link, and `mesh status` gives the reason with the key to list. This covers a contributor's
+clone of a public repository and a new machine nobody has enrolled yet. Without the rule, such
+a machine would announce itself on its network and dial every endpoint the repository commits,
+while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
+its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
+Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+
 ### Which copy of the declaration is obeyed
 
 A working tree may narrow trust and never widen it. When the trunk holds a committed copy of
@@ -222,7 +231,7 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -363,6 +372,24 @@ with it. So compaction forgets the ended sessions and claims, the taken handover
 requests of what it drops — never a claim that holds or a session that is open, never a
 handover still offered, and never who took or answered what stays. A property test holds
 that over random histories of dead and live runs.
+
+A review request ends in one of three ways, and the fold says which:
+
+- `answered`: another session gives a verdict.
+- `withdrawn`: the runtime that asked ends it with `mesh review withdraw` (done, void or
+  superseded). Any session of that runtime may, because an MCP session is one connection and
+  an asker that reconnects is another session of the same runtime. No other runtime may. The
+  note is the requester's own `result` and never an answer.
+- `expired`: nobody answered and the asking runtime has stopped beating.
+
+Expiry is a reading of liveness like a claim's, so no runtime reads another's clock. A runtime
+that sleeps and beats again reads `open` again, and the asking session closing does not end a
+request, since a lane request outlives many connections. A consumer that takes only `open`
+requests (`ReviewState::is_waiting`), such as an executor's lane intake, therefore skips
+expired ones: it should name them rather than drop them silently. A request may carry a `body` of up to 8 KiB
+beside its one-line subject: the evidence, the commands and the question. A runtime older
+than the field reads the request without its body, and holds `review_withdrawn` as an opaque
+event it relays but does not fold.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
@@ -609,9 +636,9 @@ hook library, which sends no request of its own (SECURITY.md); with no ready ser
 line, and the server line above says why.
 
 **What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
-reviewed one as the executable reads it, the self-check holds over this repository, two
-worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
-missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
+reviewed one as the executable reads it, the self-check holds over this repository, a machine
+whose key is not listed keeps the mesh closed and dials nobody, two worktrees under one listed
+key link, and a machine whose key is missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
 tracked, enabled, `deny_unknown`, allowlists at least as many keys as the trust row above names
 machines, and names a hub — so adding a machine is a key under `trust.allow` and a node id in
 that row, in one commit — and a disposable repository proves every briefing answer and exit 10
@@ -716,6 +743,7 @@ majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
 majordomus mesh review answer <request-key> --session s2 --verdict approved
+majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by the rebuilt head'
 ```
 
 Every command has `--format json`, which prints the capability's answer unchanged.
@@ -723,12 +751,13 @@ Every command has `--format json`, which prints the capability's answer unchange
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
 `/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
-`/handovers/consume`, `/reviews`, `/reviews/answer`, `/link/hello`, `/link/sync`. The schemas
+`/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.
 
 **MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_firewall`, `_register`, `_cooperation`, `_peers`,
 `_peer`, `_state`, `_events`, `_verify`, `_session_open`, `_session_close`, `_claim`,
-`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`. An
+`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`,
+`_review_withdraw`. An
 agent claims work with `majordomus_mesh_claim` instead of inventing a coordination channel;
 without a `session` the call acts for the agent's own board session.
 

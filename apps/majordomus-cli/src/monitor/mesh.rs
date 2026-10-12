@@ -292,15 +292,12 @@ impl Memory {
                 scope,
                 issue,
                 reviewer,
+                body,
             } => {
                 let name = self.name_of(&stream, &session);
                 let mine = ctx.reader.is(&session) || ctx.reader.is(&name);
-                // I2415 adds a body (up to 8 KiB): it can name the reader where the subject does not
-                let text = event
-                    .body
-                    .get("body")
-                    .and_then(|b| b.as_str())
-                    .unwrap_or_default();
+                // the body (I2415, up to 8 KiB) can name the reader where the subject does not
+                let text = body.as_deref().unwrap_or_default();
                 let asked = reviewer.as_deref().is_some_and(|r| ctx.reader.is(r))
                     || ctx.reader.named_in(&subject)
                     || ctx.reader.named_in(text);
@@ -376,6 +373,8 @@ impl Memory {
                 s.actor = Some(name);
                 s
             }
+            // read raw above, before the body is typed: a withdrawal never reaches this match
+            EventBody::ReviewWithdrawn { .. } => return None,
         };
         signal.machine = Some(machine);
         Some(signal)

@@ -1,7 +1,7 @@
 +++
 title = "majordomus evidence proves"
 description = "One test: its latest execution and every claim it proves"
-weight = 170
+weight = 171
 [extra]
 route = "/docs/cli/evidence/proves/"
 command = "majordomus evidence proves"

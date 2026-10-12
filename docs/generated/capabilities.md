@@ -40,7 +40,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 23 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -186,6 +186,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.release` | `mesh` | command | experimental | `majordomus_mesh_release` | — | `POST /api/v1/mesh/claims/release` | — | — | waived (transient_state) |
 | `mesh.review.answer` | `mesh` | command | experimental | `majordomus_mesh_review_answer` | — | `POST /api/v1/mesh/reviews/answer` | — | — | waived (transient_state) |
 | `mesh.review.request` | `mesh` | command | experimental | `majordomus_mesh_review_request` | — | `POST /api/v1/mesh/reviews` | — | — | waived (transient_state) |
+| `mesh.review.withdraw` | `mesh` | command | experimental | `majordomus_mesh_review_withdraw` | — | `POST /api/v1/mesh/reviews/withdraw` | — | — | waived (transient_state) |
 | `mesh.session.close` | `mesh` | command | experimental | `majordomus_mesh_session_close` | — | `POST /api/v1/mesh/sessions/close` | — | — | waived (transient_state) |
 | `mesh.session.open` | `mesh` | command | experimental | `majordomus_mesh_session_open` | — | `POST /api/v1/mesh/sessions` | — | — | waived (transient_state) |
 | `mesh.state` | `mesh` | query | experimental | `majordomus_mesh_state` | — | `GET /api/v1/mesh/state` | — | — | required |

@@ -287,7 +287,7 @@ mod tests {
         let ctx = context(&repo);
         let c = cooperation();
         session(&c, "s1", "3d", "the runtime train");
-        c.request_review("s1", "1b, read #885".into(), vec![], None, None)
+        c.request_review("s1", "1b, read #885".into(), vec![], None, None, None)
             .unwrap();
         ctx.mesh.attach_cooperation(Arc::clone(&c));
         let trail = crate::integration::events_path(repo.root()).unwrap();

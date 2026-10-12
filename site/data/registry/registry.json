@@ -6,28 +6,28 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "ff09873d216af8c3a6ff9ce7685ff027a9c8ee7d3c82d0d43a777f75e5fe6448",
+    "fingerprint": "2fbe9f3265da0e550d9c27faf3de427375abc4f3e77179d6b286c0eb30ae08f8",
     "summary": {
-      "total": 2271,
-      "builtin": 192,
-      "declarative": 2079,
+      "total": 2274,
+      "builtin": 193,
+      "declarative": 2081,
       "by_kind": {
-        "command": 27,
+        "command": 28,
         "query": 165,
-        "resource": 2079
+        "resource": 2081
       },
       "by_stability": {
         "behaviorally_verified": 134,
-        "experimental": 49,
-        "implemented": 2088
+        "experimental": 50,
+        "implemented": 2090
       },
-      "mcp_tools": 184,
-      "mcp_resources": 2134,
-      "http_routes": 188,
+      "mcp_tools": 185,
+      "mcp_resources": 2136,
+      "http_routes": 189,
       "cli_commands": 105,
       "modules": 90,
       "benchmark_required": 165,
-      "benchmark_waived": 27,
+      "benchmark_waived": 28,
       "cached": 54
     },
     "builtin": [
@@ -48989,6 +48989,13 @@
                   "null"
                 ],
                 "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+              },
+              "body": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines."
               }
             },
             "required": [
@@ -49038,6 +49045,108 @@
           "http": {
             "method": "POST",
             "path": "/api/v1/mesh/reviews"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "cooperation"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.review.withdraw",
+        "module": "mesh",
+        "kind": "command",
+        "title": "Withdraw a review request",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "input": {
+          "name": "ReviewWithdrawInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "request": {
+                "type": "string",
+                "description": "The request's key, `<stream>/<review>`."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The requester's result or reason, up to 8 KiB: what came of it, or why it is void."
+              }
+            },
+            "required": [
+              "request"
+            ],
+            "description": "The input of `mesh.review.withdraw`.",
+            "title": "ReviewWithdrawInput"
+          }
+        },
+        "output": {
+          "name": "Written",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "`<stream>/<local id>` of what was created or changed."
+              },
+              "event": {
+                "type": "string",
+                "description": "`<stream>/<seq>` of the event that says so."
+              },
+              "lamport": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The event's Lamport stamp."
+              }
+            },
+            "required": [
+              "key",
+              "event",
+              "lamport"
+            ],
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_review_withdraw"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/mesh/reviews/withdraw"
           }
         },
         "availability": "runtime",
@@ -50422,6 +50531,13 @@
                     ],
                     "description": "The runtime asked, when one was."
                   },
+                  "body": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What the reviewer needs beyond the subject, when the requester wrote it."
+                  },
                   "state": {
                     "$ref": "#/$defs/ReviewState",
                     "description": "Its standing."
@@ -50432,6 +50548,13 @@
                       "$ref": "#/$defs/ReviewAnswer"
                     },
                     "description": "The answers, in Lamport order."
+                  },
+                  "result": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
                   }
                 },
                 "required": [
@@ -50442,7 +50565,7 @@
                   "state",
                   "answers"
                 ],
-                "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+                "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
               },
               "ReviewState": {
                 "oneOf": [
@@ -50455,9 +50578,19 @@
                     "type": "string",
                     "const": "answered",
                     "description": "At least one answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "withdrawn",
+                    "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "expired",
+                    "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
                   }
                 ],
-                "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+                "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
               },
               "ReviewAnswer": {
                 "type": "object",
@@ -80015,7 +80148,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 331,
+        "capabilities": 332,
         "capability_ids": []
       },
       {
@@ -80089,7 +80222,7 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": [
           "mesh.claim",
           "mesh.cooperation",
@@ -80109,6 +80242,7 @@
           "mesh.release",
           "mesh.review.answer",
           "mesh.review.request",
+          "mesh.review.withdraw",
           "mesh.session.close",
           "mesh.session.open",
           "mesh.state",
@@ -80565,7 +80699,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 453,
+        "capabilities": 454,
         "capability_ids": []
       },
       {
@@ -80655,7 +80789,7 @@
     ]
   },
   "index": {
-    "fingerprint": "07777efba30e464237ef1402a9149dc4b53e4c9d5063219b49b4eefe8de3adf4",
+    "fingerprint": "e2dec5f6f8e7487e6c0689cd95a743be6afb69897761d6c0cb9ab7212cb902e6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80695,7 +80829,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 331,
+      "issue": 332,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -80709,7 +80843,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 453,
+      "test": 454,
       "use-case": 48,
       "workspace": 1
     },
@@ -86457,7 +86591,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 57975
+        "bytes": 60156
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -86520,7 +86654,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 233627
+        "bytes": 237250
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -89529,7 +89663,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 159458
+        "bytes": 159572
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -89537,7 +89671,7 @@
         "identity": "lib/changed.sh",
         "path": "lib/changed.sh",
         "source_class": "library",
-        "bytes": 17784
+        "bytes": 17731
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -89545,7 +89679,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 17181
+        "bytes": 17339
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -89569,7 +89703,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 89547
+        "bytes": 90618
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -89577,7 +89711,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 48716
+        "bytes": 48820
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -89609,7 +89743,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 33403
+        "bytes": 33350
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -89633,7 +89767,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 28303
+        "bytes": 28250
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -93424,6 +93558,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 5200
+      },
+      {
+        "uri": "majordomus://issue/I2464",
+        "kind": "issue",
+        "identity": "I2464",
+        "title": "A path that holds a space is one path to the scope doctrine",
+        "description": "Read the files a task touched as one path per line, with git's -z output, everywhere the shell layer lists them, so that a file name holding a space is judged as the one path it is.",
+        "path": ".ai/repo/project/issues/I2464.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2313
       },
       {
         "uri": "majordomus://issue/I2470",
@@ -99099,6 +99244,14 @@
         "bytes": 11703
       },
       {
+        "uri": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "kind": "test",
+        "identity": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "path": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "source_class": "case",
+        "bytes": 1821
+      },
+      {
         "uri": "majordomus://test/test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
         "kind": "test",
         "identity": "test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
@@ -100696,7 +100849,7 @@
         "identity": "test/cases/491_the_mesh_is_on_here.sh",
         "path": "test/cases/491_the_mesh_is_on_here.sh",
         "source_class": "case",
-        "bytes": 13476
+        "bytes": 14793
       },
       {
         "uri": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
@@ -100720,7 +100873,7 @@
         "identity": "test/cases/494_the_mesh_is_declared_and_held.sh",
         "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
         "source_class": "case",
-        "bytes": 9108
+        "bytes": 10577
       },
       {
         "uri": "majordomus://test/test/cases/495_the_firewall_admits_the_mesh.sh",
@@ -102136,7 +102289,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 29851
+        "bytes": 39590
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -103106,7 +103259,7 @@
       "identity": [
         "id"
       ],
-      "objects": 331
+      "objects": 332
     },
     {
       "name": "knowledge",
@@ -103258,7 +103411,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 453
+      "objects": 454
     },
     {
       "name": "use-case",
@@ -124925,6 +125078,18 @@
                     "defaults": []
                   },
                   {
+                    "name": "body",
+                    "long": "body",
+                    "positional": false,
+                    "help": "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)",
+                    "value_name": "BODY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
                     "name": "repo",
                     "long": "repo",
                     "positional": false,
@@ -125202,6 +125367,160 @@
                       "approved"
                     ],
                     "command": "majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved",
+                    "setup": [],
+                    "expectation": "exits 10"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "review",
+                  "withdraw"
+                ],
+                "route": "/docs/cli/mesh/review/withdraw/",
+                "executable": true,
+                "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>",
+                "about": "Withdraw a review request this runtime asked for, with its result",
+                "args": [
+                  {
+                    "name": "request",
+                    "positional": true,
+                    "help": "The request's key, `<stream>/<review>`",
+                    "value_name": "REQUEST",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "session",
+                    "long": "session",
+                    "positional": false,
+                    "help": "The withdrawing session, within the runtime that asked",
+                    "value_name": "SESSION",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "note",
+                    "long": "note",
+                    "positional": false,
+                    "help": "What came of it, or why it is void (up to 8 KiB)",
+                    "value_name": "NOTE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-review-withdraw",
+                    "title": "Withdraw a review request with its result",
+                    "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+                    "argv": [
+                      "mesh",
+                      "review",
+                      "withdraw",
+                      "stream/r-000000000000",
+                      "--session",
+                      "s1",
+                      "--note",
+                      "superseded"
+                    ],
+                    "command": "majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded",
                     "setup": [],
                     "expectation": "exits 10"
                   }
@@ -136309,6 +136628,23 @@
         "output": "Written"
       },
       {
+        "name": "majordomus_mesh_review_withdraw",
+        "id": "mesh.review.withdraw",
+        "title": "Withdraw a review request",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "ReviewWithdrawInput",
+        "output": "Written"
+      },
+      {
         "name": "majordomus_mesh_session_close",
         "id": "mesh.session.close",
         "title": "Close a session on the mesh",
@@ -138651,6 +138987,12 @@
         "method": "POST",
         "path": "/api/v1/mesh/reviews",
         "id": "mesh.review.request",
+        "kind": "command"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/mesh/reviews/withdraw",
+        "id": "mesh.review.withdraw",
         "kind": "command"
       },
       {
@@ -148630,6 +148972,30 @@
           "reason": "transient_state"
         },
         {
+          "subject": "mesh.review.withdraw",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "mesh.review.withdraw",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "mesh.review.withdraw",
+          "module": "mesh",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "mesh.session.close",
           "module": "mesh",
           "transport": "direct",
@@ -150331,24 +150697,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 192,
+          "required": 193,
           "covered": 165,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "http": {
-          "required": 188,
+          "required": 189,
           "covered": 165,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 184,
+          "required": 185,
           "covered": 161,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "system": {
@@ -150359,10 +150725,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 578,
+          "required": 581,
           "covered": 505,
           "missing": 0,
-          "waived": 73,
+          "waived": 76,
           "inapplicable": 0
         }
       }

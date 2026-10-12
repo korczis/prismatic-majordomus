@@ -624,6 +624,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.review.withdraw",
+      "path": "/evidence/capabilities/mesh-review-withdraw/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.session.close",
       "path": "/evidence/capabilities/mesh-session-close/"
     },
@@ -2816,6 +2821,11 @@
       "kind": "command",
       "subject": "command:mesh review request",
       "path": "/evidence/commands/mesh-review-request/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh review withdraw",
+      "path": "/evidence/commands/mesh-review-withdraw/"
     },
     {
       "kind": "command",
@@ -5053,6 +5063,16 @@
       "kind": "capability",
       "id": "mesh.review.request",
       "page": "/evidence/capabilities/mesh-review-request/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.review.withdraw": {
+      "kind": "capability",
+      "id": "mesh.review.withdraw",
+      "page": "/evidence/capabilities/mesh-review-withdraw/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -12000,6 +12020,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:1073_a_path_with_a_space_is_one_path",
+          "path": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:108_scope_after_trunk_merge",
           "path": "test/cases/108_scope_after_trunk_merge.sh",
           "category": "e2e"
@@ -12068,6 +12094,12 @@
           "via": "negative",
           "test": "suite:103_obligations",
           "path": "test/cases/103_obligations.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1073_a_path_with_a_space_is_one_path",
+          "path": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
           "category": "e2e"
         },
         {
@@ -15015,6 +15047,25 @@
       "kind": "command",
       "id": "mesh review request",
       "page": "/evidence/commands/mesh-review-request/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh review withdraw": {
+      "kind": "command",
+      "id": "mesh review withdraw",
+      "page": "/evidence/commands/mesh-review-withdraw/",
       "programs": [
         "native"
       ],
@@ -19774,6 +19825,18 @@
       "programs": [],
       "members": [
         "capability:mesh.review.request"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_review_withdraw": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_review_withdraw",
+      "alias_of": "capability:mesh.review.withdraw",
+      "programs": [],
+      "members": [
+        "capability:mesh.review.withdraw"
       ],
       "routes": [],
       "mechanisms": [],

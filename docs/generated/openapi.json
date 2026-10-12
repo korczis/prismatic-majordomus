@@ -11032,6 +11032,116 @@
         }
       }
     },
+    "/api/v1/mesh/reviews/withdraw": {
+      "post": {
+        "operationId": "mesh.review.withdraw",
+        "summary": "Withdraw a review request",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "tags": [
+          "mesh"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `mesh.review.withdraw`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewWithdrawInput"
+              },
+              "examples": {
+                "unknown": {
+                  "value": {
+                    "request": "none/r-0",
+                    "session": "bench",
+                    "note": "superseded"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdraw a review request: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Written"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.review.withdraw",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "process_state",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_review_withdraw"
+        }
+      }
+    },
     "/api/v1/mesh/sessions": {
       "post": {
         "operationId": "mesh.session.open",
@@ -52627,6 +52737,13 @@
               "null"
             ],
             "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines."
           }
         },
         "required": [
@@ -52645,9 +52762,19 @@
             "type": "string",
             "const": "answered",
             "description": "At least one answer."
+          },
+          {
+            "type": "string",
+            "const": "withdrawn",
+            "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+          },
+          {
+            "type": "string",
+            "const": "expired",
+            "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
           }
         ],
-        "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+        "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
       },
       "ReviewView": {
         "type": "object",
@@ -52685,6 +52812,13 @@
             ],
             "description": "The runtime asked, when one was."
           },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the reviewer needs beyond the subject, when the requester wrote it."
+          },
           "state": {
             "$ref": "#/components/schemas/ReviewState",
             "description": "Its standing."
@@ -52695,6 +52829,13 @@
               "$ref": "#/components/schemas/ReviewAnswer"
             },
             "description": "The answers, in Lamport order."
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
           }
         },
         "required": [
@@ -52705,7 +52846,35 @@
           "state",
           "answers"
         ],
-        "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+        "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+      },
+      "ReviewWithdrawInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "request": {
+            "type": "string",
+            "description": "The request's key, `<stream>/<review>`."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The requester's result or reason, up to 8 KiB: what came of it, or why it is void."
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "description": "The input of `mesh.review.withdraw`."
       },
       "Role": {
         "oneOf": [

@@ -1827,7 +1827,7 @@ mod tests {
         )
         .unwrap();
         let me = a.status().runtime.clone().expect("a runtime");
-        a.request_review("s1", "feature/x".into(), vec![], None, Some(me))
+        a.request_review("s1", "feature/x".into(), vec![], None, Some(me), None)
             .unwrap();
         let body = "# Objective\ncover the brief\n".to_string();
         a.publish_handover(HandoverBody {
@@ -1928,7 +1928,7 @@ mod tests {
         })
         .unwrap();
         let me = a.status().runtime.clone().expect("a runtime");
-        a.request_review("s1", "feature/x".into(), vec![], None, Some(me))
+        a.request_review("s1", "feature/x".into(), vec![], None, Some(me), None)
             .unwrap();
         let request = a.state().reviews[0].key.clone();
         a.answer_review(&request, "s9", "approved".into(), None)
