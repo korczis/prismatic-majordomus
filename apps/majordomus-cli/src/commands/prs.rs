@@ -1887,6 +1887,118 @@ mod tests {
             "an act decides on its own fresh observation"
         );
     }
+
+    /// `prs trains` says each train's links in landing order, with the turn, the relation,
+    /// the prepared head and what the link stands on; then what lies beneath, the prepared
+    /// heads no train holds, and every diagnostic.
+    #[test]
+    fn the_trains_say_each_link_its_prep_and_what_no_train_holds() {
+        use crate::integration::{
+            train::{BeneathLink, PrepState, PreparedHead, UnattachedPrep},
+            DependencyState,
+        };
+        let (s, _q) = world();
+        let mut v = integration::train::trains_of(&s.0);
+        assert!(v.observed, "{:?}", v.reason);
+        let t = v.trains.first_mut().expect("#6 depends on #2: a train");
+        assert_eq!(t.links.len(), 2, "{:?}", t.links);
+        t.links[0].prep = Some(PreparedHead {
+            reference: "refs/prep/2".into(),
+            sha: "0123456789abcdef".into(),
+            state: PrepState::Pushed,
+        });
+        t.links[1].prep = Some(PreparedHead {
+            reference: "refs/prep/6".into(),
+            sha: "fedcba9876543210".into(),
+            state: PrepState::Pending,
+        });
+        t.links[1].relation_kind = "behind".into();
+        t.links[1].behind = Some(3);
+        t.links[1].in_cycle = true;
+        t.beneath.push(BeneathLink {
+            number: 9,
+            state: DependencyState::Merged,
+            url: None,
+        });
+        v.unattached_prep = vec![
+            UnattachedPrep {
+                number: 7,
+                sha: "aaaaaaaaaaaaaaaa".into(),
+                open: true,
+            },
+            UnattachedPrep {
+                number: 8,
+                sha: "bbbbbbbbbbbbbbbb".into(),
+                open: false,
+            },
+        ];
+        v.diagnostics.push("a dependency cycle: #6".into());
+        let t = text(|o| render_trains(&v, o));
+        assert!(t.contains("train(s)") && t.contains("owner/repo"), "{t}");
+        assert!(t.contains("roots #2  tops #6  next #2"), "{t}");
+        assert!(t.contains("> #2"), "the link at its turn is marked: {t}");
+        assert!(t.contains("prep pushed"), "{t}");
+        assert!(t.contains("prep fedcba9876 pending"), "{t}");
+        assert!(t.contains("behind 3"), "{t}");
+        assert!(t.contains("on #2"), "{t}");
+        assert!(t.contains('…'), "a long title is cut: {t}");
+        assert!(t.contains("(in a cycle)"), "{t}");
+        assert!(t.contains("#9     beneath, merged"), "{t}");
+        assert!(t.contains("prepared heads no train holds:"), "{t}");
+        assert!(
+            t.contains("refs/prep/7 aaaaaaaaaa (open, stacked on nothing)"),
+            "{t}"
+        );
+        assert!(t.contains("refs/prep/8 bbbbbbbbbb (not open)"), "{t}");
+        assert!(t.contains("! a dependency cycle: #6"), "{t}");
+
+        // no train at all is said, and so is nothing observed
+        v.trains.clear();
+        let t = text(|o| render_trains(&v, o));
+        assert!(
+            t.contains("no open pull request is stacked on another"),
+            "{t}"
+        );
+        let t = text(|o| {
+            render_trains(
+                &integration::train::TrainsView::unobserved("nothing here".into()),
+                o,
+            )
+        });
+        assert_eq!(t, "no trains: nothing here\n");
+    }
+
+    /// `prs trains` exits 0 only on a whole answer, observed and without a diagnostic, in
+    /// text and in JSON alike; a checkout that observed nothing is a finding.
+    #[test]
+    fn the_trains_command_exits_by_whether_the_answer_is_whole() {
+        let (s, _q) = world();
+        let view = integration::train::trains_of(&s.0);
+        let whole = if view.observed && view.diagnostics.is_empty() {
+            0
+        } else {
+            FINDING
+        };
+        let args = |repo: &std::path::Path, format| PrsArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            command: Some(PrsCommand::Trains),
+            format,
+        };
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            assert_eq!(run(args(&s.0, format)).unwrap(), whole, "{format:?}");
+        }
+        let empty = tempfile::tempdir().unwrap();
+        git(empty.path(), &["init", "-q"]);
+        assert_eq!(
+            run(args(empty.path(), OutputFormat::Text)).unwrap(),
+            FINDING
+        );
+    }
 }
 
 #[cfg(test)]

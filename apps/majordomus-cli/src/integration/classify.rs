@@ -2386,6 +2386,52 @@ mod decision_branches {
             a.reasons
         );
     }
+
+    /// A head that holds master but not the version its landing allocates is not ready:
+    /// it needs the executor's refresh, which writes that number, and the reason names it.
+    #[test]
+    fn a_head_that_owes_its_allocated_version_needs_a_refresh() {
+        let p = pr(serde_json::json!({
+            "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}]
+        }));
+        let owes = RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+            owes_version: Some("0.4.0".into()),
+        };
+        let no_review = ReviewPolicy {
+            approvals: 0,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        let a = classify(
+            &p,
+            &owes,
+            "m",
+            "t",
+            &policy(Some(no_review), &[]),
+            &context(),
+        );
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::NeedsRefresh,
+            "{:?}",
+            a.reasons
+        );
+        assert!(
+            a.reasons.contains(&ReasonCode::VersionUnallocated {
+                version: "0.4.0".into()
+            }),
+            "{:?}",
+            a.reasons
+        );
+        assert!(
+            a.next_action
+                .as_deref()
+                .is_some_and(|n| n.contains("writes 0.4.0")),
+            "{:?}",
+            a.next_action
+        );
+    }
 }
 
 #[cfg(test)]

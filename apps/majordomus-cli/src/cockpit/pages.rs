@@ -8032,6 +8032,58 @@ mod tests {
             "a failure rendered a board: {html}"
         );
     }
+
+    /// A context over `repo` whose executable lacks the capabilities in `without`: the
+    /// shape of an executable that does not carry them.
+    fn context_without(repo: &crate::synthetic::SyntheticRepository, without: &[&str]) -> Context {
+        let index = repo.index().expect("the synthetic repository indexes");
+        let modules = crate::capability::builtin::modules()
+            .into_iter()
+            .map(|mut m| {
+                m.capabilities
+                    .retain(|e| !without.contains(&e.capability.id.as_str()));
+                m
+            })
+            .collect();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry))
+    }
+
+    /// The brief card says each section in the state its owner answered in — a section
+    /// read in part and one not read at all among them — and a brief that does not answer
+    /// is a failed card, not a missing one.
+    #[test]
+    fn the_brief_card_says_a_partial_and_an_unread_section_and_a_brief_that_did_not_answer() {
+        let (repo, _) = integration_repository();
+        let html = brief_card(&context_without(
+            &repo,
+            &["lifecycle.episodes", "peers.list"],
+        ))
+        .render();
+        assert!(html.contains("partial"), "{html}");
+        assert!(html.contains("peers.list did not answer"), "{html}");
+        assert!(html.contains("unread"), "{html}");
+
+        let html = brief_card(&context_without(&repo, &["brief.session"])).render();
+        assert!(html.contains("Session brief"), "{html}");
+        assert!(html.contains("brief.session"), "{html}");
+    }
+
+    /// The mesh page reads the peer tree after the node list and the cooperation status; a
+    /// tree that does not answer fails the page rather than rendering half of it.
+    #[test]
+    fn a_mesh_page_whose_peer_tree_does_not_answer_fails() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let page = mesh(&context_without(&repo, &["mesh.peers"]));
+        assert_eq!(page.status, 500);
+        let html = page.main.render();
+        assert!(html.contains("mesh.peers"), "{html}");
+        assert!(html.contains("did not answer"), "{html}");
+    }
 }
 
 #[cfg(test)]

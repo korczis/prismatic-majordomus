@@ -715,3 +715,172 @@ fn a_branch_that_cannot_be_listed_is_refused_as_such_and_nothing_is_pushed() {
         "a refused repair pushed"
     );
 }
+
+/// The crate manifest whose `[package]` version the allocation reads and writes.
+const MANIFEST: &str = "apps/majordomus-cli/Cargo.toml";
+
+/// A release policy that allocates at landing with a minor floor (ADR 0134).
+const LANDING: &str = "release:\n  allocation: landing\n  floor: minor\n";
+
+impl Forge {
+    /// Master becomes a supervised repository whose committed `policy` is `policy`, whose
+    /// crate declares 0.1.0, and — when `registry` — whose capability registry is empty: the
+    /// three facts of master an allocation is decided from.
+    fn allocating(&self, policy: &str, registry: bool) {
+        git(&self.work, &["fetch", "-q", "origin"]);
+        git(&self.work, &["checkout", "-q", "--detach", "origin/master"]);
+        let mut files = vec![
+            (
+                ".ai/manifest.yaml",
+                "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  \
+                 tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n"
+                    .to_string(),
+            ),
+            (".ai/repo/policy.yaml", policy.to_string()),
+            (MANIFEST, version_manifest("0.1.0")),
+        ];
+        if registry {
+            files.push((
+                "docs/generated/registry.json",
+                "{\"capabilities\": []}\n".to_string(),
+            ));
+        }
+        for (path, text) in &files {
+            let path = self.work.join(path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        }
+        let mut add = vec!["add"];
+        add.extend(files.iter().map(|(p, _)| *p));
+        git(&self.work, &add);
+        git(&self.work, &["commit", "-q", "-m", "a versioned crate"]);
+        git(&self.work, &["push", "-q", "origin", "HEAD:master"]);
+    }
+
+    /// Pull request `n` raises the crate to 0.2.0 beside its own n.txt, and master then
+    /// raises it to 0.3.0: the two conflict on the version line and nowhere else.
+    fn version_conflict(&self, n: u64) -> String {
+        git(&self.work, &["fetch", "-q", "origin"]);
+        git(
+            &self.work,
+            &[
+                "checkout",
+                "-q",
+                "-B",
+                &format!("feature/{n}"),
+                "origin/master",
+            ],
+        );
+        std::fs::write(self.work.join(MANIFEST), version_manifest("0.2.0")).unwrap();
+        std::fs::write(self.work.join(format!("{n}.txt")), format!("{n}\n")).unwrap();
+        git(&self.work, &["add", MANIFEST, &format!("{n}.txt")]);
+        git(&self.work, &["commit", "-q", "-m", &format!("change {n}")]);
+        git(
+            &self.work,
+            &[
+                "push",
+                "-q",
+                "origin",
+                &format!("HEAD:refs/heads/feature/{n}"),
+                &format!("HEAD:refs/pull/{n}/head"),
+            ],
+        );
+        let head = git(&self.work, &["rev-parse", "HEAD"]);
+        git(&self.work, &["checkout", "-q", "--detach", "origin/master"]);
+        std::fs::write(self.work.join(MANIFEST), version_manifest("0.3.0")).unwrap();
+        git(
+            &self.work,
+            &["commit", "-q", "-am", "master raises its version"],
+        );
+        git(&self.work, &["push", "-q", "origin", "HEAD:master"]);
+        git(&self.work, &["fetch", "-q", "origin"]);
+        head
+    }
+}
+
+fn version_manifest(version: &str) -> String {
+    format!("[package]\nname = \"majordomus-cli\"\nversion = \"{version}\"\n")
+}
+
+/// Under allocation at landing a conflict on the version line alone is not a person's: the
+/// repair resolves it to master's number, writes the number this landing allocates, and the
+/// pushed commit says which it took and why.
+#[test]
+fn a_version_conflict_under_allocation_is_resolved_and_the_allocated_number_pushed() {
+    let f = Forge::new();
+    f.derives();
+    f.allocating(LANDING, true);
+    let head = f.version_conflict(1);
+    f.open(&[(1, &head)]);
+    assert_eq!(f.prs(&["refresh"]).0, 0);
+    let (code, out, err) = f.prs(&["repair", "1"]);
+    assert_eq!(
+        code, 0,
+        "the version line is no person's conflict: {out}{err}"
+    );
+    assert!(out.contains("would merge"), "{out}");
+    let (code, out, err) = f.prs(&["repair", "1", "--apply"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let pushed = f.origin_ref("refs/heads/feature/1");
+    assert_ne!(pushed, head, "nothing was pushed");
+    let manifest = git(&f.origin, &["show", &format!("{pushed}:{MANIFEST}")]);
+    assert!(manifest.contains("version = \"0.4.0\""), "{manifest}");
+    let message = git(&f.origin, &["log", "-1", "--format=%B", &pushed]);
+    assert!(
+        message.contains("Version-Allocated: 0.4.0 (minor from 0.3.0)"),
+        "{message}"
+    );
+}
+
+/// An allocation that cannot be decided — master commits no capability registry to measure
+/// the change against — refuses the act after the merge, which is abandoned: nothing is
+/// pushed on a number nobody chose.
+#[test]
+fn an_allocation_that_cannot_be_decided_refuses_the_repair_and_pushes_nothing() {
+    let f = Forge::new();
+    f.derives();
+    f.allocating(LANDING, false);
+    let head = f.version_conflict(1);
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["repair", "1", "--apply"]);
+    assert_eq!(code, 10, "{out}{err}");
+    let refused = f
+        .last("repair_refused")
+        .expect("repair_refused on the trail");
+    let detail = refused["detail"].as_str().unwrap_or_default();
+    assert!(
+        detail.contains("the version could not be allocated"),
+        "{detail}"
+    );
+    assert_eq!(
+        f.origin_ref("refs/heads/feature/1"),
+        head,
+        "a refused repair pushed"
+    );
+}
+
+/// A committed release policy that cannot be read refuses the act before any merge: a
+/// refresh made without the allocation the policy may ask for would land a head that owes
+/// its number.
+#[test]
+fn an_unreadable_release_policy_refuses_the_repair_and_pushes_nothing() {
+    let f = Forge::new();
+    f.derives();
+    f.allocating("release:\n  allocation: sometimes\n", true);
+    let head = f.branch(1);
+    f.advance();
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["repair", "1", "--apply"]);
+    assert_eq!(code, 10, "{out}{err}");
+    let refused = f
+        .last("repair_refused")
+        .expect("repair_refused on the trail");
+    let detail = refused["detail"].as_str().unwrap_or_default();
+    assert!(detail.contains(".ai/repo/policy.yaml"), "{detail}");
+    assert!(detail.contains("could not be read"), "{detail}");
+    assert_eq!(
+        f.origin_ref("refs/heads/feature/1"),
+        head,
+        "a refused repair pushed"
+    );
+}
