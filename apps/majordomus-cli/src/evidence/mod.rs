@@ -2105,6 +2105,22 @@ mod tests {
 
     // ---------------------------------------------------------------- at a presented commit
 
+    /// A commit git cannot compare against is an unanswerable comparison, never "nothing
+    /// changed"; one it can answers with the moved file at both of its paths.
+    #[test]
+    fn a_commit_git_cannot_compare_against_answers_nothing() {
+        let f = Fixture::new(&["01_a"]);
+        let head = f.git(&["rev-parse", "HEAD"]);
+        assert_eq!(
+            changed_since(f.root(), "0000000000000000000000000000000000000000"),
+            None
+        );
+        f.git(&["mv", "test/cases/01_a.sh", "test/cases/02_b.sh"]);
+        let changed = changed_since(f.root(), &head).expect("git answers");
+        assert!(changed.contains("test/cases/01_a.sh"), "{changed:?}");
+        assert!(changed.contains("test/cases/02_b.sh"), "{changed:?}");
+    }
+
     /// A repository with one guaranteed claim per case, and the index the report reads.
     struct Fixture {
         dir: tempfile::TempDir,

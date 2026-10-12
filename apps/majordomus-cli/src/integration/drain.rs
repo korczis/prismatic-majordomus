@@ -3189,6 +3189,33 @@ mod obsolete_and_plan_tests {
         }
     }
 
+    /// A head waiting for its checks holds the refresh pipeline only when it holds master: one
+    /// still behind it (or of an unknown relation) is no run of the executor's to wait for.
+    #[test]
+    fn a_head_waiting_for_checks_that_does_not_hold_master_holds_no_pipeline() {
+        let dir = tempfile::tempdir().unwrap();
+        for relation in [
+            RelationToMaster::Behind {
+                behind: 1,
+                authored: vec!["src/a.rs".into()],
+            },
+            RelationToMaster::Unknown {
+                reason: "not asked".into(),
+            },
+        ] {
+            let mut q = queue(&[(&[], false)]);
+            q.assessments[0].disposition = PullRequestDisposition::WaitingForChecks;
+            q.assessments[0].relation = relation.clone();
+            q.next_refresh.clear();
+            let mut w = Fixed(q.clone());
+            assert_eq!(
+                refresh_step(dir.path(), &mut w, &q, true),
+                Ok(None),
+                "{relation:?}"
+            );
+        }
+    }
+
     #[test]
     fn apply_never_closes_what_a_person_marked_obsolete() {
         let dir = tempfile::tempdir().unwrap();

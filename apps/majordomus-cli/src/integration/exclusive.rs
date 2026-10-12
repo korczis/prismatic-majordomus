@@ -602,6 +602,14 @@ mod tests {
         // any other answer is the reason, not an empty list
         let broken = Scripted::new(vec![Ok((503, json!({ "error": "busy" })))]);
         assert!(live_claims(&broken).unwrap_err().contains("status 503"));
+
+        // an older server that refuses the view and then cannot be asked bare says why
+        let gone = Scripted::new(vec![
+            Ok((400, json!({ "error": { "code": "invalid_input" } }))),
+            Err("connection reset".into()),
+        ]);
+        assert_eq!(live_claims(&gone).unwrap_err(), "connection reset");
+        assert_eq!(gone.asked().len(), 2);
     }
 
     #[test]
