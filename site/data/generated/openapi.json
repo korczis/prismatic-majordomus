@@ -84,6 +84,7 @@
     "op-intents-coverage": "docs/api/intents/",
     "op-intents-list": "docs/api/intents/",
     "op-intents-preflight": "docs/api/intents/",
+    "op-intents-propose": "docs/api/intents/",
     "op-intents-record": "docs/api/intents/",
     "op-intents-validate": "docs/api/intents/",
     "op-knowledge_base-candidates": "docs/api/knowledge-base/",
@@ -616,6 +617,7 @@
     "schema-IntentPreflightMatch": "docs/api/intents/",
     "schema-IntentPreflightRefusal": "docs/api/intents/",
     "schema-IntentPreflightVerdict": "docs/api/intents/",
+    "schema-IntentProposeInput": "docs/api/intents/",
     "schema-IntentRealization": "docs/api/intent-realization/",
     "schema-IntentRealizationView": "docs/api/intent-realization/",
     "schema-IntentRealizedWork": "docs/api/intent-realization/",
@@ -824,6 +826,7 @@
     "schema-PromptSource": "docs/api/product/",
     "schema-ProofState": "docs/api/shared/",
     "schema-ProofStep": "docs/api/integration/",
+    "schema-Proposed": "docs/api/intents/",
     "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
@@ -1188,8 +1191,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 187,
-    "schemas": 943,
+    "operations": 188,
+    "schemas": 945,
     "tags": 55
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1219,7 +1222,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.21.0",
+  "generated_by": "majordomus-cli 0.22.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1228,7 +1231,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.21.0"
+    "version": "0.22.0"
   },
   "infrastructure": [
     {
@@ -1365,6 +1368,7 @@
     "intents.coverage": "intents",
     "intents.list": "intents",
     "intents.preflight": "intents",
+    "intents.propose": "intents",
     "intents.record": "intents",
     "intents.validate": "intents",
     "knowledge_base.candidates": "knowledge-base",
@@ -1901,6 +1905,7 @@
     "IntentPreflightMatch": "intents",
     "IntentPreflightRefusal": "intents",
     "IntentPreflightVerdict": "intents",
+    "IntentProposeInput": "intents",
     "IntentRealization": "intent-realization",
     "IntentRealizationView": "intent-realization",
     "IntentRealizedWork": "intent-realization",
@@ -2109,6 +2114,7 @@
     "PromptSource": "product",
     "ProofState": "shared",
     "ProofStep": "integration",
+    "Proposed": "intents",
     "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
@@ -18372,6 +18378,7 @@
         "intents.coverage",
         "intent_realization.explain",
         "intents.preflight",
+        "intents.propose",
         "intent_realization.work",
         "intents.record",
         "intents.validate",
@@ -26453,6 +26460,42 @@
           "value": "refused"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentProposeInput",
+      "properties": [
+        {
+          "description": "What must become true, in the proposer's words; kept verbatim.",
+          "name": "statement",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming it; the statement's first line when absent.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The identity and file name; the title's slug when absent.",
+          "name": "id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "intents.propose"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -37558,6 +37601,49 @@
       "used_by_schemas": [
         "DryRunProof"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "Proposed",
+      "properties": [
+        {
+          "description": "The identity, which is also the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path of the record written.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What must become true, as it was given.",
+          "name": "statement",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "intents.propose"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -61093,6 +61179,70 @@
           "result_schema": "IntentPreflight",
           "stability": "behaviorally_verified",
           "summary": "Which intent a piece of work serves, or why it may not proceed"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "a sentence",
+              "json": "{\"statement\":\"Every page of the UI answers within 100 ms when warm\"}"
+            }
+          ],
+          "body_schema": "IntentProposeInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "intent propose",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/intents/propose\" -H \"content-type: application/json\" -d '{\"statement\":\"Every page of the UI answers within 100 ms when warm\"}'",
+          "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+          "home": "intents",
+          "id": "intents.propose",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_intent_propose",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/intents/propose",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::intents",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Propose an intent: what must become true: the result.",
+              "schema": "Proposed",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Proposed",
+          "stability": "experimental",
+          "summary": "Propose an intent: what must become true"
         },
         {
           "benchmark": "required",

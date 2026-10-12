@@ -326,6 +326,8 @@ mod tests {
                 "continuity.sync",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
+                // writes one new intent record, never a stage (ADR 0144)
+                "intents.propose",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

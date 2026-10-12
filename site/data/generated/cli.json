@@ -29472,6 +29472,12 @@
           "command": "majordomus intent explain",
           "name": "explain",
           "route": "/docs/cli/intent/explain/"
+        },
+        {
+          "about": "Write a new, unplanned intent: what must become true (ADR 0144)",
+          "command": "majordomus intent propose",
+          "name": "propose",
+          "route": "/docs/cli/intent/propose/"
         }
       ],
       "command": "majordomus intent",
@@ -30685,6 +30691,173 @@
       ],
       "route": "/docs/cli/intent/explain/",
       "usage": "majordomus intent explain [OPTIONS] <ID>"
+    },
+    {
+      "about": "Write a new, unplanned intent: what must become true (ADR 0144)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus intent",
+          "name": "intent",
+          "route": "/docs/cli/intent/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What must become true, kept verbatim",
+          "long": "statement",
+          "name": "statement",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "STATEMENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "One line naming it; the statement's first line when absent",
+          "long": "title",
+          "name": "title",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TITLE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The identity and file name; the title's slug when absent",
+          "long": "id",
+          "name": "id",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus intent propose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "intent",
+            "propose",
+            "--statement",
+            "Every page answers within 100 ms when warm"
+          ],
+          "command": "majordomus intent propose --statement 'Every page answers within 100 ms when warm'",
+          "description": "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.",
+          "expectation": "exits 0; prints proposed every-page-answers-within-100-ms-when-warm, .ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
+          "id": "intent-propose",
+          "setup": [],
+          "title": "Propose an intent: what must become true"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "propose",
+      "parent_route": "/docs/cli/intent/",
+      "path": [
+        "majordomus",
+        "intent",
+        "propose"
+      ],
+      "route": "/docs/cli/intent/propose/",
+      "usage": "majordomus intent propose [OPTIONS]"
     },
     {
       "about": "Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass",
@@ -36191,13 +36364,13 @@
     }
   ],
   "counts": {
-    "arguments": 1573,
-    "commands": 227,
-    "examples": 228,
-    "runnable": 200
+    "arguments": 1581,
+    "commands": 228,
+    "examples": 229,
+    "runnable": 201
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.21.0",
+  "generator_version": "0.22.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

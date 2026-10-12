@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.21.0
+# Generator: majordomus-cli 0.22.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.21.0"
+  version: "0.22.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -5126,6 +5126,76 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_intent_preflight
       x-majordomus-cli: intent preflight
+  "/api/v1/intents/propose":
+    post:
+      operationId: intents.propose
+      summary: "Propose an intent: what must become true"
+      description: "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it."
+      tags:
+        - intents
+      requestBody:
+        required: true
+        description: "The input of `intents.propose`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/IntentProposeInput"
+            examples:
+              "a sentence":
+                value:
+                  statement: Every page of the UI answers within 100 ms when warm
+      responses:
+        "200":
+          description: "Propose an intent: what must become true: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Proposed"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: intents.propose
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::intents
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_intent_propose
+      x-majordomus-cli: intent propose
   "/api/v1/intents/realization":
     get:
       operationId: intent_realization.work
@@ -25576,6 +25646,26 @@ components:
           const: refused
           description: "A link is missing or points at nothing, or an intent it serves may not be executed yet."
       description: "What a preflight concluded, about one issue or about the whole piece of work.\n\n```\nuse majordomus_cli::intent::IntentPreflightVerdict;\n// the words every surface answers with\nassert_eq!(\n    serde_json::to_string(&IntentPreflightVerdict::Maintenance).unwrap(),\n    \"\\\"maintenance\\\"\"\n);\nassert_ne!(IntentPreflightVerdict::Serves, IntentPreflightVerdict::Refused);\n```"
+    IntentProposeInput:
+      type: object
+      additionalProperties: false
+      properties:
+        statement:
+          type: string
+          description: "What must become true, in the proposer's words; kept verbatim."
+        title:
+          type:
+            - string
+            - "null"
+          description: "One line naming it; the statement's first line when absent."
+        id:
+          type:
+            - string
+            - "null"
+          description: "The identity and file name; the title's slug when absent."
+      required:
+        - statement
+      description: "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```"
     IntentRealization:
       type: object
       properties:
@@ -31719,6 +31809,27 @@ components:
         - step
         - summary
       description: One step of the cycle and what it said.
+    Proposed:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The identity, which is also the file name."
+        path:
+          type: string
+          description: Repository-relative path of the record written.
+        title:
+          type: string
+          description: One line.
+        statement:
+          type: string
+          description: "What must become true, as it was given."
+      required:
+        - id
+        - path
+        - title
+        - statement
+      description: "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```"
     Protocol:
       oneOf:
         - type: string
@@ -41483,7 +41594,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.21.0
+  generator: majordomus-cli 0.22.0
   infrastructure:
     - id: home
       path: /
@@ -41532,4 +41643,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.21.0
+x-majordomus-generator: majordomus-cli 0.22.0

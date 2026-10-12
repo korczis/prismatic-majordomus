@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.22.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 191 | 164 | 0 | 27 |
-| http | 187 | 164 | 0 | 23 |
-| mcp | 183 | 160 | 0 | 23 |
+| direct | 192 | 164 | 0 | 28 |
+| http | 188 | 164 | 0 | 24 |
+| mcp | 184 | 160 | 0 | 24 |
 | system | 14 | 14 | 0 | 0 |
-| total | 575 | 502 | 0 | 73 |
+| total | 578 | 502 | 0 | 76 |
 
 ## Capabilities
 
@@ -105,6 +105,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `intents.coverage` | intents | query | — | covered | covered | covered | `default` |
 | `intents.list` | intents | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `intents.preflight` | intents | query | — | covered | covered | covered | `first-issue` |
+| `intents.propose` | intents | command | — | waived | waived | waived | — |
 | `intents.record` | intents | query | — | covered | covered | covered | `first-intent` |
 | `intents.validate` | intents | query | — | covered | covered | covered | `default` |
 | `knowledge_base.candidates` | knowledge_base | query | — | covered | covered | covered | `default` |

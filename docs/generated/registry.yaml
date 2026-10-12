@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.21.0
+# Generator: majordomus-cli 0.22.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.21.0
+generator: majordomus-cli 0.22.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -166,7 +166,7 @@ modules:
     description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 6
+    capabilities: 7
   - id: knowledge_base
     title: Knowledge base
     description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
@@ -28600,6 +28600,87 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/intents.rs
+  - id: intents.propose
+    module: intents
+    kind: command
+    title: "Propose an intent: what must become true"
+    description: "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it."
+    input:
+      name: IntentProposeInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          statement:
+            type: string
+            description: "What must become true, in the proposer's words; kept verbatim."
+          title:
+            type:
+              - string
+              - "null"
+            description: "One line naming it; the statement's first line when absent."
+          id:
+            type:
+              - string
+              - "null"
+            description: "The identity and file name; the title's slug when absent."
+        required:
+          - statement
+        description: "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```"
+        title: IntentProposeInput
+    output:
+      name: Proposed
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "The identity, which is also the file name."
+          path:
+            type: string
+            description: Repository-relative path of the record written.
+          title:
+            type: string
+            description: One line.
+          statement:
+            type: string
+            description: "What must become true, as it was given."
+        required:
+          - id
+          - path
+          - title
+          - statement
+        description: "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```"
+        title: Proposed
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::intents
+    exposure:
+      mcp:
+        tool: majordomus_intent_propose
+      http:
+        method: POST
+        path: /api/v1/intents/propose
+      cli:
+        path:
+          - intent
+          - propose
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - intent
+      - project
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/intents.rs
   - id: intents.record
     module: intents

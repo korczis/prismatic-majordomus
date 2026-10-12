@@ -3,31 +3,31 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.21.0"
+    "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "8c07b57718f0fe738b6c5615b481c889dd3c664b592878ce8b9f2d186b129d76",
+    "fingerprint": "fd55548f02c8d424e7ad52b92c50a0c2725570bb1e5be41ac634fd474dd25a95",
     "summary": {
-      "total": 2268,
-      "builtin": 191,
-      "declarative": 2077,
+      "total": 2271,
+      "builtin": 192,
+      "declarative": 2079,
       "by_kind": {
-        "command": 27,
+        "command": 28,
         "query": 164,
-        "resource": 2077
+        "resource": 2079
       },
       "by_stability": {
         "behaviorally_verified": 133,
-        "experimental": 49,
-        "implemented": 2086
+        "experimental": 50,
+        "implemented": 2088
       },
-      "mcp_tools": 183,
-      "mcp_resources": 2131,
-      "http_routes": 187,
-      "cli_commands": 105,
+      "mcp_tools": 184,
+      "mcp_resources": 2133,
+      "http_routes": 188,
+      "cli_commands": 106,
       "modules": 89,
       "benchmark_required": 164,
-      "benchmark_waived": 27,
+      "benchmark_waived": 28,
       "cached": 54
     },
     "builtin": [
@@ -40198,6 +40198,116 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
       },
       {
+        "id": "intents.propose",
+        "module": "intents",
+        "kind": "command",
+        "title": "Propose an intent: what must become true",
+        "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+        "input": {
+          "name": "IntentProposeInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statement": {
+                "type": "string",
+                "description": "What must become true, in the proposer's words; kept verbatim."
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "One line naming it; the statement's first line when absent."
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The identity and file name; the title's slug when absent."
+              }
+            },
+            "required": [
+              "statement"
+            ],
+            "description": "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```",
+            "title": "IntentProposeInput"
+          }
+        },
+        "output": {
+          "name": "Proposed",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The identity, which is also the file name."
+              },
+              "path": {
+                "type": "string",
+                "description": "Repository-relative path of the record written."
+              },
+              "title": {
+                "type": "string",
+                "description": "One line."
+              },
+              "statement": {
+                "type": "string",
+                "description": "What must become true, as it was given."
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "title",
+              "statement"
+            ],
+            "description": "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```",
+            "title": "Proposed"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intent_propose"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/intents/propose"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "propose"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "intent",
+          "project"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
         "id": "intents.record",
         "module": "intents",
         "kind": "query",
@@ -79024,7 +79134,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 96,
+        "capabilities": 97,
         "capability_ids": []
       },
       {
@@ -79599,12 +79709,13 @@
         "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 6,
+        "capabilities": 7,
         "capability_ids": [
           "intents.binding",
           "intents.coverage",
           "intents.list",
           "intents.preflight",
+          "intents.propose",
           "intents.record",
           "intents.validate"
         ],
@@ -80170,7 +80281,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 453,
+        "capabilities": 454,
         "capability_ids": []
       },
       {
@@ -80260,7 +80371,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4e4179fbce1ce7802784740dc4cfc11468c204ca9dc093db334dbc18711f2395",
+    "fingerprint": "54b1850cebb036208b9343f150b004db50006fa9a1f7e6aba67bf497abafe49b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80283,7 +80394,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 96,
+      "adr": 97,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -80314,7 +80425,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 453,
+      "test": 454,
       "use-case": 48,
       "workspace": 1
     },
@@ -81902,6 +82013,22 @@
           "interface",
           "ui",
           "pages"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0144",
+        "kind": "adr",
+        "identity": "adr-0144",
+        "title": "An intent is proposed by a capability, and its stage stays derived",
+        "description": "An intent is proposed by a capability, and its stage stays derived",
+        "path": ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4835,
+        "tags": [
+          "intent",
+          "project",
+          "capabilities"
         ]
       },
       {
@@ -85213,7 +85340,7 @@
         "path": ".ai/repo/project/intents/README.md",
         "section": "project",
         "source_class": "context",
-        "bytes": 1586
+        "bytes": 1953
       },
       {
         "uri": "majordomus://context/ai.repo.project.issues",
@@ -89493,7 +89620,7 @@
         "path": ".ai/repo/project/intents/intent-lifecycle.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2127
+        "bytes": 2225
       },
       {
         "uri": "majordomus://intent/intent-planning",
@@ -99614,6 +99741,14 @@
         "bytes": 18658
       },
       {
+        "uri": "majordomus://test/test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+        "kind": "test",
+        "identity": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+        "path": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+        "source_class": "case",
+        "bytes": 7564
+      },
+      {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "identity": "test/cases/29_prompt_capture.sh",
@@ -102522,7 +102657,7 @@
       "identity": [
         "id"
       ],
-      "objects": 96
+      "objects": 97
     },
     {
       "name": "application",
@@ -102837,7 +102972,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 453
+      "objects": 454
     },
     {
       "name": "use-case",
@@ -129301,6 +129436,156 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "propose"
+            ],
+            "route": "/docs/cli/intent/propose/",
+            "executable": true,
+            "usage": "majordomus intent propose [OPTIONS]",
+            "about": "Write a new, unplanned intent: what must become true (ADR 0144)",
+            "args": [
+              {
+                "name": "statement",
+                "long": "statement",
+                "positional": false,
+                "help": "What must become true, kept verbatim",
+                "value_name": "STATEMENT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "title",
+                "long": "title",
+                "positional": false,
+                "help": "One line naming it; the statement's first line when absent",
+                "value_name": "TITLE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "id",
+                "long": "id",
+                "positional": false,
+                "help": "The identity and file name; the title's slug when absent",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-propose",
+                "title": "Propose an intent: what must become true",
+                "description": "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.",
+                "argv": [
+                  "intent",
+                  "propose",
+                  "--statement",
+                  "Every page answers within 100 ms when warm"
+                ],
+                "command": "majordomus intent propose --statement 'Every page answers within 100 ms when warm'",
+                "setup": [],
+                "expectation": "exits 0; prints proposed every-page-answers-within-100-ms-when-warm, .ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -135425,6 +135710,23 @@
         "output": "IntentPreflight"
       },
       {
+        "name": "majordomus_intent_propose",
+        "id": "intents.propose",
+        "title": "Propose an intent: what must become true",
+        "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "repository_mutation",
+        "hints": {
+          "read_only": false,
+          "destructive": true,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "IntentProposeInput",
+        "output": "Proposed"
+      },
+      {
         "name": "majordomus_intent_record",
         "id": "intents.record",
         "title": "One intent, with everything derived about it",
@@ -138029,6 +138331,12 @@
         "path": "/api/v1/intents/preflight",
         "id": "intents.preflight",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/intents/propose",
+        "id": "intents.propose",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -147522,6 +147830,30 @@
           "cases": 1
         },
         {
+          "subject": "intents.propose",
+          "module": "intents",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "intents.propose",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "intents.propose",
+          "module": "intents",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
           "subject": "intents.record",
           "module": "intents",
           "transport": "direct",
@@ -149826,24 +150158,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 191,
+          "required": 192,
           "covered": 164,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "http": {
-          "required": 187,
+          "required": 188,
           "covered": 164,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 183,
+          "required": 184,
           "covered": 160,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "system": {
@@ -149854,10 +150186,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 575,
+          "required": 578,
           "covered": 502,
           "missing": 0,
-          "waived": 73,
+          "waived": 76,
           "inapplicable": 0
         }
       }

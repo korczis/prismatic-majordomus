@@ -1513,6 +1513,23 @@
       "tool": "majordomus_intent_preflight"
     },
     {
+      "api_anchor": "/docs/api/intents/#op-intents-propose",
+      "claims": [],
+      "cli": "majordomus intent propose",
+      "id": "intents.propose",
+      "kind": "command",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-propose/",
+      "slug": "intents-propose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Propose an intent: what must become true",
+      "tool": "majordomus_intent_propose"
+    },
+    {
       "api_anchor": "/docs/api/intents/#op-intents-record",
       "claims": [],
       "cli": "majordomus intent show",
@@ -4047,11 +4064,11 @@
     ]
   },
   "counts": {
-    "capabilities": 191,
+    "capabilities": 192,
     "claims": 92,
     "modules": 55
   },
-  "generator": "majordomus-cli 0.21.0",
+  "generator": "majordomus-cli 0.22.0",
   "modules": [
     {
       "capabilities": [
@@ -4778,6 +4795,11 @@
           "id": "intents.preflight",
           "route": "/registry/capabilities/intents-preflight/",
           "slug": "intents-preflight"
+        },
+        {
+          "id": "intents.propose",
+          "route": "/registry/capabilities/intents-propose/",
+          "slug": "intents-propose"
         },
         {
           "id": "intents.record",
