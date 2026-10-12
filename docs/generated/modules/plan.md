@@ -17,7 +17,7 @@ One record per issue with its derived status, its wave, the dependencies it decl
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_issues` |
 | HTTP | `GET /api/v1/plan/issues` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, issues |
@@ -62,7 +62,7 @@ The lowest-wave READY issue of the active milestone, highest priority first, the
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_next` |
 | HTTP | `GET /api/v1/plan/next` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, next |
@@ -105,7 +105,7 @@ The milestone graph laid out by rank, with `order` breaking ties inside a rank o
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_roadmap` |
 | HTTP | `GET /api/v1/plan/roadmap` |
-| cache | — |
+| cache | process, 4 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, roadmap |
@@ -124,7 +124,7 @@ Every milestone with its derived status and its issues counted by status, the mi
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_status` |
 | HTTP | `GET /api/v1/plan/status` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, status |

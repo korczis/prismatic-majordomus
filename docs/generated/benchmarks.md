@@ -21,7 +21,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `brief.session` | brief | query | — | covered | covered | covered | `default` |
-| `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
+| `capabilities.describe` | capabilities | query | process, 512 entries | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |
 | `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
@@ -59,7 +59,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
-| `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
+| `distribution.releases` | distribution | query | process, 1 entries, per generation | covered | covered | covered | `default` |
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `economics.check` | economics | query | — | covered | covered | covered | `default` |
 | `economics.explain` | economics | query | process, 32 entries, 5s | covered | covered | covered | `primary` |
@@ -73,9 +73,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `episodes.attach` | episodes | command | — | covered | covered | covered | `default` |
 | `episodes.detach` | episodes | command | — | covered | covered | covered | `default` |
 | `episodes.list` | episodes | query | — | covered | covered | covered | `default` |
-| `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
+| `evidence.claim` | evidence | query | process, 32 entries, per checkout state | covered | covered | covered | `first-claim` |
 | `evidence.record` | evidence | command | — | waived | — | — | — |
-| `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |
+| `evidence.report` | evidence | query | process, 8 entries, per checkout state | covered | covered | covered | `all`, `findings` |
 | `evidence.stamp` | evidence | query | — | waived | — | — | — |
 | `evidence.test` | evidence | query | — | covered | covered | covered | `first-test` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
@@ -103,7 +103,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent` |
 | `intents.binding` | intents | query | — | covered | covered | covered | `first-issue` |
 | `intents.coverage` | intents | query | — | covered | covered | covered | `default` |
-| `intents.list` | intents | query | — | covered | covered | covered | `default` |
+| `intents.list` | intents | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `intents.preflight` | intents | query | — | covered | covered | covered | `first-issue` |
 | `intents.record` | intents | query | — | covered | covered | covered | `first-intent` |
 | `intents.validate` | intents | query | — | covered | covered | covered | `default` |
@@ -153,12 +153,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
-| `plan.issues` | plan | query | — | covered | covered | covered | `all`, `ready`, `one-milestone` |
+| `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
-| `plan.next` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
-| `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
-| `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.roadmap` | plan | query | process, 4 entries, per generation | covered | covered | covered | `default` |
+| `plan.status` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
@@ -180,13 +180,13 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
 | `release.next` | release | query | — | waived | waived | waived | — |
-| `release.version` | release | query | — | covered | covered | covered | `default` |
-| `repository.info` | repository | query | — | covered | covered | covered | `default` |
+| `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
+| `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
 | `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
-| `rules.report` | rules | query | — | covered | covered | covered | `all`, `findings`, `blocking` |
-| `rules.show` | rules | query | — | covered | covered | covered | `first` |
+| `rules.report` | rules | query | process, 8 entries, per checkout state | covered | covered | covered | `all`, `findings`, `blocking` |
+| `rules.show` | rules | query | process, 32 entries, per checkout state | covered | covered | covered | `first` |
 | `served.observe` | served | command | — | waived | — | — | — |
 | `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |

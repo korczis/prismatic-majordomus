@@ -486,7 +486,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: process
+        max_entries: 512
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_capability
@@ -2887,7 +2888,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 1
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_releases
@@ -3747,7 +3749,7 @@ paths:
     get:
       operationId: evidence.report
       summary: Every claim against the evidence recorded for it
-      description: "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+      description: "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer."
       tags:
         - evidence
       parameters:
@@ -3828,7 +3830,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 8
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_evidence
@@ -3893,7 +3896,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 32
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_evidence_claim
@@ -4836,7 +4840,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 2
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_intents
@@ -8425,7 +8430,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 16
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_issues
@@ -8486,7 +8492,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 16
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_next
@@ -8601,7 +8608,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 4
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_roadmap
@@ -8662,7 +8670,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 16
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_status
@@ -10499,7 +10508,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 2
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_release_version
@@ -10551,7 +10561,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: generation
+        max_entries: 1
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_repository
@@ -10562,7 +10573,7 @@ paths:
     get:
       operationId: rules.report
       summary: Every rule against the proof there is for it
-      description: "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+      description: "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer."
       tags:
         - rules
       parameters:
@@ -10640,7 +10651,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 8
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_rules
@@ -10767,7 +10779,8 @@ paths:
       x-majordomus-benchmark:
         policy: required
       x-majordomus-cache:
-        policy: disabled
+        policy: checkout
+        max_entries: 32
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_rule
@@ -14269,7 +14282,35 @@ components:
             - policy
             - max_entries
           description: "Results are kept in this process's memory, bounded, for equal inputs."
-      description: "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+        - type: object
+          properties:
+            max_entries:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The most entries kept for this capability; the oldest is evicted first.
+            policy:
+              type: string
+              const: generation
+          required:
+            - policy
+            - max_entries
+          description: "Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key."
+        - type: object
+          properties:
+            max_entries:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The most entries kept for this capability; the oldest is evicted first.
+            policy:
+              type: string
+              const: checkout
+          required:
+            - policy
+            - max_entries
+          description: "Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached."
+      description: "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context's own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`)."
     CancelInput:
       type: object
       additionalProperties: false
