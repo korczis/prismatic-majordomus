@@ -6,27 +6,27 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "ceb29000665136414fed9547d09352a6bec71e65137ae282fbe43251f1758b37",
+    "fingerprint": "ead7f79e5f582b7d766cef46971c53e8e95fafa9ac3b01705b37d553385a020e",
     "summary": {
-      "total": 2121,
-      "builtin": 184,
-      "declarative": 1937,
+      "total": 2124,
+      "builtin": 185,
+      "declarative": 1939,
       "by_kind": {
         "command": 26,
-        "query": 158,
-        "resource": 1937
+        "query": 159,
+        "resource": 1939
       },
       "by_stability": {
-        "behaviorally_verified": 132,
+        "behaviorally_verified": 133,
         "experimental": 44,
-        "implemented": 1945
+        "implemented": 1947
       },
-      "mcp_tools": 177,
-      "mcp_resources": 1991,
-      "http_routes": 181,
+      "mcp_tools": 178,
+      "mcp_resources": 1994,
+      "http_routes": 182,
       "cli_commands": 101,
-      "modules": 86,
-      "benchmark_required": 160,
+      "modules": 87,
+      "benchmark_required": 161,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -19691,6 +19691,394 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs"
+      },
+      {
+        "id": "editors.status",
+        "module": "editors",
+        "kind": "query",
+        "title": "Editor and agent projections",
+        "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "EditorProjection",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`SCHEMA`."
+              },
+              "projection_version": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "`PROJECTION_VERSION`."
+              },
+              "adapters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorAdapter"
+                },
+                "description": "The adapters, by id."
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorInput"
+                },
+                "description": "The inputs, by path."
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorDerivation"
+                },
+                "description": "The projected files, by path."
+              },
+              "orphans": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Generator-owned files under a projected directory that the plan no longer contains."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorDiagnostic"
+                },
+                "description": "The findings, by severity then code then path."
+              }
+            },
+            "required": [
+              "schema",
+              "projection_version",
+              "adapters",
+              "inputs",
+              "artifacts",
+              "diagnostics"
+            ],
+            "description": "`editors.status`: every adapter, every projected file and its state, every finding.",
+            "title": "EditorProjection",
+            "$defs": {
+              "EditorAdapter": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`zed` or `antigravity`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The product's name."
+                  },
+                  "verified_against": {
+                    "type": "string",
+                    "description": "The release the evidence was taken from."
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/EditorCapability"
+                    },
+                    "description": "Its capabilities, by id."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "verified_against",
+                  "capabilities"
+                ],
+                "description": "One adapter: the product, the version its claims were verified against, its capabilities."
+              },
+              "EditorCapability": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ..."
+                  },
+                  "support": {
+                    "$ref": "#/$defs/EditorSupport",
+                    "description": "What the adapter does with it."
+                  },
+                  "artifacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The files that carry it, repository-relative. Empty when nothing is projected."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "Where the claim about the product comes from."
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "What it means here, and what to do when nothing is projected."
+                  }
+                },
+                "required": [
+                  "id",
+                  "support",
+                  "evidence",
+                  "note"
+                ],
+                "description": "One capability of one adapter."
+              },
+              "EditorSupport": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "supported",
+                    "description": "Projected, from a verified format."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unsupported",
+                    "description": "The product has no project-level form for it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "A project-level form is claimed somewhere and could not be verified; nothing written."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deprecated",
+                    "description": "The product reads it, from a form this projection will not write."
+                  },
+                  {
+                    "type": "string",
+                    "const": "requires_user_action",
+                    "description": "A person can enable it, outside the repository; the remedy says how."
+                  }
+                ],
+                "description": "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\"."
+              },
+              "EditorInput": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "mutability": {
+                    "$ref": "#/$defs/EditorInputClass",
+                    "description": "Tracked content or checkout state."
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "description": "SHA-256 of its content."
+                  }
+                },
+                "required": [
+                  "path",
+                  "mutability",
+                  "sha256"
+                ],
+                "description": "One input of the projection: a file, what kind of input it is, and its content address."
+              },
+              "EditorInputClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "repository",
+                    "description": "Tracked content of the repository: changes only by a commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "worktree",
+                    "description": "The state of this checkout: which files happen to exist here."
+                  }
+                ],
+                "description": "How far an input may change without the repository changing."
+              },
+              "EditorDerivation": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "document": {
+                    "type": "string",
+                    "description": "The document id in the generated-artifact manifest."
+                  },
+                  "adapters": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The adapters that read it."
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The inputs it is derived from, by path."
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes."
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "description": "SHA-256 of the projected content."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/EditorFileState",
+                    "description": "The state of the file in this checkout."
+                  }
+                },
+                "required": [
+                  "path",
+                  "document",
+                  "adapters",
+                  "sources",
+                  "key",
+                  "sha256",
+                  "state"
+                ],
+                "description": "One projected file and how it came to be."
+              },
+              "EditorFileState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Byte for byte what the projection says."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Generator-owned and different: `majordomus generate editors` rewrites it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "Not there: `majordomus generate editors` writes it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflict",
+                    "description": "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it."
+                  }
+                ],
+                "description": "A projected file as this checkout holds it."
+              },
+              "EditorDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "`info`, `warning` or `error`."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Stable identity of the finding."
+                  },
+                  "adapter": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The adapter it concerns, when it concerns one."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The file it concerns, when it concerns one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What was found."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "message",
+                  "remedy"
+                ],
+                "description": "Something about the projection worth acting on."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::editors"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_editors",
+            "resource": {
+              "uri": "majordomus://editors",
+              "name": "editors"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/editors"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "editors",
+          "projections",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs"
       },
       {
         "id": "entity.kinds",
@@ -74997,7 +75385,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 86,
+        "capabilities": 87,
         "capability_ids": []
       },
       {
@@ -75302,7 +75690,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 328,
+        "capabilities": 329,
         "capability_ids": []
       },
       {
@@ -75332,6 +75720,18 @@
           "module": "majordomus_cli::capability::builtin::economics",
           "path": "majordomus_cli/capability/builtin/economics/index.html"
         }
+      },
+      {
+        "id": "editors",
+        "title": "Editor and agent projections",
+        "description": "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "editors.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs"
       },
       {
         "id": "entity",
@@ -76196,7 +76596,7 @@
     ]
   },
   "index": {
-    "fingerprint": "776bd01c440245bc00ab0d20ac006f874378981cef699683c4dc84df1ea34877",
+    "fingerprint": "75bb127042e1b21994cd599cf4a6000099aee30228f5d20854e91fd71c90c3a9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76219,7 +76619,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 86,
+      "adr": 87,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76229,7 +76629,7 @@
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 328,
+      "document": 329,
       "domain": 6,
       "feature": 27,
       "gap": 2,
@@ -77670,6 +78070,23 @@
           "operations",
           "worktrees",
           "disk"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0140",
+        "kind": "adr",
+        "identity": "adr-0140",
+        "title": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "description": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "path": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6647,
+        "tags": [
+          "editors",
+          "projections",
+          "generated",
+          "build"
         ]
       },
       {
@@ -81546,6 +81963,15 @@
         "bytes": 9255
       },
       {
+        "uri": "majordomus://document/docs/EDITORS.md",
+        "kind": "document",
+        "identity": "docs/EDITORS.md",
+        "title": "Editors and agents",
+        "path": "docs/EDITORS.md",
+        "source_class": "document",
+        "bytes": 4032
+      },
+      {
         "uri": "majordomus://document/docs/ENTRY.md",
         "kind": "document",
         "identity": "docs/ENTRY.md",
@@ -81777,7 +82203,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22777
+        "bytes": 23052
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -94888,7 +95314,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 8225
+        "bytes": 9232
       },
       {
         "uri": "majordomus://test/test/cases/531_an_entity_names_its_public_page.sh",
@@ -96983,7 +97409,7 @@
       "identity": [
         "id"
       ],
-      "objects": 86
+      "objects": 87
     },
     {
       "name": "application",
@@ -97079,7 +97505,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 328
+      "objects": 329
     },
     {
       "name": "domain",
@@ -98932,6 +99358,10 @@
               {
                 "name": "providers",
                 "help": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)"
+              },
+              {
+                "name": "editors",
+                "help": "The files Zed and Google Antigravity read: .agents/skills/<name>/SKILL.md for every active skill, and .zed/tasks.json from the tracked justfile"
               },
               {
                 "name": "site",
@@ -127371,6 +127801,23 @@
         "output": "EconomicsSummary"
       },
       {
+        "name": "majordomus_editors",
+        "id": "editors.status",
+        "title": "Editor and agent projections",
+        "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "EditorProjection"
+      },
+      {
         "name": "majordomus_kinds",
         "id": "entity.kinds",
         "title": "Every kind, and whether every object of it is addressable",
@@ -129694,6 +130141,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://editors",
+        "name": "editors",
+        "id": "editors.status",
+        "title": "Editor and agent projections",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://environment/preflight",
         "name": "preflight",
         "id": "environment.preflight",
@@ -130267,6 +130721,12 @@
         "method": "GET",
         "path": "/api/v1/economics",
         "id": "economics.summary",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/editors",
+        "id": "editors.status",
         "kind": "query"
       },
       {
@@ -132844,6 +133304,35 @@
         "case": "narrowed",
         "cached": true,
         "route": "GET /api/v1/economics"
+      },
+      {
+        "key": "editors.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "editors.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_editors"
+      },
+      {
+        "key": "editors.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/editors"
       },
       {
         "key": "entity.kinds|direct|default",
@@ -138678,6 +139167,27 @@
           "cases": 2
         },
         {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "entity.kinds",
           "module": "entity",
           "transport": "direct",
@@ -141668,22 +142178,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 184,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 181,
-          "covered": 160,
+          "required": 182,
+          "covered": 161,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 177,
-          "covered": 156,
+          "required": 178,
+          "covered": 157,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -141696,8 +142206,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 555,
-          "covered": 489,
+          "required": 558,
+          "covered": 492,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

@@ -474,6 +474,15 @@
         "status": "query"
       },
       {
+        "id": "capability:editors.status",
+        "kind": "capability",
+        "label": "editors.status",
+        "summary": "Editor and agent projections",
+        "route": "/cockpit/capabilities/editors.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/editors.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:entity.kinds",
         "kind": "capability",
         "label": "entity.kinds",
@@ -6388,6 +6397,24 @@
             "operations",
             "worktrees",
             "disk"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0140",
+        "kind": "adr",
+        "label": "adr-0140",
+        "summary": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "route": "/cockpit/objects/adr/adr-0140",
+        "source": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "tags": [
+            "editors",
+            "projections",
+            "generated",
+            "build"
           ]
         }
       },
@@ -13175,6 +13202,14 @@
         "summary": "Economics",
         "route": "/cockpit/objects/document/docs-economics-md",
         "source": "docs/ECONOMICS.md"
+      },
+      {
+        "id": "majordomus://document/docs/EDITORS.md",
+        "kind": "document",
+        "label": "docs/EDITORS.md",
+        "summary": "Editors and agents",
+        "route": "/cockpit/objects/document/docs-editors-md",
+        "source": "docs/EDITORS.md"
       },
       {
         "id": "majordomus://document/docs/ENTRY.md",
@@ -48083,6 +48118,11 @@
         "label": "economics"
       },
       {
+        "id": "module:editors",
+        "kind": "module",
+        "label": "editors"
+      },
+      {
         "id": "module:entity",
         "kind": "module",
         "label": "entity"
@@ -49178,6 +49218,21 @@
       },
       {
         "source": "capability:economics.summary",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:editors.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:editors.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:editors.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -54952,6 +55007,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0140",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -60638,6 +60698,11 @@
       },
       {
         "source": "majordomus://document/docs/ECONOMICS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/EDITORS.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -74972,6 +75037,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:editors",
+        "target": "capability:editors.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:entity",
         "target": "capability:entity.kinds",
         "kind": "composes"
@@ -75668,8 +75738,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2502,
-      "edges": 5464,
+      "nodes": 2506,
+      "edges": 5470,
       "acyclic": false,
       "truncated": false
     }

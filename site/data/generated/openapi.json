@@ -45,6 +45,7 @@
     "op-economics-explain": "docs/api/economics/",
     "op-economics-runs": "docs/api/economics/",
     "op-economics-summary": "docs/api/economics/",
+    "op-editors-status": "docs/api/editors/",
     "op-entity-kinds": "docs/api/entity/",
     "op-entity-show": "docs/api/entity/",
     "op-environment-explain": "docs/api/environment/",
@@ -431,6 +432,15 @@
     "schema-EconomicsVerdict": "docs/api/economics/",
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
+    "schema-EditorAdapter": "docs/api/editors/",
+    "schema-EditorCapability": "docs/api/editors/",
+    "schema-EditorDerivation": "docs/api/editors/",
+    "schema-EditorDiagnostic": "docs/api/editors/",
+    "schema-EditorFileState": "docs/api/editors/",
+    "schema-EditorInput": "docs/api/editors/",
+    "schema-EditorInputClass": "docs/api/editors/",
+    "schema-EditorProjection": "docs/api/editors/",
+    "schema-EditorSupport": "docs/api/editors/",
     "schema-EffectiveEntry": "docs/api/directories/",
     "schema-Empty": "docs/api/mesh/",
     "schema-EntityDocumentation": "docs/api/entity/",
@@ -1089,6 +1099,7 @@
     "tag-directories": "docs/api/directories/",
     "tag-distribution": "docs/api/distribution/",
     "tag-economics": "docs/api/economics/",
+    "tag-editors": "docs/api/editors/",
     "tag-entity": "docs/api/entity/",
     "tag-environment": "docs/api/environment/",
     "tag-episodes": "docs/api/episodes/",
@@ -1130,9 +1141,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 181,
-    "schemas": 893,
-    "tags": 53
+    "operations": 182,
+    "schemas": 902,
+    "tags": 54
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1262,6 +1273,7 @@
     "economics.explain": "economics",
     "economics.runs": "economics",
     "economics.summary": "economics",
+    "editors.status": "editors",
     "entity.kinds": "entity",
     "entity.show": "entity",
     "environment.explain": "environment",
@@ -1652,6 +1664,15 @@
     "EconomicsVerdict": "economics",
     "Edge": "graph",
     "EdgeRule": "devcontext",
+    "EditorAdapter": "editors",
+    "EditorCapability": "editors",
+    "EditorDerivation": "editors",
+    "EditorDiagnostic": "editors",
+    "EditorFileState": "editors",
+    "EditorInput": "editors",
+    "EditorInputClass": "editors",
+    "EditorProjection": "editors",
+    "EditorSupport": "editors",
     "EffectiveEntry": "directories",
     "Empty": "mesh",
     "EntityDocumentation": "entity",
@@ -16309,6 +16330,427 @@
       "variants": []
     },
     {
+      "description": "One adapter: the product, the version its claims were verified against, its capabilities.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorAdapter",
+      "properties": [
+        {
+          "description": "`zed` or `antigravity`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The product's name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release the evidence was taken from.",
+          "name": "verified_against",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its capabilities, by id.",
+          "name": "capabilities",
+          "refs": [
+            "EditorCapability"
+          ],
+          "required": true,
+          "type": "array of EditorCapability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One capability of one adapter.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorCapability",
+      "properties": [
+        {
+          "description": "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ...",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the adapter does with it.",
+          "name": "support",
+          "refs": [
+            "EditorSupport"
+          ],
+          "required": true,
+          "type": "EditorSupport"
+        },
+        {
+          "description": "The files that carry it, repository-relative. Empty when nothing is projected.",
+          "name": "artifacts",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Where the claim about the product comes from.",
+          "name": "evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it means here, and what to do when nothing is projected.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorAdapter"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One projected file and how it came to be.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorDerivation",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document id in the generated-artifact manifest.",
+          "name": "document",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The adapters that read it.",
+          "name": "adapters",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The inputs it is derived from, by path.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "SHA-256 of the projected content.",
+          "name": "sha256",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The state of the file in this checkout.",
+          "name": "state",
+          "refs": [
+            "EditorFileState"
+          ],
+          "required": true,
+          "type": "EditorFileState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Something about the projection worth acting on.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorDiagnostic",
+      "properties": [
+        {
+          "description": "`info`, `warning` or `error`.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "Stable identity of the finding.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The adapter it concerns, when it concerns one.",
+          "name": "adapter",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The file it concerns, when it concerns one.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was found.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A projected file as this checkout holds it.",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorFileState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"absent\" | \"conflict\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorDerivation"
+      ],
+      "values": [
+        {
+          "description": "Byte for byte what the projection says.",
+          "value": "current"
+        },
+        {
+          "description": "Generator-owned and different: `majordomus generate editors` rewrites it.",
+          "value": "stale"
+        },
+        {
+          "description": "Not there: `majordomus generate editors` writes it.",
+          "value": "absent"
+        },
+        {
+          "description": "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it.",
+          "value": "conflict"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One input of the projection: a file, what kind of input it is, and its content address.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorInput",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Tracked content or checkout state.",
+          "name": "mutability",
+          "refs": [
+            "EditorInputClass"
+          ],
+          "required": true,
+          "type": "EditorInputClass"
+        },
+        {
+          "description": "SHA-256 of its content.",
+          "name": "sha256",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far an input may change without the repository changing.",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorInputClass",
+      "properties": [],
+      "type": "\"repository\" | \"worktree\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorInput"
+      ],
+      "values": [
+        {
+          "description": "Tracked content of the repository: changes only by a commit.",
+          "value": "repository"
+        },
+        {
+          "description": "The state of this checkout: which files happen to exist here.",
+          "value": "worktree"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "`editors.status`: every adapter, every projected file and its state, every finding.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorProjection",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`PROJECTION_VERSION`.",
+          "name": "projection_version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The adapters, by id.",
+          "name": "adapters",
+          "refs": [
+            "EditorAdapter"
+          ],
+          "required": true,
+          "type": "array of EditorAdapter"
+        },
+        {
+          "description": "The inputs, by path.",
+          "name": "inputs",
+          "refs": [
+            "EditorInput"
+          ],
+          "required": true,
+          "type": "array of EditorInput"
+        },
+        {
+          "description": "The projected files, by path.",
+          "name": "artifacts",
+          "refs": [
+            "EditorDerivation"
+          ],
+          "required": true,
+          "type": "array of EditorDerivation"
+        },
+        {
+          "description": "Generator-owned files under a projected directory that the plan no longer contains.",
+          "name": "orphans",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The findings, by severity then code then path.",
+          "name": "diagnostics",
+          "refs": [
+            "EditorDiagnostic"
+          ],
+          "required": true,
+          "type": "array of EditorDiagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "editors.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\".",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorSupport",
+      "properties": [],
+      "type": "\"supported\" | \"unsupported\" | \"unknown\" | \"deprecated\" | \"requires_user_action\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorCapability"
+      ],
+      "values": [
+        {
+          "description": "Projected, from a verified format.",
+          "value": "supported"
+        },
+        {
+          "description": "The product has no project-level form for it.",
+          "value": "unsupported"
+        },
+        {
+          "description": "A project-level form is claimed somewhere and could not be verified; nothing written.",
+          "value": "unknown"
+        },
+        {
+          "description": "The product reads it, from a form this projection will not write.",
+          "value": "deprecated"
+        },
+        {
+          "description": "A person can enable it, outside the repository; the remedy says how.",
+          "value": "requires_user_action"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One contract in a directory's effective chain, in the order it is applied.",
       "home": "directories",
       "is_enum": false,
@@ -17481,6 +17923,7 @@
         "economics.check",
         "economics.explain",
         "economics.runs",
+        "editors.status",
         "entity.show",
         "entity.kinds",
         "environment.status",
@@ -46121,6 +46564,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Diagnostic",
+        "EditorDiagnostic",
         "ExecutionDiagnostic",
         "Finding",
         "ProductFinding",
@@ -55308,6 +55752,70 @@
         }
       ],
       "slug": "economics"
+    },
+    {
+      "description": "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding.",
+      "name": "editors",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/editors\"",
+          "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+          "home": "editors",
+          "id": "editors.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "editors",
+            "uri": "majordomus://editors"
+          },
+          "mcp_tool": "majordomus_editors",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/editors",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::editors",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Editor and agent projections: the result.",
+              "schema": "EditorProjection",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EditorProjection",
+          "stability": "behaviorally_verified",
+          "summary": "Editor and agent projections"
+        }
+      ],
+      "slug": "editors"
     },
     {
       "description": "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object.",

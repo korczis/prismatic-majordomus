@@ -19,6 +19,8 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 |---|---|---|---|---|
 | `majordomus-ai-layer` | 2026-09-04 | 16 | Majordomus Agent Bootstrap | `~/Downloads/majordomus-ai-layer` |
 | `majordomus-ai-transform-pack` | 2026-09-04 | 32 | Majordomus `.ai/` Transformation Pack | `~/Downloads/majordomus-ai-transform-pack` |
+| `majordomus-antigravity-pack` | 2026-10-11 | 10 | Majordomus × Google Antigravity: Editor + Agent Intelligence Prompt Pack | `~/Downloads/majordomus-antigravity-prompt-pack.zip` |
+| `majordomus-antigravity-v2` | 2026-10-12 | 8 | Majordomus Antigravity/Zed Editor Intelligence V2 Addendum | `~/Downloads/majordomus-antigravity-v2-derived-buildrs-pack.zip` |
 | `majordomus-auto-control-plane-pack` | 2026-09-09 | 13 | Majordomus Automatic Control Plane Prompt Pack | `tmp/packs/majordomus-auto-control-plane-pack` |
 | `majordomus-chatgpt-project-pack` | 2026-09-04 | 8 | Majordomus ChatGPT Project Pack | `~/Downloads/majordomus-chatgpt-project-pack` |
 | `majordomus-chatgpt-project-provider-prompts` | 2026-09-09 | 14 | Majordomus ChatGPT Project Provider — Claude Code Prompt Pack | `tmp/packs/majordomus-chatgpt-project-provider-prompts` |
@@ -26,6 +28,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-cockpit-landing-claude-code-prompt-pack` | 2026-09-11 | 14 | Majordomus Cockpit Landing Page — Claude Code Prompt Pack | `tmp/prompt-packs/majordomus-cockpit-landing-claude-code-prompt-pack` |
 | `majordomus-cockpit-orchestration-prompt-pack` | 2026-09-10 | 14 | Common Contract — Majordomus Cockpit Runtime Orchestration | `tmp/packs/majordomus-cockpit-orchestration-prompt-pack` |
 | `majordomus-convergence-prompt-pack-20260911` | 2026-09-11 | 26 | Majordomus Convergence Prompt Pack | `tmp/prompt-packs/majordomus-convergence-prompt-pack-20260911` |
+| `majordomus-editor-intelligence-pack` | 2026-10-11 | 9 | Majordomus Editor Intelligence — Claude Code Opus/Fable prompt pack | `~/Downloads/majordomus-editor-intelligence-prompt-pack.zip` |
 | `majordomus-github-workgraph-prompt-pack` | 2026-09-09 | 17 | Majordomus GitHub / Work Graph Prompt Pack | `~/Downloads/majordomus-github-workgraph-prompt-pack` |
 | `majordomus-mesh-pack` | 2026-10-10 | 23 | Majordomus Mesh + Prompt-Pack Lifecycle — Opus/Fable Prompt Pack | `~/Downloads/majordomus-opus-fable-full-prompt-pack-20261010.zip` |
 | `majordomus-openai-provider-control-plane-prompts` | 2026-09-07 | 14 | Majordomus OpenAI / Provider Control Plane Prompt Pack | `~/Downloads/majordomus-openai-provider-control-plane-prompts` |

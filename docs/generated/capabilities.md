@@ -24,6 +24,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
+| `editors` | Editor and agent projections | behaviorally_verified | 1 | [`modules/editors.md`](modules/editors.md) |
 | `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 3 | [`modules/environment.md`](modules/environment.md) |
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
@@ -112,6 +113,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `economics.explain` | `economics` | query | behaviorally_verified | `majordomus_economics_explain` | — | `GET /api/v1/economics/explain` | `majordomus economics explain` | process, 32 entries, 5s | required |
 | `economics.runs` | `economics` | query | behaviorally_verified | `majordomus_economics_runs` | — | `GET /api/v1/economics/runs` | `majordomus economics runs` | process, 16 entries, 5s | required |
 | `economics.summary` | `economics` | query | behaviorally_verified | `majordomus_economics` | `majordomus://economics` | `GET /api/v1/economics` | `majordomus economics summary` | process, 8 entries, 5s | required |
+| `editors.status` | `editors` | query | behaviorally_verified | `majordomus_editors` | `majordomus://editors` | `GET /api/v1/editors` | — | — | required |
 | `entity.kinds` | `entity` | query | implemented | `majordomus_kinds` | — | `GET /api/v1/entity/kinds` | `majordomus entity kinds` | — | required |
 | `entity.show` | `entity` | query | implemented | `majordomus_entity` | — | `GET /api/v1/entity` | `majordomus entity show` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |

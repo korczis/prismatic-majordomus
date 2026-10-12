@@ -3580,6 +3580,9 @@ pub enum GenerateTarget {
     Allow,
     /// The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)
     Providers,
+    /// The files Zed and Google Antigravity read: .agents/skills/<name>/SKILL.md for every
+    /// active skill, and .zed/tasks.json from the tracked justfile
+    Editors,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact

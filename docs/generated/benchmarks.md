@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 184 | 160 | 0 | 24 |
-| http | 181 | 160 | 0 | 21 |
-| mcp | 177 | 156 | 0 | 21 |
+| direct | 185 | 161 | 0 | 24 |
+| http | 182 | 161 | 0 | 21 |
+| mcp | 178 | 157 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 555 | 489 | 0 | 66 |
+| total | 558 | 492 | 0 | 66 |
 
 ## Capabilities
 
@@ -64,6 +64,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `economics.explain` | economics | query | process, 32 entries, 5s | covered | covered | covered | `primary` |
 | `economics.runs` | economics | query | process, 16 entries, 5s | covered | covered | covered | `all`, `narrowed` |
 | `economics.summary` | economics | query | process, 8 entries, 5s | covered | covered | covered | `default`, `narrowed` |
+| `editors.status` | editors | query | — | covered | covered | covered | `default` |
 | `entity.kinds` | entity | query | — | covered | covered | covered | `default` |
 | `entity.show` | entity | query | — | covered | covered | covered | `first-object` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |

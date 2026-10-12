@@ -248,6 +248,12 @@ pub fn entrypoints(workflows: &[WorkflowDescriptor], order: &[String]) -> Vec<Wo
         .collect()
 }
 
+/// The groups of the justfile at `root`, in the order it declares them, or `None` when the
+/// runner could not be asked.
+pub fn groups(root: &Path) -> Option<Vec<String>> {
+    run(root, &["--groups", "--unsorted"]).map(|text| group_order(&text))
+}
+
 fn run(root: &Path, args: &[&str]) -> Option<String> {
     let out = super::probe::bounded_output(
         Command::new("just")
