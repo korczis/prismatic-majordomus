@@ -171,11 +171,10 @@ enum Asked {
 /// This checkout's ready server, when there is one.
 fn server_url(args: &MonitorArgs) -> Result<Option<String>> {
     let app = App::load(&args.query.repo)?;
-    let status = app
-        .context
+    app.context
         .execute("server.status", json!({}))
-        .map_err(status_failed)?;
-    Ok(ready_url(&status))
+        .map(|status| ready_url(&status))
+        .map_err(status_failed)
 }
 
 /// A `server.status` that could not be asked, as the command's error.

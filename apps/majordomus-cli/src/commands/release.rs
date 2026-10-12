@@ -288,8 +288,7 @@ fn next(args: &ReleaseArgs, base: &str, head: &str) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let decision = landing_decision(&app.context, base, head)?;
     let stdout = std::io::stdout();
-    render_next(&mut stdout.lock(), &decision, args.format)?;
-    Ok(0)
+    render_next(&mut stdout.lock(), &decision, args.format).map(|()| 0)
 }
 
 /// The landing decision the capability answers for `head` onto `base`; a refusal is the
