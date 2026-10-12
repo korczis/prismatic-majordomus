@@ -6,23 +6,23 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "1bb16e1e6693d6975434723dbfe6981866f116ffefabc1f2bc4145f34fc4639c",
+    "fingerprint": "8943748a717575069f74334944263f00ece0f4fb3e2b92332a18d07b46e77148",
     "summary": {
-      "total": 2252,
+      "total": 2256,
       "builtin": 191,
-      "declarative": 2061,
+      "declarative": 2065,
       "by_kind": {
         "command": 27,
         "query": 164,
-        "resource": 2061
+        "resource": 2065
       },
       "by_stability": {
         "behaviorally_verified": 133,
         "experimental": 49,
-        "implemented": 2070
+        "implemented": 2074
       },
       "mcp_tools": 183,
-      "mcp_resources": 2115,
+      "mcp_resources": 2119,
       "http_routes": 187,
       "cli_commands": 105,
       "modules": 89,
@@ -79113,7 +79113,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 95,
+        "capabilities": 96,
         "capability_ids": []
       },
       {
@@ -79709,7 +79709,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 328,
         "capability_ids": []
       },
       {
@@ -80259,7 +80259,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 446,
+        "capabilities": 448,
         "capability_ids": []
       },
       {
@@ -80349,7 +80349,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eadb8b509cc8fc5ae254112673ebdb1d2e978451a0bd38b6faf2571109903463",
+    "fingerprint": "bf01434e1fa842202174d4ae21066707e2524200f15c1c13af6adc50a9bb73bd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80372,7 +80372,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 95,
+      "adr": 96,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -80389,7 +80389,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 327,
+      "issue": 328,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -80403,7 +80403,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 446,
+      "test": 448,
       "use-case": 48,
       "workspace": 1
     },
@@ -81974,6 +81974,23 @@
           "operations",
           "worktrees",
           "disk"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0141",
+        "kind": "adr",
+        "identity": "adr-0141",
+        "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "description": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "path": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7337,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "pages"
         ]
       },
       {
@@ -85999,7 +86016,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 52225
+        "bytes": 53137
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -86080,7 +86097,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 13128
+        "bytes": 15784
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -86161,7 +86178,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 243805
+        "bytes": 244006
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93157,6 +93174,17 @@
         "bytes": 2401
       },
       {
+        "uri": "majordomus://issue/I2483",
+        "kind": "issue",
+        "identity": "I2483",
+        "title": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+        "description": "Let a person who has not cloned the repository open majordomus ui on the public site: the UI's own answers for every screen and panel, and for the inspectors they link to up to a bound, written as static files at the commit the site publishes, every page saying it is a snapshot and none of them leading to nothing.",
+        "path": ".ai/repo/project/issues/I2483.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4045
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -98788,6 +98816,22 @@
         "bytes": 3619
       },
       {
+        "uri": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "test",
+        "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "source_class": "case",
+        "bytes": 4703
+      },
+      {
+        "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "test",
+        "identity": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "source_class": "case",
+        "bytes": 4063
+      },
+      {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "identity": "test/cases/109_design_system.sh",
@@ -102448,7 +102492,7 @@
       "identity": [
         "id"
       ],
-      "objects": 95
+      "objects": 96
     },
     {
       "name": "application",
@@ -102611,7 +102655,7 @@
       "identity": [
         "id"
       ],
-      "objects": 327
+      "objects": 328
     },
     {
       "name": "knowledge",
@@ -102763,7 +102807,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 446
+      "objects": 448
     },
     {
       "name": "use-case",
@@ -106532,6 +106576,174 @@
                     "command": "majordomus web report ui --from target/web/run-ui.json",
                     "setup": [],
                     "expectation": "exits 13"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "ui-snapshot"
+                ],
+                "route": "/docs/cli/web/report/ui-snapshot/",
+                "executable": true,
+                "usage": "majordomus web report ui-snapshot [OPTIONS]",
+                "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+                "args": [
+                  {
+                    "name": "limit",
+                    "long": "limit",
+                    "positional": false,
+                    "help": "The most pages to write: every screen and panel first, then what they link to",
+                    "value_name": "LIMIT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "240"
+                    ]
+                  },
+                  {
+                    "name": "budget_seconds",
+                    "long": "budget-seconds",
+                    "positional": false,
+                    "help": "The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost",
+                    "value_name": "BUDGET_SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "180"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-ui-snapshot",
+                    "title": "Read the UI once and write it as the pages a publication carries at /ui",
+                    "description": "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "ui-snapshot",
+                      "--limit",
+                      "20"
+                    ],
+                    "command": "majordomus web report ui-snapshot --limit 20",
+                    "setup": [],
+                    "expectation": "exits 0; prints web report, ui-snapshot"
                   }
                 ],
                 "subcommands": []

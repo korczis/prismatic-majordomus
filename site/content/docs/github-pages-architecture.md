@@ -607,6 +607,20 @@ kind, `/openapi.json` and `/build.json`. Run the same command by hand against an
 commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
 against a served fixture.
 
+### The UI a deploy publishes
+
+The site carries `majordomus ui` at `/ui/` as a snapshot read at the published commit (ADR
+0141, `docs/MAJORDOMUS_UI.md`). The workflow's `ui-snapshot` job builds the executable from
+that commit and runs `majordomus web report ui-snapshot`; it runs beside the `rustdoc` job,
+and the deploy job waits for both. After `scripts/pages check` and before the push, the deploy
+job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
+that is absent, one read at another commit, and a mount the site itself already built.
+
+The snapshot is a generated surface, known only where its producer ran, so it is not in the
+committed topology and `scripts/site-build` does not compose it: a local build of the site has
+no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages. No
+probe reads the public `/ui/` after a deploy yet.
+
 ### When a deploy does not happen
 
 Publication is two steps owned by two parties, and either can be missing while everything

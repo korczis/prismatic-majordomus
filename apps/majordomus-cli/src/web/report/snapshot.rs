@@ -47,7 +47,13 @@ pub const PRODUCER: &str = "majordomus web report ui-snapshot";
 
 /// The pages a snapshot holds at most when the caller names no bound: every screen and
 /// panel, and the inspectors they link to, until this many pages are written.
-pub const DEFAULT_LIMIT: usize = 400;
+pub const DEFAULT_LIMIT: usize = 240;
+
+/// How long a run reads inspectors for when the caller names no budget, in seconds. The
+/// screens and panels are read whatever they cost; what they link to is read until the page
+/// bound or this is reached, whichever is first, because an inspector's cost is its source's
+/// (a claim's history, a pull request's checks) and a publication must not wait on the sum.
+pub const DEFAULT_BUDGET_SECONDS: u64 = 180;
 
 /// The page, relative to the snapshot's root, that explains a link only a running process
 /// answers.
@@ -73,11 +79,24 @@ pub struct Snapshot {
     pub left_out: Vec<String>,
     /// The bound the run was given.
     pub limit: usize,
+    /// The seconds the run was given for the pages the screens link to.
+    pub budget_seconds: u64,
+    /// What ended the reading: `complete` (every linked page was written), `limit` or `budget`.
+    pub stopped_by: &'static str,
 }
 
 /// Read the UI and write it under the generated web root, with the declaration that makes
 /// the directory a surface of every publication.
-pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result<Snapshot> {
+pub fn render(
+    root: &Path,
+    ui: &Ui,
+    topology: &Topology,
+    limit: usize,
+    budget_seconds: u64,
+) -> Result<Snapshot> {
+    let started = std::time::Instant::now();
+    let budget = std::time::Duration::from_secs(budget_seconds);
+    let mut stopped_by = "limit";
     let dir = root.join(GENERATED_ROOT).join(ID);
     if dir.exists() {
         // a snapshot is one reading: pages of an earlier one must not survive into it
@@ -87,24 +106,51 @@ pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result
     let origin = Origin::read(root);
     let outside = Outside::from(topology);
 
-    // breadth first from the screens and panels, so that a bound cuts the deepest pages
-    let mut queue: VecDeque<String> = crate::ui::SCREENS
+    // The screens and panels first, in the navigation's order. What they link to is then
+    // taken one page per family in turn (a family is a route and the one key it is asked
+    // with: every rule's inspector, every issue's), so that a bound leaves each family the
+    // same share instead of the first long list all of it.
+    let mut seeds: VecDeque<String> = crate::ui::SCREENS
         .iter()
         .map(|s| s.route.to_string())
         .chain(crate::ui::PANELS.iter().map(|p| p.to_string()))
         .collect();
-    let mut seen: BTreeSet<String> = queue.iter().cloned().collect();
+    let mut seen: BTreeSet<String> = seeds.iter().cloned().collect();
+    let mut families: Vec<(String, VecDeque<String>)> = Vec::new();
+    let mut turn = 0usize;
     let mut pages: BTreeMap<String, String> = BTreeMap::new();
     let mut rendered: Vec<(String, String)> = Vec::new();
     let mut assets: BTreeSet<String> = BTreeSet::new();
-    while let Some(target) = queue.pop_front() {
-        if pages.len() >= limit.max(1) {
-            break;
-        }
+    while pages.len() < limit.max(1) {
+        let target = match seeds.pop_front() {
+            Some(seed) => seed,
+            None => {
+                // the next family that still has a page, starting after the last one served
+                let waiting = families.len();
+                let next = (0..waiting)
+                    .map(|i| (turn + i) % waiting)
+                    .find(|i| !families[*i].1.is_empty());
+                let Some(i) = next else {
+                    stopped_by = "complete";
+                    break;
+                };
+                if started.elapsed() >= budget {
+                    stopped_by = "budget";
+                    break;
+                }
+                turn = i + 1;
+                match families[i].1.pop_front() {
+                    Some(target) => target,
+                    None => break,
+                }
+            }
+        };
         let Some(file) = page_file(&target) else {
             continue;
         };
+        let asked = std::time::Instant::now();
         let response = ui.handle(&Request::parse_target("GET", &target, Vec::new()));
+        tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;
         }
@@ -116,7 +162,11 @@ pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result
             } else if page_file(&link).is_some() {
                 let key = canonical(&link);
                 if seen.insert(key.clone()) {
-                    queue.push_back(key);
+                    let family = family(&key);
+                    match families.iter_mut().find(|(name, _)| *name == family) {
+                        Some((_, queue)) => queue.push_back(key),
+                        None => families.push((family, VecDeque::from([key]))),
+                    }
                 }
             }
         }
@@ -124,17 +174,7 @@ pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result
         rendered.push((file, html));
     }
 
-    // the pages a link may lead to are exactly the ones written: decided before any rewrite
-    let written: BTreeMap<String, String> = pages.clone();
-    let mut left_out: BTreeSet<String> = BTreeSet::new();
-    let mut frame: Option<String> = None;
-    for (file, html) in &rendered {
-        let page = rewrite(html, file, &written, &outside, &origin, &mut left_out);
-        write(&dir, file, &page)?;
-        if file == "index.html" {
-            frame = Some(page);
-        }
-    }
+    // the assets first: a page names only the ones the snapshot holds
     let mut copied = Vec::new();
     for name in &assets {
         let response = ui.handle(&Request::parse_target(
@@ -152,7 +192,27 @@ pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result
         }
         std::fs::write(&path, response.body.as_bytes())
             .map_err(|e| Error::io(path.display().to_string(), e))?;
-        copied.push(format!("assets/{name}"));
+        copied.push(name.clone());
+    }
+    let held: BTreeSet<String> = copied.iter().cloned().collect();
+    // the pages a link may lead to are exactly the ones written: decided before any rewrite
+    let written: BTreeMap<String, String> = pages.clone();
+    let mut left_out: BTreeSet<String> = BTreeSet::new();
+    let mut frame: Option<String> = None;
+    for (file, html) in &rendered {
+        let page = rewrite(
+            html,
+            file,
+            &written,
+            &held,
+            &outside,
+            &origin,
+            &mut left_out,
+        );
+        write(&dir, file, &page)?;
+        if file == "index.html" {
+            frame = Some(page);
+        }
     }
     let live = live_page(frame.as_deref(), &origin);
     write(&dir, LIVE_PAGE, &live)?;
@@ -161,9 +221,11 @@ pub fn render(root: &Path, ui: &Ui, topology: &Topology, limit: usize) -> Result
         dir: dir.clone(),
         origin,
         pages,
-        assets: copied,
+        assets: copied.iter().map(|n| format!("assets/{n}")).collect(),
         left_out: left_out.into_iter().collect(),
         limit,
+        budget_seconds,
+        stopped_by,
     };
     write_json(&dir, "snapshot.json", &snapshot)?;
     declare(&dir, &snapshot.origin)?;
@@ -206,11 +268,15 @@ struct Outside {
 impl Outside {
     fn from(topology: &Topology) -> Self {
         let from_site = |s: &crate::web::model::Surface| {
-            matches!(s.provenance.get("kind"), Some(Provenance::SiteConfig { .. }))
+            matches!(
+                s.provenance.get("kind"),
+                Some(Provenance::SiteConfig { .. })
+            )
         };
-        let published_root = topology.surfaces.iter().any(|s| {
-            s.mount.is_root() && s.availability.is_published() && from_site(s)
-        });
+        let published_root = topology
+            .surfaces
+            .iter()
+            .any(|s| s.mount.is_root() && s.availability.is_published() && from_site(s));
         Outside {
             kept: topology
                 .surfaces
@@ -265,7 +331,10 @@ fn page_file(target: &str) -> Option<String> {
         path.strip_prefix(&format!("{PREFIX}/"))?
     };
     let rest = rest.trim_end_matches('/');
-    if rest.split('/').any(|s| s.is_empty() && !rest.is_empty() || s == "." || s == "..") {
+    if rest
+        .split('/')
+        .any(|s| s.is_empty() && !rest.is_empty() || s == "." || s == "..")
+    {
         return None;
     }
     let base = if rest.is_empty() {
@@ -289,6 +358,13 @@ fn page_file(target: &str) -> Option<String> {
         }
         _ => None,
     }
+}
+
+/// The family of a page: its route and the key it is asked with, without the value.
+fn family(target: &str) -> String {
+    let (path, query) = target.split_once('?').unwrap_or((target, ""));
+    let key = query.split('=').next().unwrap_or("");
+    format!("{path}?{key}")
 }
 
 /// One spelling per page, so that two links to one page are one page.
@@ -335,7 +411,11 @@ fn decode(raw: &str) -> String {
     let mut out = Vec::with_capacity(bytes.len());
     let mut i = 0;
     while i < bytes.len() {
-        match (bytes[i], bytes.get(i + 1).copied().and_then(hex), bytes.get(i + 2).copied().and_then(hex)) {
+        match (
+            bytes[i],
+            bytes.get(i + 1).copied().and_then(hex),
+            bytes.get(i + 2).copied().and_then(hex),
+        ) {
             (b'%', Some(hi), Some(lo)) => {
                 out.push(hi * 16 + lo);
                 i += 3;
@@ -415,6 +495,7 @@ fn relink(
     link: &str,
     file: &str,
     written: &BTreeMap<String, String>,
+    held: &BTreeSet<String>,
     outside: &Outside,
     left_out: &mut BTreeSet<String>,
 ) -> String {
@@ -424,7 +505,13 @@ fn relink(
     }
     let fragment = link.find('#').map(|i| &link[i..]).unwrap_or("");
     if let Some(name) = asset_name(link) {
-        return format!("{}assets/{name}", up(file));
+        // an asset the distribution did not have is named nowhere: the page's own fallback
+        // stands (the tables beside a graph), and no link leads to nothing
+        return if held.contains(&name) {
+            format!("{}assets/{name}", up(file))
+        } else {
+            String::new()
+        };
     }
     if page_file(link).is_some() || link == PREFIX || link.starts_with(&format!("{PREFIX}/")) {
         if let Some(target) = written.get(&canonical(link)) {
@@ -437,7 +524,11 @@ fn relink(
     let path = link.split(['?', '#']).next().unwrap_or(link);
     match outside.resolve(path) {
         Some(resolved) => format!("{resolved}{}", &link[path.len()..]),
-        None => format!("{}{LIVE_PAGE}#{}", up(file), link.split('#').next().unwrap_or(link)),
+        None => format!(
+            "{}{LIVE_PAGE}#{}",
+            up(file),
+            link.split('#').next().unwrap_or(link)
+        ),
     }
 }
 
@@ -446,6 +537,7 @@ fn rewrite(
     html: &str,
     file: &str,
     written: &BTreeMap<String, String>,
+    held: &BTreeSet<String>,
     outside: &Outside,
     origin: &Origin,
     left_out: &mut BTreeSet<String>,
@@ -459,13 +551,13 @@ fn rewrite(
             let path = link.split(['?', '#']).next().unwrap_or(&link).to_string();
             format!("{}{LIVE_PAGE}#{path}", up(file))
         } else {
-            relink(&link, file, written, outside, left_out)
+            relink(&link, file, written, held, outside, left_out)
         };
         format!(r#"{name}="{}""#, escape(&target))
     });
     let graphs = graph_href_pattern();
     let page = graphs.replace_all(&page, |c: &regex::Captures<'_>| {
-        let target = relink(&unescape(&c[1]), file, written, outside, left_out);
+        let target = relink(&unescape(&c[1]), file, written, held, outside, left_out);
         format!("&quot;href&quot;:&quot;{}&quot;", escape(&target))
     });
     let page = page.replacen("<body ", &format!("<body {SNAPSHOT_ATTRIBUTE} "), 1);
@@ -523,7 +615,8 @@ fn live_page(frame: Option<&str>, origin: &Origin) -> String {
             origin.revision.as_deref().unwrap_or("an unknown commit"),
             origin.rendered_at
         )));
-    let bare = || crate::cockpit::html::document("The live UI · majordomus ui", Vec::new(), body.clone());
+    let bare =
+        || crate::cockpit::html::document("The live UI · majordomus ui", Vec::new(), body.clone());
     // the frame of the dashboard as the snapshot wrote it, at the root: its <main> is replaced
     let Some(html) = frame else { return bare() };
     let (Some(open), Some(close)) = (html.find("<main"), html.rfind("</main>")) else {
@@ -566,7 +659,10 @@ mod tests {
     fn a_target_is_a_file_when_one_file_can_stand_for_it() {
         assert_eq!(page_file("/ui").as_deref(), Some("index.html"));
         assert_eq!(page_file("/ui/").as_deref(), Some("index.html"));
-        assert_eq!(page_file("/ui/roadmap").as_deref(), Some("roadmap/index.html"));
+        assert_eq!(
+            page_file("/ui/roadmap").as_deref(),
+            Some("roadmap/index.html")
+        );
         assert_eq!(
             page_file("/ui/roadmap?milestone=M001").as_deref(),
             Some("roadmap/_milestone/M001/index.html")
@@ -588,6 +684,8 @@ mod tests {
 
     #[test]
     fn two_values_never_share_a_file() {
+        assert_eq!(family("/ui/prs?issue=I0001"), family("/ui/prs?issue=I0002"));
+        assert_ne!(family("/ui/prs?issue=I0001"), family("/ui/prs?pr=1"));
         assert_ne!(slug("a/b"), slug("a_b"));
         assert_ne!(slug("a b"), slug("a+b"));
         assert_eq!(slug(".hidden"), "_2ehidden");
@@ -609,23 +707,39 @@ mod tests {
         };
         let mut left = BTreeSet::new();
         let file = "governance/index.html";
-        let go = |l: &str, left: &mut BTreeSet<String>| relink(l, file, &written, &outside, left);
+        let held: BTreeSet<String> = ["ui.css".to_string()].into();
+        let go =
+            |l: &str, left: &mut BTreeSet<String>| relink(l, file, &written, &held, &outside, left);
         assert_eq!(go("/ui", &mut left), "../index.html");
         assert_eq!(
             go("/ui/roadmap?milestone=M1#x", &mut left),
             "../roadmap/_milestone/M1/index.html#x"
         );
         assert_eq!(go("/ui/assets/ui.css?v=12", &mut left), "../assets/ui.css");
-        assert_eq!(go("/rustdoc/majordomus_cli/", &mut left), "/rustdoc/majordomus_cli/");
+        assert_eq!(
+            go("/ui/assets/vendor/absent.js", &mut left),
+            "",
+            "not held: named nowhere"
+        );
+        assert_eq!(
+            go("/rustdoc/majordomus_cli/", &mut left),
+            "/rustdoc/majordomus_cli/"
+        );
         assert_eq!(go("/docs/getting-started/", &mut left), "/getting-started/");
         assert_eq!(go("/docs", &mut left), "/");
         assert_eq!(go("/", &mut left), "/");
         assert_eq!(go("/cockpit/x", &mut left), "../live/index.html#/cockpit/x");
-        assert_eq!(go("https://example.org/a", &mut left), "https://example.org/a");
+        assert_eq!(
+            go("https://example.org/a", &mut left),
+            "https://example.org/a"
+        );
         assert_eq!(go("#main", &mut left), "#main");
         assert!(left.is_empty());
         assert_eq!(go("/ui/mesh", &mut left), "../live/index.html#/ui/mesh");
-        assert!(left.contains("/ui/mesh"), "a UI page not written is reported");
+        assert!(
+            left.contains("/ui/mesh"),
+            "a UI page not written is reported"
+        );
     }
 
     #[test]
@@ -643,14 +757,34 @@ mod tests {
         };
         let html = r#"<!doctype html><html><body class="mj-body"><main id="main" class="m"><a href="/ui">d</a><form action="/cockpit/search"></form><div data-graph="{&quot;href&quot;:&quot;/ui&quot;}"></div></main></body></html>"#;
         let mut left = BTreeSet::new();
-        let page = rewrite(html, "index.html", &written, &outside, &origin, &mut left);
-        assert!(page.contains(r#"<body data-snapshot class="mj-body">"#), "{page}");
+        let page = rewrite(
+            html,
+            "index.html",
+            &written,
+            &BTreeSet::new(),
+            &outside,
+            &origin,
+            &mut left,
+        );
+        assert!(
+            page.contains(r#"<body data-snapshot class="mj-body">"#),
+            "{page}"
+        );
         assert!(page.contains(r#"<a href="index.html">d</a>"#), "{page}");
-        assert!(page.contains(r#"action="live/index.html#/cockpit/search""#), "{page}");
-        assert!(page.contains("&quot;href&quot;:&quot;index.html&quot;"), "{page}");
+        assert!(
+            page.contains(r#"action="live/index.html#/cockpit/search""#),
+            "{page}"
+        );
+        assert!(
+            page.contains("&quot;href&quot;:&quot;index.html&quot;"),
+            "{page}"
+        );
         assert!(page.contains("read at commit abc1234"), "{page}");
         let banner_at = page.find("A snapshot").unwrap();
-        assert!(page.find("<main").unwrap() < banner_at, "the banner is inside main");
+        assert!(
+            page.find("<main").unwrap() < banner_at,
+            "the banner is inside main"
+        );
     }
 
     #[test]
@@ -661,9 +795,10 @@ mod tests {
         let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
         let ui = Ui::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
         let root = tempfile::tempdir().unwrap();
-        let topology = crate::web::discover::discover(root.path(), crate::web::discover::Runtime::full())
-            .expect("a topology");
-        let snapshot = render(root.path(), &ui, &topology, 60).expect("a snapshot");
+        let topology =
+            crate::web::discover::discover(root.path(), crate::web::discover::Runtime::full())
+                .expect("a topology");
+        let snapshot = render(root.path(), &ui, &topology, 60, 600).expect("a snapshot");
         for screen in crate::ui::SCREENS {
             assert!(
                 snapshot.pages.contains_key(screen.route),
@@ -672,26 +807,49 @@ mod tests {
             );
         }
         assert!(snapshot.pages.len() <= 60);
+        // no budget at all still writes every screen and panel, and says what stopped it
+        let hurried = render(root.path(), &ui, &topology, 60, 0).expect("a snapshot");
+        assert_eq!(hurried.stopped_by, "budget");
+        assert_eq!(
+            hurried.pages.len(),
+            crate::ui::SCREENS.len() + crate::ui::PANELS.len(),
+            "the screens and panels, and nothing they link to"
+        );
+        let snapshot = render(root.path(), &ui, &topology, 60, 600).expect("a snapshot");
         let dir = &snapshot.dir;
         assert!(dir.join(DECLARATION_FILE).is_file());
         assert!(dir.join(LIVE_PAGE).is_file());
         // every relative link of every page names a file the snapshot holds
-        for file in snapshot.pages.values().chain(std::iter::once(&LIVE_PAGE.to_string())) {
+        for file in snapshot
+            .pages
+            .values()
+            .chain(std::iter::once(&LIVE_PAGE.to_string()))
+        {
             let html = std::fs::read_to_string(dir.join(file)).unwrap();
-            assert!(html.contains(SNAPSHOT_ATTRIBUTE) || file == LIVE_PAGE, "{file}");
+            assert!(
+                html.contains(SNAPSHOT_ATTRIBUTE) || file == LIVE_PAGE,
+                "{file}"
+            );
             for link in links(&html) {
                 let link = unescape(&link);
                 assert!(
                     !link.starts_with("/ui"),
                     "{file} keeps an absolute UI link {link}"
                 );
-                if link.starts_with('/') || link.starts_with('#') || link.contains("://") {
+                if link.is_empty()
+                    || link.starts_with('/')
+                    || link.starts_with('#')
+                    || link.contains("://")
+                {
                     continue;
                 }
                 let path = link.split(['#', '?']).next().unwrap();
                 let base = Path::new(file).parent().unwrap_or(Path::new(""));
                 let target = dir.join(base).join(path);
-                assert!(target.exists(), "{file} links {link}, which is not in the snapshot");
+                assert!(
+                    target.exists(),
+                    "{file} links {link}, which is not in the snapshot"
+                );
             }
         }
         let declared: Declaration =

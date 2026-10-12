@@ -188,6 +188,46 @@ part of the screen answers the same question as the rest of it.
    placeholder with `data-panel-src`.
 4. Lead somewhere: a tile with `kpi_to`, a panel with `panel_to`, a row with a link.
 
+## On the public site: a snapshot
+
+The UI is a projection a running process answers, and the public site is files. So the site
+carries the UI as a **snapshot** at `/ui/` (ADR 0141): the UI's own answers, read once at the
+commit the site publishes, written down.
+
+```sh
+majordomus web report ui-snapshot --limit 20
+```
+
+It writes into `target/web/ui-snapshot`. `--limit` bounds the pages and `--budget-seconds`
+the time spent on the pages the screens link to; the command's own help states the defaults.
+
+The command builds the same UI the server routes to, in-process, and asks it for every screen
+and panel, then for the pages those link to: one page per family in turn (every rule's
+inspector, every claim's, every issue's) until `--limit` pages are written or
+`--budget-seconds` have passed, whichever is first. The screens and panels are written whatever
+they cost. It renders nothing itself. What it changes is only what a file cannot do that a route can:
+
+| In the UI | In the snapshot |
+|---|---|
+| a link to another screen or inspector | a relative link to that page's file; an inspector's query is a directory (`governance/_rule/<id>/`) |
+| a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
+| a link into the served documentation (`/docs/…`) | the same page of the published site |
+| the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
+| "Read at" in the top bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
+
+A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
+recorded forge observation and no running execution, so those panels read `none`, `unknown`
+or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+that, run `majordomus serve` in a checkout and open `/ui`.
+
+The directory declares itself (`surface.json`) as the surface `ui-snapshot`, mounted at `/ui`,
+`published-only`, built from the commit it was read at. A process serves the UI at `/ui` and a
+publication holds the snapshot there, and `majordomus web validate` holds both without a
+collision. `snapshot.json` beside it lists every page written, every page left to the live
+UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
+`test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
+
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is

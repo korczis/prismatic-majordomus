@@ -3150,6 +3150,10 @@ pub enum ReportCommand {
         /// The most pages to write: every screen and panel first, then what they link to
         #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
         limit: usize,
+        /// The most seconds to spend on the pages the screens link to; the screens and
+        /// panels are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
     },
 }
 
@@ -5825,7 +5829,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "web-report-ui-snapshot",
             title: "Read the UI once and write it as the pages a publication carries at /ui",
-            description: "Asks the UI in-process for every screen and panel and, breadth first up to `--limit`, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+            description: "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
             argv: &["web", "report", "ui-snapshot", "--limit", "20"],
             setup: &[],
             expect: Expect::StdoutContains(&["web report", "ui-snapshot"]),

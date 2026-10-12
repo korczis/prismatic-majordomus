@@ -41,6 +41,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus web report tests`](#majordomus-web-report-tests) | `/docs/cli/web/report/tests/` | The test run: the behavioural cases' report, and the crate's own totals |
 | [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks) | `/docs/cli/web/report/benchmarks/` | The benchmark run: a results document, or the accepted baseline |
 | [`majordomus web report ui`](#majordomus-web-report-ui) | `/docs/cli/web/report/ui/` | The UI conformance audit, rendered as a section of the test surface (/tests/ui) |
+| [`majordomus web report ui-snapshot`](#majordomus-web-report-ui-snapshot) | `/docs/cli/web/report/ui-snapshot/` | The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141) |
 | [`majordomus web compose`](#majordomus-web-compose) | `/docs/cli/web/compose/` | Compose every published surface into one publishable tree |
 | [`majordomus why`](#majordomus-why) | `/docs/cli/why/` | The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation |
 | [`majordomus why list`](#majordomus-why-list) | `/docs/cli/why/list/` | Every operational moment, narrowed by any facet the catalogue reports |
@@ -947,7 +948,7 @@ Examples:
 
 Render a generated report into its own surface under the generated web root
 
-Subcommands: [`majordomus web report tests`](#majordomus-web-report-tests), [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks), [`majordomus web report ui`](#majordomus-web-report-ui).
+Subcommands: [`majordomus web report tests`](#majordomus-web-report-tests), [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks), [`majordomus web report ui`](#majordomus-web-report-ui), [`majordomus web report ui-snapshot`](#majordomus-web-report-ui-snapshot).
 
 ```text
 majordomus web report [OPTIONS] <COMMAND>
@@ -1053,6 +1054,37 @@ Examples:
   ```
 
   Verified: exits 13.
+
+<a id="majordomus-web-report-ui-snapshot"></a>
+## `majordomus web report ui-snapshot`
+
+The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)
+
+```text
+majordomus web report ui-snapshot [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--limit` | `<LIMIT>` | `240` | The most pages to write: every screen and panel first, then what they link to |
+| `--budget-seconds` | `<BUDGET_SECONDS>` | `180` | The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--only` | `<ONLY>` | — | Only these surfaces, by discovered id (repeat or separate with commas) (accepted by every subcommand) |
+| `--exclude` | `<EXCLUDE>` | — | Every surface except these, by discovered id (accepted by every subcommand) |
+
+Examples:
+
+- **Read the UI once and write it as the pages a publication carries at /ui** — Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.
+
+  ```console
+  $ majordomus web report ui-snapshot --limit 20
+  ```
+
+  Verified: exits 0; prints web report, ui-snapshot.
 
 <a id="majordomus-web-compose"></a>
 ## `majordomus web compose`

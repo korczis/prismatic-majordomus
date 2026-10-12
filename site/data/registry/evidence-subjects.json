@@ -3219,6 +3219,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:web report ui-snapshot",
+      "path": "/evidence/commands/web-report-ui-snapshot/"
+    },
+    {
+      "kind": "command",
       "subject": "command:web report ui",
       "path": "/evidence/commands/web-report-ui/"
     },
@@ -17250,6 +17255,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:web report ui-snapshot": {
+      "kind": "command",
+      "id": "web report ui-snapshot",
+      "page": "/evidence/commands/web-report-ui-snapshot/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:web validate": {
       "kind": "command",
       "id": "web validate",
@@ -26479,6 +26503,8 @@
     "suite:1082_a_claim_opens_its_proof",
     "suite:1083_a_rule_opens_its_proof",
     "suite:1086_a_remote_caller_cannot_write",
+    "suite:1092_the_ui_snapshot_holds_every_screen",
+    "suite:1093_the_ui_snapshot_links_nothing_absent",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
     "suite:114_two_worktrees_one_repository",

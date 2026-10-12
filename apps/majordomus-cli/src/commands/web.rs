@@ -92,7 +92,10 @@ pub fn run(args: WebArgs) -> Result<u8> {
                     let run = crate::web::report::ui::read(&from)?;
                     crate::web::report::ui::render(&root, &run)?
                 }
-                ReportCommand::UiSnapshot { limit } => {
+                ReportCommand::UiSnapshot {
+                    limit,
+                    budget_seconds,
+                } => {
                     // the UI reads the repository through the index, which the other reports
                     // do not need: it is loaded for this one alone
                     let app = crate::app::App::load(&args.repo)?;
@@ -101,14 +104,20 @@ pub fn run(args: WebArgs) -> Result<u8> {
                         crate::VERSION,
                         Some(app.share.dir()),
                     );
-                    let snapshot =
-                        crate::web::report::snapshot::render(&root, &ui, &topology, limit)?;
+                    let snapshot = crate::web::report::snapshot::render(
+                        &root,
+                        &ui,
+                        &topology,
+                        limit,
+                        budget_seconds,
+                    )?;
                     writeln!(
                         out,
-                        "web report: {} page(s), {} asset(s), {} page(s) left to the live UI, read at {}",
+                        "web report: {} page(s), {} asset(s), {} page(s) left to the live UI (stopped by {}), read at {}",
                         snapshot.pages.len(),
                         snapshot.assets.len(),
                         snapshot.left_out.len(),
+                        snapshot.stopped_by,
                         snapshot.origin.revision.as_deref().unwrap_or("an unknown commit")
                     )
                     .map_err(Error::Transport)?;

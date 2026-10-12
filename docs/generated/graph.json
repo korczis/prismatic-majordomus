@@ -3191,6 +3191,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/mod.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/web/discover.rs",
         "kind": "file",
         "label": "discover.rs",
@@ -3212,6 +3220,14 @@
         "label": "model.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/web/model.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+        "kind": "file",
+        "label": "snapshot.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/web/report/snapshot.rs",
         "external": true
       },
       {
@@ -6829,6 +6845,35 @@
             "operations",
             "worktrees",
             "disk"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0141",
+        "kind": "adr",
+        "label": "adr-0141",
+        "summary": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "route": "/cockpit/objects/adr/adr-0141",
+        "source": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md",
+            "file:.ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
+            "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+            "file:apps/majordomus-cli/src/ui/mod.rs",
+            "file:docs/MAJORDOMUS_UI.md",
+            "file:docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "file:test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            "file:test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "pages"
           ]
         }
       },
@@ -33664,6 +33709,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I2483",
+        "kind": "issue",
+        "label": "I2483",
+        "summary": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+        "route": "/cockpit/objects/issue/i2483",
+        "source": ".ai/repo/project/issues/I2483.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "the snapshot holds every screen its own navigation names, and a second run with a smaller bound leaves no page of the first",
+            "no page keeps an absolute link under /ui, and every relative link names a file the snapshot holds",
+            "a link to the Cockpit, the API or a form leads to the page about the live UI, carrying the path it meant",
+            "every page says the commit it was read at, and the script fetches no panel and refreshes nothing in a snapshot",
+            "the declaration is a published-only surface at /ui built from this commit, and the topology validates with it beside the served UI",
+            "the Pages deploy places the snapshot of the commit it publishes at /ui and refuses one of another commit"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_snapshot_unit_tests",
+            "ui_snapshot_case_1092",
+            "ui_snapshot_case_1093",
+            "ui_snapshot_on_pages"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "apps/majordomus-cli/src/web/report/mod.rs",
+            "apps/majordomus-cli/src/commands/web.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/ui/ui.js",
+            ".github/workflows/pages.yml",
+            ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            ".ai/repo/project/issues/I2483.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+          ],
+          "slug": "the-ui-is-published-as-a-snapshot",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib web::report::snapshot",
+            "test/run.sh 1092_the_ui_snapshot_holds_every_screen",
+            "test/run.sh 1093_the_ui_snapshot_links_nothing_absent",
+            "test/run.sh 97_pages_fast_path",
+            "test/run.sh 26_ci_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -47102,6 +47202,20 @@
         "source": "test/cases/108b_scope_after_trunk_fast_forward.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "test",
+        "label": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "route": "/cockpit/objects/test/test-cases-1092-the-ui-snapshot-holds-every-screen-sh",
+        "source": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "test",
+        "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "route": "/cockpit/objects/test/test-cases-1093-the-ui-snapshot-links-nothing-absent-sh",
+        "source": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "label": "test/cases/109_design_system.sh",
@@ -59351,6 +59465,56 @@
         "source": "majordomus://adr/adr-0139",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0022",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0086",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -72093,6 +72257,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2483",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2483",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2483",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -75479,6 +75658,16 @@
       },
       {
         "source": "majordomus://test/test/cases/108b_scope_after_trunk_fast_forward.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -81189,8 +81378,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2652,
-      "edges": 5794,
+      "nodes": 2658,
+      "edges": 5809,
       "acyclic": false,
       "truncated": false
     }

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 95,
+      "count": 96,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 95
+      "count": 96
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 327
+      "count": 328
     },
     {
       "kind": "knowledge",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 446
+      "count": 448
     },
     {
       "kind": "use-case",
@@ -1262,6 +1262,13 @@
           "label": "adr-0135",
           "kind": "adr",
           "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
           "external": false
         }
       ]
@@ -5033,7 +5040,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7101,7 +7116,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7252,6 +7275,88 @@
       ],
       "source": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0141",
+      "identity": "adr-0141",
+      "slug": "adr-0141",
+      "cockpit": "/cockpit/objects/adr/adr-0141",
+      "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "pages"
+      ],
+      "source": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/web/report/snapshot.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0022",
+          "kind": "adr",
+          "route": "/adrs/adr-0022/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
