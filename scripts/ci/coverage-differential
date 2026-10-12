@@ -21,7 +21,10 @@
 #
 #   default            the merge-base of HEAD and origin/master — the change this branch is,
 #                      working tree included, so an uncommitted edit is held like a commit
-#   MJ_COVERAGE_BASE   overrides it (CI passes the PR base; a case passes a fixture commit)
+#   MJ_COVERAGE_BASE   overrides it (a case passes a fixture commit). CI passes nothing: a
+#                      pull request's base branch is the trunk's merge-base only when the
+#                      pull request merges into the trunk, and a link stacked on another
+#                      pull request's branch measured against it holds its own delta only
 #   $1                 overrides both
 #
 # FIVE OUTCOMES, never conflated (§13).

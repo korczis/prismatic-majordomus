@@ -189,3 +189,68 @@ expect_exit 0 cov7 "$BASE7"
 printf 'pub fn demo() {}\n\nmod tests;\n' > "$W7/apps/majordomus-cli/src/demo/mod.rs"
 expect_exit 10 cov7 "$BASE7"
 expect_grep "$REL7:6"
+
+# ------------------------------- 9. a stacked link is judged for the whole stack beneath it
+#
+# A pull request stacked on another pull request's branch has that branch as its base. Its CI
+# checkout is the merge of its head into that branch, whose first parent is the lower link's
+# tip, so diffing against the pull request's base holds the link's own delta only. Seventeen
+# links passed one by one that way and their top then showed 2615 uncovered changed items
+# against master (#963). The gate's default base is the merge-base of HEAD with origin/master,
+# and CI passes no other: the stack's uncovered line, written by the lower link, is owed by the
+# upper one. Without origin/master there is no merge-base, and that is UNKNOWN, never a pass.
+W9="$T/repo9"
+mkdir -p "$W9/$(dirname "$REL")" "$W9/scripts/ci"
+git -C "$W9" init -q; git -C "$W9" config user.email t@example.com; git -C "$W9" config user.name t
+cp "$FX_SRC" "$W9/$REL"
+cp "$ROOT/scripts/rust-coverage" "$W9/scripts/rust-coverage"; chmod +x "$W9/scripts/rust-coverage"
+cp "$ROOT/scripts/ci/coverage-differential" "$W9/scripts/ci/coverage-differential"; chmod +x "$W9/scripts/ci/coverage-differential"
+git -C "$W9" add -A >/dev/null; git -C "$W9" commit -qm trunk
+git -C "$W9" update-ref refs/remotes/origin/master HEAD
+FX9="$T/export9.json"
+W="$W9" REL="$REL" python3 - "$FX_EXP" "$FX9" <<'PY'
+import json, os, sys
+data = json.load(open(sys.argv[1]))
+target = os.path.join(os.environ["W"], os.environ["REL"])
+for f in data["data"][0].get("files", []):
+    if f["filename"] == "SAMPLE_ABS":
+        f["filename"] = target
+for fn in data["data"][0].get("functions", []):
+    fn["filenames"] = [target if n == "SAMPLE_ABS" else n for n in fn.get("filenames", [])]
+json.dump(data, open(sys.argv[2], "w"))
+PY
+# CI's environment carries no base, so the case does not either
+cov9() { ( cd "$W9" && unset MJ_COVERAGE_BASE && MJ_ROOT="$W9" MJ_COVERAGE_EXPORT="$FX9" scripts/ci/coverage-differential ${1:+"$1"} ); }
+# the lower link touches the uncovered line 6; the upper link touches no crate source
+git -C "$W9" checkout -qb link1
+python3 - "$W9/$REL" <<'PY'
+import sys
+path = sys.argv[1]
+lines = open(path).read().splitlines(keepends=True)
+lines[5] = lines[5].rstrip("\n") + "  // touched by 132\n"
+open(path, "w").writelines(lines)
+PY
+git -C "$W9" commit -qam "link1: an uncovered line"
+git -C "$W9" checkout -qb link2
+echo "# a note appended by 132" > "$W9/NOTE.md"
+git -C "$W9" add NOTE.md >/dev/null; git -C "$W9" commit -qm "link2: no crate source"
+# the merge commit CI checks out for link2's pull request into link1
+git -C "$W9" checkout -q --detach link1
+git -C "$W9" merge -q --no-ff -m "merge link2 into link1" link2
+# against the pull request's base (HEAD^1) the link owes nothing: the shape that hid the debt
+expect_exit 0 cov9 "$(git -C "$W9" rev-parse HEAD^1)"
+# against the trunk's merge-base, the default and what CI uses, the stack's line is owed
+expect_exit 10 cov9
+expect_grep "$REL:6"
+# no trunk to find a merge-base with is UNKNOWN, not a pass
+git -C "$W9" update-ref -d refs/remotes/origin/master
+expect_exit 13 cov9
+expect_grep "no merge-base with origin/master"
+# and the coverage job hands the gate no base of its own, from a full-history checkout
+WF="$ROOT/.github/workflows/validate.yml"
+cov_job="$(awk '/^  coverage:/{f=1; next} /^  [a-z][a-z_-]*:$/{f=0} f' "$WF")"
+[ -n "$cov_job" ] || { echo "    validate.yml has no coverage job"; exit 1; }
+printf '%s\n' "$cov_job" | grep -qE '^ +MJ_COVERAGE_BASE:' \
+  && { echo "    the coverage job passes MJ_COVERAGE_BASE again; a stacked link would be measured against its own base"; exit 1; }
+printf '%s\n' "$cov_job" | grep -qE '^ +fetch-depth: 0$' \
+  || { echo "    the coverage job's checkout is not full-history, so origin/master and its merge-base are absent"; exit 1; }

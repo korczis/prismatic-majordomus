@@ -75,8 +75,10 @@ concurrency:
 jobs:
   # ------------------------------------------------------------------ plan
   # What this change can affect, from the model: a pull request is planned from its diff
-  # against the base it will merge into (HEAD^1 of the merge commit); everything else, and a
-  # pull request labelled ci:full, runs the full plan. The plan is the artifact ci-plan.
+  # against the point it leaves the trunk — HEAD^1 of the merge commit when it merges into
+  # the trunk, the merge-base with the trunk when it is stacked on another pull request's
+  # branch; everything else, and a pull request labelled ci:full, runs the full plan. The
+  # plan is the artifact ci-plan.
   plan:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -116,7 +118,33 @@ jobs:
           REF: ${{ github.ref_name }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
           PLAN_AS: ${{ github.event.inputs.plan }}
+          # the branch a pull request merges into, and the trunk every pull request reaches
+          BASE_REF: ${{ github.base_ref }}
+          TRUNK: ${{ github.event.repository.default_branch }}
         run: |
+          # A pull request is planned against the point its change leaves the trunk, never
+          # against the branch it is stacked on. Merging into the trunk, that point is HEAD^1,
+          # the trunk commit GitHub merged it into, and the two commits checked out suffice.
+          # A link of a stacked train merges into another pull request's branch, where HEAD^1
+          # holds the link's own delta only: seventeen links planned and passed one by one,
+          # and their top then showed 2615 uncovered changed items against master (#963). Such
+          # a link fetches the trunk's history and plans from the merge-base, so every link is
+          # planned for the whole stack beneath it.
+          PR_BASE=HEAD^1
+          if [ "$EVENT" = pull_request ] && [ "$BASE_REF" != "$TRUNK" ]; then
+            deepen=""
+            [ "$(git rev-parse --is-shallow-repository)" = true ] && deepen=--unshallow
+            # each refusal is named and is this step's own, whatever shell options it runs under
+            git fetch --quiet --no-tags ${deepen:+"$deepen"} origin "+refs/heads/$TRUNK:refs/remotes/origin/$TRUNK" || {
+              echo "::error::origin/$TRUNK could not be fetched; a pull request stacked on $BASE_REF cannot be planned against the trunk"
+              exit 12
+            }
+            PR_BASE="$(git merge-base "origin/$TRUNK" HEAD)" || {
+              echo "::error::HEAD has no merge-base with origin/$TRUNK; a pull request stacked on $BASE_REF cannot be planned against the trunk"
+              exit 12
+            }
+            echo "stacked on $BASE_REF: planned from the merge-base with $TRUNK, $PR_BASE"
+          fi
           # --on-demand asks for the gates the model marks on-demand — the macOS ones, whose
           # runners this repository waits hours for. The schedule, a dispatch and a pull
           # request labelled ci:full ask; a routine push does not, so that the verdict below
@@ -125,7 +153,7 @@ jobs:
             pull_request)
               case ",$LABELS," in
                 *,ci:full,*) scripts/ci-plan --full "pull request labelled ci:full" --on-demand > plan.json ;;
-                *) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;
+                *) scripts/ci-plan --base "$PR_BASE" --head HEAD > plan.json ;;
               esac ;;
             schedule) scripts/ci-plan --full "$EVENT on $REF" --on-demand > plan.json ;;
             workflow_dispatch)
@@ -618,11 +646,15 @@ jobs:
       # answer, and the differential's cannot hide the floor's.
       - id: measure
         run: ../../scripts/rust-coverage --report --export ../../coverage.json
+      # No MJ_COVERAGE_BASE: the gate's own base, the merge-base of HEAD with origin/master,
+      # is the one every run needs, and the full-history checkout above carries origin/master.
+      # The pull request's base sha was the base only for a pull request into the trunk; for a
+      # link stacked on another pull request's branch it measured that link's own delta, and
+      # seventeen links passed one by one over 2615 uncovered changed items (#963).
       - id: differential
         if: needs.plan.outputs.coverage_differential == 'true'
         env:
           MJ_COVERAGE_EXPORT: ${{ github.workspace }}/coverage.json
-          MJ_COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
         run: ../../scripts/ci/coverage-differential
       - id: floor
         if: ${{ !cancelled() && needs.plan.outputs.rust_coverage == 'true' }}

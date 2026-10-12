@@ -245,7 +245,7 @@ if [ -n "$ondemand" ]; then
     && { echo "    the default arm of validate.yml asks for the on-demand gates, so a push would wait for their runners"; exit 1; }
   grep -qE 'ci-plan --full "pull request labelled ci:full" --on-demand' "$W" \
     || { echo "    the ci:full label does not ask for the on-demand gates, so a reviewer cannot request them"; exit 1; }
-  grep -qE 'ci-plan --base HEAD\^1 --head HEAD.*--on-demand' "$W" \
+  grep -qE 'ci-plan --base [^ ]+ --head HEAD.*--on-demand' "$W" \
     && { echo "    an ordinary pull request asks for the on-demand gates; its verdict would queue behind them"; exit 1; }
   grep -qE '\*\) scripts/ci-plan --full "\$EVENT on \$REF" > plan\.json ;;' "$W" \
     || { echo "    a push does not plan without the on-demand gates; the verdict it needs would never arrive"; exit 1; }

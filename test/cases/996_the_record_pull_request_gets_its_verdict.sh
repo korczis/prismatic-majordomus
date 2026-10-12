@@ -64,8 +64,17 @@ n="$(grep -cF '${{ github.event.inputs.plan }}' "$VL")"
 awk '/workflow_dispatch\)/{f=1} f{print} f && /esac ;;/{exit}' "$VL" > "$T/arm.txt"
 grep -qF "change) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;" "$T/arm.txt" \
   || { echo "    plan=change is not planned as a pull request is"; cat "$T/arm.txt"; exit 1; }
-pr="$(grep -F '*) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;' "$VL" | head -n 1)"
-[ -n "$pr" ] || { echo "    a pull request is no longer planned from HEAD^1 to HEAD, so 'as a pull request' names nothing"; exit 1; }
+# A pull request is planned from PR_BASE, which is HEAD^1 unless the pull request is stacked on
+# a branch other than the trunk. The record's pull request is opened against the default branch
+# (release.yml, gh pr create --base), so its own run would plan from HEAD^1, as `change` does.
+pr="$(grep -F '*) scripts/ci-plan --base "$PR_BASE" --head HEAD > plan.json ;;' "$VL" | head -n 1)"
+[ -n "$pr" ] || { echo "    a pull request is no longer planned from PR_BASE to HEAD, so 'as a pull request' names nothing"; exit 1; }
+grep -qE '^[[:space:]]*PR_BASE=HEAD\^1$' "$VL" \
+  || { echo "    PR_BASE does not default to HEAD^1, so a pull request into the trunk is not planned as change is"; exit 1; }
+grep -qF 'if [ "$EVENT" = pull_request ] && [ "$BASE_REF" != "$TRUNK" ]; then' "$VL" \
+  || { echo "    PR_BASE is moved off HEAD^1 for something other than a pull request stacked off the trunk"; exit 1; }
+grep -qF 'gh pr create --base "${{ github.event.repository.default_branch }}"' "$RL" \
+  || { echo "    the record's pull request is no longer opened against the trunk, so its plan is not HEAD^1's"; exit 1; }
 grep -qE "^[[:space:]]*''\) scripts/ci-plan --full .* --on-demand > plan.json ;;" "$T/arm.txt" \
   || { echo "    an empty input no longer plans every gate with the on-demand ones"; cat "$T/arm.txt"; exit 1; }
 grep -qE '^[[:space:]]*\*\) echo "::error::.*"; exit 2 ;;' "$T/arm.txt" \
