@@ -62,7 +62,8 @@ pub fn tasks_artifact(env: &EditorEnvironment, version: &str) -> Option<Artifact
             task
         })
         .collect();
-    let body = serde_json::to_string_pretty(&Value::Array(tasks)).ok()?;
+    // `{:#}` is serde_json's pretty form of a value, and a value cannot fail to print
+    let body = format!("{:#}", Value::Array(tasks));
     Some(Artifact::verbatim(
         TASKS,
         format!("{DOCUMENT_PREFIX}zed-tasks"),
@@ -193,5 +194,44 @@ mod tests {
         std::fs::write(dir.path().join(".cursorrules"), "x").unwrap();
         let found = instruction_findings(dir.path());
         assert_eq!(found[0].path.as_deref(), Some(".cursorrules"));
+    }
+
+    #[test]
+    fn the_adapter_says_unknown_when_the_justfile_could_not_be_read() {
+        let unread = EditorEnvironment {
+            workflows_resolved: Some(false),
+            ..Default::default()
+        };
+        let tasks = |env: &EditorEnvironment| {
+            adapter(env)
+                .capabilities
+                .into_iter()
+                .find(|c| c.id == "tasks")
+                .unwrap()
+        };
+        assert_eq!(tasks(&unread).support, EditorSupport::Unknown);
+        assert!(tasks(&unread).artifacts.is_empty());
+
+        let read = EditorEnvironment {
+            workflows_resolved: Some(true),
+            tasks: vec![TaskRef {
+                recipe: "loose".into(),
+                group: None,
+                group_rank: usize::MAX,
+            }],
+            skills: vec![crate::editors::SkillRef {
+                id: "ok".into(),
+                title: "Ok".into(),
+                description: "d".into(),
+                path: ".ai/repo/skills/ok/SKILL.md".into(),
+                sha256: String::new(),
+            }],
+            ..Default::default()
+        };
+        assert_eq!(tasks(&read).support, EditorSupport::Supported);
+        assert_eq!(tasks(&read).artifacts, [TASKS]);
+        // a recipe in no group carries no tag
+        let a = tasks_artifact(&read, "0.0.0").unwrap();
+        assert!(!a.content.contains("\"tags\""), "{}", a.content);
     }
 }
