@@ -526,9 +526,7 @@ mod tests {
             }
         }
         let build = stage(&file, "build");
-        assert!(build
-            .iter()
-            .any(|l| *l == "COPY apps/majordomus-cli ./apps/majordomus-cli"));
+        assert!(build.contains(&"COPY apps/majordomus-cli ./apps/majordomus-cli"));
         assert!(build
             .iter()
             .any(|l| *l == format!("ARG {COMMIT_ARG}=unknown")));
