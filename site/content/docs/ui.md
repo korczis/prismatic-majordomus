@@ -230,6 +230,10 @@ source to fix:
   order — and *which* elements scroll is read from the stylesheet the build just compiled, so
   a theme that stops making `<pre>` scroll stops the pass touching it;
 - a markdown task list's checkbox is given the accessible name of the text beside it;
+- a Markdown table's column alignment (`---:`), which the renderer writes as an inline
+  `style`, is drawn with a class instead — the content policy refuses every inline style, and
+  one right-aligned column in one decision record stopped three publications on 2026-10-12;
+  any other inline style is left for `scripts/site-check` to refuse by name;
 - the generated highlighting palettes are raised to a 4.5:1 contrast ratio against the
   background the same stylesheet declares, keeping hue and saturation and giving up only as
   much lightness as the threshold demands.

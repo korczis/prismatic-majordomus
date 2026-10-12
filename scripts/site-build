@@ -340,7 +340,7 @@ const pages = [];
     else if (entry.name.endsWith(".html")) pages.push(path);
   }
 })("'"$PUBLIC"'");
-let touched = 0, elements = 0, named = 0;
+let touched = 0, elements = 0, named = 0, aligned = 0;
 for (const page of pages) {
   const before = readFileSync(page, "utf8");
   let result;
@@ -350,11 +350,11 @@ for (const page of pages) {
     console.error(`site-build: ${page}: ${error.message}`);
     process.exit(10);
   }
-  if (!result.scrolling && !result.named) continue;
+  if (!result.scrolling && !result.named && !result.aligned) continue;
   writeFileSync(page, result.text);
-  touched += 1; elements += result.scrolling; named += result.named;
+  touched += 1; elements += result.scrolling; named += result.named; aligned += result.aligned;
 }
-console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
+console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, ${aligned} table cell(s) aligned by class instead of inline style, over ${touched} page(s)`);
 '
 fi
 # the site's own routes, counted before another surface's pages join them
