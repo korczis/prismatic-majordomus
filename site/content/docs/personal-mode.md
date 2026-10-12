@@ -1,9 +1,9 @@
 +++
-title = "Using Majordomus without leaving anything in git"
-description = "using the tool without leaving anything in git: who it is for, why it is legitimate, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured"
+title = "Personal mode: Majordomus as one person's instrument"
+description = "personal mode, the tool as one person's instrument with nothing left in git: who it is for, why it is ordinary practice, the measured way from personal to shared, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured"
 weight = 33
 [extra]
-source = "docs/STEALTH.md"
+source = "docs/PERSONAL_MODE.md"
 +++
 
 {% raw %}
@@ -12,10 +12,16 @@ Majordomus is built to be committed: the `.ai/repo/` half of the layer travels w
 repository so that every clone and every worker reads the same rules. Sometimes that is not
 yours to decide. You work in a repository a team owns, you want your own tasks to have a
 scope and a finish contract, you want a briefing at the start of a session and the UI over
-your own records, and you do not want a commit, a line of `.gitignore` or a new file in the
-tree to tell anybody about it.
+your own records, and the team's tree is not yours to add a commit, a line of `.gitignore`
+or a new file to.
 
-There is no switch for this. It is assembled from three things git and Majordomus already
+Personal mode is the name for that arrangement: the layer lives beside the code, in your
+clone only, and the repository stays byte for byte what the team committed. Organisations
+have had a word for the hardware version of this for years: bring your own device. This is
+the same bargain one level up, bring your own discipline. The habits and the tool are
+yours, the repository and its rules are the organisation's, and neither changes the other.
+
+There is no switch for this yet. It is assembled from three things git and Majordomus already
 do: git's per-clone exclude file, a policy that is now private and can say what you need,
 and discovery that walks the work tree instead of asking the index. This page is a
 measurement, taken on 2026-10-12 in a scratch repository (one `git init`, a README, one
@@ -50,9 +56,31 @@ board where colleagues see each other, a plan several people work from and evide
 records all need the committed adoption in [`ADOPTION.md`](@/docs/adoption.md). This arrangement
 is one person's instrument.
 
-## Is this legitimate
+## Three ways to run it
 
-Yes, and it uses each mechanism for what it was made for.
+<div class="overflow-x-auto" tabindex="0">
+
+| | Personal mode | Committed adoption | Committed, with the mesh |
+|---|---|---|---|
+| where the layer lives | this clone, excluded from git | `.ai/repo/` in the repository | the same, with runtimes linked across machines |
+| who reads the rules | you and your AI client | every clone and every worker | every machine |
+| who has to agree | nobody, because nothing changes for anybody | the team, by reviewing a pull request | the team, and whoever owns the machines |
+| what refuses a change | your own `pre-push` hook | the hooks and the CI gates | the same |
+| the peer board | your own sessions | every worker of the repository | every machine's workers |
+| backup | yours to make | git | git |
+| leaving | deleting a directory | a pull request | a pull request |
+
+</div>
+
+
+The columns are a path as much as a choice. Personal mode is where one person finds out
+whether the lifecycle is worth having; [From personal to shared](#from-personal-to-shared)
+is the measured way from the first column to the second, and [`MESH.md`](@/docs/mesh.md) is the
+third.
+
+## Why this is ordinary practice
+
+It uses each mechanism for what it was made for.
 
 - **`.git/info/exclude`** is git's own answer to "patterns specific to one person's
   workflow that should not be shared". It is the documented alternative to `.gitignore`
@@ -71,10 +99,10 @@ the machine: Majordomus calls no model and sends nothing anywhere.
 Three things the arrangement does not change, and that you still owe:
 
 - **The organisation's tool policy.** Where it decides which tools may read a repository,
-  that covers a tool nobody else can see. Private is not the same as permitted.
+  that covers a tool that lives only in your clone. Private is not the same as permitted.
 - **The AI client's data policy.** The layer is local; the client that reads it may not be.
   If AI tools are not allowed on this code, this does not make them allowed.
-- **Honesty about your work.** The arrangement hides a tool, not a change. If a colleague
+- **Honesty about your work.** What stays local is a tool, never a change. If a colleague
   asks how you keep your tasks straight, the answer is one sentence, and when it has proved
   itself the next step is to propose the committed adoption.
 
@@ -87,9 +115,8 @@ rm -rf .ai CLAUDE.local.md .git/hooks/pre-push
 git status --short --ignored
 ```
 
-Then delete the lines you added to `.git/info/exclude`. To go the other way and share the
-layer, delete those lines instead, restore the projections in the policy, and commit
-`.ai/repo/` as [`ADOPTION.md`](@/docs/adoption.md) describes; `.ai/local/` stays ignored.
+Then delete the lines you added to `.git/info/exclude`. The other way out, sharing the
+layer, is [From personal to shared](#from-personal-to-shared).
 
 ## Where everything ends up
 
@@ -264,17 +291,76 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 - **Two rows of the table above were not run.** The session hooks of Claude Code and an MCP
   registration outside the repository are described from how they are built, not from a run.
 
-## What gives it away
+## From personal to shared
+
+Personal mode has done its job when you can show what it gave you. The proposal to a team
+is then a pull request and a set of records, not an opinion: the tasks you ran with a
+scope, the handovers a session started from, the times `finish` refused. The conversion was
+measured on 2026-10-12 in a scratch repository whose layer still carried the seeded policy.
+
+Delete the two lines you added to `.git/info/exclude`. `git status --short` then shows the
+layer as one untracked directory. After that:
+
+<!-- majordomus:unrun these lines write .gitignore and the instruction files of the repository being converted; they were run by hand in a scratch repository on 2026-10-12 -->
+```sh
+majordomus init --extend
+majordomus update
+majordomus doctor
+```
+
+What each did there:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Step | Measured result |
+|---|---|
+| removing the exclude lines | `git status --short` shows `?? .ai/` and nothing else |
+| `init --extend` | adds `.ai/local/` and `.ai/repo/**/.tmp.*` back to `.gitignore`, and nothing else |
+| `git add -A -n` | names 96 paths under `.ai/` and `.gitignore`; none of them is under `.ai/local/` |
+| `update` | with the seeded policy, creates `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` |
+| `doctor` | two failures, both wiring: the `pre-commit` and `pre-push` hooks it names are not installed |
+
+</div>
+
+
+A policy you narrowed for personal mode does not widen itself. Before `update`, return its
+`projections` and `enforcement` blocks to what the team wants, starting from
+[`share/skeleton/policy.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/skeleton/policy.yaml); that edit was not part of
+the measurement. Your own records under `.ai/local/` stay local in every arrangement. From
+here the path is [`ADOPTION.md`](@/docs/adoption.md).
+
+## How to say it
+
+Nothing about personal mode needs a careful answer. What each asker needs is short and is
+decided somewhere that can be read.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Who asks | What is true | Where it is decided |
+|---|---|---|
+| a colleague | my tasks, their scope and my handovers are in a local directory git ignores; nothing of it is in the repository | `git status --short --ignored` in my clone |
+| a team lead | the repository, its review and its CI are exactly what they were; if it proves useful I will propose it as a pull request | [From personal to shared](#from-personal-to-shared) |
+| security | the tool performs no network call and calls no model; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](@/guarantees/no-network.md), [`no-network-no-eval`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| an architect | the same lifecycle the committed adoption runs, with a private policy; no rule of the team's is restated or overridden | [`ADOPTION.md`](@/docs/adoption.md) |
+| whoever owns tooling policy | it is a local tool in the category of an editor configuration, and it stays subject to the policy on which tools may read this code | the organisation's policy, which this does not change |
+
+</div>
+
+
+## What stays visible
+
+Personal is not hidden. These are the places where the arrangement shows, and each is worth
+knowing before a screen is shared.
 
 - `git add -f` adds an excluded path. Read `git status` before a commit.
 - Commit trailers, the shape of commit messages and branch names are visible to everybody.
 - The banner drawn on entering the directory is visible on a shared screen;
   `MAJORDOMUS_BANNER=off` turns it off.
-- `git check-ignore -v .ai/manifest.yaml` names the line of `.git/info/exclude` that hides
-  the layer, and `git status --ignored` lists everything hidden.
+- `git check-ignore -v .ai/manifest.yaml` names the line of `.git/info/exclude` that excludes
+  the layer, and `git status --ignored` lists everything excluded.
 
 Private is not the same as permitted. Where an organisation decides which tools may read a
-repository, that decision covers a tool nobody else can see. Majordomus sends nothing
+repository, that decision covers a tool that lives only in your clone. Majordomus sends nothing
 anywhere and calls no model; the AI client using it does.
 
 ## Related
