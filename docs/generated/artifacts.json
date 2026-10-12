@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/generated-artifacts/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.21.0",
+  "generator": "majordomus-cli 0.22.0",
   "documents": [
     {
       "id": "allow/adr",
@@ -344,6 +344,20 @@
       ]
     },
     {
+      "id": "editors/skill",
+      "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "editors/zed-tasks",
+      "source": "the recipes of the tracked justfile and .just/*.just",
+      "formats": [
+        "json"
+      ]
+    },
+    {
       "id": "graph",
       "schema": "majordomus/capability-graph/v1",
       "source": "the composed graph of the registry and the index",
@@ -480,6 +494,13 @@
     {
       "id": "modules/economics",
       "source": "the `economics` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/editors",
+      "source": "the `editors` module of the canonical Majordomus capability registry",
       "formats": [
         "markdown"
       ]
@@ -1165,6 +1186,62 @@
   ],
   "artifacts": [
     {
+      "path": ".agents/skills/assess-before-deleting/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
+      "bytes": 964,
+      "sha256": "8c550ea66bdbb8ea68e31503163b06abb47db98f33d91e5565a540e1389a2bdd"
+    },
+    {
+      "path": ".agents/skills/deploy-site/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/deploy-site/SKILL.md",
+      "bytes": 865,
+      "sha256": "6636e7a3598bdfc7345d224f07c7376ba778dc90a64155ed16ecb30e37016f6c"
+    },
+    {
+      "path": ".agents/skills/implement/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/implement/SKILL.md",
+      "bytes": 875,
+      "sha256": "d83964f274d25fd7d6a1433e3819c975d01b023401cd5e1957ac746515dbea98"
+    },
+    {
+      "path": ".agents/skills/pack-for-chatgpt/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
+      "bytes": 1000,
+      "sha256": "438d9259df9452abb8f90bce7bdeccb2140c0e4660f32f15d639be0ad6f9c791"
+    },
+    {
+      "path": ".agents/skills/pack-for-review/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/pack-for-review/SKILL.md",
+      "bytes": 975,
+      "sha256": "d23d164ee369cecf8d67f900174672e150094d5f67bc5fb064fdd4908b05e3ca"
+    },
+    {
+      "path": ".agents/skills/repo-review/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/repo-review/SKILL.md",
+      "bytes": 852,
+      "sha256": "bde682329a86b71b0f63a5b165135ccc29931aa908683df8c5c47bfeb8ce2ec6"
+    },
+    {
+      "path": ".agents/skills/report-verification-state/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/report-verification-state/SKILL.md",
+      "bytes": 996,
+      "sha256": "11a3849cc65363655d09ab5144c024cecc5f8054a4d989fe5a186e46598b145a"
+    },
+    {
       "path": ".bb/AGENTS.md",
       "document": "providers/bb",
       "format": "markdown",
@@ -1179,6 +1256,14 @@
       "source": ".ai/repo/deployments/majordomus.yaml",
       "bytes": 573,
       "sha256": "b5411ad35adb24ead488fa316e91ee90f80ed8578267ddcebf02dd1334e11b29"
+    },
+    {
+      "path": ".zed/tasks.json",
+      "document": "editors/zed-tasks",
+      "format": "json",
+      "source": "the recipes of the tracked justfile and .just/*.just",
+      "bytes": 5505,
+      "sha256": "291014780a9a922d8b4995d90b3099fc3f25f717058443e271e378ffe4f53d13"
     },
     {
       "path": "AGENTS.md",
@@ -1202,7 +1287,7 @@
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
       "bytes": 904,
-      "sha256": "cae23eeef7c3b91bcd8349e1503a1d1e8a161aa6aa073c726090f11bb02b13ab"
+      "sha256": "6bdf953cdb33f1ac154f3bf2e0db9d5f7799e7b1c562873748928d7c40da2063"
     },
     {
       "path": "apps/majordomus-cli/src/design/tokens.yaml",
@@ -1210,7 +1295,7 @@
       "format": "yaml",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 21258,
-      "sha256": "a30cbb90c94c73f6313b807f520ca49ff7e33334781909ad200b8b34b79cbe3d"
+      "sha256": "e91ab7c70667d5cbedae98f174ed450805d89c971f65cb03d9bbe167e1d8c493"
     },
     {
       "path": "apps/majordomus-cli/src/ui/icons.toml",
@@ -1218,7 +1303,7 @@
       "format": "text",
       "source": "site/data/kit/icons.toml, the kit's icons",
       "bytes": 9027,
-      "sha256": "b836a984668ab599b2730773f84a8d7c7285738a1a10acca0d56a613114649e9"
+      "sha256": "e3fbe2081349a7581960be2a73b7c373ee6b757ce9c73edb103b0e88b1612651"
     },
     {
       "path": "apps/majordomus-cli/src/web/tokens.css",
@@ -1226,7 +1311,7 @@
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 9320,
-      "sha256": "d9131b18ec754335158436b0380cd524448d654550c8ee0b6ff55df1cbf93e1a"
+      "sha256": "5e7c743412dd191e10a3f35431f5ffecabcce737c835d735964040c1a35a45b0"
     },
     {
       "path": "deploy/Dockerfile",
@@ -1242,7 +1327,7 @@
       "format": "markdown",
       "source": "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
       "bytes": 11741,
-      "sha256": "3033d5c84127bf27be7c2482b8eb05a4207f668c3eeb71a3a4cddd079be3e3c8"
+      "sha256": "6adeaa9270762bca7e71f26bb08029b26505e254434e370746c746873ce75ded"
     },
     {
       "path": "docs/generated/artifacts.json",
@@ -1273,16 +1358,16 @@
       "format": "json",
       "schema": "majordomus/benchmark-matrix/v1",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 53923,
-      "sha256": "3c01f3f68b8a63804ae4e4671b25314d4d6dadaf6c591ac75a7345a1af37b2ad"
+      "bytes": 54368,
+      "sha256": "3e173965109e913c45eaf7d3b04a5a88e3c298043faec57626264eac816a68c4"
     },
     {
       "path": "docs/generated/benchmarks.md",
       "document": "benchmarks",
       "format": "markdown",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 23818,
-      "sha256": "fd10aae0140f4138ff36ce28ab55b6b85ca5a7d508e71dd45fe8a7e6d228c4f5"
+      "bytes": 23988,
+      "sha256": "182295c379988302b7d265469068cdbfb39ea8bfca3eda1bce9553e7498e55ae"
     },
     {
       "path": "docs/generated/benchmarks.yaml",
@@ -1290,16 +1375,16 @@
       "format": "yaml",
       "schema": "majordomus/benchmark-matrix/v1",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 37879,
-      "sha256": "a3bb26aa2384e04dce77efa3e1ff1ac5523d33bfb61f1873e707b0d08a6a4c8d"
+      "bytes": 38184,
+      "sha256": "233543f1c9b5178a59f87181fe1ec68bbe4d0cbf2781c8bd7546bec1cd5324af"
     },
     {
       "path": "docs/generated/capabilities.md",
       "document": "capabilities",
       "format": "markdown",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 41861,
-      "sha256": "cf6de7440aea03ac754e8c2aa8bdb9733584a3252906630185613e16ec63a2d9"
+      "bytes": 42320,
+      "sha256": "7e52636a55a468c1c1021767e1adcc10541790727b071a93b31ca151ddac0a9e"
     },
     {
       "path": "docs/generated/changelog.json",
@@ -1308,7 +1393,7 @@
       "schema": "majordomus/changelog/v1",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
       "bytes": 960619,
-      "sha256": "8d2f5ff6a7c33312c71ee7d78247ad9698636c15fe39df56bf537c7a76366832"
+      "sha256": "572e7438729a342b006294e8717fcd90ec4d19865bdbb5a6a58c981644a90da5"
     },
     {
       "path": "docs/generated/changelog.md",
@@ -1316,7 +1401,7 @@
       "format": "markdown",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
       "bytes": 231979,
-      "sha256": "d967171f42ba1e883e9788bb03d33ccad7592c3d8fbb0bfeb38b1f667f5c8246"
+      "sha256": "86362e47e9b430bb21ca257bb1a9f809444fdf8497e09a11243fe5b664c6d609"
     },
     {
       "path": "docs/generated/changelog.yaml",
@@ -1325,7 +1410,7 @@
       "schema": "majordomus/changelog/v1",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
       "bytes": 763952,
-      "sha256": "cf658f177cd7434a13c03a2fe90636b04fb7acd8af22a36c066421266ad27905"
+      "sha256": "ed9eb739258aec806a1dd62ed36a142de378567badb2f7317fac29065a4ffd75"
     },
     {
       "path": "docs/generated/cli.json",
@@ -1333,16 +1418,16 @@
       "format": "json",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 1180090,
-      "sha256": "e400f4b3a8da623a76a032e480a142981e141e3ece26c6826c124cb1028b4053"
+      "bytes": 1187184,
+      "sha256": "6cb0b408941cf4a75bcfe0263cbee8730a6e91c64af82be8bfb47877fb01760e"
     },
     {
       "path": "docs/generated/cli.md",
       "document": "cli",
       "format": "markdown",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 506627,
-      "sha256": "a0df6db6f256a2c4f3e4e138aed0083854c0945af3b7f33eec133d336de8040b"
+      "bytes": 509086,
+      "sha256": "53b36a0dd29403ebf79dcf35b8e53d134254223dd79ab3ba8356c2bd41ac79a2"
     },
     {
       "path": "docs/generated/cli.yaml",
@@ -1350,8 +1435,8 @@
       "format": "yaml",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 920553,
-      "sha256": "edff7a5eae40d2c83785078fd8c55feb37b8b7318e1baf754a6ea8d78889fd84"
+      "bytes": 926107,
+      "sha256": "8e1cfd1df59e672441f714caa799bdb026632a85c9378c3d2b9414a43b68ead6"
     },
     {
       "path": "docs/generated/design.json",
@@ -1360,7 +1445,7 @@
       "schema": "majordomus/design-system/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 155550,
-      "sha256": "f28405969bd1b1d3e2535f59476cd881e4378fc04dbd05bf7d98202fe7e25c24"
+      "sha256": "e7b7ad33d9a39bb81d20a2243c8c2e026ae706818ef4a889b3512eef5a1fa295"
     },
     {
       "path": "docs/generated/design.md",
@@ -1368,7 +1453,7 @@
       "format": "markdown",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 11791,
-      "sha256": "f207ea8a61ab37d20330f930e6110ca256a7a6e22a06018967c93ae855a41059"
+      "sha256": "aafe103fa32a731066485fd2ba1ce2625fd08194b4df8d6aae3ec6cc219a2874"
     },
     {
       "path": "docs/generated/design.yaml",
@@ -1377,7 +1462,7 @@
       "schema": "majordomus/design-system/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 126201,
-      "sha256": "23c32c69d647d6b686144955ac3f1ecb505a4f8d809dc5ef8b74c5b06726ab8a"
+      "sha256": "b6148eaba5e49c59adcbeaa780bbedc26d379a1ecb2788bf986983b3182ae678"
     },
     {
       "path": "docs/generated/distribution-matrix.json",
@@ -1394,7 +1479,7 @@
       "schema": "majordomus/economics-summary/v1",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
       "bytes": 30840,
-      "sha256": "1dd9b8aa912fd3ff8216d1640998b2b28563feb218cd334dab54312cd870f922"
+      "sha256": "5b5de4e0936fcdd5769bde72c4f61d0188465ed1af68cf4bfa0ebb86bf716068"
     },
     {
       "path": "docs/generated/economics.md",
@@ -1402,7 +1487,7 @@
       "format": "markdown",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
       "bytes": 15299,
-      "sha256": "60d04adf27a79ea8156432f3cab6d5d4fdb81cc6cf81859d7605d96d2f8bd440"
+      "sha256": "24e0a90bfe3945009f4ce6df716fb984d704bc2eac2c28286445a7814487b617"
     },
     {
       "path": "docs/generated/economics.yaml",
@@ -1411,7 +1496,7 @@
       "schema": "majordomus/economics-summary/v1",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
       "bytes": 25713,
-      "sha256": "32071f53112c4363aa3372c8cb48ac48d7fc2d38ed7d77ec090ed0f3ab5cc07f"
+      "sha256": "dc9058f4bfe6c5edf79dc94e14f1ec4c8ffc04d7c8d81f9ddf2714f8a6128376"
     },
     {
       "path": "docs/generated/graph.json",
@@ -1419,8 +1504,8 @@
       "format": "json",
       "schema": "majordomus/capability-graph/v1",
       "source": "the composed graph of the registry and the index",
-      "bytes": 3114055,
-      "sha256": "049f4679c75fd3974c1a2dc13d429041d23194b2c2df3144ac25d6190002475a"
+      "bytes": 3119828,
+      "sha256": "4e26a9c3e72b1e59344c9468be6d92b173de4ceefe6309c77432b1416b49c7f6"
     },
     {
       "path": "docs/generated/graph.schema.json",
@@ -1428,7 +1513,7 @@
       "format": "json",
       "source": "the schema of the composed graph, generated from its types",
       "bytes": 7618,
-      "sha256": "d0c5d415e1b55a699aed832530faaad70c8ca86d41baeb3bbacd808b35464ae3"
+      "sha256": "bf0e66719e700e051233d903174d2017017c97cea25c7a5f80c2074f78f52521"
     },
     {
       "path": "docs/generated/modules/artifacts.md",
@@ -1436,7 +1521,7 @@
       "format": "markdown",
       "source": "the `artifacts` module of the canonical Majordomus capability registry",
       "bytes": 1742,
-      "sha256": "450aa1eccbd8d45e0d30e269c3066aa77a522ff9a8d5b5b1103816c5a09b0c71"
+      "sha256": "3997cb591eaf537a185eb0b1f28ee0aac60623de9195f38a6982914f0bc3dff3"
     },
     {
       "path": "docs/generated/modules/brief.md",
@@ -1444,7 +1529,7 @@
       "format": "markdown",
       "source": "the `brief` module of the canonical Majordomus capability registry",
       "bytes": 2394,
-      "sha256": "21914684b1895b4a38774e1b467f6e270c5efedbb9f96f15a7321853f02cafd2"
+      "sha256": "f03cfd63d1b7e17ab5cfd76b8e13357817cd7ff0385be8d3feb93d05d32510d0"
     },
     {
       "path": "docs/generated/modules/capabilities.md",
@@ -1452,7 +1537,7 @@
       "format": "markdown",
       "source": "the `capabilities` module of the canonical Majordomus capability registry",
       "bytes": 3147,
-      "sha256": "d74bcc409290d0a8afd70774805cc4765c3e56bf2b165f58735403ef2b1c0262"
+      "sha256": "07936ae2cdd547b8844565c80544c7c333d028eaf6a3afc8470aa834c0e3ba63"
     },
     {
       "path": "docs/generated/modules/commands.md",
@@ -1460,7 +1545,7 @@
       "format": "markdown",
       "source": "the `commands` module of the canonical Majordomus capability registry",
       "bytes": 3423,
-      "sha256": "b41316714b22a7c0a20ddc1834f101b72b737724a8f54b0f645032589f57efb6"
+      "sha256": "01eea6642be9f77bc8603032f6882652261d1016b5fcddeb402591751339b9df"
     },
     {
       "path": "docs/generated/modules/commit.md",
@@ -1468,7 +1553,7 @@
       "format": "markdown",
       "source": "the `commit` module of the canonical Majordomus capability registry",
       "bytes": 4383,
-      "sha256": "b43b34d47da6e2afbfe997594bcd306b31338bb5beab4c44549329e1e9275fee"
+      "sha256": "3fc2d3791dbd846bab53ff7445276cfb214de9013b281c743c34912f5f42f706"
     },
     {
       "path": "docs/generated/modules/continuity.md",
@@ -1476,7 +1561,7 @@
       "format": "markdown",
       "source": "the `continuity` module of the canonical Majordomus capability registry",
       "bytes": 8930,
-      "sha256": "b0e855d80ef9eef0a765091bb6bc322b9fd190eba9e7d4e7ffa7129d9cadcb15"
+      "sha256": "aa85e19efdf7ff7c7abb478adeb37fd868f6dc6a2b2ac1a2827dd814658d9bb8"
     },
     {
       "path": "docs/generated/modules/convergence.md",
@@ -1484,7 +1569,7 @@
       "format": "markdown",
       "source": "the `convergence` module of the canonical Majordomus capability registry",
       "bytes": 1800,
-      "sha256": "7dc12568bca8630724c477c949d25787de02d36ca0ceb5bc704ebda5aba26f91"
+      "sha256": "43e614b4d8dc447c35f67f34e3a37cc185fe416b25341c444113a8d80001e9a9"
     },
     {
       "path": "docs/generated/modules/dashboard.md",
@@ -1492,7 +1577,7 @@
       "format": "markdown",
       "source": "the `dashboard` module of the canonical Majordomus capability registry",
       "bytes": 1702,
-      "sha256": "ab829b471447fa31c38798d2bcfd5705e3c26be549132324740487d4d74876ad"
+      "sha256": "6513c8d61f17109275820f3e3e0ab706c64ec30710b1b332ce4c120e6dda6495"
     },
     {
       "path": "docs/generated/modules/delivery.md",
@@ -1500,7 +1585,7 @@
       "format": "markdown",
       "source": "the `delivery` module of the canonical Majordomus capability registry",
       "bytes": 2602,
-      "sha256": "03012ca86556ab7aae505171724022933599c2a5d806925016d0d91e89175df5"
+      "sha256": "542f5b8bf6be231f0b40378b0231e03990cb3a7faf0e8a227194bdadf04bee1e"
     },
     {
       "path": "docs/generated/modules/deploy.md",
@@ -1508,7 +1593,7 @@
       "format": "markdown",
       "source": "the `deploy` module of the canonical Majordomus capability registry",
       "bytes": 2712,
-      "sha256": "ee2c10bb576cb04345ed2aee5c711041f8d872001d8425ded646343f691dd535"
+      "sha256": "8e30fd0070324657fe4f5c636692d5c190a61f7ac816070117505f1447be9645"
     },
     {
       "path": "docs/generated/modules/design.md",
@@ -1516,7 +1601,7 @@
       "format": "markdown",
       "source": "the `design` module of the canonical Majordomus capability registry",
       "bytes": 4193,
-      "sha256": "3d9489d608f0bec0976c240dc930dbdc7a268dd7897e33c2c1c7a06756135eff"
+      "sha256": "47fbc5b791604cfb89cd6b9239044baf238258c61390a7b731c8becc2610a4ab"
     },
     {
       "path": "docs/generated/modules/devcontext.md",
@@ -1524,7 +1609,7 @@
       "format": "markdown",
       "source": "the `devcontext` module of the canonical Majordomus capability registry",
       "bytes": 6521,
-      "sha256": "946fa8a545499fcfb7c8f3354382672ee7b50c1834f991101c2a524cbe3a6ef6"
+      "sha256": "0b9780a8693665494f16864578b107e9d8b1b26a7a6300809d7baba249f109ff"
     },
     {
       "path": "docs/generated/modules/devtask.md",
@@ -1532,7 +1617,7 @@
       "format": "markdown",
       "source": "the `devtask` module of the canonical Majordomus capability registry",
       "bytes": 4470,
-      "sha256": "244b232e643aa326dfcb8edbb5a4018aaa53e8c39e1bab5f2eb79a97d1f09ee3"
+      "sha256": "b3e0a12768bf7172789580b8c7f0ff15fd648615d7fa2dd4f0b3f697974b8ebd"
     },
     {
       "path": "docs/generated/modules/directories.md",
@@ -1540,7 +1625,7 @@
       "format": "markdown",
       "source": "the `directories` module of the canonical Majordomus capability registry",
       "bytes": 1654,
-      "sha256": "98099fe384b439f876c5700ed49c6032b284166a740f488509d3ec750f9111f1"
+      "sha256": "33930f99155d2818b79efd24279e29194af4693372a5ec00a0a71da0c9687998"
     },
     {
       "path": "docs/generated/modules/distribution.md",
@@ -1548,7 +1633,7 @@
       "format": "markdown",
       "source": "the `distribution` module of the canonical Majordomus capability registry",
       "bytes": 4566,
-      "sha256": "61694c2b94af2db7e765ee36b4f1de04f3d52baedca558b02986820d54b701d6"
+      "sha256": "5251b60582e027bb9ab00ab961abdb301608193061cca198dc57edfce3f16e1f"
     },
     {
       "path": "docs/generated/modules/economics.md",
@@ -1556,7 +1641,15 @@
       "format": "markdown",
       "source": "the `economics` module of the canonical Majordomus capability registry",
       "bytes": 4646,
-      "sha256": "2036dfba7143a09ebf32f4dbf9f60a8379ed4cd171790b134ebe61c7bd98e236"
+      "sha256": "3d1126d5976d7dd54b8874e00d4f338e3cdcd72e45947ee0c69eefcc891da1be"
+    },
+    {
+      "path": "docs/generated/modules/editors.md",
+      "document": "modules/editors",
+      "format": "markdown",
+      "source": "the `editors` module of the canonical Majordomus capability registry",
+      "bytes": 1415,
+      "sha256": "d2199c5c08d9fc638c65a8098e77944a4db29174d218b1baf1a7fecaadca4f6c"
     },
     {
       "path": "docs/generated/modules/entity.md",
@@ -1564,7 +1657,7 @@
       "format": "markdown",
       "source": "the `entity` module of the canonical Majordomus capability registry",
       "bytes": 2453,
-      "sha256": "25e61c38369def095a5f9d18619bd56eee4709799b4a5c5ff8639787735357c9"
+      "sha256": "7a93fe48077f7c0b049eb3397a55bdc0ee2f92d40e1731a40435161504673147"
     },
     {
       "path": "docs/generated/modules/environment.md",
@@ -1572,7 +1665,7 @@
       "format": "markdown",
       "source": "the `environment` module of the canonical Majordomus capability registry",
       "bytes": 4152,
-      "sha256": "1b630b7160328839d466552f2ee5a938eebd09ed69f98d6b99691c3f1f34e09f"
+      "sha256": "214b09748890361afcf112b06c94e323310d88a9be35087cdf1b3d1d0b9b8d07"
     },
     {
       "path": "docs/generated/modules/episodes.md",
@@ -1580,7 +1673,7 @@
       "format": "markdown",
       "source": "the `episodes` module of the canonical Majordomus capability registry",
       "bytes": 4357,
-      "sha256": "7ad6492591941035a06fc18ffaacb2084d9ad5d62223a900675276e33caafc72"
+      "sha256": "cb1a88bc06f20d2a02c985f2bc0c51737bcb9d0ab3937f8fb0bf2487eecc28f0"
     },
     {
       "path": "docs/generated/modules/evidence.md",
@@ -1588,7 +1681,7 @@
       "format": "markdown",
       "source": "the `evidence` module of the canonical Majordomus capability registry",
       "bytes": 9463,
-      "sha256": "d7d7d823c20245413b480717f43c0fa586e161638fcbf1d2096dae986ab9737c"
+      "sha256": "c0dde45d82d210c5c7a2b79196d22869f3c503b7649dc085222873f231c04990"
     },
     {
       "path": "docs/generated/modules/executions.md",
@@ -1596,7 +1689,7 @@
       "format": "markdown",
       "source": "the `executions` module of the canonical Majordomus capability registry",
       "bytes": 7359,
-      "sha256": "5234e90d36a6d4963e383fcd7498e904d8ac397792fe48126c970e349313ff4f"
+      "sha256": "3944f2f178f239dbf8f418fa3ece9b369d57f28e3e9a37314f7c05482ef534ac"
     },
     {
       "path": "docs/generated/modules/gates.md",
@@ -1604,7 +1697,7 @@
       "format": "markdown",
       "source": "the `gates` module of the canonical Majordomus capability registry",
       "bytes": 3260,
-      "sha256": "3edb22b72d707e035ab3bd64ce5e2192dad81c4a82b819880cc85e487e06b746"
+      "sha256": "c461f9531ee598483ef9dac41c80a66ebcda48ba79111ccf85adf4f4bd15b47c"
     },
     {
       "path": "docs/generated/modules/graph.md",
@@ -1612,7 +1705,7 @@
       "format": "markdown",
       "source": "the `graph` module of the canonical Majordomus capability registry",
       "bytes": 1798,
-      "sha256": "bb6c6f6c7db850d201e97850e077edd773f272b19ebef3429301e67559bf1cde"
+      "sha256": "9048a15299e30da58ee188616f6b33b0f3ad9ac45a3da0dff1896516d373fdad"
     },
     {
       "path": "docs/generated/modules/health.md",
@@ -1620,7 +1713,7 @@
       "format": "markdown",
       "source": "the `health` module of the canonical Majordomus capability registry",
       "bytes": 2534,
-      "sha256": "ca724709f8b3728e1801e33ef089e550c36615d34fae0b8c85d257ba29965d89"
+      "sha256": "246c06c7460bb7f05861855fb567ad8c6201ce4abeb7977727cbae1600bc9e43"
     },
     {
       "path": "docs/generated/modules/integration.md",
@@ -1628,7 +1721,7 @@
       "format": "markdown",
       "source": "the `integration` module of the canonical Majordomus capability registry",
       "bytes": 9826,
-      "sha256": "578b67c795dd9ae11da4208286a5c2fd76916d72a62ae593bceb3d9b4a94cefb"
+      "sha256": "7ce665cd2ccc6bb93d2568e8ef8ae2cc7f378318e0c904571949b184093d7886"
     },
     {
       "path": "docs/generated/modules/intent_realization.md",
@@ -1636,7 +1729,7 @@
       "format": "markdown",
       "source": "the `intent_realization` module of the canonical Majordomus capability registry",
       "bytes": 3613,
-      "sha256": "f8ff068ad813dd4929ead00a3045c88f2b1ef59a13f84dfd63a3e7c8086686d4"
+      "sha256": "8205cf1b3bf99c154a5e27549c42174d592ddcdef49ec727d62c957d7d1e2e74"
     },
     {
       "path": "docs/generated/modules/intents.md",
@@ -1644,7 +1737,7 @@
       "format": "markdown",
       "source": "the `intents` module of the canonical Majordomus capability registry",
       "bytes": 8378,
-      "sha256": "81ed087e6ef115d4efa6a15f4b332ca09512e412051d249ffe7771c4bf47db38"
+      "sha256": "3987db5c9167af29942ba4152362467d6d8b8fb4a497f4817b47d5597bd2f198"
     },
     {
       "path": "docs/generated/modules/knowledge_base.md",
@@ -1652,7 +1745,7 @@
       "format": "markdown",
       "source": "the `knowledge_base` module of the canonical Majordomus capability registry",
       "bytes": 3997,
-      "sha256": "edaf9e23ada65c769b8ebbb5289266bca7956dc8d6d4b567704d36ebb150c1ea"
+      "sha256": "212a60316684c21e54ee984fd24f9e4a193d8b9a7e72996cc15ff5c6537701ce"
     },
     {
       "path": "docs/generated/modules/lifecycle.md",
@@ -1660,7 +1753,7 @@
       "format": "markdown",
       "source": "the `lifecycle` module of the canonical Majordomus capability registry",
       "bytes": 4520,
-      "sha256": "41061b32111953a20f9b7fbef22e7d5cf6986b1dbfe499b5cccdee8dc0a0c4c1"
+      "sha256": "c3603178e96269095380fd5bd3794bc64b223184c0ec63f172484754cd4d98bd"
     },
     {
       "path": "docs/generated/modules/mcp.md",
@@ -1668,15 +1761,15 @@
       "format": "markdown",
       "source": "the `mcp` module of the canonical Majordomus capability registry",
       "bytes": 1997,
-      "sha256": "1bec5820b2ed33b3cb5731fe11a26e735e08e6ff90b781a62bad5cd2c1a39fde"
+      "sha256": "0d80db7541b35b4b1a476e3efd605283842dfc785a4865f586ddbfd0a2e02b0a"
     },
     {
       "path": "docs/generated/modules/mesh.md",
       "document": "modules/mesh",
       "format": "markdown",
       "source": "the `mesh` module of the canonical Majordomus capability registry",
-      "bytes": 25501,
-      "sha256": "dcb457a00d3b70796e631dbd1f36280df1ca62352211a07ed6018aacd06d8acd"
+      "bytes": 26858,
+      "sha256": "b4358e25f7cc8b9692b3a1e4fe8ea44d18e6503f9970816a41cd2d89bef1a9c5"
     },
     {
       "path": "docs/generated/modules/models.md",
@@ -1684,7 +1777,7 @@
       "format": "markdown",
       "source": "the `models` module of the canonical Majordomus capability registry",
       "bytes": 2899,
-      "sha256": "aedd8da2161619e083a02cbb32141ca512d0684ce6f111398eb39e27b7eb2585"
+      "sha256": "d458610337a34dc9c24c955a2c00819e93c91509f59b85121f7680fd6bccceda"
     },
     {
       "path": "docs/generated/modules/monitor.md",
@@ -1692,7 +1785,7 @@
       "format": "markdown",
       "source": "the `monitor` module of the canonical Majordomus capability registry",
       "bytes": 2411,
-      "sha256": "99176add4f1a9f4d278710a1e0b47bd0d6f16c74dc66e9f205e3aee87f1f7557"
+      "sha256": "25166cc209bf9901f3ca90810b24097ed7b10c5e87bab021ca2979035f41e60b"
     },
     {
       "path": "docs/generated/modules/objects.md",
@@ -1700,7 +1793,7 @@
       "format": "markdown",
       "source": "the `objects` module of the canonical Majordomus capability registry",
       "bytes": 4068,
-      "sha256": "f2c23d554737ec422e3376f44cf20d2e7b4d374b7bc43c82ccc5c68bb8312f7a"
+      "sha256": "2b9874cb2ca866714e2bb762d09cdb5ae9dd2fe4ec398536027e0c0acf388733"
     },
     {
       "path": "docs/generated/modules/obligations.md",
@@ -1708,7 +1801,7 @@
       "format": "markdown",
       "source": "the `obligations` module of the canonical Majordomus capability registry",
       "bytes": 2611,
-      "sha256": "947a81806f2282113ec0385a1a8e22b4842c93bcb5a5f2984377ca16484d452b"
+      "sha256": "5ee0d9b5d85a3c67d8bc7ee148a3919d82d2ef977055f8315a73b1d7767b3e68"
     },
     {
       "path": "docs/generated/modules/pack.md",
@@ -1716,7 +1809,7 @@
       "format": "markdown",
       "source": "the `pack` module of the canonical Majordomus capability registry",
       "bytes": 2805,
-      "sha256": "cd6db8b0b5edc19a64c6c8744a36b05ce254d7795185b2f394432d2f1a6c1580"
+      "sha256": "0ab79cc29cbed2eec1b4dce9edee85a6ebbd4741ad34eb977c5cc5af8fb5ad18"
     },
     {
       "path": "docs/generated/modules/peers.md",
@@ -1724,7 +1817,7 @@
       "format": "markdown",
       "source": "the `peers` module of the canonical Majordomus capability registry",
       "bytes": 3917,
-      "sha256": "f8894ebdb86e0cbaf9b6c357b2eb8f0edf12f174197df0afa042bcb0cef6f1f4"
+      "sha256": "d28d990b9258de87750fdd2d9dbc31debc7c336b7f1a9e90ec7fcefd86c60978"
     },
     {
       "path": "docs/generated/modules/perf.md",
@@ -1732,7 +1825,7 @@
       "format": "markdown",
       "source": "the `perf` module of the canonical Majordomus capability registry",
       "bytes": 1041,
-      "sha256": "9ce55861605b85d6f47cdab30b9ce34cb57f191c5ff38b6171f59a1bfb7e85b7"
+      "sha256": "d0202d9943e0f47e6952319da194cf8b7e7a914d5ed93c13fe4cc18b145918fa"
     },
     {
       "path": "docs/generated/modules/plan.md",
@@ -1740,7 +1833,7 @@
       "format": "markdown",
       "source": "the `plan` module of the canonical Majordomus capability registry",
       "bytes": 10210,
-      "sha256": "3cba7b42fcf3c931a0f5a2236eefd5a87a7c41c4e59118ed8e08905c77e43dcc"
+      "sha256": "cd1830a60f4eacce1e7ace087fac9ea69feecdd52d39879f99d1a9418458b409"
     },
     {
       "path": "docs/generated/modules/product.md",
@@ -1748,7 +1841,7 @@
       "format": "markdown",
       "source": "the `product` module of the canonical Majordomus capability registry",
       "bytes": 7230,
-      "sha256": "a88a640ca4230a7fa43332b370e9e17994537fa4b69fa84838bced0c835dfd53"
+      "sha256": "0ee83307a8b2593a34ef902b3b7c8a41693c1ca762a16607674a9014369e1d89"
     },
     {
       "path": "docs/generated/modules/quality.md",
@@ -1756,7 +1849,7 @@
       "format": "markdown",
       "source": "the `quality` module of the canonical Majordomus capability registry",
       "bytes": 4317,
-      "sha256": "3947953ba6714296f8d3f7c7d84258b52c7177212ab7c0f27ed2f2d30d31b388"
+      "sha256": "663cd5fd091b8a1977df735b630b16da2cf72ed9c5db68931896d8ae7b379cb9"
     },
     {
       "path": "docs/generated/modules/reasoning.md",
@@ -1764,7 +1857,7 @@
       "format": "markdown",
       "source": "the `reasoning` module of the canonical Majordomus capability registry",
       "bytes": 6733,
-      "sha256": "2bca5aefce144187907327d7eedf1c2c4501bd68df0cdab434a0ec1ee5f4ed66"
+      "sha256": "4a8d8f9e24110a5322fb9f317935630f4116b2328af261a3c4fe5bc96c856899"
     },
     {
       "path": "docs/generated/modules/recover.md",
@@ -1772,7 +1865,7 @@
       "format": "markdown",
       "source": "the `recover` module of the canonical Majordomus capability registry",
       "bytes": 2388,
-      "sha256": "15568db3ef799a1ad10fbae19a7534f4b8902130347ae652a05cb64735bb5726"
+      "sha256": "3086804ab4020b5b6cdd95f5dcece505191fb6696b619594f96edf34ffcec9f7"
     },
     {
       "path": "docs/generated/modules/release.md",
@@ -1780,7 +1873,7 @@
       "format": "markdown",
       "source": "the `release` module of the canonical Majordomus capability registry",
       "bytes": 6190,
-      "sha256": "ccf00a4b823f44de1e42c15cb75a96744971f76aaea60cf8298fa452aabb6a1d"
+      "sha256": "d7599c8ecb09bee2f43d9efa25601ef94984f42c47497ed65f392db87a4b4f32"
     },
     {
       "path": "docs/generated/modules/repository.md",
@@ -1788,7 +1881,7 @@
       "format": "markdown",
       "source": "the `repository` module of the canonical Majordomus capability registry",
       "bytes": 2516,
-      "sha256": "ffac7817188abe76e698f5f853b4e1aca0270af6b1949b7dba2921a4c09de062"
+      "sha256": "5de6e94efa6324f936a52a2386aee3bdd8f796625faeef99ef19a499610f3a79"
     },
     {
       "path": "docs/generated/modules/rules.md",
@@ -1796,7 +1889,7 @@
       "format": "markdown",
       "source": "the `rules` module of the canonical Majordomus capability registry",
       "bytes": 5067,
-      "sha256": "5a8a39fb1fa644528126741f18ea3e87323551c3cde60af2d7cd5bd67ceeb010"
+      "sha256": "3a6f2b446513ebd784d345ce605e3720b1b1e42e8f55a9474a6e0dec537d1e71"
     },
     {
       "path": "docs/generated/modules/served.md",
@@ -1804,7 +1897,7 @@
       "format": "markdown",
       "source": "the `served` module of the canonical Majordomus capability registry",
       "bytes": 3484,
-      "sha256": "a253dcd53e564cb7e96231402959eca916c230cd134e427af9ca25ff4a709492"
+      "sha256": "9297ce7135f06934b4ff58520acfe1333bfe12daf03407c6ac1040ce3626f676"
     },
     {
       "path": "docs/generated/modules/server.md",
@@ -1812,7 +1905,7 @@
       "format": "markdown",
       "source": "the `server` module of the canonical Majordomus capability registry",
       "bytes": 1870,
-      "sha256": "3b9a692c61791226a4e4e65a30bf7c5f9ac55dccfbf9e21e74fbb8106f193993"
+      "sha256": "b4bcd9249738968396a46bab3a0f3650a969d8f16b9afc78244185012dd08833"
     },
     {
       "path": "docs/generated/modules/session_domain.md",
@@ -1820,7 +1913,7 @@
       "format": "markdown",
       "source": "the `session_domain` module of the canonical Majordomus capability registry",
       "bytes": 2686,
-      "sha256": "590f50092b649af12ae2707c4eb187c66192afa3e33a1ff679fb2530ca66a5da"
+      "sha256": "41743c63411091407bd87213b527632399fae3095649b233f8b73aa41bf7078f"
     },
     {
       "path": "docs/generated/modules/shell.md",
@@ -1828,7 +1921,7 @@
       "format": "markdown",
       "source": "the `shell` module of the canonical Majordomus capability registry",
       "bytes": 1554,
-      "sha256": "efad587e8b00e8a3cbf91e7c75f8cc21dae172cb474c458213daa0ec98c2ea1b"
+      "sha256": "b641e40e335ee4b1b1f4e8a68a6bec0ae660fcec63ad60ffd241f57cc3bb4136"
     },
     {
       "path": "docs/generated/modules/skills.md",
@@ -1836,7 +1929,7 @@
       "format": "markdown",
       "source": "the `skills` module of the canonical Majordomus capability registry",
       "bytes": 3159,
-      "sha256": "b8ab6a20a291bb82ab711c36dceb209fd1a71f8ffe8d598fa4ac6540e8a6008d"
+      "sha256": "88e9473f99f9f08d80eca0b09cf1592a1ca794b69c983da207b2a26347039546"
     },
     {
       "path": "docs/generated/modules/trace.md",
@@ -1844,7 +1937,7 @@
       "format": "markdown",
       "source": "the `trace` module of the canonical Majordomus capability registry",
       "bytes": 4579,
-      "sha256": "91bd56babc4ba69d53cae39aba65b7b421829f5893e2b3fb595592845f140d7c"
+      "sha256": "c2bc82892bab7d3fff80c8c25bd133f6198d5afbfcce20bc2358c6070c811e23"
     },
     {
       "path": "docs/generated/modules/web.md",
@@ -1852,7 +1945,7 @@
       "format": "markdown",
       "source": "the `web` module of the canonical Majordomus capability registry",
       "bytes": 1463,
-      "sha256": "70519a3fa29bdd81654084ef981d4199b4011d11bb72f3d916184c2283699bf5"
+      "sha256": "179cb683019c96b0d6b724dca6769f338d814f0acb1edcf6229e788313ff0c49"
     },
     {
       "path": "docs/generated/modules/why.md",
@@ -1860,7 +1953,7 @@
       "format": "markdown",
       "source": "the `why` module of the canonical Majordomus capability registry",
       "bytes": 6122,
-      "sha256": "cc95c0f735e628d39761842cbc680378e1cb1e4448447e68204fb5c6faf20b2e"
+      "sha256": "91eb42f906e99006c402120de81f18932c0523550f5c9ba102efe6e3b64b5f11"
     },
     {
       "path": "docs/generated/modules/worktree.md",
@@ -1868,23 +1961,23 @@
       "format": "markdown",
       "source": "the `worktree` module of the canonical Majordomus capability registry",
       "bytes": 4893,
-      "sha256": "2ed902b8f9a1ada83948a644dbea13159b7522e917cf6eb0f17e673ad015eb69"
+      "sha256": "f2fc7aded6c6a0794eedca4208c88e8b4fe4c30b6f8227cf066b0fedc8e8231c"
     },
     {
       "path": "docs/generated/openapi.json",
       "document": "openapi",
       "format": "json",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 2402378,
-      "sha256": "fa6a7393026b45ae1ddd62b88fd3ec8b97b97702345a545ee47855f23237c27d"
+      "bytes": 2421782,
+      "sha256": "0f28ad4f406415a5758ebd0f907e06af3f2ba2a22782340a21aba92ed5575b58"
     },
     {
       "path": "docs/generated/openapi.yaml",
       "document": "openapi",
       "format": "yaml",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 1944154,
-      "sha256": "b83b2f9fdef625ef33eaf4c150904b8c3dd1abee97fe031caf5dc255b1025d30"
+      "bytes": 1959285,
+      "sha256": "f84a0b1d2540fafef23ca61a67230c65b01f81e10032aaa89e329927452f411b"
     },
     {
       "path": "docs/generated/providers.json",
@@ -1893,7 +1986,7 @@
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
       "bytes": 6954,
-      "sha256": "99fa0d1f59bfc65dc135902cad99dd140ca6c67e1caf32472ec7b651d4583b8d"
+      "sha256": "7de92f5c1d4d5469fee4228aa022ff049610f8b4b8d04c2e1e74e663e409910e"
     },
     {
       "path": "docs/generated/providers.md",
@@ -1901,7 +1994,7 @@
       "format": "markdown",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
       "bytes": 2302,
-      "sha256": "27496ca9e8a10332a14d4030f4e2709660ddbecd13d784e78d61098fc5b097ef"
+      "sha256": "9f3e8600459cd353136a35529b9735179685b4466f8c881dc74bf192f8b856e7"
     },
     {
       "path": "docs/generated/providers.yaml",
@@ -1910,7 +2003,7 @@
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
       "bytes": 6472,
-      "sha256": "b1178d91de907e4cecee2f536e2d5f18c12450d204869aefc00596fe3393401a"
+      "sha256": "48659361f89c9a6a1a62199ba5524f53e5d5cc0fcc096c444f4c8d5537f5a7dc"
     },
     {
       "path": "docs/generated/registry.json",
@@ -1918,8 +2011,8 @@
       "format": "json",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 3593384,
-      "sha256": "97a57f3b1a81074997d0a6ec4a43e489f1e7aed0abe44c79f1710ea74c98d2df"
+      "bytes": 3614498,
+      "sha256": "91d73db3f322f9a91a91411ece655360c11e5980b5e770fd635aa45734a2579e"
     },
     {
       "path": "docs/generated/registry.yaml",
@@ -1927,8 +2020,8 @@
       "format": "yaml",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 2901132,
-      "sha256": "5144005c9d47af1fe025658150b7fd11afaf03a261372db35b0cdd78288e53dc"
+      "bytes": 2917890,
+      "sha256": "66e24b35abfd6707c5e2b3c6d2dc40434e0f36655897fdd68cc4d677320a774f"
     },
     {
       "path": "docs/generated/web.json",
@@ -1937,7 +2030,7 @@
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository",
       "bytes": 5555,
-      "sha256": "753ea49373248f88eb7d7d9991164e3faeed06781f94c0377e09e67df0db1012"
+      "sha256": "74055abe392a005161d3ca00841b0c95803fb96659c69d82399888c72e924207"
     },
     {
       "path": "docs/generated/web.yaml",
@@ -1946,7 +2039,7 @@
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository",
       "bytes": 4219,
-      "sha256": "137891a88002b4996a2213a736b1760650ac395b4259dc2a46dcaacff29bdd8b"
+      "sha256": "9c30546bb5bf12ee46598c0dc2f5b274fa88c86c173d546b9fcce1435247fa2d"
     },
     {
       "path": "share/allow/adr.txt",
@@ -1954,7 +2047,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
       "bytes": 373,
-      "sha256": "b6e299f213f8f8b815385536f29800aa79cbcfcb00658e45303fa8f3781daa6b"
+      "sha256": "998fc2e0035ac7ba2c8488e1c0594fdf27a44001a50331fa3c5804a88e5e468a"
     },
     {
       "path": "share/allow/application.txt",
@@ -1962,7 +2055,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
       "bytes": 384,
-      "sha256": "d1b71363d651e5890fa263839bb6b4c99ec7dbb0977e2e1db8c595552564df32"
+      "sha256": "c2190d3e272d3d167567183feaa1dd6d9c77d26d2c851e09dd3243cdfa5462d7"
     },
     {
       "path": "share/allow/context.txt",
@@ -1970,7 +2063,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
       "bytes": 447,
-      "sha256": "59b548b76a3f4f876e1ac38fce3627837179774c3ecaa118398bd4406f01a513"
+      "sha256": "b1b17c768d2d5cc946be0dabf24ae1f2f6dba916c4907fdad4a8d826647535e2"
     },
     {
       "path": "share/allow/critique.txt",
@@ -1978,7 +2071,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.critique/v1` of the kind it validates",
       "bytes": 479,
-      "sha256": "d8d8b198c24c798acf109145d9784468bec5de2328039d04868062f9548e8842"
+      "sha256": "a5369976b77b5e44ce184a2dbaf427f1682ce15e22c284e136ff585fac544d8f"
     },
     {
       "path": "share/allow/current.txt",
@@ -1986,7 +2079,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.current/v1` of the kind it validates",
       "bytes": 454,
-      "sha256": "72756e639941f22c556727efb105e9e5e1a468d49172bd6bf2aaaddd31022dd5"
+      "sha256": "02e1b4860ee2237012e2f7f4cd281c26da6a40f1afc63241c8a9958d3dff2168"
     },
     {
       "path": "share/allow/deployment.txt",
@@ -1994,7 +2087,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.deployment/v1` of the kind it validates",
       "bytes": 873,
-      "sha256": "0e1d168a293e4c4680d602ca0f5ac88c00e9976f21d4f6f1028a42aef88717a7"
+      "sha256": "d216337055b590dec2b2c754dd2f30a6601a59d51ab132fc3629ba41425c54c5"
     },
     {
       "path": "share/allow/derive-offload.txt",
@@ -2002,7 +2095,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.derive-offload/v1` of the kind it validates",
       "bytes": 613,
-      "sha256": "22434dcfc3b0f0fb91ac3456a824ad6781b237db0936ecc25bf06fc513d1deac"
+      "sha256": "29650655a8e62a2e5309122c9f1cad7077dfb7d4899b9ffef276eb5671f7cbce"
     },
     {
       "path": "share/allow/distribution.txt",
@@ -2010,7 +2103,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.distribution/v1` of the kind it validates",
       "bytes": 997,
-      "sha256": "8bfcf33822c40978e28b0a9937415c41a347cbedebb8a8f839e4705e70694a36"
+      "sha256": "939fbbe5f48ca40df3d5e802d7eb5e401413262ae168462097cc6698049984a0"
     },
     {
       "path": "share/allow/document.txt",
@@ -2018,7 +2111,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.document/v1` of the kind it validates",
       "bytes": 274,
-      "sha256": "95406029cf0900e590b5ec9fa9b2d8b0373e65bca5c69230e5871ac7ddc9c2d8"
+      "sha256": "b42ba6a9d7b7926d8c9cc90b7afc904f3485e14a8bbe27131ceca0e15d835b3e"
     },
     {
       "path": "share/allow/gap.txt",
@@ -2026,7 +2119,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.gap/v1` of the kind it validates",
       "bytes": 627,
-      "sha256": "17f1a5176f530ade0da0b76186d9b61a827263e75403b6e3e092d0923fb2d072"
+      "sha256": "eeea63629829b20e00ccd6a787d942b07ddd2c8df1eafe5c726d20b49c14b1f7"
     },
     {
       "path": "share/allow/intent.txt",
@@ -2034,7 +2127,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.intent/v1` of the kind it validates",
       "bytes": 486,
-      "sha256": "a8e5dc796cdc085b099c8d01ad5a4f90b61741bc52afd03cb405aee581f9fdf6"
+      "sha256": "a36c159f9770bf1b6d80a63ec48ef33d280cbdb0f8374bc506481ffc4cd04d9b"
     },
     {
       "path": "share/allow/issue.txt",
@@ -2042,7 +2135,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.issue/v1` of the kind it validates",
       "bytes": 889,
-      "sha256": "4ce76b0d83dab5485c81f8bfb30ed830ace6093b12df1ad2e60ef84188f4aa65"
+      "sha256": "3bc9a68630515eac3026dae3ad10952aa4a1f6509836a04b8a03f12f3da479e5"
     },
     {
       "path": "share/allow/knowledge.txt",
@@ -2050,7 +2143,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
       "bytes": 445,
-      "sha256": "1e41b50216cc824c3522b50aeb4688ec35c9c6cc1f49ae4b6ee24aacbffa21c8"
+      "sha256": "c1284a09261a326dfe5f0345205f4ead12523a2be11abe5663265c33ea843807"
     },
     {
       "path": "share/allow/manifest.txt",
@@ -2058,7 +2151,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.manifest/v1` of the kind it validates",
       "bytes": 649,
-      "sha256": "03b19703d1a0960b5bd5116a88e6376cc753297c0572144ba9b59aff09e63512"
+      "sha256": "cb764b2a6b737b21d3c8561837415a96bbdf2819532aa93eb9a3eea0a3f0dd68"
     },
     {
       "path": "share/allow/mesh-declaration.txt",
@@ -2066,7 +2159,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.mesh-declaration/v1` of the kind it validates",
       "bytes": 687,
-      "sha256": "75fbeea435003e321349ead11c9f3d10df152314881bae0e23da2bf526f18c95"
+      "sha256": "c153b3c12deec9ed59289b781fe39fcb305f0a66cefb085049fd5224f4e8f585"
     },
     {
       "path": "share/allow/milestone.txt",
@@ -2074,7 +2167,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.milestone/v1` of the kind it validates",
       "bytes": 760,
-      "sha256": "33e282f4de2b573914ee9bb2a49e8a6ec1c1953a7aa20190d106f20227d208ac"
+      "sha256": "1c06678df9821d1ff5f35dcefb6447bdae01962d1872118049bdcdb36c8b5117"
     },
     {
       "path": "share/allow/policy.txt",
@@ -2082,7 +2175,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.policy/v1` of the kind it validates",
       "bytes": 2463,
-      "sha256": "768ffd4445356541672919827fed80c963e627d339b51015ea5c2213349dd06c"
+      "sha256": "79d84675c123b94b9f94ca5c40ac46c2f01b017912a400fbca5bb7cebae2729b"
     },
     {
       "path": "share/allow/profile.txt",
@@ -2090,7 +2183,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.profile/v1` of the kind it validates",
       "bytes": 690,
-      "sha256": "84d7a1bdea6c0ba24efeeb471824db501bb34ba486408da7b9e6a1b365a1d15a"
+      "sha256": "b9d26dab90c6305750bab659a6f464f41cbcac73437b6a6af6ff9a1d36ad21d3"
     },
     {
       "path": "share/allow/project.txt",
@@ -2098,7 +2191,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.project/v1` of the kind it validates",
       "bytes": 245,
-      "sha256": "fbb99865f766ed8fee39e02c75c803089cf1d3ad4320b6d2e8e1ea07930b692a"
+      "sha256": "a19f33c18ff5dc187634f410c2658efc7a0aff86b174cf65d036753dd624d8fb"
     },
     {
       "path": "share/allow/prompt.txt",
@@ -2106,7 +2199,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
       "bytes": 227,
-      "sha256": "b935dcb19305982286bb8163270edb29d4e928bea3d1778990b86bf7488a101a"
+      "sha256": "d134c63cc1e7a3d72ac2d95befdeaa3e6d8f4c3ee34dc18dd819ffb8992a97c3"
     },
     {
       "path": "share/allow/release.txt",
@@ -2114,7 +2207,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.release/v1` of the kind it validates",
       "bytes": 434,
-      "sha256": "40d48c755c241a8b9d5ec1c1b03e9eee2fcdd4f2e0be0cf0438c67336ed222c7"
+      "sha256": "624de22bdcbe523dfb8e0a45e88e7915f96bd5178038fb38aeef3ee5edbe862b"
     },
     {
       "path": "share/allow/rule.txt",
@@ -2122,7 +2215,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
       "bytes": 550,
-      "sha256": "665fe8e27c21e38cb03678ea5d84f3af61d931b25fd004f75697fad282e7efd4"
+      "sha256": "5bb17971ec9fac6c152db4063fa5973f9dbeade93ec422c5672f60cffdb8570d"
     },
     {
       "path": "share/allow/scope.txt",
@@ -2130,7 +2223,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.scope/v1` of the kind it validates",
       "bytes": 825,
-      "sha256": "345c200920cf75cdafdfc6a51a6254cc65a7f71a5ceadab5c060324a46fccd1c"
+      "sha256": "082a11bc5e2d73bbdb62434cc01a2f0cd852d90a846a40cd0e71cc43cba34e99"
     },
     {
       "path": "share/allow/session-context.txt",
@@ -2138,7 +2231,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.session-context/v1` of the kind it validates",
       "bytes": 327,
-      "sha256": "3165b8b1f394f483b500dd639499c2c0443c26827b279c8c61f54d9987cad90a"
+      "sha256": "8cef012b72e5fc401137c60ef6232152489704004409ffdb536b0df5d1270082"
     },
     {
       "path": "share/allow/session-record.txt",
@@ -2146,7 +2239,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.session-record/v1` of the kind it validates",
       "bytes": 651,
-      "sha256": "ff65288e7b7ed91e450278e17046290bfe402f702b5c81d854a10f45fbb99e00"
+      "sha256": "c29e593f77c3c072ee47531317a356a1115620e793325a07ad4afe4c36df1cbb"
     },
     {
       "path": "share/allow/session.txt",
@@ -2154,7 +2247,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.session/v1` of the kind it validates",
       "bytes": 334,
-      "sha256": "8044685a7b8bdbecda2ea0bd639f9c8cbe70d717e4f099dbbac0cc75a7b46e3b"
+      "sha256": "91d6b02fb70558967c3f2d74cae4fa41fc725ceecd73392b8b34bf1d1701b70c"
     },
     {
       "path": "share/allow/skill.txt",
@@ -2162,7 +2255,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
       "bytes": 394,
-      "sha256": "f39a5d0f8c5deebbfa2c9497dc0d798616e5aaaaf911b29efcf14aa212e677de"
+      "sha256": "21f474f2803bb0ab57cffe7c23acf346365d24b4003c27c71dafa11d8d644bd5"
     },
     {
       "path": "share/allow/taxonomy.txt",
@@ -2170,7 +2263,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates",
       "bytes": 313,
-      "sha256": "d2988e8e21906d93cf12f8fc6a3f32e392a4898a9ecdd62fc06a59691864e475"
+      "sha256": "02ed6fc348193e94acaa5e660bb59ea80414b08dd3e078cc0031d7c8e5c0c4fb"
     },
     {
       "path": "share/allow/use-case.txt",
@@ -2178,7 +2271,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
       "bytes": 547,
-      "sha256": "10d4e32d6d3ffb5644b3eab2b898889da1e302c9aa93b46b34815f3964fb3785"
+      "sha256": "fb7d2bf6ce812380678d3c0cfa6813519f1cbeb8c0913aac9ded9a44b09321f7"
     },
     {
       "path": "share/allow/workspace.txt",
@@ -2186,7 +2279,7 @@
       "format": "text",
       "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates",
       "bytes": 568,
-      "sha256": "faae00c1149c3e2d5210978057e6781154cb34db0a9ea86d3cb0e5e8bbb3da97"
+      "sha256": "0aea07661342185f370fc8a9652d870f07a8e5f2bfdc0be4ed502124134704c4"
     },
     {
       "path": "share/cockpit/favicon.svg",
@@ -2194,7 +2287,7 @@
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
       "bytes": 904,
-      "sha256": "cae23eeef7c3b91bcd8349e1503a1d1e8a161aa6aa073c726090f11bb02b13ab"
+      "sha256": "6bdf953cdb33f1ac154f3bf2e0db9d5f7799e7b1c562873748928d7c40da2063"
     },
     {
       "path": "share/design/status.css",
@@ -2202,7 +2295,7 @@
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 13327,
-      "sha256": "e1850cd6c76659e34d1e12598311b90f86ac818b1a7081e36b5947afe86aecc7"
+      "sha256": "d084869241470b628560b21520c7f3a67c1cd1bff57f034c92a46bb25d922d82"
     },
     {
       "path": "share/design/surface.css",
@@ -2210,7 +2303,7 @@
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 6062,
-      "sha256": "e801fb5834f3e0b74ce624a8b40469ce475f4483c8c5c0f2edec6093bf44865e"
+      "sha256": "d296c63e3887fef406261ce9553c6c81b24dfbfaa1c96d95d7c096799388c016"
     },
     {
       "path": "share/design/theme.css",
@@ -2218,7 +2311,7 @@
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 2408,
-      "sha256": "f76de14ca1de4e107fc9be9b43d6075d690508b847df973f3dd6623d932c1fc4"
+      "sha256": "934914ea33f1b61e0e1c542658ac8924503e16ccc10950067617f5a51054bb9e"
     },
     {
       "path": "share/schemas/majordomus/adr/adr.v1.schema.json",
@@ -2226,7 +2319,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
       "bytes": 6107,
-      "sha256": "b81956147a9b1e3eae1d3e3d0ebda879bb24772b474c1c5c610f4ab427d54093"
+      "sha256": "50a9a7852d40ce9983c7c4cb5e0cde39f8f5e84d0288898a2efa3d5ab68cc735"
     },
     {
       "path": "share/schemas/majordomus/application/application.v1.schema.json",
@@ -2234,7 +2327,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
       "bytes": 3961,
-      "sha256": "cf28571fcb6d98f307719e553b396ebe4c2066f739e26473c2138a7197106e9b"
+      "sha256": "a8bd601b6ba6e1d1c190c53201529be0bbdcfab5063acaae4bc41a827a6f35bb"
     },
     {
       "path": "share/schemas/majordomus/capture/capture.v1.schema.json",
@@ -2242,7 +2335,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/capture/capture.v1.proto`",
       "bytes": 6775,
-      "sha256": "691d0233c4744fadf209a96b80c9643b679a0500ac60af985c05e25edca97ee2"
+      "sha256": "7ebcc0048c6486abf009198e66b70f1fee275b06d4c3d00653a18e8a3c997797"
     },
     {
       "path": "share/schemas/majordomus/context/context.v1.schema.json",
@@ -2250,7 +2343,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
       "bytes": 6584,
-      "sha256": "ff3d196614d29f0d488d76cee4eb266dd42cdebc4baf505c1e2e49fe294d0fa4"
+      "sha256": "f81493215e92c152f95884df46f2af798a5916807fb9757126526073ef2953f5"
     },
     {
       "path": "share/schemas/majordomus/knowledge/knowledge.v1.schema.json",
@@ -2258,7 +2351,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
       "bytes": 7365,
-      "sha256": "49845154bddc11cfa46656683c9dc39c62aa2b6352467b3f4dbd02b1880e3bf7"
+      "sha256": "0e8fc5e7b0d5fcd60130fa574bd96c6e83f2f23d34fe64ca3043d258b5f793b2"
     },
     {
       "path": "share/schemas/majordomus/prompt/prompt.v1.schema.json",
@@ -2266,7 +2359,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
       "bytes": 2411,
-      "sha256": "6037eed13c114bd10ddd1ccfc4109b1fcd111f720e4142d6f173695b4d45b568"
+      "sha256": "06b5a3c171bf33d8e497bd1a302dbd3c6ed42ac4b3f3719702d15352a8a51109"
     },
     {
       "path": "share/schemas/majordomus/rule/rule.v1.schema.json",
@@ -2274,7 +2367,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
       "bytes": 5786,
-      "sha256": "c77a753625b29f06410875ac4f8ca29e2bf51bac5aa74d1267ed94121c82f26f"
+      "sha256": "beb2f493038a1d7be280f984845b8149cfa534ca7d92fedef7dc8d70140f57ea"
     },
     {
       "path": "share/schemas/majordomus/skill/skill.v1.schema.json",
@@ -2282,7 +2375,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
       "bytes": 5188,
-      "sha256": "75b99e4a3c1dcb7de8718eae41eaddcb553118c0c3ab178ee391519ff567d97c"
+      "sha256": "0462489addc3d6514daa8eecf84aad545885290a05b708f59c710c8caf1dece6"
     },
     {
       "path": "share/schemas/majordomus/use-case/use-case.v1.schema.json",
@@ -2290,7 +2383,7 @@
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
       "bytes": 11170,
-      "sha256": "d22b8af5094c1816abd30e01dbe1160f206f3a7617e1a0fcb83d06013d32d47e"
+      "sha256": "f856ca31e2f028be7f883c0e64c444855c209c72a511ec9d6808181eea32678f"
     },
     {
       "path": "share/sections/adr.txt",
@@ -2298,7 +2391,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
       "bytes": 320,
-      "sha256": "75093329ebc934c03d2d4f55d47766f2187c66c407b4d3c7814e1f5667405b0a"
+      "sha256": "f421da97553c8c077ee3a5b20ee9bf7eb3184b326a557419602a5b64bcab5059"
     },
     {
       "path": "share/sections/application.txt",
@@ -2306,7 +2399,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
       "bytes": 235,
-      "sha256": "951052f3d81da9cc9dc8a646c755032cb572d83d77b60b484fb4a89c4fbe2f46"
+      "sha256": "47d26f6bb51c225f777f1fed6ba7d226e8f4f378b9956803f8ac5bf2b26e0643"
     },
     {
       "path": "share/sections/context.txt",
@@ -2314,7 +2407,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
       "bytes": 298,
-      "sha256": "46740ea0552a99fb4435ccd818682cb58858bf1aed1e96087609c96b28674a5b"
+      "sha256": "386df65798fe271de46db5306dbeee0a206d2cef354dfcfcc4c35ed4dbc502a2"
     },
     {
       "path": "share/sections/knowledge.txt",
@@ -2322,7 +2415,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
       "bytes": 202,
-      "sha256": "a78889d6326caaa9897fb973ad235bb0796ee49999c94efd85629ece28d131f6"
+      "sha256": "8f7fde96b99da47eb5d92bd26750583d3087446e92c0f1253b20510f1d083522"
     },
     {
       "path": "share/sections/prompt.txt",
@@ -2330,7 +2423,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
       "bytes": 196,
-      "sha256": "53ebbee72f892599cfbef21298f7b063ecae3a1361e8431ac73076804555e378"
+      "sha256": "983396a027541d9852860efbb0ab4c74c90938f90fd7e92602515da85b8079b0"
     },
     {
       "path": "share/sections/rule.txt",
@@ -2338,7 +2431,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
       "bytes": 336,
-      "sha256": "85356dfe024eb112f6afc613d1510dd2000929742a152f0c5b6a15b347744b5c"
+      "sha256": "2054f017178cfb3eb240aa3b3739ff2e2c4df9b1d4d1b327c7dc1509623fdb71"
     },
     {
       "path": "share/sections/skill.txt",
@@ -2346,7 +2439,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
       "bytes": 282,
-      "sha256": "8ba611b29fbb0e842a5d96c5289cf3919e5c4c156dc12ed3f2181a293029c01d"
+      "sha256": "4aae78202d56e325bcb831c62fe648dbe7232fcfecfdd35a332c6b7175e277ec"
     },
     {
       "path": "share/sections/use-case.txt",
@@ -2354,7 +2447,7 @@
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
       "bytes": 290,
-      "sha256": "da8068fe3fc7d4aa4988afe31bfe362fd8e5ae4302543ba0bd2e895b44ae8915"
+      "sha256": "5f42b1ed2512fffff8860b804c127c32fce0fa0406a90962d540ee122495034d"
     },
     {
       "path": "share/ui/favicon.svg",
@@ -2362,7 +2455,7 @@
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
       "bytes": 904,
-      "sha256": "cae23eeef7c3b91bcd8349e1503a1d1e8a161aa6aa073c726090f11bb02b13ab"
+      "sha256": "6bdf953cdb33f1ac154f3bf2e0db9d5f7799e7b1c562873748928d7c40da2063"
     },
     {
       "path": "share/version.txt",
@@ -2370,7 +2463,7 @@
       "format": "text",
       "source": "apps/majordomus-cli/Cargo.toml ([package] version), the one place the version is authored",
       "bytes": 231,
-      "sha256": "689611f430d47860e73513005faa5cc47b1850ae1067096113af0c5070e077aa"
+      "sha256": "16c5c1db8895b02845ab37ca9b54bf6b0441abf329d30eaeb935996adafdcb70"
     },
     {
       "path": "site/data/registry/design.json",
@@ -2379,7 +2472,7 @@
       "schema": "majordomus-site-design/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
       "bytes": 11587,
-      "sha256": "79b789f1dc99b4c627fe23b24207f293097b9412169e3b91d8adf8082730632f"
+      "sha256": "f0150f702d53408a576d69edd6865f3fab3b5efba99a903c23309640b005259a"
     },
     {
       "path": "site/data/registry/distribution.json",
@@ -2395,8 +2488,8 @@
       "format": "json",
       "schema": "majordomus-site-evidence-subjects/v1",
       "source": "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases",
-      "bytes": 753711,
-      "sha256": "3dff4070dddca2da085b85d62ee558f830dc3fd0b3d4ba71df2b76daa745c964"
+      "bytes": 756259,
+      "sha256": "cbda1d1aa4dbb39b981cba81ce3eda9098d7297be1ad7b7654822ce4aeec45a3"
     },
     {
       "path": "site/data/registry/product-graph.json",
@@ -2404,7 +2497,7 @@
       "format": "json",
       "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
       "bytes": 96178,
-      "sha256": "56e179d93e0e6813b128a5127633267d7818eab79c340aa02212015601cc51d6"
+      "sha256": "07c110f0d80792f675c3462338cb2ce5b3a21869036742f0b4ea227424f04f0b"
     },
     {
       "path": "site/data/registry/product.json",
@@ -2412,8 +2505,8 @@
       "format": "json",
       "schema": "majordomus-site-product/v1",
       "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology",
-      "bytes": 696804,
-      "sha256": "f8a819ff9ff2722b24854478403714807b01b82d359ca0e3d520fa804ea8fdd4"
+      "bytes": 697554,
+      "sha256": "cc5fbc0fd84790bb2097f335de9099f60d39dacabef3c7f4b0001f56ef69d4cf"
     },
     {
       "path": "site/data/registry/registry.json",
@@ -2421,8 +2514,8 @@
       "format": "json",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer",
-      "bytes": 6578561,
-      "sha256": "bd169a04605957d60f8f67c1a59dfca0e3e44356c6740c36e8129869be0a34c7"
+      "bytes": 6613957,
+      "sha256": "b2b0771612d576159e1492f06ca468885113b2c7c092d61fe1ab09e5550be9e2"
     },
     {
       "path": "site/data/registry/why-graph.json",
@@ -2430,7 +2523,7 @@
       "format": "json",
       "source": "the moments and what answers them, as the derived `why` graph",
       "bytes": 180163,
-      "sha256": "df52815e1a59a09c24b2b2fa74f1eae4084e1bf4980569e13a8bf698d34aff65"
+      "sha256": "d81cd110d778eb731473727007b5d39f8334c9ada0797be940b323e0c1559574"
     },
     {
       "path": "site/data/registry/why.json",
@@ -2439,7 +2532,7 @@
       "schema": "majordomus-site-why/v1",
       "source": "the operational moments, audiences and areas of this repository's layer",
       "bytes": 349924,
-      "sha256": "a269b4a327f2ea2d81b9448e8f77492c367a0129eb38ce35010cda7c7c5a00dd"
+      "sha256": "4ed3f34b0e743e0f7d2b6d15f4f4fa3c9f37598acdff511de086d6f708844359"
     },
     {
       "path": "site/static/favicon.svg",
@@ -2447,7 +2540,7 @@
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
       "bytes": 904,
-      "sha256": "cae23eeef7c3b91bcd8349e1503a1d1e8a161aa6aa073c726090f11bb02b13ab"
+      "sha256": "6bdf953cdb33f1ac154f3bf2e0db9d5f7799e7b1c562873748928d7c40da2063"
     },
     {
       "path": "site/static/images/logo-mark.svg",
@@ -2455,7 +2548,7 @@
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
       "bytes": 904,
-      "sha256": "cae23eeef7c3b91bcd8349e1503a1d1e8a161aa6aa073c726090f11bb02b13ab"
+      "sha256": "6bdf953cdb33f1ac154f3bf2e0db9d5f7799e7b1c562873748928d7c40da2063"
     },
     {
       "path": "site/static/images/logo.svg",
@@ -2463,7 +2556,7 @@
       "format": "text",
       "source": "share/design/brand/logo.svg, the canonical logo",
       "bytes": 1059,
-      "sha256": "094f0380f1abfce1d401bad3b03b0c31ebc3c067fd81ee8777ecb5554f0b9905"
+      "sha256": "06f5b6459c6d59d38380fca3c1c66e730ecada968ecd2c8dcac87a7ec7363ccc"
     },
     {
       "path": "site/static/install.sh",

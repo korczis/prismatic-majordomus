@@ -612,6 +612,12 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
+      # `just` is read by the code this measures: the editor projection asks `just --dump` for
+      # the tracked justfile's recipes (ADR 0140), and without it every line past that question
+      # is unreachable here and reads as uncovered to the differential.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       # One instrumented run, one export, two verdicts read from it: the measurement exists
       # once (docs/COVERAGE.md) and neither gate re-instruments. This step holds nothing —
       # --report measures and exits 0 — so a floor failure cannot hide the differential's

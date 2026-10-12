@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.22.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 191 | 164 | 0 | 27 |
-| http | 187 | 164 | 0 | 23 |
-| mcp | 183 | 160 | 0 | 23 |
+| direct | 193 | 165 | 0 | 28 |
+| http | 189 | 165 | 0 | 24 |
+| mcp | 185 | 161 | 0 | 24 |
 | system | 14 | 14 | 0 | 0 |
-| total | 575 | 502 | 0 | 73 |
+| total | 581 | 505 | 0 | 76 |
 
 ## Capabilities
 
@@ -65,6 +65,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `economics.explain` | economics | query | process, 32 entries, 5s | covered | covered | covered | `primary` |
 | `economics.runs` | economics | query | process, 16 entries, 5s | covered | covered | covered | `all`, `narrowed` |
 | `economics.summary` | economics | query | process, 8 entries, 5s | covered | covered | covered | `default`, `narrowed` |
+| `editors.status` | editors | query | — | covered | covered | covered | `default` |
 | `entity.kinds` | entity | query | — | covered | covered | covered | `default` |
 | `entity.show` | entity | query | — | covered | covered | covered | `first-object` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
@@ -134,6 +135,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.release` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.request` | mesh | command | — | waived | waived | waived | — |
+| `mesh.review.withdraw` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.close` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.open` | mesh | command | — | waived | waived | waived | — |
 | `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |
