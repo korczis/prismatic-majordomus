@@ -1,7 +1,7 @@
 //! The `editors` module: what Zed and Google Antigravity read from this repository, and how
 //! each file they read was derived.
 //!
-//! The answer is [`crate::editors::report`] and nothing else: the same plan
+//! The answer is `crate::editors::report` and nothing else: the same plan
 //! `majordomus generate editors` writes, with every adapter's capabilities and the evidence
 //! for them, every projected file's state in this checkout and content address, and every
 //! finding. Read-only — the files are written by `majordomus generate editors` and checked by
@@ -50,5 +50,40 @@ pub fn module() -> ModuleDescriptor {
                 handler: editors_status,
             },
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the one place the tool, the route and the resource are named; a
+    /// refactor that dropped one would still compile and every behavioural suite would
+    /// still pass. This would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "editors");
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(ids, ["editors.status"]);
+        let exposure = &m.capabilities[0].capability.exposure;
+        let mcp = exposure.mcp.as_ref().expect("an MCP exposure");
+        assert_eq!(mcp.tool.as_deref(), Some("majordomus_editors"));
+        assert_eq!(
+            mcp.resource.as_ref().map(|r| r.uri.as_str()),
+            Some(EDITORS_URI)
+        );
+        assert_eq!(
+            exposure.http.as_ref().map(|h| h.path.as_str()),
+            Some("/api/v1/editors")
+        );
+        assert!(
+            exposure.cli.is_none(),
+            "the files are written by `generate editors`"
+        );
     }
 }

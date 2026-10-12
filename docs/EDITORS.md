@@ -6,11 +6,11 @@ document and the executable disagree, the document is wrong and changes in the s
 The decision is [ADR 140](../.ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md);
 the code is `apps/majordomus-cli/src/editors/`.
 
-```text
-.ai/repo/skills/<id>/SKILL.md   ──►  .agents/skills/<id>/SKILL.md   read by Zed and Antigravity
-justfile, .just/*.just          ──►  .zed/tasks.json                read by Zed
-.ai/repo/policy.yaml            ──►  AGENTS.md                      read by both (generate providers)
-```
+| source | projection | read by |
+|---|---|---|
+| `.ai/repo/skills/<id>/SKILL.md` | `.agents/skills/<id>/SKILL.md` | Zed and Antigravity |
+| `justfile`, `.just/*.just` | `.zed/tasks.json` | Zed |
+| `.ai/repo/policy.yaml` | `AGENTS.md` (`generate providers`) | both |
 
 ## Commands
 

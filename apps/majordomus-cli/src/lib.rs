@@ -33,7 +33,7 @@ pub mod diagram;
 pub mod discovery;
 pub(crate) mod distribution;
 pub mod economics;
-pub mod editors;
+pub(crate) mod editors;
 pub mod entity;
 pub mod environment;
 pub mod episodes;

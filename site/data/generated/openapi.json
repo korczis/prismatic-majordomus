@@ -17498,19 +17498,15 @@
       "is_enum": true,
       "name": "EditorInputClass",
       "properties": [],
-      "type": "\"repository\" | \"worktree\"",
+      "type": "\"repository\"",
       "used_by": [],
       "used_by_schemas": [
         "EditorInput"
       ],
       "values": [
         {
-          "description": "Tracked content of the repository: changes only by a commit.",
+          "description": "Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte.",
           "value": "repository"
-        },
-        {
-          "description": "The state of this checkout: which files happen to exist here.",
-          "value": "worktree"
         }
       ],
       "variants": []

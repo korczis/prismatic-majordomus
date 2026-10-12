@@ -82,10 +82,10 @@ const JUSTFILE_SOURCE: &str = "the recipes of the tracked justfile and .just/*.j
 #[serde(rename_all = "snake_case")]
 /// How far an input may change without the repository changing.
 pub enum EditorInputClass {
-    /// Tracked content of the repository: changes only by a commit.
+    /// Tracked content of the repository: changes only by a commit. The only class an
+    /// input has today: what the checkout merely holds (an instruction file, a legacy
+    /// directory) changes a finding, never a projected byte.
     Repository,
-    /// The state of this checkout: which files happen to exist here.
-    Worktree,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -305,8 +305,7 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
             sha256,
         });
     }
-    env.skills
-        .sort_by(|a, b| a.id.cmp(&b.id).then(a.path.cmp(&b.path)));
+    crate::order::canonical(&mut env.skills);
 
     match tracked_workflows(root) {
         Some((sources, workflows, groups)) => {
@@ -327,7 +326,7 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
         }
         None => env.workflows_resolved = None,
     }
-    env.inputs.sort_by(|a, b| a.path.cmp(&b.path));
+    crate::order::canonical(&mut env.inputs);
     env.inputs.dedup_by(|a, b| a.path == b.path);
     env
 }
@@ -346,14 +345,18 @@ fn tracked_workflows(
     }
     let mut files: Vec<PathBuf> = vec![PathBuf::from("justfile")];
     if let Ok(entries) = std::fs::read_dir(root.join(".just")) {
-        let mut more: Vec<PathBuf> = entries
+        let mut more: Vec<String> = entries
             .filter_map(|e| e.ok())
             .map(|e| e.path())
             .filter(|p| p.extension().is_some_and(|x| x == "just") && p.is_file())
-            .filter_map(|p| p.strip_prefix(root).ok().map(Path::to_path_buf))
+            .filter_map(|p| {
+                p.strip_prefix(root)
+                    .ok()
+                    .map(|r| r.to_string_lossy().replace('\\', "/"))
+            })
             .collect();
-        more.sort();
-        files.extend(more);
+        crate::order::canonical_strings(&mut more);
+        files.extend(more.into_iter().map(PathBuf::from));
     }
     let scratch = Scratch::new()?;
     let mut inputs = Vec::with_capacity(files.len());
@@ -452,12 +455,7 @@ fn tasks_of(
             group_rank,
         });
     }
-    out.sort_by(|a, b| {
-        a.group_rank
-            .cmp(&b.group_rank)
-            .then_with(|| a.group.cmp(&b.group))
-            .then_with(|| a.recipe.cmp(&b.recipe))
-    });
+    crate::order::canonical(&mut out);
     out
 }
 
@@ -467,8 +465,8 @@ fn tasks_of(
 /// fingerprints of its sources in path order. Independent of the generator's own version,
 /// which the banner states and which changes no rule.
 pub fn derivation_key(document: &str, sources: &[&EditorInput]) -> String {
-    let mut sorted: Vec<&&EditorInput> = sources.iter().collect();
-    sorted.sort_by(|a, b| a.path.cmp(&b.path));
+    let mut sorted: Vec<&EditorInput> = sources.to_vec();
+    crate::order::canonical(&mut sorted);
     let mut text = format!("editors/v{PROJECTION_VERSION}\n{document}\n");
     for i in sorted {
         text.push_str(&format!("{}\t{}\n", i.path, i.sha256));
@@ -501,7 +499,8 @@ pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
             .collect();
         artifacts.push((a, vec!["zed".into()], sources));
     }
-    artifacts.sort_by(|a, b| a.0.path.cmp(&b.0.path));
+    // in path order by construction: every skill (canonical by identity) under
+    // .agents/, then the task list under .zed/
 
     diagnostics.extend(description_findings(&env.skills));
     diagnostics.extend(checkout_findings(root));
@@ -552,17 +551,42 @@ pub fn report(index: &Index, root: &Path, version: &str) -> EditorProjection {
 }
 
 fn sort_diagnostics(d: &mut [EditorDiagnostic]) {
-    let rank = |s: Severity| match s {
-        Severity::Error => 0,
-        Severity::Warning => 1,
-        Severity::Info => 2,
-    };
-    d.sort_by(|a, b| {
-        rank(a.severity)
-            .cmp(&rank(b.severity))
-            .then_with(|| a.code.cmp(&b.code))
-            .then_with(|| a.path.cmp(&b.path))
-    });
+    crate::order::canonical(d);
+}
+
+// The canonical orders of the editor projection's collections (project.canonical-order).
+
+impl crate::order::Ordered for SkillRef {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.path)
+    }
+}
+
+impl crate::order::Ordered for EditorInput {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.path, &self.path)
+    }
+}
+
+// By the position of the recipe's group in the justfile's declaration, then by name: the
+// order the justfile already shows a person. A recipe in no declared group comes last.
+impl crate::order::Ordered for TaskRef {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let rank = i64::try_from(self.group_rank).unwrap_or(i64::MAX);
+        crate::order::OrderKey::plain(&self.recipe, &self.recipe).ranked(rank)
+    }
+}
+
+// Errors first, then warnings, then information; inside a severity by code, then path.
+impl crate::order::Ordered for EditorDiagnostic {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let rank = match self.severity {
+            Severity::Error => 0,
+            Severity::Warning => 1,
+            Severity::Info => 2,
+        };
+        crate::order::OrderKey::plain(&self.code, self.path.as_deref().unwrap_or("")).ranked(rank)
+    }
 }
 
 /// A skill name both products accept: lowercase letters, digits and single hyphens, at most
@@ -768,7 +792,7 @@ pub fn orphans(root: &Path, artifacts: &[Artifact]) -> Vec<String> {
             out.push(rel);
         }
     }
-    out.sort();
+    crate::order::canonical_strings(&mut out);
     out
 }
 

@@ -114,18 +114,19 @@ pub fn legacy_findings(root: &Path) -> Vec<EditorDiagnostic> {
     let Ok(entries) = std::fs::read_dir(root.join(".agents/rules")) else {
         return out;
     };
-    let mut rules: Vec<_> = entries
+    let mut rules: Vec<String> = entries
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|p| p.extension().is_some_and(|x| x == "md") && p.is_file())
+        .map(|p| p.to_string_lossy().into_owned())
         .collect();
-    rules.sort();
-    for path in rules {
+    crate::order::canonical_strings(&mut rules);
+    for path in rules.iter().map(std::path::Path::new) {
         let rel = path
             .strip_prefix(root)
             .map(|p| p.to_string_lossy().replace('\\', "/"))
             .unwrap_or_default();
-        let Ok(text) = std::fs::read_to_string(&path) else {
+        let Ok(text) = std::fs::read_to_string(path) else {
             continue;
         };
         if text.len() > RULE_BYTES {
