@@ -326,6 +326,18 @@ names, when it names a newer version than the build; it says so in its output an
 site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
 all of it.
 
+The pages follow the metadata, not the record. Until 2026-10-12 they did not: `latest.json`
+named v0.21.0 from 10:23Z while the homepage beside the install command offered v0.20.0,
+because every page read the release record and the record was still a pull request. The
+release a page offers is now derived once, by `scripts/site-build`, as the newer of the
+newest record and the `releases/latest.json` that `gh-pages` serves (read from the git ref,
+named in `/build.json` as `release.published_from`), and every page reads that one value. So
+the build the publish job asks for below is the one that moves the homepage, minutes after the
+archives rather than hours. `scripts/pages release-live` holds the homepage, `latest.json`
+and GitHub's newest release to one version past `deploy.release_window`, after every deploy
+and in the `pages-live` gate (`project.the-site-offers-the-release-it-published`,
+`test/cases/1087_the_site_offers_the_release_it_published.sh`).
+
 #### Why the release asks Pages to publish
 
 The publish job ends by running `gh workflow run pages.yml`, and that step is not a

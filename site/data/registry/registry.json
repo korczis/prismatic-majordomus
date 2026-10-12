@@ -6,23 +6,23 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "1bb16e1e6693d6975434723dbfe6981866f116ffefabc1f2bc4145f34fc4639c",
+    "fingerprint": "1223693d7f1643e4d79bcab3505028485fbba8633baa4e3f08b8205e0337c884",
     "summary": {
-      "total": 2252,
+      "total": 2254,
       "builtin": 191,
-      "declarative": 2061,
+      "declarative": 2063,
       "by_kind": {
         "command": 27,
         "query": 164,
-        "resource": 2061
+        "resource": 2063
       },
       "by_stability": {
         "behaviorally_verified": 133,
         "experimental": 49,
-        "implemented": 2070
+        "implemented": 2072
       },
       "mcp_tools": 183,
-      "mcp_resources": 2115,
+      "mcp_resources": 2117,
       "http_routes": 187,
       "cli_commands": 105,
       "modules": 89,
@@ -80116,7 +80116,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 168,
+        "capabilities": 169,
         "capability_ids": []
       },
       {
@@ -80259,7 +80259,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 446,
+        "capabilities": 447,
         "capability_ids": []
       },
       {
@@ -80349,7 +80349,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eadb8b509cc8fc5ae254112673ebdb1d2e978451a0bd38b6faf2571109903463",
+    "fingerprint": "e5b0750a9fc954692a7694279f79ce18e0e99d72e47aa0b0f24f8fd7dcf89ada",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80398,12 +80398,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 168,
+      "rule": 169,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 446,
+      "test": 447,
       "use-case": 48,
       "workspace": 1
     },
@@ -85900,7 +85900,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 30388
+        "bytes": 31355
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -85999,7 +85999,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 52225
+        "bytes": 54058
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -86215,7 +86215,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 40181
+        "bytes": 41205
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -96962,6 +96962,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "rule",
+        "identity": "project.the-site-offers-the-release-it-published@1",
+        "title": "The site offers the release that was published, on every surface at once",
+        "description": "Which release is the latest is derived once, by the site build, as the newer of the newest release record and the release metadata the published site already serves, and every page that names it reads that one derivation; the homepage, /releases/latest.json and the newest GitHub release are held to one version, at build time and against the live site, beyond a bounded window after a publication.",
+        "path": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6786,
+        "tags": [
+          "release",
+          "publication",
+          "web",
+          "distribution"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "rule",
         "identity": "project.the-version-is-measured@2",
@@ -98764,6 +98781,14 @@
         "bytes": 3603
       },
       {
+        "uri": "majordomus://test/test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "kind": "test",
+        "identity": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "source_class": "case",
+        "bytes": 13420
+      },
+      {
         "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
         "kind": "test",
         "identity": "test/cases/108_entry_converges_on_a_server.sh",
@@ -99665,7 +99690,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 16554
+        "bytes": 16622
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -99769,7 +99794,7 @@
         "identity": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "source_class": "case",
-        "bytes": 5098
+        "bytes": 5733
       },
       {
         "uri": "majordomus://test/test/cases/353_the_version_bump_has_an_actor.sh",
@@ -100513,7 +100538,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 10789
+        "bytes": 11932
       },
       {
         "uri": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
@@ -102708,7 +102733,7 @@
         "id",
         "version"
       ],
-      "objects": 168
+      "objects": 169
     },
     {
       "name": "scope",
@@ -102763,7 +102788,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 446
+      "objects": 447
     },
     {
       "name": "use-case",

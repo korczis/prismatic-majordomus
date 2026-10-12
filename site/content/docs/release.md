@@ -335,11 +335,24 @@ Nothing caught it, and the reason is worth keeping: `scripts/ci/version-matches-
 whether the **declared** version covers what the surface **owes** — declared-versus-owed. Nobody
 asked **shown-versus-shipped**. Both questions are about the version; only one was ever posed.
 
-So `generate-site-data` writes `release` beside `version`, read from the newest record under
-`.ai/repo/releases/` — the same records the changelog, the baselines and `/releases/latest.json`
-read. The badge renders `project.release`, guarded: a repository with nothing released shows no
-badge rather than falling back to the tree's version, because that fallback *is* the defect. The
-tree's own version stays visible to anyone auditing a build, in `/build.json`.
+So the site carries the release it offers apart from the tree's `version`, and the badge
+renders that, guarded: a repository with nothing released shows no badge rather than falling
+back to the tree's version, because that fallback *is* the defect. The tree's own version stays
+visible to anyone auditing a build, in `/build.json`.
+
+Which release it offers was at first read from the newest record under `.ai/repo/releases/`.
+That answered *shown-versus-shipped* for the tree and not for the hours after a release: the
+record reaches master through a pull request the release opens after publishing, and on
+2026-10-12 the homepage offered v0.20.0 from 10:23Z, when `/releases/latest.json` already named
+v0.21.0, until that pull request passed its own validation. The offer is now derived once, by
+`scripts/site-build`, as the newer of the newest record and the `releases/latest.json` that
+`gh-pages` already serves, into `build.json` as `release` — every page reads it from there
+(`offered` in `base.html`), and `site/data/generated/project.json` carries no release at all.
+`scripts/site-check` refuses a build whose homepage, `/build.json` and served `latest.json`
+disagree, and a tree whose newest record and its projections do; `scripts/pages release-live`
+holds the live homepage, `latest.json` and GitHub's newest release to one version once
+`deploy.release_window` has passed. The rule is
+`project.the-site-offers-the-release-it-published`; `test/cases/1087` breaks each surface.
 
 `scripts/site-check` refuses a published tree whose offered version has no release document, so
 this stops a publication rather than being found by a reader. It is scoped to what the site
