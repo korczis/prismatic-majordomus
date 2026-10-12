@@ -1009,11 +1009,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                     crate::capability::CachePolicy::Disabled => "disabled".to_string(),
                     crate::capability::CachePolicy::Process {
                         max_entries,
-                        ttl_seconds,
-                    } => match ttl_seconds {
-                        Some(t) => format!("process, {max_entries} entries, {t}s"),
-                        None => format!("process, {max_entries} entries, no expiry"),
-                    },
+                        ttl_seconds: None,
+                    } => format!("process, {max_entries} entries, no expiry"),
+                    other => other.summary(),
                 })),
             ),
             (

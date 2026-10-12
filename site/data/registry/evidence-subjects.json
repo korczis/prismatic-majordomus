@@ -2154,6 +2154,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:ui-dashboard-cites-its-sources",
+      "path": "/evidence/claims/ui-dashboard-cites-its-sources/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:use-case-coverage",
       "path": "/evidence/claims/use-case-coverage/"
     },
@@ -11151,6 +11156,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:ui-dashboard-cites-its-sources": {
+      "kind": "claim",
+      "id": "ui-dashboard-cites-its-sources",
+      "status": "guaranteed",
+      "page": "/evidence/claims/ui-dashboard-cites-its-sources/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "crate:ui_surface",
+          "path": "apps/majordomus-cli/tests/ui_surface.rs",
+          "category": "integration",
+          "inputs": [
+            "docs/MAJORDOMUS_UI.md",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/tests/ui_surface.rs"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:use-case-coverage": {
       "kind": "claim",
       "id": "use-case-coverage",
@@ -18385,10 +18413,11 @@
     "feature:ui": {
       "kind": "feature",
       "id": "ui",
-      "status": "draft",
+      "status": "stable",
       "page": "/evidence/features/ui/",
       "programs": [],
       "members": [
+        "claim:ui-dashboard-cites-its-sources",
         "rule:project.interfaces-are-projections",
         "rule:project.ui-derived-state",
         "rule:project.web-surface-declared-once"
@@ -26405,6 +26434,7 @@
     "crate:availability",
     "crate:bench",
     "crate:brief",
+    "crate:capability_cache_switch",
     "crate:cli",
     "crate:cli_docs",
     "crate:cli_validate_violations",
@@ -26476,7 +26506,6 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
-    "crate:ui_surface",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",

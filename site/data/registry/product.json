@@ -5,16 +5,16 @@
     "id": "majordomus-cli",
     "version": "0.22.0"
   },
-  "fingerprint": "df3819805c51ffa3d7ed6cd1635ee095aa6b30c74dcda0b9afb82a2f9fcd7909",
+  "fingerprint": "de1ed39f0e79e32b99dd5304439792e6d8bb8b5b4eb97c1a3406ecf838978ad5",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
-    "features": 26,
+    "features": 27,
     "features_all": 28,
-    "featured": 14,
+    "featured": 15,
     "providers": 6,
     "modules": 56,
-    "modules_covered": 42,
+    "modules_covered": 44,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 31,
@@ -25,31 +25,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 24
+      "features": 25
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 20
+      "features": 21
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 24
+      "features": 25
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 21
+      "features": 22
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 26
+      "features": 27
     }
   ],
   "domains": [
@@ -2582,7 +2582,7 @@
     {
       "id": "surfaces",
       "title": "Surfaces",
-      "headline": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
+      "headline": "One declaration in the repository becomes the command line, the HTTP API, MCP, the UI, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
       "problem": "Interfaces disagree. The command line, the API, the docs and the website each keep a copy, and the copies drift.",
       "status": "stable",
       "weight": 60,
@@ -2629,6 +2629,24 @@
           "claims": 11,
           "tested": 11,
           "use_cases": 3
+        },
+        {
+          "id": "ui",
+          "label": "UI",
+          "title": "majordomus ui: the delivery, for a person",
+          "headline": "The shared server's primary surface answers how the delivery stands — health, releases, the roadmap, the work and its pull requests, the mesh, the evidence and the rules — and every value on it names the capability it was read from and every other surface that serves it.",
+          "route": "/features/ui/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 1,
+          "tested": 1,
+          "use_cases": 0
         },
         {
           "id": "cockpit",
@@ -3086,6 +3104,12 @@
           "test": "test/cases/65_tool_root_independence.sh"
         },
         {
+          "id": "ui-dashboard-cites-its-sources",
+          "claim": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/ui_surface.rs"
+        },
+        {
           "id": "web-namespaces-reserved",
           "claim": "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount",
           "status": "guaranteed",
@@ -3164,18 +3188,18 @@
         }
       ],
       "counts": {
-        "features": 5,
-        "claims": 32,
-        "tested": 32,
+        "features": 6,
+        "claims": 33,
+        "tested": 33,
         "use_cases": 9,
-        "rules": 13,
-        "enforced_rules": 12,
-        "capabilities": 55,
+        "rules": 14,
+        "enforced_rules": 13,
+        "capabilities": 115,
         "moments": 38
       },
       "evidence": {
         "claims": {
-          "guaranteed": 32
+          "guaranteed": 33
         },
         "modules": {}
       }
@@ -3450,7 +3474,7 @@
         },
         {
           "name": "claim",
-          "objects": 243
+          "objects": 244
         }
       ],
       "rule_refs": [
@@ -3723,11 +3747,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 315,
+        "mcp_resources": 316,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 308,
+        "objects": 309,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -7182,7 +7206,7 @@
         },
         {
           "name": "document",
-          "objects": 338
+          "objects": 339
         }
       ],
       "rule_refs": [
@@ -7455,11 +7479,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 438,
+        "mcp_resources": 439,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 435,
+        "objects": 436,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9123,9 +9147,9 @@
       "short_title": "UI",
       "headline": "The shared server's primary surface answers how the delivery stands — health, releases, the roadmap, the work and its pull requests, the mesh, the evidence and the rules — and every value on it names the capability it was read from and every other surface that serves it.",
       "summary": "At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.",
-      "status": "draft",
+      "status": "stable",
       "weight": 95,
-      "featured": false,
+      "featured": true,
       "domain": "surfaces",
       "areas": [
         "observability"
@@ -9164,7 +9188,9 @@
       "adrs": [
         "adr-0135"
       ],
-      "claims": [],
+      "claims": [
+        "ui-dashboard-cites-its-sources"
+      ],
       "use_cases": [],
       "cockpit": [],
       "web": [
@@ -10179,11 +10205,18 @@
         {
           "id": "adr-0135",
           "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
-          "status": "proposed",
+          "status": "accepted",
           "path": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md"
         }
       ],
-      "claim_refs": [],
+      "claim_refs": [
+        {
+          "id": "ui-dashboard-cites-its-sources",
+          "claim": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/ui_surface.rs"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [],
       "web_refs": [
@@ -10419,12 +10452,14 @@
         "enforced_rules": 3,
         "docs": 1,
         "adrs": 1,
-        "claims": 0,
+        "claims": 1,
         "use_cases": 0,
         "moments": 35
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 1
+        },
         "modules": {
           "behaviorally_verified": 13,
           "experimental": 3,
@@ -11864,7 +11899,7 @@
         },
         {
           "name": "issue",
-          "objects": 327
+          "objects": 328
         },
         {
           "name": "intent",
@@ -12066,11 +12101,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 369,
+        "mcp_resources": 370,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 366,
+        "objects": 367,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14793,7 +14828,7 @@
         "id": "ui",
         "label": "UI",
         "route": "/features/ui/",
-        "status": "draft",
+        "status": "stable",
         "surfaces": {
           "cli": true,
           "api": true,
@@ -14808,8 +14843,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 0,
-        "claims": 0
+        "proven": 1,
+        "claims": 1
       },
       {
         "id": "cockpit",
@@ -15106,14 +15141,16 @@
         "id": "capabilities",
         "title": "Capabilities",
         "features": [
-          "declare-once"
+          "declare-once",
+          "ui"
         ]
       },
       {
         "id": "commands",
         "title": "Command graph",
         "features": [
-          "interfaces"
+          "interfaces",
+          "ui"
         ]
       },
       {
@@ -15143,12 +15180,16 @@
       {
         "id": "delivery",
         "title": "Delivery",
-        "features": []
+        "features": [
+          "ui"
+        ]
       },
       {
         "id": "deploy",
         "title": "Deployment",
-        "features": []
+        "features": [
+          "ui"
+        ]
       },
       {
         "id": "design",
@@ -15182,6 +15223,7 @@
         "id": "distribution",
         "title": "Distribution",
         "features": [
+          "ui",
           "install"
         ]
       },
@@ -15218,6 +15260,7 @@
         "id": "evidence",
         "title": "Evidence",
         "features": [
+          "ui",
           "evidence"
         ]
       },
@@ -15225,14 +15268,16 @@
         "id": "executions",
         "title": "Executions",
         "features": [
-          "interfaces"
+          "interfaces",
+          "ui"
         ]
       },
       {
         "id": "gates",
         "title": "Completion gates",
         "features": [
-          "finish-contract"
+          "finish-contract",
+          "ui"
         ]
       },
       {
@@ -15247,6 +15292,7 @@
         "title": "Health",
         "features": [
           "doctrine",
+          "ui",
           "cockpit"
         ]
       },
@@ -15254,7 +15300,8 @@
         "id": "integration",
         "title": "Pull-request integration",
         "features": [
-          "coordination"
+          "coordination",
+          "ui"
         ]
       },
       {
@@ -15268,6 +15315,7 @@
         "id": "intents",
         "title": "Intent",
         "features": [
+          "ui",
           "planning"
         ]
       },
@@ -15294,7 +15342,8 @@
         "id": "mesh",
         "title": "Mesh",
         "features": [
-          "mesh"
+          "mesh",
+          "ui"
         ]
       },
       {
@@ -15313,7 +15362,8 @@
         "id": "objects",
         "title": "Objects",
         "features": [
-          "interfaces"
+          "interfaces",
+          "ui"
         ]
       },
       {
@@ -15346,6 +15396,7 @@
         "id": "plan",
         "title": "The plan and its derivations",
         "features": [
+          "ui",
           "planning"
         ]
       },
@@ -15381,6 +15432,7 @@
         "id": "release",
         "title": "Release",
         "features": [
+          "ui",
           "install"
         ]
       },
@@ -15389,6 +15441,7 @@
         "title": "Repository",
         "features": [
           "interfaces",
+          "ui",
           "context"
         ]
       },
@@ -15396,7 +15449,8 @@
         "id": "rules",
         "title": "Rules",
         "features": [
-          "doctrine"
+          "doctrine",
+          "ui"
         ]
       },
       {
@@ -15439,7 +15493,8 @@
         "id": "web",
         "title": "Web surfaces",
         "features": [
-          "interfaces"
+          "interfaces",
+          "ui"
         ]
       },
       {
@@ -15717,7 +15772,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (243)",
+        "title": "claim (244)",
         "features": [
           "declare-once"
         ]
@@ -15786,7 +15841,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (327)",
+        "title": "issue (328)",
         "features": [
           "planning"
         ]
@@ -16607,6 +16662,14 @@
       "path": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md"
     },
     {
+      "id": "project.ui-derived-state",
+      "identity": "project.ui-derived-state@1",
+      "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/ui-derived-state.v1.md"
+    },
+    {
       "id": "project.unknown-keys-are-errors",
       "identity": "project.unknown-keys-are-errors@1",
       "title": "Unknown configuration keys are errors",
@@ -16783,36 +16846,36 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2256,
+    "capabilities": 2259,
     "builtin": 192,
-    "declarative": 2064,
+    "declarative": 2067,
     "modules": 56,
     "mcp_tools": 184,
-    "mcp_resources": 2119,
+    "mcp_resources": 2122,
     "http_routes": 188,
     "cli_commands": 199,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2064,
+    "objects": 2067,
     "by_kind": {
       "adr": 96,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 243,
+      "claim": 244,
       "command": 31,
       "context": 37,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 338,
+      "document": 339,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 327,
+      "issue": 328,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16831,7 +16894,7 @@
       "workspace": 1
     },
     "providers": 6,
-    "features": 26,
+    "features": 27,
     "domains": 6,
     "web_surfaces": 11
   },
@@ -16844,7 +16907,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 225,
+    "declared": 226,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -18222,6 +18285,12 @@
         "supported": false
       },
       "typed-outcome": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ui-dashboard-cites-its-sources": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

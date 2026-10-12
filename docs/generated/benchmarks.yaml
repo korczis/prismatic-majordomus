@@ -24,14 +24,14 @@ coverage:
     waived: 23
     inapplicable: 0
   - scope: system
-    required: 13
-    covered: 13
+    required: 14
+    covered: 14
     missing: 0
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 577
-    covered: 504
+    required: 578
+    covered: 505
     missing: 0
     waived: 73
     inapplicable: 0
@@ -58,7 +58,7 @@ capabilities:
   - id: capabilities.describe
     module: capabilities
     kind: query
-    cache: "—"
+    cache: "process, 512 entries"
     direct: covered
     mcp: covered
     http: covered
@@ -411,7 +411,7 @@ capabilities:
   - id: distribution.releases
     module: distribution
     kind: query
-    cache: "—"
+    cache: "process, 1 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -549,7 +549,7 @@ capabilities:
   - id: evidence.claim
     module: evidence
     kind: query
-    cache: "—"
+    cache: "process, 32 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -566,7 +566,7 @@ capabilities:
   - id: evidence.report
     module: evidence
     kind: query
-    cache: "—"
+    cache: "process, 8 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -825,7 +825,7 @@ capabilities:
   - id: intents.list
     module: intents
     kind: query
-    cache: "—"
+    cache: "process, 2 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1273,7 +1273,7 @@ capabilities:
   - id: plan.issues
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1293,7 +1293,7 @@ capabilities:
   - id: plan.next
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1313,7 +1313,7 @@ capabilities:
   - id: plan.roadmap
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 4 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1322,7 +1322,7 @@ capabilities:
   - id: plan.status
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1527,7 +1527,7 @@ capabilities:
   - id: release.version
     module: release
     kind: query
-    cache: "—"
+    cache: "process, 2 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1536,7 +1536,7 @@ capabilities:
   - id: repository.info
     module: repository
     kind: query
-    cache: "—"
+    cache: "process, 1 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1576,7 +1576,7 @@ capabilities:
   - id: rules.report
     module: rules
     kind: query
-    cache: "—"
+    cache: "process, 8 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1587,7 +1587,7 @@ capabilities:
   - id: rules.show
     module: rules
     kind: query
-    cache: "—"
+    cache: "process, 32 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1845,3 +1845,123 @@ system_targets:
   - key: system.http.cockpit_graph
     transport: http
     measures: GET /cockpit/graphs/registry (a page whose content is a derived graph)
+  - key: system.http.live.index
+    transport: http
+    measures: GET / over the live view a served process uses (the per-request git stamp and surface resolution)
+pages:
+  - key: system.http.ui.index
+    route: /ui
+    view: pinned
+    deferred: false
+  - key: system.http.ui.command
+    route: /ui/command
+    view: pinned
+    deferred: false
+  - key: system.http.ui.roadmap
+    route: /ui/roadmap
+    view: pinned
+    deferred: false
+  - key: system.http.ui.work
+    route: /ui/work
+    view: pinned
+    deferred: false
+  - key: system.http.ui.issues
+    route: /ui/issues
+    view: pinned
+    deferred: false
+  - key: system.http.ui.prs
+    route: /ui/prs
+    view: pinned
+    deferred: false
+  - key: system.http.ui.capabilities
+    route: /ui/capabilities
+    view: pinned
+    deferred: false
+  - key: system.http.ui.mesh
+    route: /ui/mesh
+    view: pinned
+    deferred: false
+  - key: system.http.ui.delivery
+    route: /ui/delivery
+    view: pinned
+    deferred: false
+  - key: system.http.ui.deployments
+    route: /ui/deployments
+    view: pinned
+    deferred: false
+  - key: system.http.ui.evidence
+    route: /ui/evidence
+    view: pinned
+    deferred: false
+  - key: system.http.ui.docs
+    route: /ui/docs
+    view: pinned
+    deferred: false
+  - key: system.http.ui.governance
+    route: /ui/governance
+    view: pinned
+    deferred: false
+  - key: system.http.live.ui.index
+    route: /ui
+    view: live
+    deferred: false
+  - key: system.http.live.ui.command
+    route: /ui/command
+    view: live
+    deferred: false
+  - key: system.http.live.ui.roadmap
+    route: /ui/roadmap
+    view: live
+    deferred: false
+  - key: system.http.live.ui.work
+    route: /ui/work
+    view: live
+    deferred: false
+  - key: system.http.live.ui.issues
+    route: /ui/issues
+    view: live
+    deferred: false
+  - key: system.http.live.ui.prs
+    route: /ui/prs
+    view: live
+    deferred: false
+  - key: system.http.live.ui.capabilities
+    route: /ui/capabilities
+    view: live
+    deferred: false
+  - key: system.http.live.ui.mesh
+    route: /ui/mesh
+    view: live
+    deferred: false
+  - key: system.http.live.ui.delivery
+    route: /ui/delivery
+    view: live
+    deferred: false
+  - key: system.http.live.ui.deployments
+    route: /ui/deployments
+    view: live
+    deferred: false
+  - key: system.http.live.ui.evidence
+    route: /ui/evidence
+    view: live
+    deferred: false
+  - key: system.http.live.ui.docs
+    route: /ui/docs
+    view: live
+    deferred: false
+  - key: system.http.live.ui.governance
+    route: /ui/governance
+    view: live
+    deferred: false
+  - key: system.http.ui.panels.pull_requests
+    route: /ui/panels/pull-requests
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.delivery
+    route: /ui/panels/delivery
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.drain
+    route: /ui/panels/drain
+    view: pinned
+    deferred: true

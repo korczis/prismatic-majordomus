@@ -432,7 +432,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(crate::capability::CliExposure { path: vec!["intent".into(), "list".into()] }),
                 },
                 tags: ["intent", "project"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Checkout { max_entries: 2 },
                 handler: intent_list,
             },
             capability! {

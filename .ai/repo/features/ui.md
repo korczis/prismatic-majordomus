@@ -6,12 +6,14 @@ title: "majordomus ui: the delivery, for a person"
 short_title: UI
 headline: The shared server's primary surface answers how the delivery stands — health, releases, the roadmap, the work and its pull requests, the mesh, the evidence and the rules — and every value on it names the capability it was read from and every other surface that serves it.
 summary: At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.
-status: draft
+status: stable
 weight: 95
 domain: surfaces
+featured: true
 areas: [observability]
 modules: [repository, health, release, distribution, plan, intents, mesh, integration, deploy, delivery, gates, evidence, rules, capabilities, commands, executions, objects, web]
 rules: [project.ui-derived-state, project.interfaces-are-projections, project.web-surface-declared-once]
+claims: [ui-dashboard-cites-its-sources]
 docs: [docs/MAJORDOMUS_UI.md]
 adrs: [adr-0135]
 web: [ui]

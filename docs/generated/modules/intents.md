@@ -65,7 +65,7 @@ Every intent the project model declares, each with the status the plan derives f
 | MCP resource | `majordomus://intents` |
 | HTTP | `GET /api/v1/intents` |
 | CLI | `majordomus intent list` |
-| cache | — |
+| cache | process, 2 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::intents |
 | tags | intent, project |

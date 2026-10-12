@@ -83,7 +83,7 @@ The version the crate manifest declares — the one place it is authored — the
 | stability | implemented |
 | MCP tool | `majordomus_release_version` |
 | HTTP | `GET /api/v1/release/version` |
-| cache | — |
+| cache | process, 2 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::release |
 | tags | release, version |

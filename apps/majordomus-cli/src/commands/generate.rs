@@ -93,11 +93,8 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         }
         writeln!(out, "generate --check: in sync").map_err(Error::Transport)?;
     } else {
-        for removed in
-            crate::editors::remove_orphans(&root, &orphans).map_err(|e| Error::io(&root, e))?
-        {
-            writeln!(out, "{removed} (removed: its skill is no longer active)")
-                .map_err(Error::Transport)?;
+        for removed in crate::editors::remove_orphans(&root, &orphans) {
+            tracing::info!(path = %removed, "an orphaned editor projection was removed: its skill is no longer active");
         }
         for path in generate::write(&root, &artifacts)? {
             writeln!(
@@ -479,5 +476,102 @@ mod tests {
             crate::generation::crate_generation(&crate_dir).as_deref(),
             Some(crate::GENERATION)
         );
+    }
+
+    // ---- `generate editors`, in process, over a repository with one skill
+
+    fn skill_repository() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let put = |rel: &str, text: &str| {
+            let p = root.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        };
+        let sources =
+            std::fs::read_to_string(root.join(".ai/repo/knowledge/sources.yaml")).unwrap();
+        put(
+            ".ai/repo/knowledge/sources.yaml",
+            &format!("{sources}  - id: skill\n    kind: skill\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/skills/*/SKILL.md'\n    required: false\n"),
+        );
+        put(
+            ".ai/repo/skills/triage/SKILL.md",
+            "---\nschema: skill/v1\nid: triage\nversion: 1\ntitle: Triage\ndescription: Sort a report.\nstatus: active\ntags: [t]\n---\n# Purpose\n\nSort.\n\n# Procedure\n\n1. Sort.\n\n# Output\n\nSorted.\n",
+        );
+        repo
+    }
+
+    fn editors(root: &std::path::Path, check: bool) -> crate::error::Result<u8> {
+        super::run(crate::cli::GenerateArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(root.to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Filesystem,
+                strict: false,
+                share: Some(crate::synthetic::crate_share()),
+            },
+            target: crate::cli::GenerateTarget::Editors,
+            check,
+            out: None,
+        })
+    }
+
+    #[test]
+    fn generate_editors_writes_checks_refuses_a_stranger_and_removes_an_orphan() {
+        let repo = skill_repository();
+        let root = repo.root().to_path_buf();
+        let projected = root.join(".agents/skills/triage/SKILL.md");
+
+        assert_eq!(editors(&root, false).unwrap(), 0);
+        assert!(projected.is_file());
+        assert_eq!(
+            editors(&root, true).unwrap(),
+            0,
+            "what was written is in sync"
+        );
+
+        // a file somebody wrote at the projected path is refused by name, and kept
+        let mine = "---\nname: triage\ndescription: mine\n---\nmine\n";
+        std::fs::write(&projected, mine).unwrap();
+        let refused = editors(&root, false).unwrap_err();
+        assert!(
+            matches!(refused, crate::error::Error::Refused { code: REFUSED, .. }),
+            "{refused}"
+        );
+        assert!(
+            refused
+                .to_string()
+                .contains(".agents/skills/triage/SKILL.md"),
+            "{refused}"
+        );
+        assert_eq!(std::fs::read_to_string(&projected).unwrap(), mine);
+        std::fs::remove_file(&projected).unwrap();
+        assert_eq!(editors(&root, false).unwrap(), 0);
+
+        // the skill is retired: its projection is an orphan the check names and generate removes
+        std::fs::remove_dir_all(root.join(".ai/repo/skills/triage")).unwrap();
+        let stale = editors(&root, true).unwrap_err().to_string();
+        assert!(
+            stale.contains(".agents/skills/triage/SKILL.md (orphaned)"),
+            "{stale}"
+        );
+        assert_eq!(editors(&root, false).unwrap(), 0);
+        assert!(!projected.exists());
+        assert_eq!(editors(&root, true).unwrap(), 0);
+    }
+
+    /// A justfile `just` cannot describe refuses the whole target: a task list that exists
+    /// only where the runner could be asked is not derived from the tree.
+    #[test]
+    fn generate_editors_refuses_where_the_justfile_cannot_be_read() {
+        let repo = skill_repository();
+        let root = repo.root().to_path_buf();
+        std::fs::write(root.join("justfile"), "this is { not a justfile\n").unwrap();
+        let refused = editors(&root, false).unwrap_err();
+        assert!(
+            matches!(refused, crate::error::Error::Refused { code: 12, .. }),
+            "{refused}"
+        );
+        assert!(refused.to_string().contains("install `just`"), "{refused}");
+        assert!(!root.join(".agents").exists(), "nothing is half-written");
     }
 }

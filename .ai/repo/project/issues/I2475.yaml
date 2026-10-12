@@ -28,4 +28,25 @@ evidence_required:
   - "ui_issues_unit_tests"
   - "ui_issues_case_1080"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T11:04:42Z
+started_at: 2026-10-12T11:04:21Z
+started_event: sha256:bbfae840572de5509765673f74fbce15e36e4d8e77d2be7e29f30f91f0c0c814
+verified_at: 2026-10-12T11:04:28Z
+verified_event: sha256:1dee7572e666bda318fd557678a84c8c72aefa677823c9c370998f2332191a16
+completed_at: 2026-10-12T11:04:42Z
+completed_event: sha256:f338f05cede2bd47dd9a5845e59575741c95a5d929b41acd0a0184048b9f068d
+evidence:
+  - covers: ui_issues_unit_tests
+    type: ci
+    command: "cargo test --lib ui::issues (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "5 ui::issues tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:35Z
+  - covers: ui_issues_case_1080
+    type: ci
+    command: "test/run.sh 1080_the_issues_are_browsed (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1080_the_issues_are_browsed ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:39Z

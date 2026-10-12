@@ -131,7 +131,12 @@ done
 grep -qiE 'secrets\.|GITHUB_TOKEN|gh auth' "$CORE" "$LINT" && { echo "    a gate script reaches for a credential"; exit 1; }
 
 # 7. shellcheck covers the tests as well as the tool: an unchecked test is an unchecked gate
-grep -q 'shellcheck.*test/cases/\*\.sh' "$LINT" || { echo "    shell-lint does not shellcheck test/cases"; exit 1; }
+# The lint reads a batched list of files: the cases must be in that list, and the list must be
+# what shellcheck is handed
+grep -q 'test/cases/\*\.sh > "\$lint_dir/files"' "$LINT" \
+  || { echo "    shell-lint does not list test/cases for shellcheck"; exit 1; }
+grep -q 'xargs -0 shellcheck' "$LINT" \
+  || { echo "    shell-lint does not shellcheck the files it listed"; exit 1; }
 
 # 8. the enforcement the policy declares is the enforcement the hooks run. doctor proves this
 #    for the repository; here we prove doctor itself is invoked by both hooks and by CI.

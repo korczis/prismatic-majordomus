@@ -8,7 +8,11 @@ wrong and changes in the same commit as the fix.
 - The decision is
   [ADR 0135](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md).
 - The rule the UI is held to is `project.ui-derived-state`.
-- The feature record is `.ai/repo/features/ui.md`.
+- The feature record is `.ai/repo/features/ui.md` (stable since 2026-10-12, when the owner
+  accepted ADR 0135).
+- The claim a reader can check is `ui-dashboard-cites-its-sources`
+  (`docs/claims/ui-dashboard-cites-its-sources.md`), proven by
+  `apps/majordomus-cli/tests/ui_surface.rs`.
 - The owner's brief, with its reference screens, is
   `campaigns/majordomus-ui-complete-opus-fable-v3-20261011/`.
 
@@ -22,9 +26,11 @@ The shared server of a checkout serves two surfaces a person reads.
 | The Cockpit | `/cockpit` | its technical reference: the registry rendered, one page per capability, object, graph and route |
 
 The UI is where a person is sent first, and it is not a view of the registry: its navigation
-is its screens, its words are the delivery's. It refers to the Cockpit in exactly two places:
+is its screens, its words are the delivery's. It refers to the Cockpit in three places:
 - the "technical view" link on each source line, to the Cockpit's page for that capability;
-- the Cockpit entry among the other surfaces in the top bar.
+- the Cockpit entry among the other surfaces in the top bar;
+- the top bar's search, which is the Cockpit's search (`/cockpit/search`) until the UI has a
+  search of its own.
 
 Both surfaces are projections (ADR 0012): they hold no data, they compose capabilities
 through the executor every transport calls, and the same process serves them under one
@@ -124,6 +130,16 @@ While a screen is visible, `ui.js` asks the server for it again every minute, pu
 rendering in place, and updates the time in the top bar. That time is when the sources were
 read. This is a refresh and is said as one; nothing claims a live stream.
 
+How fast is measured, not written here. `majordomus bench` derives a target from every
+screen in `SCREENS` and every panel in `PANELS`, cold and warm:
+- `system.http.ui.<route>` reads the page over a pinned context.
+- `system.http.live.ui.<route>` reads a screen over the live view that `serve` answers from,
+  so it pays the per-request git stamp. `system.http.live.index` measures that stamp alone,
+  on `/`.
+- A panel is measured only by `--profile full`, because its source is the reason it is a panel.
+
+The targets are listed in [`generated/benchmarks.md`](generated/benchmarks.md).
+
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
@@ -186,12 +202,13 @@ part of the screen answers the same question as the rest of it.
 2. Add it to `SCREENS` in `ui/mod.rs` with its icon, and its arm to the dispatcher.
 3. A source too slow for a first paint becomes a panel route in `PANELS`, drawn as a
    placeholder with `data-panel-src`.
+   Either list makes the route a benchmark target; nothing else is edited.
 4. Lead somewhere: a tile with `kpi_to`, a panel with `panel_to`, a row with a link.
 
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
-  the next slice. Until then, open `/ui` on the address `majordomus serve status` prints.
+  I2484. Until it lands, open `/ui` on the address `majordomus serve status` prints.
 - Nothing on the UI starts work yet: launching a capability, an issue or a milestone through
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.

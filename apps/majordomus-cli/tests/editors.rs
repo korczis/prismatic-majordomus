@@ -149,6 +149,43 @@ fn a_retired_skill_leaves_an_orphan_the_check_names_and_generate_removes() {
 
     let (code, out, err) = run_in(&f.root(), &["generate", "editors"], "");
     assert_eq!(code, 0, "{out}{err}");
-    assert!(out.contains("removed"), "{out}");
+    assert!(err.contains("orphaned editor projection"), "{err}");
     assert!(!f.path(".agents/skills/triage").exists());
+}
+
+/// Where `just` cannot be asked, nothing is written: a task list present on a machine that
+/// has `just` and absent on one that has not would make the committed file depend on the
+/// machine rather than the tree, so `generate` refuses with exit 12 and says what to install.
+#[cfg(unix)]
+#[test]
+fn without_just_the_projection_is_refused_rather_than_half_written() {
+    let f = repository();
+    // a PATH that has git, which the index needs, and nothing else
+    let bin = tempfile::tempdir().unwrap();
+    let git = std::process::Command::new("sh")
+        .args(["-c", "command -v git"])
+        .output()
+        .unwrap();
+    let git = String::from_utf8(git.stdout).unwrap().trim().to_string();
+    std::os::unix::fs::symlink(&git, bin.path().join("git")).unwrap();
+
+    let out = common::majordomus()
+        .args(["generate", "editors"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .env("PATH", bin.path())
+        .output()
+        .unwrap();
+    let said = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert_eq!(out.status.code(), Some(12), "{said}");
+    assert!(said.contains("install `just`"), "{said}");
+    assert!(
+        !f.path(".agents/skills/triage/SKILL.md").exists(),
+        "nothing is half-written"
+    );
+    assert!(!f.path(".zed/tasks.json").exists());
 }

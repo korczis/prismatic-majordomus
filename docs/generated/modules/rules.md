@@ -31,7 +31,7 @@ Output: `TestSubjects`.
 
 ## `rules.report` — Every rule against the proof there is for it
 
-The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.
+The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.
 
 | | |
 |---|---|
@@ -41,7 +41,7 @@ The whole rule corpus joined to the tree and the ledger: per rule, its class, it
 | MCP resource | `majordomus://rules` |
 | HTTP | `GET /api/v1/rules` |
 | CLI | `majordomus rules report` |
-| cache | — |
+| cache | process, 8 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::rules |
 | tags | rules, governance, verification, evidence, gates |
@@ -70,7 +70,7 @@ One rule with its full proof: the validator and the cases it names, the executio
 | MCP tool | `majordomus_rule` |
 | HTTP | `GET /api/v1/rules/rule` |
 | CLI | `majordomus rules show` |
-| cache | — |
+| cache | process, 32 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::rules |
 | tags | rules, governance, verification, evidence |

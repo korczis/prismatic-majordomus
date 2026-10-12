@@ -18,7 +18,7 @@ One capability by canonical id: its kind, schemas, provenance, stability, exposu
 | MCP tool | `majordomus_capability` |
 | HTTP | `GET /api/v1/capability` |
 | CLI | `majordomus capabilities describe` |
-| cache | — |
+| cache | process, 512 entries |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::capabilities |
 | tags | introspection |

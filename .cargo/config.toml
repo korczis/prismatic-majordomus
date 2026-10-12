@@ -12,3 +12,18 @@
 # scripts/reap-orphans measures it, bounds it and reduces it.
 [build]
 build-dir = "{cargo-cache-home}/build-shared/majordomus"
+
+# Each tree's own root, for the crate's build script to rerun on (`rerun-if-env-changed`).
+#
+# Sharing the build directory shares more than the dependencies. Two worktrees are one package
+# at one path relative to its workspace, and cargo names a path package's units by that
+# relative path, so every worktree compiles majordomus-cli into the same slot; whether the
+# slot is fresh is then judged by comparing this tree's source mtimes with the slot's outputs.
+# A tree whose sources are older than another tree's last build was handed that build: on
+# 2026-10-12 a `cargo build` took one second and produced an executable of another worktree's
+# code, generation and commit. A variable whose value is this tree's absolute root — `relative`
+# resolves "." against the directory holding `.cargo/`, and `force` keeps an exported value
+# from standing in for it — enters the build script's fingerprint, so a slot last written by
+# another tree is stale here and is rebuilt, and a slot this tree wrote stays fresh.
+[env]
+MAJORDOMUS_BUILD_TREE = { value = ".", relative = true, force = true }

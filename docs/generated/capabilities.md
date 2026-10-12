@@ -72,7 +72,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 |---|---|---|---|---|---|---|---|---|---|
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |
-| `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | — | required |
+| `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | process, 512 entries | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |
 | `capabilities.projections` | `capabilities` | query | behaviorally_verified | `majordomus_projections` | — | `GET /api/v1/capabilities/projections` | `majordomus capabilities projections` | process, 8 entries | required |
 | `commands.get` | `commands` | query | implemented | `majordomus_command` | — | `GET /api/v1/command` | — | — | required |
@@ -110,7 +110,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.artifact` | `distribution` | query | behaviorally_verified | `majordomus_artifact` | — | `GET /api/v1/distribution/artifact` | `majordomus distribution artifact` | — | required |
 | `distribution.build` | `distribution` | query | behaviorally_verified | `majordomus_build` | — | `GET /api/v1/distribution/build` | `majordomus distribution build` | — | required |
 | `distribution.model` | `distribution` | query | behaviorally_verified | `majordomus_distribution` | — | `GET /api/v1/distribution` | `majordomus distribution show` | — | required |
-| `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | — | required |
+| `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | process, 1 entries, per generation | required |
 | `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
 | `economics.check` | `economics` | query | behaviorally_verified | `majordomus_economics_check` | — | `GET /api/v1/economics/check` | `majordomus economics check` | — | required |
 | `economics.explain` | `economics` | query | behaviorally_verified | `majordomus_economics_explain` | — | `GET /api/v1/economics/explain` | `majordomus economics explain` | process, 32 entries, 5s | required |
@@ -125,9 +125,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes.attach` | `episodes` | command | behaviorally_verified | `majordomus_session_attach` | — | `POST /api/v1/episodes/attach` | — | — | required |
 | `episodes.detach` | `episodes` | command | behaviorally_verified | `majordomus_session_detach` | — | `POST /api/v1/episodes/detach` | — | — | required |
 | `episodes.list` | `episodes` | query | behaviorally_verified | `majordomus_episodes` | — | `GET /api/v1/episodes` | — | — | required |
-| `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | — | required |
+| `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | process, 32 entries, per checkout state | required |
 | `evidence.record` | `evidence` | command | behaviorally_verified | — | — | — | `majordomus evidence record` | — | waived (destructive) |
-| `evidence.report` | `evidence` | query | behaviorally_verified | `majordomus_evidence` | `majordomus://evidence` | `GET /api/v1/evidence` | `majordomus evidence show` | — | required |
+| `evidence.report` | `evidence` | query | behaviorally_verified | `majordomus_evidence` | `majordomus://evidence` | `GET /api/v1/evidence` | `majordomus evidence show` | process, 8 entries, per checkout state | required |
 | `evidence.stamp` | `evidence` | query | behaviorally_verified | — | — | — | `majordomus evidence stamp` | — | waived (external_dependency) |
 | `evidence.test` | `evidence` | query | behaviorally_verified | `majordomus_evidence_test` | — | `GET /api/v1/evidence/test` | `majordomus evidence proves` | — | required |
 | `executions.cancel` | `executions` | command | behaviorally_verified | `majordomus_execution_cancel` | — | `POST /api/v1/executions/cancel` | `majordomus executions cancel` | — | waived (transient_state) |
@@ -155,7 +155,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `intent_realization.work` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_realization` | — | `GET /api/v1/intents/realization` | `majordomus intent realization` | — | required |
 | `intents.binding` | `intents` | query | behaviorally_verified | `majordomus_intent_binding` | — | `GET /api/v1/intents/binding` | `majordomus intent binding` | — | required |
 | `intents.coverage` | `intents` | query | behaviorally_verified | `majordomus_intent_coverage` | — | `GET /api/v1/intents/coverage` | `majordomus intent coverage` | — | required |
-| `intents.list` | `intents` | query | behaviorally_verified | `majordomus_intents` | `majordomus://intents` | `GET /api/v1/intents` | `majordomus intent list` | — | required |
+| `intents.list` | `intents` | query | behaviorally_verified | `majordomus_intents` | `majordomus://intents` | `GET /api/v1/intents` | `majordomus intent list` | process, 2 entries, per checkout state | required |
 | `intents.preflight` | `intents` | query | behaviorally_verified | `majordomus_intent_preflight` | — | `GET /api/v1/intents/preflight` | `majordomus intent preflight` | — | required |
 | `intents.record` | `intents` | query | behaviorally_verified | `majordomus_intent_record` | — | `GET /api/v1/intents/record` | `majordomus intent show` | — | required |
 | `intents.validate` | `intents` | query | behaviorally_verified | `majordomus_intent_validate` | — | `GET /api/v1/intents/validate` | `majordomus intent validate` | — | required |
@@ -205,12 +205,12 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
-| `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | — | required |
+| `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
-| `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | — | required |
+| `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | process, 16 entries, per generation | required |
 | `plan.record` | `plan` | query | behaviorally_verified | `majordomus_plan_record` | — | `GET /api/v1/plan/record` | — | — | required |
-| `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | — | required |
-| `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | — | required |
+| `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | process, 4 entries, per generation | required |
+| `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | process, 16 entries, per generation | required |
 | `plan.transition` | `plan` | command | behaviorally_verified | `majordomus_plan_transition` | — | `POST /api/v1/plan/transition` | — | — | required when plan_holds_an_issue |
 | `plan.validate` | `plan` | query | behaviorally_verified | `majordomus_plan_validate` | — | `GET /api/v1/plan/validate` | — | — | required |
 | `plan.waves` | `plan` | query | behaviorally_verified | `majordomus_plan_waves` | — | `GET /api/v1/plan/waves` | — | — | required |
@@ -232,13 +232,13 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `release.analysis` | `release` | query | implemented | `majordomus_release_analysis` | — | `GET /api/v1/release/analysis` | — | — | waived (published_history) |
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
 | `release.next` | `release` | query | implemented | `majordomus_release_next` | — | `GET /api/v1/release/next` | — | — | waived (published_history) |
-| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | — | required |
-| `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
+| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | process, 2 entries, per checkout state | required |
+| `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | process, 1 entries, per generation | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | — | — | required |
 | `rules.proves` | `rules` | query | behaviorally_verified | `majordomus_rule_proves` | — | `GET /api/v1/rules/proves` | `majordomus rules proves` | — | required |
-| `rules.report` | `rules` | query | behaviorally_verified | `majordomus_rules` | `majordomus://rules` | `GET /api/v1/rules` | `majordomus rules report` | — | required |
-| `rules.show` | `rules` | query | behaviorally_verified | `majordomus_rule` | — | `GET /api/v1/rules/rule` | `majordomus rules show` | — | required |
+| `rules.report` | `rules` | query | behaviorally_verified | `majordomus_rules` | `majordomus://rules` | `GET /api/v1/rules` | `majordomus rules report` | process, 8 entries, per checkout state | required |
+| `rules.show` | `rules` | query | behaviorally_verified | `majordomus_rule` | — | `GET /api/v1/rules/rule` | `majordomus rules show` | process, 32 entries, per checkout state | required |
 | `served.observe` | `served` | command | behaviorally_verified | — | — | — | `majordomus served observe` | — | waived (external_dependency) |
 | `served.show` | `served` | query | behaviorally_verified | `majordomus_served` | `majordomus://served` | `GET /api/v1/served` | `majordomus served show` | — | required |
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |

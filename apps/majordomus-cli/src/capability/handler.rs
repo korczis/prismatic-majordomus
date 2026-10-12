@@ -191,7 +191,17 @@ pub struct Context {
     /// activates it from the repository's mesh declaration; the capabilities of the
     /// `mesh` module are its projections.
     pub mesh: Arc<crate::mesh::MeshRuntime>,
+    /// Which reading of the repository this is: a number no other [`Context::new`] of this
+    /// process was given, shared by every view of it ([`Context::for_caller`],
+    /// [`Context::reporting`], [`Context::with_web`]). A reload is a new reading. It is what
+    /// a [`crate::capability::CachePolicy::Generation`] entry is kept under, because the
+    /// registry fingerprint covers what is declared and not the git state an index was read
+    /// at.
+    pub reading: u64,
 }
+
+/// The number the next [`Context::new`] takes as its [`Context::reading`].
+static READINGS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl Context {
     /// A context over an index and a registry, with an empty board, a fresh executor and
@@ -222,6 +232,7 @@ impl Context {
             caller: None,
             web,
             mesh: Arc::new(crate::mesh::MeshRuntime::new()),
+            reading: READINGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
         }
     }
 
@@ -309,6 +320,7 @@ impl Context {
             caller: self.caller.clone(),
             web: Arc::clone(&self.web),
             mesh: Arc::clone(&self.mesh),
+            reading: self.reading,
         }
     }
 
