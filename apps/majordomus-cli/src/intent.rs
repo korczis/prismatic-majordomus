@@ -2268,7 +2268,7 @@ impl std::fmt::Display for ProposeError {
 }
 
 /// The identity a proposal takes when none is given: the slug of its title, cut at a word
-/// boundary within [`PROPOSED_ID_MAX`] characters.
+/// boundary within `PROPOSED_ID_MAX` (64) characters.
 ///
 /// ```
 /// use majordomus_cli::intent::proposed_id;
