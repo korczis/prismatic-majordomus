@@ -1759,23 +1759,7 @@ mod tests {
 
     /// A cooperation runtime that dials nobody until it is started, which these never are.
     fn cooperation() -> std::sync::Arc<Cooperation> {
-        use crate::mesh::config::{CooperationConfig, TrustConfig};
-        use crate::mesh::cooperation::{CheckoutFacts, CooperationSetup};
-        Cooperation::new(CooperationSetup {
-            identity: std::sync::Arc::new(NodeIdentity::ephemeral().unwrap()),
-            runtime: "0000000000000001".into(),
-            repository: crate::mesh::repository::of_root_commits(&["root".into()]),
-            endpoints: vec!["127.0.0.1:9".into()],
-            version: "test".into(),
-            config: CooperationConfig::default(),
-            trust: TrustConfig::default(),
-            journal_path: None,
-            registry: std::sync::Arc::new(crate::mesh::registry::MeshRegistry::new()),
-            transport: std::sync::Arc::new(crate::mesh::link::HttpTransport),
-            board: None,
-            checkout: CheckoutFacts::default(),
-        })
-        .unwrap()
+        crate::mesh::testing::cooperation()
     }
 
     /// A context over a synthetic repository, with a mesh declaration in its working tree

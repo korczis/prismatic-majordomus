@@ -6613,7 +6613,7 @@
             "file:apps/majordomus-cli/src/http/router.rs",
             "file:apps/majordomus-cli/src/mcp/surface.rs",
             "test:apps/majordomus-cli/tests/remote_callers.rs",
-            "test:test/cases/1022_a_remote_caller_cannot_write.sh"
+            "test:test/cases/1086_a_remote_caller_cannot_write.sh"
           ],
           "tags": [
             "security",
@@ -31284,7 +31284,7 @@
             "apps/majordomus-cli/src/mcp",
             "apps/majordomus-cli/src/execution/engine.rs",
             "apps/majordomus-cli/tests/remote_callers.rs",
-            "test/cases/1022_a_remote_caller_cannot_write.sh",
+            "test/cases/1086_a_remote_caller_cannot_write.sh",
             "docs/MCP.md",
             "docs/MESH.md"
           ],
@@ -31292,7 +31292,7 @@
           "updated_at": "2026-10-09",
           "validation": [
             "cargo test --test remote_callers",
-            "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+            "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1086_a_remote_caller_cannot_write"
           ]
         }
       },
@@ -46815,13 +46815,6 @@
         "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
       },
       {
-        "id": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
-        "kind": "test",
-        "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
-        "route": "/cockpit/objects/test/test-cases-1022-a-remote-caller-cannot-write-sh",
-        "source": "test/cases/1022_a_remote_caller_cannot_write.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "kind": "test",
         "label": "test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -47079,6 +47072,13 @@
         "label": "test/cases/1083_a_rule_opens_its_proof.sh",
         "route": "/cockpit/objects/test/test-cases-1083-a-rule-opens-its-proof-sh",
         "source": "test/cases/1083_a_rule_opens_its_proof.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "label": "test/cases/1086_a_remote_caller_cannot_write.sh",
+        "route": "/cockpit/objects/test/test-cases-1086-a-remote-caller-cannot-write-sh",
+        "source": "test/cases/1086_a_remote_caller_cannot_write.sh"
       },
       {
         "id": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
@@ -59034,7 +59034,7 @@
       },
       {
         "source": "majordomus://adr/adr-0126",
-        "target": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "target": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "kind": "put_in_force"
       },
       {
@@ -75278,11 +75278,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -75464,6 +75459,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1083_a_rule_opens_its_proof.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
