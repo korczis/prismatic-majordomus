@@ -2265,6 +2265,162 @@ fn the_queue_reads_and_keeps_each_heads_shape() {
     assert!(keys.iter().all(|k| k.starts_with(&master)), "{keys:?}");
 }
 
+// ---------------------------------------------------------------- what the process remembers
+
+/// Pull requests of every relation, one stacked on another so that its head contains the
+/// other's, each mirrored as `prs refresh` mirrors it, and an unfetched one; beside them a
+/// later head for #1 that no observation names yet.
+struct RememberedWorld {
+    fixture: RelationFixture,
+    moved: String,
+    now: std::time::SystemTime,
+}
+
+const REMEMBERED: [&str; 8] = [
+    "authored",
+    "derived_only",
+    "conflicting",
+    "derived_conflict",
+    "up_to_date",
+    "same",
+    "absent",
+    "stacked",
+];
+
+fn remembered_world() -> RememberedWorld {
+    let mut fixture = relation_fixture();
+    let dir = fixture.dir.clone();
+    let authored = fixture.heads["authored"].clone();
+    let stacked = commit_on(&dir, "stacked", &authored, &[("e.txt", "e\n")]);
+    let moved = commit_on(&dir, "authored-2", &authored, &[("b.txt", "newer\n")]);
+    fixture.heads.insert("stacked", stacked);
+    let world = RememberedWorld {
+        fixture,
+        moved,
+        now: std::time::SystemTime::now(),
+    };
+    observe_remembered(&world, None);
+    world
+}
+
+/// Record the world's observation, #1 at `one` when given, and mirror every fetched head.
+fn observe_remembered(w: &RememberedWorld, one: Option<&str>) {
+    let RelationFixture { dir, master, heads } = &w.fixture;
+    let prs: Vec<PullRequestObservation> = REMEMBERED
+        .iter()
+        .enumerate()
+        .map(|(i, name)| {
+            let n = i as u64 + 1;
+            let head = one.filter(|_| n == 1).unwrap_or(&heads[name]);
+            if *name != "absent" {
+                git(
+                    dir,
+                    &["update-ref", &format!("refs/majordomus/prs/{n}"), head],
+                );
+            }
+            observed_pr(n, head)
+        })
+        .collect();
+    observed(dir, master, prs);
+}
+
+/// `project.cache-is-invisible`: the queue a remembering process answers, on its first read
+/// and on the next, is the queue decided as if nothing had been read before — and the next
+/// read asks git nothing that is a fact about two commits. Neither writes a file.
+#[test]
+fn the_remembered_queue_equals_the_queue_decided_afresh() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert!(
+        fresh
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head carries #1"
+    );
+    let memos = Memos::new(4);
+    let (first, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let decided = memos.decided(dir);
+    assert!(decided.relations > 0 && decided.shapes > 0 && decided.containment > 0);
+    let (second, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    assert_eq!(first, fresh, "a first read differs from the fresh one");
+    assert_eq!(
+        second, fresh,
+        "a remembered read differs from the fresh one"
+    );
+    assert_eq!(memos.decided(dir), decided, "the second read decided again");
+    assert_eq!(crate::integration::queue_of(dir).unwrap(), fresh);
+    let cache = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
+    assert!(!cache.exists(), "a read wrote the relation cache");
+}
+
+/// A pull request that moved is the only one decided again: one relation, one shape, and two
+/// containment questions — its new head against every mirror, its new mirror against every
+/// head — and the answer is the one a fresh read gives.
+#[test]
+fn a_moved_head_is_the_only_one_decided_again() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = Memos::new(4);
+    let (before, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let was = memos.decided(dir);
+    observe_remembered(&w, Some(&w.moved));
+    let (after, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert_eq!(after, fresh);
+    assert_ne!(
+        after.get(1),
+        before.get(1),
+        "#1 was decided on its new head"
+    );
+    assert!(
+        !after
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head no longer carries #1"
+    );
+    let now = memos.decided(dir);
+    assert_eq!(now.relations - was.relations, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.shapes - was.shapes, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.containment - was.containment, 2, "{was:?} -> {now:?}");
+}
+
+/// Two readers of one checkout at once decide what one reader decides, and both answer the
+/// fresh queue: the second takes its turn and finds the first one's answers.
+#[test]
+fn concurrent_reads_of_one_checkout_decide_each_relation_once() {
+    use crate::integration::{computed, memo, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = memo::Memos::new(4);
+    let barrier = std::sync::Barrier::new(2);
+    let read = || {
+        barrier.wait();
+        queue_with(Some(&memos), dir, w.now).unwrap().0
+    };
+    let (a, b) = std::thread::scope(|s| {
+        let (a, b) = (s.spawn(read), s.spawn(read));
+        (a.join().unwrap(), b.join().unwrap())
+    });
+    let mut alone = memo::CheckoutMemo::default();
+    let (fresh, _) = computed(dir, w.now, &mut alone).unwrap();
+    assert_eq!(a, fresh);
+    assert_eq!(b, fresh);
+    assert_eq!(
+        memos.decided(dir),
+        alone.decided,
+        "two readers decided more than one"
+    );
+}
+
 /// What a merge changes by kind decides overlaps, risk and rank (WP16): two pull requests
 /// that raise the version overlap as a version bump, two that change release records overlap
 /// as a release whatever files they name, a shared path is contention, and of ready pull
