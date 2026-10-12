@@ -1644,6 +1644,15 @@
       "note": "a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability."
     },
     {
+      "id": "claim:ui-dashboard-cites-its-sources",
+      "kind": "claim",
+      "label": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+      "status": "guaranteed",
+      "route": "/guarantees/ui-dashboard-cites-its-sources/",
+      "external": false,
+      "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route."
+    },
+    {
       "id": "claim:deployment-contract-refuses-by-name",
       "kind": "claim",
       "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
@@ -2629,6 +2638,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/ui/dashboard.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/web/discover.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/web/discover.rs",
@@ -3322,6 +3338,13 @@
       "external": false
     },
     {
+      "id": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "source",
+      "label": "docs/MAJORDOMUS_UI.md",
+      "route": "/docs/majordomus-ui/",
+      "external": false
+    },
+    {
       "id": "source:docs/MCP.md",
       "kind": "source",
       "label": "docs/MCP.md",
@@ -3558,6 +3581,13 @@
       "label": "apps/majordomus-cli/tests/registry.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/registry.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/ui_surface.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/ui_surface.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/why.rs",
@@ -5363,6 +5393,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
       "kind": "specified_by"
@@ -6518,6 +6553,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "impl:lib/deployment.sh",
       "kind": "implemented_by"
@@ -7670,6 +7710,11 @@
     {
       "source": "claim:cockpit-is-a-projection-of-the-registry",
       "target": "test:apps/majordomus-cli/tests/cockpit.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "test:apps/majordomus-cli/tests/ui_surface.rs",
       "kind": "proved_by"
     },
     {

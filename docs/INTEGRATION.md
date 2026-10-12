@@ -669,7 +669,13 @@ json` stays the list of pull requests to close.
 - A read writes nothing. `prs status`, `plan`, `explain`, the `integration.*` capabilities
   and the Cockpit build the queue from the recorded observation and leave the checkout as
   they found it; only `prs refresh` and the executor, which have just observed the forge,
-  keep the relations they decided and the summary a briefing reads. An observation older
+  keep the relations they decided and the summary a briefing reads. What a read decides is
+  still kept, in the process that read it: a long-running server remembers each relation and
+  shape by its `master..head` pair, and whether one mirrored head contains another by its
+  pair of commits, so its next read of the same checkout asks git again only about a head or
+  a master that moved. Reads of one checkout take turns, so concurrent readers decide each
+  pair once. `MAJORDOMUS_INTEGRATION_MEMO=off` reads without that memory; the answer is the
+  same (`integration::memo`). An observation older
   than an hour is said in the queue's diagnostics, and every reading of a queue with a
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is

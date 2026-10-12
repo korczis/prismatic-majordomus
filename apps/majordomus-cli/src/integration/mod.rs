@@ -46,6 +46,7 @@ pub mod classify;
 pub mod drain;
 pub mod exclusive;
 pub mod forge;
+mod memo;
 pub mod metrics;
 pub mod model;
 pub mod proof;
@@ -1079,8 +1080,31 @@ fn successors<'a>(
 /// The queue of this checkout, from the last recorded observation, with relations decided
 /// by git against this clone's fetched master. Offline: it reads the network's last answer
 /// and never asks it again.
+///
+/// What it decides is a fact about two commits, and this process remembers it for the next
+/// read of the same checkout; reads of one checkout take turns, so concurrent readers decide
+/// each relation once ([`memo`]). `MAJORDOMUS_INTEGRATION_MEMO=off` reads without that memory.
 pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
-    computed(root, std::time::SystemTime::now()).map(|(queue, _)| queue)
+    queue_with(remembered(), root, std::time::SystemTime::now()).map(|(queue, _)| queue)
+}
+
+/// The memory of this process, unless it was told to read without it.
+fn remembered() -> Option<&'static memo::Memos> {
+    (!memo::bypassed()).then_some(&memo::PROCESS)
+}
+
+/// The queue at `now` and the relation cache after it, with `memos`' memory of `root` when
+/// one is given — held for the whole read, which is the turn the checkout's readers take —
+/// and with none, deciding everything as if this process had read nothing before.
+fn queue_with(
+    memos: Option<&memo::Memos>,
+    root: &Path,
+    now: std::time::SystemTime,
+) -> Result<(IntegrationQueue, RelationCache), String> {
+    match memos.map(|m| m.checkout(root)) {
+        Some(shared) => computed(root, now, &mut memo::lock(&shared)),
+        None => computed(root, now, &mut memo::CheckoutMemo::default()),
+    }
 }
 
 /// [`queue_of`], and what it learnt kept for the next reader: the relations decided (the
@@ -1088,7 +1112,7 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
 /// paths that just observed the forge write — `prs refresh` and the executor — so every
 /// read, from the command line, the capability or the Cockpit, leaves the checkout as it was.
 pub fn queue_and_record(root: &Path) -> Result<IntegrationQueue, String> {
-    let (queue, cache) = computed(root, std::time::SystemTime::now())?;
+    let (queue, cache) = queue_with(remembered(), root, std::time::SystemTime::now())?;
     // both are caches a later read rebuilds: a write that fails costs that rebuild, never this
     // answer, so neither failure is the caller's
     let _ = serde_json::to_string(&cache)
@@ -1150,6 +1174,7 @@ pub fn issue_milestones(root: &Path) -> BTreeMap<String, Option<String>> {
 fn computed(
     root: &Path,
     now: std::time::SystemTime,
+    memo: &mut memo::CheckoutMemo,
 ) -> Result<(IntegrationQueue, RelationCache), String> {
     let obs = load_observation(root)?.ok_or_else(|| {
         "no forge observation is recorded in this checkout; majordomus prs refresh".to_string()
@@ -1176,10 +1201,38 @@ fn computed(
         cache.entries.clear();
         cache.vocabulary = RELATION_VOCABULARY;
     }
+    // what this process decided before, under the same keys and the same rule: each entry is
+    // the same fact the file would hold, so which of the two answers is not observable
+    let remembered = std::mem::take(&mut memo.relations);
+    for (k, r) in remembered.entries {
+        cache.entries.entry(k).or_insert(r);
+    }
+    for (k, s) in remembered.shapes {
+        cache.shapes.entry(k).or_insert(s);
+    }
     cache.entries.retain(|k, _| current(k));
     cache.shapes.retain(|k, _| current(k));
+    // which observed heads this clone has, asked once for all of them: a head that is not a
+    // commit id, or an answer git could not give, is asked on its own as before
+    let resolved = obs
+        .resolved
+        .values()
+        .flat_map(|r| [r.head_sha.as_str(), r.merge_commit.as_str()]);
+    let present = memo::present(
+        root,
+        obs.pull_requests
+            .iter()
+            .map(|p| p.head_sha.as_str())
+            .chain(resolved),
+    );
+    let has_commit = |head: &str| match &present {
+        Some(found) if is_object_id(head) => found.contains(head),
+        _ => relation::has_commit(root, head),
+    };
+    let key = |head: &str| format!("{master}..{head}");
+    let decidable = |head: &str| is_object_id(&master) && is_object_id(head);
     // the relation and the shape share the cache, and each is asked from its own closure
-    let cell = std::cell::RefCell::new(cache);
+    let cell = std::cell::RefCell::new((cache, memo::Decided::default(), BTreeSet::new()));
     let mut queue = build_queue_shaped(
         &obs,
         &master,
@@ -1187,17 +1240,58 @@ fn computed(
             // decided on exactly the head the forge reported, which the assessment names as
             // evaluated: a head that moved during the refresh is not in this clone, and what
             // the fetched ref holds now is another head nobody observed
-            if !relation::has_commit(root, &p.head_sha) {
+            if !has_commit(&p.head_sha) {
                 return RelationToMaster::Unknown {
                     reason: unfetched_head_reason(root, p.number, &p.head_sha),
                 };
             }
-            relation_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha)
+            let (cache, decided, asked) = &mut *cell.borrow_mut();
+            asked.insert(key(&p.head_sha));
+            if decidable(&p.head_sha) && !cache.entries.contains_key(&key(&p.head_sha)) {
+                decided.relations += 1;
+            }
+            relation_cached(root, cache, &master, &p.head_sha)
         },
-        |p| shape_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha),
+        |p| {
+            // a head this clone lacks has no shape, which is change_shape's own first answer
+            if !has_commit(&p.head_sha) {
+                return None;
+            }
+            let (cache, decided, asked) = &mut *cell.borrow_mut();
+            asked.insert(key(&p.head_sha));
+            if decidable(&p.head_sha) && !cache.shapes.contains_key(&key(&p.head_sha)) {
+                decided.shapes += 1;
+            }
+            shape_cached(root, cache, &master, &p.head_sha)
+        },
     );
-    let cache = cell.into_inner();
-    infer_dependencies(&mut queue, |head| relation::containing(root, head));
+    let (cache, decided, asked) = cell.into_inner();
+    memo.decided.relations += decided.relations;
+    memo.decided.shapes += decided.shapes;
+    // bounded: the next read is kept what this one asked about, against this master
+    memo.relations = RelationCache {
+        vocabulary: RELATION_VOCABULARY,
+        entries: asked
+            .iter()
+            .filter_map(|k| cache.entries.get(k).map(|r| (k.clone(), r.clone())))
+            .collect(),
+        shapes: asked
+            .iter()
+            .filter_map(|k| cache.shapes.get(k).map(|s| (k.clone(), s.clone())))
+            .collect(),
+    };
+    let heads: Vec<String> = queue
+        .assessments
+        .iter()
+        .map(|a| a.evaluated_against.head_sha.clone())
+        .collect();
+    let contained = memo.containing(root, &heads, has_commit);
+    infer_dependencies(&mut queue, |head| {
+        contained
+            .get(head)
+            .cloned()
+            .unwrap_or_else(|| relation::containing(root, head))
+    });
     link_issues(&mut queue, &issue_milestones(root));
     let now_secs = now
         .duration_since(std::time::UNIX_EPOCH)

@@ -35,6 +35,12 @@ a check passed, it failed.
 - `--json` on any read-only command emits one JSON object per finding on stdout.
 - Nothing is written to stderr except usage errors and internal errors.
 - A finding without a reproduce command is a bug in Majordomus.
+- `MAJORDOMUS_CAPABILITY_CACHE=off` runs every capability without the executor's cache:
+  every call runs its handler and nothing is kept. The answers are the same with or without
+  it (`project.cache-is-invisible`); it exists to settle a doubt by asking without the cache.
+  A capability's own policy says what its answer is kept under: the registry fingerprint,
+  the context's reading of the repository (`generation`), or the checkout's state as well
+  (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
 
 ---
 

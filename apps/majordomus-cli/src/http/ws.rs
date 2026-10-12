@@ -160,8 +160,10 @@ pub fn frame(opcode: Opcode, payload: &[u8]) -> Vec<u8> {
 /// Write one text frame, refusing a payload over [`MAX_FRAME_BYTES`].
 ///
 /// The refusal is not a truncation: a client that received half a JSON document would
-/// have to guess, and a bounded producer is why this cannot happen — every event this
-/// server writes is already bounded by the store's own limits.
+/// have to guess. The store does not bound every event — a handler's output and a caller's
+/// input are unbounded values — so the live channel measures an event before it writes it
+/// and replaces such a value with a reference to where it is read
+/// ([`super::events::Withheld`]); this refusal is the last line, not the bound.
 pub fn write_text(stream: &mut dyn Write, text: &str) -> std::io::Result<()> {
     if text.len() > MAX_FRAME_BYTES {
         return Err(std::io::Error::other(format!(

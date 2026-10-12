@@ -2367,6 +2367,19 @@
       "test_case": "apps/majordomus-cli/tests/cockpit.rs"
     },
     {
+      "id": "ui-dashboard-cites-its-sources",
+      "claim": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+      "source": "docs/MAJORDOMUS_UI.md",
+      "implementation": "apps/majordomus-cli/src/ui/dashboard.rs",
+      "test": "apps/majordomus-cli/tests/ui_surface.rs",
+      "status": "guaranteed",
+      "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route.",
+      "responsibility": "none",
+      "source_route": "/docs/majordomus-ui/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/ui_surface.rs"
+    },
+    {
       "id": "deployment-contract-refuses-by-name",
       "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
       "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
