@@ -215,6 +215,16 @@ gates:
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
+  # Seventeen seconds, file reads and git only. Unconditional rather than classed: what a
+  # chapter rests on can be a document, a rule, a decision, a claim, a command or a module,
+  # so the change that breaks it can arrive through any path, and a class list that forgot
+  # one would be the gap (project.the-handbook-is-built-from-the-tree, ADR 0149).
+  - id: handbook-check
+    job: structure
+    always: true
+    runs: python3 handbook/build.py --check
+    summary: every edition of the handbook builds from this tree; a chapter whose declared anchor left the repository's graph, a chapter that cites nothing, a caption with no figure behind it and derived data that changed shape each fail
+
   - id: english-only
     job: structure
     always: true

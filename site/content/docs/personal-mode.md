@@ -1,7 +1,7 @@
 +++
 title = "Personal mode: Majordomus as one person's instrument"
 description = "personal mode, the tool as one person's instrument with nothing left in git: who it is for, why it is ordinary practice, the measured way from personal to shared, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured"
-weight = 33
+weight = 34
 [extra]
 source = "docs/PERSONAL_MODE.md"
 +++

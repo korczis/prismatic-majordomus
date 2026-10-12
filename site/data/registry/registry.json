@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "cd694630e29f8e8afca23ce6ac58fc76c20e3732a4dca955789607a2ff3ab209",
+    "fingerprint": "2919707e9a325fa5e7cdce4e9bada4e676c6fd24ce753055710c6ab03fdf0b95",
     "summary": {
-      "total": 2288,
+      "total": 2292,
       "builtin": 195,
-      "declarative": 2093,
+      "declarative": 2097,
       "by_kind": {
         "command": 29,
         "query": 166,
-        "resource": 2093
+        "resource": 2097
       },
       "by_stability": {
         "behaviorally_verified": 135,
         "experimental": 51,
-        "implemented": 2102
+        "implemented": 2106
       },
       "mcp_tools": 187,
-      "mcp_resources": 2148,
+      "mcp_resources": 2152,
       "http_routes": 191,
       "cli_commands": 106,
       "modules": 90,
@@ -79919,7 +79919,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 99,
+        "capabilities": 100,
         "capability_ids": []
       },
       {
@@ -80245,7 +80245,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 340,
+        "capabilities": 341,
         "capability_ids": []
       },
       {
@@ -80937,7 +80937,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 171,
+        "capabilities": 172,
         "capability_ids": []
       },
       {
@@ -81080,7 +81080,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 457,
+        "capabilities": 458,
         "capability_ids": []
       },
       {
@@ -81170,7 +81170,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3e5aa2bb0c56e5d27811fa1bbd53db07e13531e43f6ba518453d79279dce7042",
+    "fingerprint": "ba757626e2b44492a47c23792fef1e4c18081e7a18b3469d5347b991255b7b10",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81193,7 +81193,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 99,
+      "adr": 100,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81204,7 +81204,7 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 340,
+      "document": 341,
       "domain": 6,
       "feature": 28,
       "gap": 3,
@@ -81219,12 +81219,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 171,
+      "rule": 172,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 457,
+      "test": 458,
       "use-case": 48,
       "workspace": 1
     },
@@ -82863,6 +82863,23 @@
           "intent",
           "project",
           "capabilities"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0149",
+        "kind": "adr",
+        "identity": "adr-0149",
+        "title": "A handbook edition is a declared locale tree, built from the tree it describes",
+        "description": "A handbook edition is a declared locale tree, built from the tree it describes",
+        "path": ".ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5970,
+        "tags": [
+          "handbook",
+          "language",
+          "governance",
+          "derivation"
         ]
       },
       {
@@ -86928,6 +86945,15 @@
         "bytes": 29517
       },
       {
+        "uri": "majordomus://document/docs/HANDBOOK.md",
+        "kind": "document",
+        "identity": "docs/HANDBOOK.md",
+        "title": "The handbook",
+        "path": "docs/HANDBOOK.md",
+        "source_class": "document",
+        "bytes": 4501
+      },
+      {
         "uri": "majordomus://document/docs/HOW_IT_WORKS.md",
         "kind": "document",
         "identity": "docs/HOW_IT_WORKS.md",
@@ -87114,7 +87140,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25004
+        "bytes": 25275
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -96945,15 +96971,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.english-only@2",
+        "uri": "majordomus://rule/project.english-only@3",
         "kind": "rule",
-        "identity": "project.english-only@2",
+        "identity": "project.english-only@3",
         "title": "English only",
-        "description": "The repository's own artifacts are written in English; published content addressed to a reader may be written in that reader's language, declared and confined to the published site.",
-        "path": ".ai/repo/rules/project/english-only.v2.md",
+        "description": "The repository's own artifacts are written in English; content addressed to a reader may be written in that reader's language, declared and confined to the published site or to a declared edition of the handbook.",
+        "path": ".ai/repo/rules/project/english-only.v3.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3502,
+        "bytes": 5100,
         "tags": [
           "language"
         ]
@@ -97965,6 +97991,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+        "kind": "rule",
+        "identity": "project.the-handbook-is-built-from-the-tree@1",
+        "title": "The handbook is built from the tree it describes, and a chapter names what it rests on",
+        "description": "Every edition of the handbook is built by handbook/build.py from the tree it is in; each chapter declares the objects of the repository it rests on, and a change that removes one of them is refused where it is made.",
+        "path": ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3249,
+        "tags": [
+          "handbook",
+          "derivation",
+          "documentation"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "identity": "project.the-lease-is-read-once@1",
@@ -98255,7 +98297,7 @@
         "path": ".ai/repo/scope.yaml",
         "section": "scope",
         "source_class": "scope",
-        "bytes": 4425
+        "bytes": 4523
       },
       {
         "uri": "majordomus://session/s-20260906035523-7b6c",
@@ -100713,6 +100755,14 @@
         "path": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
         "source_class": "case",
         "bytes": 7564
+      },
+      {
+        "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "kind": "test",
+        "identity": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "source_class": "case",
+        "bytes": 7065
       },
       {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -103623,7 +103673,7 @@
       "identity": [
         "id"
       ],
-      "objects": 99
+      "objects": 100
     },
     {
       "name": "application",
@@ -103729,7 +103779,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 340
+      "objects": 341
     },
     {
       "name": "domain",
@@ -103883,7 +103933,7 @@
         "id",
         "version"
       ],
-      "objects": 171
+      "objects": 172
     },
     {
       "name": "scope",
@@ -103938,7 +103988,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 457
+      "objects": 458
     },
     {
       "name": "use-case",
