@@ -659,4 +659,178 @@ mod tests {
         let errored = json!({ "error": { "code": -32000 } });
         assert!(announcement_in(&message, Some(&errored)).is_none());
     }
+
+    fn call(tool: &str) -> Value {
+        json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": { "name": tool } })
+    }
+
+    #[test]
+    fn a_batch_is_idempotent_only_when_every_message_in_it_is() {
+        let read = call("majordomus_repository");
+        let write = call("majordomus_plan_transition");
+        let ping = json!({ "jsonrpc": "2.0", "id": 4, "method": "ping" });
+        assert!(idempotent(&json!([read.clone(), ping])));
+        assert!(!idempotent(&json!([read, write])));
+        assert!(idempotent(&json!([])), "an empty batch runs nothing twice");
+    }
+
+    #[test]
+    fn a_message_over_the_body_bound_is_refused_without_being_sent() {
+        // nothing listens on port 1: a message that were sent would come back unreachable
+        let mut bridge = Bridge::new("http://127.0.0.1:1".into());
+        let pad = "x".repeat(crate::http::server::MAX_BODY_BYTES);
+        let message = json!({ "jsonrpc": "2.0", "id": 9, "method": "tools/call",
+            "params": { "name": "majordomus_repository", "arguments": { "pad": pad } } });
+        let err = bridge.handle(&message).expect_err("refused");
+        match &err {
+            BridgeError::Rejected { status, body, url } => {
+                assert_eq!(*status, 413);
+                assert_eq!(url, "http://127.0.0.1:1");
+                assert!(body.contains("it was not sent"), "{body}");
+                assert!(
+                    body.contains(&crate::http::server::MAX_BODY_BYTES.to_string()),
+                    "{body}"
+                );
+            }
+            other => panic!("refused before a connection was made, not {other:?}"),
+        }
+        assert!(
+            !err.calls_for_an_election(),
+            "too large is too large anywhere"
+        );
+        assert!(!err.may_resend(&message));
+    }
+
+    /// One scripted HTTP answer: status, body, and the session id it opens.
+    type Scripted = (u16, &'static str, Option<&'static str>);
+
+    /// A server that answers each connection with the next scripted reply and records what
+    /// it received: the request line, the session header, and the body.
+    fn scripted(replies: Vec<Scripted>) -> (String, std::thread::JoinHandle<Vec<Value>>) {
+        use std::io::BufRead;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let server = std::thread::spawn(move || {
+            let mut seen = Vec::new();
+            for (status, body, session) in replies {
+                let (stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(30)))
+                    .unwrap();
+                let mut reader = std::io::BufReader::new(stream.try_clone().unwrap());
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                let (mut length, mut header) = (0usize, Value::Null);
+                loop {
+                    let mut h = String::new();
+                    reader.read_line(&mut h).unwrap();
+                    let h = h.trim_end();
+                    if h.is_empty() {
+                        break;
+                    }
+                    let (k, v) = h.split_once(':').unwrap();
+                    if k.eq_ignore_ascii_case("content-length") {
+                        length = v.trim().parse().unwrap();
+                    }
+                    if k.eq_ignore_ascii_case(SESSION_HEADER) {
+                        header = json!(v.trim());
+                    }
+                }
+                let mut raw = vec![0u8; length];
+                reader.read_exact(&mut raw).unwrap();
+                let message: Value = serde_json::from_slice(&raw).unwrap_or(Value::Null);
+                seen.push(
+                    json!({ "line": line.trim_end(), "session": header, "message": message }),
+                );
+                let mut head = format!(
+                    "HTTP/1.1 {status} X\r\nConnection: close\r\nContent-Length: {}\r\n",
+                    body.len()
+                );
+                if let Some(s) = session {
+                    head.push_str(&format!("{SESSION_HEADER}: {s}\r\n"));
+                }
+                let mut stream = stream;
+                stream
+                    .write_all(format!("{head}\r\n{body}").as_bytes())
+                    .unwrap();
+            }
+            seen
+        });
+        (url, server)
+    }
+
+    fn initialize() -> Value {
+        json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": { "protocolVersion": "2025-06-18", "capabilities": {},
+                "clientInfo": { "name": "bridge-test", "version": "0" } } })
+    }
+
+    #[test]
+    fn a_session_required_after_initialize_is_opened_again_with_the_clients_initialize() {
+        let answer = r#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#;
+        let (url, server) = scripted(vec![
+            // refused before it was looked at: no session, although the client initialized
+            (400, r#"{"error":"session_required"}"#, None),
+            // the session the bridge opens again with the client's own initialize
+            (200, answer, Some("s-1")),
+            (202, "", None),
+            // and the message, sent once more on it
+            (200, answer, None),
+        ]);
+        let mut bridge = Bridge::with_timeout(url, Duration::from_secs(30));
+        let got = bridge
+            .handle(&initialize())
+            .expect("answered on the reopened session");
+        assert_eq!(got.unwrap()["result"]["protocolVersion"], "2025-06-18");
+        let seen = server.join().unwrap();
+        let methods: Vec<&str> = seen
+            .iter()
+            .map(|s| s["message"]["method"].as_str().unwrap_or_default())
+            .collect();
+        assert_eq!(
+            methods,
+            vec![
+                "initialize",
+                "initialize",
+                "notifications/initialized",
+                "initialize"
+            ]
+        );
+        assert_eq!(
+            seen[1]["message"]["params"]["clientInfo"]["name"],
+            "bridge-test"
+        );
+        assert_eq!(seen[2]["session"], "s-1", "the reopened session is used");
+        assert_eq!(seen[3]["session"], "s-1");
+    }
+
+    #[test]
+    fn a_client_that_never_initialized_is_told_a_session_is_required() {
+        let (url, server) = scripted(vec![(400, r#"{"error":"session_required"}"#, None)]);
+        let mut bridge = Bridge::with_timeout(url, Duration::from_secs(30));
+        let err = bridge
+            .handle(&json!({ "jsonrpc": "2.0", "id": 2, "method": "ping" }))
+            .expect_err("refused");
+        assert!(
+            matches!(&err, BridgeError::Rejected { status: 400, body, .. } if body.contains("session_required")),
+            "{err:?}"
+        );
+        assert!(!err.calls_for_an_election());
+        assert_eq!(server.join().unwrap().len(), 1, "sent once, never again");
+    }
+
+    #[test]
+    fn a_server_failure_leaves_the_outcome_unknown() {
+        let (url, server) = scripted(vec![(503, "overloaded", None)]);
+        let mut bridge = Bridge::with_timeout(url, Duration::from_secs(30));
+        let write = call("majordomus_plan_transition");
+        let err = bridge.handle(&write).expect_err("not answered");
+        assert!(
+            matches!(&err, BridgeError::Unanswered { reason, .. } if reason.contains("status 503") && reason.contains("overloaded")),
+            "{err:?}"
+        );
+        assert!(err.calls_for_an_election());
+        assert!(!err.may_resend(&write), "a write that may have run");
+        assert_eq!(server.join().unwrap().len(), 1);
+    }
 }
