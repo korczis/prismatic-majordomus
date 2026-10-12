@@ -817,9 +817,14 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                     reason: refusal.to_string(),
                 }
             })?;
+            // The builder pins the toolchain the repository builds with, read from the one
+            // file that declares it; a repository without an exact pin cannot render one.
+            let rust = crate::deploy::render::builder_rust(app.repository.root())
+                .map_err(|reason| Error::InvalidDeployment { reason })?;
             out.extend(crate::deploy::render::artifacts(
                 &deployment,
                 &object.provenance.path,
+                &rust,
             ));
         }
     }

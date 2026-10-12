@@ -374,6 +374,134 @@ jobs:
             || { echo "::error::could not start the pages workflow; the release metadata is committed but unpublished. Start it by hand: gh workflow run pages.yml --ref ${{ github.event.repository.default_branch }}"; exit 1; }
           echo "pages requested on ${{ github.event.repository.default_branch }}"
 
+  # ------------------------------------------------------------------ image
+  # The release's deployment image, made from the release's own published executables rather
+  # than from a compile of its own. The publish job decides which bytes are the release (an
+  # existing release's assets win over this run's rebuild, which is not bit-identical), so
+  # this job reads them back from the release, holds each archive to SHA256SUMS and to the
+  # provenance attestation publish made for it, and copies the very executable a user installs
+  # into the image. The generated Dockerfile takes it through MAJORDOMUS_BINARY_FROM=release and
+  # the `release-binary` build context, and BuildKit builds only the stages the image reaches,
+  # so nothing is compiled: the image is the runtime base, the binary and the layer.
+  image:
+    needs: [plan, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      attestations: read
+    env:
+      IMAGE: ghcr.io/korczis/prismatic-majordomus
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      # Which archives, from the distribution model rather than from a list here: every Linux
+      # musl target, and the platform each one is for.
+      - name: the release's verified Linux executables
+        id: binaries
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          set -eu
+          commit="$(git rev-parse HEAD)"
+          mkdir -p release-archives release-binary
+          platforms=""
+          jq -r '.include[] | select(.target | endswith("-unknown-linux-musl")) | "\(.target)\t\(.artifact)"' \
+            docs/generated/distribution-matrix.json > musl-targets.tsv
+          [ -s musl-targets.tsv ] || { echo "::error::the distribution model names no Linux musl target"; exit 1; }
+          while IFS="$(printf '\t')" read -r target artifact; do
+            archive="${artifact//\{tag\}/$TAG}"
+            case "$target" in
+              x86_64-*) arch=amd64 ;;
+              aarch64-*) arch=arm64 ;;
+              *) echo "::error::no container platform for $target"; exit 1 ;;
+            esac
+            gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$archive" -D release-archives --clobber
+            gh attestation verify "release-archives/$archive" -R "$GITHUB_REPOSITORY" >/dev/null \
+              || { echo "::error::$archive carries no provenance attestation of this repository"; exit 1; }
+            root="${archive%.tar.gz}"
+            tar -xzf "release-archives/$archive" -C release-archives "$root/libexec/majordomus-cli" "$root/RELEASE.json"
+            built="$(jq -r .commit "release-archives/$root/RELEASE.json")"
+            [ "$built" = "$commit" ] || { echo "::error::$archive was built from $built, the tag is $commit"; exit 1; }
+            install -m 0755 "release-archives/$root/libexec/majordomus-cli" "release-binary/majordomus-$arch"
+            platforms="${platforms:+$platforms,}linux/$arch"
+            echo "$archive -> linux/$arch ($(sha256sum "release-binary/majordomus-$arch" | cut -c1-16))"
+          done < musl-targets.tsv
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p SHA256SUMS -D release-archives --clobber
+          ( cd release-archives && grep -- '-unknown-linux-musl\.tar\.gz$' SHA256SUMS | sha256sum -c - ) \
+            || { echo "::error::an archive does not match the release's SHA256SUMS"; exit 1; }
+          { echo "commit=$commit"; echo "platforms=$platforms"; } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+        timeout-minutes: 3
+      - uses: docker/setup-buildx-action@v3
+        timeout-minutes: 3
+      - uses: docker/login-action@v3
+        timeout-minutes: 2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # The runner's own platform first, loaded, so the smoke runs the image that is pushed.
+      - name: the image, from the release's executable (no compile)
+        timeout-minutes: 5
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          build-args: MAJORDOMUS_BINARY_FROM=release
+          build-contexts: release-binary=release-binary
+
+      - name: the image runs the release
+        timeout-minutes: 3
+        uses: ./.github/actions/image-smoke
+        with:
+          image: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          commit: ${{ steps.binaries.outputs.commit }}
+
+      - name: publish the release image for every platform the release ships
+        id: publish
+        timeout-minutes: 10
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: true
+          platforms: ${{ steps.binaries.outputs.platforms }}
+          tags: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          build-args: MAJORDOMUS_BINARY_FROM=release
+          build-contexts: release-binary=release-binary
+          provenance: mode=max
+          sbom: true
+
+      - name: summary
+        if: always()
+        timeout-minutes: 1
+        env:
+          REF: ${{ env.IMAGE }}:${{ needs.plan.outputs.tag }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+          PLATFORMS: ${{ steps.binaries.outputs.platforms }}
+        run: |
+          {
+            echo "### release image"
+            if [ -n "$DIGEST" ]; then echo "- published: \`$REF@$DIGEST\` ($PLATFORMS)"
+            else echo "- published: no"; fi
+            echo "- executable: the release's own musl archives, checksummed and attested"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # ------------------------------------------------------------------ smoke
   # The published installer, from its published URL, installing the release that was just
   # published. This is the check that catches a release whose artifacts exist and whose

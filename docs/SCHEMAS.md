@@ -1217,6 +1217,30 @@ capability registers, a package or binary the workspace does not contain, a buil
 that does not resolve, a `min_running` above `count` — and each refusal names the file, the
 key, the value found and the correction.
 
+**The image is built in stages that a cache can carry.** `deploy/Dockerfile` is rendered with
+four builder stages before the runtime (`BUILDER_STAGES` in `src/deploy/render.rs`):
+`toolchain` (the Rust image at the exact `channel` of `rust-toolchain.toml` — the generator
+refuses a repository without one rather than pin a second version), `recipe` (the manifest
+and lockfile with the package's own version masked, so a release bump reaches the same
+recipe), `deps` (every dependency compiled against stub sources, as layer content) and
+`build` (the real sources; the only stage that reads the commit). A cache mount would keep
+compiled dependencies only on the machine that built them; a layer travels with a registry
+cache export, so a fresh runner compiles only the package. `.github/workflows/docker-image.yml`
+builds the image, runs it and checks that `/api/v1/live` names the commit, and publishes
+`ghcr.io/korczis/prismatic-majordomus:sha-<commit>` only after that commit's `validate` run on
+master succeeded; it alone writes the shared `:buildcache` ref.
+A release image compiles nothing: `.github/workflows/release.yml` downloads the release's
+published Linux musl archives, holds each to `SHA256SUMS`, to its provenance attestation and to
+the tagged commit, and builds with `MAJORDOMUS_BINARY_FROM=release` and the `release-binary`
+build context, so the image published as `:<tag>` runs the bytes the archives ship, for every
+platform they ship.
+
+```console
+$ docker buildx build -f deploy/Dockerfile \
+    --cache-from type=registry,ref=ghcr.io/korczis/prismatic-majordomus:buildcache \
+    --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)" -t majordomus:dev --load .
+```
+
 ---
 
 ## `.ai/repo/workspaces/<id>.yaml`
