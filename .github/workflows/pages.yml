@@ -276,7 +276,16 @@ jobs:
     needs: owed
     if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.owed.outputs.remedy == 'deploy') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Every inspector the screens link to, read at one commit, takes minutes rather than
+    # seconds; the bound is behind the reading's own budget below, not instead of it.
+    timeout-minutes: 35
+    # This job reads and publishes nothing: the forge is asked what it holds (the open pull
+    # requests, every deployment, every release) so that the snapshot shows them, and no
+    # token here can write.
+    permissions:
+      contents: read
+      pull-requests: read
+      deployments: read
     steps:
       # the UI reads the history too (what changed since, what was released), as the deploy does
       - uses: actions/checkout@v4
@@ -285,8 +294,23 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - name: the executable that reads the UI
         run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+      # The forge, observed with its own tool before the UI is read: the pull requests the PR
+      # Drain draws and the deployments and releases the Deployments screen draws are read
+      # from this record and from nothing else. A runner has no observation of its own, so
+      # without this step both screens are published empty — which is what they were. It is
+      # blocking: a snapshot that says "not observed" about a forge that could have been asked
+      # is the stale page nobody sees.
+      - name: the forge, observed
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: apps/majordomus-cli/target/debug/majordomus prs refresh
+      # Every page the screens link to, not the first few: the default budget is sized for a
+      # person waiting at a terminal and left most inspectors out of the published snapshot.
+      # What was still left out is in snapshot.json, and `scripts/pages verify-ui` reports it.
       - name: the UI, read once at this commit
-        run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot
+        timeout-minutes: 22
+        run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot --limit 4000 --budget-seconds 1200
       - uses: actions/upload-artifact@v4
         with:
           name: ui-snapshot
@@ -312,9 +336,9 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. The job's 38 covers the sum of every step's bound — the evidence
+  # file says never to budget. The job's 41 covers the sum of every step's bound — the evidence
   # read before the build, and after the probe the reads of GitHub's build, of the documentation,
-  # of the crate's public reference and of the release the site offers — plus the unbounded
+  # of the crate's public reference, of the UI's snapshot and of the release the site offers — plus the unbounded
   # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
   # where it belongs: as the last resort behind every step's own. No sum is written here, because a step's bound changes without this
   # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
@@ -322,7 +346,7 @@ jobs:
     needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 38
+    timeout-minutes: 41
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -490,6 +514,22 @@ jobs:
         if: steps.public.outcome == 'success'
         timeout-minutes: 6
         run: scripts/pages verify-rustdoc --commit "$GITHUB_SHA" --timeout 300
+
+      # The UI it publishes, as the public site serves it (ADR 0141,
+      # project.the-published-ui-is-the-trunks). The step before the publish placed this run's
+      # snapshot at the UI's mount and refused one read at another commit; that proves the tree
+      # that was pushed, and nothing after it. This asks the public bytes: the snapshot's
+      # surface.json names this commit and the mount it is served at, the landing page's banner
+      # states the same commit, snapshot.json records it, and every page that record lists
+      # answers 200 — with the pages the snapshot itself left out, and what stopped it, in the
+      # line it prints. Not continue-on-error, for the reason the reference above is not: it
+      # runs only once the site is known to serve this commit, so what it can find is a UI that
+      # is missing, another commit's or half there, and that is a broken publication. The wait
+      # is for a CDN that still answers the previous snapshot's files after /build.json moved.
+      - name: the UI it publishes
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 3
+        run: scripts/pages verify-ui --commit "$GITHUB_SHA" --timeout 120
 
       # The release it offers, as served: the homepage's offered release, /releases/latest.json
       # and GitHub's newest release name one version, or GitHub published it less than

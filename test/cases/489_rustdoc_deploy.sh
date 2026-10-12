@@ -71,7 +71,11 @@ others="$(printf '%s\n' "$LAST_OUT" | grep '^FAIL' | grep -v '^FAIL surfaces ' |
 cp "$S/surface.json" site/public/rustdoc/surface.json
 
 # ---------------------------------------------------------------- the deploy
+# The deploy refuses a site short of a snapshot its model says a publication holds (the UI's,
+# ADR 0141), which the deploy job of the pages workflow places and the site build does not;
+# this case is about the reference, so it places a stand-in read at this commit, as case 96 does.
 head="$(git rev-parse HEAD)"
+publication_snapshots "$PWD" site/public "$head" || { echo "    the clone's publication model cannot be read"; exit 1; }
 expect_exit 0 scripts/site-deploy --skip-build
 expect_grep "pushed .* to origin/gh-pages"
 git fetch -q origin gh-pages

@@ -179,6 +179,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:deploy.observed",
+      "path": "/evidence/capabilities/deploy-observed/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.contrast",
       "path": "/evidence/capabilities/design-contrast/"
     },
@@ -4061,6 +4066,16 @@
       "kind": "capability",
       "id": "deploy.list",
       "page": "/evidence/capabilities/deploy-list/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:deploy.observed": {
+      "kind": "capability",
+      "id": "deploy.observed",
+      "page": "/evidence/capabilities/deploy-observed/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -18954,6 +18969,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_deployments_observed": {
+      "kind": "mcp",
+      "id": "majordomus_deployments_observed",
+      "alias_of": "capability:deploy.observed",
+      "programs": [],
+      "members": [
+        "capability:deploy.observed"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_design": {
       "kind": "mcp",
       "id": "majordomus_design",
@@ -24844,6 +24871,71 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-published-ui-is-the-trunks": {
+      "kind": "rule",
+      "id": "project.the-published-ui-is-the-trunks",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1092_the_ui_snapshot_holds_every_screen",
+          "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1093_the_ui_snapshot_links_nothing_absent",
+          "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1096_the_published_ui_is_the_trunks",
+          "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1096_the_published_ui_is_the_trunks.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:180_publication_is_observed",
+          "path": "test/cases/180_publication_is_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/180_publication_is_observed.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:96_site_deploy",
+          "path": "test/cases/96_site_deploy.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/96_site_deploy.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/pages-check",
+        "scripts/pages",
+        "scripts/site-deploy"
+      ],
+      "findings": []
+    },
     "rule:project.the-server-sees-the-current-tree": {
       "kind": "rule",
       "id": "project.the-server-sees-the-current-tree",
@@ -26704,8 +26796,6 @@
     "suite:1089_the_work_and_mesh_screens_answer",
     "suite:1090_the_deployments_and_docs_screens_answer",
     "suite:1091_no_link_on_the_ui_is_dead",
-    "suite:1092_the_ui_snapshot_holds_every_screen",
-    "suite:1093_the_ui_snapshot_links_nothing_absent",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
     "suite:114_two_worktrees_one_repository",
@@ -26721,7 +26811,6 @@
     "suite:133_plan_transition",
     "suite:139_release_record_schema",
     "suite:15b_an_installed_tool_runs_what_its_bootstrap_names",
-    "suite:180_publication_is_observed",
     "suite:181_local_is_never_published",
     "suite:182_sessions_published_are_the_records",
     "suite:190_graph_drawing",

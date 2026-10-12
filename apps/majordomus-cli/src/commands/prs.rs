@@ -17,6 +17,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::cli::{OutputFormat, PrsArgs, PrsCommand};
+use crate::deploy::observed::DeploymentObservation;
 use crate::error::{Error, Result};
 use crate::integration::{
     self,
@@ -65,6 +66,20 @@ fn w(out: &mut impl Write, line: impl AsRef<str>) -> Result<()> {
 
 fn short(sha: &str) -> &str {
     &sha[..sha.len().min(10)]
+}
+
+/// Say what observing the deployments came to. In the log and not on standard output, which
+/// belongs to the observation `refresh` prints and may be JSON.
+fn note_deployments(observed: std::result::Result<DeploymentObservation, String>) {
+    match observed {
+        Ok(o) => tracing::info!(
+            deployments = o.deployments.len(),
+            releases = o.releases.len(),
+            repository = %o.repository,
+            "the forge's deployments and releases were observed"
+        ),
+        Err(reason) => tracing::warn!(%reason, "the forge's deployments were not observed"),
+    }
 }
 
 fn trunc(s: &str, n: usize) -> String {
@@ -452,6 +467,13 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             diagnosed(&q, format)
         }
         PrsCommand::Refresh => {
+            // the deployments and releases, asked of the same forge with the same tool and
+            // recorded beside the queue's observation; said either way, and never what
+            // stops the pull requests from being observed
+            note_deployments(crate::deploy::observed::refresh_with(
+                crate::deploy::observed::GH,
+                &root,
+            ));
             // observed just now: what the queue learns from it is kept for the readers
             let obs = integration::refresh(&root)
                 .and_then(|obs| integration::queue_and_record(&root).map(|_| obs))
@@ -2071,6 +2093,59 @@ mod tests {
             run(args(empty.path(), OutputFormat::Text)).unwrap(),
             FINDING
         );
+    }
+}
+
+#[cfg(test)]
+mod refresh_tests {
+    //! `refresh` observes the deployments beside the queue: either outcome is said, and a
+    //! forge that cannot be asked about deployments still lets the pull requests be asked.
+
+    use super::*;
+
+    #[test]
+    fn observing_the_deployments_is_said_whether_it_worked_or_not() {
+        let observed = crate::deploy::observed::parse(
+            "o/r",
+            "2026-10-12T14:00:00Z",
+            &serde_json::json!({"data": {"repository": {"url": "https://forge.example/o/r"}}}),
+        );
+        note_deployments(Ok(observed));
+        note_deployments(Err("no network".into()));
+    }
+
+    /// In a repository the forge does not know, both observations fail: the deployments'
+    /// failure is a note, and the queue's is the refusal the command ends with.
+    #[test]
+    fn a_refresh_the_forge_cannot_answer_ends_on_the_queues_refusal() {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .success());
+        };
+        git(&["init", "-q", "-b", "master"]);
+        let refused = run(PrsArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(dir.path().to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            command: Some(PrsCommand::Refresh),
+            format: OutputFormat::Text,
+        })
+        .unwrap_err();
+        assert!(
+            matches!(refused, Error::Refused { code: UNUSABLE, .. }),
+            "{refused}"
+        );
+        assert!(crate::deploy::observed::load(dir.path()).unwrap().is_none());
     }
 }
 

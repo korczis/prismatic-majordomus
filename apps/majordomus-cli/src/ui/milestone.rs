@@ -5,6 +5,11 @@
 //! Read from `plan.roadmap` and `plan.issues`, both of which answer in milliseconds, so the
 //! inspector is part of the first paint. Every issue is a link to its own inspector on the PR
 //! Drain, and every milestone a link to its own here: a reader walks the plan by clicking it.
+//!
+//! What the milestone is *for* — its problem, the outcome it promises, where things stand and
+//! where they should, what is in and out of its scope, and what would prove it — is the
+//! record's own prose, asked of `objects.get` and drawn by [`super::prose`]: markup as markup,
+//! and every issue or milestone the prose names a link to it.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -129,6 +134,71 @@ fn chips(ids: &[String], to: fn(&str) -> String) -> El {
 }
 
 /// The inspector of milestone `id`.
+/// The prose sections of a milestone's record, in the order a reader asks: why, what for,
+/// from where to where, within what bounds, and proven how. A section the record does not
+/// carry is not drawn.
+const NARRATIVE: &[(&str, &str)] = &[
+    ("problem", "The problem"),
+    ("outcome", "The outcome"),
+    ("current_state", "Where it stands"),
+    ("desired_state", "Where it should stand"),
+    ("scope", "In scope"),
+    ("non_scope", "Out of scope"),
+    ("acceptance_criteria", "Proven when"),
+];
+
+/// The record's narrative as headed prose: a string as a paragraph, a list as a list.
+fn narrative(record: &Value, known: &super::prose::Known) -> Vec<El> {
+    let mut out = Vec::new();
+    for (key, heading) in NARRATIVE {
+        let drawn = match record.get(*key) {
+            Some(Value::String(prose)) if !prose.trim().is_empty() => {
+                super::prose::paragraph(prose, known)
+            }
+            Some(Value::Array(_)) if !strings(record, key).is_empty() => {
+                super::prose::bullets(&strings(record, key), known)
+            }
+            _ => continue,
+        };
+        out.push(el("h4").class("mj-ui-panel-title").text(*heading));
+        out.push(drawn);
+    }
+    out
+}
+
+/// The milestone inspector with the record's own prose: `record` is `objects.get` for the
+/// milestone, when the caller asked it.
+pub fn inspector_with(roadmap: &Answer, issues: &Answer, record: &Answer, id: &str) -> El {
+    let known = super::prose::Known {
+        issues: list(issues, "/issues")
+            .iter()
+            .map(|i| text(i, "id"))
+            .collect(),
+        milestones: list(roadmap, "/milestones")
+            .iter()
+            .map(|m| text(m, "id"))
+            .collect(),
+    };
+    let told = record
+        .ok()
+        .and_then(|r| r.get("metadata"))
+        .map(|metadata| narrative(metadata, &known))
+        .unwrap_or_default();
+    let base = inspector(roadmap, issues, id);
+    match told.is_empty() {
+        true => base,
+        false => panel(
+            "What it is for",
+            "The milestone's own record: why it exists, what it promises, and what would prove it.",
+            told.into_iter()
+                .fold(el("div").class("mj-ui-stack"), El::child),
+            &[record],
+        )
+        .attr("id", "milestone-record")
+        .child(base),
+    }
+}
+
 pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
     let body = unanswered(roadmap)
         .or_else(|| unanswered(issues))
@@ -338,6 +408,65 @@ mod tests {
             ]}),
         );
         (roadmap, issues)
+    }
+
+    /// The record's own prose is drawn above the plan's arithmetic: every section it carries,
+    /// markup as markup, and an issue or milestone it names as a link to it. A section it does
+    /// not carry is not drawn, and a record nobody could read leaves the inspector as it was.
+    #[test]
+    fn the_records_prose_is_drawn_with_its_markup_and_its_links() {
+        let (roadmap, issues) = plan();
+        let record = answer(
+            "objects.get",
+            serde_json::json!({ "metadata": {
+                "id": "M004",
+                "problem": "The shell tool is slow: `doctor` takes ten seconds, see I0002.",
+                "outcome": "Every command is **benchmarked**, after M003.",
+                "current_state": "   ",
+                "scope": ["lib", "bin/majordomus"],
+                "non_scope": [],
+                "acceptance_criteria": ["A regression is refused, as I0003 proves"]
+            }}),
+        );
+        let html = inspector_with(&roadmap, &issues, &record, "M004").render();
+        for expected in [
+            "The problem",
+            "<code class=\"mj-ui-code\">doctor</code>",
+            "?issue=I0002#issue\">I0002</a>",
+            "The outcome",
+            "<strong>benchmarked</strong>",
+            "?milestone=M003#milestone\">M003</a>",
+            "In scope",
+            "<li>bin/majordomus</li>",
+            "Proven when",
+            "?issue=I0003#issue\">I0003</a>",
+            "id=\"milestone-record\"",
+            // and the plan's own inspector is still there, below it
+            "Critical path",
+        ] {
+            assert!(html.contains(expected), "{expected} is missing from {html}");
+        }
+        for absent in ["Where it stands", "Out of scope", "Where it should stand"] {
+            assert!(
+                !html.contains(absent),
+                "{absent} was drawn from nothing: {html}"
+            );
+        }
+
+        let unread = Answer {
+            value: Err("no such object".into()),
+            ..answer("objects.get", Value::Null)
+        };
+        let plain = inspector_with(&roadmap, &issues, &unread, "M004").render();
+        assert_eq!(plain, inspector(&roadmap, &issues, "M004").render());
+        let bare = answer(
+            "objects.get",
+            serde_json::json!({ "metadata": { "id": "M004" } }),
+        );
+        assert_eq!(
+            inspector_with(&roadmap, &issues, &bare, "M004").render(),
+            inspector(&roadmap, &issues, "M004").render()
+        );
     }
 
     /// A milestone that gives no order, counts nothing blocked and holds no open issue says

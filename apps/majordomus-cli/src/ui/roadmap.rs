@@ -177,7 +177,15 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         grid = grid.child(wide(super::intent::inspector(intents, issues, id)));
     }
     if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
-        grid = grid.child(wide(super::milestone::inspector(roadmap, issues, id)));
+        // the milestone's own record, for the prose no plan summary carries
+        let record = super::source::ask_input(
+            ctx,
+            "objects.get",
+            serde_json::json!({ "uri": format!("majordomus://milestone/{id}") }),
+        );
+        grid = grid.child(wide(super::milestone::inspector_with(
+            roadmap, issues, &record, id,
+        )));
     }
     let grid = grid
         .child(wide(panel(
