@@ -90,3 +90,20 @@ pub(crate) fn runtime(net: &Arc<Net>, endpoint: &str) -> Arc<Cooperation> {
         .insert(endpoint.into(), Arc::downgrade(&c));
     c
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::link::{sign, Domain};
+
+    /// A message to an endpoint nobody listens at is refused by the network, as a socket
+    /// that connects to nothing would be; nothing is answered.
+    #[test]
+    fn a_message_to_nobody_is_refused_by_the_network() {
+        let net = Arc::new(Net::default());
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let hello = sign(&identity, Domain::Hello, serde_json::json!({}));
+        let err = net.post("nowhere:1", HELLO_PATH, &hello).err();
+        assert_eq!(err.as_deref(), Some("nowhere:1: nobody there"));
+    }
+}
