@@ -1,0 +1,32 @@
+id: I2396
+milestone: test-evidence
+title: "The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed"
+slug: the-ci-critical-path-is-measured
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Record what a pull request's verdict costs today, from the forge's own runs, so that every change of the V4 delivery work is compared with a measurement rather than with a belief."
+why: "The owner set a bound of five minutes at the 95th percentile for a pull request's required verdict and asked for the integration process to be diagnosed before it is changed. The last measurement on record (.ai/repo/ci/baseline.json) is from 2026-09-05, before the CI model existed."
+current_state: "scripts/ci-baseline records runs, jobs and steps; nothing on master holds a measurement of the current CI, and docs/CI.md names no critical path."
+desired_state: ".ai/repo/ci/baseline-2026-10-10.json holds the last 60 validate runs; docs/CI.md states the verdict's percentiles, the share of runner time spent on runs that do not end green, the jobs that set the wall clock with their queue, and the causes of the failed runs, each reproducible from the file."
+scope:
+  - ".ai/repo/ci/baseline-2026-10-10.json"
+  - "docs/CI.md"
+  - ".ai/repo/project/issues/I2396.yaml"
+  - "docs/generated"
+  - "docs/PLAN_STATUS.md"
+  - "docs/PAGES_STATUS.md"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Changing any workflow, gate or cache: the later V4 issues do that against this measurement."
+acceptance_criteria:
+  - ".ai/repo/ci/baseline-2026-10-10.json is the output of scripts/ci-baseline over 60 validate runs"
+  - "docs/CI.md states p50 and p95 of a green pull request's verdict, the runs that did not end green and their share of runner time, the long jobs with their queue, and the causes of failure, each with a command that reproduces it from the file"
+validation:
+  - "jq '.runs | length' .ai/repo/ci/baseline-2026-10-10.json"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "ci_critical_path_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -164,6 +164,9 @@ cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
 cp "$SITE/nav.js" "$SITE/static/js/nav.js"
 # the kit's behaviour (copy, tabs, the table of contents), loaded by the base layout
 cp "$SITE/kit.js" "$SITE/static/js/kit.js"
+# the site's one search, the navbar's dialog and the documentation hub's field, over the
+# /docs/index.json this build writes last; loaded by the base layout
+cp "$SITE/search.js" "$SITE/static/js/search.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )

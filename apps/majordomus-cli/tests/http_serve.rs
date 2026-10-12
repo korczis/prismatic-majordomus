@@ -8,9 +8,9 @@ mod common;
 
 use std::collections::BTreeSet;
 use std::io::{BufRead, Write};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{rule, without_observation_times, Fixture, Served, BIN};
+use common::{rule, without_observation_times, Fixture, Served};
 use serde_json::{json, Value};
 
 #[test]
@@ -170,7 +170,7 @@ fn errors_are_typed_and_the_server_survives_them() {
 
 /// One MCP tools/call over stdio, returning structuredContent.
 fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
@@ -295,7 +295,7 @@ fn mcp_session(
     cwd: &std::path::Path,
     requests: &[Value],
 ) -> std::collections::BTreeMap<u64, Value> {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["mcp", "--standalone"])
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
@@ -646,7 +646,7 @@ fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
 #[test]
 fn with_stdin_at_dev_null_the_server_keeps_running() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["serve", "--port", "0"])
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "info")

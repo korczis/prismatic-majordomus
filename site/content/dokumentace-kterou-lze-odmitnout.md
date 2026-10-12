@@ -69,9 +69,9 @@ flowchart TD
 </pre>
 
 
-Registry je ta část, která se zaplatí sama. Každá operace je deklarovaná jednou, v Rustu, včetně identity, efektu a toho, kde má být vidět. Dneska v ní je 1482 capabilit: 110 z nich je vystavených jako MCP tools, 1410 jako MCP resources, 112 jako HTTP operace. Všechny povrchy se renderují ze stejných řádků, takže operace nemůže existovat v API a chybět v OpenAPI dokumentu. Gate to přegeneruje a spadne, pokud se výsledek liší od toho, co je zacommitované.
+Registry je ta část, která se zaplatí sama. Každá operace je deklarovaná jednou, v Rustu, včetně identity, efektu a toho, kde má být vidět. Když se tahle stránka builduje, je v ní {% endraw %}{{ <cite_figure name="capabilities" /> }}{% raw %} capabilit: {% endraw %}{{ <cite_figure name="mcp_tools" /> }}{% raw %} z nich je vystavených jako MCP tools, {% endraw %}{{ <cite_figure name="mcp_resources" /> }}{% raw %} jako MCP resources, {% endraw %}{{ <cite_figure name="http_routes" /> }}{% raw %} jako HTTP operace. Všechny povrchy se renderují ze stejných řádků, takže operace nemůže existovat v API a chybět v OpenAPI dokumentu. Gate to přegeneruje a spadne, pokud se výsledek liší od toho, co je zacommitované.
 
-A teď to, co bych v marketingovém textu vynechal: **CLI odvozené není.** V grafu příkazů je 195 příkazů a 64 z nich nemá pod sebou žádnou capability — nástroj to o sobě sám hlásí řádkem `commands no capability claims: 64`. CLI je druhá deklarace, která se proti té první kontroluje, ne z ní odvozuje. Než se ta mezera zavře, platí „jedna deklarace, všechny povrchy" pro API, MCP a dokumentaci a je to předsevzetí pro CLI.
+A teď to, co bych v marketingovém textu vynechal: **CLI odvozené není.** Příkazová řádka binárky má {% endraw %}{{ <cite_figure name="cli_commands" /> }}{% raw %} spustitelných příkazů a ne každý z nich má pod sebou capability — kolik jich nemá, hlásí nástroj o sobě sám ve stejném reportu řádkem `commands no capability claims`. CLI je druhá deklarace, která se proti té první kontroluje, ne z ní odvozuje. Než se ta mezera zavře, platí „jedna deklarace, všechny povrchy" pro API, MCP a dokumentaci a je to předsevzetí pro CLI.
 
 ## Tvrzení jako objekt, ne jako věta
 
@@ -83,7 +83,7 @@ Každá věta o schopnostech na veřejném webu projektu pochází z jednoho sou
 
 Co z toho dělá víc než tabulku, je požadavek, aby ten vztah platil **oběma směry**, a rozhoduje o tom gate. `scripts/ci/claim-proof-check` vezme každé guaranteed tvrzení, otevře test, na který ukazuje, a vyžaduje, aby ten test tvrzení jmenoval zpátky ve své hlavičce. Tvrzení ukazující na test, který o něm nikdy neslyšel, je nález. Pak ještě vyžaduje, aby ten test byl **spustitelný** — shellový case v `test/cases/` nebo crate test v `apps/majordomus-cli/tests/`. Protože tvrzení, jehož důkazem je markdown, není dokázané. Je popsané.
 
-Aktuálně ten check hlásí:
+Když jsem tohle psal, ten check hlásil:
 
 ```console
 $ scripts/ci/claim-proof-check --strict
@@ -92,19 +92,19 @@ runnable tests:      every guaranteed claim names a shell case or a crate test
 claim-proof-check: every guaranteed claim names a test that names it back
 ```
 
-161 guaranteed tvrzení, všechna uzavřená, a baseline výjimek vedle toho checku obsahuje třináct řádků komentářů a nula tvrzení. Na seznamu výjimek nestojí nic.
+Když se tahle stránka builduje, drží matice {% endraw %}{{ <cite_figure name="claims_guaranteed" /> }}{% raw %} guaranteed tvrzení a check běží striktně nad každým z nich: baseline výjimek vedle něj obsahuje komentáře a žádné vyjmuté tvrzení. Na seznamu výjimek nestojí nic.
 
-Stejný tvar platí o patro výš, pro pravidla. Pravidlo je tu verzovaný markdown se strojově čitelným blokem, který deklaruje, **jak** je vynucené. 137 pravidel se rozpadá do deterministického pořadí, 116 má validátor a všech 109 blokujících pravidel ho má. Čtyři pravidla deklarují, že je vynucuje člověk při review — a to je typovaný stav s povinným odůvodněním, ne absence. Ten rozdíl je podstatný: „tohle kontrolujeme okem, protože automat by musel hádat" je obhajitelný inženýrský postoj. „Tohle nikdy nikdo nerozhodl" ve stejném kabátě není.
+Stejný tvar platí o patro výš, pro pravidla. Pravidlo je tu verzovaný markdown se strojově čitelným blokem, který deklaruje, **jak** je vynucené. Graf objektů repozitáře indexuje {% endraw %}{{ <cite_figure name="rule_objects" /> }}{% raw %} dokumentů pravidel; pravidla, která definují, se rozpadají do deterministického pořadí a každé blokující má validátor — rozhoduje o tom `scripts/ci/rule-proof-check`. Jen standardní balík, který zdědí každý repozitář, jenž nástroj přijme, deklaruje {% endraw %}{{ <cite_figure name="doctrines_declared" /> }}{% raw %} pravidel, z toho {% endraw %}{{ <cite_figure name="doctrines_blocking" /> }}{% raw %} blokujících. Některá pravidla deklarují, že je vynucuje člověk při review — a to je typovaný stav s povinným odůvodněním, ne absence. Ten rozdíl je podstatný: „tohle kontrolujeme okem, protože automat by musel hádat" je obhajitelný inženýrský postoj. „Tohle nikdy nikdo nerozhodl" ve stejném kabátě není.
 
 ## Co zatím tvrdit nemůžu
 
 Všechno výše dokazuje, že důkaz **existuje**. Nic z toho nedokazuje, že ten důkaz **proběhl**.
 
-Repozitář má evidence ledger — `.ai/repo/evidence/ledger.json` — postavený na to, aby spojoval tvrzení se zaznamenanými běhy, a tvrzení pak neslo stav jako proven, stale nebo failing místo pouhého „má test". Ten subsystém je implementovaný. V ledgeru je šest běhů. Všech šest má `"origin": "local"`. Nejnovější je šest dní starý.
+Repozitář má evidence ledger — `.ai/repo/evidence/ledger.json` — postavený na to, aby spojoval tvrzení se zaznamenanými běhy, a tvrzení pak neslo stav jako proven, stale nebo failing místo pouhého „má test". Ten subsystém je implementovaný. V ledgeru je teď {% endraw %}{{ <cite_figure name="evidence_executions" /> }}{% raw %} běhů a každý z nich vznikl na stroji vývojáře — `"origin": "local"` — protože nic jiného je zatím nezaznamenává.
 
-Když se nástroje zeptám na stav důkazu u všech 176 tvrzení, odpoví: 153 nespuštěno, 14 zastaralých, 9 bez testu. Nula dokázaných. Report pravidel říká totéž svým slovníkem: `recorded: 0, passing: 0`.
+Když se nástroje zeptám na stav důkazu u všech {% endraw %}{{ <cite_figure name="evidence_claims" /> }}{% raw %} tvrzení, odpoví v buildu téhle stránky: {% endraw %}{{ <cite_figure name="claims_not_run" /> }}{% raw %} nespuštěno, {% endraw %}{{ <cite_figure name="claims_stale" /> }}{% raw %} zastaralých, {% endraw %}{{ <cite_figure name="claims_no_test" /> }}{% raw %} bez testu, {% endraw %}{{ <cite_figure name="claims_proven" /> }}{% raw %} dokázaných. Když jsem tohle psal, report pravidel říkal totéž svým slovníkem: `recorded: 0, passing: 0`.
 
-Příčina je nudná a konkrétní: žádný CI workflow nevolá `majordomus evidence record`. Suite běží při každém pushi — 224 shellových cases a 1545 Rust testovacích funkcí — a zapíše výsledek do logu, který GitHub při dalším re-runu smaže. Strojově čitelný report testů se nikde nepublikuje; `https://majordomus.dev/reports/tests.json` vrací 404.
+Příčina je nudná a konkrétní: žádný CI workflow nevolá `majordomus evidence record`. Suite běží při každém pushi — každý shellový case v `test/cases/` a každá testovací funkce crate v Rustu — a zapíše výsledek do logu, který GitHub při dalším re-runu smaže. Strojově čitelný report testů se nikde nepublikuje; `https://majordomus.dev/reports/tests.json` vrací 404.
 
 Přesné shrnutí současného stavu tedy zní: **tenhle repozitář umí dokázat, že každé guaranteed tvrzení má test, který ho jmenuje zpátky, a zatím neumí dokázat, že ten test nedávno prošel.** První půlka je vynucený invariant bez výjimek. Druhá je nezapojený drát.
 
@@ -138,14 +138,14 @@ Tohle myslím spustitelnou governance. Ne že někde stojí, že na pravidlech z
 
 ## Důkazy
 
-Všechna čísla výše jsem změřil v září 2026 na commitu `d8c97273f0`, kterým tahle stránka přibyla, a u každého je příkaz, který ho vypsal. Repozitář je veřejný.
+Tenhle článek jsem napsal v září 2026 na commitu `d8c97273f0`, kterým tahle stránka přibyla. Počty v něm nejsou napsané ručně: každý se při každém buildu webu čte z dat, která repozitář generuje, a příkazy níže měří totéž na checkoutu. Repozitář je veřejný.
 
 - Počty capabilit a projekcí, nepokryté příkazy: `majordomus capabilities projections --format json`
 - Počty tvrzení a stavy důkazů: `majordomus evidence show --format json`
 - Uzavřenost tvrzení: `scripts/ci/claim-proof-check --strict`, baseline `.ai/repo/claim-proof-baseline.txt`
 - Pravidla a způsoby vynucení: `majordomus rules report --format json`, `scripts/ci/rule-proof-check`
-- Testy: 224 souborů v `test/cases/`, 1545 funkcí `#[test]`, z toho 374 v `apps/majordomus-cli/tests/`
-- Gates: 54 deklarovaných v `.ai/repo/ci/gates.yaml`, 17 běží vždy
+- Testy: `ls test/cases/*.sh | wc -l` spočítá shellové cases, `grep -r '#\[test\]' apps/majordomus-cli | wc -l` testovací funkce v Rustu
+- Gates: deklarované v `.ai/repo/ci/gates.yaml`; ty, které běží při každé změně, mají `always: true`
 - Nasazení: `build.json` na publikovaném webu jmenuje verzi zdroje, commit a generátor
 - Pravidlo, které tenhle článek musel změnit: `.ai/repo/rules/project/english-only.v2.md`
 

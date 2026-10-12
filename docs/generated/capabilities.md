@@ -10,6 +10,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | module | title | stability | capabilities | reference |
 |---|---|---|---|---|
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
+| `brief` | The session brief | behaviorally_verified | 1 | [`modules/brief.md`](modules/brief.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
@@ -32,14 +33,15 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
-| `integration` | Pull-request integration | experimental | 5 | [`modules/integration.md`](modules/integration.md) |
+| `integration` | Pull-request integration | experimental | 7 | [`modules/integration.md`](modules/integration.md) |
 | `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
 | `intents` | Intent | behaviorally_verified | 6 | [`modules/intents.md`](modules/intents.md) |
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 23 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
+| `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
@@ -50,7 +52,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
 | `recover` | Recovery of the record stores | behaviorally_verified | 1 | [`modules/recover.md`](modules/recover.md) |
-| `release` | Release | implemented | 3 | [`modules/release.md`](modules/release.md) |
+| `release` | Release | implemented | 4 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 2 | [`modules/served.md`](modules/served.md) |
@@ -68,6 +70,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | id | module | kind | stability | MCP tool | MCP resource | HTTP | CLI | cache | benchmark |
 |---|---|---|---|---|---|---|---|---|---|
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
+| `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | — | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |
 | `capabilities.projections` | `capabilities` | query | behaviorally_verified | `majordomus_projections` | — | `GET /api/v1/capabilities/projections` | `majordomus capabilities projections` | process, 8 entries | required |
@@ -144,6 +147,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `integration.explain` | `integration` | query | experimental | `majordomus_pull_request_explain` | — | `GET /api/v1/pull-requests/explain` | `majordomus prs explain` | — | required |
 | `integration.prove_dry_run` | `integration` | query | experimental | `majordomus_pull_requests_prove_dry_run` | — | `GET /api/v1/pull-requests/prove-dry-run` | `majordomus prs prove-dry-run` | — | waived (external_dependency) |
 | `integration.queue` | `integration` | query | experimental | `majordomus_pull_requests` | — | `GET /api/v1/pull-requests` | `majordomus prs status` | — | required |
+| `integration.timings` | `integration` | query | experimental | `majordomus_ci_timings` | — | `GET /api/v1/pull-requests/timings` | — | — | required |
+| `integration.trains` | `integration` | query | experimental | `majordomus_pull_request_trains` | — | `GET /api/v1/pull-requests/trains` | `majordomus prs trains` | — | required |
 | `intent_realization.explain` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_explain` | — | `GET /api/v1/intents/explain` | `majordomus intent explain` | — | required |
 | `intent_realization.work` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_realization` | — | `GET /api/v1/intents/realization` | `majordomus intent realization` | — | required |
 | `intents.binding` | `intents` | query | behaviorally_verified | `majordomus_intent_binding` | — | `GET /api/v1/intents/binding` | `majordomus intent binding` | — | required |
@@ -165,6 +170,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |
 | `mesh.events` | `mesh` | query | experimental | `majordomus_mesh_events` | — | `GET /api/v1/mesh/events` | — | — | required |
+| `mesh.firewall` | `mesh` | query | experimental | `majordomus_mesh_firewall` | — | `GET /api/v1/mesh/firewall` | `majordomus mesh firewall` | — | waived (external_dependency) |
+| `mesh.firewall.apply` | `mesh` | command | experimental | — | — | — | `majordomus mesh firewall apply` | — | waived (destructive) |
 | `mesh.handover.consume` | `mesh` | command | experimental | `majordomus_mesh_handover_consume` | — | `POST /api/v1/mesh/handovers/consume` | — | — | waived (transient_state) |
 | `mesh.handover.publish` | `mesh` | command | experimental | `majordomus_mesh_handover_publish` | — | `POST /api/v1/mesh/handovers` | — | — | waived (transient_state) |
 | `mesh.identity` | `mesh` | query | experimental | `majordomus_mesh_identity` | — | `GET /api/v1/mesh/identity` | `majordomus mesh identity` | — | required |
@@ -184,6 +191,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.verify` | `mesh` | command | experimental | `majordomus_mesh_verify` | — | `POST /api/v1/mesh/verify` | — | — | waived (external_dependency) |
 | `models.list` | `models` | query | experimental | `majordomus_models` | `majordomus://models` | `GET /api/v1/models` | `majordomus models list` | process, 4 entries, 5s | required |
 | `models.route` | `models` | query | experimental | `majordomus_models_route` | — | `GET /api/v1/models/route` | `majordomus models route` | — | required |
+| `monitor.stream` | `monitor` | query | experimental | `majordomus_monitor` | — | `GET /api/v1/monitor` | — | — | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |
@@ -221,6 +229,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `recover.orphans` | `recover` | command | behaviorally_verified | `majordomus_recover_orphans` | — | `POST /api/v1/recover/orphans` | — | — | required |
 | `release.analysis` | `release` | query | implemented | `majordomus_release_analysis` | — | `GET /api/v1/release/analysis` | — | — | waived (published_history) |
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
+| `release.next` | `release` | query | implemented | `majordomus_release_next` | — | `GET /api/v1/release/next` | — | — | waived (published_history) |
 | `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | — | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
@@ -254,8 +263,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 ## Declarative resources
 
-Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `critique`, `deployment`, `distribution-model`, `document`, `domain`, `feature`, `gap`, `implementation`, `intent`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
+Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `critique`, `deployment`, `derive-offload`, `distribution-model`, `document`, `domain`, `feature`, `gap`, `implementation`, `intent`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
 
 ## Infrastructure routes
 
-The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/events`, `/cockpit`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.
+The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/events`, `/cockpit`, `/ui`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.

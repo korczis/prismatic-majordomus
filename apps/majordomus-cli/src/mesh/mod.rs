@@ -47,19 +47,25 @@ pub mod broadcast;
 pub mod config;
 pub mod cooperation;
 pub mod doctor;
+pub mod firewall;
 pub mod handover;
 pub mod identity;
 pub mod journal;
 pub mod link;
 pub mod manager;
 pub mod multicast;
+pub mod page;
 pub mod protocol;
 pub mod provider;
 pub mod registry;
 pub mod rendezvous;
 pub mod repository;
+pub mod root;
 pub mod state;
 pub mod trust;
+
+#[cfg(test)]
+pub(crate) mod testing;
 
 pub use config::{MeshConfig, KIND};
 pub use doctor::{DoctorCheck, MeshDoctorReport};

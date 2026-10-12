@@ -210,7 +210,7 @@ impl Forge {
             self.bin.display(),
             std::env::var("PATH").unwrap_or_default()
         );
-        let out = Command::new(common::BIN)
+        let out = common::majordomus()
             .arg("prs")
             .arg("--repo")
             .arg(&self.work)

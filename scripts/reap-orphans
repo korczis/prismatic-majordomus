@@ -565,7 +565,7 @@ EOF
         if grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
           row "$shared" "$(human "$size")" "skip — a build started since the scan"
           tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1))
-        elif rm -rf "$shared"; then
+        elif target="$shared"; rm -rf "$target"; then
           row "$shared" "$(human "$size")" "reclaimed"
           tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + size))
         else

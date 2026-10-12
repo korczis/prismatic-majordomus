@@ -547,7 +547,7 @@ fn a_schema_violation_names_the_field_and_the_constraint() {
 #[test]
 fn without_a_share_directory_nothing_starts_and_the_search_is_named() {
     let f = Fixture::new();
-    let child = std::process::Command::new(common::BIN)
+    let child = common::majordomus()
         .args(["mcp", "--inspect"])
         .current_dir(f.root())
         .env_remove("MAJORDOMUS_SHARE")
