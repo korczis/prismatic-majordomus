@@ -219,29 +219,31 @@ ylist() { local p="Y_${1//[!A-Za-z0-9]/_}" n; n="${p}__LOADED"; if [ -n "${!n:-}
 # jstr <string>: the string as a JSON string literal, without a process. What jq -Rn --arg
 # prints: backslash and quote escaped, the named control characters as \n \r \t \b \f,
 # every other control byte as \u00XX; anything else, UTF-8 included, verbatim.
-jstr() {
-  local s="$1" out="" c i n
-  case "$s" in *[\\\"$'\x01'-$'\x1f']*) ;; *) printf '"%s"' "$s"; return 0 ;; esac
-  n=${#s}
-  for ((i = 0; i < n; i++)); do
-    c="${s:i:1}"
-    case "$c" in
-      \\) out="$out\\\\" ;;
-      \") out="$out\\\"" ;;
-      $'\n') out="$out\\n" ;;
-      $'\r') out="$out\\r" ;;
-      $'\t') out="$out\\t" ;;
-      $'\b') out="$out\\b" ;;
-      $'\f') out="$out\\f" ;;
-      [$'\x01'-$'\x1f']) out="$out$(printf '\\u%04x' "'$c")" ;;
-      *) out="$out$c" ;;
-    esac
-  done
-  printf '"%s"' "$out"
+# jstr_to <variable> <string> assigns the same literal instead of printing it, so a loop that
+# builds a document pays no subshell per value. The escapes are whole-string substitutions,
+# backslash first so that no escape it writes is escaped again; only a string that still holds
+# an unnamed control byte after them is walked a byte at a time.
+jstr_to() {
+  local s="$2" r="" c i n
+  case "$s" in *[\\\"$'\x01'-$'\x1f']*) ;; *) printf -v "$1" '"%s"' "$s"; return 0 ;; esac
+  s="${s//\\/\\\\}"; s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"; s="${s//$'\b'/\\b}"; s="${s//$'\f'/\\f}"
+  case "$s" in
+    *[$'\x01'-$'\x1f']*)
+      n=${#s}
+      for ((i = 0; i < n; i++)); do
+        c="${s:i:1}"
+        case "$c" in [$'\x01'-$'\x1f']) printf -v c '\\u%04x' "'$c" ;; esac
+        r="$r$c"
+      done
+      s="$r" ;;
+  esac
+  printf -v "$1" '"%s"' "$s"
 }
+jstr() { local j; jstr_to j "$1"; printf '%s' "$j"; }
 # jarr: the lines on stdin as a JSON array of strings; jline: the first line as a JSON
 # string. What `jq -R . | jq -sc .` and `jq -Rn input` printed, without a process each.
-jarr() { local l out="" first=1; while IFS= read -r l; do out="$out$([ "$first" = 1 ] || printf ',')$(jstr "$l")"; first=0; done; printf '[%s]' "$out"; }
+jarr() { local l j out="" sep=""; while IFS= read -r l; do jstr_to j "$l"; out="$out$sep$j"; sep=","; done; printf '[%s]' "$out"; }
 jline() { local l=""; IFS= read -r l || true; jstr "$l"; }
 jbool() { case "$1" in true) echo true ;; false) echo false ;; *) jstr "$1" ;; esac; }
 jnum_or_str() { case "$1" in ''|*[!0-9]*) jstr "$1" ;; *) printf '%s' "$1" ;; esac; }
