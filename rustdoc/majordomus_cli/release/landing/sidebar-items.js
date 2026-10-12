@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DECISION_SCHEMA"],"enum":["Allocation"],"fn":["decide","decide_adding","next_for"],"struct":["AppliedExemption","LandingDecision","ReleaseExemption","ReleasePolicy","Unreadable"]};

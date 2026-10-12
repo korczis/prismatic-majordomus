@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>mesh.peers — Prismatic Majordomus</title>
-<meta name="description" content="Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.">
+<meta name="description" content="Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold&#39;s digest closes the answer: equal digests, equal state.">
 <link rel="canonical" href="https://majordomus.dev/registry/capabilities/mesh-peers/"><meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="mesh.peers — Prismatic Majordomus">
-<meta property="og:description" content="Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.">
+<meta property="og:description" content="Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold&#39;s digest closes the answer: equal digests, equal state.">
 <meta property="og:url" content="https://majordomus.dev/registry/capabilities/mesh-peers/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=29ef4711b3e05494f0a4">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -55,7 +55,11 @@
       <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.20.0</span>
       
     </a>
-    <div class="flex items-center gap-2 md:order-2">
+    <div class="flex items-center gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+        <span class="sr-only lg:not-sr-only">Search</span>
+        <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
   <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
   <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
@@ -94,11 +98,11 @@
           <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
           <div id="nav-menu-2" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
             <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
-              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The same argument, written in Czech</a></li>
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The same argument, written in Czech</a></li>
             </ul>
           </div>
           <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
-          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The same argument, written in Czech</a></li></ul>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The same argument, written in Czech</a></li></ul>
         </li>
         
         
@@ -152,7 +156,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">mesh.peers</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold&#39;s digest closes the answer: equal digests, equal state.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -170,7 +174,7 @@
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="break-words text-lg text-body">Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.</p>
+    <p class="break-words text-lg text-body">Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold&#39;s digest closes the answer: equal digests, equal state.</p>
     <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
       <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">experimental</span></li>
@@ -192,12 +196,217 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · MeshQuery</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a reader asks of the folded state. Every filter narrows; none changes a shape, and
+an input it does not know is refused rather than ignored.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::mesh::page::{ClaimFilter, Query, View};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let q: Query = serde_json::from_str(r#&quot;{&quot;view&quot;:&quot;full&quot;,&quot;claims&quot;:&quot;live&quot;,&quot;limit&quot;:5}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(q.view(), View::Full);</span></span>
+<span class="giallo-l"><span>assert_eq!((q.claims, q.limit), (Some(ClaimFilter::Live), Some(5)));</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;Query&gt;(r#&quot;{&quot;views&quot;:&quot;full&quot;}&quot;#).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">after</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews
+and overlaps carry no stamp of their own and are kept or dropped with their sessions.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claims</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>all</code> (the default) or <code>live</code>: whether ended claims are kept.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only this collection; the others are answered empty.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">limit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">At most this many of each collection: the newest by Lamport stamp where it has one,
+kept in the fold's own order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">matching</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
+request, a word of an intent or a subject.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">open</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only what is still open: active sessions, live claims, review requests nobody has
+answered and handovers nobody has taken.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">runtime</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only what belongs to this runtime: <code>&lt;node&gt;-&lt;runtime&gt;</code>, or a node id for every runtime
+of that machine.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">session</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only what belongs to this session: its key (<code>&lt;stream&gt;/&lt;session&gt;</code>) or its bare id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">view</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>summary</code> (the default) or <code>full</code>.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;MeshClaimFilter&quot;: {
+      &quot;description&quot;: &quot;Which claims a full answer keeps: all of them, the ended ones included, or only those\nstill live — the question an executor asks before it takes a lease.\n\n```\nuse majordomus_cli::mesh::page::ClaimFilter;\n\nassert_eq!(ClaimFilter::default(), ClaimFilter::All);\nassert_eq!(serde_json::from_str::&lt;ClaimFilter&gt;(r#\&quot;\&quot;live\&quot;\&quot;#).unwrap(), ClaimFilter::Live);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;all&quot;,
+          &quot;description&quot;: &quot;Every claim, ended ones included.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;live&quot;,
+          &quot;description&quot;: &quot;Only claims that are still live: held, or conflicted and still held.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshKind&quot;: {
+      &quot;description&quot;: &quot;One collection of the folded state, as `kind` names it: a reader that wants only the\nreviews is not sent the claims.\n\n```\nuse majordomus_cli::mesh::page::Kind;\n\nassert_eq!(serde_json::from_str::&lt;Kind&gt;(r#\&quot;\&quot;reviews\&quot;\&quot;#).unwrap(), Kind::Reviews);\nassert!(serde_json::from_str::&lt;Kind&gt;(r#\&quot;\&quot;everything\&quot;\&quot;#).is_err());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;sessions&quot;,
+          &quot;description&quot;: &quot;The sessions.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;claims&quot;,
+          &quot;description&quot;: &quot;The claims.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;overlaps&quot;,
+          &quot;description&quot;: &quot;The advisory overlaps.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;handovers&quot;,
+          &quot;description&quot;: &quot;The handovers.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;reviews&quot;,
+          &quot;description&quot;: &quot;The review requests.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshView&quot;: {
+      &quot;description&quot;: &quot;How much an answer about the mesh carries. The summary is the default because it is the\nanswer a worker can read whole whatever the mesh&#39;s history; the full fold is one word\naway when a reader needs every record.\n\n```\nuse majordomus_cli::mesh::page::View;\n\nassert_eq!(View::default(), View::Summary);\nassert_eq!(serde_json::to_value(View::Full).unwrap(), \&quot;full\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;summary&quot;,
+          &quot;description&quot;: &quot;Counts, each runtime&#39;s newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, narrowed only by the filters.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;What a reader asks of the folded state. Every filter narrows; none changes a shape, and\nan input it does not know is refused rather than ignored.\n\n```\nuse majordomus_cli::mesh::page::{ClaimFilter, Query, View};\n\nlet q: Query = serde_json::from_str(r#\&quot;{\&quot;view\&quot;:\&quot;full\&quot;,\&quot;claims\&quot;:\&quot;live\&quot;,\&quot;limit\&quot;:5}\&quot;#).unwrap();\nassert_eq!(q.view(), View::Full);\nassert_eq!((q.claims, q.limit), (Some(ClaimFilter::Live), Some(5)));\nassert!(serde_json::from_str::&lt;Query&gt;(r#\&quot;{\&quot;views\&quot;:\&quot;full\&quot;}\&quot;#).is_err());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;after&quot;: {
+      &quot;description&quot;: &quot;Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;claims&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/MeshClaimFilter&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;`all` (the default) or `live`: whether ended claims are kept.&quot;
+    },
+    &quot;kind&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/MeshKind&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Only this collection; the others are answered empty.&quot;
+    },
+    &quot;limit&quot;: {
+      &quot;description&quot;: &quot;At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold&#39;s own order.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;matching&quot;: {
+      &quot;description&quot;: &quot;Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;open&quot;: {
+      &quot;description&quot;: &quot;Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken.&quot;,
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;runtime&quot;: {
+      &quot;description&quot;: &quot;Only what belongs to this runtime: `&lt;node&gt;-&lt;runtime&gt;`, or a node id for every runtime\nof that machine.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;session&quot;: {
+      &quot;description&quot;: &quot;Only what belongs to this session: its key (`&lt;stream&gt;/&lt;session&gt;`) or its bare id.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;view&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/MeshView&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;`summary` (the default) or `full`.&quot;
+    }
+  },
+  &quot;title&quot;: &quot;MeshQuery&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -242,6 +451,11 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This runtime.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">view</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the answer carries: <code>summary</code> or <code>full</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -495,6 +709,72 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;MeshClaimBrief&quot;: {
+      &quot;description&quot;: &quot;One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;) })\n    .unwrap();\nfor (claim, path) in [(\&quot;c1\&quot;, \&quot;apps/a\&quot;), (\&quot;c2\&quot;, \&quot;apps/b\&quot;)] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \&quot;s1\&quot;.into(),\n        scope: vec![path.into()], intent: Some(\&quot;work\&quot;.into()), mode: ClaimMode::Exclusive,\n        issue: Some(\&quot;#1\&quot;.into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \&quot;c1\&quot;.into() }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&amp;state, &amp;[]);\nlet newest: &amp;ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\&quot;#1\&quot;), 1));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;acquired_lamport&quot;: {
+          &quot;description&quot;: &quot;The Lamport stamp of the acquisition.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it is for, cut to `SUMMARY_TEXT` characters.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is for.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;claim&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
+          &quot;description&quot;: &quot;Exclusive or advisory.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;How many paths it claims.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The holding session&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;session&quot;,
+        &quot;paths&quot;,
+        &quot;mode&quot;,
+        &quot;acquired_lamport&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MeshView&quot;: {
+      &quot;description&quot;: &quot;How much an answer about the mesh carries. The summary is the default because it is the\nanswer a worker can read whole whatever the mesh&#39;s history; the full fold is one word\naway when a reader needs every record.\n\n```\nuse majordomus_cli::mesh::page::View;\n\nassert_eq!(View::default(), View::Summary);\nassert_eq!(serde_json::to_value(View::Full).unwrap(), \&quot;full\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;summary&quot;,
+          &quot;description&quot;: &quot;Counts, each runtime&#39;s newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, narrowed only by the filters.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;PeerView&quot;: {
       &quot;description&quot;: &quot;One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet peer: &amp;PeerView = &amp;a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \&quot;the durable identity, not the endpoint\&quot;);\nassert!(peer.outbound, \&quot;this runtime dials it\&quot;);\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \&quot;the peer&#39;s process has not died under the link\&quot;);\n```&quot;,
       &quot;properties&quot;: {
@@ -708,6 +988,11 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
           &quot;const&quot;: &quot;feature_unsupported&quot;,
           &quot;description&quot;: &quot;The peer lacks a feature the operation needs.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;misaddressed&quot;,
+          &quot;description&quot;: &quot;A hello addressed to another runtime: captured on its way there and replayed here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
@@ -773,12 +1058,23 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
           &quot;$ref&quot;: &quot;#/$defs/StreamLiveness&quot;,
           &quot;description&quot;: &quot;Whether its stream beats: own, live, or expired.&quot;
         },
+        &quot;newest_claim&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/MeshClaimBrief&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Its newest live claim, told briefly.&quot;
+        },
         &quot;runtime&quot;: {
           &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;sessions&quot;: {
-          &quot;description&quot;: &quot;Its sessions.&quot;,
+          &quot;description&quot;: &quot;Its sessions; in the summary view only the active ones.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/SessionNode&quot;
           },
@@ -889,11 +1185,17 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
       &quot;description&quot;: &quot;One session in the peer tree.&quot;,
       &quot;properties&quot;: {
         &quot;claims&quot;: {
-          &quot;description&quot;: &quot;The claims it holds or held.&quot;,
+          &quot;description&quot;: &quot;The claims it holds or held; empty in the summary view, which counts them instead.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/ClaimView&quot;
           },
           &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;claims_held&quot;: {
+          &quot;description&quot;: &quot;How many of its claims are live.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;info&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/SessionInfo&quot;,
@@ -920,6 +1222,7 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
         &quot;info&quot;,
         &quot;state&quot;,
         &quot;claims&quot;,
+        &quot;claims_held&quot;,
         &quot;reviews&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
@@ -1068,10 +1371,15 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
         &quot;string&quot;,
         &quot;null&quot;
       ]
+    },
+    &quot;view&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/MeshView&quot;,
+      &quot;description&quot;: &quot;What the answer carries: `summary` or `full`.&quot;
     }
   },
   &quot;required&quot;: [
     &quot;active&quot;,
+    &quot;view&quot;,
     &quot;machines&quot;,
     &quot;refused&quot;
   ],
@@ -1093,7 +1401,7 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
     <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
-        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-direct-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-mcp-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-http-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr></tbody>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-direct-summary" class="break-all text-fg-brand hover:underline inline-block py-1">summary</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-direct-full" class="break-all text-fg-brand hover:underline inline-block py-1">full</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-mcp-summary" class="break-all text-fg-brand hover:underline inline-block py-1">summary</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-mcp-full" class="break-all text-fg-brand hover:underline inline-block py-1">full</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-http-summary" class="break-all text-fg-brand hover:underline inline-block py-1">summary</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-peers-http-full" class="break-all text-fg-brand hover:underline inline-block py-1">full</a><br></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1105,9 +1413,9 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
         <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">mesh.peers</dd></div>
         <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/mesh.rs</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
-        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">MeshQuery</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">PeerTree</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/e002a5de5bdc084c972d1ab293f06cfc3f334aec/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">ceb29000665136414fed9547d09352a6bec71e65137ae282fbe43251f1758b37</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/722228ef3c9d8db8af6039010f9bf88a106d6cc2/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">1bb16e1e6693d6975434723dbfe6981866f116ffefabc1f2bc4145f34fc4639c</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.21.0</dd></div>
       </dl>
     </div>
@@ -1137,7 +1445,7 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
         
         <ul class="space-y-2 text-sm font-medium text-body">
-          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li>
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="hover:text-heading hover:underline">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li>
         </ul>
         
       </div>
@@ -1163,9 +1471,9 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e002a5de5bdc084c972d1ab293f06cfc3f334aec/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e002a5de5bdc084c972d1ab293f06cfc3f334aec/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e002a5de5bdc084c972d1ab293f06cfc3f334aec/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/722228ef3c9d8db8af6039010f9bf88a106d6cc2/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/722228ef3c9d8db8af6039010f9bf88a106d6cc2/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/722228ef3c9d8db8af6039010f9bf88a106d6cc2/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1173,12 +1481,26 @@ one journal and the one link table.</div><div class="mt-3 overflow-x-auto rounde
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e002a5de5bdc084c972d1ab293f06cfc3f334aec" class="font-mono underline">e002a5d</a> · inputs <span class="font-mono">4c0c326f3e90</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/722228ef3c9d8db8af6039010f9bf88a106d6cc2" class="font-mono underline">722228e</a> · inputs <span class="font-mono">33e20b5d1278</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Search this site</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="A rule, a decision, a command, a page…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Close<span class="sr-only"> the search</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Searches the titles and descriptions of every page this site publishes.</p>
+    <div id="site-search-results" role="listbox" aria-label="Pages that match" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
 
 <script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
 <script src="https://majordomus.dev/js/theme.js"></script>
 <script defer src="https://majordomus.dev/js/alpine.min.js"></script>
 

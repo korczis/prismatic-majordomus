@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["serve"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_LINE_BYTES"],"fn":["serve"]};

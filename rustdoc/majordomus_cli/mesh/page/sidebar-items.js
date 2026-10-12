@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SUMMARY_LIST","SUMMARY_TEXT"],"enum":["ClaimFilter","Kind","View"],"fn":["narrow","summarize"],"struct":["ClaimBrief","ClaimCounts","HandoverBrief","Query","ReviewBrief","RuntimeSummary","SessionCounts","Summary"]};

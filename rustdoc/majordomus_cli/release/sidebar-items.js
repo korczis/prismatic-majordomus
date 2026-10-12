@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["changelog","commits","compat","model","surface","version"]};
+window.SIDEBAR_ITEMS = {"mod":["changelog","commits","compat","landing","model","surface","version"]};

@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="How far ahead of this runtime’s Lamport clock a received event’s stamp may be: 2^32."><title>MAX_LAMPORT_LEAD in majordomus_cli::mesh::journal - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc constant"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">MAX_LAMPORT_LEAD</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.21.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>mesh::<wbr>journal</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">mesh</a>::<wbr><a href="index.html">journal</a></div><h1>Constant <span class="constant">MAX_<wbr>LAMPORT_<wbr>LEAD</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/mesh/journal.rs.html#148">Source</a> </span></div><pre class="rust item-decl"><code>pub const MAX_LAMPORT_LEAD: <a class="primitive" href="https://doc.rust-lang.org/1.98.1/std/primitive.u64.html">u64</a> = _; // 4_294_967_296u64</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>How far ahead of this runtime’s Lamport clock a received event’s stamp may be: 2^32.</p>
+<p>A Lamport stamp is what its writer says about itself, and every receiver raises its own
+clock to the highest stamp it stores. Unbounded, one event from a trusted key stamped
+near <code>u64::MAX</code> would drag every clock in the mesh to the end of its range in a single
+round, after which every event written anywhere carries the same saturated stamp and the
+fold no longer orders them causally. A legitimate stamp is never further ahead than the
+number of events written in the repository’s whole history — each event rises one above
+what its writer had seen — so the bound is far above anything a real mesh reaches, a
+fresh runtime joining at clock zero included. What it changes is the cost of the attack:
+the clock rises at most this much per event stored, so exhausting it takes 2^32 signed,
+stored events rather than one. An event past the bound is refused
+<a href="enum.Rejection.html#variant.ClockAhead" title="variant majordomus_cli::mesh::journal::Rejection::ClockAhead"><code>Rejection::ClockAhead</code></a>, on arrival and from a reloaded file alike.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>majordomus_cli::mesh::identity::NodeIdentity;
+<span class="kw">use </span>majordomus_cli::mesh::journal::{EventBody, Journal, Rejection, MAX_LAMPORT_LEAD};
+
+<span class="kw">let </span>writer = Arc::new(NodeIdentity::ephemeral().unwrap());
+<span class="kw">let </span>a = Journal::open(Arc::clone(<span class="kw-2">&amp;</span>writer), <span class="string">"0000000000000001"</span>, <span class="string">"repo"</span>.into(), <span class="prelude-val">None</span>).unwrap();
+<span class="kw">let </span>b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), <span class="string">"0000000000000002"</span>,
+    <span class="string">"repo"</span>.into(), <span class="prelude-val">None</span>).unwrap();
+<span class="kw">let </span><span class="kw-2">mut </span>event = a.append_own(EventBody::SessionClosed { session: <span class="string">"s1"</span>.into() }).unwrap();
+
+<span class="comment">// signed by a key B trusts, and stamped further ahead of B's clock than the bound allows
+</span>event.lamport = MAX_LAMPORT_LEAD + <span class="number">1</span>;
+event.sig = writer.sign(<span class="kw-2">&amp;</span>event.signing_bytes());
+<span class="kw">let </span>report = b.ingest(<span class="kw-2">&amp;</span>[event.clone()], <span class="kw-2">&amp;</span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+<span class="macro">assert_eq!</span>(report.rejected[<span class="kw-2">&amp;</span>Rejection::ClockAhead], <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(b.tallies().lamport, <span class="number">0</span>, <span class="string">"and B's clock did not move"</span>);
+
+<span class="comment">// exactly at the bound it is an ordinary event
+</span>event.lamport = MAX_LAMPORT_LEAD;
+event.sig = writer.sign(<span class="kw-2">&amp;</span>event.signing_bytes());
+<span class="macro">assert_eq!</span>(b.ingest(<span class="kw-2">&amp;</span>[event], <span class="kw-2">&amp;</span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(())).accepted, <span class="number">1</span>);</code></pre></div></div></details></section></div></main></body></html>

@@ -302,7 +302,7 @@
 <a href=#302 id=302 data-nosnippet>302</a>
 <a href=#303 id=303 data-nosnippet>303</a>    <span class="attr">#[test]
 <a href=#304 id=304 data-nosnippet>304</a>    </span><span class="kw">fn </span>the_sole_udp_provider_listens_and_counts_what_it_hears() {
-<a href=#305 id=305 data-nosnippet>305</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+<a href=#305 id=305 data-nosnippet>305</a>        <span class="kw">let </span>(tx, rx) = <span class="kw">crate</span>::mesh::provider::ObservationSender::bounded(<span class="number">64</span>);
 <a href=#306 id=306 data-nosnippet>306</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
 <a href=#307 id=307 data-nosnippet>307</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
 <a href=#308 id=308 data-nosnippet>308</a>            tx,

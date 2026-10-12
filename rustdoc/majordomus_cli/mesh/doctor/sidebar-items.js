@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["doctor","doctor_at"],"struct":["DoctorCheck","MeshDoctorReport"]};
+window.SIDEBAR_ITEMS = {"fn":["declaration_source","doctor","doctor_at","journal_check","runtime_verdict"],"struct":["DoctorCheck","MeshDoctorReport"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["APP_DIR","COMMIT_ARG","DIRTY_ARG","DOCKERFILE","DOCKERIGNORE","FLY_TOML","RUNTIME_IMAGE","RUN_USER","RUST_IMAGE"],"fn":["artifacts","dockerfile","dockerignore","fly_toml"]};
+window.SIDEBAR_ITEMS = {"constant":["ALPINE","APP_DIR","BINARY_ARG","BUILDER_STAGES","COMMIT_ARG","DIRTY_ARG","DOCKERFILE","DOCKERIGNORE","FLY_TOML","LOCAL_DIR","RELEASE_CONTEXT","RUN_USER","SCCACHE_DIR","SCCACHE_MOUNT_ID","SCCACHE_SIZE","TOOLCHAIN_FILE"],"fn":["artifacts","builder_rust","dockerfile","dockerignore","fly_toml","runtime_image","rust_image"]};

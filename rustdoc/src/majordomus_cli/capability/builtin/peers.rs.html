@@ -146,7 +146,7 @@
 <a href=#146 id=146 data-nosnippet>146</a>/// server of *this* version that rejected the parameter for any other reason would answer
 <a href=#147 id=147 data-nosnippet>147</a>/// the repository, and the two of us would ask each other until a timeout. A board that
 <a href=#148 id=148 data-nosnippet>148</a>/// cannot be read narrowly is reported unread, with the reason.
-<a href=#149 id=149 data-nosnippet>149</a></span><span class="kw">fn </span>board_of(ctx: <span class="kw-2">&amp;</span>Context, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Peer&gt;, String&gt; {
+<a href=#149 id=149 data-nosnippet>149</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>board_of(ctx: <span class="kw-2">&amp;</span>Context, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Peer&gt;, String&gt; {
 <a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">let </span>path = ctx
 <a href=#151 id=151 data-nosnippet>151</a>        .registry
 <a href=#152 id=152 data-nosnippet>152</a>        .get(<span class="string">"peers.list"</span>)

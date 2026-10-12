@@ -186,7 +186,7 @@
 <a href=#186 id=186 data-nosnippet>186</a>    <span class="attr">#[test]
 <a href=#187 id=187 data-nosnippet>187</a>    </span><span class="kw">fn </span>no_endpoints_means_a_stopped_provider_with_the_reason() {
 <a href=#188 id=188 data-nosnippet>188</a>        <span class="kw">let </span><span class="kw-2">mut </span>provider = RendezvousProvider::new(<span class="macro">vec!</span>[], <span class="number">60</span>);
-<a href=#189 id=189 data-nosnippet>189</a>        <span class="kw">let </span>(tx, _rx) = std::sync::mpsc::channel();
+<a href=#189 id=189 data-nosnippet>189</a>        <span class="kw">let </span>(tx, _rx) = <span class="kw">crate</span>::mesh::provider::ObservationSender::bounded(<span class="number">64</span>);
 <a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
 <a href=#191 id=191 data-nosnippet>191</a>            tx,
 <a href=#192 id=192 data-nosnippet>192</a>            stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">true</span>)),
@@ -254,7 +254,7 @@
 <a href=#254 id=254 data-nosnippet>254</a>        });
 <a href=#255 id=255 data-nosnippet>255</a>
 <a href=#256 id=256 data-nosnippet>256</a>        <span class="kw">let </span><span class="kw-2">mut </span>provider = RendezvousProvider::new(<span class="macro">vec!</span>[endpoint.clone()], <span class="number">1</span>);
-<a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+<a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">let </span>(tx, rx) = <span class="kw">crate</span>::mesh::provider::ObservationSender::bounded(<span class="number">64</span>);
 <a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
 <a href=#259 id=259 data-nosnippet>259</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
 <a href=#260 id=260 data-nosnippet>260</a>            tx,

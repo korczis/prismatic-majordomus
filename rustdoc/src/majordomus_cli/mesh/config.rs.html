@@ -326,96 +326,133 @@
 <a href=#326 id=326 data-nosnippet>326</a>    /// the wrong schema version, an unknown key, and a zero interval are each refused
 <a href=#327 id=327 data-nosnippet>327</a>    /// with the object's URI in the reason.
 <a href=#328 id=328 data-nosnippet>328</a>    </span><span class="kw">pub fn </span>parse(object: <span class="kw-2">&amp;</span>Object) -&gt; <span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt; {
-<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">let </span>parsed: MeshConfig = serde_json::from_value(object.metadata.clone())
-<a href=#330 id=330 data-nosnippet>330</a>            .map_err(|e| MeshError::Config(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, object.uri)))<span class="question-mark">?</span>;
-<a href=#331 id=331 data-nosnippet>331</a>        <span class="kw">if </span>parsed.schema != SCHEMA_VERSION {
-<a href=#332 id=332 data-nosnippet>332</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Config(<span class="macro">format!</span>(
-<a href=#333 id=333 data-nosnippet>333</a>                <span class="string">"{}: schema {} is not {SCHEMA_VERSION}"</span>,
-<a href=#334 id=334 data-nosnippet>334</a>                object.uri, parsed.schema
-<a href=#335 id=335 data-nosnippet>335</a>            )));
-<a href=#336 id=336 data-nosnippet>336</a>        }
-<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">if </span>parsed.kind != KIND {
-<a href=#338 id=338 data-nosnippet>338</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Config(<span class="macro">format!</span>(
-<a href=#339 id=339 data-nosnippet>339</a>                <span class="string">"{}: kind {} is not {KIND}"</span>,
-<a href=#340 id=340 data-nosnippet>340</a>                object.uri, parsed.kind
-<a href=#341 id=341 data-nosnippet>341</a>            )));
-<a href=#342 id=342 data-nosnippet>342</a>        }
-<a href=#343 id=343 data-nosnippet>343</a>        <span class="kw">if </span>parsed.multicast.interval_seconds == <span class="number">0
-<a href=#344 id=344 data-nosnippet>344</a>            </span>|| parsed.broadcast.interval_seconds == <span class="number">0
-<a href=#345 id=345 data-nosnippet>345</a>            </span>|| parsed.rendezvous.interval_seconds == <span class="number">0
-<a href=#346 id=346 data-nosnippet>346</a>        </span>{
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="self">Self</span>::from_metadata(<span class="kw-2">&amp;</span>object.metadata, <span class="kw-2">&amp;</span>object.uri)
+<a href=#330 id=330 data-nosnippet>330</a>    }
+<a href=#331 id=331 data-nosnippet>331</a>
+<a href=#332 id=332 data-nosnippet>332</a>    <span class="doccomment">/// [`MeshConfig::parse`] for a declaration that is not an indexed object: the metadata
+<a href=#333 id=333 data-nosnippet>333</a>    /// mapping as the YAML subset parsed it, and the name to quote in a refusal. The trunk's
+<a href=#334 id=334 data-nosnippet>334</a>    /// copy of the declaration is read this way (see [`super::root`]).
+<a href=#335 id=335 data-nosnippet>335</a>    ///
+<a href=#336 id=336 data-nosnippet>336</a>    /// ```
+<a href=#337 id=337 data-nosnippet>337</a>    /// use majordomus_cli::mesh::MeshConfig;
+<a href=#338 id=338 data-nosnippet>338</a>    /// let ok = serde_json::json!({ "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x" });
+<a href=#339 id=339 data-nosnippet>339</a>    /// assert!(MeshConfig::from_metadata(&amp;ok, "master:x.yaml").is_ok());
+<a href=#340 id=340 data-nosnippet>340</a>    /// let wrong = serde_json::json!({ "schema": "mesh/v0", "kind": "mesh-declaration", "id": "x" });
+<a href=#341 id=341 data-nosnippet>341</a>    /// assert!(MeshConfig::from_metadata(&amp;wrong, "master:x.yaml").unwrap_err().to_string().contains("master:x.yaml"));
+<a href=#342 id=342 data-nosnippet>342</a>    /// ```
+<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">pub fn </span>from_metadata(metadata: <span class="kw-2">&amp;</span>serde_json::Value, uri: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;MeshConfig, MeshError&gt; {
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">let </span>parsed: MeshConfig = serde_json::from_value(metadata.clone())
+<a href=#345 id=345 data-nosnippet>345</a>            .map_err(|e| MeshError::Config(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, uri)))<span class="question-mark">?</span>;
+<a href=#346 id=346 data-nosnippet>346</a>        <span class="kw">if </span>parsed.schema != SCHEMA_VERSION {
 <a href=#347 id=347 data-nosnippet>347</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Config(<span class="macro">format!</span>(
-<a href=#348 id=348 data-nosnippet>348</a>                <span class="string">"{}: an interval of 0 would be a busy loop"</span>,
-<a href=#349 id=349 data-nosnippet>349</a>                object.uri
+<a href=#348 id=348 data-nosnippet>348</a>                <span class="string">"{}: schema {} is not {SCHEMA_VERSION}"</span>,
+<a href=#349 id=349 data-nosnippet>349</a>                uri, parsed.schema
 <a href=#350 id=350 data-nosnippet>350</a>            )));
 <a href=#351 id=351 data-nosnippet>351</a>        }
-<a href=#352 id=352 data-nosnippet>352</a>        parsed
-<a href=#353 id=353 data-nosnippet>353</a>            .cooperation
-<a href=#354 id=354 data-nosnippet>354</a>            .validate()
-<a href=#355 id=355 data-nosnippet>355</a>            .map_err(|e| MeshError::Config(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, object.uri)))<span class="question-mark">?</span>;
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="prelude-val">Ok</span>(parsed)
-<a href=#357 id=357 data-nosnippet>357</a>    }
-<a href=#358 id=358 data-nosnippet>358</a>}
-<a href=#359 id=359 data-nosnippet>359</a>
-<a href=#360 id=360 data-nosnippet>360</a><span class="attr">#[cfg(test)]
-<a href=#361 id=361 data-nosnippet>361</a></span><span class="kw">mod </span>tests {
-<a href=#362 id=362 data-nosnippet>362</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#363 id=363 data-nosnippet>363</a>
-<a href=#364 id=364 data-nosnippet>364</a>    <span class="kw">fn </span>object(metadata: serde_json::Value) -&gt; Object {
-<a href=#365 id=365 data-nosnippet>365</a>        Object {
-<a href=#366 id=366 data-nosnippet>366</a>            kind: KIND.into(),
-<a href=#367 id=367 data-nosnippet>367</a>            identity: <span class="string">"majordomus"</span>.into(),
-<a href=#368 id=368 data-nosnippet>368</a>            uri: <span class="string">"majordomus://mesh-declaration/majordomus"</span>.into(),
-<a href=#369 id=369 data-nosnippet>369</a>            title: <span class="prelude-val">None</span>,
-<a href=#370 id=370 data-nosnippet>370</a>            description: <span class="prelude-val">None</span>,
-<a href=#371 id=371 data-nosnippet>371</a>            metadata,
-<a href=#372 id=372 data-nosnippet>372</a>            body: String::new(),
-<a href=#373 id=373 data-nosnippet>373</a>            content: String::new(),
-<a href=#374 id=374 data-nosnippet>374</a>            media_type: <span class="string">"application/yaml"</span>,
-<a href=#375 id=375 data-nosnippet>375</a>            provenance: <span class="kw">crate</span>::model::Provenance {
-<a href=#376 id=376 data-nosnippet>376</a>                path: <span class="string">".ai/repo/mesh/majordomus.yaml"</span>.into(),
-<a href=#377 id=377 data-nosnippet>377</a>                directory: <span class="string">".ai/repo/mesh"</span>.into(),
-<a href=#378 id=378 data-nosnippet>378</a>                source_class: KIND.into(),
-<a href=#379 id=379 data-nosnippet>379</a>                section: <span class="prelude-val">None</span>,
-<a href=#380 id=380 data-nosnippet>380</a>                bytes: <span class="number">0</span>,
-<a href=#381 id=381 data-nosnippet>381</a>                member: <span class="prelude-val">None</span>,
-<a href=#382 id=382 data-nosnippet>382</a>            },
-<a href=#383 id=383 data-nosnippet>383</a>        }
-<a href=#384 id=384 data-nosnippet>384</a>    }
-<a href=#385 id=385 data-nosnippet>385</a>
-<a href=#386 id=386 data-nosnippet>386</a>    <span class="attr">#[test]
-<a href=#387 id=387 data-nosnippet>387</a>    </span><span class="kw">fn </span>a_minimal_declaration_parses_with_safe_defaults() {
-<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">let </span>config = MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
-<a href=#389 id=389 data-nosnippet>389</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"majordomus"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true
-<a href=#390 id=390 data-nosnippet>390</a>        </span>})))
-<a href=#391 id=391 data-nosnippet>391</a>        .unwrap();
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">assert!</span>(config.enabled);
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="macro">assert!</span>(config.multicast.enabled);
-<a href=#394 id=394 data-nosnippet>394</a>        <span class="macro">assert_eq!</span>(config.multicast.group, DEFAULT_GROUP);
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">assert_eq!</span>(config.broadcast.mode, BroadcastMode::Disabled);
-<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert!</span>(config.rendezvous.endpoints.is_empty());
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="macro">assert_eq!</span>(config.trust.policy, TrustPolicy::DenyUnknown);
-<a href=#398 id=398 data-nosnippet>398</a>    }
-<a href=#399 id=399 data-nosnippet>399</a>
-<a href=#400 id=400 data-nosnippet>400</a>    <span class="attr">#[test]
-<a href=#401 id=401 data-nosnippet>401</a>    </span><span class="kw">fn </span>a_wrong_schema_and_an_unknown_key_are_refused() {
-<a href=#402 id=402 data-nosnippet>402</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
-<a href=#403 id=403 data-nosnippet>403</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v2"</span>, <span class="string">"kind"</span>: <span class="string">"mesh"</span>, <span class="string">"id"</span>: <span class="string">"x"
-<a href=#404 id=404 data-nosnippet>404</a>        </span>})))
-<a href=#405 id=405 data-nosnippet>405</a>        .is_err());
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
-<a href=#407 id=407 data-nosnippet>407</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>, <span class="string">"surprise"</span>: <span class="number">1
-<a href=#408 id=408 data-nosnippet>408</a>        </span>})))
-<a href=#409 id=409 data-nosnippet>409</a>        .is_err());
-<a href=#410 id=410 data-nosnippet>410</a>    }
-<a href=#411 id=411 data-nosnippet>411</a>
-<a href=#412 id=412 data-nosnippet>412</a>    <span class="attr">#[test]
-<a href=#413 id=413 data-nosnippet>413</a>    </span><span class="kw">fn </span>a_zero_interval_is_refused_as_a_busy_loop() {
-<a href=#414 id=414 data-nosnippet>414</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
-<a href=#415 id=415 data-nosnippet>415</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>,
-<a href=#416 id=416 data-nosnippet>416</a>            <span class="string">"multicast"</span>: {<span class="string">"interval_seconds"</span>: <span class="number">0</span>}
-<a href=#417 id=417 data-nosnippet>417</a>        })))
-<a href=#418 id=418 data-nosnippet>418</a>        .is_err());
-<a href=#419 id=419 data-nosnippet>419</a>    }
-<a href=#420 id=420 data-nosnippet>420</a>}
+<a href=#352 id=352 data-nosnippet>352</a>        <span class="kw">if </span>parsed.kind != KIND {
+<a href=#353 id=353 data-nosnippet>353</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Config(<span class="macro">format!</span>(
+<a href=#354 id=354 data-nosnippet>354</a>                <span class="string">"{}: kind {} is not {KIND}"</span>,
+<a href=#355 id=355 data-nosnippet>355</a>                uri, parsed.kind
+<a href=#356 id=356 data-nosnippet>356</a>            )));
+<a href=#357 id=357 data-nosnippet>357</a>        }
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="kw">if </span>parsed.multicast.interval_seconds == <span class="number">0
+<a href=#359 id=359 data-nosnippet>359</a>            </span>|| parsed.broadcast.interval_seconds == <span class="number">0
+<a href=#360 id=360 data-nosnippet>360</a>            </span>|| parsed.rendezvous.interval_seconds == <span class="number">0
+<a href=#361 id=361 data-nosnippet>361</a>        </span>{
+<a href=#362 id=362 data-nosnippet>362</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Config(<span class="macro">format!</span>(
+<a href=#363 id=363 data-nosnippet>363</a>                <span class="string">"{}: an interval of 0 would be a busy loop"</span>,
+<a href=#364 id=364 data-nosnippet>364</a>                uri
+<a href=#365 id=365 data-nosnippet>365</a>            )));
+<a href=#366 id=366 data-nosnippet>366</a>        }
+<a href=#367 id=367 data-nosnippet>367</a>        parsed
+<a href=#368 id=368 data-nosnippet>368</a>            .cooperation
+<a href=#369 id=369 data-nosnippet>369</a>            .validate()
+<a href=#370 id=370 data-nosnippet>370</a>            .map_err(|e| MeshError::Config(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, uri)))<span class="question-mark">?</span>;
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="prelude-val">Ok</span>(parsed)
+<a href=#372 id=372 data-nosnippet>372</a>    }
+<a href=#373 id=373 data-nosnippet>373</a>}
+<a href=#374 id=374 data-nosnippet>374</a>
+<a href=#375 id=375 data-nosnippet>375</a><span class="attr">#[cfg(test)]
+<a href=#376 id=376 data-nosnippet>376</a></span><span class="kw">mod </span>tests {
+<a href=#377 id=377 data-nosnippet>377</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#378 id=378 data-nosnippet>378</a>
+<a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">fn </span>object(metadata: serde_json::Value) -&gt; Object {
+<a href=#380 id=380 data-nosnippet>380</a>        Object {
+<a href=#381 id=381 data-nosnippet>381</a>            kind: KIND.into(),
+<a href=#382 id=382 data-nosnippet>382</a>            identity: <span class="string">"majordomus"</span>.into(),
+<a href=#383 id=383 data-nosnippet>383</a>            uri: <span class="string">"majordomus://mesh-declaration/majordomus"</span>.into(),
+<a href=#384 id=384 data-nosnippet>384</a>            title: <span class="prelude-val">None</span>,
+<a href=#385 id=385 data-nosnippet>385</a>            description: <span class="prelude-val">None</span>,
+<a href=#386 id=386 data-nosnippet>386</a>            metadata,
+<a href=#387 id=387 data-nosnippet>387</a>            body: String::new(),
+<a href=#388 id=388 data-nosnippet>388</a>            content: String::new(),
+<a href=#389 id=389 data-nosnippet>389</a>            media_type: <span class="string">"application/yaml"</span>,
+<a href=#390 id=390 data-nosnippet>390</a>            provenance: <span class="kw">crate</span>::model::Provenance {
+<a href=#391 id=391 data-nosnippet>391</a>                path: <span class="string">".ai/repo/mesh/majordomus.yaml"</span>.into(),
+<a href=#392 id=392 data-nosnippet>392</a>                directory: <span class="string">".ai/repo/mesh"</span>.into(),
+<a href=#393 id=393 data-nosnippet>393</a>                source_class: KIND.into(),
+<a href=#394 id=394 data-nosnippet>394</a>                section: <span class="prelude-val">None</span>,
+<a href=#395 id=395 data-nosnippet>395</a>                bytes: <span class="number">0</span>,
+<a href=#396 id=396 data-nosnippet>396</a>                member: <span class="prelude-val">None</span>,
+<a href=#397 id=397 data-nosnippet>397</a>            },
+<a href=#398 id=398 data-nosnippet>398</a>        }
+<a href=#399 id=399 data-nosnippet>399</a>    }
+<a href=#400 id=400 data-nosnippet>400</a>
+<a href=#401 id=401 data-nosnippet>401</a>    <span class="attr">#[test]
+<a href=#402 id=402 data-nosnippet>402</a>    </span><span class="kw">fn </span>a_declaration_of_another_kind_or_a_cooperation_it_cannot_keep_is_refused() {
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>refusal = |metadata: serde_json::Value| {
+<a href=#404 id=404 data-nosnippet>404</a>            MeshConfig::from_metadata(<span class="kw-2">&amp;</span>metadata, <span class="string">"master:m.yaml"</span>)
+<a href=#405 id=405 data-nosnippet>405</a>                .unwrap_err()
+<a href=#406 id=406 data-nosnippet>406</a>                .to_string()
+<a href=#407 id=407 data-nosnippet>407</a>        };
+<a href=#408 id=408 data-nosnippet>408</a>        <span class="kw">let </span>kind = refusal(<span class="macro">serde_json::json!</span>({
+<a href=#409 id=409 data-nosnippet>409</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"rule"</span>, <span class="string">"id"</span>: <span class="string">"x"
+<a href=#410 id=410 data-nosnippet>410</a>        </span>}));
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="macro">assert!</span>(kind.contains(<span class="string">"master:m.yaml: kind rule is not"</span>), <span class="string">"{kind}"</span>);
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">let </span>cooperation = refusal(<span class="macro">serde_json::json!</span>({
+<a href=#413 id=413 data-nosnippet>413</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>,
+<a href=#414 id=414 data-nosnippet>414</a>            <span class="string">"cooperation"</span>: { <span class="string">"heartbeat_seconds"</span>: <span class="number">5</span>, <span class="string">"expiry_seconds"</span>: <span class="number">6 </span>}
+<a href=#415 id=415 data-nosnippet>415</a>        }));
+<a href=#416 id=416 data-nosnippet>416</a>        <span class="macro">assert!</span>(
+<a href=#417 id=417 data-nosnippet>417</a>            cooperation
+<a href=#418 id=418 data-nosnippet>418</a>                .contains(<span class="string">"master:m.yaml: cooperation.expiry_seconds 6 is under three heartbeats"</span>),
+<a href=#419 id=419 data-nosnippet>419</a>            <span class="string">"{cooperation}"
+<a href=#420 id=420 data-nosnippet>420</a>        </span>);
+<a href=#421 id=421 data-nosnippet>421</a>    }
+<a href=#422 id=422 data-nosnippet>422</a>
+<a href=#423 id=423 data-nosnippet>423</a>    <span class="attr">#[test]
+<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">fn </span>a_minimal_declaration_parses_with_safe_defaults() {
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>config = MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
+<a href=#426 id=426 data-nosnippet>426</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"majordomus"</span>, <span class="string">"enabled"</span>: <span class="bool-val">true
+<a href=#427 id=427 data-nosnippet>427</a>        </span>})))
+<a href=#428 id=428 data-nosnippet>428</a>        .unwrap();
+<a href=#429 id=429 data-nosnippet>429</a>        <span class="macro">assert!</span>(config.enabled);
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="macro">assert!</span>(config.multicast.enabled);
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="macro">assert_eq!</span>(config.multicast.group, DEFAULT_GROUP);
+<a href=#432 id=432 data-nosnippet>432</a>        <span class="macro">assert_eq!</span>(config.broadcast.mode, BroadcastMode::Disabled);
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="macro">assert!</span>(config.rendezvous.endpoints.is_empty());
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="macro">assert_eq!</span>(config.trust.policy, TrustPolicy::DenyUnknown);
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="attr">#[test]
+<a href=#438 id=438 data-nosnippet>438</a>    </span><span class="kw">fn </span>a_wrong_schema_and_an_unknown_key_are_refused() {
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
+<a href=#440 id=440 data-nosnippet>440</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v2"</span>, <span class="string">"kind"</span>: <span class="string">"mesh"</span>, <span class="string">"id"</span>: <span class="string">"x"
+<a href=#441 id=441 data-nosnippet>441</a>        </span>})))
+<a href=#442 id=442 data-nosnippet>442</a>        .is_err());
+<a href=#443 id=443 data-nosnippet>443</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
+<a href=#444 id=444 data-nosnippet>444</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>, <span class="string">"surprise"</span>: <span class="number">1
+<a href=#445 id=445 data-nosnippet>445</a>        </span>})))
+<a href=#446 id=446 data-nosnippet>446</a>        .is_err());
+<a href=#447 id=447 data-nosnippet>447</a>    }
+<a href=#448 id=448 data-nosnippet>448</a>
+<a href=#449 id=449 data-nosnippet>449</a>    <span class="attr">#[test]
+<a href=#450 id=450 data-nosnippet>450</a>    </span><span class="kw">fn </span>a_zero_interval_is_refused_as_a_busy_loop() {
+<a href=#451 id=451 data-nosnippet>451</a>        <span class="macro">assert!</span>(MeshConfig::parse(<span class="kw-2">&amp;</span>object(<span class="macro">serde_json::json!</span>({
+<a href=#452 id=452 data-nosnippet>452</a>            <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>,
+<a href=#453 id=453 data-nosnippet>453</a>            <span class="string">"multicast"</span>: {<span class="string">"interval_seconds"</span>: <span class="number">0</span>}
+<a href=#454 id=454 data-nosnippet>454</a>        })))
+<a href=#455 id=455 data-nosnippet>455</a>        .is_err());
+<a href=#456 id=456 data-nosnippet>456</a>    }
+<a href=#457 id=457 data-nosnippet>457</a>}
 </code></pre></div></section></main></body></html>

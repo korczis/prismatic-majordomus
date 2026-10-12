@@ -320,7 +320,7 @@
 <a href=#320 id=320 data-nosnippet>320</a>            group: <span class="string">"10.0.0.1"</span>.into(),
 <a href=#321 id=321 data-nosnippet>321</a>            ..MulticastConfig::default()
 <a href=#322 id=322 data-nosnippet>322</a>        });
-<a href=#323 id=323 data-nosnippet>323</a>        <span class="kw">let </span>(tx, _rx) = std::sync::mpsc::channel();
+<a href=#323 id=323 data-nosnippet>323</a>        <span class="kw">let </span>(tx, _rx) = <span class="kw">crate</span>::mesh::provider::ObservationSender::bounded(<span class="number">64</span>);
 <a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
 <a href=#325 id=325 data-nosnippet>325</a>            tx,
 <a href=#326 id=326 data-nosnippet>326</a>            stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">true</span>)),
@@ -359,7 +359,7 @@
 <a href=#359 id=359 data-nosnippet>359</a>            ..MulticastConfig::default()
 <a href=#360 id=360 data-nosnippet>360</a>        });
 <a href=#361 id=361 data-nosnippet>361</a>        <span class="macro">assert_eq!</span>(provider.port(), <span class="number">0</span>, <span class="string">"no port before the provider starts"</span>);
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>(tx, rx) = <span class="kw">crate</span>::mesh::provider::ObservationSender::bounded(<span class="number">64</span>);
 <a href=#363 id=363 data-nosnippet>363</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
 <a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
 <a href=#365 id=365 data-nosnippet>365</a>            tx,

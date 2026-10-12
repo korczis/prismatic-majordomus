@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["MeshError"],"mod":["address","broadcast","config","cooperation","doctor","handover","identity","journal","link","manager","multicast","protocol","provider","registry","rendezvous","repository","state","trust"]};
+window.SIDEBAR_ITEMS = {"enum":["MeshError"],"mod":["address","broadcast","config","cooperation","doctor","firewall","handover","identity","journal","link","manager","multicast","page","protocol","provider","registry","rendezvous","repository","root","state","trust"]};

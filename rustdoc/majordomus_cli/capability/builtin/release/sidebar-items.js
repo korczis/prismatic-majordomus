@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["ANALYSIS_ID","CHANGELOG_ID","CHANGELOG_URI"],"fn":["module","produced_by"],"struct":["AnalysisInput","ChangelogInput"]};
+window.SIDEBAR_ITEMS = {"constant":["ANALYSIS_ID","CHANGELOG_ID","CHANGELOG_URI","NEXT_ID"],"fn":["module","produced_by"],"struct":["AnalysisInput","ChangelogInput","NextInput"]};
