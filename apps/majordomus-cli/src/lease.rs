@@ -1874,10 +1874,17 @@ mod tests {
         fs::write(&path, lease_text("owner", None)).unwrap();
         let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
         assert!(lock_for_change(&path, Duration::from_millis(20)).is_none());
-        assert!(
-            !remove_if_held(&path, "owner"),
-            "no removal without the lock"
-        );
+        // under a subscriber, so the warning that names the lease is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            assert!(
+                !remove_if_held(&path, "owner"),
+                "no removal without the lock"
+            );
+        });
         drop(held);
         assert!(remove_if_held(&path, "owner"));
     }
