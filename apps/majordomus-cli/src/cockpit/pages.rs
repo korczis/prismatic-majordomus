@@ -3319,7 +3319,9 @@ pub fn mesh(ctx: &Context) -> Page {
     // that column to the whole sentence: the card then overflows a 320px viewport, which is
     // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
     if let Some(reason) = &status.reason {
-        overview = overview.child(el("p").class("mj-prose").text(reason));
+        // `mj-identity`: a closed mesh names this machine's key, 64 characters with no
+        // break in them, and the paragraph must wrap it rather than widen the page
+        overview = overview.child(el("p").class("mj-prose mj-identity").text(reason));
     }
     if let Some(identity) = &status.identity {
         overview = overview.child(facts(vec![
@@ -3467,7 +3469,7 @@ pub fn mesh(ctx: &Context) -> Page {
         })),
     )]));
     if let Some(reason) = &cooperation.reason {
-        coop = coop.child(el("p").class("mj-prose").text(reason));
+        coop = coop.child(el("p").class("mj-prose mj-identity").text(reason));
     }
     if let Some(runtime) = &cooperation.runtime {
         let repository = cooperation
@@ -3852,7 +3854,9 @@ pub fn health(ctx: &Context) -> Page {
                 c.title.clone(),
                 badge(c.status.as_str(), c.status.as_str()),
                 el("div")
-                    .child(el("p").class("mj-prose").text(&c.detail))
+                    // `mj-identity`: a check's detail may name a key or a path with no
+                    // break in it (the mesh check names this machine's key when closed)
+                    .child(el("p").class("mj-prose mj-identity").text(&c.detail))
                     .child(facts(decided))
                     .when(!c.evidence.is_empty(), |d| {
                         d.child(
