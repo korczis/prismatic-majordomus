@@ -51,6 +51,75 @@ awk '/^FROM .* AS build$/{b=1} /^FROM [^ ]*$/{b=0} !b && /cargo|rustup|apk add/{
 grep -qE '/Users/|/home/|_TOKEN|_SECRET|FlyV1|fo1_' "$ROOT/deploy/Dockerfile" "$ROOT/fly.toml" "$ROOT/.dockerignore" \
   && { echo "    a generated artifact carries an absolute developer path or a credential"; exit 1; }
 
+# ---------------------------------------------------------------- cached build stages stay derived and pinned
+# Manifest changes invalidate the dependency stage; source changes do not.
+grep -q '^FROM rust:.* AS deps
+# Everything is excluded and the declared inputs are let back in, so a file that appears in
+# the repository tomorrow does not appear in the image tomorrow.
+# The first line that is not the generated banner must be `*`. Counting header lines was
+# the same second statement of one fact this whole case exists to remove: the banner grew a
+# line, `*` moved to the seventh, and a `head -6` window said the context was unbounded.
+first="$(grep -vE '^[[:space:]]*(#|$)' "$ROOT/.dockerignore" | head -1)"
+[ "$first" = '*' ] || { echo "    the ignore file does not exclude everything first (first rule: '$first')"; exit 1; }
+grep -qx '\*\*/.git' "$ROOT/.dockerignore" || { echo "    the image would carry repository history"; exit 1; }
+grep -qx '.ai/local' "$ROOT/.dockerignore" || { echo "    the image would carry the checkout-local half of the layer"; exit 1; }
+for input in $(sed -n 's/^    - //p' "$ROOT/.ai/repo/deployments/majordomus.yaml"); do
+  grep -qx "!$input" "$ROOT/.dockerignore" || { echo "    the build context does not carry the declared input $input"; exit 1; }
+done
+
+# ---------------------------------------------------------------- a hand edit is refused
+cp "$ROOT/fly.toml" "$W/fly.toml.keep"
+sed -i.bak 's/^memory_mb = .*/memory_mb = 4096/' "$ROOT/fly.toml"; rm -f "$ROOT/fly.toml.bak"
+"$RB" generate --repo "$ROOT" --check deployment >"$W/edited.log" 2>&1 \
+  && { cp "$W/fly.toml.keep" "$ROOT/fly.toml"; echo "    a hand edit to fly.toml was accepted"; exit 1; }
+grep -q 'fly.toml (differs)' "$W/edited.log" \
+  || { cp "$W/fly.toml.keep" "$ROOT/fly.toml"; echo "    the refusal did not name fly.toml"; exit 1; }
+cp "$W/fly.toml.keep" "$ROOT/fly.toml"
+
+# and regeneration puts it back exactly
+"$RB" generate --repo "$ROOT" --check deployment >/dev/null 2>&1 \
+  || { echo "    the tree was not restored"; exit 1; }
+ "$ROOT/deploy/Dockerfile" \
+  || { echo "    no independent dependency stage"; exit 1; }
+grep -q '^FROM deps AS build
+# Everything is excluded and the declared inputs are let back in, so a file that appears in
+# the repository tomorrow does not appear in the image tomorrow.
+# The first line that is not the generated banner must be `*`. Counting header lines was
+# the same second statement of one fact this whole case exists to remove: the banner grew a
+# line, `*` moved to the seventh, and a `head -6` window said the context was unbounded.
+first="$(grep -vE '^[[:space:]]*(#|$)' "$ROOT/.dockerignore" | head -1)"
+[ "$first" = '*' ] || { echo "    the ignore file does not exclude everything first (first rule: '$first')"; exit 1; }
+grep -qx '\*\*/.git' "$ROOT/.dockerignore" || { echo "    the image would carry repository history"; exit 1; }
+grep -qx '.ai/local' "$ROOT/.dockerignore" || { echo "    the image would carry the checkout-local half of the layer"; exit 1; }
+for input in $(sed -n 's/^    - //p' "$ROOT/.ai/repo/deployments/majordomus.yaml"); do
+  grep -qx "!$input" "$ROOT/.dockerignore" || { echo "    the build context does not carry the declared input $input"; exit 1; }
+done
+
+# ---------------------------------------------------------------- a hand edit is refused
+cp "$ROOT/fly.toml" "$W/fly.toml.keep"
+sed -i.bak 's/^memory_mb = .*/memory_mb = 4096/' "$ROOT/fly.toml"; rm -f "$ROOT/fly.toml.bak"
+"$RB" generate --repo "$ROOT" --check deployment >"$W/edited.log" 2>&1 \
+  && { cp "$W/fly.toml.keep" "$ROOT/fly.toml"; echo "    a hand edit to fly.toml was accepted"; exit 1; }
+grep -q 'fly.toml (differs)' "$W/edited.log" \
+  || { cp "$W/fly.toml.keep" "$ROOT/fly.toml"; echo "    the refusal did not name fly.toml"; exit 1; }
+cp "$W/fly.toml.keep" "$ROOT/fly.toml"
+
+# and regeneration puts it back exactly
+"$RB" generate --repo "$ROOT" --check deployment >/dev/null 2>&1 \
+  || { echo "    the tree was not restored"; exit 1; }
+ "$ROOT/deploy/Dockerfile" \
+  || { echo "    builder does not reuse dependency stage"; exit 1; }
+grep -q '^RUN cargo fetch --locked ' "$ROOT/deploy/Dockerfile" \
+  || { echo "    locked dependency prefetch missing"; exit 1; }
+grep -q 'type=cache,id=majordomus-cargo-target-' "$ROOT/deploy/Dockerfile" \
+  || { echo "    local compiler output cache missing"; exit 1; }
+grep -q '^COPY --from=build /out/' "$ROOT/deploy/Dockerfile" \
+  || { echo "    builder output is not extracted from cache mount"; exit 1; }
+toolchain="$(sed -n 's/^channel = "\([^"]*\)".*/\1/p' "$ROOT/rust-toolchain.toml")"
+[ -n "$toolchain" ] || { echo "    toolchain pin missing"; exit 1; }
+grep -q "^FROM rust:${toolchain}-alpine.* AS deps$" "$ROOT/deploy/Dockerfile" \
+  || { echo "    Docker builder Rust differs from the canonical toolchain"; exit 1; }
+
 # ---------------------------------------------------------------- the context is bounded
 # Everything is excluded and the declared inputs are let back in, so a file that appears in
 # the repository tomorrow does not appear in the image tomorrow.
