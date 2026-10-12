@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.22.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -25,6 +25,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
+| `editors` | Editor and agent projections | behaviorally_verified | 1 | [`modules/editors.md`](modules/editors.md) |
 | `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 3 | [`modules/environment.md`](modules/environment.md) |
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
@@ -39,7 +40,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 23 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -115,6 +116,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `economics.explain` | `economics` | query | behaviorally_verified | `majordomus_economics_explain` | — | `GET /api/v1/economics/explain` | `majordomus economics explain` | process, 32 entries, 5s | required |
 | `economics.runs` | `economics` | query | behaviorally_verified | `majordomus_economics_runs` | — | `GET /api/v1/economics/runs` | `majordomus economics runs` | process, 16 entries, 5s | required |
 | `economics.summary` | `economics` | query | behaviorally_verified | `majordomus_economics` | `majordomus://economics` | `GET /api/v1/economics` | `majordomus economics summary` | process, 8 entries, 5s | required |
+| `editors.status` | `editors` | query | behaviorally_verified | `majordomus_editors` | `majordomus://editors` | `GET /api/v1/editors` | — | — | required |
 | `entity.kinds` | `entity` | query | implemented | `majordomus_kinds` | — | `GET /api/v1/entity/kinds` | `majordomus entity kinds` | — | required |
 | `entity.show` | `entity` | query | implemented | `majordomus_entity` | — | `GET /api/v1/entity` | `majordomus entity show` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
@@ -184,6 +186,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.release` | `mesh` | command | experimental | `majordomus_mesh_release` | — | `POST /api/v1/mesh/claims/release` | — | — | waived (transient_state) |
 | `mesh.review.answer` | `mesh` | command | experimental | `majordomus_mesh_review_answer` | — | `POST /api/v1/mesh/reviews/answer` | — | — | waived (transient_state) |
 | `mesh.review.request` | `mesh` | command | experimental | `majordomus_mesh_review_request` | — | `POST /api/v1/mesh/reviews` | — | — | waived (transient_state) |
+| `mesh.review.withdraw` | `mesh` | command | experimental | `majordomus_mesh_review_withdraw` | — | `POST /api/v1/mesh/reviews/withdraw` | — | — | waived (transient_state) |
 | `mesh.session.close` | `mesh` | command | experimental | `majordomus_mesh_session_close` | — | `POST /api/v1/mesh/sessions/close` | — | — | waived (transient_state) |
 | `mesh.session.open` | `mesh` | command | experimental | `majordomus_mesh_session_open` | — | `POST /api/v1/mesh/sessions` | — | — | waived (transient_state) |
 | `mesh.state` | `mesh` | query | experimental | `majordomus_mesh_state` | — | `GET /api/v1/mesh/state` | — | — | required |

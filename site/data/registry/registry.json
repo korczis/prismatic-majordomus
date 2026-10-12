@@ -3,31 +3,31 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.21.0"
+    "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe",
+    "fingerprint": "dd6d29292732f5d2ee23fe090b39485ea896b1b247fa806424ce34f619d53a76",
     "summary": {
-      "total": 2256,
-      "builtin": 191,
-      "declarative": 2065,
+      "total": 2274,
+      "builtin": 193,
+      "declarative": 2081,
       "by_kind": {
-        "command": 27,
-        "query": 164,
-        "resource": 2065
+        "command": 28,
+        "query": 165,
+        "resource": 2081
       },
       "by_stability": {
-        "behaviorally_verified": 133,
-        "experimental": 49,
-        "implemented": 2074
+        "behaviorally_verified": 134,
+        "experimental": 50,
+        "implemented": 2090
       },
-      "mcp_tools": 183,
-      "mcp_resources": 2119,
-      "http_routes": 187,
+      "mcp_tools": 185,
+      "mcp_resources": 2136,
+      "http_routes": 189,
       "cli_commands": 105,
-      "modules": 89,
-      "benchmark_required": 164,
-      "benchmark_waived": 27,
+      "modules": 90,
+      "benchmark_required": 165,
+      "benchmark_waived": 28,
       "cached": 54
     },
     "builtin": [
@@ -10839,7 +10839,7 @@
               },
               "application": {
                 "type": "string",
-                "description": "The application's name at the provider."
+                "description": "The application's name: what the deployment is known by in a listing."
               },
               "build": {
                 "$ref": "#/$defs/Build",
@@ -10878,10 +10878,6 @@
                   "request_p99_ms": null
                 }
               },
-              "provider": {
-                "$ref": "#/$defs/Provider",
-                "description": "The provider and its own facts."
-              },
               "created_at": {
                 "type": [
                   "string",
@@ -10911,8 +10907,7 @@
               "health",
               "resources",
               "machines",
-              "region",
-              "provider"
+              "region"
             ],
             "description": "One deployment as this process reads it, with where it came from.",
             "title": "DeploymentView",
@@ -10983,7 +10978,7 @@
                 "properties": {
                   "port": {
                     "$ref": "#/$defs/Port",
-                    "description": "The port, stated once for the process, the image and the provider configuration."
+                    "description": "The port, stated once for the process and the image."
                   },
                   "interface": {
                     "$ref": "#/$defs/Interface",
@@ -11241,96 +11236,6 @@
                   }
                 },
                 "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-              },
-              "Provider": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/ProviderName",
-                    "description": "Which provider."
-                  },
-                  "fly": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Fly"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Fly's own block, when the provider is Fly.",
-                    "default": null
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "description": "The provider and the facts that belong to it alone."
-              },
-              "ProviderName": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "fly",
-                    "description": "Fly.io."
-                  }
-                ],
-                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-              },
-              "Fly": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "org": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "The organisation the application belongs to.",
-                    "default": null
-                  },
-                  "force_https": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                    "default": null
-                  },
-                  "concurrency": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Concurrency"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "When the edge considers a machine loaded.",
-                    "default": null
-                  }
-                },
-                "description": "Fly.io's own facts: what has no meaning for any other provider."
-              },
-              "Concurrency": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "soft_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where the edge starts preferring another machine."
-                  },
-                  "hard_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where it stops sending requests to this one."
-                  }
-                },
-                "required": [
-                  "soft_limit",
-                  "hard_limit"
-                ],
-                "description": "When the edge considers a machine loaded, in requests."
               }
             }
           }
@@ -11372,7 +11277,7 @@
         "module": "deploy",
         "kind": "query",
         "title": "Deployments",
-        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -11460,7 +11365,7 @@
                   },
                   "application": {
                     "type": "string",
-                    "description": "The application's name at the provider."
+                    "description": "The application's name: what the deployment is known by in a listing."
                   },
                   "build": {
                     "$ref": "#/$defs/Build",
@@ -11499,10 +11404,6 @@
                       "request_p99_ms": null
                     }
                   },
-                  "provider": {
-                    "$ref": "#/$defs/Provider",
-                    "description": "The provider and its own facts."
-                  },
                   "created_at": {
                     "type": [
                       "string",
@@ -11532,8 +11433,7 @@
                   "health",
                   "resources",
                   "machines",
-                  "region",
-                  "provider"
+                  "region"
                 ],
                 "description": "One deployment as this process reads it, with where it came from."
               },
@@ -11603,7 +11503,7 @@
                 "properties": {
                   "port": {
                     "$ref": "#/$defs/Port",
-                    "description": "The port, stated once for the process, the image and the provider configuration."
+                    "description": "The port, stated once for the process and the image."
                   },
                   "interface": {
                     "$ref": "#/$defs/Interface",
@@ -11861,96 +11761,6 @@
                   }
                 },
                 "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
-              },
-              "Provider": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/ProviderName",
-                    "description": "Which provider."
-                  },
-                  "fly": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Fly"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Fly's own block, when the provider is Fly.",
-                    "default": null
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "description": "The provider and the facts that belong to it alone."
-              },
-              "ProviderName": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "fly",
-                    "description": "Fly.io."
-                  }
-                ],
-                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
-              },
-              "Fly": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "org": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "The organisation the application belongs to.",
-                    "default": null
-                  },
-                  "force_https": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
-                    "default": null
-                  },
-                  "concurrency": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/Concurrency"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "When the edge considers a machine loaded.",
-                    "default": null
-                  }
-                },
-                "description": "Fly.io's own facts: what has no meaning for any other provider."
-              },
-              "Concurrency": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "soft_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where the edge starts preferring another machine."
-                  },
-                  "hard_limit": {
-                    "$ref": "#/$defs/Positive",
-                    "description": "Where it stops sending requests to this one."
-                  }
-                },
-                "required": [
-                  "soft_limit",
-                  "hard_limit"
-                ],
-                "description": "When the edge considers a machine loaded, in requests."
               },
               "Refusal": {
                 "type": "object",
@@ -20278,6 +20088,389 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs"
+      },
+      {
+        "id": "editors.status",
+        "module": "editors",
+        "kind": "query",
+        "title": "Editor and agent projections",
+        "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "EditorProjection",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`SCHEMA`."
+              },
+              "projection_version": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "`PROJECTION_VERSION`."
+              },
+              "adapters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorAdapter"
+                },
+                "description": "The adapters, by id."
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorInput"
+                },
+                "description": "The inputs, by path."
+              },
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorDerivation"
+                },
+                "description": "The projected files, by path."
+              },
+              "orphans": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Generator-owned files under a projected directory that the plan no longer contains."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EditorDiagnostic"
+                },
+                "description": "The findings, by severity then code then path."
+              }
+            },
+            "required": [
+              "schema",
+              "projection_version",
+              "adapters",
+              "inputs",
+              "artifacts",
+              "diagnostics"
+            ],
+            "description": "`editors.status`: every adapter, every projected file and its state, every finding.",
+            "title": "EditorProjection",
+            "$defs": {
+              "EditorAdapter": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`zed` or `antigravity`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The product's name."
+                  },
+                  "verified_against": {
+                    "type": "string",
+                    "description": "The release the evidence was taken from."
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/EditorCapability"
+                    },
+                    "description": "Its capabilities, by id."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "verified_against",
+                  "capabilities"
+                ],
+                "description": "One adapter: the product, the version its claims were verified against, its capabilities."
+              },
+              "EditorCapability": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ..."
+                  },
+                  "support": {
+                    "$ref": "#/$defs/EditorSupport",
+                    "description": "What the adapter does with it."
+                  },
+                  "artifacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The files that carry it, repository-relative. Empty when nothing is projected."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "Where the claim about the product comes from."
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "What it means here, and what to do when nothing is projected."
+                  }
+                },
+                "required": [
+                  "id",
+                  "support",
+                  "evidence",
+                  "note"
+                ],
+                "description": "One capability of one adapter."
+              },
+              "EditorSupport": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "supported",
+                    "description": "Projected, from a verified format."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unsupported",
+                    "description": "The product has no project-level form for it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "A project-level form is claimed somewhere and could not be verified; nothing written."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deprecated",
+                    "description": "The product reads it, from a form this projection will not write."
+                  },
+                  {
+                    "type": "string",
+                    "const": "requires_user_action",
+                    "description": "A person can enable it, outside the repository; the remedy says how."
+                  }
+                ],
+                "description": "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\"."
+              },
+              "EditorInput": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "mutability": {
+                    "$ref": "#/$defs/EditorInputClass",
+                    "description": "Tracked content or checkout state."
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "description": "SHA-256 of its content."
+                  }
+                },
+                "required": [
+                  "path",
+                  "mutability",
+                  "sha256"
+                ],
+                "description": "One input of the projection: a file, what kind of input it is, and its content address."
+              },
+              "EditorInputClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "repository",
+                    "description": "Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte."
+                  }
+                ],
+                "description": "How far an input may change without the repository changing."
+              },
+              "EditorDerivation": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "document": {
+                    "type": "string",
+                    "description": "The document id in the generated-artifact manifest."
+                  },
+                  "adapters": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The adapters that read it."
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The inputs it is derived from, by path."
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes."
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "description": "SHA-256 of the projected content."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/EditorFileState",
+                    "description": "The state of the file in this checkout."
+                  }
+                },
+                "required": [
+                  "path",
+                  "document",
+                  "adapters",
+                  "sources",
+                  "key",
+                  "sha256",
+                  "state"
+                ],
+                "description": "One projected file and how it came to be."
+              },
+              "EditorFileState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Byte for byte what the projection says."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Generator-owned and different: `majordomus generate editors` rewrites it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "Not there: `majordomus generate editors` writes it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflict",
+                    "description": "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it."
+                  }
+                ],
+                "description": "A projected file as this checkout holds it."
+              },
+              "EditorDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "`info`, `warning` or `error`."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Stable identity of the finding."
+                  },
+                  "adapter": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The adapter it concerns, when it concerns one."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The file it concerns, when it concerns one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What was found."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "message",
+                  "remedy"
+                ],
+                "description": "Something about the projection worth acting on."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::editors"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_editors",
+            "resource": {
+              "uri": "majordomus://editors",
+              "name": "editors"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/editors"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "editors",
+          "projections",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs"
       },
       {
         "id": "entity.kinds",
@@ -48796,6 +48989,13 @@
                   "null"
                 ],
                 "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+              },
+              "body": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines."
               }
             },
             "required": [
@@ -48845,6 +49045,108 @@
           "http": {
             "method": "POST",
             "path": "/api/v1/mesh/reviews"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "cooperation"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.review.withdraw",
+        "module": "mesh",
+        "kind": "command",
+        "title": "Withdraw a review request",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "input": {
+          "name": "ReviewWithdrawInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "request": {
+                "type": "string",
+                "description": "The request's key, `<stream>/<review>`."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The requester's result or reason, up to 8 KiB: what came of it, or why it is void."
+              }
+            },
+            "required": [
+              "request"
+            ],
+            "description": "The input of `mesh.review.withdraw`.",
+            "title": "ReviewWithdrawInput"
+          }
+        },
+        "output": {
+          "name": "Written",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "`<stream>/<local id>` of what was created or changed."
+              },
+              "event": {
+                "type": "string",
+                "description": "`<stream>/<seq>` of the event that says so."
+              },
+              "lamport": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The event's Lamport stamp."
+              }
+            },
+            "required": [
+              "key",
+              "event",
+              "lamport"
+            ],
+            "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+            "title": "Written"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_review_withdraw"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/mesh/reviews/withdraw"
           }
         },
         "availability": "runtime",
@@ -50229,6 +50531,13 @@
                     ],
                     "description": "The runtime asked, when one was."
                   },
+                  "body": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What the reviewer needs beyond the subject, when the requester wrote it."
+                  },
                   "state": {
                     "$ref": "#/$defs/ReviewState",
                     "description": "Its standing."
@@ -50239,6 +50548,13 @@
                       "$ref": "#/$defs/ReviewAnswer"
                     },
                     "description": "The answers, in Lamport order."
+                  },
+                  "result": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
                   }
                 },
                 "required": [
@@ -50249,7 +50565,7 @@
                   "state",
                   "answers"
                 ],
-                "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+                "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
               },
               "ReviewState": {
                 "oneOf": [
@@ -50262,9 +50578,19 @@
                     "type": "string",
                     "const": "answered",
                     "description": "At least one answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "withdrawn",
+                    "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "expired",
+                    "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
                   }
                 ],
-                "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+                "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
               },
               "ReviewAnswer": {
                 "type": "object",
@@ -79214,7 +79540,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 95,
+        "capabilities": 97,
         "capability_ids": []
       },
       {
@@ -79539,7 +79865,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 338,
+        "capabilities": 339,
         "capability_ids": []
       },
       {
@@ -79569,6 +79895,18 @@
           "module": "majordomus_cli::capability::builtin::economics",
           "path": "majordomus_cli/capability/builtin/economics/index.html"
         }
+      },
+      {
+        "id": "editors",
+        "title": "Editor and agent projections",
+        "description": "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "editors.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs"
       },
       {
         "id": "entity",
@@ -79810,7 +80148,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 328,
+        "capabilities": 332,
         "capability_ids": []
       },
       {
@@ -79884,7 +80222,7 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": [
           "mesh.claim",
           "mesh.cooperation",
@@ -79904,6 +80242,7 @@
           "mesh.release",
           "mesh.review.answer",
           "mesh.review.request",
+          "mesh.review.withdraw",
           "mesh.session.close",
           "mesh.session.open",
           "mesh.state",
@@ -80217,7 +80556,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 168,
+        "capabilities": 169,
         "capability_ids": []
       },
       {
@@ -80360,7 +80699,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 446,
+        "capabilities": 454,
         "capability_ids": []
       },
       {
@@ -80450,7 +80789,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e59a27862c156c47651aa550b3e8946172a4329bfb0c8d7497df3a12b9e3c62",
+    "fingerprint": "03f6557b8d557b96853032b04aef98a9d346346f87a6e06ac1fe8aae806a2655",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80473,7 +80812,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 95,
+      "adr": 97,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -80484,13 +80823,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 338,
+      "document": 339,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 328,
+      "issue": 332,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -80499,12 +80838,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 168,
+      "rule": 169,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 446,
+      "test": 454,
       "use-case": 48,
       "workspace": 1
     },
@@ -82075,6 +82414,40 @@
           "operations",
           "worktrees",
           "disk"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0140",
+        "kind": "adr",
+        "identity": "adr-0140",
+        "title": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "description": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "path": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6647,
+        "tags": [
+          "editors",
+          "projections",
+          "generated",
+          "build"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0141",
+        "kind": "adr",
+        "identity": "adr-0141",
+        "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "description": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "path": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7337,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "pages"
         ]
       },
       {
@@ -85153,7 +85526,7 @@
         "description": "The tracked half of the layer and what each section under it is for.",
         "path": ".ai/repo/README.md",
         "source_class": "context",
-        "bytes": 2413
+        "bytes": 2402
       },
       {
         "uri": "majordomus://context/ai.repo.adrs",
@@ -85242,11 +85615,11 @@
         "kind": "context",
         "identity": "ai.repo.deployments",
         "title": "Deployments",
-        "description": "One canonical object per deployment of this repository's executable; every container and provider artifact is generated from it and none of them is authoritative.",
+        "description": "One canonical object per deployment of this repository's executable; every artifact built from it — the container image definition and its ignore file — is generated from it and none of them is authoritative.",
         "path": ".ai/repo/deployments/README.md",
         "section": "deployments",
         "source_class": "context",
-        "bytes": 2780
+        "bytes": 2848
       },
       {
         "uri": "majordomus://context/ai.repo.evidence",
@@ -85566,12 +85939,12 @@
         "uri": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "identity": "majordomus",
-        "title": "The Majordomus layer, served from one machine",
-        "description": "One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.",
+        "title": "The Majordomus layer, served from its container image",
+        "description": "The container image of this repository's executable, published to GHCR, serving the AI layer over HTTP and MCP; no hosting provider runs it.",
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 2877
+        "bytes": 3773
       },
       {
         "uri": "majordomus://derive-offload/derive",
@@ -85912,7 +86285,7 @@
         "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
         "path": "docs/COCKPIT_IDE_AUDIT.md",
         "source_class": "document",
-        "bytes": 50160
+        "bytes": 50148
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -86011,7 +86384,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 30388
+        "bytes": 31690
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -86048,6 +86421,15 @@
         "path": "docs/ECONOMICS.md",
         "source_class": "document",
         "bytes": 9255
+      },
+      {
+        "uri": "majordomus://document/docs/EDITORS.md",
+        "kind": "document",
+        "identity": "docs/EDITORS.md",
+        "title": "Editors and agents",
+        "path": "docs/EDITORS.md",
+        "source_class": "document",
+        "bytes": 3991
       },
       {
         "uri": "majordomus://document/docs/ENTRY.md",
@@ -86110,7 +86492,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 52225
+        "bytes": 54988
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -86191,7 +86573,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 14132
+        "bytes": 19340
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -86209,7 +86591,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 57975
+        "bytes": 60156
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -86272,7 +86654,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232613
+        "bytes": 237250
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -86308,7 +86690,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 24291
+        "bytes": 24566
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -86326,7 +86708,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 40181
+        "bytes": 41219
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -86353,7 +86735,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 79788
+        "bytes": 79957
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -86929,7 +87311,7 @@
         "title": "A deployment that breaks its closed contract is refused by doctor with the reason named",
         "path": "docs/claims/deployment-contract-refuses-by-name.md",
         "source_class": "claim_page",
-        "bytes": 4238
+        "bytes": 4231
       },
       {
         "uri": "majordomus://document/docs/claims/derivation-one-graph.md",
@@ -88888,12 +89270,12 @@
         "uri": "majordomus://feature/deployments",
         "kind": "feature",
         "identity": "deployments",
-        "title": "A deployment is one canonical object, and every provider artifact is generated from it",
-        "description": "One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.",
+        "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
+        "description": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
         "path": ".ai/repo/features/deployments.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1558,
+        "bytes": 1706,
         "tags": [
           "deployment"
         ]
@@ -89281,7 +89663,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 159458
+        "bytes": 159572
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -89289,7 +89671,7 @@
         "identity": "lib/changed.sh",
         "path": "lib/changed.sh",
         "source_class": "library",
-        "bytes": 17784
+        "bytes": 17731
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -89297,7 +89679,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 17181
+        "bytes": 17339
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -89321,7 +89703,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 89547
+        "bytes": 90618
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -89329,7 +89711,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 48716
+        "bytes": 48820
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -89353,7 +89735,7 @@
         "identity": "lib/deployment.sh",
         "path": "lib/deployment.sh",
         "source_class": "library",
-        "bytes": 5576
+        "bytes": 5567
       },
       {
         "uri": "majordomus://implementation/lib/derive.sh",
@@ -89361,7 +89743,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 33403
+        "bytes": 33350
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -89385,7 +89767,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 28303
+        "bytes": 28250
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -90766,7 +91148,7 @@
         "path": ".ai/repo/project/issues/I0909.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2932
+        "bytes": 3181
       },
       {
         "uri": "majordomus://issue/I0910",
@@ -90810,7 +91192,7 @@
         "path": ".ai/repo/project/issues/I0913.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2902
+        "bytes": 3084
       },
       {
         "uri": "majordomus://issue/I0914",
@@ -93178,6 +93560,17 @@
         "bytes": 5200
       },
       {
+        "uri": "majordomus://issue/I2464",
+        "kind": "issue",
+        "identity": "I2464",
+        "title": "A path that holds a space is one path to the scope doctrine",
+        "description": "Read the files a task touched as one path per line, with git's -z output, everywhere the shell layer lists them, so that a file name holding a space is judged as the one path it is.",
+        "path": ".ai/repo/project/issues/I2464.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2313
+      },
+      {
         "uri": "majordomus://issue/I2470",
         "kind": "issue",
         "identity": "I2470",
@@ -93275,6 +93668,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3530
+      },
+      {
+        "uri": "majordomus://issue/I2481",
+        "kind": "issue",
+        "identity": "I2481",
+        "title": "The UI links every entity it names, and says none where a source has no value",
+        "description": "Make every entity a screen of majordomus ui names lead somewhere: to the UI's own screen or inspector for it, to its technical view when the UI has no screen for it, or to the address its source gives when it lives elsewhere; say none where a source has no value; say how much a cut list leaves out; and count throughput over the window the queue states rather than one the screen chooses.",
+        "path": ".ai/repo/project/issues/I2481.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4271
+      },
+      {
+        "uri": "majordomus://issue/I2482",
+        "kind": "issue",
+        "identity": "I2482",
+        "title": "Every screen of the UI has a case, and no link on the UI is dead",
+        "description": "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers.",
+        "path": ".ai/repo/project/issues/I2482.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2314
+      },
+      {
+        "uri": "majordomus://issue/I2483",
+        "kind": "issue",
+        "identity": "I2483",
+        "title": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+        "description": "Let a person who has not cloned the repository open majordomus ui on the public site: the UI's own answers for every screen and panel, and for the inspectors they link to up to a bound, written as static files at the commit the site publishes, every page saying it is a snapshot and none of them leading to nothing.",
+        "path": ".ai/repo/project/issues/I2483.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4045
       },
       {
         "uri": "majordomus://issue/I2484",
@@ -94894,12 +95320,12 @@
         "uri": "majordomus://rule/majordomus.deployment-contract@1",
         "kind": "rule",
         "identity": "majordomus.deployment-contract@1",
-        "title": "A deployment is described once, and every provider artifact is generated from it",
-        "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and the provider configuration are projections of it, never a second description.",
+        "title": "A deployment is described once, and every artifact built from it is generated from it",
+        "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and its ignore file are projections of it, never a second description.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4176,
+        "bytes": 4067,
         "tags": [
           "deployment",
           "schema",
@@ -97103,6 +97529,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "rule",
+        "identity": "project.the-site-offers-the-release-it-published@1",
+        "title": "The site offers the release that was published, on every surface at once",
+        "description": "Which release is the latest is derived once, by the site build, as the newer of the newest release record and the release metadata the published site already serves, and every page that names it reads that one derivation; the homepage, /releases/latest.json and the newest GitHub release are held to one version, at build time and against the live site, beyond a bounded window after a publication.",
+        "path": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7019,
+        "tags": [
+          "release",
+          "publication",
+          "web",
+          "distribution"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "rule",
         "identity": "project.the-version-is-measured@2",
@@ -98801,6 +99244,14 @@
         "bytes": 11703
       },
       {
+        "uri": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "kind": "test",
+        "identity": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "path": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "source_class": "case",
+        "bytes": 1821
+      },
+      {
         "uri": "majordomus://test/test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
         "kind": "test",
         "identity": "test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
@@ -98846,7 +99297,7 @@
         "identity": "test/cases/1079_the_drain_draws_its_throughput.sh",
         "path": "test/cases/1079_the_drain_draws_its_throughput.sh",
         "source_class": "case",
-        "bytes": 3480
+        "bytes": 4154
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -98905,6 +99356,30 @@
         "bytes": 3603
       },
       {
+        "uri": "majordomus://test/test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "kind": "test",
+        "identity": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "source_class": "case",
+        "bytes": 14473
+      },
+      {
+        "uri": "majordomus://test/test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "path": "test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2498
+      },
+      {
+        "uri": "majordomus://test/test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "path": "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2085
+      },
+      {
         "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
         "kind": "test",
         "identity": "test/cases/108_entry_converges_on_a_server.sh",
@@ -98927,6 +99402,38 @@
         "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
         "source_class": "case",
         "bytes": 3619
+      },
+      {
+        "uri": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "kind": "test",
+        "identity": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "path": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "source_class": "case",
+        "bytes": 2402
+      },
+      {
+        "uri": "majordomus://test/test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "kind": "test",
+        "identity": "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "path": "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "source_class": "case",
+        "bytes": 2321
+      },
+      {
+        "uri": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "test",
+        "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "source_class": "case",
+        "bytes": 4703
+      },
+      {
+        "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "test",
+        "identity": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "source_class": "case",
+        "bytes": 4063
       },
       {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
@@ -99342,7 +99849,7 @@
         "identity": "test/cases/180_publication_is_observed.sh",
         "path": "test/cases/180_publication_is_observed.sh",
         "source_class": "case",
-        "bytes": 14215
+        "bytes": 16819
       },
       {
         "uri": "majordomus://test/test/cases/181_local_is_never_published.sh",
@@ -99806,7 +100313,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 16554
+        "bytes": 16622
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -99910,7 +100417,7 @@
         "identity": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "source_class": "case",
-        "bytes": 5098
+        "bytes": 5733
       },
       {
         "uri": "majordomus://test/test/cases/353_the_version_bump_has_an_actor.sh",
@@ -100342,7 +100849,7 @@
         "identity": "test/cases/491_the_mesh_is_on_here.sh",
         "path": "test/cases/491_the_mesh_is_on_here.sh",
         "source_class": "case",
-        "bytes": 13476
+        "bytes": 14793
       },
       {
         "uri": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
@@ -100366,7 +100873,7 @@
         "identity": "test/cases/494_the_mesh_is_declared_and_held.sh",
         "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
         "source_class": "case",
-        "bytes": 9108
+        "bytes": 10577
       },
       {
         "uri": "majordomus://test/test/cases/495_the_firewall_admits_the_mesh.sh",
@@ -100470,7 +100977,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 8225
+        "bytes": 9232
       },
       {
         "uri": "majordomus://test/test/cases/531_an_entity_names_its_public_page.sh",
@@ -100654,7 +101161,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 10789
+        "bytes": 11932
       },
       {
         "uri": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
@@ -101310,7 +101817,7 @@
         "identity": "test/cases/84_deployment_contract.sh",
         "path": "test/cases/84_deployment_contract.sh",
         "source_class": "case",
-        "bytes": 5006
+        "bytes": 5356
       },
       {
         "uri": "majordomus://test/test/cases/84_distribution_model.sh",
@@ -101382,7 +101889,7 @@
         "identity": "test/cases/85_deployment_bind.sh",
         "path": "test/cases/85_deployment_bind.sh",
         "source_class": "case",
-        "bytes": 4629
+        "bytes": 4607
       },
       {
         "uri": "majordomus://test/test/cases/85_installer.sh",
@@ -101414,7 +101921,7 @@
         "identity": "test/cases/86_deployment_projections.sh",
         "path": "test/cases/86_deployment_projections.sh",
         "source_class": "case",
-        "bytes": 10254
+        "bytes": 10537
       },
       {
         "uri": "majordomus://test/test/cases/86_installer_platform.sh",
@@ -101782,7 +102289,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 29851
+        "bytes": 39590
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -102589,7 +103096,7 @@
       "identity": [
         "id"
       ],
-      "objects": 95
+      "objects": 97
     },
     {
       "name": "application",
@@ -102695,7 +103202,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 338
+      "objects": 339
     },
     {
       "name": "domain",
@@ -102752,7 +103259,7 @@
       "identity": [
         "id"
       ],
-      "objects": 328
+      "objects": 332
     },
     {
       "name": "knowledge",
@@ -102849,7 +103356,7 @@
         "id",
         "version"
       ],
-      "objects": 168
+      "objects": 169
     },
     {
       "name": "scope",
@@ -102904,7 +103411,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 446
+      "objects": 454
     },
     {
       "name": "use-case",
@@ -104550,6 +105057,10 @@
                 "help": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)"
               },
               {
+                "name": "editors",
+                "help": "The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every active skill, and `.zed/tasks.json` from the tracked justfile"
+              },
+              {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
               },
@@ -104571,7 +105082,7 @@
               },
               {
                 "name": "deployment",
-                "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+                "help": "deploy/Dockerfile and .dockerignore, from the deployment objects"
               },
               {
                 "name": "graph",
@@ -106673,6 +107184,174 @@
                     "command": "majordomus web report ui --from target/web/run-ui.json",
                     "setup": [],
                     "expectation": "exits 13"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "ui-snapshot"
+                ],
+                "route": "/docs/cli/web/report/ui-snapshot/",
+                "executable": true,
+                "usage": "majordomus web report ui-snapshot [OPTIONS]",
+                "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+                "args": [
+                  {
+                    "name": "limit",
+                    "long": "limit",
+                    "positional": false,
+                    "help": "The most pages to write: every screen and panel first, then what they link to",
+                    "value_name": "LIMIT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "240"
+                    ]
+                  },
+                  {
+                    "name": "budget_seconds",
+                    "long": "budget-seconds",
+                    "positional": false,
+                    "help": "The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost",
+                    "value_name": "BUDGET_SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "180"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-ui-snapshot",
+                    "title": "Read the UI once and write it as the pages a publication carries at /ui",
+                    "description": "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "ui-snapshot",
+                      "--limit",
+                      "20"
+                    ],
+                    "command": "majordomus web report ui-snapshot --limit 20",
+                    "setup": [],
+                    "expectation": "exits 0; prints web report, ui-snapshot"
                   }
                 ],
                 "subcommands": []
@@ -124399,6 +125078,18 @@
                     "defaults": []
                   },
                   {
+                    "name": "body",
+                    "long": "body",
+                    "positional": false,
+                    "help": "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)",
+                    "value_name": "BODY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
                     "name": "repo",
                     "long": "repo",
                     "positional": false,
@@ -124676,6 +125367,160 @@
                       "approved"
                     ],
                     "command": "majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved",
+                    "setup": [],
+                    "expectation": "exits 10"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "review",
+                  "withdraw"
+                ],
+                "route": "/docs/cli/mesh/review/withdraw/",
+                "executable": true,
+                "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>",
+                "about": "Withdraw a review request this runtime asked for, with its result",
+                "args": [
+                  {
+                    "name": "request",
+                    "positional": true,
+                    "help": "The request's key, `<stream>/<review>`",
+                    "value_name": "REQUEST",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "session",
+                    "long": "session",
+                    "positional": false,
+                    "help": "The withdrawing session, within the runtime that asked",
+                    "value_name": "SESSION",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "note",
+                    "long": "note",
+                    "positional": false,
+                    "help": "What came of it, or why it is void (up to 8 KiB)",
+                    "value_name": "NOTE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-review-withdraw",
+                    "title": "Withdraw a review request with its result",
+                    "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+                    "argv": [
+                      "mesh",
+                      "review",
+                      "withdraw",
+                      "stream/r-000000000000",
+                      "--session",
+                      "s1",
+                      "--note",
+                      "superseded"
+                    ],
+                    "command": "majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded",
                     "setup": [],
                     "expectation": "exits 10"
                   }
@@ -134375,7 +135220,7 @@
         "name": "majordomus_deployments",
         "id": "deploy.list",
         "title": "Deployments",
-        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -134710,6 +135555,23 @@
         },
         "input": "EconomicsQuery",
         "output": "EconomicsSummary"
+      },
+      {
+        "name": "majordomus_editors",
+        "id": "editors.status",
+        "title": "Editor and agent projections",
+        "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "EditorProjection"
       },
       {
         "name": "majordomus_kinds",
@@ -135763,6 +136625,23 @@
           "open_world": false
         },
         "input": "ReviewRequestInput",
+        "output": "Written"
+      },
+      {
+        "name": "majordomus_mesh_review_withdraw",
+        "id": "mesh.review.withdraw",
+        "title": "Withdraw a review request",
+        "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "ReviewWithdrawInput",
         "output": "Written"
       },
       {
@@ -137120,6 +137999,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://editors",
+        "name": "editors",
+        "id": "editors.status",
+        "title": "Editor and agent projections",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://environment/preflight",
         "name": "preflight",
         "id": "environment.preflight",
@@ -137703,6 +138589,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/editors",
+        "id": "editors.status",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/entity/kinds",
         "id": "entity.kinds",
         "kind": "query"
@@ -138095,6 +138987,12 @@
         "method": "POST",
         "path": "/api/v1/mesh/reviews",
         "id": "mesh.review.request",
+        "kind": "command"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/mesh/reviews/withdraw",
+        "id": "mesh.review.withdraw",
         "kind": "command"
       },
       {
@@ -140341,6 +141239,35 @@
         "case": "narrowed",
         "cached": true,
         "route": "GET /api/v1/economics"
+      },
+      {
+        "key": "editors.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "editors.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_editors"
+      },
+      {
+        "key": "editors.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "editors.status",
+        "module": "editors",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/editors"
       },
       {
         "key": "entity.kinds|direct|default",
@@ -146609,6 +147536,27 @@
           "cases": 2
         },
         {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "editors.status",
+          "module": "editors",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "entity.kinds",
           "module": "entity",
           "transport": "direct",
@@ -148017,6 +148965,30 @@
         },
         {
           "subject": "mesh.review.request",
+          "module": "mesh",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "mesh.review.withdraw",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "mesh.review.withdraw",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "mesh.review.withdraw",
           "module": "mesh",
           "transport": "http",
           "state": "waived",
@@ -149725,24 +150697,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 191,
-          "covered": 164,
+          "required": 193,
+          "covered": 165,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "http": {
-          "required": 187,
-          "covered": 164,
+          "required": 189,
+          "covered": 165,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 183,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
-          "waived": 23,
+          "waived": 24,
           "inapplicable": 0
         },
         "system": {
@@ -149753,10 +150725,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 575,
-          "covered": 502,
+          "required": 581,
+          "covered": 505,
           "missing": 0,
-          "waived": 73,
+          "waived": 76,
           "inapplicable": 0
         }
       }

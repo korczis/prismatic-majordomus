@@ -48,8 +48,6 @@ machines:
   autostart: true
   autostop: true
 region: fra
-provider:
-  name: fly
 MD
 }
 

@@ -10,11 +10,45 @@ use crate::cockpit::html::{el, El};
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Source};
 use super::view::{
-    hero, kpi, kpi_count, list, panel, panel_to, state, strip, table, text, unanswered, wide,
+    anchor, hero, kpi, kpi_count, link, list, none, object_if, panel, panel_to, state, strip,
+    table, text, unanswered, value, wide,
 };
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/deployments";
+
+/// Where one declared deployment is: its row on this screen.
+pub fn href(id: &str) -> String {
+    format!("{ROUTE}#deployment-{}", anchor(id))
+}
+
+/// One declared deployment as a row: its id leading to its row here, its declaration's
+/// technical view, the application it runs and its state. The CI/CD screen draws the same row.
+pub fn summary_row(ctx: &Context, d: &Value) -> El {
+    let id = text(d, "id");
+    el("tr")
+        .child(
+            el("td")
+                .child(
+                    el("a")
+                        .class("mj-ui-row-link")
+                        .attr("href", href(&id))
+                        .child(
+                            el("span")
+                                .class("mj-ui-mono mj-ui-dim")
+                                .text(value(d, "id")),
+                        )
+                        .child(el("span").class("mj-ui-cell-title").text(value(d, "title"))),
+                )
+                .child(object_if(
+                    ctx,
+                    &format!("majordomus://deployment/{id}"),
+                    &text(d, "file"),
+                )),
+        )
+        .child(el("td").class("mj-ui-mono").text(value(d, "application")))
+        .child(el("td").child(state(d, "status")))
+}
 
 /// The route of the delivery panel.
 pub const DELIVERY_PANEL: &str = "/ui/panels/delivery";
@@ -43,14 +77,7 @@ pub fn screen(ctx: &Context) -> View {
         let rows = list(deployments, "/deployments")
             .iter()
             .map(|d| {
-                el("tr")
-                    .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(d, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(d, "title"))),
-                    )
-                    .child(el("td").class("mj-ui-mono").text(text(d, "application")))
-                    .child(el("td").child(state(d, "status")))
+                summary_row(ctx, d).attr("id", format!("deployment-{}", anchor(&text(d, "id"))))
             })
             .collect::<Vec<_>>();
         table(
@@ -99,10 +126,10 @@ pub fn screen(ctx: &Context) -> View {
 
 /// The delivery report as a panel: the publication's verification and every feature's stage.
 pub fn delivery_panel(ctx: &Context) -> View {
-    View::new("Delivery", delivery(&ask(ctx, DELIVERY)))
+    View::new("Delivery", delivery(ctx, &ask(ctx, DELIVERY)))
 }
 
-fn delivery(report: &Answer) -> El {
+fn delivery(ctx: &Context, report: &Answer) -> El {
     let body = unanswered(report).unwrap_or_else(|| {
         let tallies = strip(vec![
             kpi("Features", &report.read("/tallies/features")),
@@ -113,6 +140,7 @@ fn delivery(report: &Answer) -> El {
                 &report.read("/tallies/publicly_verified"),
             ),
         ]);
+        let url = report.read("/publication/url").text();
         let publication = el("p")
             .class("mj-ui-line")
             .child(state(
@@ -122,16 +150,18 @@ fn delivery(report: &Answer) -> El {
                     .unwrap_or(&Value::Null),
                 "state",
             ))
+            .text(" ")
+            .child(match &url {
+                // the address the report probed, as it gave it
+                Some(u) => link(u.clone(), u.clone()),
+                None => el("span").text("no public address"),
+            })
             .text(format!(
-                " {} — {}",
-                report
-                    .read("/publication/url")
-                    .text()
-                    .unwrap_or_else(|| "no public address".into()),
+                " — {}",
                 report
                     .read("/publication/verification/detail")
                     .text()
-                    .unwrap_or_default()
+                    .unwrap_or_else(|| "none".into())
             ));
         let rows = list(report, "/features")
             .iter()
@@ -146,11 +176,12 @@ fn delivery(report: &Answer) -> El {
                             .collect()
                     })
                     .unwrap_or_default();
+                let id = text(f, "id");
                 el("tr")
                     .child(
                         el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(f, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(f, "title"))),
+                            .child(object_if(ctx, &format!("majordomus://feature/{id}"), &id))
+                            .child(el("span").class("mj-ui-cell-title").text(value(f, "title"))),
                     )
                     .child(
                         el("td").child(state(f.get("delivery").unwrap_or(&Value::Null), "stage")),
@@ -158,11 +189,13 @@ fn delivery(report: &Answer) -> El {
                     .child(
                         el("td").child(state(f.get("delivery").unwrap_or(&Value::Null), "state")),
                     )
-                    .child(
-                        el("td")
+                    .child(el("td").child(if blocking.is_empty() {
+                        none()
+                    } else {
+                        el("span")
                             .class("mj-ui-mono mj-ui-dim")
-                            .text(blocking.join(", ")),
-                    )
+                            .text(blocking.join(", "))
+                    }))
             })
             .collect::<Vec<_>>();
         el("div")
@@ -279,11 +312,22 @@ pub(crate) mod tests {
         let html = view.main.render();
         assert_eq!(view.status, 200);
         assert!(
-            html.contains("The Majordomus layer, served from one machine"),
+            html.contains("The Majordomus layer, served from its container image"),
             "{html}"
         );
         assert!(html.contains(">majordomus<"), "{html}");
         assert!(html.contains("declared"), "{html}");
+        // the row is where a link to the deployment leads, and its declaration is the
+        // technical view of the object the index holds
+        assert!(html.contains("id=\"deployment-majordomus\""), "{html}");
+        assert!(
+            html.contains(&format!("href=\"{}\"", href("majordomus"))),
+            "{html}"
+        );
+        assert!(
+            html.contains("/cockpit/object?uri=majordomus%3A%2F%2Fdeployment%2Fmajordomus"),
+            "{html}"
+        );
         assert!(!html.contains("No deployment is declared."), "{html}");
         assert!(
             html.contains(&format!("data-panel-src=\"{DELIVERY_PANEL}\"")),
@@ -328,10 +372,14 @@ pub(crate) mod tests {
                 ]
             })),
         );
-        let html = delivery(&report).render();
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = delivery(&ctx, &report).render();
         assert!(
-            html.contains("https://example.test/ — the site serves the trunk"),
-            "{html}"
+            html.contains(
+                "href=\"https://example.test/\">https://example.test/</a> — the site serves the trunk"
+            ),
+            "the address the report probed is a link: {html}"
         );
         assert!(html.contains("verified"), "{html}");
         assert!(
@@ -344,6 +392,16 @@ pub(crate) mod tests {
         );
         assert!(html.contains("A feature with no delivery"), "{html}");
         assert!(html.contains("unknown"), "{html}");
+        // a feature with nothing blocking it says so; the fixture's index holds neither
+        // feature, so each id is text rather than a link to a page that would answer 404
+        assert!(
+            html.contains("<span class=\"mj-ui-dim\">none</span>"),
+            "{html}"
+        );
+        assert!(
+            !html.contains("/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fci"),
+            "{html}"
+        );
         assert!(!html.contains("No feature is declared."), "{html}");
     }
 
@@ -351,7 +409,9 @@ pub(crate) mod tests {
     #[test]
     fn a_report_that_could_not_be_made_says_why() {
         let report = answer(DELIVERY, Err("the probe timed out".into()));
-        let html = delivery(&report).render();
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = delivery(&ctx, &report).render();
         assert!(
             html.contains("delivery.report could not answer: the probe timed out"),
             "{html}"

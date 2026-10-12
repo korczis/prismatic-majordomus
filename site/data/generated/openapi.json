@@ -46,6 +46,7 @@
     "op-economics-explain": "docs/api/economics/",
     "op-economics-runs": "docs/api/economics/",
     "op-economics-summary": "docs/api/economics/",
+    "op-editors-status": "docs/api/editors/",
     "op-entity-kinds": "docs/api/entity/",
     "op-entity-show": "docs/api/entity/",
     "op-environment-explain": "docs/api/environment/",
@@ -112,6 +113,7 @@
     "op-mesh-release": "docs/api/mesh/",
     "op-mesh-review-answer": "docs/api/mesh/",
     "op-mesh-review-request": "docs/api/mesh/",
+    "op-mesh-review-withdraw": "docs/api/mesh/",
     "op-mesh-session-close": "docs/api/mesh/",
     "op-mesh-session-open": "docs/api/mesh/",
     "op-mesh-state": "docs/api/mesh/",
@@ -333,7 +335,6 @@
     "schema-Completion": "docs/api/gates/",
     "schema-Component": "docs/api/continuity/",
     "schema-ConclusionView": "docs/api/reasoning/",
-    "schema-Concurrency": "docs/api/deploy/",
     "schema-ConditionState": "docs/api/intents/",
     "schema-Confidence": "docs/api/environment/",
     "schema-Conflict": "docs/api/devcontext/",
@@ -452,6 +453,15 @@
     "schema-EconomicsVerdict": "docs/api/economics/",
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
+    "schema-EditorAdapter": "docs/api/editors/",
+    "schema-EditorCapability": "docs/api/editors/",
+    "schema-EditorDerivation": "docs/api/editors/",
+    "schema-EditorDiagnostic": "docs/api/editors/",
+    "schema-EditorFileState": "docs/api/editors/",
+    "schema-EditorInput": "docs/api/editors/",
+    "schema-EditorInputClass": "docs/api/editors/",
+    "schema-EditorProjection": "docs/api/editors/",
+    "schema-EditorSupport": "docs/api/editors/",
     "schema-EffectiveEntry": "docs/api/directories/",
     "schema-Empty": "docs/api/mesh/",
     "schema-EntityDocumentation": "docs/api/entity/",
@@ -532,7 +542,6 @@
     "schema-FirewallReport": "docs/api/mesh/",
     "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
-    "schema-Fly": "docs/api/deploy/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
     "schema-GapCondition": "docs/api/intents/",
@@ -829,12 +838,10 @@
     "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
-    "schema-Provider": "docs/api/deploy/",
     "schema-ProviderBootstrap": "docs/api/product/",
     "schema-ProviderLifecycle": "docs/api/lifecycle/",
     "schema-ProviderLifecycles": "docs/api/lifecycle/",
     "schema-ProviderList": "docs/api/product/",
-    "schema-ProviderName": "docs/api/deploy/",
     "schema-ProviderOffers": "docs/api/product/",
     "schema-ProviderState": "docs/api/environment/",
     "schema-ProviderStatus": "docs/api/mesh/",
@@ -948,6 +955,7 @@
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
+    "schema-ReviewWithdrawInput": "docs/api/mesh/",
     "schema-Role": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
@@ -1150,6 +1158,7 @@
     "tag-directories": "docs/api/directories/",
     "tag-distribution": "docs/api/distribution/",
     "tag-economics": "docs/api/economics/",
+    "tag-editors": "docs/api/editors/",
     "tag-entity": "docs/api/entity/",
     "tag-environment": "docs/api/environment/",
     "tag-episodes": "docs/api/episodes/",
@@ -1192,9 +1201,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 187,
-    "schemas": 947,
-    "tags": 55
+    "operations": 189,
+    "schemas": 953,
+    "tags": 56
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1223,7 +1232,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.21.0",
+  "generated_by": "majordomus-cli 0.22.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1232,7 +1241,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.21.0"
+    "version": "0.22.0"
   },
   "infrastructure": [
     {
@@ -1331,6 +1340,7 @@
     "economics.explain": "economics",
     "economics.runs": "economics",
     "economics.summary": "economics",
+    "editors.status": "editors",
     "entity.kinds": "entity",
     "entity.show": "entity",
     "environment.explain": "environment",
@@ -1397,6 +1407,7 @@
     "mesh.release": "mesh",
     "mesh.review.answer": "mesh",
     "mesh.review.request": "mesh",
+    "mesh.review.withdraw": "mesh",
     "mesh.session.close": "mesh",
     "mesh.session.open": "mesh",
     "mesh.state": "mesh",
@@ -1622,7 +1633,6 @@
     "Completion": "gates",
     "Component": "continuity",
     "ConclusionView": "reasoning",
-    "Concurrency": "deploy",
     "ConditionState": "intents",
     "Confidence": "environment",
     "Conflict": "devcontext",
@@ -1741,6 +1751,15 @@
     "EconomicsVerdict": "economics",
     "Edge": "graph",
     "EdgeRule": "devcontext",
+    "EditorAdapter": "editors",
+    "EditorCapability": "editors",
+    "EditorDerivation": "editors",
+    "EditorDiagnostic": "editors",
+    "EditorFileState": "editors",
+    "EditorInput": "editors",
+    "EditorInputClass": "editors",
+    "EditorProjection": "editors",
+    "EditorSupport": "editors",
     "EffectiveEntry": "directories",
     "Empty": "mesh",
     "EntityDocumentation": "entity",
@@ -1821,7 +1840,6 @@
     "FirewallReport": "mesh",
     "FirewallRule": "mesh",
     "Fixtures": "repository",
-    "Fly": "deploy",
     "Fonts": "design",
     "Freshness": "shared",
     "GapCondition": "intents",
@@ -2118,12 +2136,10 @@
     "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
-    "Provider": "deploy",
     "ProviderBootstrap": "product",
     "ProviderLifecycle": "lifecycle",
     "ProviderLifecycles": "lifecycle",
     "ProviderList": "product",
-    "ProviderName": "deploy",
     "ProviderOffers": "product",
     "ProviderState": "environment",
     "ProviderStatus": "mesh",
@@ -2237,6 +2253,7 @@
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
+    "ReviewWithdrawInput": "mesh",
     "Role": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
@@ -10143,39 +10160,6 @@
       "variants": []
     },
     {
-      "description": "When the edge considers a machine loaded, in requests.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Concurrency",
-      "properties": [
-        {
-          "description": "Where the edge starts preferring another machine.",
-          "name": "soft_limit",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        },
-        {
-          "description": "Where it stops sending requests to this one.",
-          "name": "hard_limit",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Fly"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "The state of one criterion as the gap observed it. Four values, because \"not determined\"\nhas to be writable: an omitted criterion is refused, and `Unknown` is never a pass.\n\n```\nuse majordomus_cli::intent_review::ConditionState;\nassert_eq!(serde_json::to_string(&ConditionState::Conflicting).unwrap(), \"\\\"conflicting\\\"\");\nassert_ne!(ConditionState::Unknown, ConditionState::Satisfied);\n```",
       "home": "intents",
       "is_enum": true,
@@ -12738,7 +12722,7 @@
           "type": "DeploymentStatus | null"
         },
         {
-          "description": "The application's name at the provider.",
+          "description": "The application's name: what the deployment is known by in a listing.",
           "name": "application",
           "refs": [],
           "required": true,
@@ -12804,15 +12788,6 @@
           ],
           "required": false,
           "type": "Budgets"
-        },
-        {
-          "description": "The provider and its own facts.",
-          "name": "provider",
-          "refs": [
-            "Provider"
-          ],
-          "required": true,
-          "type": "Provider"
         },
         {
           "description": "When the object was written.",
@@ -17221,6 +17196,423 @@
       "variants": []
     },
     {
+      "description": "One adapter: the product, the version its claims were verified against, its capabilities.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorAdapter",
+      "properties": [
+        {
+          "description": "`zed` or `antigravity`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The product's name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release the evidence was taken from.",
+          "name": "verified_against",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its capabilities, by id.",
+          "name": "capabilities",
+          "refs": [
+            "EditorCapability"
+          ],
+          "required": true,
+          "type": "array of EditorCapability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One capability of one adapter.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorCapability",
+      "properties": [
+        {
+          "description": "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ...",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the adapter does with it.",
+          "name": "support",
+          "refs": [
+            "EditorSupport"
+          ],
+          "required": true,
+          "type": "EditorSupport"
+        },
+        {
+          "description": "The files that carry it, repository-relative. Empty when nothing is projected.",
+          "name": "artifacts",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Where the claim about the product comes from.",
+          "name": "evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it means here, and what to do when nothing is projected.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorAdapter"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One projected file and how it came to be.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorDerivation",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document id in the generated-artifact manifest.",
+          "name": "document",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The adapters that read it.",
+          "name": "adapters",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The inputs it is derived from, by path.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "SHA-256 of the projected content.",
+          "name": "sha256",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The state of the file in this checkout.",
+          "name": "state",
+          "refs": [
+            "EditorFileState"
+          ],
+          "required": true,
+          "type": "EditorFileState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Something about the projection worth acting on.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorDiagnostic",
+      "properties": [
+        {
+          "description": "`info`, `warning` or `error`.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "Stable identity of the finding.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The adapter it concerns, when it concerns one.",
+          "name": "adapter",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The file it concerns, when it concerns one.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was found.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A projected file as this checkout holds it.",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorFileState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"absent\" | \"conflict\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorDerivation"
+      ],
+      "values": [
+        {
+          "description": "Byte for byte what the projection says.",
+          "value": "current"
+        },
+        {
+          "description": "Generator-owned and different: `majordomus generate editors` rewrites it.",
+          "value": "stale"
+        },
+        {
+          "description": "Not there: `majordomus generate editors` writes it.",
+          "value": "absent"
+        },
+        {
+          "description": "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it.",
+          "value": "conflict"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One input of the projection: a file, what kind of input it is, and its content address.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorInput",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Tracked content or checkout state.",
+          "name": "mutability",
+          "refs": [
+            "EditorInputClass"
+          ],
+          "required": true,
+          "type": "EditorInputClass"
+        },
+        {
+          "description": "SHA-256 of its content.",
+          "name": "sha256",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far an input may change without the repository changing.",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorInputClass",
+      "properties": [],
+      "type": "\"repository\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorInput"
+      ],
+      "values": [
+        {
+          "description": "Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte.",
+          "value": "repository"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "`editors.status`: every adapter, every projected file and its state, every finding.",
+      "home": "editors",
+      "is_enum": false,
+      "name": "EditorProjection",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`PROJECTION_VERSION`.",
+          "name": "projection_version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The adapters, by id.",
+          "name": "adapters",
+          "refs": [
+            "EditorAdapter"
+          ],
+          "required": true,
+          "type": "array of EditorAdapter"
+        },
+        {
+          "description": "The inputs, by path.",
+          "name": "inputs",
+          "refs": [
+            "EditorInput"
+          ],
+          "required": true,
+          "type": "array of EditorInput"
+        },
+        {
+          "description": "The projected files, by path.",
+          "name": "artifacts",
+          "refs": [
+            "EditorDerivation"
+          ],
+          "required": true,
+          "type": "array of EditorDerivation"
+        },
+        {
+          "description": "Generator-owned files under a projected directory that the plan no longer contains.",
+          "name": "orphans",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The findings, by severity then code then path.",
+          "name": "diagnostics",
+          "refs": [
+            "EditorDiagnostic"
+          ],
+          "required": true,
+          "type": "array of EditorDiagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "editors.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\".",
+      "home": "editors",
+      "is_enum": true,
+      "name": "EditorSupport",
+      "properties": [],
+      "type": "\"supported\" | \"unsupported\" | \"unknown\" | \"deprecated\" | \"requires_user_action\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EditorCapability"
+      ],
+      "values": [
+        {
+          "description": "Projected, from a verified format.",
+          "value": "supported"
+        },
+        {
+          "description": "The product has no project-level form for it.",
+          "value": "unsupported"
+        },
+        {
+          "description": "A project-level form is claimed somewhere and could not be verified; nothing written.",
+          "value": "unknown"
+        },
+        {
+          "description": "The product reads it, from a form this projection will not write.",
+          "value": "deprecated"
+        },
+        {
+          "description": "A person can enable it, outside the repository; the remedy says how.",
+          "value": "requires_user_action"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One contract in a directory's effective chain, in the order it is applied.",
       "home": "directories",
       "is_enum": false,
@@ -18394,6 +18786,7 @@
         "economics.check",
         "economics.explain",
         "economics.runs",
+        "editors.status",
         "entity.show",
         "entity.kinds",
         "environment.status",
@@ -18453,6 +18846,7 @@
         "mesh.register",
         "mesh.review.request",
         "mesh.review.answer",
+        "mesh.review.withdraw",
         "mesh.session.open",
         "mesh.session.close",
         "mesh.state",
@@ -21982,44 +22376,6 @@
       "used_by": [],
       "used_by_schemas": [
         "Out"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "Fly.io's own facts: what has no meaning for any other provider.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Fly",
-      "properties": [
-        {
-          "description": "The organisation the application belongs to.",
-          "name": "org",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Whether the edge redirects plain HTTP to HTTPS.",
-          "name": "force_https",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        },
-        {
-          "description": "When the edge considers a machine loaded.",
-          "name": "concurrency",
-          "refs": [
-            "Concurrency"
-          ],
-          "required": false,
-          "type": "Concurrency | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
       ],
       "values": [],
       "variants": []
@@ -29141,7 +29497,7 @@
       "name": "Listen",
       "properties": [
         {
-          "description": "The port, stated once for the process, the image and the provider configuration.",
+          "description": "The port, stated once for the process and the image.",
           "name": "port",
           "refs": [
             "Port"
@@ -36724,7 +37080,6 @@
       "used_by": [],
       "used_by_schemas": [
         "Budgets",
-        "Concurrency",
         "HealthRoutes",
         "Machines",
         "Resources"
@@ -37871,39 +38226,6 @@
       ]
     },
     {
-      "description": "The provider and the facts that belong to it alone.",
-      "home": "deploy",
-      "is_enum": false,
-      "name": "Provider",
-      "properties": [
-        {
-          "description": "Which provider.",
-          "name": "name",
-          "refs": [
-            "ProviderName"
-          ],
-          "required": true,
-          "type": "ProviderName"
-        },
-        {
-          "description": "Fly's own block, when the provider is Fly.",
-          "name": "fly",
-          "refs": [
-            "Fly"
-          ],
-          "required": false,
-          "type": "Fly | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "One bootstrap a provider renders.",
       "home": "product",
       "is_enum": false,
@@ -38070,25 +38392,6 @@
       ],
       "used_by_schemas": [],
       "values": [],
-      "variants": []
-    },
-    {
-      "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.",
-      "home": "deploy",
-      "is_enum": true,
-      "name": "ProviderName",
-      "properties": [],
-      "type": "\"fly\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
-      ],
-      "values": [
-        {
-          "description": "Fly.io.",
-          "value": "fly"
-        }
-      ],
       "variants": []
     },
     {
@@ -45557,6 +45860,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -45568,12 +45878,12 @@
       "variants": []
     },
     {
-      "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```",
+      "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```",
       "home": "mesh",
       "is_enum": true,
       "name": "ReviewState",
       "properties": [],
-      "type": "\"open\" | \"answered\"",
+      "type": "\"open\" | \"answered\" | \"withdrawn\" | \"expired\"",
       "used_by": [],
       "used_by_schemas": [
         "ReviewView"
@@ -45586,12 +45896,20 @@
         {
           "description": "At least one answer.",
           "value": "answered"
+        },
+        {
+          "description": "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it.",
+          "value": "withdrawn"
+        },
+        {
+          "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again.",
+          "value": "expired"
         }
       ],
       "variants": []
     },
     {
-      "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```",
+      "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "ReviewView",
@@ -45639,6 +45957,13 @@
           "type": "string | null"
         },
         {
+          "description": "What the reviewer needs beyond the subject, when the requester wrote it.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "Its standing.",
           "name": "state",
           "refs": [
@@ -45655,6 +45980,13 @@
           ],
           "required": true,
           "type": "array of ReviewAnswer"
+        },
+        {
+          "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict.",
+          "name": "result",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -45662,6 +45994,42 @@
       "used_by_schemas": [
         "CooperationState"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.review.withdraw`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewWithdrawInput",
+      "properties": [
+        {
+          "description": "The request's key, `<stream>/<review>`.",
+          "name": "request",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The requester's result or reason, up to 8 KiB: what came of it, or why it is void.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.review.withdraw"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -48820,6 +49188,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Diagnostic",
+        "EditorDiagnostic",
         "ExecutionDiagnostic",
         "Finding",
         "ProductFinding",
@@ -55304,6 +55673,7 @@
         "mesh.handover.publish",
         "mesh.review.request",
         "mesh.review.answer",
+        "mesh.review.withdraw",
         "mesh.session.open",
         "mesh.session.close"
       ],
@@ -57050,7 +57420,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments\"",
-          "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+          "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
           "home": "deploy",
           "id": "deploy.list",
           "kind": "query",
@@ -58630,6 +59000,70 @@
         }
       ],
       "slug": "economics"
+    },
+    {
+      "description": "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding.",
+      "name": "editors",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/editors\"",
+          "description": "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does.",
+          "home": "editors",
+          "id": "editors.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "editors",
+            "uri": "majordomus://editors"
+          },
+          "mcp_tool": "majordomus_editors",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/editors",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::editors",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Editor and agent projections: the result.",
+              "schema": "EditorProjection",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EditorProjection",
+          "stability": "behaviorally_verified",
+          "summary": "Editor and agent projections"
+        }
+      ],
+      "slug": "editors"
     },
     {
       "description": "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object.",
@@ -63085,6 +63519,70 @@
           "result_schema": "Written",
           "stability": "experimental",
           "summary": "Answer a review request"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "unknown",
+              "json": "{\"request\":\"none/r-0\",\"session\":\"bench\",\"note\":\"superseded\"}"
+            }
+          ],
+          "body_schema": "ReviewWithdrawInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews/withdraw\" -H \"content-type: application/json\" -d '{\"request\":\"none/r-0\",\"session\":\"bench\",\"note\":\"superseded\"}'",
+          "description": "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.review.withdraw",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_review_withdraw",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/reviews/withdraw",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Withdraw a review request: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Withdraw a review request"
         },
         {
           "benchmark": "waived",

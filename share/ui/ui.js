@@ -1,6 +1,7 @@
 // The UI's one script: `majordomus ui`, the primary surface (ADR 0135).
 //
-// It adds two things to pages that are complete without it.
+// It adds two things to pages that are complete without it, and neither to a snapshot of
+// them (below), which reads nothing again.
 //
 // A panel whose source is slow is drawn as a placeholder that links to the panel's own
 // route (`data-panel-src`). Once the screen has painted, this fetches that route with
@@ -240,13 +241,33 @@ async function refresh() {
   }
 }
 
+// A snapshot (ADR 0141) is the UI read once at a commit and published as files: nothing on it
+// is read again, because a host answers a query it ignores with the same file, and a panel's
+// placeholder already links to the panel's own page. The body says so (`data-snapshot`).
+// Its page about the live UI names the path a link meant, which the link carries after `#`.
+const SNAPSHOT = Boolean(document.body && 'snapshot' in document.body.dataset);
+
+function showSnapshotPath() {
+  const target = document.querySelector('[data-snapshot-path]');
+  if (target && window.location.hash.length > 1) {
+    target.textContent = decodeURIComponent(window.location.hash.slice(1));
+  }
+}
+
 function enhance() {
-  for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
-    fillPanel(placeholder);
+  if (!SNAPSHOT) {
+    for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
+      fillPanel(placeholder);
+    }
   }
   drawGraphs();
 }
 
 wireTheme();
 enhance();
-if (!window.location.pathname.includes('/panels/')) setInterval(refresh, REFRESH_MS);
+if (SNAPSHOT) {
+  showSnapshotPath();
+  window.addEventListener('hashchange', showSnapshotPath);
+} else if (!window.location.pathname.includes('/panels/')) {
+  setInterval(refresh, REFRESH_MS);
+}

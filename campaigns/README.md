@@ -21,6 +21,8 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-0.15.0-release-prompt-pack` | 2026-10-07 | 13 | Majordomus 0.15.0 — Same-Day Release Prompt Pack | `~/Downloads/majordomus-0.15.0-release-prompt-pack.zip` |
 | `majordomus-ai-layer` | 2026-09-04 | 16 | Majordomus Agent Bootstrap | `~/Downloads/majordomus-ai-layer` |
 | `majordomus-ai-transform-pack` | 2026-09-04 | 32 | Majordomus `.ai/` Transformation Pack | `~/Downloads/majordomus-ai-transform-pack` |
+| `majordomus-antigravity-pack` | 2026-10-11 | 10 | Majordomus × Google Antigravity: Editor + Agent Intelligence Prompt Pack | `~/Downloads/majordomus-antigravity-prompt-pack.zip` |
+| `majordomus-antigravity-v2` | 2026-10-12 | 8 | Majordomus Antigravity/Zed Editor Intelligence V2 Addendum | `~/Downloads/majordomus-antigravity-v2-derived-buildrs-pack.zip` |
 | `majordomus-auto-control-plane-pack` | 2026-09-09 | 13 | Majordomus Automatic Control Plane Prompt Pack | `tmp/packs/majordomus-auto-control-plane-pack` |
 | `majordomus-autopilot-pack-20261010` | 2026-10-10 | 8 | Majordomus Autonomous Delivery Convergence · 2026-10-10 | `~/Downloads/majordomus-autopilot-pack-20261010.zip` |
 | `majordomus-chatgpt-project-pack` | 2026-09-04 | 8 | Majordomus ChatGPT Project Pack | `~/Downloads/majordomus-chatgpt-project-pack` |
@@ -35,6 +37,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-dashboard-concepts` | 2026-10-11 | 4 | (images: dashboard concepts the owner handed over beside the UI packs, two of 2026-10-02 and two of 2026-10-11, each with its C2PA content credentials intact) | `~/Downloads/*Dashboard*.png`, kept byte for byte with each space of the downloaded name written as a hyphen (the scope check reads a changed path as words) |
 | `majordomus-delivery-acceleration-prompt-pack-20261011` | 2026-10-10 | 15 | MAJORDOMUS: DELIVERY CONVERGENCE CAMPAIGN | `~/Downloads/majordomus-delivery-acceleration-prompt-pack-20261011.zip` |
 | `majordomus-derive-infer-enforce-prompt-pack` | 2026-10-11 | 8 | Prompt pack: Majordomus derive/infer/verify/enforce | `~/Downloads/majordomus-derive-infer-enforce-prompt-pack.zip` |
+| `majordomus-editor-intelligence-pack` | 2026-10-11 | 9 | Majordomus Editor Intelligence — Claude Code Opus/Fable prompt pack | `~/Downloads/majordomus-editor-intelligence-prompt-pack.zip` |
 | `majordomus-flux-v1-20261011` | 2026-10-11 | 15 | Majordomus Flux V1 — Derived Delivery Engine | `~/Downloads/majordomus-flux-v1-20261011.zip` (request-scoped snapshots, fragment cache, incremental derive, pagination and live streaming under every UI surface) |
 | `majordomus-github-workgraph-prompt-pack` | 2026-09-09 | 17 | Majordomus GitHub / Work Graph Prompt Pack | `~/Downloads/majordomus-github-workgraph-prompt-pack` |
 | `majordomus-idd-completion-prompt-pack` | 2026-09-16 | 15 | Majordomus IDD Completion Prompt Pack | `~/Downloads/majordomus-idd-completion-prompt-pack.zip` |

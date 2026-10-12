@@ -139,7 +139,6 @@ impl Reading {
     }
 
     /// The value as a count, when it is a number.
-    #[cfg(test)]
     pub fn count(&self) -> Option<u64> {
         match &self.state {
             Availability::Available(v) => v.as_u64(),

@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 67
+weight = 68
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -606,6 +606,46 @@ documentation root, every route the catalogue publishes a kind at, one page of e
 kind, `/openapi.json` and `/build.json`. Run the same command by hand against any deployed
 commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
 against a served fixture.
+
+### The UI a deploy publishes
+
+The site carries `majordomus ui` at `/ui/` as a snapshot read at the published commit (ADR
+0141, `docs/MAJORDOMUS_UI.md`). The workflow's `ui-snapshot` job builds the executable from
+that commit and runs `majordomus web report ui-snapshot`; it runs beside the `rustdoc` job,
+and the deploy job waits for both. After `scripts/pages check` and before the push, the deploy
+job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
+that is absent, one read at another commit, and a mount the site itself already built.
+
+The snapshot is a generated surface, known only where its producer ran, so it is not in the
+committed topology and `scripts/site-build` does not compose it: a local build of the site has
+no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages. No
+probe reads the public `/ui/` after a deploy yet.
+
+### The release the site offers
+
+Which release is the latest is one fact with three public surfaces: the homepage (the navbar
+badge, the hero and the trust strip's `data-release`), `/releases/latest.json`, which the
+installer resolves, and the newest GitHub release. A release reaches them in that order — GitHub,
+then `latest.json` from the release's publish job (`scripts/site-deploy --release-metadata`,
+ADR 0131), then the pages from the build of master that job asks for — and the record that
+archives it lands later still, through its own pull request.
+
+So the pages do not read the record. `scripts/site-build` derives the release the site offers as
+the newer of the record's projection (`site/data/registry/distribution.json`) and the
+`releases/latest.json` that `origin/gh-pages` serves, read from git and named in `build.json`
+(`release.source`, `release.published_from`); `base.html` sets `offered` from it and every page
+reads `offered`. When the published release is the newer, the build serves its two documents, so
+the metadata beside the pages names what they offer. `scripts/site-build --release` prints the
+derivation alone.
+
+It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
+`/build.json` and `/releases/latest.json` disagree, or whose two committed projections of the latest release do;
+the deploy's `the release it offers` step runs `scripts/pages release-live` once the site serves
+the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
+the schedule and at `finish`. A disagreement younger than `deploy.release_window`
+(`.ai/repo/ci/pages.yaml`) after GitHub's release is a publication in flight; older, or a site
+offering a version GitHub has not published, is a failure. The rule is
+`project.the-site-offers-the-release-it-published`.
 
 ### When a deploy does not happen
 

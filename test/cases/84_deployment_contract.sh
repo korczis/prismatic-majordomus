@@ -55,8 +55,6 @@ machines:
   autostart: true
   autostop: true
 region: fra
-provider:
-  name: fly
 MD
 git add -A >/dev/null
 
@@ -77,6 +75,9 @@ probe() {   # reason mutation...
 }
 probe 'key\(s\) the contract does not have: fly_api_token' \
   sed -i.bak 's|^region: fra$|region: fra\nfly_api_token: "x"|' "$d"
+# no hosting provider is a target: a provider block is a key the contract does not have
+probe 'key\(s\) the contract does not have: provider' \
+  sed -i.bak 's|^region: fra$|region: fra\nprovider:\n  name: fly|' "$d"
 probe 'this executable reads deployment/v1' \
   sed -i.bak 's|^schema: deployment/v1$|schema: deployment/v2|' "$d"
 probe 'lacks region' \
@@ -90,7 +91,7 @@ probe 'machines.min_running 2 exceeds machines.count 1' \
 probe 'is not a path beginning with /' \
   sed -i.bak 's|^  liveness: /healthz$|  liveness: http://example.invalid/healthz|' "$d"
 probe 'carries what reads as a credential' \
-  sed -i.bak 's|^  org: .*$||; s|^provider:$|provider:\n  fly:\n    org: "FlyV1 fm2_notarealtoken"|' "$d"
+  sed -i.bak 's|^description: .*$|description: "FlyV1 fm2_notarealtoken"|' "$d"
 rm -f "$d".bak
 
 # two objects, one identity
@@ -105,7 +106,9 @@ rm -f .ai/repo/deployments/a-second-claim.yaml; git add -A >/dev/null
 allow="$(dirname "$(dirname "$MJ")")/share/allow/deployment.txt"
 [ -f "$allow" ] || { echo "    share/allow/deployment.txt was not projected from the schema"; exit 1; }
 grep -qx '\^listen\\.port\$' "$allow" || { echo "    the allow-list does not close listen.port"; exit 1; }
-grep -qx '\^provider\\.fly\\.org\$' "$allow" || { echo "    the allow-list does not reach into the provider block"; exit 1; }
+grep -qx '\^budgets\\.blocking_check_ms\$' "$allow" || { echo "    the allow-list does not reach into the budgets block"; exit 1; }
+# no hosting provider is a target, so the contract has no block for one
+grep -q '^\^provider' "$allow" && { echo "    the allow-list still admits a provider block"; exit 1; }
 
 # and the restored object is accepted again: every refusal above was the mutation, not the shape
 "$MJ" doctor 2>&1 | grep -q 'OK   deployment' || { echo "    the restored object is no longer accepted"; exit 1; }

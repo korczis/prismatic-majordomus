@@ -2,6 +2,11 @@
 {%- set source = load_data(path="data/generated/source.json") -%}
 {#- build.json is written by scripts/site-build and ignored by git; a plain `zola serve` has none, so it is optional and the two places that show the commit fall back. -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
+{#- The release this site offers: derived once, by scripts/site-build, as the newer of the
+    newest release record and the release metadata gh-pages already serves, and carried in
+    build.json. Every page that names "the latest release" reads `offered` and nothing else
+    (project.the-site-offers-the-release-it-published); false on a plain `zola serve`. -#}
+{%- set offered = build.release if build and build.release else false -%}
 {%- set m = load_data(path="data/marketing.toml") -%}
 {#- the design contract, generated from share/design/tokens.yaml: the theme class and storage key the toggle honours, the pre-paint statement, the fingerprint the probes compare with the stylesheet's. -#}
 {%- set design = load_data(path="data/registry/design.json") -%}

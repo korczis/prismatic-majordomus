@@ -208,6 +208,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI conformance report surface from a probe's output, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report ui-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",
@@ -409,6 +414,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh review answer",
         reason: LocalReason::RendersCapability("mesh.review.answer"),
         note: "runs mesh.review.answer on this checkout's running server, whose journal holds the request.",
+    },
+    LocalCommand {
+        command: "mesh review withdraw",
+        reason: LocalReason::RendersCapability("mesh.review.withdraw"),
+        note: "runs mesh.review.withdraw on this checkout's running server, whose journal holds the request.",
     },
     LocalCommand {
         command: "capabilities validate",

@@ -1,0 +1,33 @@
+id: I2482
+milestone: development-runtime
+title: "Every screen of the UI has a case, and no link on the UI is dead"
+slug: every-ui-screen-has-a-case
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers."
+why: "The owner asked on 2026-10-12 that majordomus ui be tested and verified. The audit of the merged UI found six screens no case or integration test reaches (Command, Issues & PRs, Capabilities, Mesh, Deployments with its delivery panel, Documentation), a Governance screen with no unit test, and nothing that checks a link the UI draws leads anywhere."
+current_state: "Cases 1075-1083 prove the drain, the roadmap, CI timings, the trail, throughput, issues, intents, claims and rules; tests/ui_surface.rs proves the Dashboard and the queue panel. The other screens and every link are unproven."
+desired_state: "Cases 1088-1091 serve a fixture and read the Command, Issues & PRs, Capabilities (with an inspected capability), Mesh (with a node), Deployments (with the delivery panel) and Documentation screens, each saying what it must show; governance.rs has unit tests; tests/ui_links.rs serves a fixture, reads every screen of the navigation and every link under /ui and /cockpit/object it draws, and fails on any that does not answer 200."
+scope:
+  - "apps/majordomus-cli/src/ui/governance.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "test/cases/1088_the_command_and_capability_screens_answer.sh"
+  - "test/cases/1089_the_work_and_mesh_screens_answer.sh"
+  - "test/cases/1090_the_deployments_and_docs_screens_answer.sh"
+  - "test/cases/1091_no_link_on_the_ui_is_dead.sh"
+  - ".ai/repo/project/issues/I2482.yaml"
+depends_on: ["I2481"]
+acceptance_criteria:
+  - "every screen of the navigation is read by a case through a real server"
+  - "governance.rs has unit tests"
+  - "every link under /ui and /cockpit/object the screens draw answers 200, and a test fails when one does not"
+validation:
+  - "cargo test --lib ui::governance"
+  - "cargo test --test ui_links"
+  - "test/run.sh 1088_the_command_and_capability_screens_answer"
+evidence_required:
+  - "ui_screen_cases_1088_1091"
+  - "ui_links_integration_test"
+created_at: 2026-10-12
+updated_at: 2026-10-12

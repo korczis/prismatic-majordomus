@@ -1186,8 +1186,8 @@ See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
 ## `.ai/repo/deployments/<id>.yaml`
 
 One deployment of this repository's executable, and the only authoritative statement of
-it. The container image definition, its ignore file and the provider configuration
-(`fly.toml`) are **generated** from this object; each carries a provenance header naming
+it. The container image definition (`deploy/Dockerfile`) and its ignore file
+(`.dockerignore`) are **generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
 [`share/schemas/majordomus/deployment/deployment.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/deployment/deployment.v1.schema.json)
@@ -1201,7 +1201,7 @@ title: ...                      # one line, for a listing
 description: ...                # one line: what it serves and to whom
 status: declared                # declared | active | retired
 
-application: majordomus         # the application's name at the provider
+application: majordomus         # the application's name, for a listing
 
 build:
   package: majordomus-cli       # the Cargo package built
@@ -1232,7 +1232,7 @@ machines:
   autostart: true
   autostop: true
 
-region: fra                     # the provider's own vocabulary
+region: fra                     # required; no generated artifact reads it now
 
 budgets:                        # each written by the run that measured it; none guessed
   image_bytes: ...
@@ -1242,18 +1242,16 @@ budgets:                        # each written by the run that measured it; none
   resident_memory_mb: ...
   blocking_check_ms: ...
   request_p99_ms: ...
-
-provider:
-  name: fly                     # provider-specific facts live here and nowhere else
-  fly:
-    org: ...
-    force_https: true
-    concurrency: { soft_limit: 20, hard_limit: 40 }
 ```
 
-**The port is stated once.** The process, the image and the provider configuration all
-read this one field; a literal port anywhere else is the drift this kind exists to
-prevent. The same holds for the region, the resources, the machine count, the health
+**No hosting provider is named.** None is a target: the release binaries, GitHub Pages and
+the GHCR image built from `deploy/Dockerfile` are what ships. The object once carried a
+`provider` block naming Fly.io, rendered into `fly.toml`; nothing ever ran there, and on
+2026-10-12 the block, its reader and `fly.toml` were removed together. A `provider` key is
+now refused like any other key the contract does not have.
+
+**The port is stated once.** The process and the image both read this one field; a literal
+port anywhere else is the drift this kind exists to prevent. The same holds for the health
 routes and the build inputs.
 
 **No credential belongs here.** The token that authorises a deployment comes from outside

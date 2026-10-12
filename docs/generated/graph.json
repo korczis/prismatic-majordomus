@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.21.0",
+  "generator": "majordomus-cli 0.22.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -481,6 +481,15 @@
         "summary": "Token economics summary",
         "route": "/cockpit/capabilities/economics.summary",
         "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:editors.status",
+        "kind": "capability",
+        "label": "editors.status",
+        "summary": "Editor and agent projections",
+        "route": "/cockpit/capabilities/editors.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/editors.rs",
         "status": "query"
       },
       {
@@ -1101,6 +1110,15 @@
         "label": "mesh.review.request",
         "summary": "Ask the mesh for a review",
         "route": "/cockpit/capabilities/mesh.review.request",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.review.withdraw",
+        "kind": "capability",
+        "label": "mesh.review.withdraw",
+        "summary": "Withdraw a review request",
+        "route": "/cockpit/capabilities/mesh.review.withdraw",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "command"
       },
@@ -3199,6 +3217,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/mod.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/web/discover.rs",
         "kind": "file",
         "label": "discover.rs",
@@ -3220,6 +3246,14 @@
         "label": "model.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/web/model.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+        "kind": "file",
+        "label": "snapshot.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/web/report/snapshot.rs",
         "external": true
       },
       {
@@ -6845,6 +6879,53 @@
             "operations",
             "worktrees",
             "disk"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0140",
+        "kind": "adr",
+        "label": "adr-0140",
+        "summary": "Editors and agents read projections of the layer, and cargo embeds none of it",
+        "route": "/cockpit/objects/adr/adr-0140",
+        "source": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "tags": [
+            "editors",
+            "projections",
+            "generated",
+            "build"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0141",
+        "kind": "adr",
+        "label": "adr-0141",
+        "summary": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+        "route": "/cockpit/objects/adr/adr-0141",
+        "source": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md",
+            "file:.ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
+            "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+            "file:apps/majordomus-cli/src/ui/mod.rs",
+            "file:docs/MAJORDOMUS_UI.md",
+            "file:docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "file:test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            "file:test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "pages"
           ]
         }
       },
@@ -13360,7 +13441,7 @@
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
-        "summary": "The Majordomus layer, served from one machine",
+        "summary": "The Majordomus layer, served from its container image",
         "route": "/cockpit/objects/deployment/majordomus",
         "source": ".ai/repo/deployments/majordomus.yaml",
         "status": "declared",
@@ -13368,7 +13449,7 @@
           "application": "majordomus",
           "created_at": "2026-09-06",
           "region": "fra",
-          "updated_at": "2026-09-06"
+          "updated_at": "2026-10-12"
         }
       },
       {
@@ -13781,6 +13862,14 @@
         "summary": "Economics",
         "route": "/cockpit/objects/document/docs-economics-md",
         "source": "docs/ECONOMICS.md"
+      },
+      {
+        "id": "majordomus://document/docs/EDITORS.md",
+        "kind": "document",
+        "label": "docs/EDITORS.md",
+        "summary": "Editors and agents",
+        "route": "/cockpit/objects/document/docs-editors-md",
+        "source": "docs/EDITORS.md"
       },
       {
         "id": "majordomus://document/docs/ENTRY.md",
@@ -16805,7 +16894,7 @@
         "id": "majordomus://feature/deployments",
         "kind": "feature",
         "label": "deployments",
-        "summary": "A deployment is one canonical object, and every provider artifact is generated from it",
+        "summary": "A deployment is one canonical object, and every artifact built from it is generated from it",
         "route": "/cockpit/objects/feature/deployments",
         "source": ".ai/repo/features/deployments.md",
         "status": "draft",
@@ -16824,7 +16913,7 @@
           ],
           "domain": "surfaces",
           "featured": false,
-          "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
+          "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
           "kinds": [
             "deployment"
           ],
@@ -23169,7 +23258,7 @@
             "apps/majordomus-cli/src/deploy/container.rs"
           ],
           "slug": "container-projection",
-          "updated_at": "2026-09-10",
+          "updated_at": "2026-10-12",
           "validation": [
             "majordomus generate --check",
             "cargo test --workspace --all-features"
@@ -23363,7 +23452,7 @@
             "apps/majordomus-cli/src/deploy/fly.rs"
           ],
           "slug": "fly-configuration-projection",
-          "updated_at": "2026-09-10",
+          "updated_at": "2026-10-12",
           "validation": [
             "majordomus generate --check",
             "fly config validate"
@@ -33343,6 +33432,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2464",
+        "kind": "issue",
+        "label": "I2464",
+        "summary": "A path that holds a space is one path to the scope doctrine",
+        "route": "/cockpit/objects/issue/i2464",
+        "source": ".ai/repo/project/issues/I2464.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus check passes a task whose in-scope files hold spaces, committed, staged, modified, untracked and renamed",
+            "an out-of-scope path with a space is reported once, whole, never in pieces or in quotes",
+            "case 1073 fails against master without the change"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "mj_git_touched and four other readers take `git status --porcelain` without -z, and two callers split its output into words; a path with a space is refused as several paths outside the scope.",
+          "depends_on": [],
+          "evidence_required": [
+            "path_with_space_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Read the files a task touched as one path per line, with git's -z output, everywhere the shell layer lists them, so that a file name holding a space is judged as the one path it is.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/check.sh",
+            "lib/context.sh",
+            "lib/changed.sh",
+            "lib/evidence.sh",
+            "lib/derive.sh",
+            "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+            ".ai/repo/project/issues/I2464.yaml"
+          ],
+          "slug": "a-path-with-a-space-is-one-path",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bash test/run.sh 1073_a_path_with_a_space_is_one_path 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2470",
         "kind": "issue",
         "label": "I2470",
@@ -33782,6 +33913,152 @@
           ],
           "verified_at": "2026-10-12T11:01:39Z",
           "verified_event": "sha256:5b833de8b479047ca8544b9d45652df8471a836574e79af7ead6ec8bff68779d"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2481",
+        "kind": "issue",
+        "label": "I2481",
+        "summary": "The UI links every entity it names, and says none where a source has no value",
+        "route": "/cockpit/objects/issue/i2481",
+        "source": ".ai/repo/project/issues/I2481.yaml",
+        "facts": {
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2478"
+          ],
+          "evidence_required": [
+            "ui_links_unit_tests"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/source.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "apps/majordomus-cli/src/ui/deployments.rs",
+            "apps/majordomus-cli/src/ui/command.rs",
+            "apps/majordomus-cli/src/ui/docs.rs",
+            "apps/majordomus-cli/src/ui/prs.rs",
+            "apps/majordomus-cli/src/ui/rule.rs",
+            "apps/majordomus-cli/src/ui/claim.rs",
+            "apps/majordomus-cli/src/ui/evidence.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "apps/majordomus-cli/src/ui/work.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            ".ai/repo/project/issues/I2481.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1079_the_drain_draws_its_throughput.sh"
+          ],
+          "slug": "the-ui-links-every-entity",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib ui::",
+            "scripts/ci/cockpit-projection-check --ui-integrity",
+            "test/run.sh 1079_the_drain_draws_its_throughput"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2482",
+        "kind": "issue",
+        "label": "I2482",
+        "summary": "Every screen of the UI has a case, and no link on the UI is dead",
+        "route": "/cockpit/objects/issue/i2482",
+        "source": ".ai/repo/project/issues/I2482.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "every screen of the navigation is read by a case through a real server",
+            "governance.rs has unit tests",
+            "every link under /ui and /cockpit/object the screens draw answers 200, and a test fails when one does not"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2481"
+          ],
+          "evidence_required": [
+            "ui_screen_cases_1088_1091",
+            "ui_links_integration_test"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Prove every screen of majordomus ui through a real server, and prove that every link the UI draws inside the server answers.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/governance.rs",
+            "apps/majordomus-cli/tests/ui_links.rs",
+            "test/cases/1088_the_command_and_capability_screens_answer.sh",
+            "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+            "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+            "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+            ".ai/repo/project/issues/I2482.yaml"
+          ],
+          "slug": "every-ui-screen-has-a-case",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib ui::governance",
+            "cargo test --test ui_links",
+            "test/run.sh 1088_the_command_and_capability_screens_answer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2483",
+        "kind": "issue",
+        "label": "I2483",
+        "summary": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui",
+        "route": "/cockpit/objects/issue/i2483",
+        "source": ".ai/repo/project/issues/I2483.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "the snapshot holds every screen its own navigation names, and a second run with a smaller bound leaves no page of the first",
+            "no page keeps an absolute link under /ui, and every relative link names a file the snapshot holds",
+            "a link to the Cockpit, the API or a form leads to the page about the live UI, carrying the path it meant",
+            "every page says the commit it was read at, and the script fetches no panel and refreshes nothing in a snapshot",
+            "the declaration is a published-only surface at /ui built from this commit, and the topology validates with it beside the served UI",
+            "the Pages deploy places the snapshot of the commit it publishes at /ui and refuses one of another commit"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_snapshot_unit_tests",
+            "ui_snapshot_case_1092",
+            "ui_snapshot_case_1093",
+            "ui_snapshot_on_pages"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "apps/majordomus-cli/src/web/report/mod.rs",
+            "apps/majordomus-cli/src/commands/web.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/ui/ui.js",
+            ".github/workflows/pages.yml",
+            ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            ".ai/repo/project/issues/I2483.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+            "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+          ],
+          "slug": "the-ui-is-published-as-a-snapshot",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "cargo test --lib web::report::snapshot",
+            "test/run.sh 1092_the_ui_snapshot_holds_every_screen",
+            "test/run.sh 1093_the_ui_snapshot_links_nothing_absent",
+            "test/run.sh 97_pages_fast_path",
+            "test/run.sh 26_ci_wiring"
+          ]
         }
       },
       {
@@ -39478,7 +39755,7 @@
         "id": "majordomus://rule/majordomus.deployment-contract@1",
         "kind": "rule",
         "label": "majordomus.deployment-contract@1",
-        "summary": "A deployment is described once, and every provider artifact is generated from it",
+        "summary": "A deployment is described once, and every artifact built from it is generated from it",
         "route": "/cockpit/objects/rule/majordomus-deployment-contract-1",
         "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
         "status": "active",
@@ -42308,6 +42585,29 @@
             "sessions",
             "continuity",
             "lifecycle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "rule",
+        "label": "project.the-site-offers-the-release-it-published@1",
+        "summary": "The site offers the release that was published, on every surface at once",
+        "route": "/cockpit/objects/rule/project-the-site-offers-the-release-it-published-1",
+        "source": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2",
+            "project.land-and-publish@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "release",
+            "publication",
+            "web",
+            "distribution"
           ]
         }
       },
@@ -47182,6 +47482,13 @@
         "source": "test/cases/1072_the_train_is_seen.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "kind": "test",
+        "label": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "route": "/cockpit/objects/test/test-cases-1073-a-path-with-a-space-is-one-path-sh",
+        "source": "test/cases/1073_a_path_with_a_space_is_one_path.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
         "kind": "test",
         "label": "test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
@@ -47273,6 +47580,27 @@
         "source": "test/cases/1086_a_remote_caller_cannot_write.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "kind": "test",
+        "label": "test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "route": "/cockpit/objects/test/test-cases-1087-the-site-offers-the-release-it-published-sh",
+        "source": "test/cases/1087_the_site_offers_the_release_it_published.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "kind": "test",
+        "label": "test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "route": "/cockpit/objects/test/test-cases-1088-the-command-and-capability-screens-answer-sh",
+        "source": "test/cases/1088_the_command_and_capability_screens_answer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "kind": "test",
+        "label": "test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "route": "/cockpit/objects/test/test-cases-1089-the-work-and-mesh-screens-answer-sh",
+        "source": "test/cases/1089_the_work_and_mesh_screens_answer.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
         "kind": "test",
         "label": "test/cases/108_entry_converges_on_a_server.sh",
@@ -47292,6 +47620,34 @@
         "label": "test/cases/108b_scope_after_trunk_fast_forward.sh",
         "route": "/cockpit/objects/test/test-cases-108b-scope-after-trunk-fast-forward-sh",
         "source": "test/cases/108b_scope_after_trunk_fast_forward.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "kind": "test",
+        "label": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "route": "/cockpit/objects/test/test-cases-1090-the-deployments-and-docs-screens-answer-sh",
+        "source": "test/cases/1090_the_deployments_and_docs_screens_answer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "kind": "test",
+        "label": "test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "route": "/cockpit/objects/test/test-cases-1091-no-link-on-the-ui-is-dead-sh",
+        "source": "test/cases/1091_no_link_on_the_ui_is_dead.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "test",
+        "label": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "route": "/cockpit/objects/test/test-cases-1092-the-ui-snapshot-holds-every-screen-sh",
+        "source": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "test",
+        "label": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "route": "/cockpit/objects/test/test-cases-1093-the-ui-snapshot-links-nothing-absent-sh",
+        "source": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
       },
       {
         "id": "majordomus://test/test/cases/109_design_system.sh",
@@ -52133,6 +52489,11 @@
         "label": "economics"
       },
       {
+        "id": "module:editors",
+        "kind": "module",
+        "label": "editors"
+      },
+      {
         "id": "module:entity",
         "kind": "module",
         "label": "entity"
@@ -53265,6 +53626,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:editors.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:editors.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:editors.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:entity.kinds",
         "target": "projection:cli",
         "kind": "projects"
@@ -54411,6 +54787,21 @@
       },
       {
         "source": "capability:mesh.review.request",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.withdraw",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.withdraw",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.withdraw",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -59543,6 +59934,61 @@
         "source": "majordomus://adr/adr-0139",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0140",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0022",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0086",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0141",
+        "target": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -65386,6 +65832,11 @@
       },
       {
         "source": "majordomus://document/docs/ECONOMICS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/EDITORS.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -72170,6 +72621,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2464",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2464",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2470",
         "target": "kind:issue",
         "kind": "is_a"
@@ -72306,6 +72767,51 @@
       },
       {
         "source": "majordomus://issue/I2478",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2481",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2481",
+        "target": "majordomus://issue/I2478",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2481",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "majordomus://issue/I2481",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2482",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2483",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2483",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2483",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -74670,6 +75176,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-version-is-measured@2",
         "target": "kind:rule",
         "kind": "is_a"
@@ -75640,6 +76166,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1074_a_script_that_sources_the_library_leaves_no_temp_files.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -75705,6 +76236,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1087_the_site_offers_the_release_it_published.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1088_the_command_and_capability_screens_answer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1089_the_work_and_mesh_screens_answer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -75716,6 +76262,26 @@
       },
       {
         "source": "majordomus://test/test/cases/108b_scope_after_trunk_fast_forward.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1091_no_link_on_the_ui_is_dead.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -80700,6 +81266,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:editors",
+        "target": "capability:editors.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:entity",
         "target": "capability:entity.kinds",
         "kind": "composes"
@@ -81042,6 +81613,11 @@
       {
         "source": "module:mesh",
         "target": "capability:mesh.review.request",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.review.withdraw",
         "kind": "composes"
       },
       {
@@ -81426,8 +82002,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2658,
-      "edges": 5803,
+      "nodes": 2679,
+      "edges": 5846,
       "acyclic": false,
       "truncated": false
     }

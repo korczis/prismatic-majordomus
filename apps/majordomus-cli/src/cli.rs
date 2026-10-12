@@ -1327,6 +1327,8 @@ pub enum MeshReviewCommand {
     Request(MeshReviewRequestArgs),
     /// Answer a review request
     Answer(MeshReviewAnswerArgs),
+    /// Withdraw a review request this runtime asked for, with its result
+    Withdraw(MeshReviewWithdrawArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1369,6 +1371,10 @@ pub struct MeshReviewRequestArgs {
     /// The runtime asked, `<node>-<runtime>`
     #[arg(long)]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question (up to
+    /// 8 KiB)
+    #[arg(long)]
+    pub body: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1520,6 +1526,42 @@ pub fn parse_duration(text: &str) -> std::result::Result<u64, String> {
         _ => return Err(format!("{text:?} has an unknown unit: use s, m, h or d")),
     };
     Ok(n.saturating_mul(scale))
+}
+
+#[derive(Debug, Args)]
+/// `mesh review withdraw`: end a request this runtime asked for, because it is done, void
+/// or superseded, with what came of it. Any session of the asking runtime may, no other
+/// runtime may; the note is its own result, shown with the request, and never an answer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand,
+///     MeshReviewWithdrawArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "withdraw", "a1b2c3d4-r1/r-1", "--session", "s1",
+///     "--note", "superseded by the rebuilt head",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Withdraw(w) = review.command else { panic!("expected `withdraw`") };
+/// let w: MeshReviewWithdrawArgs = w;
+/// assert_eq!(w.request, "a1b2c3d4-r1/r-1");
+/// assert_eq!(w.note.as_deref(), Some("superseded by the rebuilt head"));
+/// ```
+pub struct MeshReviewWithdrawArgs {
+    /// The request's key, `<stream>/<review>`
+    pub request: String,
+    /// The withdrawing session, within the runtime that asked
+    #[arg(long)]
+    pub session: String,
+    /// What came of it, or why it is void (up to 8 KiB)
+    #[arg(long)]
+    pub note: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -3144,6 +3186,17 @@ pub enum ReportCommand {
         #[arg(long)]
         from: PathBuf,
     },
+    /// The UI itself, read once at this commit and written as static pages a publication
+    /// carries at /ui (ADR 0141)
+    UiSnapshot {
+        /// The most pages to write: every screen and panel first, then what they link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the screens link to; the screens and
+        /// panels are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -4001,6 +4054,9 @@ pub enum GenerateTarget {
     Allow,
     /// The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)
     Providers,
+    /// The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every
+    /// active skill, and `.zed/tasks.json` from the tracked justfile
+    Editors,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
@@ -4014,7 +4070,7 @@ pub enum GenerateTarget {
     /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
     /// release records, its decisions and the repository's commits
     Changelog,
-    /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
+    /// deploy/Dockerfile and .dockerignore, from the deployment objects
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,
@@ -5814,6 +5870,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "web report ui-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-ui-snapshot",
+            title: "Read the UI once and write it as the pages a publication carries at /ui",
+            description: "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+            argv: &["web", "report", "ui-snapshot", "--limit", "20"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "ui-snapshot"]),
+        }],
+    },
+    CommandExamples {
         command: "web compose",
         examples: &[ExampleDoc {
             id: "web-compose",
@@ -6920,6 +6987,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Answer a review request from any runtime",
             description: "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
             argv: &["mesh", "review", "answer", "stream/r-000000000000", "--session", "s1", "--verdict", "approved"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review withdraw",
+        examples: &[ExampleDoc {
+            id: "mesh-review-withdraw",
+            title: "Withdraw a review request with its result",
+            description: "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "withdraw", "stream/r-000000000000", "--session", "s1", "--note", "superseded"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

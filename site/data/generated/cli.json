@@ -2082,6 +2082,10 @@
               "name": "providers"
             },
             {
+              "help": "The files Zed and Google Antigravity read: `.agents/skills/<id>/SKILL.md` for every active skill, and `.zed/tasks.json` from the tracked justfile",
+              "name": "editors"
+            },
+            {
               "help": "site/data/registry/registry.json, the registry dataset the site renders",
               "name": "site"
             },
@@ -2102,7 +2106,7 @@
               "name": "changelog"
             },
             {
-              "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects",
+              "help": "deploy/Dockerfile and .dockerignore, from the deployment objects",
               "name": "deployment"
             },
             {
@@ -3989,6 +3993,12 @@
           "command": "majordomus web report ui",
           "name": "ui",
           "route": "/docs/cli/web/report/ui/"
+        },
+        {
+          "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+          "command": "majordomus web report ui-snapshot",
+          "name": "ui-snapshot",
+          "route": "/docs/cli/web/report/ui-snapshot/"
         }
       ],
       "command": "majordomus web report",
@@ -4539,6 +4549,196 @@
       ],
       "route": "/docs/cli/web/report/ui/",
       "usage": "majordomus web report ui [OPTIONS]"
+    },
+    {
+      "about": "The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "240"
+          ],
+          "global": false,
+          "help": "The most pages to write: every screen and panel first, then what they link to",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "The most seconds to spend on the pages the screens link to; the screens and panels are written whatever they cost",
+          "long": "budget-seconds",
+          "name": "budget_seconds",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report ui-snapshot",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "ui-snapshot",
+            "--limit",
+            "20"
+          ],
+          "command": "majordomus web report ui-snapshot --limit 20",
+          "description": "Asks the UI in-process for every screen and panel and then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages they link to, and writes each as a file under target/web/ui-snapshot: links between them relative, a link only a running process answers led to the snapshot's page about the live UI, the script told not to read again, and every page stamped with the commit, the time and the executable that read it. The declaration beside it makes the directory a surface of every publication and of no process.",
+          "expectation": "exits 0; prints web report, ui-snapshot",
+          "id": "web-report-ui-snapshot",
+          "setup": [],
+          "title": "Read the UI once and write it as the pages a publication carries at /ui"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ui-snapshot",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "ui-snapshot"
+      ],
+      "route": "/docs/cli/web/report/ui-snapshot/",
+      "usage": "majordomus web report ui-snapshot [OPTIONS]"
     },
     {
       "about": "Compose every published surface into one publishable tree",
@@ -24875,6 +25075,12 @@
           "command": "majordomus mesh review answer",
           "name": "answer",
           "route": "/docs/cli/mesh/review/answer/"
+        },
+        {
+          "about": "Withdraw a review request this runtime asked for, with its result",
+          "command": "majordomus mesh review withdraw",
+          "name": "withdraw",
+          "route": "/docs/cli/mesh/review/withdraw/"
         }
       ],
       "command": "majordomus mesh review",
@@ -24970,6 +25176,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "REVIEWER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What the reviewer needs beyond the subject: evidence, commands, the question (up to 8 KiB)",
+          "long": "body",
+          "name": "body",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BODY"
         },
         {
           "defaults": [],
@@ -25290,6 +25508,182 @@
       ],
       "route": "/docs/cli/mesh/review/answer/",
       "usage": "majordomus mesh review answer [OPTIONS] <REQUEST>"
+    },
+    {
+      "about": "Withdraw a review request this runtime asked for, with its result",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh review",
+          "name": "review",
+          "route": "/docs/cli/mesh/review/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The request's key, `<stream>/<review>`",
+          "name": "request",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "REQUEST"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The withdrawing session, within the runtime that asked",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What came of it, or why it is void (up to 8 KiB)",
+          "long": "note",
+          "name": "note",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NOTE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh review withdraw",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "review",
+            "withdraw",
+            "stream/r-000000000000",
+            "--session",
+            "s1",
+            "--note",
+            "superseded"
+          ],
+          "command": "majordomus mesh review withdraw stream/r-000000000000 --session s1 --note superseded",
+          "description": "Only the runtime that asked may withdraw its request, from any of its sessions; the note is the requester's own result and never an answer. It needs the running server; without one it exits 10.",
+          "expectation": "exits 10",
+          "id": "mesh-review-withdraw",
+          "setup": [],
+          "title": "Withdraw a review request with its result"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "withdraw",
+      "parent_route": "/docs/cli/mesh/review/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "review",
+        "withdraw"
+      ],
+      "route": "/docs/cli/mesh/review/withdraw/",
+      "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
     },
     {
       "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
@@ -35995,13 +36389,13 @@
     }
   ],
   "counts": {
-    "arguments": 1564,
-    "commands": 226,
-    "examples": 227,
-    "runnable": 199
+    "arguments": 1582,
+    "commands": 228,
+    "examples": 229,
+    "runnable": 201
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.21.0",
+  "generator_version": "0.22.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

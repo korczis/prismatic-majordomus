@@ -84,6 +84,11 @@ pub enum Target {
     /// bootstrap still has providers, and a fixture that checks its bootstraps alone is not
     /// asked for a document it never wrote.
     Providers,
+    /// The files Zed and Google Antigravity read from a project: one
+    /// `.agents/skills/<id>/SKILL.md` per active skill and `.zed/tasks.json` from the tracked
+    /// justfile
+    /// (see the `editors` module, ADR 0140).
+    Editors,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
@@ -113,8 +118,8 @@ pub enum Target {
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
     Manifest,
-    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
-    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    /// The artifacts of every deployment object: `deploy/Dockerfile` and `.dockerignore`
+    /// (see [`crate::deploy::render`]).
     Deployment,
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
@@ -142,6 +147,7 @@ impl Target {
         Target::Allow,
         Target::Documents,
         Target::Providers,
+        Target::Editors,
         Target::Site,
         Target::Web,
         Target::Design,
@@ -177,6 +183,7 @@ impl Target {
             Target::Allow => "allow",
             Target::Documents => "documents",
             Target::Providers => "providers",
+            Target::Editors => "editors",
             Target::Site => "site",
             Target::Web => "web",
             Target::Changelog => "changelog",
@@ -632,6 +639,7 @@ pub fn artifacts(
             | Target::Allow
             | Target::Documents
             | Target::Providers
+            | Target::Editors
             | Target::Site
             | Target::Web
             | Target::Changelog
@@ -745,6 +753,13 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             crate::VERSION,
             &crate::release::changelog::render(&log),
         ));
+    }
+
+    if targets.contains(&Target::Editors) {
+        out.extend(
+            crate::editors::plan(&app.context.index, app.repository.root(), crate::VERSION)
+                .artifacts,
+        );
     }
 
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
@@ -2265,6 +2280,20 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
         // a region projection owns part of a file it did not write, and a header at the
         // top of it would be a claim over text this generator does not own
         let stamped_elsewhere = a.document.starts_with("providers/");
+        // an editor's file is read by the editor, whose format decides where the banner can
+        // go: after the front matter of a skill, as `//` lines in JSONC (ADR 0140)
+        if a.document.starts_with(crate::editors::DOCUMENT_PREFIX) {
+            if !crate::editors::banner_is_present(&a.content) {
+                out.push(at(&a.path, "carries no generated-file banner".into()));
+            }
+            if a.format == ArtifactFormat::Json {
+                let body = crate::editors::jsonc_body(&a.content).unwrap_or(&a.content);
+                if let Err(e) = serde_json::from_str::<Value>(body) {
+                    out.push(at(&a.path, format!("is not JSON below its banner: {e}")));
+                }
+            }
+            continue;
+        }
         // the opening an encoding wraps the banner in: an HTML comment in Markdown, a `#`
         // comment in YAML and in line-oriented text, and nothing here for JSON, which
         // carries it as members and is checked below
@@ -2391,15 +2420,33 @@ pub fn verify(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Result<()> 
     }
 }
 
-/// Write every artifact under `root`, creating the directory. Returns the paths written.
+/// Write every artifact under `root`, creating the directory. Returns every artifact's path.
+///
+/// A file whose bytes are already the artifact's is left alone, so its modification time
+/// says when it last changed rather than when it was last generated; any other is written to
+/// a temporary sibling and renamed over the target, so a reader never sees half a file and
+/// an interrupted run leaves the old one intact.
 pub fn write(root: &Path, artifacts: &[Artifact]) -> Result<Vec<PathBuf>> {
     let mut written = Vec::new();
     for a in artifacts {
         let path = root.join(&a.path);
+        if std::fs::read(&path).is_ok_and(|on_disk| on_disk == a.content.as_bytes()) {
+            written.push(path);
+            continue;
+        }
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
         }
-        std::fs::write(&path, &a.content).map_err(|e| Error::io(&path, e))?;
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let staging = path.with_file_name(format!(".{name}.mj-tmp.{}", std::process::id()));
+        std::fs::write(&staging, &a.content).map_err(|e| Error::io(&staging, e))?;
+        if let Err(e) = std::fs::rename(&staging, &path) {
+            let _ = std::fs::remove_file(&staging);
+            return Err(Error::io(&path, e));
+        }
         written.push(path);
     }
     Ok(written)
