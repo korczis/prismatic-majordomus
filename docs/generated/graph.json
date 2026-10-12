@@ -13329,7 +13329,7 @@
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
-        "summary": "The Majordomus layer, served from one machine",
+        "summary": "The Majordomus layer, served from its container image",
         "route": "/cockpit/objects/deployment/majordomus",
         "source": ".ai/repo/deployments/majordomus.yaml",
         "status": "declared",
@@ -13337,7 +13337,7 @@
           "application": "majordomus",
           "created_at": "2026-09-06",
           "region": "fra",
-          "updated_at": "2026-09-06"
+          "updated_at": "2026-10-12"
         }
       },
       {
@@ -16766,7 +16766,7 @@
         "id": "majordomus://feature/deployments",
         "kind": "feature",
         "label": "deployments",
-        "summary": "A deployment is one canonical object, and every provider artifact is generated from it",
+        "summary": "A deployment is one canonical object, and every artifact built from it is generated from it",
         "route": "/cockpit/objects/feature/deployments",
         "source": ".ai/repo/features/deployments.md",
         "status": "draft",
@@ -16785,7 +16785,7 @@
           ],
           "domain": "surfaces",
           "featured": false,
-          "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
+          "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
           "kinds": [
             "deployment"
           ],
@@ -39286,7 +39286,7 @@
         "id": "majordomus://rule/majordomus.deployment-contract@1",
         "kind": "rule",
         "label": "majordomus.deployment-contract@1",
-        "summary": "A deployment is described once, and every provider artifact is generated from it",
+        "summary": "A deployment is described once, and every artifact built from it is generated from it",
         "route": "/cockpit/objects/rule/majordomus-deployment-contract-1",
         "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
         "status": "active",

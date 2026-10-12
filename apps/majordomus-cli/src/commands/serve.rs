@@ -100,8 +100,8 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     lease.keep_alive();
     let app = App::load(&args.repo)?;
     // The address: the local default, or the one a deployment object declares. The port is
-    // never typed twice — the object states it once and the process, the image and the
-    // provider configuration all read that one.
+    // never typed twice — the object states it once and the process and the image both
+    // read that one.
     let declared = match &args.deployment {
         Some(id) => Some(deployment(&app, id)?),
         None => None,

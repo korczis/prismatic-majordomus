@@ -3,7 +3,7 @@ schema: context/v1
 id: ai.repo.deployments
 kind: context
 title: Deployments
-description: One canonical object per deployment of this repository's service; every container and provider artifact is generated from it and none of them is authoritative.
+description: One canonical object per deployment of this repository's service; every artifact built from it — the container image definition and its ignore file — is generated from it and none of them is authoritative.
 status: active
 scope: subtree
 providers: ["*"]

@@ -4,9 +4,15 @@
 //!
 //! Nothing here reaches the network, spawns a process or talks to a hosting provider. The
 //! question this module answers is the local one — would this deployment work — and it is
-//! answered while a test is cheap rather than after a rollout is not. The provider
-//! projections (the image definition, the provider configuration) read the values this
-//! module produces; they never re-read the file.
+//! answered while a test is cheap rather than after a rollout is not. The projections (the
+//! image definition and its ignore file) read the values this module produces; they never
+//! re-read the file.
+//!
+//! The object names no hosting provider. Fly.io was the one it named, and it is no target
+//! (owner order, 2026-10-12): what ships is the release binaries, GitHub Pages and the
+//! container image published to GHCR, and none of the three reads a provider block. A
+//! field nothing reads is removed rather than kept for later (`docs/SCHEMAS.md`), so the
+//! block, its Fly facts and the `fly.toml` they were rendered into went together.
 //!
 //! Every refusal names four things: the file, the key, the value observed and the
 //! correction. A message that names fewer sends the reader looking.
@@ -260,15 +266,6 @@ pub enum Status {
     Retired,
 }
 
-/// The hosting provider. One is supported; a second is an object of its own rather than an
-/// abstraction over this one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ProviderName {
-    /// Fly.io.
-    Fly,
-}
-
 // ---------------------------------------------------------------- the object
 
 /// What is shipped and what it is built from.
@@ -293,7 +290,7 @@ pub struct Build {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Listen {
-    /// The port, stated once for the process, the image and the provider configuration.
+    /// The port, stated once for the process and the image.
     pub port: Port,
     /// Which interface.
     pub interface: Interface,
@@ -385,44 +382,8 @@ pub struct Budgets {
     pub request_p99_ms: Option<Positive>,
 }
 
-/// Fly.io's own facts: what has no meaning for any other provider.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct Fly {
-    /// The organisation the application belongs to.
-    #[serde(default)]
-    pub org: Option<String>,
-    /// Whether the edge redirects plain HTTP to HTTPS.
-    #[serde(default)]
-    pub force_https: Option<bool>,
-    /// When the edge considers a machine loaded.
-    #[serde(default)]
-    pub concurrency: Option<Concurrency>,
-}
-
-/// When the edge considers a machine loaded, in requests.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct Concurrency {
-    /// Where the edge starts preferring another machine.
-    pub soft_limit: Positive,
-    /// Where it stops sending requests to this one.
-    pub hard_limit: Positive,
-}
-
-/// The provider and the facts that belong to it alone.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct Provider {
-    /// Which provider.
-    pub name: ProviderName,
-    /// Fly's own block, when the provider is Fly.
-    #[serde(default)]
-    pub fly: Option<Fly>,
-}
-
 /// A deployment is presented by its id, which is its identity within the repository; the
-/// title is prose and two providers may well be given the same one.
+/// title is prose and two deployments may well be given the same one.
 impl crate::order::Ordered for Deployment {
     fn order_key(&self) -> crate::order::OrderKey<'_> {
         crate::order::OrderKey::plain(&self.id, &self.id)
@@ -447,7 +408,7 @@ pub struct Deployment {
     /// Where it stands.
     #[serde(default)]
     pub status: Option<Status>,
-    /// The application's name at the provider.
+    /// The application's name: what the deployment is known by in a listing.
     pub application: String,
     /// What is shipped and what it is built from.
     pub build: Build,
@@ -464,8 +425,6 @@ pub struct Deployment {
     /// The measured figures it is held to.
     #[serde(default)]
     pub budgets: Budgets,
-    /// The provider and its own facts.
-    pub provider: Provider,
     /// When the object was written.
     #[serde(default)]
     pub created_at: Option<String>,
@@ -590,8 +549,8 @@ impl Deployment {
     }
 
     /// Every local refusal this deployment earns, in the order the keys appear. An empty
-    /// list is the whole verdict this module can give: what remains is decided by the
-    /// provider, and by then a refusal costs a rollout.
+    /// list is the whole verdict this module can give: what remains is decided where the
+    /// image runs, and by then a refusal costs a rollout.
     pub fn check(&self, file: &str, ws: &Workspace<'_>) -> Vec<Refusal> {
         let mut out = Vec::new();
 
@@ -694,19 +653,6 @@ impl Deployment {
             ));
         }
 
-        // --- the concurrency limits, when stated, must be an order
-        if let Some(c) = self.provider.fly.as_ref().and_then(|f| f.concurrency) {
-            if c.soft_limit > c.hard_limit {
-                out.push(Refusal::new(
-                    file,
-                    "provider.fly.concurrency.soft_limit",
-                    c.soft_limit,
-                    &format!("above the hard limit ({})", c.hard_limit),
-                    "lower the soft limit, or raise the hard one",
-                ));
-            }
-        }
-
         out
     }
 }
@@ -733,7 +679,6 @@ mod tests {
             "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
             "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
             "region": "fra",
-            "provider": { "name": "fly" },
         })
     }
 
@@ -940,16 +885,6 @@ mod tests {
         }
 
         #[test]
-        fn a_soft_limit_above_the_hard_one_is_refused() {
-            let d = tree();
-            let mut v = super::object_text();
-            v["provider"]["fly"] =
-                serde_json::json!({ "concurrency": { "soft_limit": 50, "hard_limit": 10 } });
-            let out = deployment(v).check("x.yaml", &workspace(d.path()));
-            assert!(out[0].key.ends_with("soft_limit"));
-        }
-
-        #[test]
         fn every_refusal_names_the_file_the_key_the_value_and_the_correction() {
             let d = tree();
             let mut v = super::object_text();
@@ -1071,8 +1006,8 @@ mod tests {
             }
 
             /// Any accepted deployment binds an address its own interface and port describe,
-            /// whatever the two are — the process, the image and the provider configuration
-            /// read one fact and cannot disagree about it.
+            /// whatever the two are — the process and the image read one fact and cannot
+            /// disagree about it.
             #[test]
             fn the_bound_address_is_the_declared_one(port in 1024u32..65535, all in any::<bool>()) {
                 let listen = Listen {
