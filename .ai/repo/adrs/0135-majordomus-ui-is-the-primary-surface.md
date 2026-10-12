@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0135
 kind: adr
 title: "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it"
-status: proposed
+status: accepted
 date: 2026-10-11
 tags:
   - architecture
@@ -97,4 +97,9 @@ evidence, documentation). On the same day the owner settled the choice in plain 
 
 ## Status
 
-Proposed by session d3 on 2026-10-11 on the owner's words. Acceptance is the owner's act.
+Proposed by session d3 on 2026-10-11 on the owner's words. Accepted by the owner on
+2026-10-12, asked in session p12 after the UI had landed with v0.21.0 (#940, #948, #952,
+#955, #957-#963): "Yes, accept both" — this decision and the `ui` feature as stable.
+
+I2231 lived only on the closed PR #863 and never reached master. The `majordomus ui` command
+that the first consequence describes is planned as I2484 instead.
