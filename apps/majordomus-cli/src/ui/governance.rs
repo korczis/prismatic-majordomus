@@ -111,3 +111,80 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+
+    fn q(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    }
+
+    /// The screen reads the report it names: its verdict and coverage, the proof states and
+    /// every rule as a row that leads to the rule's own inspector.
+    #[test]
+    fn every_rule_is_a_row_that_leads_to_its_inspector() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let view = screen(&ctx, &[]);
+        assert_eq!(view.title, "Governance");
+        let html = view.main.render();
+        for want in ["Proof states", "Coverage", "Rules", "rules.report"] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
+        let report = ctx
+            .execute("rules.report", serde_json::json!({}))
+            .expect("the report");
+        let ids: Vec<String> = report["rules"]
+            .as_array()
+            .map(|a| {
+                a.iter()
+                    .map(|r| {
+                        super::super::rule::id_of(r.get("rule").unwrap_or(&serde_json::Value::Null))
+                    })
+                    .filter(|id| !id.is_empty())
+                    .collect()
+            })
+            .unwrap_or_default();
+        if ids.is_empty() {
+            assert!(html.contains("No rule is declared."), "{html}");
+        }
+        for id in &ids {
+            let href = super::super::rule::href(id);
+            assert!(
+                html.contains(&format!("href=\"{href}\"")),
+                "{id} leads nowhere: {html}"
+            );
+        }
+        assert!(
+            !html.contains("id=\"rule\""),
+            "no rule is inspected unless asked"
+        );
+    }
+
+    /// `?rule=` opens the inspector above the table; a value that is no rule id opens none and
+    /// is never asked.
+    #[test]
+    fn a_picked_rule_opens_its_inspector_and_a_bad_one_none() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let unknown = screen(&ctx, &q(&[("rule", "no.such-rule")])).main.render();
+        assert!(
+            unknown.contains("rules.show"),
+            "the inspector asked: {unknown}"
+        );
+        assert!(!unknown.contains("id=\"rule\""), "{unknown}");
+        let hostile = screen(&ctx, &q(&[("rule", "x\" onclick=\"y")]))
+            .main
+            .render();
+        assert!(
+            !hostile.contains("rules.show"),
+            "a hostile id is never asked: {hostile}"
+        );
+        assert!(!hostile.contains("onclick=\"y"), "{hostile}");
+    }
+}

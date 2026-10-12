@@ -208,6 +208,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI conformance report surface from a probe's output, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "web report ui-snapshot",
+        reason: LocalReason::WritesRepository,
+        note: "writes the UI's snapshot surface, one file per screen and panel read in-process, which is a producer of the web root rather than a reading of it.",
+    },
+    LocalCommand {
         command: "prs",
         reason: LocalReason::Alias("prs status"),
         note: "with no subcommand it answers `prs status`, the ranked integration queue.",

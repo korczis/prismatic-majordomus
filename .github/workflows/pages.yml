@@ -264,6 +264,36 @@ jobs:
       - id: done
         run: echo "seconds=$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" >> "$GITHUB_OUTPUT"
 
+  # The UI as a publication carries it (ADR 0141): `majordomus ui` read once at this commit by
+  # this commit's own executable, written as static pages. A job of its own, beside the rustdoc
+  # job and never after it, so that the deploy job keeps no Rust toolchain and waits for the
+  # slower of the two rather than for their sum. It is the second Rust command on this path and
+  # is here for the reason the first is (ADR 0086): what it writes is published bytes. Its
+  # build cache is setup-rust's, keyed by this job's id. The job carries the one bound and no
+  # step does: test/cases/26_ci_wiring.sh sums every step bound of this file against the
+  # deploy job's, and these steps are not that job's.
+  ui-snapshot:
+    needs: owed
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.owed.outputs.remedy == 'deploy') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # the UI reads the history too (what changed since, what was released), as the deploy does
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-rust
+      - name: the executable that reads the UI
+        run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+      - name: the UI, read once at this commit
+        run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-snapshot
+          path: target/web/ui-snapshot
+          if-no-files-found: error
+          retention-days: 1
+
   # The bound is over two different kinds of second, so it is written twice, and the two
   # numbers are not independent.
   #
@@ -282,17 +312,17 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. The job's 36 covers the sum of every step's bound — the evidence
-  # read before the build, and after the probe the reads of GitHub's build, of the documentation
-  # and of the crate's public reference — plus the unbounded checkout, setup, download and report
-  # steps on a cold runner, and leaves the job's bound where it belongs: as the last resort
-  # behind every step's own. No sum is written here, because a step's bound changes without this
+  # file says never to budget. The job's 38 covers the sum of every step's bound — the evidence
+  # read before the build, and after the probe the reads of GitHub's build, of the documentation,
+  # of the crate's public reference and of the release the site offers — plus the unbounded
+  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
+  # where it belongs: as the last resort behind every step's own. No sum is written here, because a step's bound changes without this
   # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
   deploy:
-    needs: [owed, rustdoc]
+    needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 36
+    timeout-minutes: 38
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -374,6 +404,29 @@ jobs:
         timeout-minutes: 3
         run: scripts/pages check
 
+      # The UI's snapshot of this commit (ADR 0141), from the ui-snapshot job of this run, placed
+      # at the mount its own declaration names. After the check, which judges the site's pages
+      # by the site's contracts and not another producer's, and before the push. It refuses a
+      # snapshot that is absent or was read at another commit, and a path the site already
+      # filled: a deployment that silently lost the UI is the stale one nobody sees. No step
+      # bound: a download and a copy cannot wait on anything, and the job's bound is behind them.
+      - name: the UI's snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-snapshot
+          path: target/web/ui-snapshot
+      - name: the UI's snapshot, at its mount
+        run: |
+          declared=target/web/ui-snapshot/surface.json
+          mount="$(jq -er '.mount' "$declared")"
+          built="$(jq -er '.built_from' "$declared")"
+          [ -n "$built" ] || { echo "the UI's snapshot names no commit it was read at" >&2; exit 1; }
+          case "$GITHUB_SHA" in "$built"*) ;; *) echo "the UI's snapshot was read at $built, and this run publishes $GITHUB_SHA" >&2; exit 1 ;; esac
+          [ ! -e "site/public$mount" ] || { echo "the site itself built site/public$mount, the snapshot's mount; one path has one owner" >&2; exit 1; }
+          mkdir -p "site/public$mount"
+          cp -R target/web/ui-snapshot/. "site/public$mount/"
+          echo "the UI's snapshot of $built is at $mount: $(find "site/public$mount" -name index.html | wc -l | tr -d ' ') page(s)"
+
       # the one deploy path, the same script a person runs
       - name: publish
         id: publish
@@ -437,6 +490,21 @@ jobs:
         if: steps.public.outcome == 'success'
         timeout-minutes: 6
         run: scripts/pages verify-rustdoc --commit "$GITHUB_SHA" --timeout 300
+
+      # The release it offers, as served: the homepage's offered release, /releases/latest.json
+      # and GitHub's newest release name one version, or GitHub published it less than
+      # deploy.release_window ago (project.the-site-offers-the-release-it-published). The build
+      # derives the offer from the record and from what gh-pages already serves (scripts/site-build),
+      # so the run a release asks for after publishing its metadata is the one that moves the
+      # homepage. Until 2026-10-12 the pages read the record alone and offered the previous
+      # release for hours with every check here green. Runs once the site serves this commit, so
+      # what it finds is this build's; a disagreement past the window fails the deployment.
+      - name: the release it offers
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages release-live
 
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #

@@ -1,12 +1,12 @@
-//! The provider artifacts, rendered from the canonical deployment object: the container
-//! image definition, the ignore file that bounds its build context, and the provider
-//! configuration.
+//! The deployment artifacts, rendered from the canonical deployment object: the container
+//! image definition and the ignore file that bounds its build context. No provider
+//! configuration is rendered: no hosting provider is a target (see [`super`]).
 //!
-//! None of the three is authoritative and none is written by hand. Each carries a header
-//! naming the object it came from and the command that regenerates it, and
+//! Neither is authoritative and neither is written by hand. Each carries a header naming
+//! the object it came from and the command that regenerates it, and
 //! `majordomus generate --check` refuses a tree where one of them was edited. That is the
-//! whole point of the kind: the port, the routes, the resources, the machine count and the
-//! build inputs are stated once, and these files are views of that one statement.
+//! whole point of the kind: the port, the routes and the build inputs are stated once, and
+//! these files are views of that one statement.
 
 use crate::generate::{Artifact, ArtifactFormat};
 
@@ -17,8 +17,6 @@ pub const DOCKERFILE: &str = "deploy/Dockerfile";
 /// Where the build context's ignore file goes. Docker reads it from the context root, so
 /// it lives at the repository root whatever the image definition's own path is.
 pub const DOCKERIGNORE: &str = ".dockerignore";
-/// Where the provider configuration goes. Fly reads `fly.toml` from the working directory.
-pub const FLY_TOML: &str = "fly.toml";
 
 /// The Alpine release both stages are built on: the builder links against its musl and the
 /// runtime runs the result, so the two are one number rather than two that could disagree.
@@ -343,79 +341,7 @@ pub fn dockerignore(d: &Deployment, source: &str) -> String {
     out
 }
 
-/// The provider configuration. Every value here is read from the object; nothing is stated
-/// twice, and the `[build]` section points at the generated image definition.
-pub fn fly_toml(d: &Deployment, source: &str) -> String {
-    let mut out = header(
-        "#",
-        source,
-        "The Fly.io configuration of this repository's deployment.",
-    );
-    out.push_str(&format!(
-        "app = \"{app}\"\n\
-         primary_region = \"{region}\"\n\n\
-         [build]\n\
-         dockerfile = \"{DOCKERFILE}\"\n\n\
-         [http_service]\n\
-         internal_port = {port}\n\
-         force_https = {https}\n\
-         auto_stop_machines = \"{stop}\"\n\
-         auto_start_machines = {start}\n\
-         min_machines_running = {min}\n\n",
-        app = d.application,
-        region = d.region,
-        port = d.listen.port,
-        https = d
-            .provider
-            .fly
-            .as_ref()
-            .and_then(|f| f.force_https)
-            .unwrap_or(true),
-        stop = if d.machines.autostop { "stop" } else { "off" },
-        start = d.machines.autostart,
-        min = d.machines.min_running,
-    ));
-    if let Some(c) = d.provider.fly.as_ref().and_then(|f| f.concurrency) {
-        out.push_str(&format!(
-            "  [http_service.concurrency]\n  type = \"requests\"\n  soft_limit = {}\n  hard_limit = {}\n\n",
-            c.soft_limit, c.hard_limit
-        ));
-    }
-    out.push_str(&format!(
-        "  [[http_service.checks]]\n\
-         \x20 grace_period = \"{grace}s\"\n\
-         \x20 interval = \"{interval}s\"\n\
-         \x20 method = \"GET\"\n\
-         \x20 timeout = \"{timeout}s\"\n\
-         \x20 path = \"{liveness}\"\n\n\
-         \x20 [[http_service.checks]]\n\
-         \x20 grace_period = \"{grace}s\"\n\
-         \x20 interval = \"{interval}s\"\n\
-         \x20 method = \"GET\"\n\
-         \x20 timeout = \"{timeout}s\"\n\
-         \x20 path = \"{readiness}\"\n\n",
-        grace = d.health.grace_seconds.unwrap_or(2),
-        interval = d.health.interval_seconds.map(|v| v.get()).unwrap_or(15),
-        timeout = d.health.timeout_seconds.map(|v| v.get()).unwrap_or(2),
-        liveness = d.health.liveness,
-        readiness = d.health.readiness,
-    ));
-    out.push_str(&format!(
-        "[[vm]]\n\
-         cpu_kind = \"{kind}\"\n\
-         cpus = {cpus}\n\
-         memory_mb = {memory}\n",
-        kind = match d.resources.cpu_kind {
-            super::CpuKind::Shared => "shared",
-            super::CpuKind::Performance => "performance",
-        },
-        cpus = d.resources.cpus,
-        memory = d.resources.memory_mb,
-    ));
-    out
-}
-
-/// The three artifacts of one deployment; `rust` is the builder's exact Rust version.
+/// The two artifacts of one deployment; `rust` is the builder's exact Rust version.
 pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
     vec![
         Artifact {
@@ -433,14 +359,6 @@ pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
             schema: None,
             source: source.into(),
             content: dockerignore(d, source),
-        },
-        Artifact {
-            path: FLY_TOML.into(),
-            document: "deployment".into(),
-            format: ArtifactFormat::Text,
-            schema: None,
-            source: source.into(),
-            content: fly_toml(d, source),
         },
     ]
 }
@@ -467,7 +385,6 @@ mod tests {
             "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
             "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
             "region": "fra",
-            "provider": { "name": "fly" },
         }))
         .expect("the example deployment parses")
     }

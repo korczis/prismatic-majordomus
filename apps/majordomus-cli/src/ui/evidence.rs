@@ -23,7 +23,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let picked = super::claim::picked(query);
     let inspected = picked
         .as_deref()
-        .map(|id| super::claim::inspector(&super::claim::ask(ctx, id), id));
+        .map(|id| super::claim::inspector(ctx, &super::claim::ask(ctx, id), id));
 
     let top = hero(
         "file-check",

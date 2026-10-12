@@ -1,5 +1,6 @@
 //! The reports this repository generates as web surfaces: the test run, the benchmark run,
-//! and the UI conformance audit that is a section of the first.
+//! the UI conformance audit that is a section of the first, and the UI itself read once at a
+//! pinned commit, which a publication carries at the UI's mount (`snapshot`, ADR 0141).
 //!
 //! A report is a *rendering* of evidence somebody else produced. The suite writes its
 //! results, the benchmark run writes its own, and this module turns either into a directory
@@ -13,6 +14,7 @@
 //! creating it.
 
 pub(crate) mod benchmarks;
+pub(crate) mod snapshot;
 /// The page style every generated surface uses. It lives beside the model now that the
 /// home page renders through it too; this re-export keeps the reports' own path to it.
 pub use super::html;
