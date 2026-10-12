@@ -564,8 +564,30 @@ that is absent, one read at another commit, and a mount the site itself already 
 
 The snapshot is a generated surface, known only where its producer ran, so it is not in the
 committed topology and `scripts/site-build` does not compose it: a local build of the site has
-no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages. No
-probe reads the public `/ui/` after a deploy yet.
+no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages.
+
+That a publication holds it is declared once, in `.ai/repo/ci/pages.yaml` under
+`deploy.snapshots`: the served surface it is a snapshot of, where the producer writes it, the
+producer, and the attribute its pages state their commit with. The mount is the topology's
+mount of that surface, and `scripts/pages snapshots` prints the resolved rows. Three readers
+hold a publication to that entry (`project.the-published-ui-is-the-trunks`):
+
+- `scripts/site-deploy` refuses a site whose tree has no snapshot at the mount, one read at
+  another commit than `HEAD`, or one that declares another mount, and says how to place it.
+  A deploy from a terminal therefore cannot publish the site without `/ui/`.
+  `--release-metadata` changes two files of what is already served and is not asked.
+- `scripts/pages verify-ui` asks the public site, once it serves the deployed commit:
+  `/ui/surface.json` names that commit, the landing page's banner states it, `/ui/snapshot.json`
+  records it and says what ended the reading, and every page the record lists answers 200. It
+  prints how many pages it asked for, how many `--max-pages` left unasked, how many the
+  snapshot itself left out and what stopped it. Exit 10 is a UI that is missing, another
+  commit's or not whole; 12 is a site that never answered. The deploy's `the UI it publishes`
+  step runs it and is not `continue-on-error`.
+- The `pages-live` gate asks the same probe of the published commit (section 2c of
+  `scripts/ci/pages-check`), so the live `/ui/` is held to the trunk within the window the
+  site is.
+
+`test/cases/1096_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
 
 ### The release the site offers
 
@@ -620,7 +642,8 @@ it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue ob
 2026-09-10), the live site serves what `gh-pages` published, and GitHub's own build of that
 branch did not error. A section of its own asks a fifth: the reference at `/rustdoc/` is
 whole and was built from the commit the site serves, by the same `scripts/pages verify-rustdoc`
-the deploy runs. The trigger paths it uses to decide whether a publication is *owed* are
+the deploy runs. Another asks the same of the UI's snapshot at `/ui/`, by
+`scripts/pages verify-ui`. The trigger paths it uses to decide whether a publication is *owed* are
 `scripts/pages paths` — the same list that is the workflow's own `paths:` — so a commit that
 cannot change the site does not owe a deploy.
 

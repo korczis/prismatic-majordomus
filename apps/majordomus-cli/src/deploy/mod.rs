@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::Object;
 
+pub(crate) mod observed;
 pub mod render;
 
 /// The kind a deployment object is discovered as.
