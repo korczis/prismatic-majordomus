@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "33e731847d47a899a78ce6611a2806937f3a0ae962b40b9c177acd407c1f123a",
+    "fingerprint": "607413cb621ae1d5fab355a20b5d3ffe472c1b9374023a44164f5c487a1339a9",
     "summary": {
       "total": 2252,
       "builtin": 191,
@@ -28,7 +28,7 @@
       "modules": 89,
       "benchmark_required": 164,
       "benchmark_waived": 27,
-      "cached": 41
+      "cached": 54
     },
     "builtin": [
       {
@@ -1494,9 +1494,49 @@
                       "max_entries"
                     ],
                     "description": "Results are kept in this process's memory, bounded, for equal inputs."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "max_entries": {
+                        "type": "integer",
+                        "format": "uint",
+                        "minimum": 0,
+                        "description": "The most entries kept for this capability; the oldest is evicted first."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "generation"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "max_entries"
+                    ],
+                    "description": "Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "max_entries": {
+                        "type": "integer",
+                        "format": "uint",
+                        "minimum": 0,
+                        "description": "The most entries kept for this capability; the oldest is evicted first."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "checkout"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "max_entries"
+                    ],
+                    "description": "Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached."
                   }
                 ],
-                "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+                "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context's own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`)."
               },
               "ExecutionPolicy": {
                 "type": "object",
@@ -1592,7 +1632,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "process",
+          "max_entries": 512
         },
         "execution": {
           "effect": "read",
@@ -2230,9 +2271,49 @@
                       "max_entries"
                     ],
                     "description": "Results are kept in this process's memory, bounded, for equal inputs."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "max_entries": {
+                        "type": "integer",
+                        "format": "uint",
+                        "minimum": 0,
+                        "description": "The most entries kept for this capability; the oldest is evicted first."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "generation"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "max_entries"
+                    ],
+                    "description": "Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "max_entries": {
+                        "type": "integer",
+                        "format": "uint",
+                        "minimum": 0,
+                        "description": "The most entries kept for this capability; the oldest is evicted first."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "checkout"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "max_entries"
+                    ],
+                    "description": "Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached."
                   }
                 ],
-                "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+                "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context's own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`)."
               }
             }
           }
@@ -17414,7 +17495,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 1
         },
         "execution": {
           "effect": "read",
@@ -23173,7 +23255,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 32
         },
         "execution": {
           "effect": "read",
@@ -24160,7 +24243,7 @@
         "module": "evidence",
         "kind": "query",
         "title": "Every claim against the evidence recorded for it",
-        "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+        "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
         "input": {
           "name": "EvidenceReportInput",
           "schema": {
@@ -24855,7 +24938,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 8
         },
         "execution": {
           "effect": "read",
@@ -39470,7 +39554,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 2
         },
         "execution": {
           "effect": "read",
@@ -54730,7 +54815,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 16
         },
         "execution": {
           "effect": "read",
@@ -55463,7 +55549,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 16
         },
         "execution": {
           "effect": "read",
@@ -56055,7 +56142,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 4
         },
         "execution": {
           "effect": "read",
@@ -56402,7 +56490,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 16
         },
         "execution": {
           "effect": "read",
@@ -67541,7 +67630,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 2
         },
         "execution": {
           "effect": "read",
@@ -68030,7 +68120,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "generation",
+          "max_entries": 1
         },
         "execution": {
           "effect": "read",
@@ -68909,7 +69000,7 @@
         "module": "rules",
         "kind": "query",
         "title": "Every rule against the proof there is for it",
-        "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+        "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
         "input": {
           "name": "RulesReportInput",
           "schema": {
@@ -69934,7 +70025,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 8
         },
         "execution": {
           "effect": "read",
@@ -70723,7 +70815,8 @@
           "policy": "required"
         },
         "cache": {
-          "policy": "disabled"
+          "policy": "checkout",
+          "max_entries": 32
         },
         "execution": {
           "effect": "read",
@@ -80349,7 +80442,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3cf950a40e655eea0c0d6aa25b2b41bcdacbaba5056bc37dba4b9acc292ab0a7",
+    "fingerprint": "a920b3f27a492cdc018c73e6f6b11774591d0d8d3467594cd6daf09f81795be6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -85783,7 +85876,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 135355
+        "bytes": 135897
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -134727,7 +134820,7 @@
         "name": "majordomus_evidence",
         "id": "evidence.report",
         "title": "Every claim against the evidence recorded for it",
-        "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+        "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -136495,7 +136588,7 @@
         "name": "majordomus_rules",
         "id": "rules.report",
         "title": "Every rule against the proof there is for it",
-        "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+        "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -138555,7 +138648,7 @@
         "id": "capabilities.describe",
         "module": "capabilities",
         "case": "repository-info",
-        "cached": false
+        "cached": true
       },
       {
         "key": "capabilities.describe|mcp|repository-info",
@@ -138564,7 +138657,7 @@
         "id": "capabilities.describe",
         "module": "capabilities",
         "case": "repository-info",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_capability"
       },
       {
@@ -138574,7 +138667,7 @@
         "id": "capabilities.describe",
         "module": "capabilities",
         "case": "repository-info",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/capability"
       },
       {
@@ -139976,7 +140069,7 @@
         "id": "distribution.releases",
         "module": "distribution",
         "case": "default",
-        "cached": false
+        "cached": true
       },
       {
         "key": "distribution.releases|mcp|default",
@@ -139985,7 +140078,7 @@
         "id": "distribution.releases",
         "module": "distribution",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_releases"
       },
       {
@@ -139995,7 +140088,7 @@
         "id": "distribution.releases",
         "module": "distribution",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/distribution/releases"
       },
       {
@@ -140469,7 +140562,7 @@
         "id": "evidence.claim",
         "module": "evidence",
         "case": "first-claim",
-        "cached": false
+        "cached": true
       },
       {
         "key": "evidence.claim|mcp|first-claim",
@@ -140478,7 +140571,7 @@
         "id": "evidence.claim",
         "module": "evidence",
         "case": "first-claim",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_evidence_claim"
       },
       {
@@ -140488,7 +140581,7 @@
         "id": "evidence.claim",
         "module": "evidence",
         "case": "first-claim",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/evidence/claim"
       },
       {
@@ -140498,7 +140591,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "all",
-        "cached": false
+        "cached": true
       },
       {
         "key": "evidence.report|direct|findings",
@@ -140507,7 +140600,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "findings",
-        "cached": false
+        "cached": true
       },
       {
         "key": "evidence.report|mcp|all",
@@ -140516,7 +140609,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_evidence"
       },
       {
@@ -140526,7 +140619,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "findings",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_evidence"
       },
       {
@@ -140536,7 +140629,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/evidence"
       },
       {
@@ -140546,7 +140639,7 @@
         "id": "evidence.report",
         "module": "evidence",
         "case": "findings",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/evidence"
       },
       {
@@ -141493,7 +141586,7 @@
         "id": "intents.list",
         "module": "intents",
         "case": "default",
-        "cached": false
+        "cached": true
       },
       {
         "key": "intents.list|mcp|default",
@@ -141502,7 +141595,7 @@
         "id": "intents.list",
         "module": "intents",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_intents"
       },
       {
@@ -141512,7 +141605,7 @@
         "id": "intents.list",
         "module": "intents",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/intents"
       },
       {
@@ -142865,7 +142958,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "all",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.issues|direct|ready",
@@ -142874,7 +142967,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "ready",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.issues|direct|one-milestone",
@@ -142883,7 +142976,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.issues|mcp|all",
@@ -142892,7 +142985,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_issues"
       },
       {
@@ -142902,7 +142995,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "ready",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_issues"
       },
       {
@@ -142912,7 +143005,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_issues"
       },
       {
@@ -142922,7 +143015,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/issues"
       },
       {
@@ -142932,7 +143025,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "ready",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/issues"
       },
       {
@@ -142942,7 +143035,7 @@
         "id": "plan.issues",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/issues"
       },
       {
@@ -142981,7 +143074,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.next|direct|one-milestone",
@@ -142990,7 +143083,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.next|mcp|whole-plan",
@@ -142999,7 +143092,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_next"
       },
       {
@@ -143009,7 +143102,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_next"
       },
       {
@@ -143019,7 +143112,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/next"
       },
       {
@@ -143029,7 +143122,7 @@
         "id": "plan.next",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/next"
       },
       {
@@ -143097,7 +143190,7 @@
         "id": "plan.roadmap",
         "module": "plan",
         "case": "default",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.roadmap|mcp|default",
@@ -143106,7 +143199,7 @@
         "id": "plan.roadmap",
         "module": "plan",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_roadmap"
       },
       {
@@ -143116,7 +143209,7 @@
         "id": "plan.roadmap",
         "module": "plan",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/roadmap"
       },
       {
@@ -143126,7 +143219,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.status|direct|one-milestone",
@@ -143135,7 +143228,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false
+        "cached": true
       },
       {
         "key": "plan.status|mcp|whole-plan",
@@ -143144,7 +143237,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_status"
       },
       {
@@ -143154,7 +143247,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_plan_status"
       },
       {
@@ -143164,7 +143257,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "whole-plan",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/status"
       },
       {
@@ -143174,7 +143267,7 @@
         "id": "plan.status",
         "module": "plan",
         "case": "one-milestone",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/plan/status"
       },
       {
@@ -143967,7 +144060,7 @@
         "id": "release.version",
         "module": "release",
         "case": "default",
-        "cached": false
+        "cached": true
       },
       {
         "key": "release.version|mcp|default",
@@ -143976,7 +144069,7 @@
         "id": "release.version",
         "module": "release",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_release_version"
       },
       {
@@ -143986,7 +144079,7 @@
         "id": "release.version",
         "module": "release",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/release/version"
       },
       {
@@ -143996,7 +144089,7 @@
         "id": "repository.info",
         "module": "repository",
         "case": "default",
-        "cached": false
+        "cached": true
       },
       {
         "key": "repository.info|mcp|default",
@@ -144005,7 +144098,7 @@
         "id": "repository.info",
         "module": "repository",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_repository"
       },
       {
@@ -144015,7 +144108,7 @@
         "id": "repository.info",
         "module": "repository",
         "case": "default",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/repository"
       },
       {
@@ -144228,7 +144321,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "all",
-        "cached": false
+        "cached": true
       },
       {
         "key": "rules.report|direct|findings",
@@ -144237,7 +144330,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "findings",
-        "cached": false
+        "cached": true
       },
       {
         "key": "rules.report|direct|blocking",
@@ -144246,7 +144339,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "blocking",
-        "cached": false
+        "cached": true
       },
       {
         "key": "rules.report|mcp|all",
@@ -144255,7 +144348,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_rules"
       },
       {
@@ -144265,7 +144358,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "findings",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_rules"
       },
       {
@@ -144275,7 +144368,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "blocking",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_rules"
       },
       {
@@ -144285,7 +144378,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "all",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/rules"
       },
       {
@@ -144295,7 +144388,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "findings",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/rules"
       },
       {
@@ -144305,7 +144398,7 @@
         "id": "rules.report",
         "module": "rules",
         "case": "blocking",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/rules"
       },
       {
@@ -144315,7 +144408,7 @@
         "id": "rules.show",
         "module": "rules",
         "case": "first",
-        "cached": false
+        "cached": true
       },
       {
         "key": "rules.show|mcp|first",
@@ -144324,7 +144417,7 @@
         "id": "rules.show",
         "module": "rules",
         "case": "first",
-        "cached": false,
+        "cached": true,
         "tool": "majordomus_rule"
       },
       {
@@ -144334,7 +144427,7 @@
         "id": "rules.show",
         "module": "rules",
         "case": "first",
-        "cached": false,
+        "cached": true,
         "route": "GET /api/v1/rules/rule"
       },
       {

@@ -163,16 +163,11 @@ fn errors_are_not_cached_and_uncached_capabilities_always_run() {
         entries,
         "no error was stored"
     );
-    // repository.info declares no cache: the handler runs every time
-    assert!(!ctx
-        .registry
-        .get("repository.info")
-        .unwrap()
-        .cache
-        .is_enabled());
+    // plan.waves declares no cache: the handler runs every time
+    assert!(!ctx.registry.get("plan.waves").unwrap().cache.is_enabled());
     for _ in 0..3 {
         let before = snapshot();
-        ctx.execute("repository.info", json!({})).unwrap();
+        ctx.execute("plan.waves", json!({})).unwrap();
         let after = snapshot();
         assert_eq!(after.handler_invocations, before.handler_invocations + 1);
         assert_eq!(after.cache_hits, before.cache_hits);
@@ -415,3 +410,348 @@ fn a_call_answers_from_the_distribution_the_process_located() {
 /// The vocabulary file of a distribution, named here so the test above can replace it
 /// without the module under test exporting its own path.
 const VOCABULARY_FILE: &str = "obligations.yaml";
+
+/// A query of this file's own, with the cache it is given: what the tests below drive when
+/// they need a handler they can count and slow down, or one that reads the work tree.
+fn fixture_query(
+    id: &str,
+    cache: CachePolicy,
+    handler: std::sync::Arc<dyn majordomus_cli::capability::Handler>,
+) -> majordomus_cli::capability::Executable {
+    use majordomus_cli::capability::{
+        Availability, BenchmarkPolicy, CanonicalSchema, Capability, CapabilityId, Executable,
+        ExecutionPolicy, Exposure, ModuleId, Provenance, Stability, Visibility,
+    };
+    let exposure = Exposure::default();
+    let kind = CapabilityKind::Query;
+    Executable {
+        capability: Capability {
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
+            id: CapabilityId::parse(id).unwrap(),
+            module: ModuleId::unchecked(""),
+            kind,
+            title: "Fixture".into(),
+            description: "A fixture capability.".into(),
+            input: CanonicalSchema::empty(),
+            output: CanonicalSchema::empty(),
+            provenance: Provenance::Builtin {
+                module: "fixture".into(),
+            },
+            exposure,
+            stability: Stability::Experimental,
+            tags: vec![],
+            benchmark: BenchmarkPolicy::Required,
+            cache,
+            execution: ExecutionPolicy::classify(kind),
+        },
+        handler,
+        cases: |_| vec![],
+    }
+}
+
+/// A context over the fixture's index whose registry holds only `executables`.
+fn context_with(
+    app: &majordomus_cli::app::App,
+    executables: Vec<majordomus_cli::capability::Executable>,
+) -> Context {
+    let registry = majordomus_cli::capability::CapabilityRegistry::builder()
+        .with_builtin(executables)
+        .build()
+        .expect("the fixture registry builds");
+    Context::new(app.context.index.clone(), Arc::new(registry))
+}
+
+/// Concurrent calls that miss on one key run the handler once: the first runs it, the
+/// others wait for it and are answered with what it stored, which is what it returned.
+#[test]
+fn concurrent_misses_on_one_key_run_the_handler_once() {
+    use majordomus_cli::capability::handler::handler;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let slow = handler::<Value, Value, _>(|_, v| {
+        RAN.fetch_add(1, Ordering::SeqCst);
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        Ok(json!({ "echo": v, "n": RAN.load(Ordering::SeqCst) }))
+    });
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.slow",
+            CachePolicy::Process {
+                max_entries: 4,
+                ttl_seconds: None,
+            },
+            slow,
+        )],
+    );
+    let barrier = std::sync::Barrier::new(8);
+    let answers: Vec<Value> = std::thread::scope(|scope| {
+        let threads: Vec<_> = (0..8)
+            .map(|_| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    ctx.execute("fixture.slow", json!({ "k": 1 })).unwrap()
+                })
+            })
+            .collect();
+        threads.into_iter().map(|t| t.join().unwrap()).collect()
+    });
+    assert_eq!(
+        RAN.load(Ordering::SeqCst),
+        1,
+        "one handler ran for eight callers"
+    );
+    assert_eq!(ctx.executor.handler_invocations(), 1);
+    assert!(
+        answers.iter().all(|a| a == &answers[0]),
+        "every caller has the one answer: {answers:?}"
+    );
+    // another key is another flight, and runs its own handler
+    ctx.execute("fixture.slow", json!({ "k": 2 })).unwrap();
+    assert_eq!(ctx.executor.handler_invocations(), 2);
+}
+
+/// A failing handler stores nothing, and a caller that waited for it runs the handler
+/// itself rather than being handed the failure or nothing.
+#[test]
+fn a_failure_is_not_shared_with_the_callers_that_waited_for_it() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::CapabilityError;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static RAN: AtomicU64 = AtomicU64::new(0);
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let first_fails = handler::<Value, Value, _>(|_, _| {
+        let n = RAN.fetch_add(1, Ordering::SeqCst);
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        if n == 0 {
+            Err(CapabilityError::Internal("the first call fails".into()))
+        } else {
+            Ok(json!({ "n": n }))
+        }
+    });
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.flaky",
+            CachePolicy::Process {
+                max_entries: 4,
+                ttl_seconds: None,
+            },
+            first_fails,
+        )],
+    );
+    let barrier = std::sync::Barrier::new(2);
+    let answers: Vec<bool> = std::thread::scope(|scope| {
+        let threads: Vec<_> = (0..2)
+            .map(|_| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    ctx.execute("fixture.flaky", json!({})).is_ok()
+                })
+            })
+            .collect();
+        threads.into_iter().map(|t| t.join().unwrap()).collect()
+    });
+    assert_eq!(
+        answers.iter().filter(|ok| **ok).count(),
+        1,
+        "one caller failed, the other ran the handler itself and succeeded: {answers:?}"
+    );
+    assert_eq!(RAN.load(Ordering::SeqCst), 2);
+    assert_eq!(ctx.executor.cached_entries(), 1, "only the success is kept");
+}
+
+/// A `Generation` entry is kept for the context that computed it and its views, and a
+/// new reading of the same repository — what a reload hands out — is a new key.
+#[test]
+fn a_generation_entry_is_kept_for_one_reading_of_the_repository() {
+    use majordomus_cli::capability::handler::handler;
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let read = || {
+        fixture_query(
+            "fixture.reading",
+            CachePolicy::Generation { max_entries: 2 },
+            handler::<Value, Value, _>(|ctx, _| Ok(json!({ "objects": ctx.index.objects.len() }))),
+        )
+    };
+    let first = context_with(&app, vec![read()]);
+    let a = first.execute("fixture.reading", json!({})).unwrap();
+    first
+        .with_web(first.web.clone())
+        .execute("fixture.reading", json!({}))
+        .unwrap();
+    assert_eq!(
+        first.executor.handler_invocations(),
+        1,
+        "a view of the same reading answers from the entry"
+    );
+    // the same index and registry, read again, through the same executor
+    let second = Context::new(first.index.clone(), first.registry.clone());
+    assert_ne!(second.reading, first.reading);
+    let second = Context {
+        executor: Arc::clone(&first.executor),
+        ..second
+    };
+    let b = second.execute("fixture.reading", json!({})).unwrap();
+    assert_eq!(
+        first.executor.handler_invocations(),
+        2,
+        "a new reading is a new key"
+    );
+    assert_eq!(a, b);
+}
+
+/// A `Checkout` entry is kept while the checkout is as it was, and every change the
+/// fingerprint covers — an edit, a second edit of the same file, an untracked file, a
+/// commit, a tag — is a new key whose answer is the one the handler gives.
+#[test]
+fn a_checkout_entry_follows_every_change_of_the_work_tree_and_the_refs() {
+    use majordomus_cli::capability::handler::handler;
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let ctx = context_with(
+        &app,
+        vec![fixture_query(
+            "fixture.tree",
+            CachePolicy::Checkout { max_entries: 64 },
+            handler::<Value, Value, _>(|ctx, _| {
+                let root = std::path::Path::new(&ctx.index.repository.root);
+                let read = |p: &str| std::fs::read_to_string(root.join(p)).ok();
+                let tags = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(root)
+                    .args(["tag", "--list"])
+                    .output()
+                    .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+                    .unwrap_or_default();
+                Ok(json!({
+                    "readme": read("README.md"),
+                    "new": read("NEW.md"),
+                    "tags": tags,
+                }))
+            }),
+        )],
+    );
+    let ask = |ctx: &Context| ctx.execute("fixture.tree", json!({})).unwrap();
+    let fresh = |ctx: &Context| ctx.execute_observed("fixture.tree", json!({})).unwrap();
+    let ran = |ctx: &Context| ctx.executor.handler_invocations();
+
+    let first = ask(&ctx);
+    assert_eq!(ask(&ctx), first);
+    assert_eq!(ran(&ctx), 1, "nothing moved: the second call is a hit");
+
+    let step = |what: &str, change: &dyn Fn()| {
+        change();
+        let before = ran(&ctx);
+        let cached = ask(&ctx);
+        assert_eq!(ran(&ctx), before + 1, "{what}: a new key, the handler ran");
+        assert_eq!(cached, fresh(&ctx), "{what}: the answer is the handler's");
+        assert_eq!(ask(&ctx), cached, "{what}: and then kept");
+        cached
+    };
+    let edited = step("an edit of a tracked file", &|| {
+        f.write("README.md", "# Fixture, edited\n")
+    });
+    assert_ne!(edited, first);
+    std::thread::sleep(std::time::Duration::from_millis(20));
+    let again = step("a second edit of the same file", &|| {
+        f.write("README.md", "# Fixture, edited twice\n")
+    });
+    assert_ne!(again, edited);
+    let untracked = step("an untracked file", &|| f.write("NEW.md", "new\n"));
+    assert_ne!(untracked, again);
+    step("a commit", &|| f.commit("change"));
+    let tagged = step("a tag", &|| {
+        f.git(&["tag", "v9.9.9"]);
+    });
+    assert_eq!(tagged["tags"], json!("v9.9.9\n"));
+    // a file the fingerprint does not cover is ignored, and that is the policy's boundary
+    f.write(".ai/local/state/elsewhere.yaml", "x: 1\n");
+    let before = ran(&ctx);
+    ask(&ctx);
+    assert_eq!(ran(&ctx), before, "an ignored file is outside the key");
+}
+
+/// Every capability that keeps its answer per checkout state answers what its handler
+/// answers after the state it reads has changed — a ledger row, a test, a commit — and
+/// never what it kept before the change.
+#[test]
+fn every_checkout_capability_answers_fresh_after_the_state_it_reads_changed() {
+    let _serial = serial();
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let ctx = app.context.clone();
+    let checkout: Vec<String> = ctx
+        .registry
+        .iter()
+        .filter(|c| matches!(c.cache, CachePolicy::Checkout { .. }))
+        .map(|c| c.id.to_string())
+        .collect();
+    for want in [
+        "evidence.report",
+        "rules.report",
+        "intents.list",
+        "release.version",
+    ] {
+        assert!(
+            checkout.iter().any(|id| id == want),
+            "{want} keeps its answer per checkout state"
+        );
+    }
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let source = std::fs::read(f.path("test/cases/00_x.sh")).expect("the fixture's case");
+    let ledger = json!({ "version": 1, "executions": [{
+        "test": "suite:00_x", "runner": "suite", "source": "test/cases/00_x.sh",
+        "outcome": "pass", "seconds": 1, "commit": head, "working_tree": "clean",
+        "digest": majordomus_cli::evidence::digest_of(&source),
+        "at": "2026-10-12T00:00:00Z", "origin": "local",
+        "command": "bash test/run.sh 00_x"
+    }]})
+    .to_string();
+    let changes: [(&str, &dyn Fn()); 3] = [
+        ("a run recorded in the ledger", &|| {
+            f.write(".ai/repo/evidence/ledger.json", &ledger)
+        }),
+        ("an edited case", &|| {
+            f.write("test/cases/00_x.sh", "# majordomus-covers: none\ntrue\n")
+        }),
+        ("a commit", &|| f.commit("the state moved")),
+    ];
+    for id in &checkout {
+        for (_, input) in cases_of(&ctx, id) {
+            let _ = ctx.execute(id, input.clone());
+        }
+    }
+    let report = |ctx: &Context| ctx.execute("evidence.report", json!({})).unwrap();
+    let mut seen = vec![report(&ctx)];
+    for (what, change) in changes {
+        change();
+        seen.push(report(&ctx));
+        for id in &checkout {
+            for (case, input) in cases_of(&ctx, id) {
+                let fresh = ctx.execute_observed(id, input.clone());
+                let cached = ctx.execute(id, input.clone());
+                match (fresh, cached) {
+                    (Ok(fresh), Ok(cached)) => {
+                        assert_eq!(cached, fresh, "{id}/{case} after {what}")
+                    }
+                    (Err(a), Err(b)) => assert_eq!(a.to_string(), b.to_string()),
+                    (a, b) => panic!("{id}/{case} after {what}: {a:?} against {b:?}"),
+                }
+            }
+        }
+    }
+    // and the changes were ones the evidence report reads: each moved its answer
+    for pair in seen.windows(2) {
+        assert_ne!(pair[0], pair[1], "every change moved evidence.report");
+    }
+}

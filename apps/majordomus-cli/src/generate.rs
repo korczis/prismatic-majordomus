@@ -1569,16 +1569,7 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             })
             .collect();
         cases.dedup();
-        let cache = match c.cache {
-            crate::capability::CachePolicy::Disabled => "—".to_string(),
-            crate::capability::CachePolicy::Process {
-                max_entries,
-                ttl_seconds,
-            } => match ttl_seconds {
-                Some(ttl) => format!("process, {max_entries} entries, {ttl}s"),
-                None => format!("process, {max_entries} entries"),
-            },
-        };
+        let cache = c.cache.summary();
         let kind = serde_json::to_value(c.kind)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
@@ -2759,17 +2750,7 @@ fn enum_name<T: serde::Serialize>(v: T) -> String {
 }
 
 fn cache_cell(policy: crate::capability::CachePolicy) -> String {
-    match policy {
-        crate::capability::CachePolicy::Disabled => "—".into(),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: None,
-        } => format!("process, {max_entries} entries"),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: Some(ttl),
-        } => format!("process, {max_entries} entries, {ttl}s"),
-    }
+    policy.summary()
 }
 
 fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {

@@ -199,6 +199,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["release", "version"],
+                cache: crate::capability::CachePolicy::Checkout { max_entries: 2 },
                 handler: version,
             },
             capability! {
