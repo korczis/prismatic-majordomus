@@ -174,9 +174,11 @@ mj_uc_file() { local n="MJ_UC_FILE_$1"; printf '%s' "${!n}"; }
 mj_ap_v()    { mj_yv "MJAP$1" "$2"; }
 mj_ap_list() { mj_yvlist "MJAP$1" "$2"; }
 mj_ap_file() { local n="MJ_AP_FILE_$1"; printf '%s' "${!n}"; }
-# the index of a use case by id, or failure
-mj_uc_index() { local i=0; while [ "$i" -lt "$MJ_UC_N" ]; do [ "$(mj_uc_v "$i" id)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
-mj_ap_index() { local j=0; while [ "$j" -lt "$MJ_AP_N" ]; do [ "$(mj_ap_v "$j" id)" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
+# the index of a use case by id, or failure; each id is read by expansion (mj_uc_get), not
+# by a command substitution per entry: a run asks this for every id several times, which made
+# the lookup quadratic in subshells
+mj_uc_index() { local i=0 MJ_V; while [ "$i" -lt "$MJ_UC_N" ]; do mj_uc_get "$i" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
+mj_ap_index() { local j=0 MJ_V; while [ "$j" -lt "$MJ_AP_N" ]; do mj_ap_get "$j" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
 # the categories of the taxonomy, one id per line
 mj_uc_categories() {
   local t="$MJ_UC_DIR/taxonomy.yaml" flat

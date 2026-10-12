@@ -2275,6 +2275,7 @@ i=0; jq -r '.modules[] | [.id, .slug, .title] | @tsv' "$OUT/executable.json" | w
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$ltitle" "$ldesc" "$i" "$lslug" "$lid" "$lsrc" > "$CONTENT_ROOT/registry/modules/$slug.md"; done 3< "$STAGE/registry-modules.lit"
 i=0; jq -r '.capabilities[] | [.id, .slug, .source_path] | @tsv' "$OUT/executable.json" | while IFS="$MJ_TAB" read -r id slug sp && IFS= read -r ldesc <&3; do i=$((i+1))
   jstr_to lid "$id"; jstr_to lslug "$slug"; jstr_to lsp "$sp"
+  # shellcheck disable=SC2154  # jstr_to assigns lsp, through printf -v
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$lid" "$ldesc" "$i" "$lslug" "$lid" "$lsp" > "$CONTENT_ROOT/registry/capabilities/$slug.md"; done 3< "$STAGE/registry-capabilities.lit"
 # the executable's own narrative: the crate's README, projected as the documents are, with
 # its relative links rewritten to site routes or to the repository
