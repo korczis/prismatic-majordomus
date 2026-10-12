@@ -23,6 +23,19 @@
 #     labelled ci:full do and a routine push does not. It is not a weaker gate: it is one
 #     whose runner this repository cannot get on demand, and a plan that selects it on every
 #     push is a plan that never completes. The three that carry it say why, below.
+#   - a `shape` is the one rule that narrows. A change of a shape — at least one changed path
+#     matches the shape's `records`, and every other changed path is a derived file — plans
+#     the `always` gates and the shape's own `gates` (with `implies` and `requires` applied)
+#     instead of the union of its classes. A derived file is one git marks `merge=derived`
+#     AND a pattern of the block scripts/gitattributes generates matches from the root: git's
+#     answer alone is not enough, because an attribute line outside that block, a nested
+#     .gitattributes, or a pattern without a slash (which git matches at any depth) would let
+#     an authored file pass as a derived one. Only an affected plan narrows: `--full`, an
+#     escalating class and an unclassified path are never narrowed, and the plan names the
+#     shape and why. What makes it sound is that the shape's gates prove every derived file
+#     equal to its regeneration (see the shape below), so the record is the only authored
+#     input in the change. The executable's reader (src/gates/model.rs) applies no shape and
+#     plans the union, which can only be wider.
 #
 # Patterns: `**` crosses directories, `*` does not, a pattern without a wildcard names one
 # path. Paths are repository-relative, as `git diff --name-only` prints them.
@@ -696,6 +709,86 @@ gates:
     runs: scripts/ci/source-pin-check
     summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
 
+  # The third half of scripts/derive-check, which no gate of this model ran: `generate
+  # --check` is rust-integration's and `generate-site-data --check` is core-check's, and the
+  # merge policy itself — .gitattributes, which is generated too — was proved only by a case
+  # of the suite and by the release workflow before it proposes a record. File reads and jq,
+  # no build. The release-record shape needs it: it is what proves that every line marking a
+  # file derived is a generator's claim, so the planner's reading of "derived" is not a
+  # person's.
+  - id: merge-policy
+    job: structure
+    runs: scripts/gitattributes --check
+    summary: the merge policy's generated block of .gitattributes is what the generators write — every path it marks merge=derived is one a generator owns, and every generated path is marked
+
+  # The behavioural cases whose subject is the committed release record, its writer, or what
+  # the site and the installer are offered from it, run by name in the job that has the built
+  # executable. The suite runs them too; this gate exists for the plan that does not run the
+  # suite, the release-record shape below. The list is every case that names a record path
+  # (.ai/repo/releases, release-record, site/static/releases, scripts/ci/release-check) or reads
+  # the checkout's own installation guide, distribution projection or changelog, and
+  # test/cases/94_ci_plan.sh holds it to that grep, so a new such case cannot be left out.
+  - id: release-record-cases
+    job: rust
+    requires: [rust-integration]
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note
+    summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
+
+# Shapes: changes whose plan is narrower than the union of their classes (the header's last
+# rule). Each names the paths that make a change of its shape (`records`, at least one must
+# change), what every other changed path must be (`others: derived`, the only kind there is),
+# and the gates the shape plans beside the `always` ones.
+shapes:
+  # A release record and nothing but the projections of it: the pull request
+  # .github/workflows/release.yml opens on release/record-<tag> after scripts/release-record
+  # wrote .ai/repo/releases/<tag>.yaml and scripts/derive regenerated what follows from it.
+  # Planned by the union it was the full suite, the UI audit, the interactions and the site
+  # probe (#976, v0.21.0: about 95 minutes before the homepage could name the release).
+  #
+  # Soundness: every other path is derived, and the gates below prove each one equal to its
+  # regeneration from this tree — so the only authored input of the change is the record, and
+  # what can break is what reads the record or its projections. The proof, by generator:
+  #   majordomus generate (docs/generated/**, site/data/registry/**, site/static/releases/**,
+  #     docs/INSTALL.md, share/version.txt, the provider bootstraps): rust-integration runs
+  #     `generate --check`;
+  #   scripts/generate-site-data (site/data/generated/**, site/content/**, docs/PLAN_STATUS.md,
+  #     docs/PAGES_STATUS.md, docs/SITE_CLAIMS.md): core-check runs `generate-site-data
+  #     --check`, on every plan;
+  #   scripts/gitattributes (.gitattributes): merge-policy.
+  # One gap stays open and is named rather than hidden: generate-site-data --check judges the
+  # directories under site/content it stages, and the generated block marks every directory
+  # there derived, so a hand-written directory under site/content would be marked derived and
+  # judged by nothing but the site build. None exists today (the generator says so where it
+  # publishes); a change that adds one is a change to the generator's output set, which this
+  # shape does not plan.
+  #
+  # The gates, one by one:
+  #   rust-integration      every projection of `majordomus generate` is current, and the
+  #                         registry validates with the record as one more object of the index;
+  #   version-surface       the newest record is the baseline the declared version is held to;
+  #   release-check         the tree is not behind what was published, and every published tag
+  #                         has its record;
+  #   merge-policy          .gitattributes is the generators' (the soundness above);
+  #   pack-plan             the record is one more source of the ChatGPT pack, which must still
+  #                         fit its shards, and .gitattributes decides what the pack drops;
+  #   entity-check          the record is one more addressable object: no two identities may
+  #                         reduce to one route;
+  #   site-basepath         the installation guide is a document the site serves at two mounts;
+  #   site-build            the site builds from the new data, and site-check holds it —
+  #                         homepage-check's trust card names the release the installer resolves,
+  #                         every link resolves, and the cases that read the built site run;
+  #   release-record-cases  the behavioural cases about the record and what is offered from it.
+  # Left out, deliberately: the shell suite (its cases about the record are the gate above),
+  # the crate's own tests and coverage (no code changed), and the browser gates — site-probe,
+  # ui-audit, interaction-probe and cockpit-probe measure templates, styles and controls, none
+  # of which a derived data file changes; the record adds a changelog section and a release
+  # entry to pages those gates have measured every release before. The master push after the
+  # merge is a full plan and runs every one of them.
+  - id: release-record
+    records: [.ai/repo/releases/v*.yaml]
+    others: derived
+    gates: [rust-integration, version-surface, release-check, merge-policy, pack-plan, entity-check, site-basepath, site-build, release-record-cases]
+
 classes:
   # the pipeline itself: a change here can only be validated by running everything.
   # `except` names the files under .ai/repo/ci/ that are data, not pipeline: each is read by
@@ -872,6 +965,12 @@ classes:
   - id: distribution
     paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**, .ai/repo/release-record-baseline.txt]
     gates: [shell-suite, rust-integration, macos, release-check, version-surface]
+
+  # the merge policy: the file itself, its generator, the driver it names, and the case that
+  # proves its converse. Every path here is in another class already; this one adds the gate.
+  - id: merge-policy
+    paths: [.gitattributes, scripts/gitattributes, scripts/merge-derived, test/cases/241_merge_policy_claims_only_generator_output.sh]
+    gates: [merge-policy, shell-suite]
 
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients

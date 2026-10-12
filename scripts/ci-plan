@@ -19,6 +19,9 @@
 #   --format json|text|github               json (default): the plan; text: one line per gate;
 #                                           github: name=value lines for $GITHUB_OUTPUT
 #   --model FILE                            another model (the tests mutate a copy)
+#   --attr-root DIR                         the checkout whose .gitattributes says which paths
+#                                           are derived, for the model's shapes (default: this
+#                                           one); the tests point it at a fixture
 #   --check                                 validate the model and exit: 0 sound, 10 not
 #
 # The plan is deterministic for a given model and path list, and the same command runs
@@ -32,6 +35,7 @@ MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_
 command -v jq >/dev/null || { echo "ci-plan: jq is required" >&2; exit 12; }
 
 MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0; ONDEMAND=0
+ATTR_ROOT="$ROOT"
 while [ $# -gt 0 ]; do
   case "$1" in
     --base) BASE="$2"; shift 2 ;;
@@ -41,6 +45,7 @@ while [ $# -gt 0 ]; do
     --on-demand) ONDEMAND=1; shift ;;
     --format) FORMAT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
+    --attr-root) ATTR_ROOT="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
     # A bare path list — `ci-plan a.sh b.sh` — is the obvious guess, and it is the one thing
     # the parser cannot take: the paths a plan is computed over come from one of three named
@@ -57,7 +62,7 @@ case "$FORMAT" in json|text|github) ;; *) echo "ci-plan: --format is json, text 
 [ -f "$MODEL" ] || { echo "ci-plan: no CI model at $MODEL" >&2; exit 10; }
 
 # ---------------------------------------------------------------- the model
-FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan.XXXXXX")"; trap 'rm -f "$FLAT" "${LIST:-}"' EXIT
+FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan.XXXXXX")"; trap 'rm -f "$FLAT" "$FLAT".block "$FLAT".attr "$FLAT".derived "$FLAT".kinds "${LIST:-}"' EXIT
 mj_yaml_flatten "$MODEL" > "$FLAT" || { echo "ci-plan: $MODEL does not parse" >&2; exit 10; }
 [ "$(mj_yget "$FLAT" version)" = 1 ] || { echo "ci-plan: $MODEL: version must be 1" >&2; exit 10; }
 gate_ids="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
@@ -97,6 +102,23 @@ i=0; while [ "$i" -lt "$n_classes" ]; do
   fi
   i=$((i+1))
 done
+# A shape narrows a plan, so a shape that does not resolve is refused rather than ignored:
+# one that named a gate the model lacks would plan less than it says, and one with no record
+# pattern would claim every change made only of derived files.
+shape_ids="$(awk -F= '$1 ~ /^shapes\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
+n_shapes="$(printf '%s' "$shape_ids" | grep -c . || true)"
+i=0; while [ "$i" -lt "$n_shapes" ]; do
+  s_id="$(mj_yget "$FLAT" "shapes.$i.id")"
+  [ -n "$(mj_ylist "$FLAT" "shapes.$i.records")" ] || { echo "ci-plan: shape $s_id names no record pattern (records)" >&2; bad=1; }
+  [ "$(mj_yget "$FLAT" "shapes.$i.others")" = derived ] \
+    || { echo "ci-plan: shape $s_id: others must be derived, the one kind of path a shape admits beside its records" >&2; bad=1; }
+  [ -n "$(mj_ylist "$FLAT" "shapes.$i.gates")" ] || { echo "ci-plan: shape $s_id names no gate" >&2; bad=1; }
+  for ref in $(mj_ylist "$FLAT" "shapes.$i.gates"); do
+    printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: shape $s_id names a gate that does not exist: $ref" >&2; bad=1; }
+  done
+  i=$((i+1))
+done
+[ "$(printf '%s' "$shape_ids" | LC_ALL=C sort | uniq -d | grep -c . || true)" = 0 ] || { echo "ci-plan: a shape id is declared twice" >&2; bad=1; }
 [ "$bad" = 0 ] || exit 10
 gate_jobs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.job$/ { split($1, a, "."); job[a[2]] = $2 } END { for (i in id) print id[i] "\t" job[i] }' "$FLAT")"
 gate_runs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.runs$/ { split($1, a, "."); r[a[2]] = substr($0, length($1) + 2) } END { for (i in id) print id[i] "\t" r[i] }' "$FLAT")"
@@ -105,7 +127,7 @@ ondemand_ids="$(awk -F= '
   $1 ~ /^gates\.[0-9]+\.on-demand$/ && $2 == "true" { split($1, a, "."); od[a[2]] = 1 }
   END { for (i in id) if (i in od) print id[i] }' "$FLAT" | LC_ALL=C sort | tr '\n' ' ')"
 on_demand() { case " $ondemand_ids " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
-[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, every reference resolves"; exit 0; }
+[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, $n_shapes shape(s), every reference resolves"; exit 0; }
 
 # ---------------------------------------------------------------- the change
 LIST="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan-files.XXXXXX")"
@@ -184,6 +206,87 @@ if [ "$mode" = full ] && [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
   reason="${reason% } (without the on-demand gates: ${ondemand_ids% })"
 fi
 
+# ---------------------------------------------------------------- the shapes
+# The one rule that narrows (the model's header states it). Only an affected plan is ever
+# narrowed: an escalation and an unclassified path stay full, so a shape can take nothing out
+# of a plan the model says must run everything.
+#
+# A path is derived when git marks it merge=derived AND a pattern of the block
+# scripts/gitattributes generates matches it from the root. Both, because git's answer alone
+# would admit what that block does not say: an attribute line outside the block, a nested
+# .gitattributes (one the change itself could add), a user-level attributes file, or a block
+# pattern without a slash, which git matches at any depth. The block is the generators' own
+# claim, and the merge-policy gate proves it is; requiring it can only make fewer paths
+# derived, never more.
+#
+# The attributes are read from a working tree (--attr-root, default this checkout), so a plan
+# of --base/--head whose head is not the commit checked out there is not narrowed.
+shape=""; shape_records=""; shape_derived=0; shape_note=""
+if [ "$mode" = affected ] && [ -s "$LIST" ] && [ "$n_shapes" -gt 0 ]; then
+  attr_ok=1
+  if [ -n "$HEAD" ] && [ "$HEAD" != worktree ] && [ "$HEAD" != "(listed)" ]; then
+    want="$(git -C "$ROOT" rev-parse -q --verify "$HEAD^{commit}" 2>/dev/null || true)"
+    have="$(git -C "$ATTR_ROOT" rev-parse -q --verify "HEAD^{commit}" 2>/dev/null || true)"
+    [ -n "$want" ] && [ "$want" = "$have" ] || { attr_ok=0; shape_note="the head $HEAD is not the commit checked out, so its attributes cannot be read"; }
+  fi
+  if [ "$attr_ok" = 1 ]; then
+    if [ -f "$ATTR_ROOT/.gitattributes" ]; then
+      awk '/^# >>> generated by scripts\/gitattributes/ { f = 1; next } /^# <<< generated by scripts\/gitattributes/ { f = 0 }
+           f && $2 == "merge=derived" { print $1 }' "$ATTR_ROOT/.gitattributes" > "$FLAT.block"
+    else
+      : > "$FLAT.block"
+    fi
+    if git -C "$ATTR_ROOT" -c core.attributesFile=/dev/null check-attr --stdin merge < "$LIST" > "$FLAT.attr" 2>/dev/null; then
+      awk -F': merge: ' '$2 == "derived" { print $1 }' "$FLAT.attr" > "$FLAT.derived"
+    else
+      attr_ok=0; shape_note="git could not read the attributes in $ATTR_ROOT"
+    fi
+  fi
+  i=0; while [ "$attr_ok" = 1 ] && [ "$i" -lt "$n_shapes" ] && [ -z "$shape" ]; do
+    s_id="$(mj_yget "$FLAT" "shapes.$i.id")"
+    # one line per changed path: record, derived, or other
+    awk -v recs="$(mj_ylist "$FLAT" "shapes.$i.records" | tr '\n' ' ')" -v block="$FLAT.block" -v attrs="$FLAT.derived" '
+      function pat2re(p,   r, i, c, out) {
+        out = "^"
+        for (i = 1; i <= length(p); i++) {
+          c = substr(p, i, 1)
+          if (c == "*") { if (substr(p, i + 1, 1) == "*") { out = out ".*"; i++ } else { out = out "[^/]*" } }
+          else if (index(".\\+?()[]{}|^$", c)) { out = out "\\" c }
+          else out = out c
+        }
+        return out "$"
+      }
+      BEGIN {
+        nr = split(recs, rp, " "); for (k = 1; k <= nr; k++) rre[k] = pat2re(rp[k])
+        nb = 0; while ((getline b < block) > 0) bre[++nb] = pat2re(b)
+        while ((getline a < attrs) > 0) git[a] = 1
+      }
+      NF {
+        kind = "other"
+        for (k = 1; k <= nr; k++) if (match($0, rre[k])) { kind = "record"; break }
+        if (kind == "other" && ($0 in git)) for (k = 1; k <= nb; k++) if (match($0, bre[k])) { kind = "derived"; break }
+        print kind "\t" $0
+      }' "$LIST" > "$FLAT.kinds"
+    n_rec="$(grep -c '^record' "$FLAT.kinds" || true)"
+    n_oth="$(grep -c '^other' "$FLAT.kinds" || true)"
+    if [ "$n_rec" -gt 0 ] && [ "$n_oth" = 0 ]; then
+      shape="$s_id"
+      shape_records="$(awk -F'\t' '$1 == "record" { print $2 }' "$FLAT.kinds")"
+      shape_derived="$(grep -c '^derived' "$FLAT.kinds" || true)"
+      shape_gates=" $(mj_ylist "$FLAT" "shapes.$i.gates" | tr '\n' ' ')"
+    elif [ "$n_rec" -gt 0 ]; then
+      shape_note="not the shape $s_id: $(awk -F'\t' '$1 == "other" { print $2 }' "$FLAT.kinds" | head -3 | tr '\n' ' ')is neither a record nor a derived file"
+    fi
+    i=$((i+1))
+  done
+  rm -f "$FLAT.block" "$FLAT.attr" "$FLAT.derived" "$FLAT.kinds"
+fi
+if [ -n "$shape" ]; then
+  reason="the change is of the shape $shape: $(printf '%s\n' "$shape_records" | grep -c .) record(s) ($(printf '%s' "$shape_records" | tr '\n' ' ' | sed 's/ $//')) and $shape_derived derived file(s), each proven equal to its regeneration by the shape's gates; the always gates and the shape's own run, not the union of the classes"
+elif [ -n "$shape_note" ]; then
+  reason="${reason% } (${shape_note% })"
+fi
+
 # ---------------------------------------------------------------- the selection
 selected=""; why_of=""
 add() { case " $selected " in *" $1 "*) ;; *) selected="$selected $1" ;; esac; why_of="$why_of
@@ -200,6 +303,8 @@ $g	on demand only: its runner is not available on demand; the schedule, a dispat
   fi
   if [ "$mode" = full ]; then add "$g" "full"
   elif [ "$(mj_yget "$FLAT" "gates.$i.always")" = true ]; then add "$g" "always"
+  elif [ -n "$shape" ]; then
+    case "$shape_gates " in *" $g "*) add "$g" "shape $shape" ;; esac
   else
     by="$(printf '%s\n' "$MATCH" | awk -F'\t' -v g="$g" '$1=="gate" && $2==g {print $3}' | LC_ALL=C sort -u | tr '\n' ' ')"
     [ -n "$by" ] && add "$g" "class ${by% }"
@@ -222,9 +327,14 @@ fi
 selected="${selected# }"
 
 # ---------------------------------------------------------------- the output
+# what a gate the plan left out is told: under a shape it was the shape that left it out, and
+# the reader of the run must see that rather than a class map that was never consulted
+skip_why="no changed path in a class that needs it"
+[ -z "$shape" ] || skip_why="left out by the shape $shape, which plans the always gates and its own gates only"
 case "$FORMAT" in
   text)
     printf 'mode: %s (%s)\nbase: %s\nhead: %s\nchanged: %s path(s)\n' "$mode" "$reason" "$BASE" "$HEAD" "$(wc -l < "$LIST" | tr -d ' ')"
+    [ -z "$shape" ] || printf 'shape: %s (records: %s; derived: %s)\n' "$shape" "$(printf '%s' "$shape_records" | tr '\n' ' ' | sed 's/ $//')" "$shape_derived"
     for g in $gate_ids; do
       w="$(printf '%s\n' "$why_of" | awk -F'\t' -v g="$g" '$1==g {print $2; exit}')"
       # run or skip is read from the selection, never from the presence of a reason: an
@@ -232,11 +342,12 @@ case "$FORMAT" in
       # a reader is told a gate ran that never did.
       case " $selected " in
         *" $g "*) printf '  run   %-17s %s\n' "$g" "$w" ;;
-        *) printf '  skip  %-17s %s\n' "$g" "${w:-no changed path in a class that needs it}" ;;
+        *) printf '  skip  %-17s %s\n' "$g" "${w:-$skip_why}" ;;
       esac
     done ;;
   github)
     printf 'mode=%s\n' "$mode"
+    printf 'shape=%s\n' "$shape"
     printf 'selected=%s\n' "$selected"
     for g in $gate_ids; do
       case " $selected " in *" $g "*) v=true ;; *) v=false ;; esac
@@ -249,7 +360,8 @@ case "$FORMAT" in
     jq -n --arg mode "$mode" --arg reason "$reason" --arg base "$BASE" --arg head "$HEAD" --arg model "${MODEL#"$ROOT"/}" \
       --rawfile changed "$LIST" --rawfile classes "$FLAT.classes" \
       --arg selected "$selected" --arg gates "$gate_ids" --arg why "$why_of" --arg jobs "$gate_jobs" --arg runs "$gate_runs" \
-      --arg unclassified "$(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}')" '
+      --arg unclassified "$(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}')" \
+      --arg skip_why "$skip_why" --arg shape "$shape" --arg shape_records "$shape_records" --arg shape_derived "$shape_derived" '
       def lines: split("\n") | map(select(length > 0));
       ($why | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $w
       | ($jobs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $jobs
@@ -259,7 +371,8 @@ case "$FORMAT" in
           changed: ($changed | lines),
           classes: ($classes | lines | map(split("\t")) | group_by(.[0]) | map({id: .[0][0], paths: map(.[1])})),
           unclassified: ($unclassified | lines),
-          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), reason: ($w[.] // "no changed path in a class that needs it")})),
+          shape: (if $shape == "" then null else {id: $shape, records: ($shape_records | lines), derived: ($shape_derived | tonumber)} end),
+          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), reason: ($w[.] // $skip_why)})),
           selected: $sel }'
     rm -f "$FLAT.classes" ;;
 esac
