@@ -503,6 +503,15 @@ and `share/schemas/` are where it keeps its kinds. They are read from disk, once
 served from memory with the digest of their bytes in the URL — so a changed file is a
 changed URL, and a versioned asset is answered `immutable` for a year.
 
+Only the exact version a page emits is immutable; any other `v` (empty, a prefix, a stale
+one) and no `v` at all are answered `no-cache`. Every answer carries the digest as its
+`ETag`, and an `If-None-Match` that still holds is a `304 Not Modified` with no body. Every
+asset URL a page loads carries its digest: a script module's relative imports are rewritten,
+when it is read, to the digested URLs of what they import, so a module's digest covers its
+imports and every importer names one URL; the libraries the scripts load at run time get
+theirs from the page body's `data-vendor` (`cockpit::VENDOR`); the favicon is digested like
+the stylesheet. A warm navigation therefore fetches only the page.
+
 ```sh
 scripts/cockpit-assets            # compile the stylesheet, vendor the pinned libraries
 scripts/cockpit-assets --check    # fail if the committed stylesheet differs from its source
@@ -577,7 +586,8 @@ disposable repository:
 - the runner form is generated from the input schema,
 - a graph page lists every node and edge before any library loads,
 - the health page shows the verdicts the engines reach,
-- assets are immutable by digest and no traversal escapes the directory,
+- assets are immutable by their exact digest, every URL a page emits carries one, a
+  revalidation that holds is a 304, and no traversal escapes the directory,
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,

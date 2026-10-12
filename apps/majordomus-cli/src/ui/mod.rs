@@ -247,12 +247,7 @@ impl Ui {
             );
         }
         if let Some(name) = req.path.strip_prefix(ASSETS_PREFIX) {
-            let version = req
-                .query
-                .iter()
-                .find(|(k, _)| k == "v")
-                .map(|(_, v)| v.as_str());
-            return self.assets.respond(name, version);
+            return self.assets.respond(name, req);
         }
         // one reading of the repository for the whole screen
         let ctx = self.live.current();
