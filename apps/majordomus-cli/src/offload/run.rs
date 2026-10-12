@@ -582,17 +582,25 @@ pub fn offload(
     }
     cleanup(request.keep);
     let derived_ref = format!("refs/offload/{tag}-derived");
+    // The ref is this process's scratch and goes however the apply ends: a refused apply
+    // used to leave it behind, and the next offload of the same tree (same tag) then fetched
+    // a different derived commit (`stash create` stamps the time) onto it, which git refuses
+    // as a non-fast-forward with nothing on stderr under -q. `+` overwrites whatever an
+    // earlier process left, and the guard removes it on every path.
+    let _derived_guard = ScratchRef {
+        dir: &worktree,
+        name: derived_ref.clone(),
+    };
     git(
         &worktree,
         &[
             "fetch",
             "-q",
             &back.to_string_lossy(),
-            &format!("{derived_ref}:{derived_ref}"),
+            &format!("+{derived_ref}:{derived_ref}"),
         ],
     )?;
     apply(&worktree, &input, &sha, &derived_ref, &mut report)?;
-    let _ = git(&worktree, &["update-ref", "-d", &derived_ref]);
     let _ = writeln!(
         log,
         "derive-offload: applied {} derived file(s), staged, not committed",

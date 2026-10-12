@@ -832,7 +832,7 @@ fn a_derived_tree_that_cannot_be_applied_is_refused() {
     std::fs::write(s.join("a.txt"), "two\n").unwrap();
     for (what, words) in [
         (
-            "/back.bundle refs/offload/",
+            "/back.bundle +refs/offload/",
             "failed: git: injected failure",
         ),
         ("diff --name-status", "git diff --name-status"),
@@ -852,6 +852,36 @@ fn a_derived_tree_that_cannot_be_applied_is_refused() {
         let err = refused(&out, 12);
         assert!(err.contains(words), "{what}: {err}");
     }
+}
+
+/// A refused apply leaves no scratch ref behind, and the next offload of the same tree takes
+/// its derived commit whatever an earlier process left: the tag is the input's, so it repeats,
+/// and the derived commit does not (`stash create` stamps the time) — a plain fetch refused
+/// that as a non-fast-forward, with nothing on stderr under -q.
+#[test]
+fn a_refused_apply_does_not_spoil_the_next_offload_of_the_same_tree() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let s = c.session();
+    std::fs::write(s.join("a.txt"), "two\n").unwrap();
+    let out = c.derive(&d, &["--host", "h0"], &c.failing_session_git("checkout "));
+    let err = refused(&out, 12);
+    assert!(err.contains("git checkout"), "{err}");
+    assert_eq!(
+        c.git(&s, &["for-each-ref", "refs/offload/"]),
+        "",
+        "a refused apply left a scratch ref"
+    );
+    // the next derive's commit must carry another second
+    std::thread::sleep(Duration::from_millis(1100));
+    let out = c.derive(&d, &["--host", "h0"], &[]);
+    assert!(
+        out.status.success(),
+        "{}\n{}",
+        text(&out.stdout),
+        text(&out.stderr)
+    );
+    assert_eq!(c.git(&s, &["for-each-ref", "refs/offload/"]), "");
 }
 
 /// A derive that changes nothing stages nothing and says the worktree is current; the host
