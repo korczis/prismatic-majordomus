@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The latest reading of a source, handed over at once."><title>majordomus_cli::capability::readings - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module readings</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.22.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module readings</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#what-a-read-costs" title="What a read costs">What a read costs</a></li><li><a href="#switching-it-off" title="Switching it off">Switching it off</a></li><li><a href="#a-reading-from-first-to-known" title="A reading, from first to known">A reading, from first to known</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">capability</a></div><h1>Module <span>readings</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/capability/readings.rs.html#1-684">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The latest reading of a source, handed over at once.</p>
+<p><a href="../executor/struct.CapabilityExecutor.html#method.execute" title="method majordomus_cli::capability::executor::CapabilityExecutor::execute"><code>CapabilityExecutor::execute</code></a> answers a
+question: it runs the handler, or returns an answer byte-identical to what the handler
+would return (<code>project.cache-is-invisible</code>). A page a person is looking at asks for
+something else. It wants what is known <em>now</em>, at once, with how old that is, and it
+wants the answer to catch up behind it. That is a <a href="fn.read.html" title="fn majordomus_cli::capability::readings::read"><code>read</code></a>, and it never passes itself
+off as an answer: a <a href="struct.Latest.html" title="struct majordomus_cli::capability::readings::Latest"><code>Latest</code></a> always carries when it was read, whether the repository
+has moved since, and whether a newer reading is on its way.</p>
+<h2 id="what-a-read-costs"><a class="doc-anchor" href="#what-a-read-costs">§</a>What a read costs</h2>
+<p>One lookup in this process’s memory. The handler, git and the file system are touched
+only by a worker of this module, off the path of the request:</p>
+<ul>
+<li><strong>The source was read in the repository as it is now.</strong> The reading is returned
+immediately. When it is older than <a href="constant.REVALIDATE.html" title="constant majordomus_cli::capability::readings::REVALIDATE"><code>REVALIDATE</code></a>, a worker reads it again behind the
+caller, so a source the repository does not determine (health, the mesh, the forge)
+stays close to the present without any reader waiting for it.</li>
+<li><strong>The repository has moved since.</strong> A worker reads the source again and the caller
+waits for it for at most <a href="struct.Patience.html#structfield.moved" title="field majordomus_cli::capability::readings::Patience::moved"><code>Patience::moved</code></a>. A fast source is therefore current on the
+same request; a slow one is returned as it was, marked <a href="enum.Freshness.html#variant.Stale" title="variant majordomus_cli::capability::readings::Freshness::Stale"><code>Freshness::Stale</code></a> and
+<code>refreshing</code>. Every other source this process has been asked for lately is read again
+at the same moment, so the next screen a reader opens is ready before it is asked for.</li>
+<li><strong>The source has never been read here.</strong> There is nothing to hand over, so the caller
+waits for the first reading, for at most <a href="struct.Patience.html#structfield.cold" title="field majordomus_cli::capability::readings::Patience::cold"><code>Patience::cold</code></a>, and is told
+<a href="enum.Freshness.html#variant.Pending" title="variant majordomus_cli::capability::readings::Freshness::Pending"><code>Freshness::Pending</code></a> past that.</li>
+</ul>
+<p>One worker reads a source at a time, however many callers ask. The readings to take wait
+in one queue, drained by at most <a href="constant.WORKERS.html" title="constant majordomus_cli::capability::readings::WORKERS"><code>WORKERS</code></a> threads, so a change of the repository that
+sends every remembered source to be read again starts no more threads than that. A
+reading a caller is waiting for goes to the front of the queue and the ones nobody is
+waiting for go to the back, so a reader never waits behind the background. Under the
+workers the executor’s own cache and single flight still apply: a worker whose source
+did not change is answered from the cache and costs nearly nothing.</p>
+<h2 id="switching-it-off"><a class="doc-anchor" href="#switching-it-off">§</a>Switching it off</h2>
+<p><code>MAJORDOMUS_CAPABILITY_CACHE=off</code> makes every read run its handler and wait for it, as
+it makes every <code>execute</code> do. <a href="constant.PATIENCE_SWITCH.html" title="constant majordomus_cli::capability::readings::PATIENCE_SWITCH"><code>PATIENCE_SWITCH</code></a> set to <code>wait</code> keeps the store and makes
+every read wait for a current reading, which is what a test that changes a repository
+and then reads a page needs in order to be exact.</p>
+<h2 id="a-reading-from-first-to-known"><a class="doc-anchor" href="#a-reading-from-first-to-known">§</a>A reading, from first to known</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::readings::{read, Freshness, Patience};
+<span class="kw">use </span>majordomus_cli::synthetic::SyntheticRepository;
+<span class="kw">use </span>serde_json::json;
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>ctx = repo.context().unwrap();
+
+<span class="comment">// never read here: the caller waits for the first reading, and it is current
+</span><span class="kw">let </span>first = read(<span class="kw-2">&amp;</span>ctx, <span class="string">"plan.status"</span>, <span class="macro">json!</span>({}), Patience::WAIT);
+<span class="macro">assert_eq!</span>(first.freshness, Freshness::Current);
+<span class="macro">assert!</span>(first.value.is_ok() &amp;&amp; first.read_at.is_some());
+
+<span class="comment">// known now: handed over from memory, with the age it has, and no handler runs for it
+</span><span class="kw">let </span>ran = ctx.executor.handler_invocations();
+<span class="kw">let </span>again = read(<span class="kw-2">&amp;</span>ctx, <span class="string">"plan.status"</span>, <span class="macro">json!</span>({}), Patience::PAGE);
+<span class="macro">assert_eq!</span>(again.value, first.value);
+<span class="macro">assert!</span>(again.age.is_some() &amp;&amp; !again.catching_up());
+<span class="macro">assert_eq!</span>(ctx.executor.handler_invocations(), ran);
+
+<span class="comment">// a source that cannot answer is a reading that says why, never a missing one
+</span><span class="kw">let </span>unknown = read(<span class="kw-2">&amp;</span>ctx, <span class="string">"no.such.capability"</span>, <span class="macro">json!</span>({}), Patience::WAIT);
+<span class="macro">assert!</span>(unknown.value.is_err());
+<span class="macro">assert_eq!</span>(unknown.freshness, Freshness::Current);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Latest.html" title="struct majordomus_cli::capability::readings::Latest">Latest</a></dt><dd>The latest reading of one source.</dd><dt><a class="struct" href="struct.Patience.html" title="struct majordomus_cli::capability::readings::Patience">Patience</a></dt><dd>How long a read waits for a worker before it returns what it has.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Freshness.html" title="enum majordomus_cli::capability::readings::Freshness">Freshness</a></dt><dd>How a reading stands against the repository as it is now.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.MAX_SOURCES.html" title="constant majordomus_cli::capability::readings::MAX_SOURCES">MAX_<wbr>SOURCES</a></dt><dd>The most sources remembered at once; the one asked for longest ago is dropped first.</dd><dt><a class="constant" href="constant.PATIENCE_SWITCH.html" title="constant majordomus_cli::capability::readings::PATIENCE_SWITCH">PATIENCE_<wbr>SWITCH</a></dt><dd>The environment variable that sets how long a read waits: a number of milliseconds for
+a source whose repository has moved, or <code>wait</code> to wait for a current reading every time.</dd><dt><a class="constant" href="constant.PENDING.html" title="constant majordomus_cli::capability::readings::PENDING">PENDING</a></dt><dd>What the first reading of a source says while it has not arrived.</dd><dt><a class="constant" href="constant.REMEMBERED.html" title="constant majordomus_cli::capability::readings::REMEMBERED">REMEMBERED</a></dt><dd>How long a source nobody asked for is remembered, and so read again when the repository
+moves. A page left open asks for its sources every minute, so its sources stay; a screen
+nobody has looked at for five minutes stops costing anything when the repository changes.</dd><dt><a class="constant" href="constant.REVALIDATE.html" title="constant majordomus_cli::capability::readings::REVALIDATE">REVALIDATE</a></dt><dd>How old a reading of the repository as it is now may grow before a worker reads its
+source again behind the caller.</dd><dt><a class="constant" href="constant.WORKERS.html" title="constant majordomus_cli::capability::readings::WORKERS">WORKERS</a></dt><dd>How many sources are read at once by this module’s workers, all sources together.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.read.html" title="fn majordomus_cli::capability::readings::read">read</a></dt><dd>The latest reading of <code>id</code> asked with <code>input</code>: what this process knows now, returned
+within <code>patience</code>, with a worker reading the source again behind the caller whenever
+what is known is not current. See the module for what each case costs.</dd></dl></section></div></main></body></html>

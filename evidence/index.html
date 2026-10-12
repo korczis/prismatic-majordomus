@@ -172,22 +172,24 @@ the edge was lost on the way in.</p>
   <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
 
     The newest executions CI recorded are of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012">81178f5362ea</a>,
-    14 commit(s) and 606 changed file(s) before the one this site was built from.
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/cce3983435f18947781b26938b59e7c88fd1cd78">cce3983435f1</a>,
+    9 commit(s) and 295 changed file(s) before the one this site was built from.
     They say what held there, not what holds here; the site is published again once CI has recorded this commit.
   </p>
   <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
     <li>A job that ran tests ran them in a dirty tree.</li>
-    <li>The run has no report from coverage.</li>
+    <li>The run has no report from suite, coverage.</li>
+    <li>The run recorded 3 failed, timed-out or errored execution(s).</li>
   </ul>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">332</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">331</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">skip</dt><dd class="text-heading">1</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">71</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">error</dt><dd class="text-heading">2</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">fail</dt><dd class="text-heading">1</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">68</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">coverage</dt><dd class="text-heading">not measured by this run</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-12T17:20:17Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-12T20:35:26Z</dd></div>
   </dl>
-  <p class="mt-3 text-sm text-body-subtle">Absent from this run: coverage. Nothing absent is counted as passing.</p>
+  <p class="mt-3 text-sm text-body-subtle">Absent from this run: suite, coverage. Nothing absent is counted as passing.</p>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
   <div role="tablist" aria-label="The tracked ledger&#39;s verdict, as CI derived it at this commit" class="flex flex-wrap gap-1.5"><button type="button" role="tab" id="ci-evidence-tab-0" aria-controls="ci-evidence-panel-0"
@@ -200,8 +202,8 @@ the edge was lost on the way in.</p>
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         81178f53 (clean)
-judged at the working tree (HEAD 81178f5362ea, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         cce39834 (clean)
+judged at the working tree (HEAD cce3983435f1, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
 subject      244 claim(s), whole
@@ -996,8 +998,8 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/38278173940/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/81178f5362ea7ef4948a951d7604bce298fed012" class="text-fg-brand hover:underline">commit 81178f5362ea &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/38295307121/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/cce3983435f18947781b26938b59e7c88fd1cd78" class="text-fg-brand hover:underline">commit cce3983435f1 &rarr;</a>
     </div>
   </figure></div>
 
@@ -4267,7 +4269,7 @@ not_run            guaranteed   worktree-topology-derived
   </a>
 </div>
 <p class="mt-6 text-sm text-body-subtle">
-  The canonical source is <a class="underline" href="https://github.com/korczis/prismatic-majordomus/blob/9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>;
+  The canonical source is <a class="underline" href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>;
   the full table with sources, implementations and tests is on <a class="underline" href="https://majordomus.dev/guarantees/">guarantees</a>.
 </p>
 
@@ -4318,9 +4320,9 @@ not_run            guaranteed   worktree-topology-derived
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/92cc480679bb092d81d9acf4d7a818638bfa8e8d/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -4328,7 +4330,7 @@ not_run            guaranteed   worktree-topology-derived
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4" class="font-mono underline">9d31c4d</a> · inputs <span class="font-mono">dd8c67e6cfd2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/92cc480679bb092d81d9acf4d7a818638bfa8e8d" class="font-mono underline">92cc480</a> · inputs <span class="font-mono">6a1a7cd766cf</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

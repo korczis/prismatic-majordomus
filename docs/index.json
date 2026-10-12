@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4",
+  "commit": "92cc480679bb092d81d9acf4d7a818638bfa8e8d",
   "source_version": "0.22.0",
-  "registry_fingerprint": "dd6d29292732f5d2ee23fe090b39485ea896b1b247fa806424ce34f619d53a76"
+  "registry_fingerprint": "5b5053f8de8104a7b864770bc35634503c7d4c71f11ed2f9e1722302249f88de"
  },
  "counts": {
-  "pages": 2126,
-  "capabilities": 2274,
+  "pages": 2136,
+  "capabilities": 2285,
   "cli_commands": 105,
-  "http_routes": 189,
-  "mcp_tools": 185,
-  "mcp_resources": 2136,
+  "http_routes": 190,
+  "mcp_tools": 186,
+  "mcp_resources": 2146,
   "modules": 90
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 97
+   "count": 98
   },
   {
    "kind": "application",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 339
+   "count": 340
   },
   {
    "kind": "domain",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 332
+   "count": 336
   },
   {
    "kind": "knowledge",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 169
+   "count": 171
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 454
+   "count": 456
   },
   {
    "kind": "use-case",
@@ -1173,6 +1173,15 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0141",
    "source": ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0142/",
+   "title": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+   "description": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0142",
+   "source": ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
    "section": "Decisions"
   },
   {
@@ -3453,6 +3462,12 @@
    "route": "/docs/performance/",
    "title": "Performance truth",
    "description": "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/personal-mode/",
+   "title": "Personal mode: Majordomus as one person's instrument",
+   "description": "personal mode, the tool as one person's instrument with nothing left in git: who it is for, why it is ordinary practice, the measured way from personal to shared, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured",
    "section": "Documentation"
   },
   {
@@ -7776,6 +7791,30 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2486/",
+   "title": "I2486 — No screen waits for a source: a page shows the latest reading with its age, read again behind the reader",
+   "description": "Take every handler, git call and file read off the path of a UI request: the executor keeps the latest reading of each source a page asked for, a screen is rendered from those readings at once, and a worker reads a source again behind the reader whenever the reading is not of the repository as it is now.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2487/",
+   "title": "I2487 — A screen is streamed, and one stream tells an open page which readings changed",
+   "description": "Send a screen as it becomes known and keep it current without polling: the shell and every panel whose reading is at hand are written at once, a panel whose first reading is pending follows on the same response, and after that one WebSocket subscription tells the page which readings changed.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2488/",
+   "title": "I2488 — The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum",
+   "description": "Decide which HTTP stack the shared server keeps, from a measurement of the two candidates on the same routes, a streamed route and long-lived subscribers, and record the decision so that the repository has one stack and knows why.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2489/",
+   "title": "I2489 — A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
+   "description": "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
@@ -8133,6 +8172,12 @@
    "route": "/registry/capabilities/deploy-list/",
    "title": "deploy.list",
    "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs and the measured budgets. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/deploy-observed/",
+   "title": "deploy.observed",
+   "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
    "section": "Registry"
   },
   {
@@ -10635,6 +10680,15 @@
    "section": "Rules"
   },
   {
+   "route": "/rules/project-no-screen-waits-for-a-source-1/",
+   "title": "A screen shows the latest reading of its sources at once, and never waits for a handler",
+   "description": "A screen shows the latest reading of its sources at once, and never waits for a handler",
+   "kind": "rule",
+   "id": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+   "source": ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+   "section": "Rules"
+  },
+  {
    "route": "/rules/project-one-derive-at-a-time-1/",
    "title": "One derive at a time per machine, and a stopped derive leaves no orphans",
    "description": "One derive at a time per machine, and a stopped derive leaves no orphans",
@@ -10896,6 +10950,15 @@
    "section": "Rules"
   },
   {
+   "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+   "title": "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication",
+   "description": "The UI the site publishes is the trunk's, and a UI that is missing, older or cut short without saying so is a failed publication",
+   "kind": "rule",
+   "id": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+   "source": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
+   "section": "Rules"
+  },
+  {
    "route": "/rules/project-the-server-sees-the-current-tree-1/",
    "title": "A long-lived process serves the repository as it is, never as it was when it started",
    "description": "A long-lived process serves the repository as it is, never as it was when it started",
@@ -11033,7 +11096,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.22.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 9d31c4d456d5e0e6aaf5817364b1f5daa5b19da4: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 92cc480679bb092d81d9acf4d7a818638bfa8e8d: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.22.0 — Rust API reference"
   },
   {
@@ -11322,6 +11385,12 @@
    "route": "/rustdoc/majordomus_cli/capability/model/",
    "title": "majordomus_cli::capability::model - Rust",
    "description": "The descriptor: everything a projection may say about a capability, and nothing else.",
+   "section": "majordomus-cli 0.22.0 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/readings/",
+   "title": "majordomus_cli::capability::readings - Rust",
+   "description": "The latest reading of a source, handed over at once.",
    "section": "majordomus-cli 0.22.0 — Rust API reference"
   },
   {

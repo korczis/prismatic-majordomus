@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["builtin","closure","executor","handler","model","registry","rustdoc","schema"],"struct":["CaseContext","ModuleDescriptor","NamedCase"],"trait":["BenchmarkCases"],"type":["CaseProvider"]};
+window.SIDEBAR_ITEMS = {"mod":["builtin","closure","executor","handler","model","readings","registry","rustdoc","schema"],"struct":["CaseContext","ModuleDescriptor","NamedCase"],"trait":["BenchmarkCases"],"type":["CaseProvider"]};

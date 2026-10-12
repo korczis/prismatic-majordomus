@@ -126,9 +126,9 @@
 <a href=#126 id=126 data-nosnippet>126</a>            .strip_prefix(root)
 <a href=#127 id=127 data-nosnippet>127</a>            .map(|p| p.to_string_lossy().replace(<span class="string">'\\'</span>, <span class="string">"/"</span>))
 <a href=#128 id=128 data-nosnippet>128</a>            .unwrap_or_default();
-<a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(path) <span class="kw">else </span>{
-<a href=#130 id=130 data-nosnippet>130</a>            <span class="kw">continue</span>;
-<a href=#131 id=131 data-nosnippet>131</a>        };
+<a href=#129 id=129 data-nosnippet>129</a>        <span class="comment">// a rule that cannot be read is one Antigravity cannot load either: it reads as empty,
+<a href=#130 id=130 data-nosnippet>130</a>        // and is reported below as carrying no trigger
+<a href=#131 id=131 data-nosnippet>131</a>        </span><span class="kw">let </span>text = std::fs::read_to_string(path).unwrap_or_default();
 <a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">if </span>text.len() &gt; RULE_BYTES {
 <a href=#133 id=133 data-nosnippet>133</a>            out.push(finding(
 <a href=#134 id=134 data-nosnippet>134</a>                Severity::Warning,
@@ -179,28 +179,82 @@
 <a href=#179 id=179 data-nosnippet>179</a>        std::fs::write(rules.join(<span class="string">"plain.md"</span>), <span class="string">"# no front matter\n"</span>).unwrap();
 <a href=#180 id=180 data-nosnippet>180</a>        std::fs::write(rules.join(<span class="string">"camel.md"</span>), <span class="string">"---\ntrigger: alwaysOn\n---\nx\n"</span>).unwrap();
 <a href=#181 id=181 data-nosnippet>181</a>        std::fs::write(rules.join(<span class="string">"good.md"</span>), <span class="string">"---\ntrigger: always_on\n---\nx\n"</span>).unwrap();
-<a href=#182 id=182 data-nosnippet>182</a>        <span class="kw">let </span>found = legacy_findings(dir.path());
-<a href=#183 id=183 data-nosnippet>183</a>        <span class="kw">let </span>paths: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().filter_map(|d| d.path.as_deref()).collect();
-<a href=#184 id=184 data-nosnippet>184</a>        <span class="macro">assert_eq!</span>(paths, [<span class="string">".agents/rules/camel.md"</span>, <span class="string">".agents/rules/plain.md"</span>]);
-<a href=#185 id=185 data-nosnippet>185</a>        <span class="macro">assert!</span>(found.iter().all(|d| d.code == <span class="string">"antigravity-rule-discarded"</span>));
-<a href=#186 id=186 data-nosnippet>186</a>    }
-<a href=#187 id=187 data-nosnippet>187</a>
-<a href=#188 id=188 data-nosnippet>188</a>    <span class="attr">#[test]
-<a href=#189 id=189 data-nosnippet>189</a>    </span><span class="kw">fn </span>legacy_workflows_and_a_skills_manifest_are_reported() {
-<a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#191 id=191 data-nosnippet>191</a>        std::fs::create_dir_all(dir.path().join(<span class="string">".agents/workflows"</span>)).unwrap();
-<a href=#192 id=192 data-nosnippet>192</a>        std::fs::write(dir.path().join(<span class="string">".agents/skills.json"</span>), <span class="string">"{}"</span>).unwrap();
-<a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>codes: Vec&lt;String&gt; = legacy_findings(dir.path())
-<a href=#194 id=194 data-nosnippet>194</a>            .into_iter()
-<a href=#195 id=195 data-nosnippet>195</a>            .map(|d| d.code)
-<a href=#196 id=196 data-nosnippet>196</a>            .collect();
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="macro">assert_eq!</span>(
-<a href=#198 id=198 data-nosnippet>198</a>            codes,
-<a href=#199 id=199 data-nosnippet>199</a>            [
-<a href=#200 id=200 data-nosnippet>200</a>                <span class="string">"antigravity-legacy-workflows"</span>,
-<a href=#201 id=201 data-nosnippet>201</a>                <span class="string">"antigravity-skills-manifest"
-<a href=#202 id=202 data-nosnippet>202</a>            </span>]
-<a href=#203 id=203 data-nosnippet>203</a>        );
-<a href=#204 id=204 data-nosnippet>204</a>    }
-<a href=#205 id=205 data-nosnippet>205</a>}
+<a href=#182 id=182 data-nosnippet>182</a>        <span class="comment">// front matter that never closes is no front matter
+<a href=#183 id=183 data-nosnippet>183</a>        </span>std::fs::write(rules.join(<span class="string">"open.md"</span>), <span class="string">"---\ntrigger: always_on\n"</span>).unwrap();
+<a href=#184 id=184 data-nosnippet>184</a>        <span class="kw">let </span>found = legacy_findings(dir.path());
+<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>paths: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().filter_map(|d| d.path.as_deref()).collect();
+<a href=#186 id=186 data-nosnippet>186</a>        <span class="macro">assert_eq!</span>(
+<a href=#187 id=187 data-nosnippet>187</a>            paths,
+<a href=#188 id=188 data-nosnippet>188</a>            [
+<a href=#189 id=189 data-nosnippet>189</a>                <span class="string">".agents/rules/camel.md"</span>,
+<a href=#190 id=190 data-nosnippet>190</a>                <span class="string">".agents/rules/open.md"</span>,
+<a href=#191 id=191 data-nosnippet>191</a>                <span class="string">".agents/rules/plain.md"
+<a href=#192 id=192 data-nosnippet>192</a>            </span>]
+<a href=#193 id=193 data-nosnippet>193</a>        );
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="macro">assert!</span>(found.iter().all(|d| d.code == <span class="string">"antigravity-rule-discarded"</span>));
+<a href=#195 id=195 data-nosnippet>195</a>    }
+<a href=#196 id=196 data-nosnippet>196</a>
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="attr">#[test]
+<a href=#198 id=198 data-nosnippet>198</a>    </span><span class="kw">fn </span>legacy_workflows_and_a_skills_manifest_are_reported() {
+<a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#200 id=200 data-nosnippet>200</a>        std::fs::create_dir_all(dir.path().join(<span class="string">".agents/workflows"</span>)).unwrap();
+<a href=#201 id=201 data-nosnippet>201</a>        std::fs::write(dir.path().join(<span class="string">".agents/skills.json"</span>), <span class="string">"{}"</span>).unwrap();
+<a href=#202 id=202 data-nosnippet>202</a>        <span class="kw">let </span>codes: Vec&lt;String&gt; = legacy_findings(dir.path())
+<a href=#203 id=203 data-nosnippet>203</a>            .into_iter()
+<a href=#204 id=204 data-nosnippet>204</a>            .map(|d| d.code)
+<a href=#205 id=205 data-nosnippet>205</a>            .collect();
+<a href=#206 id=206 data-nosnippet>206</a>        <span class="macro">assert_eq!</span>(
+<a href=#207 id=207 data-nosnippet>207</a>            codes,
+<a href=#208 id=208 data-nosnippet>208</a>            [
+<a href=#209 id=209 data-nosnippet>209</a>                <span class="string">"antigravity-legacy-workflows"</span>,
+<a href=#210 id=210 data-nosnippet>210</a>                <span class="string">"antigravity-skills-manifest"
+<a href=#211 id=211 data-nosnippet>211</a>            </span>]
+<a href=#212 id=212 data-nosnippet>212</a>        );
+<a href=#213 id=213 data-nosnippet>213</a>    }
+<a href=#214 id=214 data-nosnippet>214</a>
+<a href=#215 id=215 data-nosnippet>215</a>    <span class="attr">#[test]
+<a href=#216 id=216 data-nosnippet>216</a>    </span><span class="kw">fn </span>a_rule_over_the_budget_is_reported_and_a_quoted_trigger_is_read() {
+<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#218 id=218 data-nosnippet>218</a>        <span class="kw">let </span>rules = dir.path().join(<span class="string">".agents/rules"</span>);
+<a href=#219 id=219 data-nosnippet>219</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>rules).unwrap();
+<a href=#220 id=220 data-nosnippet>220</a>        <span class="kw">let </span>body = <span class="string">"x"</span>.repeat(RULE_BYTES + <span class="number">1</span>);
+<a href=#221 id=221 data-nosnippet>221</a>        std::fs::write(
+<a href=#222 id=222 data-nosnippet>222</a>            rules.join(<span class="string">"big.md"</span>),
+<a href=#223 id=223 data-nosnippet>223</a>            <span class="macro">format!</span>(<span class="string">"---\ntrigger: \"always_on\"\n---\n{body}\n"</span>),
+<a href=#224 id=224 data-nosnippet>224</a>        )
+<a href=#225 id=225 data-nosnippet>225</a>        .unwrap();
+<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span>found = legacy_findings(dir.path());
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">let </span>codes: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|d| d.code.as_str()).collect();
+<a href=#228 id=228 data-nosnippet>228</a>        <span class="macro">assert_eq!</span>(
+<a href=#229 id=229 data-nosnippet>229</a>            codes,
+<a href=#230 id=230 data-nosnippet>230</a>            [<span class="string">"antigravity-rule-too-large"</span>],
+<a href=#231 id=231 data-nosnippet>231</a>            <span class="string">"the quoted trigger is valid"
+<a href=#232 id=232 data-nosnippet>232</a>        </span>);
+<a href=#233 id=233 data-nosnippet>233</a>    }
+<a href=#234 id=234 data-nosnippet>234</a>
+<a href=#235 id=235 data-nosnippet>235</a>    <span class="attr">#[test]
+<a href=#236 id=236 data-nosnippet>236</a>    </span><span class="kw">fn </span>the_adapter_names_every_projected_skill_and_no_refused_one() {
+<a href=#237 id=237 data-nosnippet>237</a>        <span class="kw">let </span>skill = |id: <span class="kw-2">&amp;</span>str| <span class="kw">crate</span>::editors::SkillRef {
+<a href=#238 id=238 data-nosnippet>238</a>            id: id.into(),
+<a href=#239 id=239 data-nosnippet>239</a>            title: id.into(),
+<a href=#240 id=240 data-nosnippet>240</a>            description: <span class="string">"d"</span>.into(),
+<a href=#241 id=241 data-nosnippet>241</a>            path: <span class="macro">format!</span>(<span class="string">".ai/repo/skills/{id}/SKILL.md"</span>),
+<a href=#242 id=242 data-nosnippet>242</a>            sha256: String::new(),
+<a href=#243 id=243 data-nosnippet>243</a>        };
+<a href=#244 id=244 data-nosnippet>244</a>        <span class="kw">let </span>env = EditorEnvironment {
+<a href=#245 id=245 data-nosnippet>245</a>            skills: <span class="macro">vec!</span>[skill(<span class="string">"ok"</span>), skill(<span class="string">"Not_Ok"</span>)],
+<a href=#246 id=246 data-nosnippet>246</a>            ..Default::default()
+<a href=#247 id=247 data-nosnippet>247</a>        };
+<a href=#248 id=248 data-nosnippet>248</a>        <span class="kw">let </span>view = adapter(<span class="kw-2">&amp;</span>env);
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span>skills = view.capabilities.iter().find(|c| c.id == <span class="string">"skills"</span>).unwrap();
+<a href=#250 id=250 data-nosnippet>250</a>        <span class="macro">assert_eq!</span>(skills.artifacts, [<span class="string">".agents/skills/ok/SKILL.md"</span>]);
+<a href=#251 id=251 data-nosnippet>251</a>        <span class="macro">assert_eq!</span>(skills.support, EditorSupport::Supported);
+<a href=#252 id=252 data-nosnippet>252</a>        <span class="kw">let </span>mcp = view.capabilities.iter().find(|c| c.id == <span class="string">"mcp"</span>).unwrap();
+<a href=#253 id=253 data-nosnippet>253</a>        <span class="macro">assert_eq!</span>(
+<a href=#254 id=254 data-nosnippet>254</a>            mcp.support,
+<a href=#255 id=255 data-nosnippet>255</a>            EditorSupport::Unknown,
+<a href=#256 id=256 data-nosnippet>256</a>            <span class="string">"what is not verified is not written"
+<a href=#257 id=257 data-nosnippet>257</a>        </span>);
+<a href=#258 id=258 data-nosnippet>258</a>    }
+<a href=#259 id=259 data-nosnippet>259</a>}
 </code></pre></div></section></main></body></html>

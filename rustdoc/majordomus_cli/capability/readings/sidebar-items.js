@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_SOURCES","PATIENCE_SWITCH","PENDING","REMEMBERED","REVALIDATE","WORKERS"],"enum":["Freshness"],"fn":["read"],"struct":["Latest","Patience"]};
