@@ -71,6 +71,11 @@ pub const SKILLS_DIR: &str = ".agents/skills";
 /// The kind whose objects are skills.
 const SKILL_KIND: &str = "skill";
 
+/// The finding that the justfile exists and `just` could not describe it. `generate` refuses
+/// on it: a task list that is present on a machine with `just` and absent on one without
+/// would make the committed projection depend on the machine, not on the tree.
+pub const WORKFLOWS_UNREADABLE: &str = "workflows-unreadable";
+
 /// The source line of every artifact derived from the justfile.
 const JUSTFILE_SOURCE: &str = "the recipes of the tracked justfile and .just/*.just";
 
@@ -298,7 +303,7 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
             sha256: sha256.clone(),
         });
         env.skills.push(SkillRef {
-            title: o.title.clone().unwrap_or_else(|| id.clone()),
+            title: o.title.clone().unwrap_or(id.clone()),
             description: o.description.clone().unwrap_or_default(),
             path: o.provenance.path.clone(),
             id,
@@ -316,12 +321,12 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
         None if root.join("justfile").is_file() => {
             env.workflows_resolved = Some(false);
             env.diagnostics.push(EditorDiagnostic {
-                severity: Severity::Warning,
-                code: "workflows-unreadable".into(),
+                severity: Severity::Error,
+                code: WORKFLOWS_UNREADABLE.into(),
                 adapter: Some("zed".into()),
                 path: Some("justfile".into()),
-                message: "the justfile exists and `just --dump` could not describe it, so no task is projected".into(),
-                remedy: "install `just` (the CI runner has it) and run `just --dump` to see why it refuses".into(),
+                message: "the justfile exists and `just --dump` could not describe it, so the task list cannot be derived here".into(),
+                remedy: "install `just` (every CI job that builds the crate has it, through .github/actions/setup-rust) and run `just --dump` to see why it refuses".into(),
             });
         }
         None => env.workflows_resolved = None,
@@ -358,19 +363,29 @@ fn tracked_workflows(
         crate::order::canonical_strings(&mut more);
         files.extend(more.into_iter().map(PathBuf::from));
     }
-    let scratch = Scratch::new()?;
-    let mut inputs = Vec::with_capacity(files.len());
-    for rel in &files {
-        let text = std::fs::read_to_string(root.join(rel)).ok()?;
-        let dest = scratch.path.join(rel);
-        if let Some(dir) = dest.parent() {
-            std::fs::create_dir_all(dir).ok()?;
-        }
-        std::fs::write(&dest, &text).ok()?;
+    // every file is read before anything is asked: one that cannot be read means the recipes
+    // cannot be known, which is the same answer as a justfile `just` refuses
+    let texts: Vec<(&PathBuf, String)> = files
+        .iter()
+        .filter_map(|rel| {
+            std::fs::read_to_string(root.join(rel))
+                .ok()
+                .map(|text| (rel, text))
+        })
+        .collect();
+    if texts.len() != files.len() {
+        return None;
+    }
+    // A copy that could not be written is not handled here: `just` is then asked about an
+    // incomplete justfile and refuses it, and that refusal is the one answer below.
+    let scratch = Scratch::new();
+    let mut inputs = Vec::with_capacity(texts.len());
+    for (rel, text) in &texts {
+        let _ = std::fs::write(scratch.path.join(rel), text);
         inputs.push(EditorInput {
             path: rel.to_string_lossy().replace('\\', "/"),
             mutability: EditorInputClass::Repository,
-            sha256: sha256_hex(&text),
+            sha256: sha256_hex(text),
         });
     }
     let catalogue = workflows::resolve(&scratch.path);
@@ -388,15 +403,15 @@ struct Scratch {
 }
 
 impl Scratch {
-    fn new() -> Option<Scratch> {
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0);
+    /// The directory, with the `.just/` the copied justfile imports from. A directory that
+    /// could not be made is found out by whoever writes into it.
+    fn new() -> Scratch {
+        static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let seq = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let path =
-            std::env::temp_dir().join(format!("majordomus-editors-{}-{nanos}", std::process::id()));
-        std::fs::create_dir_all(&path).ok()?;
-        Some(Scratch { path })
+            std::env::temp_dir().join(format!("majordomus-editors-{}-{seq}", std::process::id()));
+        let _ = std::fs::create_dir_all(path.join(".just"));
+        Scratch { path }
     }
 }
 
@@ -629,7 +644,8 @@ pub fn skill_artifact(skill: &SkillRef, version: &str) -> Result<Artifact, Box<E
         skill.description.trim().to_string()
     };
     let one_line = description.split_whitespace().collect::<Vec<_>>().join(" ");
-    let quoted = serde_json::to_string(&one_line).unwrap_or_else(|_| "\"\"".into());
+    // a JSON string is a YAML double-quoted scalar: one line, every quote and escape safe
+    let quoted = serde_json::Value::String(one_line).to_string();
     let [a, b, c] = banner_lines(&skill.path, version);
     let depth = path.matches('/').count();
     let up = "../".repeat(depth);
@@ -796,17 +812,19 @@ pub fn orphans(root: &Path, artifacts: &[Artifact]) -> Vec<String> {
     out
 }
 
-/// Remove every orphan and the directory it leaves empty. Returns what was removed.
-pub fn remove_orphans(root: &Path, orphans: &[String]) -> std::io::Result<Vec<String>> {
+/// Remove every orphan and the directory it leaves empty. Returns what was removed; one that
+/// could not be removed is still an orphan, and the next `--check` says so.
+pub fn remove_orphans(root: &Path, orphans: &[String]) -> Vec<String> {
+    let mut removed = Vec::with_capacity(orphans.len());
     for rel in orphans {
         let path = root.join(rel);
-        std::fs::remove_file(&path)?;
-        if let Some(dir) = path.parent() {
-            // only when empty: anything else in it is someone's
-            let _ = std::fs::remove_dir(dir);
+        if std::fs::remove_file(&path).is_ok() {
+            removed.push(rel.clone());
         }
+        // the directory only when that left it empty: anything else in it is someone's
+        let _ = std::fs::remove_dir(path.with_file_name(""));
     }
-    Ok(orphans.to_vec())
+    removed
 }
 
 /// Facts of this checkout an adapter acts on differently. None changes a projected byte.
@@ -999,7 +1017,9 @@ mod tests {
         std::fs::write(&path, &gone.content).unwrap();
         let found = orphans(dir.path(), &[]);
         assert_eq!(found, vec![gone.path.clone()]);
-        remove_orphans(dir.path(), &found).unwrap();
+        assert_eq!(remove_orphans(dir.path(), &found), found);
+        // one that is not there to remove is not reported as removed
+        assert!(remove_orphans(dir.path(), &found).is_empty());
         assert!(!path.exists() && !path.parent().unwrap().exists());
         assert!(mine.exists(), "a hand-written skill is never removed");
     }
@@ -1009,5 +1029,303 @@ mod tests {
         let text = format!("{}[1]\n", jsonc_banner("s", "0.0.0"));
         assert_eq!(jsonc_body(&text), Some("[1]\n"));
         assert_eq!(jsonc_body("[1]\n"), None);
+    }
+
+    // ---- the projection over a real repository, in process
+
+    const SKILL_SOURCE: &str = "  - id: skill\n    kind: skill\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/skills/*/SKILL.md'\n    required: false\n";
+
+    fn write(root: &Path, rel: &str, text: &str) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(p, text).unwrap();
+    }
+
+    fn skill_md(id: &str, description: &str, status: &str) -> String {
+        format!(
+            "---\nschema: skill/v1\nid: {id}\nversion: 1\ntitle: The {id} skill\n\
+             description: {description}\nstatus: {status}\ntags: [t]\n---\n# Purpose\n\nDo it.\n\n\
+             # Procedure\n\n1. Do.\n\n# Output\n\nDone.\n"
+        )
+    }
+
+    fn has_just() -> bool {
+        std::process::Command::new("just")
+            .arg("--version")
+            .output()
+            .is_ok_and(|o| o.status.success())
+    }
+
+    /// A synthetic repository with skills of every shape and, when asked, a justfile.
+    fn repository(justfile: bool) -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let sources =
+            std::fs::read_to_string(root.join(".ai/repo/knowledge/sources.yaml")).unwrap();
+        write(
+            &root,
+            ".ai/repo/knowledge/sources.yaml",
+            &format!("{sources}{SKILL_SOURCE}"),
+        );
+        write(
+            &root,
+            ".ai/repo/skills/triage/SKILL.md",
+            &skill_md("triage", "Sort a report.", "active"),
+        );
+        write(
+            &root,
+            ".ai/repo/skills/long/SKILL.md",
+            &skill_md("long", &"word ".repeat(260), "active"),
+        );
+        write(
+            &root,
+            ".ai/repo/skills/gone/SKILL.md",
+            &skill_md("gone", "Retired.", "deprecated"),
+        );
+        // a name the layer accepts and neither product does: longer than 64 characters
+        let long_name = "n".repeat(70);
+        write(
+            &root,
+            &format!(".ai/repo/skills/{long_name}/SKILL.md"),
+            &skill_md(&long_name, "Named at length.", "active"),
+        );
+        if justfile {
+            write(
+                &root,
+                "justfile",
+                "import '.just/more.just'\n\n# Build.\n[group('build')]\nbuild:\n    @echo b\n\n\
+                 [group('build')]\n[confirm]\nclean:\n    @echo c\n\n[group('test')]\ntest:\n    @echo t\n\n\
+                 loose:\n    @echo l\n",
+            );
+            write(
+                &root,
+                ".just/more.just",
+                "[group('test')]\nlint:\n    @echo l\n",
+            );
+        }
+        repo
+    }
+
+    #[test]
+    fn a_repository_projects_its_active_skills_and_its_runnable_recipes() {
+        let repo = repository(true);
+        let index = repo.index().unwrap();
+        let plan = plan(&index, repo.root(), "0.0.0");
+        let paths: Vec<&str> = plan.artifacts.iter().map(|a| a.path.as_str()).collect();
+        assert!(
+            paths.contains(&".agents/skills/triage/SKILL.md"),
+            "{paths:?}"
+        );
+        assert!(paths.contains(&".agents/skills/long/SKILL.md"));
+        assert!(
+            !paths.iter().any(|p| p.contains("/gone/")),
+            "a retired skill is not projected"
+        );
+        assert!(!paths.iter().any(|p| p.contains("nnnnnnnn")));
+        assert!(plan
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "skill-name-refused"));
+        assert!(plan
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "skill-description-long"));
+        if has_just() {
+            let tasks = plan
+                .artifacts
+                .iter()
+                .find(|a| a.path == zed::TASKS)
+                .expect("tasks");
+            let body: serde_json::Value =
+                serde_json::from_str(jsonc_body(&tasks.content).unwrap()).unwrap();
+            let labels: Vec<&str> = body
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|t| t["label"].as_str().unwrap())
+                .collect();
+            assert_eq!(
+                labels,
+                ["just build", "just lint", "just test", "just loose"]
+            );
+            assert!(plan.inputs.iter().any(|i| i.path == ".just/more.just"));
+        } else {
+            assert!(plan
+                .diagnostics
+                .iter()
+                .any(|d| d.code == WORKFLOWS_UNREADABLE));
+        }
+        // the derivation keys are the inputs: the same repository, the same keys
+        let again = super::plan(&index, repo.root(), "0.0.0");
+        assert_eq!(plan.derivations, again.derivations);
+    }
+
+    #[test]
+    fn the_report_follows_each_file_through_absent_current_stale_and_conflict() {
+        let repo = repository(false);
+        let root = repo.root().to_path_buf();
+        let index = repo.index().unwrap();
+        let first = report(&index, &root, "0.0.0");
+        assert_eq!(first.schema, SCHEMA);
+        let state = |r: &EditorProjection, path: &str| {
+            r.artifacts.iter().find(|a| a.path == path).map(|a| a.state)
+        };
+        let triage = ".agents/skills/triage/SKILL.md";
+        assert_eq!(state(&first, triage), Some(EditorFileState::Absent));
+
+        let planned = plan(&index, &root, "0.0.0").artifacts;
+        crate::generate::write(&root, &planned).unwrap();
+        assert_eq!(
+            state(&report(&index, &root, "0.0.0"), triage),
+            Some(EditorFileState::Current)
+        );
+
+        let older = plan(&index, &root, "older").artifacts;
+        crate::generate::write(&root, &older).unwrap();
+        assert_eq!(
+            state(&report(&index, &root, "0.0.0"), triage),
+            Some(EditorFileState::Stale)
+        );
+
+        std::fs::remove_file(root.join(triage)).unwrap();
+        std::fs::create_dir_all(root.join(triage)).unwrap();
+        assert_eq!(
+            state(&report(&index, &root, "0.0.0"), triage),
+            Some(EditorFileState::Conflict)
+        );
+        assert_eq!(conflicts(&root, &planned), vec![triage.to_string()]);
+
+        // a projection left behind by a retired skill is named, and only it
+        write(
+            &root,
+            ".agents/skills/gone/SKILL.md",
+            &skill_artifact(&skill("gone", "d"), "0.0.0")
+                .unwrap()
+                .content,
+        );
+        assert_eq!(
+            report(&index, &root, "0.0.0").orphans,
+            vec![".agents/skills/gone/SKILL.md"]
+        );
+    }
+
+    #[test]
+    fn a_path_that_climbs_out_or_is_absolute_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(escapes(dir.path(), "/etc/passwd"));
+        assert!(escapes(dir.path(), "../outside"));
+        assert!(escapes(dir.path(), "a//b"));
+        assert!(!escapes(dir.path(), ".agents/skills/x/SKILL.md"));
+        let mut a = skill_artifact(&skill("x", "d"), "0.0.0").unwrap();
+        a.path = "../x/SKILL.md".into();
+        assert_eq!(
+            conflicts(dir.path(), &[a]),
+            vec!["../x/SKILL.md (outside the repository)"]
+        );
+    }
+
+    #[test]
+    fn a_head_of_something_unreadable_is_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(head(&dir.path().join("absent")).is_none());
+        assert!(head(dir.path()).is_none(), "a directory has no head");
+    }
+
+    #[test]
+    fn a_skill_with_no_description_is_described_by_its_title() {
+        let mut s = skill("plain", "");
+        s.title = "Plain".into();
+        let a = skill_artifact(&s, "0.0.0").unwrap();
+        assert!(
+            a.content.contains("description: \"Plain\""),
+            "{}",
+            a.content
+        );
+    }
+
+    #[test]
+    fn findings_order_errors_first_then_by_code_then_path() {
+        let d = |severity, code: &str, path: Option<&str>| EditorDiagnostic {
+            severity,
+            code: code.into(),
+            adapter: None,
+            path: path.map(Into::into),
+            message: String::new(),
+            remedy: String::new(),
+        };
+        let mut all = vec![
+            d(Severity::Info, "a", None),
+            d(Severity::Warning, "b", Some("y")),
+            d(Severity::Warning, "b", Some("x")),
+            d(Severity::Error, "z", None),
+        ];
+        sort_diagnostics(&mut all);
+        let order: Vec<(&str, Option<&str>)> = all
+            .iter()
+            .map(|d| (d.code.as_str(), d.path.as_deref()))
+            .collect();
+        assert_eq!(
+            order,
+            [("z", None), ("b", Some("x")), ("b", Some("y")), ("a", None)]
+        );
+    }
+
+    #[test]
+    fn a_justfile_just_refuses_is_an_error_finding_and_projects_no_task() {
+        let repo = repository(false);
+        write(repo.root(), "justfile", "this is { not a justfile\n");
+        let index = repo.index().unwrap();
+        let plan = plan(&index, repo.root(), "0.0.0");
+        let found = plan
+            .diagnostics
+            .iter()
+            .find(|d| d.code == WORKFLOWS_UNREADABLE)
+            .expect("the unreadable justfile is a finding");
+        assert_eq!(found.severity, Severity::Error);
+        assert!(!plan.artifacts.iter().any(|a| a.path == zed::TASKS));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_recipe_file_that_cannot_be_read_means_the_recipes_are_not_known() {
+        use std::os::unix::fs::PermissionsExt;
+        let repo = repository(true);
+        let locked = repo.root().join(".just/more.just");
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+        // root reads anything; where that is so there is nothing to observe
+        if std::fs::read_to_string(&locked).is_err() {
+            assert!(tracked_workflows(repo.root()).is_none());
+        }
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o644)).unwrap();
+    }
+
+    #[test]
+    fn a_recipe_of_a_module_is_run_by_its_module_path_and_one_that_needs_an_argument_is_not() {
+        let w = |name: &str, namespace: Option<&str>, required: bool| WorkflowDescriptor {
+            name: name.into(),
+            namespace: namespace.map(Into::into),
+            description: None,
+            group: None,
+            parameters: vec![crate::environment::WorkflowParameter {
+                name: "arg".into(),
+                variadic: false,
+                required,
+            }],
+            dependencies: Vec::new(),
+            confirm: false,
+        };
+        let mut d = Vec::new();
+        let found = tasks_of(
+            &[
+                w("build", Some("site"), false),
+                w("deploy", None, true),
+                w("top", Some(""), false),
+            ],
+            &[],
+            &mut d,
+        );
+        let recipes: Vec<&str> = found.iter().map(|t| t.recipe.as_str()).collect();
+        assert_eq!(recipes, ["site::build", "top"]);
+        assert!(d.is_empty());
     }
 }

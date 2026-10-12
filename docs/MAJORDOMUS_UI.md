@@ -53,7 +53,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
-| Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
+| Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
@@ -87,6 +87,8 @@ Every entity a screen names leads somewhere (I2481):
 | an issue, a pull request, a milestone, an intent, a claim, a rule, a capability, a machine | its inspector in the UI |
 | a gate | its row in the CI model, `/ui/delivery#gate-<id>`; the gates it implies lead to theirs |
 | a deployment | its row on Deployments, `/ui/deployments#deployment-<id>` |
+| a deployed commit, the ref it was deployed from, an environment, the run that deployed it, a published release | the forge's page for it, built from the repository address the forge itself gave when it was observed (`deploy.observed`) |
+| an issue or a milestone that a milestone's own prose names | its inspector; the prose is the record's, drawn with its markup (`ui/prose.rs`) |
 | a command the registry also serves as a capability | that capability's inspector; the two are one when the capability's declared command-line path is the command's invocation |
 | a release | the record the distribution publishes for it, at the address `distribution.releases` gives |
 | a document, a test, a feature, a rule's or a deployment's declaration | its technical view, the Cockpit's page for that object |
@@ -95,9 +97,16 @@ Every entity a screen names leads somewhere (I2481):
 A link to a technical view is drawn only when the index holds the object: the source said so
 (a rule's own URI, a test the proof found on disk), or `objects.get` resolves it. What the
 index does not hold is text, so no link leads to a page that answers 404. Two kinds of name
-stay text because nothing derives where they lead: a commit, since no capability a screen can
-ask at first paint states the forge's address (the PR Drain, which asks the queue, does link
-the forge), and a path that is not an object of the index.
+stay text because nothing derives where they lead: a commit outside the Deployments screen,
+since no capability the other screens ask at first paint states the forge's address (the PR
+Drain, which asks the queue, and Deployments, which asks what was observed, do link the
+forge), and a path that is not an object of the index.
+
+What the forge recorded is read from one observation, taken by `majordomus prs refresh` — the
+one command that asks the forge — and kept beside the pull-request observation. A checkout
+that has never asked says so, with that command, instead of drawing empty tables; the
+published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
+empty.
 
 A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here", with a link
 to the screen that shows them all when there is one. Case 1091 and
@@ -150,9 +159,42 @@ refuses, in the UI, a read of the index or the registry and an absent count draw
 
 ## Fast, and current
 
-A screen asks all of its sources at once, each on a thread of its own, so it costs its slowest
-source rather than the sum of them (`source::ask_all`; the Cockpit's overview does the same
-since I2460).
+**A screen does not wait for its sources** (ADR 0142, rule
+`project.no-screen-waits-for-a-source`). It asks for the *latest reading* of each one
+(`Context::read`, `capability::readings`): what the process knows now, handed over from
+memory. Handlers, git and files are touched by a worker behind the reader, never on the path
+of the request.
+
+| The source was | What the reader gets | What happens behind them |
+|---|---|---|
+| read in the repository as it is now | the reading, at once | read again once it is older than a second |
+| read before the repository last changed | the new reading if it lands within 50 ms, otherwise the old one, marked stale | read again, with every other source read in the last five minutes |
+| never read in this process | the first reading, waited for | nothing more; past a minute it is said to be pending |
+
+The repository's own reload is not waited for either. When the repository has changed, a
+screen is drawn from the generation the server has, opens with "The repository changed: this
+screen shows it as it was, and is being read again", and the next generation loads behind it.
+An answer over the API, MCP or the command line still waits for the generation its caller
+saw.
+
+A reading says how it stands on its source line. A current one older than five seconds says
+its age ("read 12 s ago"). A stale one says "read 12 s ago, before the repository changed;
+reading again", and its line carries `data-catching-up`. `ui.js` reads a screen with such a
+line again after 0.4 s, then after twice that, up to 6.4 s, until none is left. A stale value
+is never drawn as current.
+
+The first reader of the UI starts one pass over every screen and panel in the background, so
+the screen opened next has its sources read before it is asked for. The pass walks `SCREENS`
+and `PANELS`; no other list of sources exists.
+
+An answer is not a reading. `execute`, and so the API, MCP and the command line, still run
+the handler or return exactly what it would return. Two switches settle a doubt:
+- `MAJORDOMUS_CAPABILITY_CACHE=off` makes every reading run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS=wait` keeps the readings and makes every read wait for a
+  current one. A number sets the 50 ms.
+
+Sources that have no reading yet are asked at once, each on a thread of its own, so a first
+paint costs its slowest source rather than the sum of them (`source::ask_all`).
 
 A source too slow for a first paint is a **panel with a route of its own**. The pull-request
 queue (`integration.queue`) is `/ui/panels/pull-requests`:
@@ -161,8 +203,10 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
 - without JavaScript the placeholder is a link to the same route.
 
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
-rendering in place, and updates the time in the top bar. That time is when the sources were
-read. This is a refresh and is said as one; nothing claims a live stream.
+rendering in place, and updates the time in the top bar. That time is when the page was
+rendered; each source line says when its own reading is older. This is a refresh and is said
+as one; nothing claims a live stream. A streamed page and one stream of changed readings
+replace it in I2487.
 
 How fast is measured, not written here. `majordomus bench` derives a target from every
 screen in `SCREENS` and every panel in `PANELS`, cold and warm:
@@ -278,6 +322,16 @@ publication holds the snapshot there, and `majordomus web validate` holds both w
 collision. `snapshot.json` beside it lists every page written, every page left to the live
 UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
 `test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
+
+The published snapshot is held to the trunk (`project.the-published-ui-is-the-trunks`). The
+publication model declares that a publication holds it (`deploy.snapshots` in
+`.ai/repo/ci/pages.yaml`), `scripts/site-deploy` refuses to publish a site without one read at
+`HEAD`, and `scripts/pages verify-ui` asks the public site for it after a deploy and inside the
+`pages-live` gate: the commit `surface.json`, the banner and `snapshot.json` name, and every
+page the record lists. A snapshot that stopped at its bound passes and the probe states what
+it left out; one that is missing, names an older commit or does not say what ended its
+reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
+`test/cases/1096_the_published_ui_is_the_trunks.sh` holds them.
 
 ## What it does not do yet
 

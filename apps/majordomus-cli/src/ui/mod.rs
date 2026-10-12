@@ -50,6 +50,7 @@ pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod rule;
@@ -205,6 +206,8 @@ pub(crate) struct Ui {
     live: Arc<Live>,
     version: &'static str,
     assets: Assets,
+    /// Whether this UI's screens have been read once behind its first reader.
+    warmed: std::sync::atomic::AtomicBool,
 }
 
 impl Ui {
@@ -227,6 +230,42 @@ impl Ui {
             live: live.into_live(),
             version,
             assets,
+            warmed: std::sync::atomic::AtomicBool::new(false),
+        }
+    }
+
+    /// Read every screen and every panel once, behind the first reader of this UI, so that
+    /// the screen they open next has its sources read before they ask for it.
+    ///
+    /// The routes are [`SCREENS`] and [`PANELS`], the lists the navigation and the
+    /// dispatcher are held to, so a screen added tomorrow is warmed with no edit here. What
+    /// each request renders is discarded: its effect is that the sources it names are now
+    /// remembered and kept current (`crate::capability::readings`). A process that runs
+    /// every capability without its cache does not warm, and neither do the crate's own
+    /// unit tests, whose fixtures are gone before a background reader would finish.
+    pub(crate) fn warm_once(ui: &Arc<Ui>) {
+        use std::sync::atomic::Ordering;
+        if cfg!(test) || crate::capability::executor::bypassed() {
+            return;
+        }
+        if ui.warmed.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let ui = Arc::clone(ui);
+        let warm = move || {
+            let routes = SCREENS
+                .iter()
+                .map(|s| s.route)
+                .chain(PANELS.iter().copied());
+            for route in routes {
+                let _ = ui.handle(&Request::parse_target("GET", route, Vec::new()));
+            }
+        };
+        if let Err(refused) = std::thread::Builder::new()
+            .name("mj-ui-warm".into())
+            .spawn(warm)
+        {
+            tracing::warn!("no thread to warm the UI's screens: {refused}");
         }
     }
 
@@ -249,8 +288,11 @@ impl Ui {
         if let Some(name) = req.path.strip_prefix(ASSETS_PREFIX) {
             return self.assets.respond(name, req);
         }
-        // one reading of the repository for the whole screen
-        let ctx = self.live.current();
+        // one reading of the repository for the whole screen: the generation there is, never
+        // a wait for the next one (ADR 0142); a screen drawn from a generation the repository
+        // has moved past says so, and the page's script reads it again
+        let (reading, behind) = self.live.view_without_waiting();
+        let ctx = reading.ctx;
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
         let mut screen = match path {
@@ -272,6 +314,17 @@ impl Ui {
             prs::PANEL => prs::panel_view(&ctx, &req.query),
             other => shell::not_found(other),
         };
+        if behind {
+            screen.main = crate::cockpit::html::el("div")
+                .class("mj-ui-stack")
+                .child(
+                    crate::cockpit::html::el("p")
+                        .class("mj-ui-dim")
+                        .attr(view::CATCHING_UP, "")
+                        .text("The repository changed: this screen shows it as it was, and is being read again."),
+                )
+                .child(screen.main);
+        }
         // A panel read as a page of its own has no hero, so it carries the page's one heading
         // itself; the fragment a screen pulls in does not, or the screen would have two.
         if !fragment && PANELS.contains(&path) {

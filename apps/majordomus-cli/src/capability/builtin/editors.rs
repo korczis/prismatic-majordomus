@@ -86,4 +86,20 @@ mod tests {
             "the files are written by `generate editors`"
         );
     }
+
+    /// The capability answers with the projection's own report, over the repository the
+    /// context was built from.
+    #[test]
+    fn the_status_is_the_projections_report_for_this_repository() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let answer = editors_status(&ctx, Empty {}).unwrap();
+        assert_eq!(answer.schema, crate::editors::SCHEMA);
+        let ids: Vec<&str> = answer.adapters.iter().map(|a| a.id.as_str()).collect();
+        assert_eq!(ids, ["antigravity", "zed"]);
+        assert!(
+            answer.artifacts.is_empty(),
+            "no skill, no justfile, nothing projected"
+        );
+    }
 }

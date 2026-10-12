@@ -2968,6 +2968,86 @@
         }
       }
     },
+    "/api/v1/deployments/observed": {
+      "get": {
+        "operationId": "deploy.observed",
+        "summary": "What was deployed, and where",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "tags": [
+          "deploy"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What was deployed, and where: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservedDeployments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "deploy.observed",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_deployments_observed"
+        }
+      }
+    },
     "/api/v1/design": {
       "get": {
         "operationId": "design.system",
@@ -31447,6 +31527,53 @@
         ],
         "description": "Where the values of one snapshot came from."
       },
+      "EnvironmentSummary": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The environment."
+          },
+          "deployments": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of the observed deployments went to it."
+          },
+          "state": {
+            "type": "string",
+            "description": "The state of its newest deployment."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The commit its newest deployment put there."
+          },
+          "deployed_at": {
+            "type": "string",
+            "description": "When that was."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it is served, when its newest deployment says."
+          },
+          "activity_url": {
+            "type": "string",
+            "description": "The environment's activity on the forge."
+          }
+        },
+        "required": [
+          "name",
+          "deployments",
+          "state",
+          "sha",
+          "deployed_at",
+          "activity_url"
+        ],
+        "description": "One environment, as its deployments describe it."
+      },
       "EnvrcApproval": {
         "oneOf": [
           {
@@ -43607,6 +43734,174 @@
           "disposition"
         ],
         "description": "One open pull request as the cycle classified it."
+      },
+      "ObservedDeployment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The forge's identity of the deployment."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment it went to, in the forge's words (`github-pages`, `production`, ...)."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The commit that was deployed."
+          },
+          "git_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The ref it was deployed from, when the forge still names one."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was created, RFC 3339."
+          },
+          "creator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who or what created it."
+          },
+          "state": {
+            "type": "string",
+            "description": "How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all."
+          },
+          "environment_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the environment is served, when the deployment says."
+          },
+          "log_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The run that performed it, when the deployment says."
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "sha",
+          "created_at",
+          "state"
+        ],
+        "description": "One deployment the forge recorded."
+      },
+      "ObservedDeployments": {
+        "type": "object",
+        "properties": {
+          "observed": {
+            "type": "boolean",
+            "description": "Whether this checkout holds an observation at all."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why not, and what to run, when it holds none or cannot read it."
+          },
+          "repository": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`owner/name`, when observed."
+          },
+          "repository_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The repository's address on the forge, when observed."
+          },
+          "observed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the forge was asked, when observed."
+          },
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnvironmentSummary"
+            },
+            "description": "Every environment something was deployed to, by name."
+          },
+          "deployments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObservedDeployment"
+            },
+            "description": "The observed deployments, newest first."
+          },
+          "releases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObservedRelease"
+            },
+            "description": "The observed releases, newest first."
+          }
+        },
+        "required": [
+          "observed",
+          "environments",
+          "deployments",
+          "releases"
+        ],
+        "description": "`deploy.observed`: what was deployed where, or that nothing has been observed here."
+      },
+      "ObservedRelease": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "The tag."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The release's title, when it has one."
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it was published; absent for a draft."
+          },
+          "url": {
+            "type": "string",
+            "description": "Its page on the forge."
+          },
+          "prerelease": {
+            "type": "boolean",
+            "description": "Whether the forge marks it a pre-release."
+          },
+          "draft": {
+            "type": "boolean",
+            "description": "Whether it is still a draft."
+          }
+        },
+        "required": [
+          "tag",
+          "url",
+          "prerelease",
+          "draft"
+        ],
+        "description": "One release the forge published."
       },
       "OpenSession": {
         "type": "object",

@@ -756,10 +756,21 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
 
     if targets.contains(&Target::Editors) {
-        out.extend(
-            crate::editors::plan(&app.context.index, app.repository.root(), crate::VERSION)
-                .artifacts,
-        );
+        let editors =
+            crate::editors::plan(&app.context.index, app.repository.root(), crate::VERSION);
+        // a projection that would differ by whether this machine has `just` is not derived
+        // from the tree; refuse instead of committing whichever half this runner could see
+        if let Some(d) = editors
+            .diagnostics
+            .iter()
+            .find(|d| d.code == crate::editors::WORKFLOWS_UNREADABLE)
+        {
+            return Err(Error::Refused {
+                code: 12,
+                reason: format!("generate editors: {}; {}", d.message, d.remedy),
+            });
+        }
+        out.extend(editors.artifacts);
     }
 
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
@@ -3234,5 +3245,103 @@ mod tests {
                 .contains(HEADER),
             "JSON carries its provenance as a field, having no comment to carry it in"
         );
+    }
+
+    /// An editor reads these files, so their banner sits where the editor's format allows;
+    /// the contract still refuses one without it, and one whose JSON is broken below it.
+    #[test]
+    fn an_editor_artifact_without_its_banner_or_with_broken_json_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        let json = |content: &str| {
+            Artifact::verbatim(
+                ".zed/tasks.json",
+                "editors/zed-tasks",
+                ArtifactFormat::Json,
+                None,
+                "the justfile",
+                content.to_string(),
+            )
+        };
+        let reasons = |a: Artifact| -> Vec<String> {
+            violations(&[a], &schemas)
+                .into_iter()
+                .map(|v| v.reason)
+                .collect()
+        };
+        assert_eq!(reasons(json("[1]\n")), ["carries no generated-file banner"]);
+        let banner = crate::editors::jsonc_banner("the justfile", "0.0.0");
+        assert!(reasons(json(&format!("{banner}[1]\n"))).is_empty());
+        let broken = reasons(json(&format!("{banner}[1,\n")));
+        assert_eq!(broken.len(), 1, "{broken:?}");
+        assert!(
+            broken[0].starts_with("is not JSON below its banner"),
+            "{broken:?}"
+        );
+    }
+
+    /// A write that cannot land leaves the old file and no staging file behind.
+    #[test]
+    fn a_write_that_cannot_land_leaves_nothing_half_written() {
+        let dir = tempfile::tempdir().unwrap();
+        // a non-empty directory sits where the file should go: the rename cannot replace it
+        std::fs::create_dir_all(dir.path().join("out/file.txt/inside")).unwrap();
+        let a = Artifact::verbatim(
+            "out/file.txt",
+            "doc",
+            ArtifactFormat::Text,
+            None,
+            "s",
+            "x\n".into(),
+        );
+        assert!(write(dir.path(), &[a]).is_err());
+        let left: Vec<String> = std::fs::read_dir(dir.path().join("out"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, ["file.txt"], "no staging file remains");
+
+        // a directory nothing can be written into refuses at the staging file
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let locked = dir.path().join("locked");
+            std::fs::create_dir_all(&locked).unwrap();
+            std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o555)).unwrap();
+            let c = Artifact::verbatim(
+                "locked/new.txt",
+                "doc",
+                ArtifactFormat::Text,
+                None,
+                "s",
+                "x\n".into(),
+            );
+            // root writes anywhere; where that is so there is nothing to observe
+            if std::fs::write(locked.join("probe"), "x").is_err() {
+                assert!(write(dir.path(), &[c]).is_err());
+            }
+            std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+
+        // and an unchanged file is not rewritten
+        let b = Artifact::verbatim(
+            "kept.txt",
+            "doc",
+            ArtifactFormat::Text,
+            None,
+            "s",
+            "same\n".into(),
+        );
+        write(dir.path(), std::slice::from_ref(&b)).unwrap();
+        let before = std::fs::metadata(dir.path().join("kept.txt"))
+            .unwrap()
+            .modified()
+            .unwrap();
+        write(dir.path(), std::slice::from_ref(&b)).unwrap();
+        let after = std::fs::metadata(dir.path().join("kept.txt"))
+            .unwrap()
+            .modified()
+            .unwrap();
+        assert_eq!(before, after);
     }
 }

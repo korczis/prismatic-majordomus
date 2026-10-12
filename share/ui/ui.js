@@ -204,7 +204,29 @@ async function drawGraphs() {
 // Reading the sources again: while the screen is visible, every minute, the server's
 // rendering of this screen replaces the one on the page, and the time it was read is
 // updated. This is a refresh, said as one: nothing here claims a live stream.
+//
+// The server never makes a screen wait for a source. A value it read before the repository
+// last changed, or has not read yet, is shown as that, and its source line carries
+// `data-catching-up` while the server reads it again. A screen with such a line is read
+// again after CATCH_UP_MS, then after twice that, up to CATCH_UP_MAX_MS, until none is left.
 const REFRESH_MS = 60000;
+const CATCH_UP_MS = 400;
+const CATCH_UP_MAX_MS = 6400;
+let catchUpIn = CATCH_UP_MS;
+let catchUpTimer = null;
+function catchUp() {
+  if (catchUpTimer) return;
+  if (!document.querySelector('#main [data-catching-up]')) {
+    catchUpIn = CATCH_UP_MS;
+    return;
+  }
+  catchUpTimer = setTimeout(async () => {
+    catchUpTimer = null;
+    catchUpIn = Math.min(catchUpIn * 2, CATCH_UP_MAX_MS);
+    await refresh();
+    catchUp();
+  }, catchUpIn);
+}
 async function refresh() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
@@ -270,4 +292,5 @@ if (SNAPSHOT) {
   window.addEventListener('hashchange', showSnapshotPath);
 } else if (!window.location.pathname.includes('/panels/')) {
   setInterval(refresh, REFRESH_MS);
+  catchUp();
 }

@@ -248,6 +248,7 @@ mod tests {
             exposure: Exposure::default(),
             value,
             took: Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 

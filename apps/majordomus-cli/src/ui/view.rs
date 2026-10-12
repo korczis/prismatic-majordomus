@@ -197,6 +197,10 @@ pub fn wide(panel: El) -> El {
     el("div").class("mj-ui-span").child(panel)
 }
 
+/// The attribute a source line carries while its reading is not of the repository as it is
+/// now. The page's script reads the screen again shortly when it finds one.
+pub const CATCHING_UP: &str = "data-catching-up";
+
 /// The sources of a panel: for each, the capability and how long it took, then every other
 /// way to ask it the same question — the API route a browser opens, the command a person
 /// types, the MCP tool an agent calls — and its technical reference in the Cockpit. Each is
@@ -216,6 +220,14 @@ pub fn sources(answers: &[&Answer]) -> El {
                     .class("mj-ui-dim")
                     .text(format!("{} ms", a.took.as_millis())),
             );
+        // a reading that is not simply current says so, and one a newer reading is about to
+        // replace marks its line, which is what the page's script reads the screen again for
+        if let Some(note) = a.standing.note() {
+            line = line.child(el("span").class("mj-ui-dim").text(note));
+        }
+        if a.standing.catching_up() {
+            line = line.attr(CATCHING_UP, "");
+        }
         if let Some(path) = &a.exposure.get {
             line = line.child(chip_link("API", path, "open the same answer as JSON"));
         }
@@ -285,12 +297,17 @@ pub fn object(uri: &str, label: impl Into<String>) -> El {
 /// [`object`] when the index holds `uri`, the label as text when it does not, so no link
 /// leads to a page that answers 404, and `none` when there is no label at all. Whether the
 /// index holds it is asked of `objects.get`, the capability every surface resolves a URI with
-/// (ADR 0012), never read from the index beside it.
+/// (ADR 0012), never read from the index beside it. Asked as a reading, like every source of
+/// a screen (`project.no-screen-waits-for-a-source`): an object whose first reading has not
+/// arrived is its label as text until it has.
 pub fn object_if(ctx: &Context, uri: &str, label: &str) -> El {
     if label.is_empty() {
         return none();
     }
-    match ctx.execute("objects.get", serde_json::json!({ "uri": uri })) {
+    match ctx
+        .read("objects.get", serde_json::json!({ "uri": uri }))
+        .value
+    {
         Ok(_) => object(uri, label),
         Err(_) => el("span").class("mj-ui-mono").text(label),
     }
@@ -669,6 +686,44 @@ mod tests {
     use crate::ui::source::{Exposure, Source};
     use std::time::Duration;
 
+    /// A source line whose reading is not of the repository as it is now says so and is
+    /// marked for the page's script; a current reading's line carries neither.
+    #[test]
+    fn a_source_line_that_is_catching_up_says_so_and_is_marked() {
+        use crate::capability::readings::Freshness;
+        use crate::ui::source::Standing;
+        let current = answer(Ok(Value::Null));
+        let line = sources(&[&current]).render();
+        assert!(!line.contains(CATCHING_UP), "{line}");
+        assert!(
+            !line.contains("read "),
+            "a reading taken now says no age: {line}"
+        );
+
+        let mut stale = answer(Ok(Value::Null));
+        stale.standing = Standing {
+            age: Some(Duration::from_secs(12)),
+            freshness: Freshness::Stale,
+            refreshing: true,
+        };
+        let line = sources(&[&stale]).render();
+        assert!(line.contains(CATCHING_UP), "{line}");
+        assert!(
+            line.contains("read 12 s ago, before the repository changed; reading again"),
+            "{line}"
+        );
+
+        let mut old = answer(Ok(Value::Null));
+        old.standing = Standing {
+            age: Some(Duration::from_secs(30)),
+            freshness: Freshness::Current,
+            refreshing: false,
+        };
+        let line = sources(&[&old]).render();
+        assert!(line.contains("read 30 s ago"), "{line}");
+        assert!(!line.contains(CATCHING_UP), "old is not stale: {line}");
+    }
+
     fn answer(value: Result<Value, String>) -> Answer {
         Answer {
             source: Source::of("plan.status"),
@@ -676,6 +731,7 @@ mod tests {
             exposure: Exposure::default(),
             value,
             took: Duration::from_millis(5),
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
