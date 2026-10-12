@@ -100,7 +100,15 @@ grep -q 'set offered = build.release if build and build.release else false' "$TP
   || { echo "    base.html does not derive \`offered\` from build.json's release"; exit 1; }
 left="$(grep -rnE 'project\.release|dist\.latest' "$TPL" || true)"
 [ -z "$left" ] || { echo "    a template still reads another source for the latest release:"; echo "$left"; exit 1; }
-grep -q 'v{{ offered.version }}' "$TPL/partials/navbar.html" || { echo "    the navbar badge does not read offered"; exit 1; }
+grep -q 'data-release="{{ offered.version }}">v{{ offered.version }}' "$TPL/partials/navbar.html" \
+  || { echo "    the navbar badge does not read offered, or does not state it as data-release"; exit 1; }
+grep -q 'hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden' "$TPL/index.html" \
+  || { echo "    the hero badge does not state the offer as data-release"; exit 1; }
+# No surface chooses "the newest record" by listing files: the highest file name is not the
+# latest release the day a prerelease or a withdrawn record tops it (PR #918's finding). The
+# record's reading is `latest` in distribution.json, which is Releases::latest_stable.
+listed="$(grep -nE 'ls[^|#]*\.ai/repo/releases' "$ROOT/scripts/generate-site-data" "$ROOT/scripts/site-build" "$ROOT/scripts/site-check" || true)"
+[ -z "$listed" ] || { echo "    a script lists the release records to choose a version:"; echo "$listed"; exit 1; }
 grep -q 'data-trust-key="release"{% if offered %} data-release="{{ offered.version }}"' "$TPL/index.html" \
   || { echo "    the homepage's trust strip does not state the offer as data-release"; exit 1; }
 grep -q 'release: \$release' "$ROOT/scripts/generate-site-data" \
@@ -175,8 +183,10 @@ grep -qE '^  release_window: [0-9]+$' "$ROOT/.ai/repo/ci/pages.yaml" \
   || { echo "    .ai/repo/ci/pages.yaml declares no deploy.release_window"; exit 1; }
 grep -q 'a page reads another source than build.json' "$ROOT/scripts/site-check" \
   || { echo "    site-check does not refuse a build whose surfaces disagree"; exit 1; }
-grep -q 'and distribution.json names' "$ROOT/scripts/site-check" \
-  || { echo "    site-check does not hold the newest record to its projections"; exit 1; }
+grep -q 'as the latest and site/static/releases/latest.json names' "$ROOT/scripts/site-check" \
+  || { echo "    site-check does not hold the two committed projections of the latest release together"; exit 1; }
+grep -q 'a badge reads another source' "$ROOT/scripts/site-check" \
+  || { echo "    site-check does not hold every data-release on the homepage to the one offer"; exit 1; }
 echo "    pages-check, the pages workflow, the model and site-check carry it"
 
 # ---------------------------------------------------------------- 5. pages-check under a release

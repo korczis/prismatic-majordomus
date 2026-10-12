@@ -571,7 +571,7 @@ the metadata beside the pages names what they offer. `scripts/site-build --relea
 derivation alone.
 
 It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
-`/build.json` and `/releases/latest.json` disagree, or whose newest record and projections do;
+`/build.json` and `/releases/latest.json` disagree, or whose two committed projections of the latest release do;
 the deploy's `the release it offers` step runs `scripts/pages release-live` once the site serves
 the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
 the schedule and at `finish`. A disagreement younger than `deploy.release_window`

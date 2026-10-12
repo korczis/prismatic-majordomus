@@ -1337,10 +1337,14 @@ fi
 # three are refused unless they name one version: a template that read another source — the
 # record alone, as every page did until 2026-10-12 — renders a page that disagrees with the
 # metadata published beside it, and that is a build refused here, before anything is pushed.
-# And the half that is decidable from the tree alone, before a merge: the newest release record,
-# the record's projection the build reads (distribution.json), and the committed metadata under
-# site/static/releases name one version, so a record whose projections were not regenerated
-# cannot reach the build that would offer it.
+# Every `data-release` the homepage carries — the navbar badge, the hero badge, the trust strip
+# — is that one value. And the half that is decidable from the tree alone, before a merge: the
+# two committed projections of the latest release — `latest` in distribution.json, which the
+# build reads, and site/static/releases/latest.json, which it serves — name one version, so a
+# record whose projections were half regenerated cannot reach the build that would offer it.
+# Both come from `Releases::latest_stable`, the highest stable record that is not withdrawn;
+# the records are not listed here to find "the newest", because the highest file name is a
+# second derivation and a wrong one the day a prerelease or a yanked record tops it (#918).
 relbad=0
 offered="$(jq -r '.release.version // empty' "$PUB/build.json" 2>/dev/null || true)"
 home_offer="$(sed -n 's/.*data-trust-key="release" data-release="\([^"]*\)".*/\1/p' "$PUB/index.html" 2>/dev/null | head -n 1)"
@@ -1351,15 +1355,17 @@ if [ -n "$offered" ] || [ -n "$home_offer" ] || [ -n "$pub_latest" ]; then
   [ "$pub_latest" = "$offered" ] \
     || { bad release "/build.json offers ${offered:-no release} and the /releases/latest.json this build serves names ${pub_latest:-none}"; relbad=1; }
 fi
-newest_record="$(ls "$ROOT/.ai/repo/releases/"v*.yaml 2>/dev/null | sed 's|.*/v||; s|\.yaml$||' \
-  | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+if [ -n "$offered" ]; then
+  other_offers="$(grep -oE 'data-release="[^"]*"' "$PUB/index.html" 2>/dev/null | sed 's/^[^"]*"//; s/"$//' \
+    | LC_ALL=C sort -u | grep -vxF -- "$offered" | tr '\n' ' ' || true)"
+  [ -z "$other_offers" ] \
+    || { bad release "the homepage carries data-release ${other_offers% } beside the ${offered} /build.json offers: a badge reads another source"; relbad=1; }
+fi
 dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
 static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
-[ "$dist_latest" = "$newest_record" ] \
-  || { bad release "the newest release record is ${newest_record:-none} and distribution.json names ${dist_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$static_latest" = "$newest_record" ] \
-  || { bad release "the newest release record is ${newest_record:-none} and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the newest record ${newest_record:-none} agrees with its projections"
+[ "$static_latest" = "$dist_latest" ] \
+  || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
+[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
 
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection

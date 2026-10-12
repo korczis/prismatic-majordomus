@@ -475,7 +475,10 @@ yanked: true
 then `just derive` and commit. `latest.json` is derived on every generation as the highest
 version among the stable, unwithdrawn records, so the stable pointer moves back on its own
 and `--version v0.3.0` still resolves for anyone who wants exactly that. Nothing is deleted
-and no URL stops working.
+and no URL stops working. The site follows the same derivation: the record's reading of the
+release it offers is `latest` in `site/data/registry/distribution.json`, never the highest
+record file name, so a withdrawn or prerelease record is not what the pages present, and
+`scripts/site-check` refuses a build whose badges differ from the one release it offers.
 
 ## Reproducibility
 

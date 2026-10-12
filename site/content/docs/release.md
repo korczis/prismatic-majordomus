@@ -349,7 +349,7 @@ v0.21.0, until that pull request passed its own validation. The offer is now der
 `gh-pages` already serves, into `build.json` as `release` — every page reads it from there
 (`offered` in `base.html`), and `site/data/generated/project.json` carries no release at all.
 `scripts/site-check` refuses a build whose homepage, `/build.json` and served `latest.json`
-disagree, and a tree whose newest record and its projections do; `scripts/pages release-live`
+disagree, and a tree whose two committed projections of the latest release do; `scripts/pages release-live`
 holds the live homepage, `latest.json` and GitHub's newest release to one version once
 `deploy.release_window` has passed. The rule is
 `project.the-site-offers-the-release-it-published`; `test/cases/1087` breaks each surface.

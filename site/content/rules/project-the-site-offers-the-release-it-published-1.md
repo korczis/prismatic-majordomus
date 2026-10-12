@@ -47,9 +47,12 @@ publication moved one surface and left the rest.
    tag, and the tag does not wait for it. The changelog and the install guide's history are its
    projections and follow it; they state releases that exist and never offer one ahead of it.
 4. **Refused before it is pushed.** `scripts/site-check` refuses a build whose homepage offer
-   (`data-release` on the trust strip), `/build.json` and served `/releases/latest.json` name
-   different releases, and a tree whose newest release record, `distribution.json` and committed
-   `site/static/releases/latest.json` disagree — the pre-merge half, decidable from the tree.
+   (`data-release` on the trust strip, and on the navbar and hero badges), `/build.json` and
+   served `/releases/latest.json` name different releases, and a tree whose two committed
+   projections of the latest release — `latest` in `distribution.json` and
+   `site/static/releases/latest.json` — disagree: the pre-merge half, decidable from the tree.
+   The record's reading is the highest stable record that is not withdrawn
+   (`Releases::latest_stable`); no surface lists the record files to find "the newest".
 5. **Measured after it is deployed.** `scripts/pages release-live` reads the live homepage's
    offer, `/build.json`, `/releases/latest.json` and the newest GitHub release. One version is a
    pass. A disagreement younger than `deploy.release_window` (`.ai/repo/ci/pages.yaml`) after
