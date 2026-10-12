@@ -168,7 +168,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-capabilities" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-capabilities" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">capabilities</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.</p><article id="op-capabilities-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -202,7 +202,7 @@
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capabilities?kind=query&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capabilities?kind=query&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -265,7 +265,7 @@ surface. Empty is the closure the rule asks for.</td>
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capabilities/projections?unmet=false&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capabilities/projections?unmet=false&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -307,7 +307,7 @@ surface. Empty is the closure the rule asks for.</td>
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
-    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_capability</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ capabilities describe</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=512)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_capability</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ capabilities describe</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
@@ -321,7 +321,7 @@ surface. Empty is the closure the rule asks for.</td>
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capability?id=repository.info&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capability?id=repository.info&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -393,11 +393,14 @@ operation.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a h
 <article id="schema-CachePolicy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">CachePolicy</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 2 variants</span>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 4 variants</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether, and how, the executor keeps results of this capability. Cache lives in the
 executor and nowhere else, so MCP, HTTP and the command line share one; the key is the
 canonical id, the normalised input and the registry fingerprint, so a changed
-repository never answers from an old entry.</div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Every call runs the handler.</div>
+repository never answers from an old entry. The two narrower policies add to the key
+what the registry fingerprint cannot see: the context's own reading of the repository
+(<code>CachePolicy::Generation</code>) and the state of the checkout itself
+(<code>CachePolicy::Checkout</code>).</div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Every call runs the handler.</div>
   <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">policy</td><td class="px-3 py-2 font-mono text-body">&quot;disabled&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
@@ -406,6 +409,24 @@ repository never answers from an old entry.</div><div class="mt-3 break-words te
   <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">max_entries</td><td class="px-3 py-2 font-mono text-body">integer (uint)</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The most entries kept for this capability; the oldest is evicted first.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">ttl_seconds</td><td class="px-3 py-2 font-mono text-body">integer | null</td><td class="px-3 py-2 font-mono text-body">no</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Seconds an entry stays valid; <code>None</code> for the life of the process.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">policy</td><td class="px-3 py-2 font-mono text-body">&quot;process&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Results are kept for equal inputs while the context that computed them is the one
+asked: for a capability that is a function of the index and the registry alone,
+including the git state the index was read at, which the registry fingerprint does
+not cover. A reload of the repository is a new context, and so a new key.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">max_entries</td><td class="px-3 py-2 font-mono text-body">integer (uint)</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The most entries kept for this capability; the oldest is evicted first.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">policy</td><td class="px-3 py-2 font-mono text-body">&quot;generation&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Results are kept for equal inputs while the context is the same <em>and</em> the checkout
+is as it was: HEAD, the staging index, the refs and every changed or untracked path
+of the work tree, fingerprinted again on every call
+(<code>capability::checkout</code>). For a capability that reads git, the index and the
+files of the work tree, and nothing that fingerprint cannot see: no ignored file, no
+other process, no network, no clock. A checkout git cannot fingerprint is not cached.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">max_entries</td><td class="px-3 py-2 font-mono text-body">integer (uint)</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The most entries kept for this capability; the oldest is evicted first.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">policy</td><td class="px-3 py-2 font-mono text-body">&quot;checkout&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/capabilities/#schema-Capability" class="font-mono text-fg-brand underline">Capability</a> <a href="https://majordomus.dev/docs/api/capabilities/#schema-CapabilitySummary" class="font-mono text-fg-brand underline">CapabilitySummary</a></p></article>
 <article id="schema-CanonicalSchema" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -979,9 +1000,9 @@ it simply does not exist yet where the benchmark runs.</span></li></ul><p class=
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -989,7 +1010,7 @@ it simply does not exist yet where the benchmark runs.</span></li></ul><p class=
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3e288a2977592ffc1fd6e5769cb080478fe4c00b" class="font-mono underline">3e288a2</a> · inputs <span class="font-mono">15656e9f3cc3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

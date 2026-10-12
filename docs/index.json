@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "3e288a2977592ffc1fd6e5769cb080478fe4c00b",
+  "commit": "8d7825451f88dbe1a6ac701dbce975e4d5648f08",
   "source_version": "0.21.0",
-  "registry_fingerprint": "4c1dfe74df38350f69fb3023e5bff8eaec93f86860d6edb52c1a3a41ebb8e14d"
+  "registry_fingerprint": "f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe"
  },
  "counts": {
-  "pages": 2109,
-  "capabilities": 2253,
+  "pages": 2112,
+  "capabilities": 2256,
   "cli_commands": 105,
   "http_routes": 187,
   "mcp_tools": 183,
-  "mcp_resources": 2116,
+  "mcp_resources": 2119,
   "modules": 89
  },
  "kinds": [
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 243
+   "count": 244
   },
   {
    "kind": "command",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 337
+   "count": 338
   },
   {
    "kind": "domain",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 327
+   "count": 328
   },
   {
    "kind": "knowledge",
@@ -3872,7 +3872,7 @@
   {
    "route": "/domains/surfaces/",
    "title": "Surfaces",
-   "description": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
+   "description": "One declaration in the repository becomes the command line, the HTTP API, MCP, the UI, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
    "section": "The product, by domain"
   },
   {
@@ -4041,6 +4041,12 @@
    "route": "/features/skills/",
    "title": "Skills are procedures as data, discovered and checked, never registered",
    "description": "A skill is a provider-neutral procedure for one bounded kind of work, front matter under a schema over a body with a purpose, a procedure and an output contract; the source class discovers it, skills check holds every one to its contract, and nothing loads a skill unless the task is about it.",
+   "section": "Features"
+  },
+  {
+   "route": "/features/ui/",
+   "title": "majordomus ui: the delivery, for a person",
+   "description": "At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.",
    "section": "Features"
   },
   {
@@ -5475,6 +5481,12 @@
    "route": "/guarantees/typed-outcome/",
    "title": "An outcome is a value from a closed vocabulary, not free text",
    "description": "A task ends with exactly one of completed, partial, blocked, no_match, failed (plus handed_over when it continues elsewhere and active while it runs). no_match means the work was done and the thing sought does not exist; failed means the work could not be done. They look alike in a chat — \"we found nothing\" versus \"we could not search\" — and are different facts a supervisor must tell apart to decide whether to retry, escalate or accept.",
+   "section": "Guaranteed, advisory, planned"
+  },
+  {
+   "route": "/guarantees/ui-dashboard-cites-its-sources/",
+   "title": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+   "description": "majordomus ui, the primary surface at /ui (ADR 0135), shows a person how the delivery",
    "section": "Guaranteed, advisory, planned"
   },
   {
@@ -7692,6 +7704,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2484/",
+   "title": "I2484 — majordomus ui ensures the shared server and opens the UI's dashboard",
+   "description": "Give the primary surface its command: `majordomus ui` ensures this checkout's shared server, the way `serve ensure` does, prints the address of /ui and opens it in a browser, so that a person reaches the UI in one step and never needs the lease, a port or the Cockpit to find it.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
@@ -8228,7 +8246,7 @@
   {
    "route": "/registry/capabilities/evidence-report/",
    "title": "evidence.report",
-   "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+   "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
    "section": "Registry"
   },
   {
@@ -8888,7 +8906,7 @@
   {
    "route": "/registry/capabilities/rules-report/",
    "title": "rules.report",
-   "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+   "description": "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
    "section": "Registry"
   },
   {
@@ -10922,7 +10940,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.21.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.21.0, built from commit 3e288a2977592ffc1fd6e5769cb080478fe4c00b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.21.0, built from commit 8d7825451f88dbe1a6ac701dbce975e4d5648f08: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.21.0 — Rust API reference"
   },
   {

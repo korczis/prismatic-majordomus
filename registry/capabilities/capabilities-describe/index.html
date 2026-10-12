@@ -383,7 +383,7 @@ declarative object.</td>
       ]
     },
     &quot;CachePolicy&quot;: {
-      &quot;description&quot;: &quot;Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.&quot;,
+      &quot;description&quot;: &quot;Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry. The two narrower policies add to the key\nwhat the registry fingerprint cannot see: the context&#39;s own reading of the repository\n(`CachePolicy::Generation`) and the state of the checkout itself\n(`CachePolicy::Checkout`).&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;description&quot;: &quot;Every call runs the handler.&quot;,
@@ -419,6 +419,46 @@ declarative object.</td>
                 &quot;integer&quot;,
                 &quot;null&quot;
               ]
+            }
+          },
+          &quot;required&quot;: [
+            &quot;policy&quot;,
+            &quot;max_entries&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Results are kept for equal inputs while the context that computed them is the one\nasked: for a capability that is a function of the index and the registry alone,\nincluding the git state the index was read at, which the registry fingerprint does\nnot cover. A reload of the repository is a new context, and so a new key.&quot;,
+          &quot;properties&quot;: {
+            &quot;max_entries&quot;: {
+              &quot;description&quot;: &quot;The most entries kept for this capability; the oldest is evicted first.&quot;,
+              &quot;format&quot;: &quot;uint&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: &quot;integer&quot;
+            },
+            &quot;policy&quot;: {
+              &quot;const&quot;: &quot;generation&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;policy&quot;,
+            &quot;max_entries&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Results are kept for equal inputs while the context is the same *and* the checkout\nis as it was: HEAD, the staging index, the refs and every changed or untracked path\nof the work tree, fingerprinted again on every call\n(`capability::checkout`). For a capability that reads git, the index and the\nfiles of the work tree, and nothing that fingerprint cannot see: no ignored file, no\nother process, no network, no clock. A checkout git cannot fingerprint is not cached.&quot;,
+          &quot;properties&quot;: {
+            &quot;max_entries&quot;: {
+              &quot;description&quot;: &quot;The most entries kept for this capability; the oldest is evicted first.&quot;,
+              &quot;format&quot;: &quot;uint&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: &quot;integer&quot;
+            },
+            &quot;policy&quot;: {
+              &quot;const&quot;: &quot;checkout&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
           &quot;required&quot;: [
@@ -942,14 +982,14 @@ declarative object.</td>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
     <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">process</span> — up to 512 entries in the process, scoped by the registry fingerprint</dd></div>
     </dl>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
     <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
-        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-direct-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-mcp-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-http-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a><br></td></tr></tbody>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-direct-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-mcp-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-capabilities-describe-http-repository-info" class="break-all text-fg-brand hover:underline inline-block py-1">repository-info</a> <span class="text-body-subtle">cold+warm</span><br></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -963,7 +1003,7 @@ declarative object.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::capabilities</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DescribeInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Capability</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">4c1dfe74df38350f69fb3023e5bff8eaec93f86860d6edb52c1a3a41ebb8e14d</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.21.0</dd></div>
       </dl>
     </div>
@@ -1026,9 +1066,9 @@ declarative object.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1036,7 +1076,7 @@ declarative object.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3e288a2977592ffc1fd6e5769cb080478fe4c00b" class="font-mono underline">3e288a2</a> · inputs <span class="font-mono">15656e9f3cc3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

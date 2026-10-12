@@ -161,12 +161,9 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 4 · p1 · implementation profile · runs alone</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/development-runtime/" class="text-fg-brand underline">development-runtime — The runtime has a development surface</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until <a href="https://majordomus.dev/plan/i2473/" class="font-mono underline">I2473</a> is done. The status is derived from that, not declared.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Draw on the PR Drain how many pull requests the executor merged on each of the fourteen days that end on the day of its trail&#39;s newest event, as a chart whose counts are written in its label and in a table beside it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The owner asked on 2026-10-11 to implement every view of the UI screenshots (reference 03-pr-drain shows a merge throughput chart; pack v3 M04-03, measured time series). The executor&#39;s trail records every merge_succeeded with its time, and the queue already folds a seven-day merge count, but nothing showed the series.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The drain shows merges in seven days and merges per day as two numbers.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The drain panel, which asks integration.events, draws &#39;Merge throughput&#39;: the fourteen days ending on the trail&#39;s newest event&#39;s day (the record&#39;s end, not the reader&#39;s clock), each with its count of merge_succeeded events, as a server-side SVG chart labelled with every day&#39;s count and a table of the same numbers. An attempt is no merge, a merge outside the window is not drawn, and a trail with no merge in the window says so and draws no chart.</p>
@@ -177,7 +174,7 @@
   
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2473/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2473</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2473/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2473</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">A pull request shows its trail: what the executor did to it, and the drain what the lane did lately</span></a></li>
   </ul>
 
@@ -192,17 +189,22 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">ui_throughput_unit_test</li><li class="font-mono text-heading break-words">ui_throughput_case_1079</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">ui_throughput_unit_test</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --lib ui::prs (validate run 38223440282 on 722228ef3c, the v0.21.0 top)</td><td class="px-4 py-2 text-body">merges_are_counted_per_day_over_the_days_the_trail_ends_on ok</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">722228e</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">ui_throughput_case_1079</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">test/run.sh 1079_the_drain_draws_its_throughput (validate run 38223440282 on 722228ef3c, the v0.21.0 top)</td><td class="px-4 py-2 text-body">case 1079_the_drain_draws_its_throughput ok</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">722228e</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-12T11:03:47Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-12T11:03:54Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-12T11:04:08Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/.ai/repo/project/issues/I2474.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2474.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2474</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/.ai/repo/project/issues/I2474.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2474.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2474</code>.</p>
 </div>
 
 </div>
@@ -252,9 +254,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -262,7 +264,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3e288a2977592ffc1fd6e5769cb080478fe4c00b" class="font-mono underline">3e288a2</a> · inputs <span class="font-mono">15656e9f3cc3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

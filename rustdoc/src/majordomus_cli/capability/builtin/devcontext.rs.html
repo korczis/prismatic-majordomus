@@ -315,19 +315,21 @@
 <a href=#315 id=315 data-nosnippet>315</a>                    <span class="string">"{} expires by time; the cache key already carries the index fingerprint"</span>,
 <a href=#316 id=316 data-nosnippet>316</a>                    e.capability.id
 <a href=#317 id=317 data-nosnippet>317</a>                ),
-<a href=#318 id=318 data-nosnippet>318</a>                CachePolicy::Disabled =&gt; {}
-<a href=#319 id=319 data-nosnippet>319</a>            }
-<a href=#320 id=320 data-nosnippet>320</a>        }
-<a href=#321 id=321 data-nosnippet>321</a>    }
-<a href=#322 id=322 data-nosnippet>322</a>
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="attr">#[test]
-<a href=#324 id=324 data-nosnippet>324</a>    </span><span class="kw">fn </span>every_capability_has_a_benchmark_case_over_this_repository() {
-<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().expect(<span class="string">"a repository"</span>);
-<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">let </span>index = repo.index().expect(<span class="string">"an index"</span>);
-<a href=#327 id=327 data-nosnippet>327</a>        <span class="kw">let </span>ctx = CaseContext { index: <span class="kw-2">&amp;</span>index };
-<a href=#328 id=328 data-nosnippet>328</a>        <span class="macro">assert!</span>(!CompileInput::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
-<a href=#329 id=329 data-nosnippet>329</a>        <span class="macro">assert!</span>(!ExplainInput::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="macro">assert!</span>(!Empty::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
-<a href=#331 id=331 data-nosnippet>331</a>    }
-<a href=#332 id=332 data-nosnippet>332</a>}
+<a href=#318 id=318 data-nosnippet>318</a>                CachePolicy::Disabled
+<a href=#319 id=319 data-nosnippet>319</a>                | CachePolicy::Generation { .. }
+<a href=#320 id=320 data-nosnippet>320</a>                | CachePolicy::Checkout { .. } =&gt; {}
+<a href=#321 id=321 data-nosnippet>321</a>            }
+<a href=#322 id=322 data-nosnippet>322</a>        }
+<a href=#323 id=323 data-nosnippet>323</a>    }
+<a href=#324 id=324 data-nosnippet>324</a>
+<a href=#325 id=325 data-nosnippet>325</a>    <span class="attr">#[test]
+<a href=#326 id=326 data-nosnippet>326</a>    </span><span class="kw">fn </span>every_capability_has_a_benchmark_case_over_this_repository() {
+<a href=#327 id=327 data-nosnippet>327</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().expect(<span class="string">"a repository"</span>);
+<a href=#328 id=328 data-nosnippet>328</a>        <span class="kw">let </span>index = repo.index().expect(<span class="string">"an index"</span>);
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">let </span>ctx = CaseContext { index: <span class="kw-2">&amp;</span>index };
+<a href=#330 id=330 data-nosnippet>330</a>        <span class="macro">assert!</span>(!CompileInput::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
+<a href=#331 id=331 data-nosnippet>331</a>        <span class="macro">assert!</span>(!ExplainInput::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
+<a href=#332 id=332 data-nosnippet>332</a>        <span class="macro">assert!</span>(!Empty::benchmark_cases(<span class="kw-2">&amp;</span>ctx).is_empty());
+<a href=#333 id=333 data-nosnippet>333</a>    }
+<a href=#334 id=334 data-nosnippet>334</a>}
 </code></pre></div></section></main></body></html>

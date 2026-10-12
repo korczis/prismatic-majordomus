@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["canonical_json"],"struct":["CapabilityExecutor"]};
+window.SIDEBAR_ITEMS = {"constant":["SWITCH"],"fn":["bypassed","canonical_json"],"struct":["CapabilityExecutor"]};

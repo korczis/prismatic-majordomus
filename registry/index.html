@@ -173,8 +173,8 @@
 <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
   <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
   <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-    <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">4c1dfe74df38350f69fb3023e5bff8eaec93f86860d6edb52c1a3a41ebb8e14d</dd>
-    <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">5dc1f3b3208e864f710255e572713c2d3e41d59f5d85b3a6d5d7b02c6edd8f46</dd>
+    <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">f1262816b29d7846ccdd30ee7b024d5771b4dcb1bff3770cf40e3d1407adaabe</dd>
+    <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">5e59a27862c156c47651aa550b3e8946172a4329bfb0c8d7497df3a12b9e3c62</dd>
     <dt class="text-body-subtle">generator</dt><dd class="font-mono text-heading">majordomus-cli 0.21.0 · dataset majordomus-site-registry/v2</dd>
     <dt class="text-body-subtle">layer</dt><dd class="font-mono text-heading">ai-repository/v1 · index ok</dd>
     <dt class="text-body-subtle">routes from</dt><dd class="min-w-0 break-all font-mono text-heading">docs/generated/registry.json · majordomus/capability-registry/v1</dd>
@@ -184,13 +184,13 @@
 
 <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   
-<a href="https://majordomus.dev/registry/capabilities/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">capabilities</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">2253 in the registry</h2>
-  <p class="text-sm leading-relaxed text-body">191 builtin (composed in Rust), 2062 declarative (one resource per object of the layer), in 89 modules.</p>
+<a href="https://majordomus.dev/registry/capabilities/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">capabilities</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">2256 in the registry</h2>
+  <p class="text-sm leading-relaxed text-body">191 builtin (composed in Rust), 2065 declarative (one resource per object of the layer), in 89 modules.</p>
   <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
 </a>
 
   
-<a href="https://majordomus.dev/registry/mcp/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">mcp</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">183 tools · 2116 resources</h2>
+<a href="https://majordomus.dev/registry/mcp/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">mcp</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">183 tools · 2119 resources</h2>
   <p class="text-sm leading-relaxed text-body">Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>.</p>
   <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
 </a>
@@ -203,7 +203,7 @@
 
   
 <a href="https://majordomus.dev/registry/benchmarks/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">benchmarks</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">164 required · 27 waived</h2>
-  <p class="text-sm leading-relaxed text-body">Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. 41 are cached by the executor.</p>
+  <p class="text-sm leading-relaxed text-body">Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. 54 are cached by the executor.</p>
   <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
 </a>
 
@@ -244,7 +244,7 @@
     <td class="px-3 py-2 font-mono text-xs">majordomus capabilities describe</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">process</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/capabilities-list/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">capabilities.list</a><p class="mt-1 max-w-md break-words text-xs text-body">Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -586,7 +586,7 @@
     <td class="px-3 py-2 font-mono text-xs">majordomus distribution releases</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/distribution-status/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">distribution.status</a><p class="mt-1 max-w-md break-words text-xs text-body">Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline&#39;s smoke phase, not guessed at here.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -712,7 +712,7 @@
     <td class="px-3 py-2 font-mono text-xs">majordomus evidence claim</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/evidence-record/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">evidence.record</a><p class="mt-1 max-w-md break-words text-xs text-body">Reads what the runs already wrote — the suite&#39;s TSV report, cargo test&#39;s output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test&#39;s own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report&#39;s run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate&#39;s own unit tests, its doctests) is listed as dropped.</p></td>
     <td class="px-3 py-2 font-mono text-xs">command</td>
@@ -723,14 +723,14 @@
     <td class="px-3 py-2 font-mono text-xs">waived (destructive)</td>
     <td class="px-3 py-2 font-mono text-xs">disabled</td>
   </tr><tr class="align-top">
-    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/evidence-report/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">evidence.report</a><p class="mt-1 max-w-md break-words text-xs text-body">The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit&#39;s does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.</p></td>
+    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/evidence-report/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">evidence.report</a><p class="mt-1 max-w-md break-words text-xs text-body">The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit&#39;s does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
     <td class="px-3 py-2 font-mono text-xs">majordomus_evidence</td>
     <td class="px-3 py-2 font-mono text-xs">GET /api/v1/evidence</td>
     <td class="px-3 py-2 font-mono text-xs">majordomus evidence show</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/evidence-stamp/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">evidence.stamp</a><p class="mt-1 max-w-md break-words text-xs text-body">The one measurement a runner takes at the end of its run, for evidence record --provenance: the commit; the tree, ignoring the evidence ledger and the run&#39;s own untracked outputs, never a tracked change; the producer; its toolchain; the recorder&#39;s version; the report&#39;s digest; the host; the CI run. It writes nothing. It is offered only on the command line because it reads a path its caller names.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -982,7 +982,7 @@
     <td class="px-3 py-2 font-mono text-xs">majordomus intent list</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/intents-preflight/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">intents.preflight</a><p class="mt-1 max-w-md break-words text-xs text-body">Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1432,7 +1432,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/plan-model/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">plan.model</a><p class="mt-1 max-w-md break-words text-xs text-body">Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan&#39;s header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1450,7 +1450,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/plan-record/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">plan.record</a><p class="mt-1 max-w-md break-words text-xs text-body">A milestone with its issues in full, or an issue with the issues it waits on in full. The record&#39;s own prose stays where it has always been — `majordomus://issue/&lt;id&gt;` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1468,7 +1468,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/plan-status/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">plan.status</a><p class="mt-1 max-w-md break-words text-xs text-body">Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan&#39;s own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1477,7 +1477,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/plan-transition/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">plan.transition</a><p class="mt-1 max-w-md break-words text-xs text-body">Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue&#39;s own record is stamped, the seal of its event is written beside it, and the event is appended to the ledger; a stamp without that seal moves no status. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one that was never started, whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.</p></td>
     <td class="px-3 py-2 font-mono text-xs">command</td>
@@ -1675,7 +1675,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">implemented</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/repository-info/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">repository.info</a><p class="mt-1 max-w-md break-words text-xs text-body">The repository root, layer sections, git state, discovery mode, kinds present, every diagnostic, and the capability registry counted.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1684,7 +1684,7 @@
     <td class="px-3 py-2 font-mono text-xs">—</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">generation</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/repository-scope/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">repository.scope</a><p class="mt-1 max-w-md break-words text-xs text-body">The scope declaration as read, where it came from (the repository&#39;s own or the distribution&#39;s default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1713,14 +1713,14 @@
     <td class="px-3 py-2 font-mono text-xs">required</td>
     <td class="px-3 py-2 font-mono text-xs">disabled</td>
   </tr><tr class="align-top">
-    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/rules-report/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">rules.report</a><p class="mt-1 max-w-md break-words text-xs text-body">The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.</p></td>
+    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/rules-report/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">rules.report</a><p class="mt-1 max-w-md break-words text-xs text-body">The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
     <td class="px-3 py-2 font-mono text-xs">majordomus_rules</td>
     <td class="px-3 py-2 font-mono text-xs">GET /api/v1/rules</td>
     <td class="px-3 py-2 font-mono text-xs">majordomus rules report</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/rules-show/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">rules.show</a><p class="mt-1 max-w-md break-words text-xs text-body">One rule with its full proof: the validator and the cases it names, the execution behind each, the gates that run them, the rules it depends on and the rules that depend on it — each with the state it is in, because a rule is proven only as far as its dependencies are — and, when it is not proven, the one sentence saying what would have to be true for it to be. A rule this repository does not declare is a not-found rather than an empty answer, because a typo that read as &#39;this rule has no proof&#39; is the one answer this capability must never give.</p></td>
     <td class="px-3 py-2 font-mono text-xs">query</td>
@@ -1729,7 +1729,7 @@
     <td class="px-3 py-2 font-mono text-xs">majordomus rules show</td>
     <td class="px-3 py-2 font-mono text-xs">behaviorally_verified</td>
     <td class="px-3 py-2 font-mono text-xs">required</td>
-    <td class="px-3 py-2 font-mono text-xs">disabled</td>
+    <td class="px-3 py-2 font-mono text-xs">checkout</td>
   </tr><tr class="align-top">
     <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/served-observe/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">served.observe</a><p class="mt-1 max-w-md break-words text-xs text-body">Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).</p></td>
     <td class="px-3 py-2 font-mono text-xs">command</td>
@@ -1952,20 +1952,20 @@
   <tr><td class="px-3 py-2 font-mono text-heading">application</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.application/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">5</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">area</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.area/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">9</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">audience</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.audience/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">8</td></tr>
-  <tr><td class="px-3 py-2 font-mono text-heading">claim</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.claim/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">243</td></tr>
+  <tr><td class="px-3 py-2 font-mono text-heading">claim</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.claim/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">244</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">command</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.command/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">31</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">context</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.context/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">37</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">critique</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.critique/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">intent</td><td class="px-3 py-2 text-right font-mono text-xs">3</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">deployment</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.deployment/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">1</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">derive-offload</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.derive-offload/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">1</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">distribution-model</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.distribution/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">path</td><td class="px-3 py-2 text-right font-mono text-xs">1</td></tr>
-  <tr><td class="px-3 py-2 font-mono text-heading">document</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">optional</td><td class="px-3 py-2 font-mono text-xs">majordomus.document/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">path</td><td class="px-3 py-2 text-right font-mono text-xs">337</td></tr>
+  <tr><td class="px-3 py-2 font-mono text-heading">document</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">optional</td><td class="px-3 py-2 font-mono text-xs">majordomus.document/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">path</td><td class="px-3 py-2 text-right font-mono text-xs">338</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">domain</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.domain/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">6</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">feature</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.feature/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">28</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">gap</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.gap/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">intent</td><td class="px-3 py-2 text-right font-mono text-xs">3</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">implementation</td><td class="px-3 py-2 font-mono text-xs">text</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">—</td><td class="px-3 py-2 font-mono text-xs">path</td><td class="px-3 py-2 text-right font-mono text-xs">52</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">intent</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.intent/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">4</td></tr>
-  <tr><td class="px-3 py-2 font-mono text-heading">issue</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.issue/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">327</td></tr>
+  <tr><td class="px-3 py-2 font-mono text-heading">issue</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.issue/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">328</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">knowledge</td><td class="px-3 py-2 font-mono text-xs">markdown</td><td class="px-3 py-2 font-mono text-xs">required</td><td class="px-3 py-2 font-mono text-xs">majordomus.knowledge/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">1</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">mesh-declaration</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.mesh-declaration/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">1</td></tr>
   <tr><td class="px-3 py-2 font-mono text-heading">milestone</td><td class="px-3 py-2 font-mono text-xs">yaml</td><td class="px-3 py-2 font-mono text-xs">none</td><td class="px-3 py-2 font-mono text-xs">majordomus.milestone/v1.schema.json</td><td class="px-3 py-2 font-mono text-xs">id</td><td class="px-3 py-2 text-right font-mono text-xs">35</td></tr>
@@ -1993,7 +1993,7 @@
 <ul class="mt-4 grid gap-2 text-sm sm:grid-cols-3"><li class="min-w-0 rounded border border-default px-3 py-2"><code class="break-all font-mono text-heading">AGENTS.md</code> <span class="text-body">← agents · file</span> <span class="ms-1 rounded bg-brand-softer px-1 font-mono text-xs text-fg-brand-strong">always loaded</span></li><li class="min-w-0 rounded border border-default px-3 py-2"><code class="break-all font-mono text-heading">CLAUDE.md</code> <span class="text-body">← claude-code · file</span></li><li class="min-w-0 rounded border border-default px-3 py-2"><code class="break-all font-mono text-heading">.bb/AGENTS.md</code> <span class="text-body">← bb · file</span></li></ul>
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objects of the layer</h2>
-<p class="mt-2 max-w-3xl text-sm text-body">2062 objects, each an MCP resource. Grouped by kind; the path is where the object lives in the repository.</p>
+<p class="mt-2 max-w-3xl text-sm text-body">2065 objects, each an MCP resource. Grouped by kind; the path is where the object lives in the repository.</p>
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
   <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">adr</code> <span class="ms-2 font-mono text-xs text-body-subtle">95</span></summary>
   <ul class="divide-y divide-default border-t border-default text-sm">
@@ -2132,7 +2132,7 @@
   </ul>
 </details>
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
-  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">claim</code> <span class="ms-2 font-mono text-xs text-body-subtle">243</span></summary>
+  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">claim</code> <span class="ms-2 font-mono text-xs text-body-subtle">244</span></summary>
   <ul class="divide-y divide-default border-t border-default text-sm">
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">a-candidate-is-routed-by-what-it-is-about</code><span class="min-w-0 text-body">Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject&#39;s structure and never from its wording, and in a repository that adopted the tool its own share/ routes project</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">a-finding-names-how-to-see-it-again</code><span class="min-w-0 text-body">Every finding a command reports names the command that reproduces it</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
@@ -2364,6 +2364,7 @@
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">token-savings-measured</code><span class="min-w-0 text-body">Majordomus will state a total-token change only from matched, verified runs that meet the methodology&#39;s publication rule</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">tool-location-independent</code><span class="min-w-0 text-body">The tool runs read-only from any location, and two locations of one version agree about one repository</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">typed-outcome</code><span class="min-w-0 text-body">An outcome is a value from a closed vocabulary, not free text</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
+  <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">ui-dashboard-cites-its-sources</code><span class="min-w-0 text-body">The UI&#39;s dashboard at /ui links every capability it read to that capability&#39;s page, serves under the Cockpit&#39;s security policy, and never waits for the pull-request queue, which is a page and a fragment of its own</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">use-case-coverage</code><span class="min-w-0 text-body">Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">use-case-evidence</code><span class="min-w-0 text-body">A use case&#39;s scenario executes against the real tool in a disposable repository, every step&#39;s exit code and output are asserted, and the normalised evidence is what the site shows</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">use-case-impact</code><span class="min-w-0 text-body">From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/CLAIMS.yaml</span></li>
@@ -2484,7 +2485,7 @@
   </ul>
 </details>
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
-  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">document</code> <span class="ms-2 font-mono text-xs text-body-subtle">337</span></summary>
+  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">document</code> <span class="ms-2 font-mono text-xs text-body-subtle">338</span></summary>
   <ul class="divide-y divide-default border-t border-default text-sm">
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">.ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md</code><span class="min-w-0 text-body">Remove worktrees that look finished</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">.ai/repo/skills/implement/examples/add-a-catalogue-item.md</code><span class="min-w-0 text-body">Add a declarative catalogue item</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/skills/implement/examples/add-a-catalogue-item.md</span></li>
@@ -2810,6 +2811,7 @@
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/token-savings-measured.md</code><span class="min-w-0 text-body">A total-token change is stated only from verified, matched runs</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/token-savings-measured.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/tool-location-independent.md</code><span class="min-w-0 text-body">The tool runs read-only from any location, and two locations of one version agree about one repository</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/tool-location-independent.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/typed-outcome.md</code><span class="min-w-0 text-body">An outcome is a value from a closed vocabulary, not free text</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/typed-outcome.md</span></li>
+  <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/ui-dashboard-cites-its-sources.md</code><span class="min-w-0 text-body">The UI&#39;s dashboard names the capability behind every value it shows, and never waits for the queue</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/ui-dashboard-cites-its-sources.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/use-case-coverage.md</code><span class="min-w-0 text-body">Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/use-case-coverage.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/use-case-evidence.md</code><span class="min-w-0 text-body">A use case&#39;s scenario executes against the real tool in a disposable repository, every step&#39;s exit code and output are asserted, and the normalised evidence is what the site shows</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/use-case-evidence.md</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">docs/claims/use-case-impact.md</code><span class="min-w-0 text-body">From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">docs/claims/use-case-impact.md</span></li>
@@ -2944,7 +2946,7 @@
   </ul>
 </details>
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
-  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">issue</code> <span class="ms-2 font-mono text-xs text-body-subtle">327</span></summary>
+  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">issue</code> <span class="ms-2 font-mono text-xs text-body-subtle">328</span></summary>
   <ul class="divide-y divide-default border-t border-default text-sm">
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I0001</code><span class="min-w-0 text-body">Audit what actually plans work in this repository</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I0001.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I0002</code><span class="min-w-0 text-body">Define the canonical milestone and issue schema</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I0002.yaml</span></li>
@@ -3273,6 +3275,7 @@
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I2476</code><span class="min-w-0 text-body">An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I2476.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I2477</code><span class="min-w-0 text-body">A claim opens its proof: what settles it, its last run, what changed since, how to see it again</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I2477.yaml</span></li>
   <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I2478</code><span class="min-w-0 text-body">A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I2478.yaml</span></li>
+  <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">I2484</code><span class="min-w-0 text-body">majordomus ui ensures the shared server and opens the UI&#39;s dashboard</span><span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">.ai/repo/project/issues/I2484.yaml</span></li>
   </ul>
 </details>
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -4273,9 +4276,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3e288a2977592ffc1fd6e5769cb080478fe4c00b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8d7825451f88dbe1a6ac701dbce975e4d5648f08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -4283,7 +4286,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3e288a2977592ffc1fd6e5769cb080478fe4c00b" class="font-mono underline">3e288a2</a> · inputs <span class="font-mono">15656e9f3cc3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.21.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8d7825451f88dbe1a6ac701dbce975e4d5648f08" class="font-mono underline">8d78254</a> · inputs <span class="font-mono">87f8eaf518e3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

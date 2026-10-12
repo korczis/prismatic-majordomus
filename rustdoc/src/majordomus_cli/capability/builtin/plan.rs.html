@@ -551,7 +551,7 @@
 <a href=#551 id=551 data-nosnippet>551</a>                    cli: <span class="prelude-val">None</span>,
 <a href=#552 id=552 data-nosnippet>552</a>                },
 <a href=#553 id=553 data-nosnippet>553</a>                tags: [<span class="string">"plan"</span>, <span class="string">"project"</span>, <span class="string">"status"</span>],
-<a href=#554 id=554 data-nosnippet>554</a>                cache: CachePolicy::Disabled,
+<a href=#554 id=554 data-nosnippet>554</a>                cache: CachePolicy::Generation { max_entries: <span class="number">16 </span>},
 <a href=#555 id=555 data-nosnippet>555</a>                handler: plan_status,
 <a href=#556 id=556 data-nosnippet>556</a>            },
 <a href=#557 id=557 data-nosnippet>557</a>            <span class="macro">capability!</span> {
@@ -567,7 +567,7 @@
 <a href=#567 id=567 data-nosnippet>567</a>                    cli: <span class="prelude-val">None</span>,
 <a href=#568 id=568 data-nosnippet>568</a>                },
 <a href=#569 id=569 data-nosnippet>569</a>                tags: [<span class="string">"plan"</span>, <span class="string">"project"</span>, <span class="string">"issues"</span>],
-<a href=#570 id=570 data-nosnippet>570</a>                cache: CachePolicy::Disabled,
+<a href=#570 id=570 data-nosnippet>570</a>                cache: CachePolicy::Generation { max_entries: <span class="number">16 </span>},
 <a href=#571 id=571 data-nosnippet>571</a>                handler: plan_issues,
 <a href=#572 id=572 data-nosnippet>572</a>            },
 <a href=#573 id=573 data-nosnippet>573</a>            <span class="macro">capability!</span> {
@@ -599,7 +599,7 @@
 <a href=#599 id=599 data-nosnippet>599</a>                    cli: <span class="prelude-val">None</span>,
 <a href=#600 id=600 data-nosnippet>600</a>                },
 <a href=#601 id=601 data-nosnippet>601</a>                tags: [<span class="string">"plan"</span>, <span class="string">"project"</span>, <span class="string">"next"</span>],
-<a href=#602 id=602 data-nosnippet>602</a>                cache: CachePolicy::Disabled,
+<a href=#602 id=602 data-nosnippet>602</a>                cache: CachePolicy::Generation { max_entries: <span class="number">16 </span>},
 <a href=#603 id=603 data-nosnippet>603</a>                handler: plan_next,
 <a href=#604 id=604 data-nosnippet>604</a>            },
 <a href=#605 id=605 data-nosnippet>605</a>            <span class="macro">capability!</span> {
@@ -615,7 +615,7 @@
 <a href=#615 id=615 data-nosnippet>615</a>                    cli: <span class="prelude-val">None</span>,
 <a href=#616 id=616 data-nosnippet>616</a>                },
 <a href=#617 id=617 data-nosnippet>617</a>                tags: [<span class="string">"plan"</span>, <span class="string">"project"</span>, <span class="string">"roadmap"</span>],
-<a href=#618 id=618 data-nosnippet>618</a>                cache: CachePolicy::Disabled,
+<a href=#618 id=618 data-nosnippet>618</a>                cache: CachePolicy::Generation { max_entries: <span class="number">4 </span>},
 <a href=#619 id=619 data-nosnippet>619</a>                handler: plan_roadmap,
 <a href=#620 id=620 data-nosnippet>620</a>            },
 <a href=#621 id=621 data-nosnippet>621</a>            <span class="macro">capability!</span> {
@@ -964,127 +964,133 @@
 <a href=#964 id=964 data-nosnippet>964</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>path),
 <a href=#965 id=965 data-nosnippet>965</a>                <span class="string">"{id} lost or renamed its HTTP route"
 <a href=#966 id=966 data-nosnippet>966</a>            </span>);
-<a href=#967 id=967 data-nosnippet>967</a>            <span class="macro">assert!</span>(
-<a href=#968 id=968 data-nosnippet>968</a>                !executable.capability.cache.is_enabled(),
-<a href=#969 id=969 data-nosnippet>969</a>                <span class="string">"{id} must not cache: a transition changes the plan between two calls"
-<a href=#970 id=970 data-nosnippet>970</a>            </span>);
-<a href=#971 id=971 data-nosnippet>971</a>        }
-<a href=#972 id=972 data-nosnippet>972</a>        <span class="kw">let </span>resource = m.capabilities[<span class="number">0</span>]
-<a href=#973 id=973 data-nosnippet>973</a>            .capability
-<a href=#974 id=974 data-nosnippet>974</a>            .exposure
-<a href=#975 id=975 data-nosnippet>975</a>            .mcp
-<a href=#976 id=976 data-nosnippet>976</a>            .as_ref()
-<a href=#977 id=977 data-nosnippet>977</a>            .and_then(|m| m.resource.as_ref());
-<a href=#978 id=978 data-nosnippet>978</a>        <span class="macro">assert_eq!</span>(resource.map(|r| r.uri.as_str()), <span class="prelude-val">Some</span>(PLAN_URI));
-<a href=#979 id=979 data-nosnippet>979</a>    }
-<a href=#980 id=980 data-nosnippet>980</a>
-<a href=#981 id=981 data-nosnippet>981</a>    <span class="doccomment">/// Exactly one capability of the module writes, and it is named here.
-<a href=#982 id=982 data-nosnippet>982</a>    ///
-<a href=#983 id=983 data-nosnippet>983</a>    /// This assertion used to read "every capability is a query", which was the registry's
-<a href=#984 id=984 data-nosnippet>984</a>    /// contract until [ADR 0040] made development semantics capabilities of this runtime. It
-<a href=#985 id=985 data-nosnippet>985</a>    /// is kept rather than deleted, and inverted rather than loosened: a module that reads
-<a href=#986 id=986 data-nosnippet>986</a>    /// the plan and one that changes it are different things to depend on, and the next
-<a href=#987 id=987 data-nosnippet>987</a>    /// capability to gain a write should have to say so here.
+<a href=#967 id=967 data-nosnippet>967</a>            <span class="comment">// a transition changes the plan between two calls; it is a write, and a write
+<a href=#968 id=968 data-nosnippet>968</a>            // makes the next reading of the repository a new generation, so an answer is
+<a href=#969 id=969 data-nosnippet>969</a>            // kept, if at all, per generation and never across one
+<a href=#970 id=970 data-nosnippet>970</a>            </span><span class="macro">assert!</span>(
+<a href=#971 id=971 data-nosnippet>971</a>                <span class="macro">matches!</span>(
+<a href=#972 id=972 data-nosnippet>972</a>                    executable.capability.cache,
+<a href=#973 id=973 data-nosnippet>973</a>                    CachePolicy::Disabled | CachePolicy::Generation { .. }
+<a href=#974 id=974 data-nosnippet>974</a>                ),
+<a href=#975 id=975 data-nosnippet>975</a>                <span class="string">"{id} may cache only per generation: a transition changes the plan between two calls"
+<a href=#976 id=976 data-nosnippet>976</a>            </span>);
+<a href=#977 id=977 data-nosnippet>977</a>        }
+<a href=#978 id=978 data-nosnippet>978</a>        <span class="kw">let </span>resource = m.capabilities[<span class="number">0</span>]
+<a href=#979 id=979 data-nosnippet>979</a>            .capability
+<a href=#980 id=980 data-nosnippet>980</a>            .exposure
+<a href=#981 id=981 data-nosnippet>981</a>            .mcp
+<a href=#982 id=982 data-nosnippet>982</a>            .as_ref()
+<a href=#983 id=983 data-nosnippet>983</a>            .and_then(|m| m.resource.as_ref());
+<a href=#984 id=984 data-nosnippet>984</a>        <span class="macro">assert_eq!</span>(resource.map(|r| r.uri.as_str()), <span class="prelude-val">Some</span>(PLAN_URI));
+<a href=#985 id=985 data-nosnippet>985</a>    }
+<a href=#986 id=986 data-nosnippet>986</a>
+<a href=#987 id=987 data-nosnippet>987</a>    <span class="doccomment">/// Exactly one capability of the module writes, and it is named here.
 <a href=#988 id=988 data-nosnippet>988</a>    ///
-<a href=#989 id=989 data-nosnippet>989</a>    /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
-<a href=#990 id=990 data-nosnippet>990</a>    </span><span class="attr">#[test]
-<a href=#991 id=991 data-nosnippet>991</a>    </span><span class="kw">fn </span>only_the_transition_writes() {
-<a href=#992 id=992 data-nosnippet>992</a>        <span class="kw">let </span>m = module();
-<a href=#993 id=993 data-nosnippet>993</a>        <span class="kw">let </span>writers: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
-<a href=#994 id=994 data-nosnippet>994</a>            .capabilities
-<a href=#995 id=995 data-nosnippet>995</a>            .iter()
-<a href=#996 id=996 data-nosnippet>996</a>            .filter(|e| !e.capability.kind.is_read_only())
-<a href=#997 id=997 data-nosnippet>997</a>            .map(|e| e.capability.id.as_str())
-<a href=#998 id=998 data-nosnippet>998</a>            .collect();
-<a href=#999 id=999 data-nosnippet>999</a>        <span class="macro">assert_eq!</span>(writers, [<span class="string">"plan.transition"</span>]);
-<a href=#1000 id=1000 data-nosnippet>1000</a>    }
-<a href=#1001 id=1001 data-nosnippet>1001</a>
-<a href=#1002 id=1002 data-nosnippet>1002</a>    <span class="doccomment">/// A transition is an HTTP POST, never a GET.
-<a href=#1003 id=1003 data-nosnippet>1003</a>    ///
-<a href=#1004 id=1004 data-nosnippet>1004</a>    /// Stated separately because the projection is what a caller meets: a mutating
-<a href=#1005 id=1005 data-nosnippet>1005</a>    /// capability reachable by GET would be followed by every crawler, prefetcher and
-<a href=#1006 id=1006 data-nosnippet>1006</a>    /// link-checker that ever met the Cockpit.
-<a href=#1007 id=1007 data-nosnippet>1007</a>    </span><span class="attr">#[test]
-<a href=#1008 id=1008 data-nosnippet>1008</a>    </span><span class="kw">fn </span>the_transition_is_not_reachable_by_get() {
-<a href=#1009 id=1009 data-nosnippet>1009</a>        <span class="kw">let </span>e = module()
-<a href=#1010 id=1010 data-nosnippet>1010</a>            .capabilities
-<a href=#1011 id=1011 data-nosnippet>1011</a>            .into_iter()
-<a href=#1012 id=1012 data-nosnippet>1012</a>            .find(|e| e.capability.id.as_str() == <span class="string">"plan.transition"</span>)
-<a href=#1013 id=1013 data-nosnippet>1013</a>            .expect(<span class="string">"the module declares plan.transition"</span>);
-<a href=#1014 id=1014 data-nosnippet>1014</a>        <span class="kw">let </span>http = e.capability.exposure.http.expect(<span class="string">"it is exposed over HTTP"</span>);
-<a href=#1015 id=1015 data-nosnippet>1015</a>        <span class="macro">assert_eq!</span>(http.method.as_str(), <span class="string">"POST"</span>);
-<a href=#1016 id=1016 data-nosnippet>1016</a>    }
-<a href=#1017 id=1017 data-nosnippet>1017</a>
-<a href=#1018 id=1018 data-nosnippet>1018</a>    <span class="doccomment">/// "Nothing is ready" and "there is nothing" are different answers: a plan with no
-<a href=#1019 id=1019 data-nosnippet>1019</a>    /// issue says it declares none, and a plan whose every issue is taken says none is READY.
-<a href=#1020 id=1020 data-nosnippet>1020</a>    </span><span class="attr">#[test]
-<a href=#1021 id=1021 data-nosnippet>1021</a>    </span><span class="kw">fn </span>nothing_ready_is_not_nothing_declared() {
-<a href=#1022 id=1022 data-nosnippet>1022</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().expect(<span class="string">"a repository"</span>);
-<a href=#1023 id=1023 data-nosnippet>1023</a>        <span class="kw">let </span>next = plan_next(<span class="kw-2">&amp;</span>repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
-<a href=#1024 id=1024 data-nosnippet>1024</a>        <span class="macro">assert!</span>(next.issue.is_none());
-<a href=#1025 id=1025 data-nosnippet>1025</a>        <span class="macro">assert_eq!</span>(
-<a href=#1026 id=1026 data-nosnippet>1026</a>            next.reason.as_deref(),
-<a href=#1027 id=1027 data-nosnippet>1027</a>            <span class="prelude-val">Some</span>(<span class="string">"the plan declares no issue to hand out"</span>)
-<a href=#1028 id=1028 data-nosnippet>1028</a>        );
-<a href=#1029 id=1029 data-nosnippet>1029</a>
-<a href=#1030 id=1030 data-nosnippet>1030</a>        <span class="comment">// the synthetic repository declares no plan classes; this one does, as ours does
-<a href=#1031 id=1031 data-nosnippet>1031</a>        </span><span class="kw">let </span>sources = repo.root().join(<span class="string">".ai/repo/knowledge/sources.yaml"</span>);
-<a href=#1032 id=1032 data-nosnippet>1032</a>        <span class="kw">let </span><span class="kw-2">mut </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>sources).unwrap();
-<a href=#1033 id=1033 data-nosnippet>1033</a>        <span class="kw">for </span>(class, pathspec) <span class="kw">in </span>[
-<a href=#1034 id=1034 data-nosnippet>1034</a>            (<span class="string">"project"</span>, <span class="string">".ai/repo/project/project.yaml"</span>),
-<a href=#1035 id=1035 data-nosnippet>1035</a>            (<span class="string">"milestone"</span>, <span class="string">".ai/repo/project/milestones/*.yaml"</span>),
-<a href=#1036 id=1036 data-nosnippet>1036</a>            (<span class="string">"issue"</span>, <span class="string">".ai/repo/project/issues/*.yaml"</span>),
-<a href=#1037 id=1037 data-nosnippet>1037</a>        ] {
-<a href=#1038 id=1038 data-nosnippet>1038</a>            text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#1039 id=1039 data-nosnippet>1039</a>                <span class="string">"  - id: {class}\n    kind: {class}\n    discovery: vcs\n    \
-<a href=#1040 id=1040 data-nosnippet>1040</a>                 pathspec: ':(glob){pathspec}'\n    required: false\n"
-<a href=#1041 id=1041 data-nosnippet>1041</a>            </span>));
-<a href=#1042 id=1042 data-nosnippet>1042</a>        }
-<a href=#1043 id=1043 data-nosnippet>1043</a>        std::fs::write(<span class="kw-2">&amp;</span>sources, text).unwrap();
-<a href=#1044 id=1044 data-nosnippet>1044</a>        <span class="kw">let </span>project = repo.root().join(<span class="string">".ai/repo/project"</span>);
-<a href=#1045 id=1045 data-nosnippet>1045</a>        <span class="kw">for </span>dir <span class="kw">in </span>[<span class="string">"milestones"</span>, <span class="string">"issues"</span>] {
-<a href=#1046 id=1046 data-nosnippet>1046</a>            std::fs::create_dir_all(project.join(dir)).unwrap();
-<a href=#1047 id=1047 data-nosnippet>1047</a>        }
-<a href=#1048 id=1048 data-nosnippet>1048</a>        std::fs::write(
-<a href=#1049 id=1049 data-nosnippet>1049</a>            project.join(<span class="string">"project.yaml"</span>),
-<a href=#1050 id=1050 data-nosnippet>1050</a>            <span class="string">"schema_version: 1\nname: P\nrepository: o/r\ndefault_branch: master\n"</span>,
-<a href=#1051 id=1051 data-nosnippet>1051</a>        )
-<a href=#1052 id=1052 data-nosnippet>1052</a>        .unwrap();
-<a href=#1053 id=1053 data-nosnippet>1053</a>        std::fs::write(
-<a href=#1054 id=1054 data-nosnippet>1054</a>            project.join(<span class="string">"milestones/M000.yaml"</span>),
-<a href=#1055 id=1055 data-nosnippet>1055</a>            <span class="string">"id: M000\ntitle: m\nslug: m\norder: 0\npriority: p1\nproblem: p\noutcome: o\n\
-<a href=#1056 id=1056 data-nosnippet>1056</a>             acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
-<a href=#1057 id=1057 data-nosnippet>1057</a>             evidence_required:\n  - proof\n"</span>,
-<a href=#1058 id=1058 data-nosnippet>1058</a>        )
-<a href=#1059 id=1059 data-nosnippet>1059</a>        .unwrap();
-<a href=#1060 id=1060 data-nosnippet>1060</a>        <span class="comment">// the only issue is ACTIVE: declared, and not READY
-<a href=#1061 id=1061 data-nosnippet>1061</a>        </span><span class="kw">let </span>at = <span class="string">"2026-09-01T00:00:00Z"</span>;
-<a href=#1062 id=1062 data-nosnippet>1062</a>        std::fs::write(
-<a href=#1063 id=1063 data-nosnippet>1063</a>            project.join(<span class="string">"issues/I0001.yaml"</span>),
-<a href=#1064 id=1064 data-nosnippet>1064</a>            <span class="macro">format!</span>(
-<a href=#1065 id=1065 data-nosnippet>1065</a>                <span class="string">"id: I0001\nmilestone: M000\ntitle: t\nslug: t\npriority: p1\n\
-<a href=#1066 id=1066 data-nosnippet>1066</a>                 profile: implementation\nobjective: o\nscope:\n  - src\n\
-<a href=#1067 id=1067 data-nosnippet>1067</a>                 acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
-<a href=#1068 id=1068 data-nosnippet>1068</a>                 evidence_required:\n  - proof\nstarted_at: {at}\n\
-<a href=#1069 id=1069 data-nosnippet>1069</a>                 unsealed_stamps:\n  - started_at {at}\n"
-<a href=#1070 id=1070 data-nosnippet>1070</a>            </span>),
-<a href=#1071 id=1071 data-nosnippet>1071</a>        )
-<a href=#1072 id=1072 data-nosnippet>1072</a>        .unwrap();
-<a href=#1073 id=1073 data-nosnippet>1073</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
-<a href=#1074 id=1074 data-nosnippet>1074</a>        <span class="kw">let </span>plan = plan_of(<span class="kw-2">&amp;</span>ctx).unwrap();
-<a href=#1075 id=1075 data-nosnippet>1075</a>        <span class="macro">assert_eq!</span>(
-<a href=#1076 id=1076 data-nosnippet>1076</a>            plan.issue(<span class="string">"I0001"</span>).map(|i| i.status.as_str()),
-<a href=#1077 id=1077 data-nosnippet>1077</a>            <span class="prelude-val">Some</span>(<span class="string">"ACTIVE"</span>)
-<a href=#1078 id=1078 data-nosnippet>1078</a>        );
-<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="kw">let </span>next = plan_next(<span class="kw-2">&amp;</span>ctx, PlanMilestoneFilter::default()).unwrap();
-<a href=#1080 id=1080 data-nosnippet>1080</a>        <span class="macro">assert!</span>(next.issue.is_none());
+<a href=#989 id=989 data-nosnippet>989</a>    /// This assertion used to read "every capability is a query", which was the registry's
+<a href=#990 id=990 data-nosnippet>990</a>    /// contract until [ADR 0040] made development semantics capabilities of this runtime. It
+<a href=#991 id=991 data-nosnippet>991</a>    /// is kept rather than deleted, and inverted rather than loosened: a module that reads
+<a href=#992 id=992 data-nosnippet>992</a>    /// the plan and one that changes it are different things to depend on, and the next
+<a href=#993 id=993 data-nosnippet>993</a>    /// capability to gain a write should have to say so here.
+<a href=#994 id=994 data-nosnippet>994</a>    ///
+<a href=#995 id=995 data-nosnippet>995</a>    /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+<a href=#996 id=996 data-nosnippet>996</a>    </span><span class="attr">#[test]
+<a href=#997 id=997 data-nosnippet>997</a>    </span><span class="kw">fn </span>only_the_transition_writes() {
+<a href=#998 id=998 data-nosnippet>998</a>        <span class="kw">let </span>m = module();
+<a href=#999 id=999 data-nosnippet>999</a>        <span class="kw">let </span>writers: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
+<a href=#1000 id=1000 data-nosnippet>1000</a>            .capabilities
+<a href=#1001 id=1001 data-nosnippet>1001</a>            .iter()
+<a href=#1002 id=1002 data-nosnippet>1002</a>            .filter(|e| !e.capability.kind.is_read_only())
+<a href=#1003 id=1003 data-nosnippet>1003</a>            .map(|e| e.capability.id.as_str())
+<a href=#1004 id=1004 data-nosnippet>1004</a>            .collect();
+<a href=#1005 id=1005 data-nosnippet>1005</a>        <span class="macro">assert_eq!</span>(writers, [<span class="string">"plan.transition"</span>]);
+<a href=#1006 id=1006 data-nosnippet>1006</a>    }
+<a href=#1007 id=1007 data-nosnippet>1007</a>
+<a href=#1008 id=1008 data-nosnippet>1008</a>    <span class="doccomment">/// A transition is an HTTP POST, never a GET.
+<a href=#1009 id=1009 data-nosnippet>1009</a>    ///
+<a href=#1010 id=1010 data-nosnippet>1010</a>    /// Stated separately because the projection is what a caller meets: a mutating
+<a href=#1011 id=1011 data-nosnippet>1011</a>    /// capability reachable by GET would be followed by every crawler, prefetcher and
+<a href=#1012 id=1012 data-nosnippet>1012</a>    /// link-checker that ever met the Cockpit.
+<a href=#1013 id=1013 data-nosnippet>1013</a>    </span><span class="attr">#[test]
+<a href=#1014 id=1014 data-nosnippet>1014</a>    </span><span class="kw">fn </span>the_transition_is_not_reachable_by_get() {
+<a href=#1015 id=1015 data-nosnippet>1015</a>        <span class="kw">let </span>e = module()
+<a href=#1016 id=1016 data-nosnippet>1016</a>            .capabilities
+<a href=#1017 id=1017 data-nosnippet>1017</a>            .into_iter()
+<a href=#1018 id=1018 data-nosnippet>1018</a>            .find(|e| e.capability.id.as_str() == <span class="string">"plan.transition"</span>)
+<a href=#1019 id=1019 data-nosnippet>1019</a>            .expect(<span class="string">"the module declares plan.transition"</span>);
+<a href=#1020 id=1020 data-nosnippet>1020</a>        <span class="kw">let </span>http = e.capability.exposure.http.expect(<span class="string">"it is exposed over HTTP"</span>);
+<a href=#1021 id=1021 data-nosnippet>1021</a>        <span class="macro">assert_eq!</span>(http.method.as_str(), <span class="string">"POST"</span>);
+<a href=#1022 id=1022 data-nosnippet>1022</a>    }
+<a href=#1023 id=1023 data-nosnippet>1023</a>
+<a href=#1024 id=1024 data-nosnippet>1024</a>    <span class="doccomment">/// "Nothing is ready" and "there is nothing" are different answers: a plan with no
+<a href=#1025 id=1025 data-nosnippet>1025</a>    /// issue says it declares none, and a plan whose every issue is taken says none is READY.
+<a href=#1026 id=1026 data-nosnippet>1026</a>    </span><span class="attr">#[test]
+<a href=#1027 id=1027 data-nosnippet>1027</a>    </span><span class="kw">fn </span>nothing_ready_is_not_nothing_declared() {
+<a href=#1028 id=1028 data-nosnippet>1028</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().expect(<span class="string">"a repository"</span>);
+<a href=#1029 id=1029 data-nosnippet>1029</a>        <span class="kw">let </span>next = plan_next(<span class="kw-2">&amp;</span>repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
+<a href=#1030 id=1030 data-nosnippet>1030</a>        <span class="macro">assert!</span>(next.issue.is_none());
+<a href=#1031 id=1031 data-nosnippet>1031</a>        <span class="macro">assert_eq!</span>(
+<a href=#1032 id=1032 data-nosnippet>1032</a>            next.reason.as_deref(),
+<a href=#1033 id=1033 data-nosnippet>1033</a>            <span class="prelude-val">Some</span>(<span class="string">"the plan declares no issue to hand out"</span>)
+<a href=#1034 id=1034 data-nosnippet>1034</a>        );
+<a href=#1035 id=1035 data-nosnippet>1035</a>
+<a href=#1036 id=1036 data-nosnippet>1036</a>        <span class="comment">// the synthetic repository declares no plan classes; this one does, as ours does
+<a href=#1037 id=1037 data-nosnippet>1037</a>        </span><span class="kw">let </span>sources = repo.root().join(<span class="string">".ai/repo/knowledge/sources.yaml"</span>);
+<a href=#1038 id=1038 data-nosnippet>1038</a>        <span class="kw">let </span><span class="kw-2">mut </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>sources).unwrap();
+<a href=#1039 id=1039 data-nosnippet>1039</a>        <span class="kw">for </span>(class, pathspec) <span class="kw">in </span>[
+<a href=#1040 id=1040 data-nosnippet>1040</a>            (<span class="string">"project"</span>, <span class="string">".ai/repo/project/project.yaml"</span>),
+<a href=#1041 id=1041 data-nosnippet>1041</a>            (<span class="string">"milestone"</span>, <span class="string">".ai/repo/project/milestones/*.yaml"</span>),
+<a href=#1042 id=1042 data-nosnippet>1042</a>            (<span class="string">"issue"</span>, <span class="string">".ai/repo/project/issues/*.yaml"</span>),
+<a href=#1043 id=1043 data-nosnippet>1043</a>        ] {
+<a href=#1044 id=1044 data-nosnippet>1044</a>            text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#1045 id=1045 data-nosnippet>1045</a>                <span class="string">"  - id: {class}\n    kind: {class}\n    discovery: vcs\n    \
+<a href=#1046 id=1046 data-nosnippet>1046</a>                 pathspec: ':(glob){pathspec}'\n    required: false\n"
+<a href=#1047 id=1047 data-nosnippet>1047</a>            </span>));
+<a href=#1048 id=1048 data-nosnippet>1048</a>        }
+<a href=#1049 id=1049 data-nosnippet>1049</a>        std::fs::write(<span class="kw-2">&amp;</span>sources, text).unwrap();
+<a href=#1050 id=1050 data-nosnippet>1050</a>        <span class="kw">let </span>project = repo.root().join(<span class="string">".ai/repo/project"</span>);
+<a href=#1051 id=1051 data-nosnippet>1051</a>        <span class="kw">for </span>dir <span class="kw">in </span>[<span class="string">"milestones"</span>, <span class="string">"issues"</span>] {
+<a href=#1052 id=1052 data-nosnippet>1052</a>            std::fs::create_dir_all(project.join(dir)).unwrap();
+<a href=#1053 id=1053 data-nosnippet>1053</a>        }
+<a href=#1054 id=1054 data-nosnippet>1054</a>        std::fs::write(
+<a href=#1055 id=1055 data-nosnippet>1055</a>            project.join(<span class="string">"project.yaml"</span>),
+<a href=#1056 id=1056 data-nosnippet>1056</a>            <span class="string">"schema_version: 1\nname: P\nrepository: o/r\ndefault_branch: master\n"</span>,
+<a href=#1057 id=1057 data-nosnippet>1057</a>        )
+<a href=#1058 id=1058 data-nosnippet>1058</a>        .unwrap();
+<a href=#1059 id=1059 data-nosnippet>1059</a>        std::fs::write(
+<a href=#1060 id=1060 data-nosnippet>1060</a>            project.join(<span class="string">"milestones/M000.yaml"</span>),
+<a href=#1061 id=1061 data-nosnippet>1061</a>            <span class="string">"id: M000\ntitle: m\nslug: m\norder: 0\npriority: p1\nproblem: p\noutcome: o\n\
+<a href=#1062 id=1062 data-nosnippet>1062</a>             acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
+<a href=#1063 id=1063 data-nosnippet>1063</a>             evidence_required:\n  - proof\n"</span>,
+<a href=#1064 id=1064 data-nosnippet>1064</a>        )
+<a href=#1065 id=1065 data-nosnippet>1065</a>        .unwrap();
+<a href=#1066 id=1066 data-nosnippet>1066</a>        <span class="comment">// the only issue is ACTIVE: declared, and not READY
+<a href=#1067 id=1067 data-nosnippet>1067</a>        </span><span class="kw">let </span>at = <span class="string">"2026-09-01T00:00:00Z"</span>;
+<a href=#1068 id=1068 data-nosnippet>1068</a>        std::fs::write(
+<a href=#1069 id=1069 data-nosnippet>1069</a>            project.join(<span class="string">"issues/I0001.yaml"</span>),
+<a href=#1070 id=1070 data-nosnippet>1070</a>            <span class="macro">format!</span>(
+<a href=#1071 id=1071 data-nosnippet>1071</a>                <span class="string">"id: I0001\nmilestone: M000\ntitle: t\nslug: t\npriority: p1\n\
+<a href=#1072 id=1072 data-nosnippet>1072</a>                 profile: implementation\nobjective: o\nscope:\n  - src\n\
+<a href=#1073 id=1073 data-nosnippet>1073</a>                 acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
+<a href=#1074 id=1074 data-nosnippet>1074</a>                 evidence_required:\n  - proof\nstarted_at: {at}\n\
+<a href=#1075 id=1075 data-nosnippet>1075</a>                 unsealed_stamps:\n  - started_at {at}\n"
+<a href=#1076 id=1076 data-nosnippet>1076</a>            </span>),
+<a href=#1077 id=1077 data-nosnippet>1077</a>        )
+<a href=#1078 id=1078 data-nosnippet>1078</a>        .unwrap();
+<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
+<a href=#1080 id=1080 data-nosnippet>1080</a>        <span class="kw">let </span>plan = plan_of(<span class="kw-2">&amp;</span>ctx).unwrap();
 <a href=#1081 id=1081 data-nosnippet>1081</a>        <span class="macro">assert_eq!</span>(
-<a href=#1082 id=1082 data-nosnippet>1082</a>            next.reason.as_deref(),
-<a href=#1083 id=1083 data-nosnippet>1083</a>            <span class="prelude-val">Some</span>(
-<a href=#1084 id=1084 data-nosnippet>1084</a>                <span class="string">"no issue is READY; every one of them waits on a dependency or on its \
-<a href=#1085 id=1085 data-nosnippet>1085</a>                 milestone's gate"
-<a href=#1086 id=1086 data-nosnippet>1086</a>            </span>)
-<a href=#1087 id=1087 data-nosnippet>1087</a>        );
-<a href=#1088 id=1088 data-nosnippet>1088</a>    }
-<a href=#1089 id=1089 data-nosnippet>1089</a>}
+<a href=#1082 id=1082 data-nosnippet>1082</a>            plan.issue(<span class="string">"I0001"</span>).map(|i| i.status.as_str()),
+<a href=#1083 id=1083 data-nosnippet>1083</a>            <span class="prelude-val">Some</span>(<span class="string">"ACTIVE"</span>)
+<a href=#1084 id=1084 data-nosnippet>1084</a>        );
+<a href=#1085 id=1085 data-nosnippet>1085</a>        <span class="kw">let </span>next = plan_next(<span class="kw-2">&amp;</span>ctx, PlanMilestoneFilter::default()).unwrap();
+<a href=#1086 id=1086 data-nosnippet>1086</a>        <span class="macro">assert!</span>(next.issue.is_none());
+<a href=#1087 id=1087 data-nosnippet>1087</a>        <span class="macro">assert_eq!</span>(
+<a href=#1088 id=1088 data-nosnippet>1088</a>            next.reason.as_deref(),
+<a href=#1089 id=1089 data-nosnippet>1089</a>            <span class="prelude-val">Some</span>(
+<a href=#1090 id=1090 data-nosnippet>1090</a>                <span class="string">"no issue is READY; every one of them waits on a dependency or on its \
+<a href=#1091 id=1091 data-nosnippet>1091</a>                 milestone's gate"
+<a href=#1092 id=1092 data-nosnippet>1092</a>            </span>)
+<a href=#1093 id=1093 data-nosnippet>1093</a>        );
+<a href=#1094 id=1094 data-nosnippet>1094</a>    }
+<a href=#1095 id=1095 data-nosnippet>1095</a>}
 </code></pre></div></section></main></body></html>

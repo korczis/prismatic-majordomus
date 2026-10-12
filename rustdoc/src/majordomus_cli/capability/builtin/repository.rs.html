@@ -87,103 +87,104 @@
 <a href=#87 id=87 data-nosnippet>87</a>                    cli: <span class="prelude-val">None</span>,
 <a href=#88 id=88 data-nosnippet>88</a>                },
 <a href=#89 id=89 data-nosnippet>89</a>                tags: [<span class="string">"repository"</span>, <span class="string">"introspection"</span>],
-<a href=#90 id=90 data-nosnippet>90</a>                handler: repository_info,
-<a href=#91 id=91 data-nosnippet>91</a>            },
-<a href=#92 id=92 data-nosnippet>92</a>            <span class="macro">capability!</span> {
-<a href=#93 id=93 data-nosnippet>93</a>                id: <span class="string">"repository.scope"</span>,
-<a href=#94 id=94 data-nosnippet>94</a>                title: <span class="string">"The repository scope"</span>,
-<a href=#95 id=95 data-nosnippet>95</a>                description: <span class="string">"The scope declaration as read, where it came from (the repository's own or the distribution's default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which."</span>,
-<a href=#96 id=96 data-nosnippet>96</a>                input: Empty,
-<a href=#97 id=97 data-nosnippet>97</a>                output: ScopeReport,
-<a href=#98 id=98 data-nosnippet>98</a>                stability: Stability::BehaviorallyVerified,
-<a href=#99 id=99 data-nosnippet>99</a>                exposure: Exposure {
-<a href=#100 id=100 data-nosnippet>100</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
-<a href=#101 id=101 data-nosnippet>101</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_scope"</span>.into()),
-<a href=#102 id=102 data-nosnippet>102</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: SCOPE_URI.into(), name: <span class="string">"scope"</span>.into() }),
-<a href=#103 id=103 data-nosnippet>103</a>                    }),
-<a href=#104 id=104 data-nosnippet>104</a>                    http: get(<span class="string">"/api/v1/scope"</span>),
-<a href=#105 id=105 data-nosnippet>105</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"scope"</span>.into()] }),
-<a href=#106 id=106 data-nosnippet>106</a>                },
-<a href=#107 id=107 data-nosnippet>107</a>                tags: [<span class="string">"repository"</span>, <span class="string">"scope"</span>, <span class="string">"introspection"</span>],
-<a href=#108 id=108 data-nosnippet>108</a>                handler: scope_info,
-<a href=#109 id=109 data-nosnippet>109</a>            },
-<a href=#110 id=110 data-nosnippet>110</a>            <span class="macro">capability!</span> {
-<a href=#111 id=111 data-nosnippet>111</a>                id: <span class="string">"repository.scope_classify"</span>,
-<a href=#112 id=112 data-nosnippet>112</a>                title: <span class="string">"Judge a path against the scope"</span>,
-<a href=#113 id=113 data-nosnippet>113</a>                description: <span class="string">"Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content."</span>,
-<a href=#114 id=114 data-nosnippet>114</a>                input: ClassifyInput,
-<a href=#115 id=115 data-nosnippet>115</a>                output: Classification,
-<a href=#116 id=116 data-nosnippet>116</a>                stability: Stability::BehaviorallyVerified,
-<a href=#117 id=117 data-nosnippet>117</a>                <span class="comment">// No CLI exposure: `majordomus scope &lt;PATHS&gt;` is one command that answers
-<a href=#118 id=118 data-nosnippet>118</a>                // with this capability when it is given paths and with `repository.scope`
-<a href=#119 id=119 data-nosnippet>119</a>                // when it is not, and clap has no `scope classify` subcommand for anybody
-<a href=#120 id=120 data-nosnippet>120</a>                // to type. The path used to be declared here so that the command module
-<a href=#121 id=121 data-nosnippet>121</a>                // could find the id with `by_cli`, which made a lookup key look like a
-<a href=#122 id=122 data-nosnippet>122</a>                // public command line — `capabilities describe`, `docs/generated/cli.md`
-<a href=#123 id=123 data-nosnippet>123</a>                // and the site's registry all repeated a command that does not exist. The
-<a href=#124 id=124 data-nosnippet>124</a>                // command module names [`SCOPE_CLASSIFY`] instead, and this exposure says
-<a href=#125 id=125 data-nosnippet>125</a>                // what is true: the capability is reached through the command above.
-<a href=#126 id=126 data-nosnippet>126</a>                </span>exposure: Exposure {
-<a href=#127 id=127 data-nosnippet>127</a>                    mcp: mcp(<span class="string">"majordomus_scope_classify"</span>),
-<a href=#128 id=128 data-nosnippet>128</a>                    http: get(<span class="string">"/api/v1/scope/classify"</span>),
-<a href=#129 id=129 data-nosnippet>129</a>                    cli: <span class="prelude-val">None</span>,
-<a href=#130 id=130 data-nosnippet>130</a>                },
-<a href=#131 id=131 data-nosnippet>131</a>                tags: [<span class="string">"repository"</span>, <span class="string">"scope"</span>],
-<a href=#132 id=132 data-nosnippet>132</a>                handler: scope_classify,
-<a href=#133 id=133 data-nosnippet>133</a>            },
-<a href=#134 id=134 data-nosnippet>134</a>        ],
-<a href=#135 id=135 data-nosnippet>135</a>    }
-<a href=#136 id=136 data-nosnippet>136</a>}
-<a href=#137 id=137 data-nosnippet>137</a>
-<a href=#138 id=138 data-nosnippet>138</a><span class="attr">#[cfg(test)]
-<a href=#139 id=139 data-nosnippet>139</a></span><span class="kw">mod </span>tests {
-<a href=#140 id=140 data-nosnippet>140</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#141 id=141 data-nosnippet>141</a>
-<a href=#142 id=142 data-nosnippet>142</a>    <span class="doccomment">/// The declaration is the only place these names exist, and every projection — the MCP
-<a href=#143 id=143 data-nosnippet>143</a>    /// tool, the HTTP route, the OpenAPI operation, the benchmark target — is derived from
-<a href=#144 id=144 data-nosnippet>144</a>    /// it. A refactor that dropped an exposure or renamed a route would still compile, and
-<a href=#145 id=145 data-nosnippet>145</a>    /// the suites that exercise the behaviour behind it would still pass. This is the
-<a href=#146 id=146 data-nosnippet>146</a>    /// assertion that would not.
-<a href=#147 id=147 data-nosnippet>147</a>    </span><span class="attr">#[test]
-<a href=#148 id=148 data-nosnippet>148</a>    </span><span class="kw">fn </span>the_declaration_yields_the_projections_it_claims() {
-<a href=#149 id=149 data-nosnippet>149</a>        <span class="kw">let </span>m = module();
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"repository"</span>);
-<a href=#151 id=151 data-nosnippet>151</a>        <span class="kw">let </span>expected: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)] = <span class="kw-2">&amp;</span>[
-<a href=#152 id=152 data-nosnippet>152</a>            (
-<a href=#153 id=153 data-nosnippet>153</a>                <span class="string">"repository.info"</span>,
-<a href=#154 id=154 data-nosnippet>154</a>                <span class="string">"majordomus_repository"</span>,
-<a href=#155 id=155 data-nosnippet>155</a>                <span class="string">"/api/v1/repository"</span>,
-<a href=#156 id=156 data-nosnippet>156</a>            ),
-<a href=#157 id=157 data-nosnippet>157</a>            (<span class="string">"repository.scope"</span>, <span class="string">"majordomus_scope"</span>, <span class="string">"/api/v1/scope"</span>),
-<a href=#158 id=158 data-nosnippet>158</a>            (
-<a href=#159 id=159 data-nosnippet>159</a>                <span class="string">"repository.scope_classify"</span>,
-<a href=#160 id=160 data-nosnippet>160</a>                <span class="string">"majordomus_scope_classify"</span>,
-<a href=#161 id=161 data-nosnippet>161</a>                <span class="string">"/api/v1/scope/classify"</span>,
-<a href=#162 id=162 data-nosnippet>162</a>            ),
-<a href=#163 id=163 data-nosnippet>163</a>        ];
-<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
-<a href=#165 id=165 data-nosnippet>165</a>            .capabilities
-<a href=#166 id=166 data-nosnippet>166</a>            .iter()
-<a href=#167 id=167 data-nosnippet>167</a>            .map(|e| e.capability.id.as_str())
-<a href=#168 id=168 data-nosnippet>168</a>            .collect();
-<a href=#169 id=169 data-nosnippet>169</a>        <span class="kw">let </span>want: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = expected.iter().map(|(id, <span class="kw">_</span>, <span class="kw">_</span>)| <span class="kw-2">*</span>id).collect();
-<a href=#170 id=170 data-nosnippet>170</a>        <span class="macro">assert_eq!</span>(
-<a href=#171 id=171 data-nosnippet>171</a>            ids, want,
-<a href=#172 id=172 data-nosnippet>172</a>            <span class="string">"the module declares a different set of capabilities"
-<a href=#173 id=173 data-nosnippet>173</a>        </span>);
-<a href=#174 id=174 data-nosnippet>174</a>        <span class="kw">for </span>(executable, (id, tool, path)) <span class="kw">in </span>m.capabilities.iter().zip(expected) {
-<a href=#175 id=175 data-nosnippet>175</a>            <span class="kw">let </span>exposure = <span class="kw-2">&amp;</span>executable.capability.exposure;
-<a href=#176 id=176 data-nosnippet>176</a>            <span class="macro">assert_eq!</span>(
-<a href=#177 id=177 data-nosnippet>177</a>                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
-<a href=#178 id=178 data-nosnippet>178</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>tool),
-<a href=#179 id=179 data-nosnippet>179</a>                <span class="string">"{id} lost or renamed its MCP tool"
-<a href=#180 id=180 data-nosnippet>180</a>            </span>);
-<a href=#181 id=181 data-nosnippet>181</a>            <span class="macro">assert_eq!</span>(
-<a href=#182 id=182 data-nosnippet>182</a>                exposure.http.as_ref().map(|h| h.path.as_str()),
-<a href=#183 id=183 data-nosnippet>183</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>path),
-<a href=#184 id=184 data-nosnippet>184</a>                <span class="string">"{id} lost or renamed its HTTP route"
-<a href=#185 id=185 data-nosnippet>185</a>            </span>);
-<a href=#186 id=186 data-nosnippet>186</a>        }
-<a href=#187 id=187 data-nosnippet>187</a>    }
-<a href=#188 id=188 data-nosnippet>188</a>}
+<a href=#90 id=90 data-nosnippet>90</a>                cache: <span class="kw">crate</span>::capability::CachePolicy::Generation { max_entries: <span class="number">1 </span>},
+<a href=#91 id=91 data-nosnippet>91</a>                handler: repository_info,
+<a href=#92 id=92 data-nosnippet>92</a>            },
+<a href=#93 id=93 data-nosnippet>93</a>            <span class="macro">capability!</span> {
+<a href=#94 id=94 data-nosnippet>94</a>                id: <span class="string">"repository.scope"</span>,
+<a href=#95 id=95 data-nosnippet>95</a>                title: <span class="string">"The repository scope"</span>,
+<a href=#96 id=96 data-nosnippet>96</a>                description: <span class="string">"The scope declaration as read, where it came from (the repository's own or the distribution's default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which."</span>,
+<a href=#97 id=97 data-nosnippet>97</a>                input: Empty,
+<a href=#98 id=98 data-nosnippet>98</a>                output: ScopeReport,
+<a href=#99 id=99 data-nosnippet>99</a>                stability: Stability::BehaviorallyVerified,
+<a href=#100 id=100 data-nosnippet>100</a>                exposure: Exposure {
+<a href=#101 id=101 data-nosnippet>101</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#102 id=102 data-nosnippet>102</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_scope"</span>.into()),
+<a href=#103 id=103 data-nosnippet>103</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: SCOPE_URI.into(), name: <span class="string">"scope"</span>.into() }),
+<a href=#104 id=104 data-nosnippet>104</a>                    }),
+<a href=#105 id=105 data-nosnippet>105</a>                    http: get(<span class="string">"/api/v1/scope"</span>),
+<a href=#106 id=106 data-nosnippet>106</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"scope"</span>.into()] }),
+<a href=#107 id=107 data-nosnippet>107</a>                },
+<a href=#108 id=108 data-nosnippet>108</a>                tags: [<span class="string">"repository"</span>, <span class="string">"scope"</span>, <span class="string">"introspection"</span>],
+<a href=#109 id=109 data-nosnippet>109</a>                handler: scope_info,
+<a href=#110 id=110 data-nosnippet>110</a>            },
+<a href=#111 id=111 data-nosnippet>111</a>            <span class="macro">capability!</span> {
+<a href=#112 id=112 data-nosnippet>112</a>                id: <span class="string">"repository.scope_classify"</span>,
+<a href=#113 id=113 data-nosnippet>113</a>                title: <span class="string">"Judge a path against the scope"</span>,
+<a href=#114 id=114 data-nosnippet>114</a>                description: <span class="string">"Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content."</span>,
+<a href=#115 id=115 data-nosnippet>115</a>                input: ClassifyInput,
+<a href=#116 id=116 data-nosnippet>116</a>                output: Classification,
+<a href=#117 id=117 data-nosnippet>117</a>                stability: Stability::BehaviorallyVerified,
+<a href=#118 id=118 data-nosnippet>118</a>                <span class="comment">// No CLI exposure: `majordomus scope &lt;PATHS&gt;` is one command that answers
+<a href=#119 id=119 data-nosnippet>119</a>                // with this capability when it is given paths and with `repository.scope`
+<a href=#120 id=120 data-nosnippet>120</a>                // when it is not, and clap has no `scope classify` subcommand for anybody
+<a href=#121 id=121 data-nosnippet>121</a>                // to type. The path used to be declared here so that the command module
+<a href=#122 id=122 data-nosnippet>122</a>                // could find the id with `by_cli`, which made a lookup key look like a
+<a href=#123 id=123 data-nosnippet>123</a>                // public command line — `capabilities describe`, `docs/generated/cli.md`
+<a href=#124 id=124 data-nosnippet>124</a>                // and the site's registry all repeated a command that does not exist. The
+<a href=#125 id=125 data-nosnippet>125</a>                // command module names [`SCOPE_CLASSIFY`] instead, and this exposure says
+<a href=#126 id=126 data-nosnippet>126</a>                // what is true: the capability is reached through the command above.
+<a href=#127 id=127 data-nosnippet>127</a>                </span>exposure: Exposure {
+<a href=#128 id=128 data-nosnippet>128</a>                    mcp: mcp(<span class="string">"majordomus_scope_classify"</span>),
+<a href=#129 id=129 data-nosnippet>129</a>                    http: get(<span class="string">"/api/v1/scope/classify"</span>),
+<a href=#130 id=130 data-nosnippet>130</a>                    cli: <span class="prelude-val">None</span>,
+<a href=#131 id=131 data-nosnippet>131</a>                },
+<a href=#132 id=132 data-nosnippet>132</a>                tags: [<span class="string">"repository"</span>, <span class="string">"scope"</span>],
+<a href=#133 id=133 data-nosnippet>133</a>                handler: scope_classify,
+<a href=#134 id=134 data-nosnippet>134</a>            },
+<a href=#135 id=135 data-nosnippet>135</a>        ],
+<a href=#136 id=136 data-nosnippet>136</a>    }
+<a href=#137 id=137 data-nosnippet>137</a>}
+<a href=#138 id=138 data-nosnippet>138</a>
+<a href=#139 id=139 data-nosnippet>139</a><span class="attr">#[cfg(test)]
+<a href=#140 id=140 data-nosnippet>140</a></span><span class="kw">mod </span>tests {
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#142 id=142 data-nosnippet>142</a>
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="doccomment">/// The declaration is the only place these names exist, and every projection — the MCP
+<a href=#144 id=144 data-nosnippet>144</a>    /// tool, the HTTP route, the OpenAPI operation, the benchmark target — is derived from
+<a href=#145 id=145 data-nosnippet>145</a>    /// it. A refactor that dropped an exposure or renamed a route would still compile, and
+<a href=#146 id=146 data-nosnippet>146</a>    /// the suites that exercise the behaviour behind it would still pass. This is the
+<a href=#147 id=147 data-nosnippet>147</a>    /// assertion that would not.
+<a href=#148 id=148 data-nosnippet>148</a>    </span><span class="attr">#[test]
+<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">fn </span>the_declaration_yields_the_projections_it_claims() {
+<a href=#150 id=150 data-nosnippet>150</a>        <span class="kw">let </span>m = module();
+<a href=#151 id=151 data-nosnippet>151</a>        <span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"repository"</span>);
+<a href=#152 id=152 data-nosnippet>152</a>        <span class="kw">let </span>expected: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)] = <span class="kw-2">&amp;</span>[
+<a href=#153 id=153 data-nosnippet>153</a>            (
+<a href=#154 id=154 data-nosnippet>154</a>                <span class="string">"repository.info"</span>,
+<a href=#155 id=155 data-nosnippet>155</a>                <span class="string">"majordomus_repository"</span>,
+<a href=#156 id=156 data-nosnippet>156</a>                <span class="string">"/api/v1/repository"</span>,
+<a href=#157 id=157 data-nosnippet>157</a>            ),
+<a href=#158 id=158 data-nosnippet>158</a>            (<span class="string">"repository.scope"</span>, <span class="string">"majordomus_scope"</span>, <span class="string">"/api/v1/scope"</span>),
+<a href=#159 id=159 data-nosnippet>159</a>            (
+<a href=#160 id=160 data-nosnippet>160</a>                <span class="string">"repository.scope_classify"</span>,
+<a href=#161 id=161 data-nosnippet>161</a>                <span class="string">"majordomus_scope_classify"</span>,
+<a href=#162 id=162 data-nosnippet>162</a>                <span class="string">"/api/v1/scope/classify"</span>,
+<a href=#163 id=163 data-nosnippet>163</a>            ),
+<a href=#164 id=164 data-nosnippet>164</a>        ];
+<a href=#165 id=165 data-nosnippet>165</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
+<a href=#166 id=166 data-nosnippet>166</a>            .capabilities
+<a href=#167 id=167 data-nosnippet>167</a>            .iter()
+<a href=#168 id=168 data-nosnippet>168</a>            .map(|e| e.capability.id.as_str())
+<a href=#169 id=169 data-nosnippet>169</a>            .collect();
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span>want: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = expected.iter().map(|(id, <span class="kw">_</span>, <span class="kw">_</span>)| <span class="kw-2">*</span>id).collect();
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="macro">assert_eq!</span>(
+<a href=#172 id=172 data-nosnippet>172</a>            ids, want,
+<a href=#173 id=173 data-nosnippet>173</a>            <span class="string">"the module declares a different set of capabilities"
+<a href=#174 id=174 data-nosnippet>174</a>        </span>);
+<a href=#175 id=175 data-nosnippet>175</a>        <span class="kw">for </span>(executable, (id, tool, path)) <span class="kw">in </span>m.capabilities.iter().zip(expected) {
+<a href=#176 id=176 data-nosnippet>176</a>            <span class="kw">let </span>exposure = <span class="kw-2">&amp;</span>executable.capability.exposure;
+<a href=#177 id=177 data-nosnippet>177</a>            <span class="macro">assert_eq!</span>(
+<a href=#178 id=178 data-nosnippet>178</a>                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+<a href=#179 id=179 data-nosnippet>179</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>tool),
+<a href=#180 id=180 data-nosnippet>180</a>                <span class="string">"{id} lost or renamed its MCP tool"
+<a href=#181 id=181 data-nosnippet>181</a>            </span>);
+<a href=#182 id=182 data-nosnippet>182</a>            <span class="macro">assert_eq!</span>(
+<a href=#183 id=183 data-nosnippet>183</a>                exposure.http.as_ref().map(|h| h.path.as_str()),
+<a href=#184 id=184 data-nosnippet>184</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>path),
+<a href=#185 id=185 data-nosnippet>185</a>                <span class="string">"{id} lost or renamed its HTTP route"
+<a href=#186 id=186 data-nosnippet>186</a>            </span>);
+<a href=#187 id=187 data-nosnippet>187</a>        }
+<a href=#188 id=188 data-nosnippet>188</a>    }
+<a href=#189 id=189 data-nosnippet>189</a>}
 </code></pre></div></section></main></body></html>
