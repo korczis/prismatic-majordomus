@@ -339,7 +339,9 @@ mod tests {
         )
         .render();
         assert!(
-            html.contains("href=\"/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDOC_0.md\""),
+            html.contains(
+                "href=\"/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDOC_0.md\""
+            ),
             "the document the index holds is a link: {html}"
         );
         assert!(
@@ -353,8 +355,12 @@ mod tests {
     fn a_claim_the_matrix_does_not_declare_is_said_as_its_refusal_and_a_hostile_id_never_asked() {
         let repo = repo();
         let ctx = repo.context().expect("a context");
-        let refused =
-            inspector(&ctx, &answer(Err("not found: no claim nope".into())), "nope").render();
+        let refused = inspector(
+            &ctx,
+            &answer(Err("not found: no claim nope".into())),
+            "nope",
+        )
+        .render();
         assert!(refused.contains("not found: no claim nope"), "{refused}");
         assert!(!refused.contains("id=\"claim\""));
         let q = |v: &str| vec![("claim".to_string(), v.to_string())];
@@ -363,5 +369,20 @@ mod tests {
             Some("a-finding.names_it".into())
         );
         assert_eq!(picked(&q("x\" onclick=\"y")), None);
+    }
+
+    /// A run's seconds and commit are shown as recorded: a short commit whole, and one a run
+    /// did not record as unknown.
+    #[test]
+    fn a_run_says_what_it_did_not_record() {
+        assert_eq!(seconds(&serde_json::json!({ "seconds": 6 })), "6");
+        assert_eq!(seconds(&serde_json::json!({ "seconds": null })), "unknown");
+        assert_eq!(seconds(&serde_json::json!({})), "unknown");
+        assert_eq!(
+            commit(&serde_json::json!({ "commit": "0123456789abcdef" })),
+            "0123456789"
+        );
+        assert_eq!(commit(&serde_json::json!({ "commit": "abc" })), "abc");
+        assert_eq!(commit(&serde_json::json!({})), "unknown");
     }
 }

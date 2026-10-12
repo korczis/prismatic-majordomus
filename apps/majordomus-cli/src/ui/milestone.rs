@@ -179,11 +179,17 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                             ),
                         )
                         .child(el("td").child(state(i, "status")))
-                        .child(el("td").class("mj-ui-mono").text(text(i, "priority")))
                         .child(
                             el("td")
                                 .class("mj-ui-mono")
-                                .text(i.get("wave").map(Value::to_string).unwrap_or_default()),
+                                .text(super::view::value(i, "priority")),
+                        )
+                        .child(
+                            el("td").class("mj-ui-mono").text(
+                                i.get("wave")
+                                    .filter(|w| !w.is_null())
+                                    .map_or_else(|| "none".into(), Value::to_string),
+                            ),
                         )
                         .child(el("td").child(chips(&strings(i, "blocked_by"), issue_href)))
                 })
@@ -419,5 +425,27 @@ mod tests {
         let html = inspector(&roadmap, &issues, "M004").render();
         assert!(html.contains("/ui/prs?issue=I0005#issue"), "{html}");
         assert!(!html.contains("I0099"), "{html}");
+    }
+
+    /// An issue that gives no wave or priority says so in its row rather than leaving it blank.
+    #[test]
+    fn an_issue_without_a_wave_says_none() {
+        let roadmap = answer(
+            "plan.roadmap",
+            serde_json::json!({ "milestones": [
+                { "id": "M010", "status": "ACTIVE", "title": "waveless", "issues": ["I0100"] }
+            ]}),
+        );
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [
+                { "id": "I0100", "milestone": "M010", "status": "READY", "title": "no wave", "wave": null }
+            ]}),
+        );
+        let html = inspector(&roadmap, &issues, "M010").render();
+        assert!(
+            html.contains("<td class=\"mj-ui-mono\">none</td><td class=\"mj-ui-mono\">none</td>"),
+            "{html}"
+        );
     }
 }

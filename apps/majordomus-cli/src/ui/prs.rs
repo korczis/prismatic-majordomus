@@ -306,7 +306,8 @@ pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> E
                         .iter()
                         .filter(|e| e.get("pr").and_then(Value::as_u64) == Some(n))
                         .collect();
-                    let own: Vec<Value> = all_own.iter().take(TRAIL).map(|e| (*e).clone()).collect();
+                    let own: Vec<Value> =
+                        all_own.iter().take(TRAIL).map(|e| (*e).clone()).collect();
                     inspector(a, &all, &repository, filter)
                         .child(
                             el("h4")
@@ -577,11 +578,10 @@ fn next_up(queue: &Answer, filter: &Filter) -> El {
                     .child(el("code").class("mj-ui-chip-value").text(format!("#{n}")))
             }))
             .when(ns.len() > NEXT_UP, |s| {
-                s.child(
-                    el("span")
-                        .class("mj-ui-dim")
-                        .text(format!(" and {} more in the rows below", ns.len() - NEXT_UP)),
-                )
+                s.child(el("span").class("mj-ui-dim").text(format!(
+                    " and {} more in the rows below",
+                    ns.len() - NEXT_UP
+                )))
             })
     };
     // a list the queue did not answer is unknown; an empty one it answered is none
@@ -1284,14 +1284,21 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                         if intents.is_empty() {
                             none()
                         } else {
-                            el("span").class("mj-ui-badges").children(intents.into_iter().map(
-                                |intent| {
+                            el("span")
+                                .class("mj-ui-badges")
+                                .children(intents.into_iter().map(|served| {
+                                    // `intent#criterion`: the intent opens, the criterion is
+                                    // named in the label
+                                    let intent = served.split('#').next().unwrap_or(&served);
                                     el("a")
                                         .class("mj-ui-chip mj-ui-chip--link")
-                                        .attr("href", super::intent::href(&intent))
-                                        .child(el("code").class("mj-ui-chip-value").text(intent))
-                                },
-                            ))
+                                        .attr("href", super::intent::href(intent))
+                                        .child(
+                                            el("code")
+                                                .class("mj-ui-chip-value")
+                                                .text(served.clone()),
+                                        )
+                                }))
                         }
                     }))
                     .child(fact("Scope", path_chips(&strings(&i, "scope"))))
@@ -1463,7 +1470,10 @@ mod tests {
             "a merge outside the window is not drawn"
         );
         assert!(merges_per_day(&[], 14).is_empty());
-        assert!(merges_per_day(&trail, 0).is_empty(), "a window of no days counts none");
+        assert!(
+            merges_per_day(&trail, 0).is_empty(),
+            "a window of no days counts none"
+        );
         // the chart counts over the queue's own window, and says which
         let windowed = queue(serde_json::json!({ "throughput": { "window_days": 14 } }));
         let html = throughput(&trail, &windowed).render();
@@ -1471,7 +1481,7 @@ mod tests {
             html.contains("<svg") && html.contains("Merges per day from 2026-09-28 to 2026-10-11"),
             "{html}"
         );
-        assert!(html.contains("the queue's window of 14 days"), "{html}");
+        assert!(html.contains("window of 14 days"), "{html}");
         let seven = queue(serde_json::json!({ "throughput": { "window_days": 7 } }));
         assert!(throughput(&trail, &seven)
             .render()
@@ -1630,7 +1640,9 @@ mod tests {
         let html = issue_panel(&issues, "I0002", &filter).render();
         for want in [
             "id=\"issue\"",
-            "I0002 · M1 · p1 · wave 3",
+            "I0002 · <a",
+            "href=\"/ui/roadmap?milestone=M1#milestone\">M1</a> · p1 · wave 3",
+            "href=\"/ui/roadmap?intent=intent-a#intent\"",
             "Make the second thing true.",
             "issue=I0001",
             "issue=I0003",
@@ -1814,9 +1826,40 @@ mod tests {
             "status": "READY", "serves": []
         }]}));
         let html = issue_panel(&issues, "I0007", &Filter::default()).render();
-        assert!(html.contains("I0007 · M1 · p2 · wave ?"), "{html}");
+        assert!(html.contains(">M1</a> · p2 · wave unknown"), "{html}");
         assert!(
-            html.contains("<span class=\"mj-ui-mono\">none</span>"),
+            html.contains("<dt>Serves</dt><dd><span class=\"mj-ui-dim\">none</span>"),
+            "{html}"
+        );
+    }
+
+    /// A line of pull requests names its first dozen and how many more there are, a row of
+    /// paths its first six, and an issue with no milestone says none.
+    #[test]
+    fn a_long_line_of_pull_requests_or_paths_counts_the_rest() {
+        let ns: Vec<u64> = (1..=NEXT_UP as u64 + 3).collect();
+        let q = queue(
+            serde_json::json!({ "queue": { "next_refresh": ns, "starving": [], "tallies": {} } }),
+        );
+        let html = next_up(&q, &Filter::default()).render();
+        assert!(html.contains("and 3 more in the rows below"), "{html}");
+        let paths: Vec<String> = (0..PATHS + 2).map(|i| format!("p/{i}.rs")).collect();
+        let chips = path_chips(&paths).render();
+        assert!(
+            chips.contains("and 2 more") && chips.contains("p/7.rs"),
+            "{chips}"
+        );
+        assert!(
+            !chips.contains(">p/7.rs<"),
+            "the rest is in the title: {chips}"
+        );
+        assert!(path_chips(&[]).render().contains(">none<"));
+        let issues = plan(
+            serde_json::json!({ "issues": [{ "id": "I0008", "title": "Adrift", "status": "READY" }]}),
+        );
+        let html = issue_panel(&issues, "I0008", &Filter::default()).render();
+        assert!(
+            html.contains("I0008 · <span class=\"mj-ui-dim\">none</span> · none · wave unknown"),
             "{html}"
         );
     }

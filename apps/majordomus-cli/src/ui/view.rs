@@ -275,7 +275,10 @@ pub fn object(uri: &str, label: impl Into<String>) -> El {
     el("a")
         .class("mj-ui-link mj-ui-mono")
         .attr("href", object_href(uri))
-        .attr("title", format!("{uri}: its technical view, in the Cockpit"))
+        .attr(
+            "title",
+            format!("{uri}: its technical view, in the Cockpit"),
+        )
         .text(label)
 }
 
@@ -290,6 +293,16 @@ pub fn object_if(ctx: &Context, uri: &str, label: &str) -> El {
     match ctx.execute("objects.get", serde_json::json!({ "uri": uri })) {
         Ok(_) => object(uri, label),
         Err(_) => el("span").class("mj-ui-mono").text(label),
+    }
+}
+
+/// An object as its source names it: a link to its technical view when the source gave its
+/// URI, its label as text when it gave none, and `none` when it gave no label either.
+pub fn object_or(uri: &str, label: &str) -> El {
+    match (uri.is_empty(), label.is_empty()) {
+        (_, true) => none(),
+        (true, false) => el("span").class("mj-ui-mono").text(label),
+        (false, false) => object(uri, label),
     }
 }
 
@@ -859,5 +872,90 @@ mod tests {
             state_word(&serde_json::json!({ "status": "warn" }), "status"),
             "warn"
         );
+    }
+
+    /// A value a source does not have reads `none`, never a blank; one it has is itself.
+    #[test]
+    fn a_missing_value_reads_none() {
+        let e = serde_json::json!({ "title": "A", "empty": "" });
+        assert_eq!(value(&e, "title"), "A");
+        assert_eq!(value(&e, "empty"), "none");
+        assert_eq!(value(&e, "absent"), "none");
+        assert_eq!(none().render(), "<span class=\"mj-ui-dim\">none</span>");
+    }
+
+    /// A list cut short says how many it leaves out and where the whole list is; one that
+    /// was not cut says nothing.
+    #[test]
+    fn a_cut_list_says_what_it_leaves_out() {
+        assert!(more(8, 8, Some("/ui/roadmap")).is_none());
+        assert!(more(3, 2, None).is_none());
+        let html = more(8, 31, Some("/ui/roadmap"))
+            .expect("a cut list")
+            .render();
+        assert!(html.contains("The first 8 of 31; 23 more"), "{html}");
+        assert!(html.contains("href=\"/ui/roadmap\""), "{html}");
+        let nowhere = more(10, 12, None).expect("a cut list").render();
+        assert!(
+            nowhere.contains("2 more") && !nowhere.contains("href"),
+            "{nowhere}"
+        );
+    }
+
+    /// An object leads to its technical view by its URI, percent-encoded; an id becomes a
+    /// fragment that cannot break out of its attribute.
+    #[test]
+    fn an_object_leads_to_its_technical_view() {
+        assert_eq!(
+            object_href("majordomus://test/test/cases/1_a.sh"),
+            "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F1_a.sh"
+        );
+        let html = object("majordomus://adr/adr-0135", "ADR 0135").render();
+        assert!(html.contains("href=\"/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0135\""));
+        assert!(
+            html.contains(">ADR 0135<") && html.contains("technical view"),
+            "{html}"
+        );
+        assert_eq!(anchor("shell-suite"), "shell-suite");
+        assert_eq!(anchor("a b\"c/d@1"), "a-b-c-d-1");
+        assert_eq!(
+            link("/ui/docs", "Docs").render(),
+            "<a class=\"mj-ui-link\" href=\"/ui/docs\">Docs</a>"
+        );
+        assert!(code_link("/ui/x", "x").render().contains("mj-ui-mono"));
+    }
+
+    /// Whether an object is a link is asked of the index: one it holds leads to its technical
+    /// view, one it does not is its label as text, and no label at all is `none`.
+    #[test]
+    fn an_object_is_a_link_only_when_the_index_holds_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let held = object_if(&ctx, "majordomus://document/docs/DOC_0.md", "docs/DOC_0.md").render();
+        assert!(held.contains("href=\"/cockpit/object?uri="), "{held}");
+        let absent = object_if(&ctx, "majordomus://document/docs/NOPE.md", "docs/NOPE.md").render();
+        assert_eq!(absent, "<span class=\"mj-ui-mono\">docs/NOPE.md</span>");
+        assert_eq!(
+            object_if(&ctx, "majordomus://document/", "").render(),
+            none().render()
+        );
+    }
+
+    /// An object a source names with its URI is a link, one named without is text, and one
+    /// not named at all is `none`.
+    #[test]
+    fn an_object_is_drawn_as_its_source_names_it() {
+        assert!(object_or("majordomus://rule/a@1", "a.md")
+            .render()
+            .contains("href="));
+        assert_eq!(
+            object_or("", "a.md").render(),
+            "<span class=\"mj-ui-mono\">a.md</span>"
+        );
+        assert_eq!(
+            object_or("majordomus://rule/a@1", "").render(),
+            none().render()
+        );
+        assert_eq!(object_or("", "").render(), none().render());
     }
 }

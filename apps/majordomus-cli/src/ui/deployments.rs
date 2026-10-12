@@ -33,7 +33,11 @@ pub fn summary_row(ctx: &Context, d: &Value) -> El {
                     el("a")
                         .class("mj-ui-row-link")
                         .attr("href", href(&id))
-                        .child(el("span").class("mj-ui-mono mj-ui-dim").text(value(d, "id")))
+                        .child(
+                            el("span")
+                                .class("mj-ui-mono mj-ui-dim")
+                                .text(value(d, "id")),
+                        )
                         .child(el("span").class("mj-ui-cell-title").text(value(d, "title"))),
                 )
                 .child(object_if(
@@ -188,7 +192,9 @@ fn delivery(ctx: &Context, report: &Answer) -> El {
                     .child(el("td").child(if blocking.is_empty() {
                         none()
                     } else {
-                        el("span").class("mj-ui-mono mj-ui-dim").text(blocking.join(", "))
+                        el("span")
+                            .class("mj-ui-mono mj-ui-dim")
+                            .text(blocking.join(", "))
                     }))
             })
             .collect::<Vec<_>>();
@@ -314,7 +320,10 @@ pub(crate) mod tests {
         // the row is where a link to the deployment leads, and its declaration is the
         // technical view of the object the index holds
         assert!(html.contains("id=\"deployment-majordomus\""), "{html}");
-        assert!(html.contains(&format!("href=\"{}\"", href("majordomus"))), "{html}");
+        assert!(
+            html.contains(&format!("href=\"{}\"", href("majordomus"))),
+            "{html}"
+        );
         assert!(
             html.contains("/cockpit/object?uri=majordomus%3A%2F%2Fdeployment%2Fmajordomus"),
             "{html}"
@@ -385,8 +394,14 @@ pub(crate) mod tests {
         assert!(html.contains("unknown"), "{html}");
         // a feature with nothing blocking it says so; the fixture's index holds neither
         // feature, so each id is text rather than a link to a page that would answer 404
-        assert!(html.contains("<span class=\"mj-ui-dim\">none</span>"), "{html}");
-        assert!(!html.contains("/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fci"), "{html}");
+        assert!(
+            html.contains("<span class=\"mj-ui-dim\">none</span>"),
+            "{html}"
+        );
+        assert!(
+            !html.contains("/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fci"),
+            "{html}"
+        );
         assert!(!html.contains("No feature is declared."), "{html}");
     }
 

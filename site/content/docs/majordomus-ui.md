@@ -35,9 +35,14 @@ The shared server of a checkout serves two surfaces a person reads.
 
 
 The UI is where a person is sent first, and it is not a view of the registry: its navigation
-is its screens, its words are the delivery's. It refers to the Cockpit in exactly two places:
+is its screens, its words are the delivery's. It refers to the Cockpit only as the technical
+view of what a screen read (ADR 0135), and in the frame:
 - the "technical view" link on each source line, to the Cockpit's page for that capability;
-- the Cockpit entry among the other surfaces in the top bar.
+- the technical view of an object a screen names and the UI has no screen of its own for (a
+  document, a test, a declaring file, a feature's or a deployment's record), to the Cockpit's
+  page for that object;
+- the Cockpit entry among the other surfaces in the top bar, and the search in it, which is
+  the Cockpit's.
 
 Both surfaces are projections (ADR 0012): they hold no data, they compose capabilities
 through the executor every transport calls, and the same process serves them under one
@@ -51,7 +56,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Screen | Route | Reads |
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
-| Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
+| Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
@@ -87,6 +92,37 @@ its detail (`?pr=`), and a machine of the mesh — in its table or as a node of 
 its inspector (`?node=`); every selection is a URL, so it survives a reload and the browser's
 Back.
 
+## What a screen names is a link
+
+Every entity a screen names leads somewhere (I2481):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| What is named | Where it leads |
+|---|---|
+| an issue, a pull request, a milestone, an intent, a claim, a rule, a capability, a machine | its inspector in the UI |
+| a gate | its row in the CI model, `/ui/delivery#gate-<id>`; the gates it implies lead to theirs |
+| a deployment | its row on Deployments, `/ui/deployments#deployment-<id>` |
+| a command the registry also serves as a capability | that capability's inspector; the two are one when the capability's declared command-line path is the command's invocation |
+| a release | the record the distribution publishes for it, at the address `distribution.releases` gives |
+| a document, a test, a feature, a rule's or a deployment's declaration | its technical view, the Cockpit's page for that object |
+| the public address the delivery report probed | that address |
+
+</div>
+
+
+A link to a technical view is drawn only when the index holds the object: the source said so
+(a rule's own URI, a test the proof found on disk), or `objects.get` resolves it. What the
+index does not hold is text, so no link leads to a page that answers 404. Two kinds of name
+stay text because nothing derives where they lead: a commit, since no capability a screen can
+ask at first paint states the forge's address (the PR Drain, which asks the queue, does link
+the forge), and a path that is not an object of the index.
+
+A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here", with a link
+to the screen that shows them all when there is one. Case 1091 and
+`apps/majordomus-cli/tests/ui_links.rs` read every screen through a real server and follow
+every link under `/ui` and every technical view it draws; one that does not answer fails them.
+
 A pull request's detail is read from the queue's own answer, so it costs no second call: what
 the pull request is, every gate with its verdict, the evidence each verdict was read from, why
 it stands where it stands, the next action that would move it, the paths it authors and the
@@ -110,6 +146,11 @@ Nothing is computed on the UI's behalf:
 - A meter is a picture of the two numbers written beside it.
 - A donut draws the counts its legend lists.
 - A status word is the source's own word, styled by the design system's status vocabulary.
+- A window is the source's own. The merge tiles are labelled with the queue's
+  `throughput/window_days`, and the PR Drain's throughput chart counts the trail's merges per
+  day over that same window; when the queue states no window, the tile says so and no day is
+  counted. The chart's bars are the one thing a screen tallies itself, each from the trail's
+  own `merge_succeeded` events of that day, with the count written beside the bar.
 
 Classes that overlap, such as a rule report's coverage, are listed and never summed. What is
 missing says so:

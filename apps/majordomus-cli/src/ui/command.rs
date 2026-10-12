@@ -6,17 +6,49 @@
 //! screen: the tabs are links to the same route with the filter the capability declares.
 
 use crate::capability::Context;
-use crate::cockpit::html::el;
+use crate::cockpit::html::{el, El};
 
 use super::dashboard::ROWS;
 use super::shell::View;
-use super::source::{ask_all, ask_input, Source};
-use super::view::{hero, kpi, list, panel, state, table, text, unanswered, wide};
+use super::source::{ask_all, ask_input, Answer, Source};
+use super::view::{
+    code_link, hero, kpi, list, more, none, panel, state, table, text, unanswered, value, wide,
+};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/command";
 
 const EXECUTIONS: Source = Source::of("executions.list");
+
+/// Every capability with its projections, so a command the registry also serves as a
+/// capability can lead to it: a command and a capability are one when the capability's
+/// declared command-line path is the command's invocation (`capabilities.list`, `exposure.cli`).
+const CAPABILITIES: Source = Source::of("capabilities.list");
+
+/// The capability a command is, by its invocation: the one whose declared command-line path,
+/// after the executable's name, is that invocation. None when no capability declares it.
+pub fn capability_of<'a>(
+    invocation: &str,
+    capabilities: &'a [serde_json::Value],
+) -> Option<&'a str> {
+    let line = invocation.strip_prefix("majordomus ")?;
+    capabilities.iter().find_map(|c| {
+        let path: Vec<&str> = c
+            .pointer("/exposure/cli/path")?
+            .as_array()?
+            .iter()
+            .filter_map(serde_json::Value::as_str)
+            .collect();
+        (!path.is_empty() && path.join(" ") == line)
+            .then(|| c.get("id").and_then(serde_json::Value::as_str))
+            .flatten()
+    })
+}
+
+/// Where a capability's inspector is.
+pub fn capability_href(id: &str) -> String {
+    format!("{}?id={id}#detail", super::capabilities::ROUTE)
+}
 
 /// The origins `commands.list` filters by, as its input declares them.
 const ORIGINS: &[(&str, &str)] = &[
@@ -37,8 +69,9 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         None => serde_json::json!({}),
     };
     let commands = ask_input(ctx, "commands.list", input);
-    let answers = ask_all(ctx, &[EXECUTIONS]);
+    let answers = ask_all(ctx, &[EXECUTIONS, CAPABILITIES]);
     let executions = &answers[&EXECUTIONS];
+    let registry = list(&answers[&CAPABILITIES], "/capabilities");
 
     let top = hero(
         "terminal",
@@ -72,42 +105,8 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
                 .text(*label)
         }));
 
-    let catalogue = unanswered(&commands).unwrap_or_else(|| {
-        let rows = list(&commands, "/commands")
-            .iter()
-            .map(|c| {
-                el("tr")
-                    .child(
-                        el("td").child(el("code").class("mj-ui-mono").text(text(c, "invocation"))),
-                    )
-                    .child(el("td").class("mj-ui-dim").text(text(c, "summary")))
-                    .child(el("td").child(state(c, "effect")))
-            })
-            .collect::<Vec<_>>();
-        table(
-            &["Command", "What it does", "Effect"],
-            rows,
-            "No command matches.",
-        )
-    });
-
-    let running = unanswered(executions).unwrap_or_else(|| {
-        let rows = list(executions, "/executions")
-            .iter()
-            .take(ROWS * 2)
-            .map(|e| {
-                el("tr")
-                    .child(el("td").class("mj-ui-mono").text(text(e, "id")))
-                    .child(el("td").class("mj-ui-mono").text(text(e, "capability")))
-                    .child(el("td").child(state(e, "state")))
-            })
-            .collect::<Vec<_>>();
-        table(
-            &["Execution", "Capability", "State"],
-            rows,
-            "This process is running no execution and remembers none.",
-        )
-    });
+    let catalogue = catalogue(&commands, &registry);
+    let running = running(executions);
 
     let grid = el("div")
         .class("mj-ui-grid")
@@ -115,7 +114,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
             "Commands",
             "Each with the line a person types and what it changes when it runs.",
             el("div").class("mj-ui-stack").child(tabs).child(catalogue),
-            &[&commands],
+            &[&commands, &answers[&CAPABILITIES]],
         )))
         .child(wide(panel(
             "Executions",
@@ -128,6 +127,64 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         "Command",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+/// The catalogue as a table: each command with the line a person types (a link to the
+/// capability it is, when the registry declares one by that line), what it does and what it
+/// changes.
+fn catalogue(commands: &Answer, registry: &[serde_json::Value]) -> El {
+    unanswered(commands).unwrap_or_else(|| {
+        let rows = list(commands, "/commands")
+            .iter()
+            .map(|c| {
+                let invocation = text(c, "invocation");
+                let command = match capability_of(&invocation, registry) {
+                    Some(id) => code_link(capability_href(id), invocation)
+                        .attr("title", format!("the capability {id}")),
+                    None => el("code").class("mj-ui-mono").text(value(c, "invocation")),
+                };
+                el("tr")
+                    .child(el("td").child(command))
+                    .child(el("td").class("mj-ui-dim").text(value(c, "summary")))
+                    .child(el("td").child(state(c, "effect")))
+            })
+            .collect::<Vec<_>>();
+        table(
+            &["Command", "What it does", "Effect"],
+            rows,
+            "No command matches.",
+        )
+    })
+}
+
+/// The executions this process runs or remembers: each with the capability it runs, a link
+/// to that capability, and its state; a longer list says how many it leaves out.
+fn running(executions: &Answer) -> El {
+    unanswered(executions).unwrap_or_else(|| {
+        let all = list(executions, "/executions");
+        let rows = all
+            .iter()
+            .take(ROWS * 2)
+            .map(|e| {
+                let capability = text(e, "capability");
+                el("tr")
+                    .child(el("td").class("mj-ui-mono").text(value(e, "id")))
+                    .child(el("td").child(if capability.is_empty() {
+                        none()
+                    } else {
+                        code_link(capability_href(&capability), capability)
+                    }))
+                    .child(el("td").child(state(e, "state")))
+            })
+            .collect::<Vec<_>>();
+        el("div")
+            .child(table(
+                &["Execution", "Capability", "State"],
+                rows,
+                "This process is running no execution and remembers none.",
+            ))
+            .children(more((ROWS * 2).min(all.len()), all.len(), None))
+    })
 }
 
 #[cfg(test)]
@@ -180,6 +237,108 @@ mod tests {
         assert!(
             !html.contains("This process is running no execution"),
             "{html}"
+        );
+    }
+
+    /// A command the registry also serves as a capability leads to that capability: the two
+    /// are one when the capability's declared command-line path is the command's invocation.
+    #[test]
+    fn a_command_leads_to_the_capability_that_declares_its_invocation() {
+        let registry = vec![
+            serde_json::json!({ "id": "plan.status", "exposure": { "cli": { "path": ["plan", "status"] } } }),
+            serde_json::json!({ "id": "no.cli", "exposure": {} }),
+            serde_json::json!({ "id": "empty.cli", "exposure": { "cli": { "path": [] } } }),
+        ];
+        assert_eq!(
+            capability_of("majordomus plan status", &registry),
+            Some("plan.status")
+        );
+        assert_eq!(capability_of("majordomus plan", &registry), None);
+        assert_eq!(capability_of("bin/other plan status", &registry), None);
+        assert_eq!(
+            capability_href("plan.status"),
+            "/ui/capabilities?id=plan.status#detail"
+        );
+
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert!(
+            html.contains("href=\"/ui/capabilities?id="),
+            "a command of the executable leads to its capability: {html}"
+        );
+        assert!(
+            html.contains("capabilities.list"),
+            "the join names its source: {html}"
+        );
+    }
+
+    /// An execution names the capability it runs, a link to it; one that names none says so,
+    /// and a list longer than its rows says how many it leaves out. A command no capability
+    /// declares is its line as text, and a catalogue that could not answer says why.
+    #[test]
+    fn an_execution_leads_to_its_capability_and_a_long_list_counts_the_rest() {
+        let answer = |source: Source, value: Result<serde_json::Value, String>| Answer {
+            source,
+            route: None,
+            exposure: Default::default(),
+            value,
+            took: std::time::Duration::ZERO,
+        };
+        let many: Vec<serde_json::Value> = (0..ROWS * 2 + 3)
+            .map(|i| serde_json::json!({ "id": format!("x-{i}"), "capability": "plan.status", "state": "done" }))
+            .chain([serde_json::json!({ "id": "x-bare" })])
+            .collect();
+        let html = running(&answer(
+            EXECUTIONS,
+            Ok(serde_json::json!({ "executions": many })),
+        ))
+        .render();
+        assert!(
+            html.contains("href=\"/ui/capabilities?id=plan.status#detail\""),
+            "{html}"
+        );
+        assert!(html.contains("4 more not shown"), "{html}");
+        let bare = running(&answer(
+            EXECUTIONS,
+            Ok(serde_json::json!({ "executions": [{ "id": "x-bare" }] })),
+        ))
+        .render();
+        assert!(
+            bare.contains(">none<") && bare.contains("unknown"),
+            "{bare}"
+        );
+        let commands = answer(
+            Source::of("commands.list"),
+            Ok(serde_json::json!({ "commands": [
+                { "invocation": "majordomus plan status", "summary": "s", "effect": "read_only" },
+                { "invocation": "bin/tool", "effect": "local_mutation" }
+            ]})),
+        );
+        let registry = vec![
+            serde_json::json!({ "id": "plan.status", "exposure": { "cli": { "path": ["plan", "status"] } } }),
+        ];
+        let html = catalogue(&commands, &registry).render();
+        assert!(
+            html.contains("title=\"the capability plan.status\""),
+            "{html}"
+        );
+        assert!(
+            html.contains("<code class=\"mj-ui-mono\">bin/tool</code>"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">none<"),
+            "a command with no summary says so: {html}"
+        );
+        let refused = catalogue(
+            &answer(Source::of("commands.list"), Err("no".into())),
+            &registry,
+        )
+        .render();
+        assert!(
+            refused.contains("commands.list could not answer: no"),
+            "{refused}"
         );
     }
 }

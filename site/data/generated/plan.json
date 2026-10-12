@@ -20850,14 +20850,17 @@
         "apps/majordomus-cli/src/ui/claim.rs",
         "apps/majordomus-cli/src/ui/evidence.rs",
         "apps/majordomus-cli/src/ui/mesh.rs",
+        "apps/majordomus-cli/src/ui/work.rs",
+        "apps/majordomus-cli/src/ui/milestone.rs",
         ".ai/repo/project/issues/I2481.yaml",
-        "docs/MAJORDOMUS_UI.md"
+        "docs/MAJORDOMUS_UI.md",
+        "test/cases/1079_the_drain_draws_its_throughput.sh"
       ],
       "non_scope": [],
       "objective": "Make every entity a screen of majordomus ui names lead somewhere: to the UI's own screen or inspector for it, to its technical view when the UI has no screen for it, or to the address its source gives when it lives elsewhere; say none where a source has no value; say how much a cut list leaves out; and count throughput over the window the queue states rather than one the screen chooses.",
       "why": "The owner asked on 2026-10-12 that majordomus ui be interconnected, interlinked, derived and inferred. The audit of the merged UI (#940-#963) found releases, gates, deployments, a rule's tests, declaration and gates, a claim's document, code and test, and an issue's milestone and intents drawn as plain text; about sixty fields rendered blank instead of none; seven lists cut with take(N) without saying so; and the PR Drain counting merges over a hard-coded fourteen-day window beside a tile labelled with a hard-coded seven days, while the queue answers its own window (throughput/window_days).",
       "current_state": "Entities outside the UI's own inspectors are plain text, a missing value is a blank cell, cut lists are silent, and the merge tile and chart use windows the screen chose. Commit SHAs and file paths that are not objects of the index stay text: no fast capability derives the forge's address, and the UI does not compose one.",
-      "desired_state": "A gate leads to its row in the CI model (/ui/delivery#gate-<id>), and a gate's implied gates to theirs; a deployment leads to its row on Deployments and its declaration to its technical view; a release leads to the record the distribution publishes; the publication address of the delivery report is a link; an issue's milestone and the intents it serves open their inspectors; a rule's tests (when the report found them), its declaration and its gates are links; a claim's document, implementation and test lead to their technical views when objects.get resolves them and are text otherwise, so no link answers 404. A value a source does not have reads none or unknown; every list cut short says how many it leaves out and, where one exists, links the place that shows them all. The merge tiles say the queue's window, and the throughput chart counts over that window and draws nothing when the queue states none.",
+      "desired_state": "A gate leads to its row in the CI model (/ui/delivery#gate-<id>), and a gate's implied gates to theirs; a deployment leads to its row on Deployments and its declaration to its technical view; a release leads to the record the distribution publishes; the publication address of the delivery report is a link; a command the registry also serves as a capability leads to that capability, joined by the capability's declared command-line path; a feature and a document lead to their technical views; an issue's row, its milestone and the intents it serves open their inspectors; a rule's tests (when the report found them), its declaration and its gates are links; a claim's document, implementation and test lead to their technical views when objects.get resolves them and are text otherwise, so no link answers 404. A value a source does not have reads none or unknown; every list cut short says how many it leaves out and, where one exists, links the place that shows them all. The merge tiles say the queue's window, and the throughput chart counts over that window and draws nothing when the queue states none.",
       "acceptance_criteria": [
         "every gate, deployment, release, milestone, intent, rule test, rule declaration and claim source, implementation and test a screen names is a link, to a UI route or to the technical view of an object the index holds",
         "a reference the index does not hold is text, never a link to a page that answers 404",
@@ -20867,7 +20870,8 @@
       ],
       "validation": [
         "cargo test --lib ui::",
-        "scripts/ci/cockpit-projection-check --ui-integrity"
+        "scripts/ci/cockpit-projection-check --ui-integrity",
+        "test/run.sh 1079_the_drain_draws_its_throughput"
       ],
       "evidence_required": [
         "ui_links_unit_tests"

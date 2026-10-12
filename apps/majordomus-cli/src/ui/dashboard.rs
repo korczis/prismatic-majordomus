@@ -123,7 +123,11 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
             .into_iter()
             .filter(|m| m.get("status").and_then(Value::as_str) != Some("DONE"))
             .collect();
-        let rows = open.iter().take(ROWS).map(milestone_row).collect::<Vec<_>>();
+        let rows = open
+            .iter()
+            .take(ROWS)
+            .map(milestone_row)
+            .collect::<Vec<_>>();
         el("div")
             .child(el("p").class("mj-ui-line").text(format!(
                 "Now {} · next {}",
@@ -135,7 +139,11 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
                 rows,
                 "No milestone is open.",
             ))
-            .children(more(ROWS.min(open.len()), open.len(), Some(super::roadmap::ROUTE)))
+            .children(more(
+                ROWS.min(open.len()),
+                open.len(),
+                Some(super::roadmap::ROUTE),
+            ))
     });
     panel_to(
         "Roadmap",
@@ -216,7 +224,7 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
                     el("span")
                         .class("mj-ui-dim")
                         .text(format!(
-                            "{} · {} ",
+                            "{} · {}",
                             value(r, "channel"),
                             commit.get(..10).unwrap_or(if commit.is_empty() {
                                 "no commit"
@@ -226,7 +234,8 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
                         ))
                         // the release's own record, at the address the distribution gives
                         .when(!record.is_empty(), |s| {
-                            s.child(super::view::link(record.clone(), "its record"))
+                            s.text(" · ")
+                                .child(super::view::link(record.clone(), "its record"))
                         }),
                 )
             })
@@ -242,7 +251,11 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
             } else {
                 timeline(entries)
             })
-            .children(more(limit.min(all.len()), all.len(), Some(super::delivery::ROUTE)))
+            .children(more(
+                limit.min(all.len()),
+                all.len(),
+                Some(super::delivery::ROUTE),
+            ))
     });
     panel_to(
         "Releases",
@@ -257,14 +270,22 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
 pub fn mesh_panel(mesh: &Answer) -> El {
     let body = unanswered(mesh).unwrap_or_else(|| {
         let machines = list(mesh, "/machines");
-        let rows = machines.iter().take(ROWS).map(machine_row).collect::<Vec<_>>();
+        let rows = machines
+            .iter()
+            .take(ROWS)
+            .map(machine_row)
+            .collect::<Vec<_>>();
         el("div")
             .child(table(
                 &["Machine", "Where", "Runtimes"],
                 rows,
                 "No machine is known to the mesh runtime.",
             ))
-            .children(more(ROWS.min(machines.len()), machines.len(), Some(super::mesh::ROUTE)))
+            .children(more(
+                ROWS.min(machines.len()),
+                machines.len(),
+                Some(super::mesh::ROUTE),
+            ))
     });
     panel_to(
         "Mesh",
@@ -426,7 +447,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                     )
                     .child(el("td").child(state(a, "disposition")))
                     .child(el("td").text(value(a, "lane")))
-                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(first_reasons(&reasons)))
+                    .child(
+                        el("td")
+                            .class("mj-ui-mono mj-ui-dim")
+                            .text(first_reasons(&reasons)),
+                    )
             })
             .collect::<Vec<_>>();
         let observed = queue
@@ -739,7 +764,8 @@ mod tests {
             RELEASES,
             serde_json::json!({ "releases": [
                 { "version": "0.20.0", "channel": "stable", "commit": "c8f0e4c5011234567890",
-                  "published_at": "2026-10-10T16:38:00Z" },
+                  "published_at": "2026-10-10T16:38:00Z",
+                  "metadata_url": "https://example.test/releases/v0.20.0.json" },
                 { "version": "0.19.1", "channel": "stable", "commit": "abc",
                   "published_at": "2026-10-09T10:00:00Z" }
             ]}),
@@ -750,8 +776,12 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("stable · c8f0e4c501<"),
+            html.contains("stable · c8f0e4c501 · <a"),
             "a commit is cut to ten: {html}"
+        );
+        assert!(
+            html.contains("href=\"https://example.test/releases/v0.20.0.json\">its record</a>"),
+            "a release leads to the record the distribution gives: {html}"
         );
         assert!(
             html.contains("stable · abc<"),
@@ -841,8 +871,8 @@ mod tests {
         );
         assert!(html.contains("Observed 2026-10-11 09:00:00Z"), "{html}");
         assert!(
-            html.contains("stacked_on:940, ci:pass<"),
-            "two reasons in a row: {html}"
+            html.contains("stacked_on:940, ci:pass and 1 more<"),
+            "two reasons in a row, and how many it leaves out: {html}"
         );
         assert!(html.contains("Next: nothing to do"), "{html}");
         assert!(
@@ -877,5 +907,60 @@ mod tests {
             assert_eq!(view.status, 200);
             assert!(view.main.render().contains("Pull-request queue"));
         }
+    }
+
+    /// The merge tile is labelled with the queue's own window, and says so when the queue
+    /// states none; a row names two reasons and how many more there are.
+    #[test]
+    fn the_merge_window_and_the_reasons_are_the_queues_own() {
+        let stated = answer(
+            QUEUE,
+            serde_json::json!({ "throughput": { "window_days": 7 } }),
+        );
+        assert_eq!(merged_label(&stated), "Merged, 7 days");
+        let silent = answer(QUEUE, serde_json::json!({ "throughput": {} }));
+        assert_eq!(
+            merged_label(&silent),
+            "Merged, over a window the queue does not state"
+        );
+        let r = |n: usize| (0..n).map(|i| format!("r{i}")).collect::<Vec<_>>();
+        assert_eq!(first_reasons(&r(0)), "none");
+        assert_eq!(first_reasons(&r(1)), "r0");
+        assert_eq!(first_reasons(&r(2)), "r0, r1");
+        assert_eq!(first_reasons(&r(5)), "r0, r1 and 3 more");
+    }
+
+    /// A panel that shows the first rows of a longer list says how many it leaves out and
+    /// leads to the screen that shows them all.
+    #[test]
+    fn a_panel_of_a_longer_list_says_how_many_it_leaves_out() {
+        let milestones: Vec<Value> = (0..ROWS + 3)
+            .map(|i| serde_json::json!({ "id": format!("M{i:03}"), "title": "t", "status": "ACTIVE" }))
+            .collect();
+        let roadmap = answer(ROADMAP, serde_json::json!({ "milestones": milestones }));
+        let html = plan_panel(&roadmap, &answer(PLAN, serde_json::json!({}))).render();
+        assert!(
+            html.contains(&format!("The first {ROWS} of {}; 3 more", ROWS + 3)),
+            "{html}"
+        );
+        let machines: Vec<Value> = (0..ROWS + 2)
+            .map(|i| serde_json::json!({ "name": format!("m{i}"), "runtimes": [] }))
+            .collect();
+        let mesh = mesh_panel(&answer(MESH, serde_json::json!({ "machines": machines }))).render();
+        assert!(mesh.contains("2 more"), "{mesh}");
+        let releases: Vec<Value> = (0..ROWS + 1)
+            .map(|i| serde_json::json!({ "version": format!("0.{i}.0"), "published_at": "2026-10-01T00:00:00Z" }))
+            .collect();
+        let all = answer(RELEASES, serde_json::json!({ "releases": releases }));
+        let version = answer(VERSION, serde_json::json!({}));
+        assert!(releases_panel(&all, &version, Some(ROWS))
+            .render()
+            .contains("1 more"));
+        let whole = releases_panel(&all, &version, None).render();
+        assert!(!whole.contains("more not shown"), "{whole}");
+        assert!(
+            whole.contains("none · no commit"),
+            "a release with neither says so: {whole}"
+        );
     }
 }

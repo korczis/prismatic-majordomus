@@ -133,7 +133,12 @@ fn gates_named(g: &Value, key: &str) -> crate::cockpit::html::El {
     let ids: Vec<String> = g
         .get(key)
         .and_then(Value::as_array)
-        .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(Value::as_str)
+                .map(str::to_string)
+                .collect()
+        })
         .unwrap_or_default();
     if ids.is_empty() {
         return none();
@@ -173,5 +178,43 @@ mod tests {
             "the gate's own summary: {html}"
         );
         assert!(!html.contains("The CI model declares no gate."), "{html}");
+    }
+
+    /// A gate is a row a link can lead to, and the gates it implies lead to theirs.
+    #[test]
+    fn a_gate_is_a_row_links_lead_to() {
+        assert_eq!(gate_href("shell-suite"), "/ui/delivery#gate-shell-suite");
+        let implied = gates_named(
+            &serde_json::json!({ "implies": ["rust-integration", "rust-quality"] }),
+            "implies",
+        )
+        .render();
+        assert!(
+            implied.contains("href=\"/ui/delivery#gate-rust-integration\""),
+            "{implied}"
+        );
+        assert!(
+            implied.contains("href=\"/ui/delivery#gate-rust-quality\""),
+            "{implied}"
+        );
+        assert!(gates_named(&serde_json::json!({}), "implies")
+            .render()
+            .contains(">none<"));
+
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        assert!(html.contains("id=\"gate-every-plan\""), "{html}");
+        assert!(
+            html.contains("href=\"/ui/delivery#gate-by-path\""),
+            "{html}"
+        );
+        assert!(
+            html.contains(&format!(
+                "href=\"{}\"",
+                super::super::deployments::href("majordomus")
+            )),
+            "a deployment leads to its row on Deployments: {html}"
+        );
     }
 }

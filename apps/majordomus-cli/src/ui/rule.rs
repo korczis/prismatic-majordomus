@@ -12,7 +12,9 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::source::{ask_input, Answer};
-use super::view::{code_link, none, object, panel, state, table, text, unanswered, value};
+use super::view::{
+    code_link, none, object, object_or, panel, state, table, text, unanswered, value,
+};
 
 /// A rule id as the index writes them (`project.worktree-topology`, `majordomus.adr-integrity@1`):
 /// letters, digits, `.`, `-`, `_` and `@`, and nothing a link could carry anything else in.
@@ -111,7 +113,9 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
                 } else if t.get("present").and_then(Value::as_bool) == Some(true) {
                     object(&format!("majordomus://test/{path}"), path)
                 } else {
-                    el("span").class("mj-ui-mono").text(format!("{path} (not found)"))
+                    el("span")
+                        .class("mj-ui-mono")
+                        .text(format!("{path} (not found)"))
                 };
                 el("tr")
                     .child(el("td").child(test))
@@ -174,21 +178,17 @@ pub fn inspector(answer: &Answer, id: &str) -> El {
                         if g.is_empty() {
                             none()
                         } else {
-                            el("span").class("mj-ui-badges").children(g.into_iter().map(|id| {
-                                code_link(super::delivery::gate_href(&id), id)
-                            }))
+                            el("span").class("mj-ui-badges").children(
+                                g.into_iter()
+                                    .map(|id| code_link(super::delivery::gate_href(&id), id)),
+                            )
                         }
                     }))
                     .child(fact("Depends on", chips(strings(&a, "depends_on"))))
                     .child(fact("Required by", chips(strings(&a, "required_by"))))
                     .child(fact("Declared in", {
                         // the rule's own record, which the index holds: rules.show found it
-                        let (uri, path) = (text(&rule, "uri"), text(&rule, "path"));
-                        match (uri.is_empty(), path.is_empty()) {
-                            (_, true) => none(),
-                            (true, false) => el("span").class("mj-ui-mono").text(path),
-                            (false, false) => object(&uri, path),
-                        }
+                        object_or(&text(&rule, "uri"), &text(&rule, "path"))
                     })),
             )
             .child(el("h4").class("mj-ui-panel-title").text("What proves it"))
