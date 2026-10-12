@@ -248,127 +248,133 @@
 <a href=#248 id=248 data-nosnippet>248</a>        .collect()
 <a href=#249 id=249 data-nosnippet>249</a>}
 <a href=#250 id=250 data-nosnippet>250</a>
-<a href=#251 id=251 data-nosnippet>251</a><span class="kw">fn </span>run(root: <span class="kw-2">&amp;</span>Path, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
-<a href=#252 id=252 data-nosnippet>252</a>    <span class="kw">let </span>out = <span class="kw">super</span>::probe::bounded_output(
-<a href=#253 id=253 data-nosnippet>253</a>        Command::new(<span class="string">"just"</span>)
-<a href=#254 id=254 data-nosnippet>254</a>            .arg(<span class="string">"--justfile"</span>)
-<a href=#255 id=255 data-nosnippet>255</a>            .arg(root.join(<span class="string">"justfile"</span>))
-<a href=#256 id=256 data-nosnippet>256</a>            .args(args),
-<a href=#257 id=257 data-nosnippet>257</a>        TIMEOUT,
-<a href=#258 id=258 data-nosnippet>258</a>    )<span class="question-mark">?</span>;
-<a href=#259 id=259 data-nosnippet>259</a>    out.status
-<a href=#260 id=260 data-nosnippet>260</a>        .success()
-<a href=#261 id=261 data-nosnippet>261</a>        .then(|| String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).into_owned())
-<a href=#262 id=262 data-nosnippet>262</a>}
-<a href=#263 id=263 data-nosnippet>263</a>
-<a href=#264 id=264 data-nosnippet>264</a><span class="attr">#[cfg(test)]
-<a href=#265 id=265 data-nosnippet>265</a></span><span class="kw">mod </span>tests {
-<a href=#266 id=266 data-nosnippet>266</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#267 id=267 data-nosnippet>267</a>
-<a href=#268 id=268 data-nosnippet>268</a>    <span class="kw">fn </span>document() -&gt; Value {
-<a href=#269 id=269 data-nosnippet>269</a>        <span class="macro">serde_json::json!</span>({
-<a href=#270 id=270 data-nosnippet>270</a>            <span class="string">"modules"</span>: {
-<a href=#271 id=271 data-nosnippet>271</a>                <span class="string">"site"</span>: { <span class="string">"modules"</span>: {}, <span class="string">"recipes"</span>: {
-<a href=#272 id=272 data-nosnippet>272</a>                    <span class="string">"build"</span>: { <span class="string">"name"</span>: <span class="string">"build"</span>, <span class="string">"doc"</span>: <span class="string">"Build the site."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
-<a href=#273 id=273 data-nosnippet>273</a>                               <span class="string">"attributes"</span>: [], <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] }
-<a href=#274 id=274 data-nosnippet>274</a>                }}
-<a href=#275 id=275 data-nosnippet>275</a>            },
-<a href=#276 id=276 data-nosnippet>276</a>            <span class="string">"recipes"</span>: {
-<a href=#277 id=277 data-nosnippet>277</a>                <span class="string">"test"</span>: { <span class="string">"name"</span>: <span class="string">"test"</span>, <span class="string">"doc"</span>: <span class="string">"Every gate."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
-<a href=#278 id=278 data-nosnippet>278</a>                          <span class="string">"attributes"</span>: [{<span class="string">"group"</span>: <span class="string">"test"</span>}], <span class="string">"parameters"</span>: [],
-<a href=#279 id=279 data-nosnippet>279</a>                          <span class="string">"dependencies"</span>: [{<span class="string">"recipe"</span>: <span class="string">"build"</span>}] },
-<a href=#280 id=280 data-nosnippet>280</a>                <span class="string">"clean"</span>: { <span class="string">"name"</span>: <span class="string">"clean"</span>, <span class="string">"doc"</span>: <span class="string">"Remove it."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
-<a href=#281 id=281 data-nosnippet>281</a>                           <span class="string">"attributes"</span>: [{<span class="string">"confirm"</span>: <span class="string">"Sure? [y/N]"</span>}, {<span class="string">"group"</span>: <span class="string">"build"</span>}],
-<a href=#282 id=282 data-nosnippet>282</a>                           <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] },
-<a href=#283 id=283 data-nosnippet>283</a>                <span class="string">"build"</span>: { <span class="string">"name"</span>: <span class="string">"build"</span>, <span class="string">"doc"</span>: null, <span class="string">"private"</span>: <span class="bool-val">false</span>,
-<a href=#284 id=284 data-nosnippet>284</a>                           <span class="string">"attributes"</span>: [{<span class="string">"group"</span>: <span class="string">"build"</span>}],
-<a href=#285 id=285 data-nosnippet>285</a>                           <span class="string">"parameters"</span>: [{<span class="string">"name"</span>: <span class="string">"args"</span>, <span class="string">"kind"</span>: <span class="string">"star"</span>, <span class="string">"default"</span>: null}],
-<a href=#286 id=286 data-nosnippet>286</a>                           <span class="string">"dependencies"</span>: [] },
-<a href=#287 id=287 data-nosnippet>287</a>                <span class="string">"default"</span>: { <span class="string">"name"</span>: <span class="string">"default"</span>, <span class="string">"doc"</span>: null, <span class="string">"private"</span>: <span class="bool-val">true</span>,
-<a href=#288 id=288 data-nosnippet>288</a>                             <span class="string">"attributes"</span>: [], <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] }
-<a href=#289 id=289 data-nosnippet>289</a>            }
-<a href=#290 id=290 data-nosnippet>290</a>        })
-<a href=#291 id=291 data-nosnippet>291</a>    }
-<a href=#292 id=292 data-nosnippet>292</a>
-<a href=#293 id=293 data-nosnippet>293</a>    <span class="attr">#[test]
-<a href=#294 id=294 data-nosnippet>294</a>    </span><span class="kw">fn </span>a_private_recipe_is_not_a_workflow() {
-<a href=#295 id=295 data-nosnippet>295</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="macro">assert!</span>(!found.iter().any(|w| w.name == <span class="string">"default"</span>));
+<a href=#251 id=251 data-nosnippet>251</a><span class="doccomment">/// The groups of the justfile at `root`, in the order it declares them, or `None` when the
+<a href=#252 id=252 data-nosnippet>252</a>/// runner could not be asked.
+<a href=#253 id=253 data-nosnippet>253</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>groups(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;String&gt;&gt; {
+<a href=#254 id=254 data-nosnippet>254</a>    run(root, <span class="kw-2">&amp;</span>[<span class="string">"--groups"</span>, <span class="string">"--unsorted"</span>]).map(|text| group_order(<span class="kw-2">&amp;</span>text))
+<a href=#255 id=255 data-nosnippet>255</a>}
+<a href=#256 id=256 data-nosnippet>256</a>
+<a href=#257 id=257 data-nosnippet>257</a><span class="kw">fn </span>run(root: <span class="kw-2">&amp;</span>Path, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="kw">let </span>out = <span class="kw">super</span>::probe::bounded_output(
+<a href=#259 id=259 data-nosnippet>259</a>        Command::new(<span class="string">"just"</span>)
+<a href=#260 id=260 data-nosnippet>260</a>            .arg(<span class="string">"--justfile"</span>)
+<a href=#261 id=261 data-nosnippet>261</a>            .arg(root.join(<span class="string">"justfile"</span>))
+<a href=#262 id=262 data-nosnippet>262</a>            .args(args),
+<a href=#263 id=263 data-nosnippet>263</a>        TIMEOUT,
+<a href=#264 id=264 data-nosnippet>264</a>    )<span class="question-mark">?</span>;
+<a href=#265 id=265 data-nosnippet>265</a>    out.status
+<a href=#266 id=266 data-nosnippet>266</a>        .success()
+<a href=#267 id=267 data-nosnippet>267</a>        .then(|| String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).into_owned())
+<a href=#268 id=268 data-nosnippet>268</a>}
+<a href=#269 id=269 data-nosnippet>269</a>
+<a href=#270 id=270 data-nosnippet>270</a><span class="attr">#[cfg(test)]
+<a href=#271 id=271 data-nosnippet>271</a></span><span class="kw">mod </span>tests {
+<a href=#272 id=272 data-nosnippet>272</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#273 id=273 data-nosnippet>273</a>
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">fn </span>document() -&gt; Value {
+<a href=#275 id=275 data-nosnippet>275</a>        <span class="macro">serde_json::json!</span>({
+<a href=#276 id=276 data-nosnippet>276</a>            <span class="string">"modules"</span>: {
+<a href=#277 id=277 data-nosnippet>277</a>                <span class="string">"site"</span>: { <span class="string">"modules"</span>: {}, <span class="string">"recipes"</span>: {
+<a href=#278 id=278 data-nosnippet>278</a>                    <span class="string">"build"</span>: { <span class="string">"name"</span>: <span class="string">"build"</span>, <span class="string">"doc"</span>: <span class="string">"Build the site."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
+<a href=#279 id=279 data-nosnippet>279</a>                               <span class="string">"attributes"</span>: [], <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] }
+<a href=#280 id=280 data-nosnippet>280</a>                }}
+<a href=#281 id=281 data-nosnippet>281</a>            },
+<a href=#282 id=282 data-nosnippet>282</a>            <span class="string">"recipes"</span>: {
+<a href=#283 id=283 data-nosnippet>283</a>                <span class="string">"test"</span>: { <span class="string">"name"</span>: <span class="string">"test"</span>, <span class="string">"doc"</span>: <span class="string">"Every gate."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
+<a href=#284 id=284 data-nosnippet>284</a>                          <span class="string">"attributes"</span>: [{<span class="string">"group"</span>: <span class="string">"test"</span>}], <span class="string">"parameters"</span>: [],
+<a href=#285 id=285 data-nosnippet>285</a>                          <span class="string">"dependencies"</span>: [{<span class="string">"recipe"</span>: <span class="string">"build"</span>}] },
+<a href=#286 id=286 data-nosnippet>286</a>                <span class="string">"clean"</span>: { <span class="string">"name"</span>: <span class="string">"clean"</span>, <span class="string">"doc"</span>: <span class="string">"Remove it."</span>, <span class="string">"private"</span>: <span class="bool-val">false</span>,
+<a href=#287 id=287 data-nosnippet>287</a>                           <span class="string">"attributes"</span>: [{<span class="string">"confirm"</span>: <span class="string">"Sure? [y/N]"</span>}, {<span class="string">"group"</span>: <span class="string">"build"</span>}],
+<a href=#288 id=288 data-nosnippet>288</a>                           <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] },
+<a href=#289 id=289 data-nosnippet>289</a>                <span class="string">"build"</span>: { <span class="string">"name"</span>: <span class="string">"build"</span>, <span class="string">"doc"</span>: null, <span class="string">"private"</span>: <span class="bool-val">false</span>,
+<a href=#290 id=290 data-nosnippet>290</a>                           <span class="string">"attributes"</span>: [{<span class="string">"group"</span>: <span class="string">"build"</span>}],
+<a href=#291 id=291 data-nosnippet>291</a>                           <span class="string">"parameters"</span>: [{<span class="string">"name"</span>: <span class="string">"args"</span>, <span class="string">"kind"</span>: <span class="string">"star"</span>, <span class="string">"default"</span>: null}],
+<a href=#292 id=292 data-nosnippet>292</a>                           <span class="string">"dependencies"</span>: [] },
+<a href=#293 id=293 data-nosnippet>293</a>                <span class="string">"default"</span>: { <span class="string">"name"</span>: <span class="string">"default"</span>, <span class="string">"doc"</span>: null, <span class="string">"private"</span>: <span class="bool-val">true</span>,
+<a href=#294 id=294 data-nosnippet>294</a>                             <span class="string">"attributes"</span>: [], <span class="string">"parameters"</span>: [], <span class="string">"dependencies"</span>: [] }
+<a href=#295 id=295 data-nosnippet>295</a>            }
+<a href=#296 id=296 data-nosnippet>296</a>        })
 <a href=#297 id=297 data-nosnippet>297</a>    }
 <a href=#298 id=298 data-nosnippet>298</a>
 <a href=#299 id=299 data-nosnippet>299</a>    <span class="attr">#[test]
-<a href=#300 id=300 data-nosnippet>300</a>    </span><span class="kw">fn </span>recipes_come_back_in_a_stable_order_whatever_the_runner_emitted() {
+<a href=#300 id=300 data-nosnippet>300</a>    </span><span class="kw">fn </span>a_private_recipe_is_not_a_workflow() {
 <a href=#301 id=301 data-nosnippet>301</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#302 id=302 data-nosnippet>302</a>        <span class="kw">let </span>names: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|w| w.name.as_str()).collect();
-<a href=#303 id=303 data-nosnippet>303</a>        <span class="macro">assert_eq!</span>(names, [<span class="string">"build"</span>, <span class="string">"clean"</span>, <span class="string">"site build"</span>, <span class="string">"test"</span>]);
-<a href=#304 id=304 data-nosnippet>304</a>    }
-<a href=#305 id=305 data-nosnippet>305</a>
-<a href=#306 id=306 data-nosnippet>306</a>    <span class="attr">#[test]
-<a href=#307 id=307 data-nosnippet>307</a>    </span><span class="kw">fn </span>a_modules_recipe_carries_its_module_in_its_name() {
-<a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#309 id=309 data-nosnippet>309</a>        <span class="kw">let </span>module_recipe = found
-<a href=#310 id=310 data-nosnippet>310</a>            .iter()
-<a href=#311 id=311 data-nosnippet>311</a>            .find(|w| w.namespace.as_deref() == <span class="prelude-val">Some</span>(<span class="string">"site"</span>))
-<a href=#312 id=312 data-nosnippet>312</a>            .expect(<span class="string">"the module's recipe"</span>);
-<a href=#313 id=313 data-nosnippet>313</a>        <span class="macro">assert_eq!</span>(module_recipe.name, <span class="string">"site build"</span>);
-<a href=#314 id=314 data-nosnippet>314</a>        <span class="macro">assert_eq!</span>(
-<a href=#315 id=315 data-nosnippet>315</a>            module_recipe.description.as_deref(),
-<a href=#316 id=316 data-nosnippet>316</a>            <span class="prelude-val">Some</span>(<span class="string">"Build the site."</span>)
-<a href=#317 id=317 data-nosnippet>317</a>        );
-<a href=#318 id=318 data-nosnippet>318</a>    }
-<a href=#319 id=319 data-nosnippet>319</a>
-<a href=#320 id=320 data-nosnippet>320</a>    <span class="attr">#[test]
-<a href=#321 id=321 data-nosnippet>321</a>    </span><span class="kw">fn </span>attributes_become_the_facts_a_reader_needs() {
-<a href=#322 id=322 data-nosnippet>322</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#323 id=323 data-nosnippet>323</a>        <span class="kw">let </span>clean = found.iter().find(|w| w.name == <span class="string">"clean"</span>).expect(<span class="string">"clean"</span>);
-<a href=#324 id=324 data-nosnippet>324</a>        <span class="macro">assert!</span>(clean.confirm, <span class="string">"a recipe that asks first says so"</span>);
-<a href=#325 id=325 data-nosnippet>325</a>        <span class="macro">assert_eq!</span>(clean.group.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"build"</span>));
-<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">let </span>build = found.iter().find(|w| w.name == <span class="string">"build"</span>).expect(<span class="string">"build"</span>);
-<a href=#327 id=327 data-nosnippet>327</a>        <span class="macro">assert!</span>(!build.confirm);
-<a href=#328 id=328 data-nosnippet>328</a>        <span class="macro">assert_eq!</span>(build.parameters[<span class="number">0</span>].name, <span class="string">"args"</span>);
-<a href=#329 id=329 data-nosnippet>329</a>        <span class="macro">assert!</span>(build.parameters[<span class="number">0</span>].variadic);
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="macro">assert!</span>(
-<a href=#331 id=331 data-nosnippet>331</a>            !build.parameters[<span class="number">0</span>].required,
-<a href=#332 id=332 data-nosnippet>332</a>            <span class="string">"a star parameter is optional"
-<a href=#333 id=333 data-nosnippet>333</a>        </span>);
-<a href=#334 id=334 data-nosnippet>334</a>    }
-<a href=#335 id=335 data-nosnippet>335</a>
-<a href=#336 id=336 data-nosnippet>336</a>    <span class="doccomment">/// The rule the banner's commands come from, stated as an assertion: a group offers
-<a href=#337 id=337 data-nosnippet>337</a>    /// the recipe named after it, in the order the justfile declares its groups, and a
-<a href=#338 id=338 data-nosnippet>338</a>    /// group with no such recipe offers nothing rather than something arbitrary.
-<a href=#339 id=339 data-nosnippet>339</a>    </span><span class="attr">#[test]
-<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">fn </span>the_entrypoint_of_a_group_is_the_recipe_named_after_it() {
-<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>workflows = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#342 id=342 data-nosnippet>342</a>        <span class="kw">let </span>found = entrypoints(<span class="kw-2">&amp;</span>workflows, <span class="kw-2">&amp;</span>[<span class="string">"test"</span>.into(), <span class="string">"build"</span>.into()]);
-<a href=#343 id=343 data-nosnippet>343</a>        <span class="kw">let </span>commands: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|e| e.command.as_str()).collect();
-<a href=#344 id=344 data-nosnippet>344</a>        <span class="macro">assert_eq!</span>(
-<a href=#345 id=345 data-nosnippet>345</a>            commands,
-<a href=#346 id=346 data-nosnippet>346</a>            [<span class="string">"just test"</span>, <span class="string">"just build"</span>],
-<a href=#347 id=347 data-nosnippet>347</a>            <span class="string">"declaration order wins"
-<a href=#348 id=348 data-nosnippet>348</a>        </span>);
-<a href=#349 id=349 data-nosnippet>349</a>    }
-<a href=#350 id=350 data-nosnippet>350</a>
-<a href=#351 id=351 data-nosnippet>351</a>    <span class="attr">#[test]
-<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="kw">fn </span>a_group_order_that_could_not_be_read_still_answers_deterministically() {
-<a href=#353 id=353 data-nosnippet>353</a>        <span class="kw">let </span>workflows = workflows_of(<span class="kw-2">&amp;</span>document());
-<a href=#354 id=354 data-nosnippet>354</a>        <span class="kw">let </span>found = entrypoints(<span class="kw-2">&amp;</span>workflows, <span class="kw-2">&amp;</span>[]);
-<a href=#355 id=355 data-nosnippet>355</a>        <span class="kw">let </span>commands: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|e| e.command.as_str()).collect();
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="macro">assert_eq!</span>(commands, [<span class="string">"just build"</span>, <span class="string">"just test"</span>], <span class="string">"then by group name"</span>);
-<a href=#357 id=357 data-nosnippet>357</a>    }
-<a href=#358 id=358 data-nosnippet>358</a>
-<a href=#359 id=359 data-nosnippet>359</a>    <span class="attr">#[test]
-<a href=#360 id=360 data-nosnippet>360</a>    </span><span class="kw">fn </span>a_repository_without_a_workflow_runner_is_not_an_error() {
-<a href=#361 id=361 data-nosnippet>361</a>        <span class="kw">let </span>dir = tempfile::tempdir().expect(<span class="string">"a temporary directory"</span>);
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>catalogue = resolve(dir.path());
-<a href=#363 id=363 data-nosnippet>363</a>        <span class="macro">assert_eq!</span>(catalogue.state, TierState::Unavailable);
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="macro">assert!</span>(catalogue.workflows.is_empty());
-<a href=#365 id=365 data-nosnippet>365</a>        <span class="macro">assert!</span>(catalogue.entrypoints.is_empty());
-<a href=#366 id=366 data-nosnippet>366</a>    }
-<a href=#367 id=367 data-nosnippet>367</a>
-<a href=#368 id=368 data-nosnippet>368</a>    <span class="attr">#[test]
-<a href=#369 id=369 data-nosnippet>369</a>    </span><span class="kw">fn </span>the_group_listing_header_is_not_read_as_a_group() {
-<a href=#370 id=370 data-nosnippet>370</a>        <span class="macro">assert_eq!</span>(group_order(<span class="string">"Recipe groups:\n    a\n    b\n"</span>), [<span class="string">"a"</span>, <span class="string">"b"</span>]);
-<a href=#371 id=371 data-nosnippet>371</a>        <span class="macro">assert_eq!</span>(group_order(<span class="string">""</span>), Vec::&lt;String&gt;::new());
+<a href=#302 id=302 data-nosnippet>302</a>        <span class="macro">assert!</span>(!found.iter().any(|w| w.name == <span class="string">"default"</span>));
+<a href=#303 id=303 data-nosnippet>303</a>    }
+<a href=#304 id=304 data-nosnippet>304</a>
+<a href=#305 id=305 data-nosnippet>305</a>    <span class="attr">#[test]
+<a href=#306 id=306 data-nosnippet>306</a>    </span><span class="kw">fn </span>recipes_come_back_in_a_stable_order_whatever_the_runner_emitted() {
+<a href=#307 id=307 data-nosnippet>307</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
+<a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">let </span>names: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|w| w.name.as_str()).collect();
+<a href=#309 id=309 data-nosnippet>309</a>        <span class="macro">assert_eq!</span>(names, [<span class="string">"build"</span>, <span class="string">"clean"</span>, <span class="string">"site build"</span>, <span class="string">"test"</span>]);
+<a href=#310 id=310 data-nosnippet>310</a>    }
+<a href=#311 id=311 data-nosnippet>311</a>
+<a href=#312 id=312 data-nosnippet>312</a>    <span class="attr">#[test]
+<a href=#313 id=313 data-nosnippet>313</a>    </span><span class="kw">fn </span>a_modules_recipe_carries_its_module_in_its_name() {
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">let </span>module_recipe = found
+<a href=#316 id=316 data-nosnippet>316</a>            .iter()
+<a href=#317 id=317 data-nosnippet>317</a>            .find(|w| w.namespace.as_deref() == <span class="prelude-val">Some</span>(<span class="string">"site"</span>))
+<a href=#318 id=318 data-nosnippet>318</a>            .expect(<span class="string">"the module's recipe"</span>);
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="macro">assert_eq!</span>(module_recipe.name, <span class="string">"site build"</span>);
+<a href=#320 id=320 data-nosnippet>320</a>        <span class="macro">assert_eq!</span>(
+<a href=#321 id=321 data-nosnippet>321</a>            module_recipe.description.as_deref(),
+<a href=#322 id=322 data-nosnippet>322</a>            <span class="prelude-val">Some</span>(<span class="string">"Build the site."</span>)
+<a href=#323 id=323 data-nosnippet>323</a>        );
+<a href=#324 id=324 data-nosnippet>324</a>    }
+<a href=#325 id=325 data-nosnippet>325</a>
+<a href=#326 id=326 data-nosnippet>326</a>    <span class="attr">#[test]
+<a href=#327 id=327 data-nosnippet>327</a>    </span><span class="kw">fn </span>attributes_become_the_facts_a_reader_needs() {
+<a href=#328 id=328 data-nosnippet>328</a>        <span class="kw">let </span>found = workflows_of(<span class="kw-2">&amp;</span>document());
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">let </span>clean = found.iter().find(|w| w.name == <span class="string">"clean"</span>).expect(<span class="string">"clean"</span>);
+<a href=#330 id=330 data-nosnippet>330</a>        <span class="macro">assert!</span>(clean.confirm, <span class="string">"a recipe that asks first says so"</span>);
+<a href=#331 id=331 data-nosnippet>331</a>        <span class="macro">assert_eq!</span>(clean.group.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"build"</span>));
+<a href=#332 id=332 data-nosnippet>332</a>        <span class="kw">let </span>build = found.iter().find(|w| w.name == <span class="string">"build"</span>).expect(<span class="string">"build"</span>);
+<a href=#333 id=333 data-nosnippet>333</a>        <span class="macro">assert!</span>(!build.confirm);
+<a href=#334 id=334 data-nosnippet>334</a>        <span class="macro">assert_eq!</span>(build.parameters[<span class="number">0</span>].name, <span class="string">"args"</span>);
+<a href=#335 id=335 data-nosnippet>335</a>        <span class="macro">assert!</span>(build.parameters[<span class="number">0</span>].variadic);
+<a href=#336 id=336 data-nosnippet>336</a>        <span class="macro">assert!</span>(
+<a href=#337 id=337 data-nosnippet>337</a>            !build.parameters[<span class="number">0</span>].required,
+<a href=#338 id=338 data-nosnippet>338</a>            <span class="string">"a star parameter is optional"
+<a href=#339 id=339 data-nosnippet>339</a>        </span>);
+<a href=#340 id=340 data-nosnippet>340</a>    }
+<a href=#341 id=341 data-nosnippet>341</a>
+<a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// The rule the banner's commands come from, stated as an assertion: a group offers
+<a href=#343 id=343 data-nosnippet>343</a>    /// the recipe named after it, in the order the justfile declares its groups, and a
+<a href=#344 id=344 data-nosnippet>344</a>    /// group with no such recipe offers nothing rather than something arbitrary.
+<a href=#345 id=345 data-nosnippet>345</a>    </span><span class="attr">#[test]
+<a href=#346 id=346 data-nosnippet>346</a>    </span><span class="kw">fn </span>the_entrypoint_of_a_group_is_the_recipe_named_after_it() {
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">let </span>workflows = workflows_of(<span class="kw-2">&amp;</span>document());
+<a href=#348 id=348 data-nosnippet>348</a>        <span class="kw">let </span>found = entrypoints(<span class="kw-2">&amp;</span>workflows, <span class="kw-2">&amp;</span>[<span class="string">"test"</span>.into(), <span class="string">"build"</span>.into()]);
+<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">let </span>commands: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|e| e.command.as_str()).collect();
+<a href=#350 id=350 data-nosnippet>350</a>        <span class="macro">assert_eq!</span>(
+<a href=#351 id=351 data-nosnippet>351</a>            commands,
+<a href=#352 id=352 data-nosnippet>352</a>            [<span class="string">"just test"</span>, <span class="string">"just build"</span>],
+<a href=#353 id=353 data-nosnippet>353</a>            <span class="string">"declaration order wins"
+<a href=#354 id=354 data-nosnippet>354</a>        </span>);
+<a href=#355 id=355 data-nosnippet>355</a>    }
+<a href=#356 id=356 data-nosnippet>356</a>
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="attr">#[test]
+<a href=#358 id=358 data-nosnippet>358</a>    </span><span class="kw">fn </span>a_group_order_that_could_not_be_read_still_answers_deterministically() {
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="kw">let </span>workflows = workflows_of(<span class="kw-2">&amp;</span>document());
+<a href=#360 id=360 data-nosnippet>360</a>        <span class="kw">let </span>found = entrypoints(<span class="kw-2">&amp;</span>workflows, <span class="kw-2">&amp;</span>[]);
+<a href=#361 id=361 data-nosnippet>361</a>        <span class="kw">let </span>commands: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|e| e.command.as_str()).collect();
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="macro">assert_eq!</span>(commands, [<span class="string">"just build"</span>, <span class="string">"just test"</span>], <span class="string">"then by group name"</span>);
+<a href=#363 id=363 data-nosnippet>363</a>    }
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="attr">#[test]
+<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">fn </span>a_repository_without_a_workflow_runner_is_not_an_error() {
+<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">let </span>dir = tempfile::tempdir().expect(<span class="string">"a temporary directory"</span>);
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw">let </span>catalogue = resolve(dir.path());
+<a href=#369 id=369 data-nosnippet>369</a>        <span class="macro">assert_eq!</span>(catalogue.state, TierState::Unavailable);
+<a href=#370 id=370 data-nosnippet>370</a>        <span class="macro">assert!</span>(catalogue.workflows.is_empty());
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="macro">assert!</span>(catalogue.entrypoints.is_empty());
 <a href=#372 id=372 data-nosnippet>372</a>    }
-<a href=#373 id=373 data-nosnippet>373</a>}
+<a href=#373 id=373 data-nosnippet>373</a>
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="attr">#[test]
+<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">fn </span>the_group_listing_header_is_not_read_as_a_group() {
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="macro">assert_eq!</span>(group_order(<span class="string">"Recipe groups:\n    a\n    b\n"</span>), [<span class="string">"a"</span>, <span class="string">"b"</span>]);
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="macro">assert_eq!</span>(group_order(<span class="string">""</span>), Vec::&lt;String&gt;::new());
+<a href=#378 id=378 data-nosnippet>378</a>    }
+<a href=#379 id=379 data-nosnippet>379</a>}
 </code></pre></div></section></main></body></html>
