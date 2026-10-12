@@ -39,14 +39,61 @@ function wireTheme() {
   }
 }
 
+// A slow panel's source can take minutes (the integration queue spawns git per pull request),
+// and a browser holds at most six connections to one host: a fetch per panel per visit, again
+// on every refresh, and never given up, filled all six and stalled the whole UI for that
+// browser. So a panel is fetched once at a time, its rendering is kept for PANEL_KEEP_MS and
+// reused by a refresh, a fetch is given up after PANEL_TIMEOUT_MS, and every fetch in flight
+// is given up when the page goes away.
+const PANEL_TIMEOUT_MS = 45000;
+const PANEL_KEEP_MS = 300000;
+const panels = new Map(); // src -> { at, html } once answered, { pending } while asked
+const inFlight = new Set();
+window.addEventListener('pagehide', () => {
+  for (const controller of inFlight) controller.abort();
+});
+
+async function panelHtml(src) {
+  const known = panels.get(src);
+  if (known && known.pending) return known.pending;
+  if (known && Date.now() - known.at < PANEL_KEEP_MS) {
+    // a panel that did not answer is not asked again until it is due: one slow source must
+    // not take a connection every refresh
+    if (known.error) throw new Error(known.error);
+    return known.html;
+  }
+  const controller = new AbortController();
+  inFlight.add(controller);
+  const timer = setTimeout(() => controller.abort(), PANEL_TIMEOUT_MS);
+  const pending = (async () => {
+    try {
+      const response = await fetch(`${src}${src.includes('?') ? '&' : '?'}fragment`, {
+        headers: { Accept: 'text/html' },
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`${response.status}`);
+      const html = await response.text();
+      panels.set(src, { at: Date.now(), html });
+      return html;
+    } catch (e) {
+      const error = controller.signal.aborted ? new Error('no answer in time') : e;
+      panels.set(src, { at: Date.now(), error: error.message });
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      inFlight.delete(controller);
+    }
+  })();
+  panels.set(src, { pending });
+  return pending;
+}
+
 async function fillPanel(placeholder) {
   const src = placeholder.dataset.panelSrc;
   if (!src) return;
   placeholder.setAttribute('aria-busy', 'true');
   try {
-    const response = await fetch(`${src}${src.includes('?') ? '&' : '?'}fragment`, { headers: { Accept: 'text/html' } });
-    if (!response.ok) throw new Error(`${response.status}`);
-    const html = await response.text();
+    const html = await panelHtml(src);
     const holder = document.createElement('div');
     holder.innerHTML = html;
     const panel = holder.firstElementChild;
@@ -161,8 +208,16 @@ async function refresh() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;
+  // the screen as it is shown, filters included: the query is the reader's, not this script's
+  const query = window.location.search ? `${window.location.search}&` : '?';
+  const controller = new AbortController();
+  inFlight.add(controller);
+  const timer = setTimeout(() => controller.abort(), PANEL_TIMEOUT_MS);
   try {
-    const response = await fetch(`${window.location.pathname}?fragment`, { headers: { Accept: 'text/html' } });
+    const response = await fetch(`${window.location.pathname}${query}fragment`, {
+      headers: { Accept: 'text/html' },
+      signal: controller.signal,
+    });
     if (!response.ok) return;
     const holder = document.createElement('div');
     holder.innerHTML = await response.text();
@@ -179,6 +234,9 @@ async function refresh() {
     enhance();
   } catch (e) {
     /* the page as it is stays; the next round tries again */
+  } finally {
+    clearTimeout(timer);
+    inFlight.delete(controller);
   }
 }
 
