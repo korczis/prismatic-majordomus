@@ -126,9 +126,9 @@ pub fn legacy_findings(root: &Path) -> Vec<EditorDiagnostic> {
             .strip_prefix(root)
             .map(|p| p.to_string_lossy().replace('\\', "/"))
             .unwrap_or_default();
-        let Ok(text) = std::fs::read_to_string(path) else {
-            continue;
-        };
+        // a rule that cannot be read is one Antigravity cannot load either: it reads as empty,
+        // and is reported below as carrying no trigger
+        let text = std::fs::read_to_string(path).unwrap_or_default();
         if text.len() > RULE_BYTES {
             out.push(finding(
                 Severity::Warning,
@@ -179,9 +179,18 @@ mod tests {
         std::fs::write(rules.join("plain.md"), "# no front matter\n").unwrap();
         std::fs::write(rules.join("camel.md"), "---\ntrigger: alwaysOn\n---\nx\n").unwrap();
         std::fs::write(rules.join("good.md"), "---\ntrigger: always_on\n---\nx\n").unwrap();
+        // front matter that never closes is no front matter
+        std::fs::write(rules.join("open.md"), "---\ntrigger: always_on\n").unwrap();
         let found = legacy_findings(dir.path());
         let paths: Vec<&str> = found.iter().filter_map(|d| d.path.as_deref()).collect();
-        assert_eq!(paths, [".agents/rules/camel.md", ".agents/rules/plain.md"]);
+        assert_eq!(
+            paths,
+            [
+                ".agents/rules/camel.md",
+                ".agents/rules/open.md",
+                ".agents/rules/plain.md"
+            ]
+        );
         assert!(found.iter().all(|d| d.code == "antigravity-rule-discarded"));
     }
 
@@ -200,6 +209,51 @@ mod tests {
                 "antigravity-legacy-workflows",
                 "antigravity-skills-manifest"
             ]
+        );
+    }
+
+    #[test]
+    fn a_rule_over_the_budget_is_reported_and_a_quoted_trigger_is_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let rules = dir.path().join(".agents/rules");
+        std::fs::create_dir_all(&rules).unwrap();
+        let body = "x".repeat(RULE_BYTES + 1);
+        std::fs::write(
+            rules.join("big.md"),
+            format!("---\ntrigger: \"always_on\"\n---\n{body}\n"),
+        )
+        .unwrap();
+        let found = legacy_findings(dir.path());
+        let codes: Vec<&str> = found.iter().map(|d| d.code.as_str()).collect();
+        assert_eq!(
+            codes,
+            ["antigravity-rule-too-large"],
+            "the quoted trigger is valid"
+        );
+    }
+
+    #[test]
+    fn the_adapter_names_every_projected_skill_and_no_refused_one() {
+        let skill = |id: &str| crate::editors::SkillRef {
+            id: id.into(),
+            title: id.into(),
+            description: "d".into(),
+            path: format!(".ai/repo/skills/{id}/SKILL.md"),
+            sha256: String::new(),
+        };
+        let env = EditorEnvironment {
+            skills: vec![skill("ok"), skill("Not_Ok")],
+            ..Default::default()
+        };
+        let view = adapter(&env);
+        let skills = view.capabilities.iter().find(|c| c.id == "skills").unwrap();
+        assert_eq!(skills.artifacts, [".agents/skills/ok/SKILL.md"]);
+        assert_eq!(skills.support, EditorSupport::Supported);
+        let mcp = view.capabilities.iter().find(|c| c.id == "mcp").unwrap();
+        assert_eq!(
+            mcp.support,
+            EditorSupport::Unknown,
+            "what is not verified is not written"
         );
     }
 }

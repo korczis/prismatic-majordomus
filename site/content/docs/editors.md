@@ -50,7 +50,10 @@ until it has.
 - **Tasks.** Every public recipe of the tracked justfile that has no `[confirm]` and needs no
   argument, as `just <recipe>` from the project root, tagged with its group, in the order the
   justfile declares its groups. The local command-graph bridge the justfile also imports is
-  not read, so the file is the same on every machine.
+  not read, so the file is the same on every machine. Where the justfile exists and `just` cannot
+  describe it, `generate` refuses with exit 12 rather than write a task list that depends on
+  the machine; every CI job that builds the crate installs `just` through
+  `.github/actions/setup-rust`.
 - **Instructions.** Nothing new: both products read `AGENTS.md`, which `generate providers`
   derives from the policy.
 
