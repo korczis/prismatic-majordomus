@@ -143,7 +143,8 @@ pub struct IntentArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `validate`, `coverage` or `preflight`.
+    /// `list`, `show`, `validate`, `coverage`, `preflight`, `binding`, `realization`,
+    /// `explain` or `propose`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -217,6 +218,18 @@ pub enum IntentCommand {
     Explain {
         /// The intent's id
         id: String,
+    },
+    /// Write a new, unplanned intent: what must become true (ADR 0144)
+    Propose {
+        /// What must become true, kept verbatim
+        #[arg(long)]
+        statement: String,
+        /// One line naming it; the statement's first line when absent
+        #[arg(long)]
+        title: Option<String>,
+        /// The identity and file name; the title's slug when absent
+        #[arg(long)]
+        id: Option<String>,
     },
 }
 
@@ -6210,6 +6223,20 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["intent", "explain", "fixture-intent"],
             setup: &[],
             expect: Expect::StdoutContains(&["fixture-intent", "the-case-passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent propose",
+        examples: &[ExampleDoc {
+            id: "intent-propose",
+            title: "Propose an intent: what must become true",
+            description: "Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.",
+            argv: &["intent", "propose", "--statement", "Every page answers within 100 ms when warm"],
+            setup: &[],
+            expect: Expect::StdoutContains(&[
+                "proposed every-page-answers-within-100-ms-when-warm",
+                ".ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
+            ]),
         }],
     },
     CommandExamples {

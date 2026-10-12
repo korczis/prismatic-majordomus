@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 98,
+      "count": 99,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 98
+      "count": 99
     },
     {
       "kind": "application",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 456
+      "count": 457
     },
     {
       "kind": "use-case",
@@ -449,6 +449,13 @@
           "label": "adr-0136",
           "kind": "adr",
           "route": "/adrs/adr-0136/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
           "external": false
         }
       ]
@@ -4174,6 +4181,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0111/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
         }
       ]
     },
@@ -7489,6 +7503,66 @@
           "edge": "put_in_force",
           "label": "docs/MAJORDOMUS_UI.md",
           "kind": "document",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0144",
+      "identity": "adr-0144",
+      "slug": "adr-0144",
+      "cockpit": "/cockpit/objects/adr/adr-0144",
+      "title": "An intent is proposed by a capability, and its stage stays derived",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "project",
+        "capabilities"
+      ],
+      "source": ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "intent-lifecycle",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
+          "kind": "test",
           "route": null,
           "external": false
         }
