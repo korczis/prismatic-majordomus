@@ -1,0 +1,35 @@
+id: I2489
+milestone: development-runtime
+title: "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench"
+slug: a-screen-over-its-budget-fails-the-build
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails."
+why: "ADR 0142, part 4. The owner's pack set the budgets (a cached capability under 50 ms at p95, a warm server-rendered page under 100 ms, a live update under 250 ms) and said they are 'measured, never invented'. Today nothing holds them: the bench times the UI's screens since the UI-performance batch, and reports; it refuses nothing. The UI was eight seconds slow on master for a day before a person said so."
+current_state: "majordomus bench times /ui screens and panels (system.http.ui.*) and writes results. No budget for them is declared and no gate reads the results. case 1096 refuses a screen that calls a handler, by a scan of src/ui."
+desired_state: "policy.yaml declares benchmark.budget.ui_page_warm_p95_ms, ui_page_moved_p95_ms and ui_reading_p95_ms, read by the bench with no default beside the reader. The bench has a mode that moves the repository between samples, so the budget covers the request after a change and not only the warm one. A gate in .ai/repo/ci runs the UI targets on the CI build, compares against the budgets with the tolerance the existing bench-check uses for a shared runner, and fails naming the screen, its p95 and its budget. The rule project.no-screen-waits-for-a-source names that gate and its tests as its proof."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/ci"
+  - ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md"
+  - "scripts/ci"
+  - "docs/PERFORMANCE.md"
+  - "test/cases/1099_a_screen_over_its_budget_fails.sh"
+  - ".ai/repo/project/issues/I2489.yaml"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "A screen made slower than its budget in a fixture fails the gate, which names the screen, the measured p95 and the budget"
+  - "The budget is read from the policy, and a policy without the key is a policy error and not a default"
+  - "The bench measures the request after the repository moved as well as the warm one"
+  - "The gate's verdict on a shared runner uses the same tolerance rule the existing bench-check does, and says which rule it applied"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails"
+evidence_required:
+  - "ui_budget_gate_case_1099"
+  - "ui_budget_bench_results"
+created_at: 2026-10-12
+updated_at: 2026-10-12

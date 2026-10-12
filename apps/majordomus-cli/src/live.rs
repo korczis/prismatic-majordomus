@@ -450,6 +450,48 @@ impl Live {
         self.reload(watch, taken)
     }
 
+    /// The generation there is, at once, and whether the repository has moved past it: what
+    /// a page a person is looking at asks for (ADR 0142).
+    ///
+    /// [`Live::view`] waits for a reload, because an answer must be of the repository the
+    /// caller saw. A page need not be: it is drawn from the generation that exists, says that
+    /// the repository changed, and is read again once the new generation has loaded. So
+    /// when the repository has moved, this starts the reload on a thread of its own, unless
+    /// one is already running, and returns the existing generation with `behind` set.
+    /// Nothing about [`Live::view`] changes for any other caller.
+    pub fn view_without_waiting(self: &Arc<Self>) -> (View, bool) {
+        let Some(watch) = self.watch.as_ref() else {
+            return (self.view(), false);
+        };
+        let taken = watch.stamp.take();
+        let existing = {
+            let state = read(&self.state);
+            let view = View {
+                generation: state.number,
+                ctx: Arc::clone(&state.ctx),
+            };
+            if state.current(&taken) {
+                return (view, false);
+            }
+            view
+        };
+        // one reload at a time: a caller that finds one running leaves it to finish
+        if let Ok(guard) = self.rebuilding.try_lock() {
+            drop(guard);
+            let live = Arc::clone(self);
+            let started = std::thread::Builder::new()
+                .name("mj-reload".into())
+                .spawn(move || {
+                    live.view();
+                });
+            if let Err(refused) = started {
+                tracing::warn!("no thread to reload the repository behind a page: {refused}");
+                return (self.view(), false);
+            }
+        }
+        (existing, true)
+    }
+
     fn reload(&self, watch: &Watch, taken: String) -> View {
         // A caller that arrives mid-rebuild has already seen the stamp move: the generation
         // that exists is known to be stale, and answering from it is the frozen picture
@@ -777,6 +819,64 @@ mod tests {
                 .expect("the caller is answered once the rebuild is over");
             assert_eq!(answered, after, "and with the commit it asked about");
         });
+    }
+
+    /// A page does not wait for a rebuild: it is handed the generation there is, told the
+    /// repository has moved past it, and the rebuild runs behind it; once it is over, the
+    /// next page is current. A caller of `view` still waits, as before.
+    #[test]
+    fn a_page_is_handed_the_generation_there_is_and_the_rebuild_runs_behind_it() {
+        let (fixture, live) = followed();
+        let live = Arc::new(live);
+        let before = head_in(fixture.root());
+        let (view, behind) = live.view_without_waiting();
+        assert!(!behind, "nothing has moved");
+        assert_eq!(head_of(&view.ctx), before);
+
+        // a rebuild already running: the page is not held by it
+        let rebuilding = live.rebuilding.lock().expect("the rebuild");
+        Command::new("git")
+            .arg("-C")
+            .arg(fixture.root())
+            .args(["commit", "-q", "--allow-empty", "-m", "two"])
+            .output()
+            .expect("git");
+        let after = head_in(fixture.root());
+        let started = std::time::Instant::now();
+        let (view, behind) = live.view_without_waiting();
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(1),
+            "the page waited for the rebuild: {:?}",
+            started.elapsed()
+        );
+        assert!(
+            behind,
+            "the page is told the repository moved past what it shows"
+        );
+        assert_eq!(head_of(&view.ctx), before, "as it was");
+        drop(rebuilding);
+
+        // no rebuild running: the page starts one behind itself, and the generation catches up
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(60);
+        loop {
+            let (view, behind) = live.view_without_waiting();
+            if !behind {
+                assert_eq!(
+                    head_of(&view.ctx),
+                    after,
+                    "current once the rebuild is over"
+                );
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < until,
+                "the rebuild never caught up"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        // a pinned view has nothing to follow, and is never behind
+        let pinned = Arc::new(Live::pinned(Arc::clone(&live.view().ctx)));
+        assert!(!pinned.view_without_waiting().1);
     }
 
     #[test]

@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "dd6d29292732f5d2ee23fe090b39485ea896b1b247fa806424ce34f619d53a76",
+    "fingerprint": "bbacb5336c5afccdab734b829adb4457a34127c22b8a744042cbd179616f566f",
     "summary": {
-      "total": 2274,
+      "total": 2281,
       "builtin": 193,
-      "declarative": 2081,
+      "declarative": 2088,
       "by_kind": {
         "command": 28,
         "query": 165,
-        "resource": 2081
+        "resource": 2088
       },
       "by_stability": {
         "behaviorally_verified": 134,
         "experimental": 50,
-        "implemented": 2090
+        "implemented": 2097
       },
       "mcp_tools": 185,
-      "mcp_resources": 2136,
+      "mcp_resources": 2143,
       "http_routes": 189,
       "cli_commands": 105,
       "modules": 90,
@@ -79540,7 +79540,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 97,
+        "capabilities": 98,
         "capability_ids": []
       },
       {
@@ -80148,7 +80148,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 332,
+        "capabilities": 336,
         "capability_ids": []
       },
       {
@@ -80556,7 +80556,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 169,
+        "capabilities": 170,
         "capability_ids": []
       },
       {
@@ -80699,7 +80699,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 454,
+        "capabilities": 455,
         "capability_ids": []
       },
       {
@@ -80789,7 +80789,7 @@
     ]
   },
   "index": {
-    "fingerprint": "03f6557b8d557b96853032b04aef98a9d346346f87a6e06ac1fe8aae806a2655",
+    "fingerprint": "103896ea70078683cbf27737d945d6616f10eee85d694a741315b241416656a4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80812,7 +80812,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 97,
+      "adr": 98,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -80829,7 +80829,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 332,
+      "issue": 336,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -80838,12 +80838,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 21,
-      "rule": 169,
+      "rule": 170,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 454,
+      "test": 455,
       "use-case": 48,
       "workspace": 1
     },
@@ -82448,6 +82448,24 @@
           "interface",
           "ui",
           "pages"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0142",
+        "kind": "adr",
+        "identity": "adr-0142",
+        "title": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+        "description": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+        "path": ".ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7948,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "performance",
+          "cache"
         ]
       },
       {
@@ -86267,7 +86285,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 135897
+        "bytes": 136362
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -86573,7 +86591,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 19340
+        "bytes": 21676
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -86654,7 +86672,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 237250
+        "bytes": 238514
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -93714,6 +93732,50 @@
         "bytes": 2915
       },
       {
+        "uri": "majordomus://issue/I2486",
+        "kind": "issue",
+        "identity": "I2486",
+        "title": "No screen waits for a source: a page shows the latest reading with its age, read again behind the reader",
+        "description": "Take every handler, git call and file read off the path of a UI request: the executor keeps the latest reading of each source a page asked for, a screen is rendered from those readings at once, and a worker reads a source again behind the reader whenever the reading is not of the repository as it is now.",
+        "path": ".ai/repo/project/issues/I2486.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4878
+      },
+      {
+        "uri": "majordomus://issue/I2487",
+        "kind": "issue",
+        "identity": "I2487",
+        "title": "A screen is streamed, and one stream tells an open page which readings changed",
+        "description": "Send a screen as it becomes known and keep it current without polling: the shell and every panel whose reading is at hand are written at once, a panel whose first reading is pending follows on the same response, and after that one WebSocket subscription tells the page which readings changed.",
+        "path": ".ai/repo/project/issues/I2487.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3434
+      },
+      {
+        "uri": "majordomus://issue/I2488",
+        "kind": "issue",
+        "identity": "I2488",
+        "title": "The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum",
+        "description": "Decide which HTTP stack the shared server keeps, from a measurement of the two candidates on the same routes, a streamed route and long-lived subscribers, and record the decision so that the repository has one stack and knows why.",
+        "path": ".ai/repo/project/issues/I2488.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2815
+      },
+      {
+        "uri": "majordomus://issue/I2489",
+        "kind": "issue",
+        "identity": "I2489",
+        "title": "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
+        "description": "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails.",
+        "path": ".ai/repo/project/issues/I2489.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2840
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -97026,6 +97088,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "kind": "rule",
+        "identity": "project.no-screen-waits-for-a-source@1",
+        "title": "A screen shows the latest reading of its sources at once, and never waits for a handler",
+        "description": "A screen of the UI is rendered from the latest reading of each source it names, handed over from memory with the reading's age; a handler, git and the file system are touched by a worker behind the reader and never on the path of the request; a reading that is not of the repository as it is now says so and is replaced when the new one lands; and a capability's answer over the API, MCP and the command line stays exact.",
+        "path": ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4381,
+        "tags": [
+          "ui",
+          "performance",
+          "cache",
+          "derivation",
+          "enforcement"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "rule",
         "identity": "project.one-derive-at-a-time@1",
@@ -99434,6 +99514,14 @@
         "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "source_class": "case",
         "bytes": 4063
+      },
+      {
+        "uri": "majordomus://test/test/cases/1096_no_screen_waits_for_a_source.sh",
+        "kind": "test",
+        "identity": "test/cases/1096_no_screen_waits_for_a_source.sh",
+        "path": "test/cases/1096_no_screen_waits_for_a_source.sh",
+        "source_class": "case",
+        "bytes": 4294
       },
       {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
@@ -103096,7 +103184,7 @@
       "identity": [
         "id"
       ],
-      "objects": 97
+      "objects": 98
     },
     {
       "name": "application",
@@ -103259,7 +103347,7 @@
       "identity": [
         "id"
       ],
-      "objects": 332
+      "objects": 336
     },
     {
       "name": "knowledge",
@@ -103356,7 +103444,7 @@
         "id",
         "version"
       ],
-      "objects": 169
+      "objects": 170
     },
     {
       "name": "scope",
@@ -103411,7 +103499,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 454
+      "objects": 455
     },
     {
       "name": "use-case",

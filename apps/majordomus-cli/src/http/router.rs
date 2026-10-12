@@ -486,7 +486,17 @@ impl Router {
     /// site's configuration and the generated web root, both of which are files in the
     /// repository, so a checkout that moved may serve a different set of surfaces.
     fn resolution(&self) -> Arc<Result<Resolution, String>> {
-        let view = self.live.view();
+        self.resolution_of(self.live.view())
+    }
+
+    /// The resolution of the generation there is, without waiting for a reload: what a
+    /// page of the UI is routed by (ADR 0142). The UI says itself when the repository has
+    /// moved past what it shows; every other surface is routed by [`Router::resolution`].
+    fn resolution_without_waiting(&self) -> Arc<Result<Resolution, String>> {
+        self.resolution_of(self.live.view_without_waiting().0)
+    }
+
+    fn resolution_of(&self, view: crate::live::View) -> Arc<Result<Resolution, String>> {
         self.served.get_or_init(view.generation, || {
             let root = std::path::Path::new(&view.ctx.index.repository.root);
             Served::resolve(&view.ctx.web, root, self.runtime())
@@ -583,7 +593,16 @@ impl Router {
                 return refusal;
             }
         }
-        let held = self.resolution();
+        // a page of the UI is drawn from the generation there is and never waits for the next
+        // one; every other request waits for the generation its caller saw
+        let page = req.method == "GET"
+            && (req.path == crate::ui::PREFIX
+                || req.path.starts_with(&format!("{}/", crate::ui::PREFIX)));
+        let held = if page {
+            self.resolution_without_waiting()
+        } else {
+            self.resolution()
+        };
         let resolution = match &*held {
             Ok(resolution) => resolution,
             Err(reason) => return error_response(500, "internal", reason),
@@ -672,7 +691,10 @@ impl Router {
                 ),
             },
             Bound::Route(Native::Ui) => match &self.ui {
-                Some(ui) => ui.handle(req),
+                Some(ui) => {
+                    Ui::warm_once(ui);
+                    ui.handle(req)
+                }
                 None => error_response(
                     500,
                     "internal",
