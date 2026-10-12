@@ -12,8 +12,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | direct | 191 | 164 | 0 | 27 |
 | http | 187 | 164 | 0 | 23 |
 | mcp | 183 | 160 | 0 | 23 |
-| system | 13 | 13 | 0 | 0 |
-| total | 574 | 501 | 0 | 73 |
+| system | 14 | 14 | 0 | 0 |
+| total | 575 | 502 | 0 | 73 |
 
 ## Capabilities
 
@@ -228,5 +228,42 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `system.http.cockpit_overview` | http | GET /cockpit (the Cockpit's landing page, server-rendered) |
 | `system.http.cockpit_capabilities` | http | GET /cockpit/capabilities (every capability as a table: the widest page) |
 | `system.http.cockpit_graph` | http | GET /cockpit/graphs/registry (a page whose content is a derived graph) |
+| `system.http.live.index` | http | GET / over the live view a served process uses (the per-request git stamp and surface resolution) |
+
+## UI pages
+
+Every screen and panel of the UI's own route list, read with `GET` and `Accept: text/html`: a screen over the pinned context and over the live view a served process answers from (which pays the per-request git stamp), a panel over the pinned context only. Each is measured cold (the capability cache cleared before every sample) and warm. A deferred panel is one the UI pulls in after the screen, because its source is slow; only the `full` profile measures it, with `cold_spawns` samples.
+
+| key | route | view | deferred |
+|---|---|---|---|
+| `system.http.ui.index` | `/ui` | pinned | — |
+| `system.http.ui.command` | `/ui/command` | pinned | — |
+| `system.http.ui.roadmap` | `/ui/roadmap` | pinned | — |
+| `system.http.ui.work` | `/ui/work` | pinned | — |
+| `system.http.ui.issues` | `/ui/issues` | pinned | — |
+| `system.http.ui.prs` | `/ui/prs` | pinned | — |
+| `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
+| `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
+| `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
+| `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
+| `system.http.ui.evidence` | `/ui/evidence` | pinned | — |
+| `system.http.ui.docs` | `/ui/docs` | pinned | — |
+| `system.http.ui.governance` | `/ui/governance` | pinned | — |
+| `system.http.live.ui.index` | `/ui` | live | — |
+| `system.http.live.ui.command` | `/ui/command` | live | — |
+| `system.http.live.ui.roadmap` | `/ui/roadmap` | live | — |
+| `system.http.live.ui.work` | `/ui/work` | live | — |
+| `system.http.live.ui.issues` | `/ui/issues` | live | — |
+| `system.http.live.ui.prs` | `/ui/prs` | live | — |
+| `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
+| `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
+| `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
+| `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
+| `system.http.live.ui.evidence` | `/ui/evidence` | live | — |
+| `system.http.live.ui.docs` | `/ui/docs` | live | — |
+| `system.http.live.ui.governance` | `/ui/governance` | live | — |
+| `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
+| `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
+| `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.

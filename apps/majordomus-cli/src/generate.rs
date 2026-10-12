@@ -1608,6 +1608,22 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             t.description()
         ));
     }
+    s.push_str("\n## UI pages\n\nEvery screen and panel of the UI's own route list, read with `GET` and `Accept: text/html`: a screen over the pinned context and over the live view a served process answers from (which pays the per-request git stamp), a panel over the pinned context only. Each is measured cold (the capability cache cleared before every sample) and warm. A deferred panel is one the UI pulls in after the screen, because its source is slow; only the `full` profile measures it, with `cold_spawns` samples.\n\n| key | route | view | deferred |\n|---|---|---|---|\n");
+    for t in projection.pages() {
+        if let crate::bench::TargetKind::Page {
+            route,
+            view,
+            deferred,
+        } = &t.kind
+        {
+            s.push_str(&format!(
+                "| `{}` | `{route}` | {} | {} |\n",
+                t.key,
+                view.name(),
+                if *deferred { "yes" } else { "—" }
+            ));
+        }
+    }
     s.push_str("\nCache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.\n");
     s
 }
@@ -1795,6 +1811,15 @@ pub fn benchmark_document(ctx: &Context) -> Value {
             "transport": s.transport().name(),
             "measures": s.description(),
         })).collect::<Vec<_>>(),
+        "pages": projection.pages().filter_map(|t| match &t.kind {
+            crate::bench::TargetKind::Page { route, view, deferred } => Some(serde_json::json!({
+                "key": t.key,
+                "route": route,
+                "view": view.name(),
+                "deferred": deferred,
+            })),
+            _ => None,
+        }).collect::<Vec<_>>(),
     })
 }
 
