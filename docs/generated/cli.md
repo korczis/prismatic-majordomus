@@ -203,6 +203,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent binding`](#majordomus-intent-binding) | `/docs/cli/intent/binding/` | What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused |
 | [`majordomus intent realization`](#majordomus-intent-realization) | `/docs/cli/intent/realization/` | Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence |
 | [`majordomus intent explain`](#majordomus-intent-explain) | `/docs/cli/intent/explain/` | Why an intent stands where it stands: its stage, each criterion, the work realising it |
+| [`majordomus intent propose`](#majordomus-intent-propose) | `/docs/cli/intent/propose/` | Write a new, unplanned intent: what must become true (ADR 0144) |
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
 | [`majordomus delivery report`](#majordomus-delivery-report) | `/docs/cli/delivery/report/` | Every feature against every dimension, with the development stage of what does not exist |
 | [`majordomus delivery show`](#majordomus-delivery-show) | `/docs/cli/delivery/show/` | One feature: every dimension with its reason and remediation |
@@ -5572,7 +5573,7 @@ Examples:
 
 What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
 
-Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent binding`](#majordomus-intent-binding), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
+Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent binding`](#majordomus-intent-binding), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain), [`majordomus intent propose`](#majordomus-intent-propose).
 
 ```text
 majordomus intent [OPTIONS] <COMMAND>
@@ -5835,6 +5836,36 @@ Examples:
   ```
 
   Verified: exits 0; prints fixture-intent, the-case-passes.
+
+<a id="majordomus-intent-propose"></a>
+## `majordomus intent propose`
+
+Write a new, unplanned intent: what must become true (ADR 0144)
+
+```text
+majordomus intent propose [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--statement` | `<STATEMENT>` | required | What must become true, kept verbatim |
+| `--title` | `<TITLE>` | — | One line naming it; the statement's first line when absent |
+| `--id` | `<ID>` | — | The identity and file name; the title's slug when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Propose an intent: what must become true** — Writes a new record under `.ai/repo/project/intents/` holding the statement and nothing else yet (ADR 0144): no milestone, criterion or invariant. Its stage derives as `declared`, `intent validate` reports the two absences as warnings, and no work can serve it until it is planned. `--title` and `--id` default to the statement's first line and that line's slug; an identity that exists is refused, never overwritten.
+
+  ```console
+  $ majordomus intent propose --statement 'Every page answers within 100 ms when warm'
+  ```
+
+  Verified: exits 0; prints proposed every-page-answers-within-100-ms-when-warm, .ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml.
 
 <a id="majordomus-delivery"></a>
 ## `majordomus delivery`

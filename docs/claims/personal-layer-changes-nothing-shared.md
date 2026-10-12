@@ -13,7 +13,8 @@ already held uncommitted work:
   writing it, and leave a file the project already tracks as it is.
 
 When the trial has made its case, `majordomus init --extend --shared` hands the layer to
-the team: it removes the cover and prints what is now the repository's to commit.
+the team: it removes the cover and prints what is now the repository's to commit. A file
+that is one person's by its own name (`*.local`, `*.local.*`) stays covered.
 
 ## How it works
 
@@ -47,7 +48,8 @@ bash test/run.sh 2979_a_personal_layer_changes_nothing_shared
 The case works in a repository with a modified file and an untracked one, because a clean
 tree staying clean proves little. It runs `init --personal`, `update`, `capture install`
 and an `--extend`, and compares the status after each. It commits a `CLAUDE.md` and
-requires `update` to refuse it and write nothing. It tracks one file of the layer and
+requires `update` to refuse it, to write nothing, and never to advise `--force` for it;
+`doctor` must not hold that file to this layer's rules. It tracks one file of the layer and
 requires `doctor` to name it. It shares a layer and requires the cover gone and nothing
 committed. It installs through the real installer against a fixture release and requires
 `Verified (personal)`.

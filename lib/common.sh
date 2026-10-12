@@ -356,23 +356,54 @@ mj_personal_cover() {
 mj_personal_guard() {
   local p
   mj_personal_active || return 0
-  for p in "$@"; do
-    if mj_git ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
-      mj_die "$MJ_EX_REFUSED" "$p is tracked, so it is the project's, and this layer is personal: writing it would change what everyone shares. Leave it as it is and point that projection at a file of your own in $(mj_rel "$MJ_POLICY_FILE") (CLAUDE.local.md is the one Claude Code reads beside the project's), or share the layer with the team (majordomus init --extend --shared)"
-    fi
-  done
+  mj_personal_refuse_tracked "$@"
   for p in "$@"; do mj_personal_cover "$p" "$p.mj-tmp" || return 1; done
 }
-# The patterns the block held, then the block removed: what `init --shared` prints as the
-# paths that are now the repository's to commit.
+# Is this path the project's? Under a personal layer, whatever git tracks is.
+mj_personal_is_the_projects() {
+  mj_personal_active && mj_git ls-files --error-unmatch -- "$1" >/dev/null 2>&1
+}
+# The refusal alone, with nothing written: what a writer asks while it is still planning,
+# so that a dry run says the same thing a real one would and no advice to force is ever
+# printed for a file that is somebody else's.
+mj_personal_refuse_tracked() {
+  local p
+  for p in "$@"; do
+    mj_personal_is_the_projects "$p" || continue
+    mj_die "$MJ_EX_REFUSED" "$p is tracked, so it is the project's, and this layer is personal: writing it would change what everyone shares. Leave it as it is and point that projection at a file of your own in $(mj_rel "$MJ_POLICY_FILE") (CLAUDE.local.md is the one Claude Code reads beside the project's), or share the layer with the team (majordomus init --extend --shared)"
+  done
+}
+# What `init --shared` runs: the cover is lifted from everything except the files that are
+# one person's by their own name — `*.local` and `*.local.*`, the convention CLAUDE.local.md
+# and .envrc.local follow. Those stay covered, because handing the layer to the team is not
+# handing it a personal projection. Prints the lifted paths, then a line `kept <path>` each.
+# With the layer's own pattern gone the layer is no longer personal, whatever stays covered.
 mj_personal_uncover() {
-  local f tmp
+  local f tmp have keep lift p
   f="$(mj_personal_exclude_file)"
   [ -f "$f" ] || return 0
-  mj_personal_covered
+  have="$(mj_personal_covered)"; keep=''; lift=''
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "${p%.mj-tmp}" in
+      *.local|*.local.*) keep="${keep:+$keep
+}$p" ;;
+      *) lift="${lift:+$lift
+}$p" ;;
+    esac
+  done <<EOF
+$have
+EOF
   tmp="$f.mj-tmp.$$"
   awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
-    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" && mv "$tmp" "$f"
+    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" || { rm -f "$tmp"; return 1; }
+  if [ -n "$keep" ]; then
+    { [ -s "$tmp" ] && [ -n "$(tail -c1 "$tmp")" ] && printf '\n'
+      printf '%s\n%s\n%s\n' "$MJ_PERSONAL_BEGIN" "$keep" "$MJ_PERSONAL_END"; } >> "$tmp"
+  fi
+  mv "$tmp" "$f" || return 1
+  [ -z "$lift" ] || printf '%s\n' "$lift"
+  [ -z "$keep" ] || printf '%s\n' "$keep" | sed -e '/\.mj-tmp$/d' -e 's/^/kept /'
 }
 # Does the cover hold? One finding a fact, through the callbacks the caller names (doctor's
 # and init's differ only in how a finding is printed). Returns 1 when something shared shows it.

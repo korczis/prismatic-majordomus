@@ -64,7 +64,8 @@ majordomus init --extend --shared
 ```
 
 It removes the cover, adds the two `.gitignore` lines a plain `init` adds, and prints what
-is now the repository's to commit. It commits nothing; that step is yours.
+is now the repository's to commit. It commits nothing; that step is yours. A file that is
+one person's by its own name, such as `CLAUDE.local.md`, stays covered and stays yours.
 
 To stop instead, delete the block between `# >>> majordomus personal >>>` and
 `# <<< majordomus personal <<<` and the files it lists.

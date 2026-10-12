@@ -31,8 +31,9 @@ is checked by the command that makes it. ADR 0145.
 3. **Cover before write.** A writer outside the layer calls `mj_personal_guard <path>…`
    before it writes. Under a personal layer the guard covers the path and the staging name
    beside it; elsewhere it does nothing, so the call is unconditional.
-4. **A tracked path is the project's.** It is refused with exit 15 before any path of that
-   command is written.
+4. **A tracked path is the project's.** It is refused with exit 15 while the command is
+   still planning, before any path is written and before any advice to force it; a dry run
+   refuses the same way. `doctor` does not hold such a file to a stamp or a bootstrap line.
 5. **Verified where it is claimed.** `init --personal` exits 10 when the status after
    differs from the status before. The installer compares the status itself. `doctor`
    reports `OK personal` or names what is tracked, uncovered or shown.
@@ -41,7 +42,8 @@ is checked by the command that makes it. ADR 0145.
    walks the work tree; no option selects it.
 8. **Sharing is explicit.** `init --extend --shared` removes the block, writes the two
    `.gitignore` lines of a plain init, prints the paths that are now the repository's to
-   commit, and commits nothing. It refuses a layer that is not personal.
+   commit, and commits nothing. It refuses a layer that is not personal. A path that is
+   one person's by its own name (`*.local`, `*.local.*`) stays covered.
 
 ## Failure behaviour
 

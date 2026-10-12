@@ -275,7 +275,9 @@ P="$ROOT/.github/workflows/pages.yml"
 grep -q 'scripts/pages verify --commit' "$P" \
   || { echo "    pages.yml no longer verifies that the site serves the commit it published"; exit 1; }
 job_to="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^    timeout-minutes: / {print $2; exit}' "$P")"
-step_to="$(awk '/^        timeout-minutes: / {s += $2} END {print s+0}' "$P")"
+# the deploy job's own steps: another job of the workflow has its own bound and its own sum,
+# and counting its steps here made the deploy job look overrun the day one gained a timeout
+step_to="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^        timeout-minutes: / {s += $2} END {print s+0}' "$P")"
 [ -n "$job_to" ] || { echo "    the pages deploy job carries no timeout; a hang holds a runner for GitHub's default six hours"; exit 1; }
 [ "$step_to" -gt 0 ] || { echo "    no step of the pages deploy job carries a timeout, so only the job's bound can fire and every overrun reads as cancelled"; exit 1; }
 [ "$job_to" -gt "$step_to" ] \

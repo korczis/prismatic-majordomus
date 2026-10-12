@@ -9,16 +9,19 @@
 //!
 //! Every capability here reads [`crate::intent::Intents`], built on demand from the index,
 //! the plan [`crate::plan::Plan::build`] derives from the same index, and the evidence
-//! ledger. All six are read-only: there is no intent status to write, because the stage is
+//! ledger. Six are read-only: there is no intent status to write, because the stage is
 //! derived, and no transition, because the plan already owns the lifecycle of the work an
 //! intent is realised by (ADR 0070), and the coverage of its criteria by the plan (ADR 0073).
+//! One writes, and only a new record: `intents.propose` declares what must become true and
+//! leaves the intent unplanned, its stage still derived (ADR 0144).
 //!
 //! ```
 //! use majordomus_cli::capability::builtin::intents;
 //! let m = intents::module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 //! assert_eq!(ids, ["intents.list", "intents.record", "intents.validate",
-//!                  "intents.coverage", "intents.preflight", "intents.binding"]);
+//!                  "intents.coverage", "intents.preflight", "intents.binding",
+//!                  "intents.propose"]);
 //! ```
 
 use schemars::JsonSchema;
@@ -26,7 +29,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CachePolicy, CapabilityKind, Exposure, McpExposure, McpResource, Stability,
+    WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::intent::{
     IntentFinding, IntentPreflight, IntentView, Intents, RepositoryEvidence, INTENT,
@@ -37,7 +43,7 @@ use crate::intent_review::{CritiqueRecord, GapRecord};
 use crate::plan::Plan;
 use crate::{capability, module};
 
-use super::{get, mcp, Empty};
+use super::{get, mcp, post, Empty};
 
 /// The URI under which every intent, derived, is read as an MCP resource.
 pub const INTENTS_URI: &str = "majordomus://intents";
@@ -395,9 +401,71 @@ fn intent_binding(
     })
 }
 
-/// The module the registry composes: six read-only capabilities over one derivation, each
-/// declared once here and projected to the command line, HTTP, MCP and OpenAPI from that
-/// declaration.
+// ---------------------------------------------------------------- intents.propose
+
+/// The input of `intents.propose`: what must become true, and optionally its title and id.
+///
+/// No milestone, criterion or invariant: a proposal says what is wanted, and planning it is a
+/// separate act (ADR 0144). No timestamp either: the record is dated when it is written.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentProposeInput;
+/// let i: IntentProposeInput =
+///     serde_json::from_str(r#"{"statement": "The UI answers within 100 ms warm"}"#).unwrap();
+/// assert_eq!(i.title, None);
+/// // a field the input does not have is refused, never ignored
+/// assert!(serde_json::from_str::<IntentProposeInput>(r#"{"statement": "s", "stage": "x"}"#).is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct IntentProposeInput {
+    /// What must become true, in the proposer's words; kept verbatim.
+    pub statement: String,
+    /// One line naming it; the statement's first line when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    /// The identity and file name; the title's slug when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+}
+
+impl BenchmarkCases for IntentProposeInput {
+    // Waived as destructive, so never timed: the case is the example every projection shows.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "a sentence",
+            IntentProposeInput {
+                statement: "Every page of the UI answers within 100 ms when warm".into(),
+                title: None,
+                id: None,
+            },
+        )]
+    }
+}
+
+fn intent_propose(
+    ctx: &Context,
+    input: IntentProposeInput,
+) -> Result<crate::intent::Proposed, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let today = crate::ledger::now();
+    crate::intent::propose(
+        root,
+        &input.statement,
+        input.title.as_deref(),
+        input.id.as_deref(),
+        &today[..10],
+    )
+    .map_err(|e| match e {
+        crate::intent::ProposeError::Invalid(m) => CapabilityError::InvalidInput(m),
+        crate::intent::ProposeError::Exists(m) => CapabilityError::Refused(m),
+        crate::intent::ProposeError::Write(m) => CapabilityError::Internal(m),
+    })
+}
+
+/// The module the registry composes: six read-only capabilities over one derivation and one
+/// that proposes a new intent, each declared once here and projected to the command line,
+/// HTTP, MCP and OpenAPI from that declaration.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::intents;
@@ -515,6 +583,27 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: intent_binding,
             },
+            capability! {
+                id: "intents.propose",
+                kind: CapabilityKind::Command,
+                title: "Propose an intent: what must become true",
+                description: "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+                input: IntentProposeInput,
+                output: crate::intent::Proposed,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_intent_propose"),
+                    http: post("/api/v1/intents/propose"),
+                    cli: Some(crate::capability::CliExposure { path: vec!["intent".into(), "propose".into()] }),
+                },
+                tags: ["intent", "project"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: intent_propose,
+            }
+            // The one thing its kind cannot say: this writes a tracked record, so every
+            // surface's exposure ceiling is the one a repository write has.
+            .writes_repository(),
         ],
     }
 }
@@ -567,6 +656,12 @@ mod tests {
                 "/api/v1/intents/binding",
                 &["intent", "binding"],
             ),
+            (
+                "intents.propose",
+                "majordomus_intent_propose",
+                "/api/v1/intents/propose",
+                &["intent", "propose"],
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -598,16 +693,18 @@ mod tests {
         }
     }
 
-    /// Nothing in this module writes: the stage is derived, so there is nothing to record.
+    /// One capability writes, and it only proposes: the stage is derived, so there is no
+    /// status to record and no transition (ADR 0070, ADR 0144).
     #[test]
-    fn no_intent_capability_writes_the_repository() {
-        for e in module().capabilities {
-            assert_ne!(
-                e.capability.execution.effect,
-                crate::capability::Effect::RepositoryMutation,
-                "{} claims to write",
-                e.capability.id
-            );
-        }
+    fn only_the_proposal_writes_the_repository() {
+        let writers: Vec<String> = module()
+            .capabilities
+            .iter()
+            .filter(|e| {
+                e.capability.execution.effect == crate::capability::Effect::RepositoryMutation
+            })
+            .map(|e| e.capability.id.as_str().to_string())
+            .collect();
+        assert_eq!(writers, ["intents.propose"]);
     }
 }

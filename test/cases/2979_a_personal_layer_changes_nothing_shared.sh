@@ -98,8 +98,19 @@ rm "$A/.ai/repo/workflows/task-lifecycle.md"
 B="$T/b"; dirty_repo "$B"; printf 'ours\n' > "$B/CLAUDE.md"; G -C "$B" add CLAUDE.md; G -C "$B" commit -qm claude
 ( cd "$B" && "$MJ" init --personal >/dev/null 2>&1 ) || { echo "    init --personal failed beside a tracked CLAUDE.md"; exit 1; }
 bbefore="$(status_of "$B")"
-rc=0; out="$(cd "$B" && "$MJ" update --force 2>&1)" || rc=$?
+# without --force first: the refusal must be the personal one, and must not advise forcing
+# a file that is the project's (the hand-edit protection used to answer here, and did)
+rc=0; out="$(cd "$B" && "$MJ" update 2>&1)" || rc=$?
 [ "$rc" = 15 ] || { echo "    update over a tracked target exited $rc, not 15: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q -- '--force' && { echo "    the refusal advises --force for the project's file: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'CLAUDE.md is tracked' || { echo "    the plain refusal does not name the file: $out"; exit 1; }
+rc=0; out="$(cd "$B" && "$MJ" update --dry-run 2>&1)" || rc=$?
+[ "$rc" = 15 ] || { echo "    a dry run over a tracked target exited $rc, not 15"; exit 1; }
+out="$(cd "$B" && "$MJ" doctor 2>&1 || true)"
+printf '%s\n' "$out" | grep -qE '^FAIL (bootstrap|projection) +CLAUDE.md' && { echo "    doctor holds the project's CLAUDE.md to this layer's rules: $(printf '%s\n' "$out" | grep 'CLAUDE.md')"; exit 1; }
+printf '%s\n' "$out" | grep -q '^INFO projection  *CLAUDE.md.*the project' || { echo "    doctor does not say the tracked target is the project's"; exit 1; }
+rc=0; out="$(cd "$B" && "$MJ" update --force 2>&1)" || rc=$?
+[ "$rc" = 15 ] || { echo "    update --force over a tracked target exited $rc, not 15: $out"; exit 1; }
 printf '%s\n' "$out" | grep -q 'CLAUDE.md is tracked' && printf '%s\n' "$out" | grep -q 'CLAUDE.local.md' || { echo "    the refusal does not name the file: $out"; exit 1; }
 [ "$(cat "$B/CLAUDE.md")" = ours ] || { echo "    the tracked file was rewritten"; exit 1; }
 [ ! -e "$B/AGENTS.md" ] || { echo "    a refused update wrote part of itself"; exit 1; }
@@ -137,6 +148,17 @@ printf '%s\n' "$out" | grep -q 'mj-tmp' && { echo "    --shared offers a staging
 [ -z "$(git -C "$S" diff --cached --name-only)" ] || { echo "    --shared staged something"; exit 1; }
 status_of "$S" | grep -q '^?? \.ai/' || { echo "    a shared layer is not offered to git"; exit 1; }
 git -C "$S" check-ignore -q .ai/local/state/decisions.md || { echo "    the local half of a shared layer is not ignored"; exit 1; }
+# a file that is one person's by its own name is not handed over with the layer
+L="$T/l"; dirty_repo "$L"
+( cd "$L" && "$MJ" init --personal >/dev/null 2>&1 ) || { echo "    the layer with a local projection could not be made"; exit 1; }
+sed -i.bak 's|^\( *target: *\)CLAUDE\.md$|\1CLAUDE.local.md|' "$L/.ai/repo/policy.yaml" && rm -f "$L/.ai/repo/policy.yaml.bak"
+grep -q 'target: CLAUDE.local.md' "$L/.ai/repo/policy.yaml" || { echo "    the fixture policy names no CLAUDE.md projection to retarget"; exit 1; }
+( cd "$L" && "$MJ" update >/dev/null 2>&1 ) || { echo "    update into CLAUDE.local.md failed"; exit 1; }
+out="$(cd "$L" && "$MJ" init --extend --shared 2>&1)" || { echo "    sharing a layer with a local projection failed: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'git add CLAUDE.local.md' && { echo "    --shared offers a personal file to the team: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'CLAUDE.local.md stays yours' || { echo "    --shared does not say the local file stays: $out"; exit 1; }
+git -C "$L" check-ignore -q CLAUDE.local.md || { echo "    the local file lost its cover when the layer was shared"; exit 1; }
+status_of "$L" | grep -q 'CLAUDE.local.md' && { echo "    a shared layer shows the personal file to git"; exit 1; }
 # and the executable goes back to the index the moment the layer is committed: nothing to set
 rc=0; out="$(cd "$S" && "$MJ" init --extend --shared 2>&1)" || rc=$?
 [ "$rc" = 15 ] || { echo "    sharing a layer that is not personal exited $rc, not 15: $out"; exit 1; }

@@ -382,15 +382,19 @@ mod tests {
 
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let ctx = context(&repo);
+        // this machine's own key is listed: a machine its trust list does not name keeps its
+        // mesh closed and hears nobody
+        let this = NodeIdentity::ephemeral().unwrap();
         let config: MeshConfig = serde_json::from_value(json!({
             "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
             "multicast": { "enabled": false },
+            "trust": { "allow": [this.public.public_key.clone()] },
         }))
         .unwrap();
         ctx.mesh
             .activate_as(
                 &config,
-                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                Arc::new(this),
                 "0000000000000001",
                 vec![],
                 vec!["root".into()],

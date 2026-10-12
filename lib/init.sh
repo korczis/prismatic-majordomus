@@ -171,8 +171,11 @@ H
   fi
   if [ "$shared" = 1 ]; then
     printf "shared: the cover is removed; these paths are now the repository's to commit, when you choose to:\n"
-    printf '%s\n' "$MJ_INIT_UNCOVERED" | sed -e '/\.mj-tmp$/d' -e 's|^/||' -e 's/^/  git add /' -e '/^  git add $/d'
+    printf '%s\n' "$MJ_INIT_UNCOVERED" | sed -e '/^kept /d' -e '/\.mj-tmp$/d' -e 's|^/||' -e 's/^/  git add /' -e '/^  git add $/d'
     printf '  git add .gitignore\n'
+    # a file that is one person's by its own name stays covered, and the policy still
+    # projects into it: the team's projection is theirs to name before the first commit
+    printf '%s\n' "$MJ_INIT_UNCOVERED" | sed -n 's|^kept /\(.*\)$|shared: \1 stays yours and stays covered; point that projection at the file the team reads before you commit the policy|p'
     printf "shared: %s stays this checkout's own, as in every layer\n" "$(mj_rel "$MJ_AI_LOCAL_DIR")/"
   fi
   cat <<OUT

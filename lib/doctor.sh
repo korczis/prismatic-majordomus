@@ -228,6 +228,12 @@ mj_validate_projection() {
       file|region) ;;
       *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' $(mj_rel "$MJ_POLICY_FILE")"; j=$((j+1)); continue ;;
     esac
+    # Under a personal layer a target git tracks is the project's own file. It was not
+    # written by update and will not be, so it is not held to a stamp it never had.
+    if mj_personal_is_the_projects "$tgt"; then
+      mj_doctrine_skip projection "$tgt" "tracked, so it is the project's; a personal layer leaves it alone (point this projection at a file of your own)"
+      j=$((j+1)); continue
+    fi
     st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
     case "$st" in
       # update would die on this; doctor is the command that is supposed to say so first
@@ -264,6 +270,7 @@ mj_validate_bootstrap() {
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
+    mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
     if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
     elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then

@@ -8101,6 +8101,115 @@
         "x-majordomus-cli": "intent preflight"
       }
     },
+    "/api/v1/intents/propose": {
+      "post": {
+        "operationId": "intents.propose",
+        "summary": "Propose an intent: what must become true",
+        "description": "Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.",
+        "tags": [
+          "intents"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `intents.propose`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentProposeInput"
+              },
+              "examples": {
+                "a sentence": {
+                  "value": {
+                    "statement": "Every page of the UI answers within 100 ms when warm"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Propose an intent: what must become true: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Proposed"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intents.propose",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "repository_mutation",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_propose"
+        },
+        "x-majordomus-cli": "intent propose"
+      }
+    },
     "/api/v1/intents/realization": {
       "get": {
         "operationId": "intent_realization.work",
@@ -38228,6 +38337,34 @@
         ],
         "description": "What a preflight concluded, about one issue or about the whole piece of work.\n\n```\nuse majordomus_cli::intent::IntentPreflightVerdict;\n// the words every surface answers with\nassert_eq!(\n    serde_json::to_string(&IntentPreflightVerdict::Maintenance).unwrap(),\n    \"\\\"maintenance\\\"\"\n);\nassert_ne!(IntentPreflightVerdict::Serves, IntentPreflightVerdict::Refused);\n```"
       },
+      "IntentProposeInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "statement": {
+            "type": "string",
+            "description": "What must become true, in the proposer's words; kept verbatim."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "One line naming it; the statement's first line when absent."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The identity and file name; the title's slug when absent."
+          }
+        },
+        "required": [
+          "statement"
+        ],
+        "description": "The input of `intents.propose`: what must become true, and optionally its title and id.\n\nNo milestone, criterion or invariant: a proposal says what is wanted, and planning it is a\nseparate act (ADR 0144). No timestamp either: the record is dated when it is written.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentProposeInput;\nlet i: IntentProposeInput =\n    serde_json::from_str(r#\"{\"statement\": \"The UI answers within 100 ms warm\"}\"#).unwrap();\nassert_eq!(i.title, None);\n// a field the input does not have is refused, never ignored\nassert!(serde_json::from_str::<IntentProposeInput>(r#\"{\"statement\": \"s\", \"stage\": \"x\"}\"#).is_err());\n```"
+      },
       "IntentRealization": {
         "type": "object",
         "properties": {
@@ -46863,6 +47000,34 @@
           "summary"
         ],
         "description": "One step of the cycle and what it said."
+      },
+      "Proposed": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, which is also the file name."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path of the record written."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line."
+          },
+          "statement": {
+            "type": "string",
+            "description": "What must become true, as it was given."
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "title",
+          "statement"
+        ],
+        "description": "What `propose` wrote: the identity, the file, and the record as it now reads.\n\n```\nuse majordomus_cli::intent::Proposed;\nlet p: Proposed = serde_json::from_str(\n    r#\"{\"id\": \"fast-ui\", \"path\": \".ai/repo/project/intents/fast-ui.yaml\",\n        \"title\": \"Fast UI\", \"statement\": \"The UI answers at once\"}\"#,\n)\n.unwrap();\n// the path is the identity under the intents directory: one answer to where it lives\nassert_eq!(p.path, format!(\".ai/repo/project/intents/{}.yaml\", p.id));\n```"
       },
       "Protocol": {
         "oneOf": [

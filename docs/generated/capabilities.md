@@ -36,7 +36,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `integration` | Pull-request integration | experimental | 7 | [`modules/integration.md`](modules/integration.md) |
 | `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
-| `intents` | Intent | behaviorally_verified | 6 | [`modules/intents.md`](modules/intents.md) |
+| `intents` | Intent | behaviorally_verified | 7 | [`modules/intents.md`](modules/intents.md) |
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
@@ -158,6 +158,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `intents.coverage` | `intents` | query | behaviorally_verified | `majordomus_intent_coverage` | — | `GET /api/v1/intents/coverage` | `majordomus intent coverage` | — | required |
 | `intents.list` | `intents` | query | behaviorally_verified | `majordomus_intents` | `majordomus://intents` | `GET /api/v1/intents` | `majordomus intent list` | process, 2 entries, per checkout state | required |
 | `intents.preflight` | `intents` | query | behaviorally_verified | `majordomus_intent_preflight` | — | `GET /api/v1/intents/preflight` | `majordomus intent preflight` | — | required |
+| `intents.propose` | `intents` | command | experimental | `majordomus_intent_propose` | — | `POST /api/v1/intents/propose` | `majordomus intent propose` | — | waived (destructive) |
 | `intents.record` | `intents` | query | behaviorally_verified | `majordomus_intent_record` | — | `GET /api/v1/intents/record` | `majordomus intent show` | — | required |
 | `intents.validate` | `intents` | query | behaviorally_verified | `majordomus_intent_validate` | — | `GET /api/v1/intents/validate` | `majordomus intent validate` | — | required |
 | `knowledge_base.candidates` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_candidates` | `majordomus://knowledge-candidates` | `GET /api/v1/knowledge/candidates` | `majordomus knowledge candidates` | — | required |

@@ -484,6 +484,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intents.propose",
+      "path": "/evidence/capabilities/intents-propose/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intents.record",
       "path": "/evidence/capabilities/intents-record/"
     },
@@ -2724,6 +2729,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent propose",
+      "path": "/evidence/commands/intent-propose/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent realization",
       "path": "/evidence/commands/intent-realization/"
     },
@@ -4768,6 +4778,18 @@
       "programs": [],
       "members": [
         "command:intent preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.propose": {
+      "kind": "capability",
+      "id": "intents.propose",
+      "page": "/evidence/capabilities/intents-propose/",
+      "programs": [],
+      "members": [
+        "command:intent propose"
       ],
       "routes": [],
       "mechanisms": [],
@@ -14578,6 +14600,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent propose": {
+      "kind": "command",
+      "id": "intent propose",
+      "page": "/evidence/commands/intent-propose/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent realization": {
       "kind": "command",
       "id": "intent realization",
@@ -19528,6 +19569,18 @@
       "programs": [],
       "members": [
         "capability:intents.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_propose": {
+      "kind": "mcp",
+      "id": "majordomus_intent_propose",
+      "alias_of": "capability:intents.propose",
+      "programs": [],
+      "members": [
+        "capability:intents.propose"
       ],
       "routes": [],
       "mechanisms": [],
@@ -26923,6 +26976,7 @@
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
+    "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",

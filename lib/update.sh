@@ -66,6 +66,10 @@ H
       fi
     fi
 
+    # A target the project tracks is refused here, while planning: before the hand-edit
+    # protection below can advise --force for a file that is somebody else's (ADR 0145).
+    mj_personal_refuse_tracked "$tgt"
+
     # what is on disk: the content this projection owns, and the hash its own stamp claims
     local have_c="" want_c="" present=0 cur="$tmp/cur.$i"
     : > "$cur"

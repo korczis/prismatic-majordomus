@@ -40,7 +40,7 @@ debug build on a machine at load 20; a release build is three to five times fast
 shape is the same):
 
 | Route | Every request | First request after a start or a change |
-|---|---:|---:|
+|---|---|---|
 | `/ui` | 2.2-2.5 s | 2.3 s |
 | `/ui/roadmap` | 0.08-0.12 s | 8.1 s |
 | `/ui/evidence` | 0.07-0.09 s | 5.6 s |
