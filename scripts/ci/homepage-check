@@ -270,7 +270,11 @@ if os.path.exists(build_path):
         build = json.load(f)
 cat_path = os.path.join(root, "site", "data", "generated", "catalogue.json")
 catalogue = load_json("site/data/generated/catalogue.json") if os.path.exists(cat_path) else {}
-latest = dist.get("latest") or {}
+# The release card reads the release this build offers, which scripts/site-build derives into
+# build.json from the newest record and from what gh-pages already serves; the record's own
+# `latest` in distribution.json is one of its inputs and no longer what the page states
+# (project.the-site-offers-the-release-it-published).
+latest = build.get("release") or {}
 commit = build.get("commit") or ""
 expect = {
     "release": [latest.get("version")] if latest.get("version") else ["unknown"],

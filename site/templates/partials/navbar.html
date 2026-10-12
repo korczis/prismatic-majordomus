@@ -33,9 +33,13 @@
 
          No fallback to project.version when there is no release. A repository with nothing
          released shows no badge, because the alternative is to state a version that does not
-         exist, which is the defect this replaces. #}
-      {% if project.release %}
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ project.release }}</span>
+         exist, which is the defect this replaces.
+
+         And it is the release that was PUBLISHED, not only the one recorded on master: `offered`
+         (base.html, derived by scripts/site-build) is the newer of the two, so the badge moves
+         when the release does rather than when its record's pull request lands. #}
+      {% if offered %}
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ offered.version }}</span>
       {% endif %}
     </a>
     <div class="flex items-center gap-2 md:order-2">

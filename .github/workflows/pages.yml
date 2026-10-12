@@ -282,17 +282,17 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. The job's 36 covers the sum of every step's bound — the evidence
-  # read before the build, and after the probe the reads of GitHub's build, of the documentation
-  # and of the crate's public reference — plus the unbounded checkout, setup, download and report
-  # steps on a cold runner, and leaves the job's bound where it belongs: as the last resort
-  # behind every step's own. No sum is written here, because a step's bound changes without this
+  # file says never to budget. The job's 38 covers the sum of every step's bound — the evidence
+  # read before the build, and after the probe the reads of GitHub's build, of the documentation,
+  # of the crate's public reference and of the release the site offers — plus the unbounded
+  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
+  # where it belongs: as the last resort behind every step's own. No sum is written here, because a step's bound changes without this
   # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
   deploy:
     needs: [owed, rustdoc]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 36
+    timeout-minutes: 38
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -437,6 +437,21 @@ jobs:
         if: steps.public.outcome == 'success'
         timeout-minutes: 6
         run: scripts/pages verify-rustdoc --commit "$GITHUB_SHA" --timeout 300
+
+      # The release it offers, as served: the homepage's offered release, /releases/latest.json
+      # and GitHub's newest release name one version, or GitHub published it less than
+      # deploy.release_window ago (project.the-site-offers-the-release-it-published). The build
+      # derives the offer from the record and from what gh-pages already serves (scripts/site-build),
+      # so the run a release asks for after publishing its metadata is the one that moves the
+      # homepage. Until 2026-10-12 the pages read the record alone and offered the previous
+      # release for hours with every check here green. Runs once the site serves this commit, so
+      # what it finds is this build's; a disagreement past the window fails the deployment.
+      - name: the release it offers
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages release-live
 
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #
