@@ -84,8 +84,9 @@ pub enum Target {
     /// bootstrap still has providers, and a fixture that checks its bootstraps alone is not
     /// asked for a document it never wrote.
     Providers,
-    /// The files Zed and Google Antigravity read from a project: `.agents/skills/<name>/
-    /// SKILL.md` for every active skill and `.zed/tasks.json` from the tracked justfile
+    /// The files Zed and Google Antigravity read from a project: one
+    /// `.agents/skills/<id>/SKILL.md` per active skill and `.zed/tasks.json` from the tracked
+    /// justfile
     /// (see [`crate::editors`], ADR 0140).
     Editors,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
