@@ -54,6 +54,12 @@ a check passed, it failed.
   A capability's own policy says what its answer is kept under: the registry fingerprint,
   the context's reading of the repository (`generation`), or the checkout's state as well
   (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
+  The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
+  repository changed before it shows the reading it has, marked stale (50 by default; see
+  [`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#fast-and-current)). `wait` makes every read wait for
+  a current reading, which is what a test that changes a repository and then reads a page
+  needs to be exact.
 
 ---
 

@@ -299,6 +299,7 @@ pub(crate) mod tests {
             exposure: Default::default(),
             value,
             took: Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         }
     }
 
