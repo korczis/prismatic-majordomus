@@ -103,3 +103,14 @@ harness = false
 
 [profile.release]
 strip = true
+
+# The source parser runs at run time, not only inside proc macros: `generate --check`, which
+# `scripts/pages current` asks on every commit, parses the whole crate with syn to route the
+# rustdoc modules the site renders, and unoptimised syn was a quarter of that check — the
+# share that grows with the crate. Optimising these two crates changes no behaviour (overflow
+# checks and debug assertions keep the dev profile's values) and keeps test/cases/56's bound.
+[profile.dev.package.syn]
+opt-level = 3
+
+[profile.dev.package.proc-macro2]
+opt-level = 3
