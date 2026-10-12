@@ -40,6 +40,34 @@
 //! it makes every `execute` do. [`PATIENCE_SWITCH`] set to `wait` keeps the store and makes
 //! every read wait for a current reading, which is what a test that changes a repository
 //! and then reads a page needs in order to be exact.
+//!
+//! # A reading, from first to known
+//!
+//! ```
+//! use majordomus_cli::capability::readings::{read, Freshness, Patience};
+//! use majordomus_cli::synthetic::SyntheticRepository;
+//! use serde_json::json;
+//!
+//! let repo = SyntheticRepository::small().unwrap();
+//! let ctx = repo.context().unwrap();
+//!
+//! // never read here: the caller waits for the first reading, and it is current
+//! let first = read(&ctx, "plan.status", json!({}), Patience::WAIT);
+//! assert_eq!(first.freshness, Freshness::Current);
+//! assert!(first.value.is_ok() && first.read_at.is_some());
+//!
+//! // known now: handed over from memory, with the age it has, and no handler runs for it
+//! let ran = ctx.executor.handler_invocations();
+//! let again = read(&ctx, "plan.status", json!({}), Patience::PAGE);
+//! assert_eq!(again.value, first.value);
+//! assert!(again.age.is_some() && !again.catching_up());
+//! assert_eq!(ctx.executor.handler_invocations(), ran);
+//!
+//! // a source that cannot answer is a reading that says why, never a missing one
+//! let unknown = read(&ctx, "no.such.capability", json!({}), Patience::WAIT);
+//! assert!(unknown.value.is_err());
+//! assert_eq!(unknown.freshness, Freshness::Current);
+//! ```
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
@@ -70,6 +98,19 @@ pub const MAX_SOURCES: usize = 512;
 pub const PATIENCE_SWITCH: &str = "MAJORDOMUS_READING_PATIENCE_MS";
 
 /// How long a read waits for a worker before it returns what it has.
+///
+/// ```
+/// use majordomus_cli::capability::readings::Patience;
+/// use std::time::Duration;
+///
+/// // a page waits a minute for a first reading and 50 ms for a moved repository
+/// assert_eq!(Patience::PAGE.cold, Duration::from_secs(60));
+/// assert_eq!(Patience::PAGE.moved, Duration::from_millis(50));
+/// // an exact read waits for as long as it takes
+/// assert_eq!(Patience::WAIT.moved, Duration::MAX);
+/// let brief = Patience { cold: Duration::from_millis(5), moved: Duration::ZERO };
+/// assert!(brief.moved < Patience::PAGE.moved);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Patience {
     /// For a source that has never been read in this process.
@@ -98,11 +139,12 @@ impl Patience {
     /// screen asserts on a current reading and never on a timing.
     ///
     /// ```
-    /// use majordomus_cli::capability::readings::Patience;
-    /// assert_eq!(Patience::parse(Some("wait")), Some(Patience::WAIT));
-    /// assert_eq!(Patience::parse(Some("20")).map(|p| p.moved.as_millis()), Some(20));
-    /// assert_eq!(Patience::parse(Some("soon")), None, "not a number and not `wait`");
-    /// assert_eq!(Patience::parse(None), None);
+    /// use majordomus_cli::capability::readings::{Patience, PATIENCE_SWITCH};
+    ///
+    /// // what the switch says when it is set and means something, a page's patience otherwise
+    /// let set = std::env::var(PATIENCE_SWITCH).ok();
+    /// let expected = Patience::parse(set.as_deref()).unwrap_or(Patience::PAGE);
+    /// assert_eq!(Patience::of_process(), expected);
     /// ```
     pub fn of_process() -> Patience {
         let set = std::env::var(PATIENCE_SWITCH).ok();
@@ -113,7 +155,19 @@ impl Patience {
         }
     }
 
-    /// What a value of [`PATIENCE_SWITCH`] means, or `None` when it means nothing.
+    /// What a value of [`PATIENCE_SWITCH`] means, or `None` when it means nothing: `wait`
+    /// is [`Patience::WAIT`], and a number is that many milliseconds for a repository that
+    /// has moved, with a first reading waited for no less than a page waits.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::readings::Patience;
+    /// assert_eq!(Patience::parse(Some("wait")), Some(Patience::WAIT));
+    /// let twenty = Patience::parse(Some(" 20 ")).unwrap();
+    /// assert_eq!(twenty.moved.as_millis(), 20);
+    /// assert_eq!(twenty.cold, Patience::PAGE.cold, "a first reading is still waited for");
+    /// assert_eq!(Patience::parse(Some("soon")), None, "not a number and not `wait`");
+    /// assert_eq!(Patience::parse(None), None);
+    /// ```
     pub fn parse(value: Option<&str>) -> Option<Patience> {
         let value = value?.trim();
         if value == "wait" {
@@ -128,6 +182,25 @@ impl Patience {
 }
 
 /// How a reading stands against the repository as it is now.
+///
+/// ```
+/// use majordomus_cli::capability::readings::{read, Freshness, Patience};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// use std::time::Duration;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// // a caller with no patience at all is told the first reading is pending, or handed it
+/// // when the worker was quicker than the caller: never anything in between
+/// let none = Patience { cold: Duration::ZERO, moved: Duration::ZERO };
+/// let first = read(&ctx, "plan.status", serde_json::json!({}), none);
+/// assert!(matches!(first.freshness, Freshness::Pending | Freshness::Current));
+/// // and a caller that waits is handed a current one; nothing here moved the repository,
+/// // so nothing is `Freshness::Stale`
+/// let waited = read(&ctx, "plan.status", serde_json::json!({}), Patience::WAIT);
+/// assert_eq!(waited.freshness, Freshness::Current);
+/// assert_ne!(waited.freshness, Freshness::Stale);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Freshness {
     /// Read in the repository as it is now.
@@ -139,6 +212,20 @@ pub enum Freshness {
 }
 
 /// The latest reading of one source.
+///
+/// ```
+/// use majordomus_cli::capability::readings::{read, Freshness, Latest, Patience};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let latest: Latest = read(&ctx, "plan.status", serde_json::json!({}), Patience::WAIT);
+/// // what the source answered, how long that took, when it was read and how it stands
+/// assert!(latest.value.is_ok());
+/// assert!(latest.read_at.is_some() && latest.age.is_some());
+/// assert_eq!(latest.freshness, Freshness::Current);
+/// assert!(latest.took >= std::time::Duration::ZERO);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Latest {
     /// What the source answered, or why it could not. `Err` for a pending reading too.
@@ -170,6 +257,20 @@ impl Latest {
 
     /// Whether a reader should be told that what they see is about to be replaced: the
     /// reading is not of the repository as it is now.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::readings::{read, Freshness, Patience};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let mut latest = read(&ctx, "plan.status", serde_json::json!({}), Patience::WAIT);
+    /// assert!(!latest.catching_up(), "a current reading is not about to be replaced");
+    /// latest.freshness = Freshness::Stale;
+    /// assert!(latest.catching_up());
+    /// latest.freshness = Freshness::Pending;
+    /// assert!(latest.catching_up());
+    /// ```
     pub fn catching_up(&self) -> bool {
         self.freshness != Freshness::Current
     }
@@ -246,7 +347,7 @@ struct Queue {
 
 /// The latest readings of one executor.
 #[derive(Debug, Default)]
-pub struct Readings {
+pub(crate) struct Readings {
     slots: Mutex<HashMap<Key, Arc<Slot>>>,
     world: Mutex<Option<World>>,
     queue: Mutex<Queue>,
@@ -258,7 +359,7 @@ fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
 
 impl Readings {
     /// How many sources are remembered.
-    pub fn remembered(&self) -> usize {
+    pub(crate) fn remembered(&self) -> usize {
         lock(&self.slots).len()
     }
 
@@ -328,6 +429,21 @@ impl Readings {
 /// The latest reading of `id` asked with `input`: what this process knows now, returned
 /// within `patience`, with a worker reading the source again behind the caller whenever
 /// what is known is not current. See the module for what each case costs.
+///
+/// ```
+/// use majordomus_cli::capability::readings::{read, Patience};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// use serde_json::json;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let reading = read(&ctx, "plan.status", json!({}), Patience::WAIT);
+/// // a reading holds what `execute` answers: it is the same source, asked the same way
+/// assert_eq!(reading.value.ok(), ctx.execute("plan.status", json!({})).ok());
+/// // one source per input: asked again it is remembered, not read a second time
+/// read(&ctx, "plan.status", json!({}), Patience::PAGE);
+/// assert_eq!(ctx.executor.readings_remembered(), 1);
+/// ```
 pub fn read(ctx: &Context, id: &str, input: Value, patience: Patience) -> Latest {
     if bypassed() {
         let started = Instant::now();
