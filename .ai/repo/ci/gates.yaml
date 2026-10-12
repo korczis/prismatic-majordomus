@@ -10,6 +10,9 @@
 #     never the first match), so an overlap can only widen a plan;
 #   - a class whose gates are the word `full` escalates the whole plan;
 #   - a changed path that no class matches escalates the whole plan, and the plan names it;
+#   - a class's `except` lists single paths (never patterns) its patterns cover and it does
+#     not: the path still falls in every other class that matches it. It is how a data file
+#     under an escalating directory is planned by its readers instead of escalating;
 #   - `implies` adds a gate whenever its parent is selected (a full Rust gate includes the
 #     registry checks); `requires` names the gate a gate cannot run without (the probe needs
 #     the built site), which the planner adds;
@@ -366,7 +369,7 @@ gates:
   - id: cockpit-assets
     job: site
     runs: scripts/cockpit-assets --check
-    summary: the committed Cockpit stylesheet matches the source it is compiled from
+    summary: every committed stylesheet of the browser surfaces (the Cockpit's and the UI's) matches the source it is compiled from
 
   # A grep over six files, so it costs nothing and runs in every plan. ADR 0012 decides that
   # no Cockpit page reads the index directly — a page that does is outside the executor, the
@@ -694,10 +697,27 @@ gates:
     summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
 
 classes:
-  # the pipeline itself: a change here can only be validated by running everything
+  # the pipeline itself: a change here can only be validated by running everything.
+  # `except` names the files under .ai/repo/ci/ that are data, not pipeline: each is read by
+  # named gates only, found by grepping every reader, and planned by `ci-data` below. They
+  # are single paths on purpose — a file that appears under .ai/repo/ci/ tomorrow escalates
+  # until someone names its readers. Replayed over the forty master merges before this
+  # change: sixteen plans were full, and one of them (#881) only because of a file now named
+  # here; the other fifteen also changed a pipeline definition and still escalate.
   - id: ci
     paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile, .just/**]
+    except: [.ai/repo/ci/suite-durations.tsv, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/github-drift-baseline.txt, .ai/repo/ci/baseline.json, .ai/repo/ci/README.md]
     gates: full
+
+  # the pipeline's data, by reader. suite-durations.tsv is how test/run.sh deals the shards
+  # (case 721 proves the deal); case-numbers-baseline.txt is scripts/case-numbers' ratchet
+  # (also in `cases`); github-drift-baseline.txt is scripts/ci/github-check's ratchet;
+  # baseline.json is the record scripts/ci-baseline writes and only it reads; README.md is
+  # the directory's contract. Every one of them is also under `layer`, which plans what reads
+  # .ai/ as objects of the index, so the union stays at least that wide.
+  - id: ci-data
+    paths: [.ai/repo/ci/suite-durations.tsv, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/github-drift-baseline.txt, .ai/repo/ci/baseline.json, .ai/repo/ci/README.md]
+    gates: [shell-suite, case-numbers, github-projection]
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline.
   # The crate's sources and the web module that serves the reference are under
@@ -774,6 +794,14 @@ classes:
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs, scripts/lib/ui-routes.mjs]
     gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check, design, ui-audit]
+
+  # the UI's own assets and screens (`majordomus ui`, ADR 0135): its stylesheet source, its
+  # compiled stylesheet and script, and the Rust module that renders it. Without this class
+  # a change under share/ui/ matched only `share`, which does not select cockpit-assets, so
+  # a stale compiled ui.css would have passed.
+  - id: ui
+    paths: [share/ui/**, apps/majordomus-cli/src/ui/**]
+    gates: [cockpit-assets, cockpit-probe, rust-check, rust-integration, design, ui-audit]
 
   # the design tokens and their projections. The canonical file reaches every surface, so a
   # change here is selected by the site, the Cockpit and the crate at once; the class exists

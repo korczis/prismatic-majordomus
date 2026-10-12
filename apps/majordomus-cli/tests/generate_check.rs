@@ -83,3 +83,26 @@ fn generate_writes_check_agrees_tampering_is_detected_and_check_never_writes() {
     assert!(stdout.contains("openapi.json") && !stdout.contains("capabilities.md"));
     assert_eq!(std::fs::read_to_string(&openapi).unwrap(), first);
 }
+
+/// A deployment's image pins the Rust the repository builds with, read from its
+/// `rust-toolchain.toml`; a repository that declares a deployment and no exact pin is refused,
+/// naming the file, rather than given a builder version nobody chose.
+#[test]
+fn a_deployment_without_an_exact_rust_pin_is_refused() {
+    let f = Fixture::new();
+    let out = f.path("out");
+    let out_s = out.to_str().unwrap();
+    let (code, _, err) = run_in(&f.root(), &["generate", "deployment", "--out", out_s], "");
+    assert_eq!(code, 0, "{err}");
+    let dockerfile = std::fs::read_to_string(out.join("deploy/Dockerfile"))
+        .expect("the image definition is generated");
+    assert!(
+        dockerfile.contains("\nFROM rust:1.98.1-alpine"),
+        "the builder is not the fixture's pin:\n{dockerfile}"
+    );
+
+    f.remove("rust-toolchain.toml");
+    let (code, _, err) = run_in(&f.root(), &["generate", "deployment", "--out", out_s], "");
+    assert_ne!(code, 0, "a deployment with no Rust pin was rendered");
+    assert!(err.contains("rust-toolchain.toml"), "{err}");
+}

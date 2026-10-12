@@ -1574,7 +1574,11 @@ fn refresh_step(
     let within = REFRESHED_HEAD_REPORTS_WITHIN.as_secs() as i64;
     if let Some(waiting) = first.assessments.iter().find(|a| {
         a.disposition == PullRequestDisposition::WaitingForChecks
-            && matches!(a.relation, super::RelationToMaster::UpToDate { .. })
+            && matches!(
+                a.relation,
+                super::RelationToMaster::UpToDate { .. }
+                    | super::RelationToMaster::CarriesMaster { .. }
+            )
             && pushed
                 .get(&(a.number, a.evaluated_against.head_sha.clone()))
                 .is_some_and(|at| {
@@ -2446,6 +2450,7 @@ impl Integrator for ForgeIntegrator<'_> {
             // rerere off: a resolution recorded during some other merge is a memory of what
             // one person decided about two other commits, and replaying it here would resolve
             // paths nobody decided on
+            let policy = super::allocate::policy_at(root, &master)?;
             if let Err(e) = git_in(&[
                 "-c",
                 "rerere.enabled=false",
@@ -2454,11 +2459,26 @@ impl Integrator for ForgeIntegrator<'_> {
                 "--no-ff",
                 &master,
             ]) {
-                let why = unmerged_paths(root, &dir, &master)
-                    .unwrap_or(format!("the merge of master conflicts after all: {e}"));
-                let _ = git_in(&["merge", "--abort"]);
-                return Err(why);
+                // under allocation at landing a conflict on the version line alone is ours; a
+                // resolution that cannot be made is no resolution: the merge is aborted and the
+                // unmerged paths are the refusal, rather than a merge left half-done in the
+                // scratch worktree (relation.rs classed the conflict before a refresh is tried,
+                // so only a git or file-system failure in between reaches this)
+                let resolved = policy.allocation == crate::release::landing::Allocation::Landing
+                    && super::allocate::resolve_version_conflict(&dir).unwrap_or(false);
+                if !resolved {
+                    let why = unmerged_paths(root, &dir, &master)
+                        .unwrap_or(format!("the merge of master conflicts after all: {e}"));
+                    let _ = git_in(&["merge", "--abort"]);
+                    return Err(why);
+                }
             }
+            // the number this landing takes, from master as it is now (ADR 0134); the derive
+            // below projects it
+            let allocated = super::allocate::allocate_in(root, &dir, &master, &head, &policy)
+                .inspect_err(|_| {
+                    let _ = git_in(&["merge", "--abort"]);
+                })?;
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");
             let derive = Command::new(dir.join("scripts/derive"))
@@ -2480,7 +2500,11 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             git_in(&["add", "-A"])?;
-            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            let mut message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            if let Some(decision) = &allocated {
+                message.push_str("\n\n");
+                message.push_str(&super::allocate::trailer(decision));
+            }
             let commit = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
@@ -3166,6 +3190,33 @@ mod obsolete_and_plan_tests {
         }
         fn reopen(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
             panic!("cleanup reopened #{pr}")
+        }
+    }
+
+    /// A head waiting for its checks holds the refresh pipeline only when it holds master: one
+    /// still behind it (or of an unknown relation) is no run of the executor's to wait for.
+    #[test]
+    fn a_head_waiting_for_checks_that_does_not_hold_master_holds_no_pipeline() {
+        let dir = tempfile::tempdir().unwrap();
+        for relation in [
+            RelationToMaster::Behind {
+                behind: 1,
+                authored: vec!["src/a.rs".into()],
+            },
+            RelationToMaster::Unknown {
+                reason: "not asked".into(),
+            },
+        ] {
+            let mut q = queue(&[(&[], false)]);
+            q.assessments[0].disposition = PullRequestDisposition::WaitingForChecks;
+            q.assessments[0].relation = relation.clone();
+            q.next_refresh.clear();
+            let mut w = Fixed(q.clone());
+            assert_eq!(
+                refresh_step(dir.path(), &mut w, &q, true),
+                Ok(None),
+                "{relation:?}"
+            );
         }
     }
 

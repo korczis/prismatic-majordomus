@@ -817,9 +817,14 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                     reason: refusal.to_string(),
                 }
             })?;
+            // The builder pins the toolchain the repository builds with, read from the one
+            // file that declares it; a repository without an exact pin cannot render one.
+            let rust = crate::deploy::render::builder_rust(app.repository.root())
+                .map_err(|reason| Error::InvalidDeployment { reason })?;
             out.extend(crate::deploy::render::artifacts(
                 &deployment,
                 &object.provenance.path,
+                &rust,
             ));
         }
     }
@@ -963,6 +968,11 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
     Ok(out)
 }
 
+/// A source file a projection compiles, read as text: a failure names the path it read.
+fn read_source(path: &Path) -> Result<String> {
+    std::fs::read_to_string(path).map_err(|e| Error::io(path, e))
+}
+
 /// A file of the tool's data directory, read as text.
 /// Every projection of the design system. The declaration is read from the tool's data
 /// directory, validated, and rendered by [`crate::design::render`]; a stylesheet that would
@@ -1036,6 +1046,7 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
     for path in [
         render::COMPILED_MARK,
         "share/cockpit/favicon.svg",
+        crate::ui::FAVICON,
         "site/static/favicon.svg",
         "site/static/images/logo-mark.svg",
     ] {
@@ -1054,6 +1065,23 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         version,
         &logo,
     ));
+
+    // the kit's icons, declared once beside the site's templates and compiled into the
+    // crate for the UI's shell (ADR 0135), so the two surfaces draw one icon set. A tree
+    // without the site (a design fixture holds `share/` alone) has no set to compile and no
+    // crate to compile it into; in this repository the set is present, and `ui::icons`
+    // holds the compiled copy equal to it in a test, so its absence cannot pass unnoticed.
+    let icons_path = app.repository.root().join(crate::ui::icons::SOURCE);
+    if icons_path.is_file() {
+        let icons = read_source(&icons_path)?;
+        out.push(Artifact::comment_text(
+            crate::ui::icons::COMPILED,
+            "ui-icons",
+            format!("{}, the kit's icons", crate::ui::icons::SOURCE),
+            version,
+            &icons,
+        ));
+    }
 
     // the site's dataset and the reference documents
     out.push(Artifact::verbatim(
@@ -1546,16 +1574,7 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             })
             .collect();
         cases.dedup();
-        let cache = match c.cache {
-            crate::capability::CachePolicy::Disabled => "—".to_string(),
-            crate::capability::CachePolicy::Process {
-                max_entries,
-                ttl_seconds,
-            } => match ttl_seconds {
-                Some(ttl) => format!("process, {max_entries} entries, {ttl}s"),
-                None => format!("process, {max_entries} entries"),
-            },
-        };
+        let cache = c.cache.summary();
         let kind = serde_json::to_value(c.kind)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
@@ -1584,6 +1603,22 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
             t.transport().name(),
             t.description()
         ));
+    }
+    s.push_str("\n## UI pages\n\nEvery screen and panel of the UI's own route list, read with `GET` and `Accept: text/html`: a screen over the pinned context and over the live view a served process answers from (which pays the per-request git stamp), a panel over the pinned context only. Each is measured cold (the capability cache cleared before every sample) and warm. A deferred panel is one the UI pulls in after the screen, because its source is slow; only the `full` profile measures it, with `cold_spawns` samples.\n\n| key | route | view | deferred |\n|---|---|---|---|\n");
+    for t in projection.pages() {
+        if let crate::bench::TargetKind::Page {
+            route,
+            view,
+            deferred,
+        } = &t.kind
+        {
+            s.push_str(&format!(
+                "| `{}` | `{route}` | {} | {} |\n",
+                t.key,
+                view.name(),
+                if *deferred { "yes" } else { "—" }
+            ));
+        }
     }
     s.push_str("\nCache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.\n");
     s
@@ -1772,6 +1807,15 @@ pub fn benchmark_document(ctx: &Context) -> Value {
             "transport": s.transport().name(),
             "measures": s.description(),
         })).collect::<Vec<_>>(),
+        "pages": projection.pages().filter_map(|t| match &t.kind {
+            crate::bench::TargetKind::Page { route, view, deferred } => Some(serde_json::json!({
+                "key": t.key,
+                "route": route,
+                "view": view.name(),
+                "deferred": deferred,
+            })),
+            _ => None,
+        }).collect::<Vec<_>>(),
     })
 }
 
@@ -2711,17 +2755,7 @@ fn enum_name<T: serde::Serialize>(v: T) -> String {
 }
 
 fn cache_cell(policy: crate::capability::CachePolicy) -> String {
-    match policy {
-        crate::capability::CachePolicy::Disabled => "—".into(),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: None,
-        } => format!("process, {max_entries} entries"),
-        crate::capability::CachePolicy::Process {
-            max_entries,
-            ttl_seconds: Some(ttl),
-        } => format!("process, {max_entries} entries, {ttl}s"),
-    }
+    policy.summary()
 }
 
 fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
@@ -2740,6 +2774,19 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    /// A source that cannot be read is refused with its path, never compiled as empty.
+    #[test]
+    fn a_source_that_cannot_be_read_is_refused_with_its_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("icons.toml");
+        let Err(Error::Io { path: named, .. }) = read_source(&path) else {
+            panic!("a missing source was read");
+        };
+        assert_eq!(named, path);
+        std::fs::write(&path, "[icons]\n").unwrap();
+        assert_eq!(read_source(&path).unwrap(), "[icons]\n");
+    }
 
     /// `docs/generated/web.json` is committed and `generate --check` compares it, so it
     /// may hold nothing that depends on which producers ran in the checkout that wrote it.

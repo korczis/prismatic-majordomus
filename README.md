@@ -348,6 +348,21 @@ majordomus mesh verify      # a live round with every peer, and whether the stat
 The guarantees and their tests — separate processes over TCP, and a container lab that
 partitions and kills nodes on a real network — are in `docs/MESH.md`.
 
+To follow all of it, and the executor's merges and GitHub's runs beside it, in one stream,
+use `majordomus monitor`. It folds away the heartbeat noise, puts what names you first, and
+resumes from one cursor across every source:
+
+<!-- majordomus:unrun they follow a running server's stream, and --follow does not end on its own; cases 1050 and 1051 run these commands against a server with a declared mesh -->
+```sh
+majordomus monitor --for 1b                # the last hour, what names 1b first
+majordomus monitor --follow                # keep printing what is new
+majordomus monitor --follow --match '#885' --until merged --timeout 1h   # wait for one merge
+```
+
+The same stream is `majordomus_monitor` over MCP, `GET /api/v1/monitor`, and the Cockpit's
+`/cockpit/monitor`. Every session-start briefing prints a line of it. `docs/MONITOR.md` is
+the manual, and ADR 0133 is the decision.
+
 Beside it, `share/models.yaml` declares the AI models this tool's world can name —
 vendors, canonical ids, capabilities, context windows, provenance stated and pricing
 deliberately absent — and `majordomus models route` answers which model a stated need
@@ -488,8 +503,9 @@ fails the build before it can be deployed. The contract is
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
-just serve                      # the shared server alone: the home page at /, the docs at /docs/, the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
+just serve                      # the shared server alone: the home page at /, the UI at /ui, the docs at /docs/, the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
 just home                       # open the running server's home page: every surface it serves
+just open ui                    # open the running server's UI (majordomus ui) in a browser
 just cockpit                    # open the running server's Cockpit in a browser
 just site-docs                  # build the documentation for the running server's /docs/ mount
 just cockpit-assets             # build the Cockpit's stylesheet and vendor its pinned libraries (needs npm ci)
@@ -513,7 +529,20 @@ its rows on the module, MCP, API and benchmark pages and its links come out of t
 benchmarked through the real transports and every claim about speed is a recorded
 measurement ([`docs/CAPABILITIES.md`](docs/CAPABILITIES.md), ADR 4).
 
-**A control plane for a person.** The same server renders the registry as pages at
+**The delivery, for a person.** `majordomus ui` at `/ui` is the surface a person is sent to
+first: how the delivery stands — health, the release live and the one the commits imply, the
+roadmap and its milestones, the issues and the pull-request drain, the mesh, CI/CD and
+deployments, the evidence and the rules — on screens composed only of what
+capabilities answered. Every tile and panel names the capability it read, the route, command
+and MCP tool that serve the same answer, and its technical view in the Cockpit; a value a
+source does not carry reads `none` or `not answered`, never zero. Slow sources, such as the
+pull-request queue, are panels on routes of their own, so a screen paints in the time of its
+fastest sources ([`docs/MAJORDOMUS_UI.md`](docs/MAJORDOMUS_UI.md),
+[ADR 135](.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md)).
+
+![The UI's dashboard: health, releases, the plan and the mesh, each citing its source](site/static/images/ui/ui-dashboard-1440.png)
+
+**A control plane for a person.** Beneath the UI, the same server renders the registry as pages at
 `/cockpit`: what this repository holds, which capabilities exist and where each came from,
 a form generated from every capability's own input schema that calls its real route, the
 graphs the layer already implies (rule dependencies, decisions and what they put in force,
@@ -538,7 +567,7 @@ that capability's own descriptor
 
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
 projection beside its stdio session and logs the URL and every surface it serves (the home
-page at `/`, the documentation at `/docs/`, the Cockpit at `/cockpit`, Swagger UI at
+page at `/`, the UI at `/ui`, the documentation at `/docs/`, the Cockpit at `/cockpit`, Swagger UI at
 `/swagger`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
 attaches to it instead of starting another, and the server ends when its last client
 leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
@@ -548,7 +577,7 @@ environment, and every server started there binds it
 ([`docs/MCP.md`](docs/MCP.md#the-machine-names-the-interface)).
 
 **One web surface, discovered from its producer.** What the server serves is not a list
-anybody keeps. A *surface* — the home page, the documentation, the Cockpit, Swagger UI, the
+anybody keeps. A *surface* — the home page, the UI, the documentation, the Cockpit, Swagger UI, the
 OpenAPI document, the capability routes, MCP over HTTP, a generated test or benchmark
 report — is discovered from the thing that produces it: the executable's own declarations,
 the site's configuration, or a `surface.json` a producer writes beside its output. One
@@ -562,7 +591,8 @@ appears in all of them with no registration anywhere.
 /swagger        Swagger UI over the OpenAPI document
 /openapi.json   the OpenAPI document, generated from the registry
 /api/v1/        the capability routes; /api/v1/web/surfaces is this topology as JSON
-/cockpit        the registry rendered for a person
+/ui             majordomus ui: the delivery, for a person (the primary surface)
+/cockpit        the registry rendered for a person: the technical layer beneath the UI
 /mcp            MCP over HTTP for a second client
 ```
 

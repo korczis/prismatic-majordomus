@@ -113,7 +113,7 @@ fn prs(f: &Forge, dir: &Path, args: &[&str]) -> (i32, String, String) {
         f.bin.display(),
         std::env::var("PATH").unwrap_or_default()
     );
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .arg("prs")
         .arg("--repo")
         .arg(dir)

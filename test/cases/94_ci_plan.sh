@@ -89,6 +89,35 @@ printf '%s' "$p" | jq -r .reason | grep -q 'escalates: .github/workflows/validat
 p="$(plan some/new/thing.txt)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    an unclassified path did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .unclassified[0] | grep -qx 'some/new/thing.txt' || { echo "    the plan does not name the unclassified path"; exit 1; }
+
+# --- the pipeline's data files are excepted from the pipeline class by name: each one plans
+#     the gates of the classes it still falls in, never the full plan. The list is read from
+#     the model, so a file added to `except` is held to this the day it is added.
+excepted="$(awk '/^  - id: ci$/{c=1} c && /^    except: /{sub(/^    except: \[/, ""); sub(/\]$/, ""); gsub(/, /, " "); print; exit}' "$MODEL")"
+[ -n "$excepted" ] || { echo "    the ci class excepts nothing; the data-file planning is unasserted"; exit 1; }
+for f in $excepted; do
+  p="$(plan "$f")"
+  [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] || { echo "    the pipeline data file $f escalated: $(printf '%s' "$p" | jq -r .reason)"; exit 1; }
+  s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+  has "$s" shell-suite || { echo "    the pipeline data file $f did not select the suite: $s"; exit 1; }
+done
+s="$(selected .ai/repo/ci/suite-durations.tsv)"
+has "$s" shell-suite || { echo "    the shard deal's durations did not select the suite: $s"; exit 1; }
+s="$(selected .ai/repo/ci/case-numbers-baseline.txt)"
+has "$s" case-numbers || { echo "    the case-number ratchet did not select its gate: $s"; exit 1; }
+s="$(selected .ai/repo/ci/github-drift-baseline.txt)"
+has "$s" github-projection || { echo "    the GitHub drift ratchet did not select its gate: $s"; exit 1; }
+# the pipeline's definitions still escalate, and so does a file nobody has named yet: an
+# exception is one path, and the directory stays escalating around it
+for f in .ai/repo/ci/gates.yaml .ai/repo/ci/suite.yaml .ai/repo/ci/a-file-added-tomorrow.yaml; do
+  [ "$(plan "$f" | jq -r .mode)" = full ] || { echo "    $f under the pipeline class did not escalate"; exit 1; }
+done
+# and an exception that is a pattern is refused: it would carve an open-ended hole
+awk '/^  - id: ci$/{c=1} c && /^    except: /{print "    except: [.ai/repo/ci/*.tsv]"; c=0; next} {print}' "$MODEL" > broad.yaml
+grep -q 'except: \[.ai/repo/ci/\*.tsv\]' broad.yaml || { echo "    the except mutation did not take"; exit 1; }
+expect_exit 10 "$PLAN" --model broad.yaml --check
+expect_grep 'an exception names one path'
+
 p="$(plan .gitignore)"
 # an inert path selects the always-gates and nothing beyond them; how many that is comes
 # from the model, for the same reason as above
@@ -170,28 +199,78 @@ needs() {
     | ($jobs | split(" ") | map(select(length > 0)) | map({key: ., value: {result: "skipped"}}) | from_entries) as $rest
     | $rest + $named'
 }
+# Every selected gate's steps left a receipt saying they succeeded (scripts/ci/receipt):
+# what the jobs' uploads carry, one file per job.
+mkdir -p receipts/structure
+jq -r '.gates[] | select(.selected) | "\(.id)\tsuccess\t\(.job)/fixture"' plan.json > receipts/structure/receipts.tsv
 needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
-expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 grep -q '^## ci: green' summary.md || { cat summary.md; echo "    a green verdict did not say so"; exit 1; }
 grep -q '| rust-coverage | coverage | skipped' summary.md || { echo "    the summary does not show the skipped gate"; exit 1; }
 needs "plan=success,structure=success,suite=failure,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate shell-suite was selected and its job suite reported failure'
 needs "plan=success,structure=success,suite=success,rust=cancelled,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate site-build was selected and its job site reported skipped'
 needs "plan=failure,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'planning did not succeed'
 # a job that ran for another gate and failed is a failure even for the gate that did not plan it
 needs "plan=success,structure=success,suite=success,rust=success,coverage=failure,bench=skipped,site=success,ui=success,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+# --- receipts: a job's `success` says no step failed, not that the gate's step ran. A
+#     selected gate whose job succeeded is red without a receipt, and red when any of its
+#     receipts is not `success` — a step its condition skipped, a step cancelled, a failure
+#     a `continue-on-error` swallowed. A gate the plan left out needs none.
+needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+cp receipts/structure/receipts.tsv all.tsv
+grep -v '^site-probe	' all.tsv > receipts/structure/receipts.tsv
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+expect_grep 'gate site-probe was selected and its job site succeeded, but no step left a receipt for it'
+grep -q '| site-probe | site | .* | success, \*\*no receipt\*\* |' summary.md || { cat summary.md; echo "    the summary does not show the gate without a receipt"; exit 1; }
+for outcome in skipped cancelled failure ''; do
+  cp all.tsv receipts/structure/receipts.tsv
+  # a second job's receipts beside the first: every *.tsv beneath the directory is read
+  mkdir -p receipts/site; printf 'site-build\t%s\tsite/build the site\n' "$outcome" > receipts/site/receipts.tsv
+  expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+  # an empty outcome is a step id that named no step: read as absent, never as success
+  expect_grep "gate site-build was selected and its job site succeeded, but a step of it reported ${outcome:-absent}"
+done
+rm -rf receipts/site; cp all.tsv receipts/structure/receipts.tsv
+# a receipt of a gate the plan left out is read and changes nothing
+printf 'rust-bench\tskipped\tbench/fixture\n' >> receipts/structure/receipts.tsv
+expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+# no receipts at all — the artifacts never arrived — is red for every selected gate, not a pass
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts "$T/no-such-directory" --summary summary.md
+expect_grep 'gate shell-lint was selected and its job structure succeeded, but no step left a receipt for it'
+# and a verdict asked without the receipts is a usage error, never the old job-only verdict
+expect_exit 2 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
+expect_grep 'are required'
+cp all.tsv receipts/structure/receipts.tsv
+
+# --- the writers: timed and run-plan write a receipt per step and per gate when
+#     MJ_CI_RECEIPTS is set; the workflow's closing steps write the rest from step outcomes
+MJ_CI_RECEIPTS="$T/r.tsv" "$ROOT/scripts/ci/timed" --bound 30 site-build "a step" "$T/rows.tsv" true
+MJ_CI_RECEIPTS="$T/r.tsv" "$ROOT/scripts/ci/timed" --bound 30 site-probe "a step" "$T/rows.tsv" false && { echo "    timed swallowed a failure"; exit 1; }
+[ "$(cut -f1,2 "$T/r.tsv")" = "$(printf 'site-build\tsuccess\nsite-probe\tfailure')" ] \
+  || { cat "$T/r.tsv"; echo "    timed did not write each step's receipt"; exit 1; }
+# run-plan writes one per gate it ran, and none for a gate a step of its own runs (--skip)
+jq -n '{schema: 1, mode: "affected", reason: "fixture", selected: ["gate-a", "gate-b", "gate-c"],
+        gates: [{id: "gate-a", job: "j", runs: "true", selected: true, reason: "x"},
+                {id: "gate-b", job: "j", runs: "false", selected: true, reason: "x"},
+                {id: "gate-c", job: "j", runs: "true", selected: true, reason: "x"}]}' > "$T/rp.json"
+MJ_CI_RECEIPTS="$T/rp.tsv" "$ROOT/scripts/ci/run-plan" --plan "$T/rp.json" --job j --skip gate-c >/dev/null 2>&1 \
+  && { echo "    run-plan passed a plan with a failing gate"; exit 1; }
+[ "$(cut -f1,2 "$T/rp.tsv")" = "$(printf 'gate-a\tsuccess\ngate-b\tfailure')" ] \
+  || { cat "$T/rp.tsv"; echo "    run-plan did not write a receipt per gate it ran, and none for the skipped one"; exit 1; }
+
 # an empty selection cannot pass
 jq '.gates |= map(.selected = false) | .selected = []' plan.json > empty.json
 needs "plan=success,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
-expect_exit 1 "$VERDICT" --plan empty.json --needs n.json --summary summary.md
+expect_exit 1 "$VERDICT" --plan empty.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'selected no gate'
 
 # --- the parallel runner keeps the serial runner's semantics: a failing case turns the run

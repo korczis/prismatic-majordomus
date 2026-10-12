@@ -1,7 +1,7 @@
 +++
 title = "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate"
 description = "Presence is current, never \"seen once this morning\". A runtime killed without a shutdown"
-weight = 219
+weight = 220
 [extra]
 claim_id = "mesh-liveness-expiry"
 status = "guaranteed"
@@ -33,7 +33,7 @@ freshness, so nothing is alive until it beats again.
 
 ```
 majordomus mesh peers                       # link state and "beat Ns ago" per runtime
-curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.streams'
+curl 'http://127.0.0.1:8741/api/v1/mesh/state?view=full' | jq '.streams'
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation a_killed_runtime
 ```
 

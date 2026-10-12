@@ -43,6 +43,12 @@ declare_mesh() { # repo [seed-url]
   # Declarations are discovered through the version-control index, as in any repository
   # `majordomus init` created: a declaration is what a person commits.
   git -C "$1" add .ai/repo/mesh/majordomus.yaml
+  # and committed on the trunk: trust on first use is honoured only from the trunk's copy,
+  # and this fixture works on feature/mesh, so the trunk is moved to the declaration (I2135)
+  git -C "$1" commit -qm "the mesh declaration"
+  local trunk
+  trunk="$(git -C "$1" for-each-ref --format='%(refname:short)' refs/heads/main refs/heads/master | head -1)"
+  git -C "$1" branch -f "$trunk" HEAD
 }
 
 serve() { # repo state
@@ -83,7 +89,7 @@ poll 150 linked "$B"
 cd "$A" || exit
 expect_exit 0 "$RB" mesh claim lib --session a1 --issue '#184'
 expect_grep '^written '
-claim_seen() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e '[.state.claims[] | select(.state.state == "held")] | length == 1'; }
+claim_seen() { ( cd "$B" && "$RB" mesh state --full --format json ) | jq -e '[.state.claims[] | select(.state.state == "held")] | length == 1'; }
 poll 100 claim_seen
 cd "$B" || exit
 expect_exit 10 "$RB" mesh claim lib/a --session b1
@@ -96,7 +102,7 @@ expect_exit 0 bash -c "printf '# Objective\nship the mesh\n# Current State\nlink
 # stdout alone: expect_exit folds stderr (the server discovery's log lines) into its capture.
 ID="$("$RB" mesh handover publish --issue '#184' --format json 2>/dev/null | jq -r '.key')"
 [ -n "$ID" ] && [ "$ID" != null ] || { echo "    publish answered no handover id: $LAST_OUT"; exit 1; }
-held_on_b() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e --arg h "$ID" '[.state.handovers[] | select(.id == $h)] | length == 1'; }
+held_on_b() { ( cd "$B" && "$RB" mesh state --full --format json ) | jq -e --arg h "$ID" '[.state.handovers[] | select(.id == $h)] | length == 1'; }
 poll 100 held_on_b
 
 cd "$B" || exit
@@ -110,7 +116,7 @@ expect_grep 'render the machine tree'
 expect_exit 0 "$RB" mesh handover consume "$ID" --session b1
 [ "$(grep -l "mesh_handover: $ID" .ai/local/state/handovers/*.md | wc -l | tr -d ' ')" = 1 ] \
   || { echo "    a second consume wrote a second record"; exit 1; }
-consumed_on_a() { ( cd "$A" && "$RB" mesh state --format json ) | jq -e --arg h "$ID" '[.state.handovers[] | select(.id == $h and (.consumed_by | length) >= 1)] | length == 1'; }
+consumed_on_a() { ( cd "$A" && "$RB" mesh state --full --format json ) | jq -e --arg h "$ID" '[.state.handovers[] | select(.id == $h and (.consumed_by | length) >= 1)] | length == 1'; }
 poll 100 consumed_on_a
 
 # ---------------------------------------------------------------- 3. both runtimes verify

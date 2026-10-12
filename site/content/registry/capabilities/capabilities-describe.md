@@ -1,7 +1,7 @@
 +++
 title = "capabilities.describe"
 description = "One capability by canonical id: its kind, schemas, provenance, stability, exposures, benchmark and cache policy."
-weight = 2
+weight = 3
 slug = "capabilities-describe"
 [extra]
 id = "capabilities.describe"

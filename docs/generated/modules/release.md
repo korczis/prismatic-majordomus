@@ -5,7 +5,7 @@
 
 What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.
 
-Stability: implemented. Capabilities: 3.
+Stability: implemented. Capabilities: 4.
 
 ## `release.analysis` — What the public contract did, and the smallest version it allows
 
@@ -51,6 +51,28 @@ Every release the layer records, newest first, with the work that has not been r
 
 Output: `ReleaseChangelog`.
 
+## `release.next` — The version a landing allocates, and why
+
+What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.
+
+| | |
+|---|---|
+| kind | query |
+| stability | implemented |
+| MCP tool | `majordomus_release_next` |
+| HTTP | `GET /api/v1/release/next` |
+| cache | — |
+| benchmark | waived (published_history) |
+| provenance | builtin majordomus_cli::capability::builtin::release |
+| tags | release, version, integration |
+
+| input | type | required | description |
+|---|---|---|---|
+| `base` | string or null | no | The trunk the landing raises from; `origin/master` when absent. |
+| `head` | string or null | no | What lands; `HEAD` when absent. |
+
+Output: `LandingDecision`.
+
 ## `release.version` — The version, and the one the contract requires next
 
 The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. It is the one release selection `release bump` also raises to when no target is named, so the report and the writer cannot disagree. When the contract cannot be measured — no published baseline, a version that is not three numbers, or any other error that makes the plan unsound, the plan `release bump` refuses to write from — the baseline is refused, not guessed: `next` is absent, `decided_by` is `undecided` and `contract_unreadable` carries every error, one per line. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence, and never answer `next` in the contract's place.
@@ -61,7 +83,7 @@ The version the crate manifest declares — the one place it is authored — the
 | stability | implemented |
 | MCP tool | `majordomus_release_version` |
 | HTTP | `GET /api/v1/release/version` |
-| cache | — |
+| cache | process, 2 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::release |
 | tags | release, version |

@@ -18,7 +18,7 @@ The repository root, layer sections, git state, discovery mode, kinds present, e
 | MCP tool | `majordomus_repository` |
 | MCP resource | `majordomus://repository` |
 | HTTP | `GET /api/v1/repository` |
-| cache | — |
+| cache | process, 1 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::repository |
 | tags | repository, introspection |

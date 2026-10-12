@@ -322,7 +322,10 @@ impl BenchmarkPolicy {
 /// Whether, and how, the executor keeps results of this capability. Cache lives in the
 /// executor and nowhere else, so MCP, HTTP and the command line share one; the key is the
 /// canonical id, the normalised input and the registry fingerprint, so a changed
-/// repository never answers from an old entry.
+/// repository never answers from an old entry. The two narrower policies add to the key
+/// what the registry fingerprint cannot see: the context's own reading of the repository
+/// ([`CachePolicy::Generation`]) and the state of the checkout itself
+/// ([`CachePolicy::Checkout`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "policy", rename_all = "snake_case")]
 pub enum CachePolicy {
@@ -336,6 +339,24 @@ pub enum CachePolicy {
         #[serde(skip_serializing_if = "Option::is_none")]
         ttl_seconds: Option<u64>,
     },
+    /// Results are kept for equal inputs while the context that computed them is the one
+    /// asked: for a capability that is a function of the index and the registry alone,
+    /// including the git state the index was read at, which the registry fingerprint does
+    /// not cover. A reload of the repository is a new context, and so a new key.
+    Generation {
+        /// The most entries kept for this capability; the oldest is evicted first.
+        max_entries: usize,
+    },
+    /// Results are kept for equal inputs while the context is the same *and* the checkout
+    /// is as it was: HEAD, the staging index, the refs and every changed or untracked path
+    /// of the work tree, fingerprinted again on every call
+    /// (`capability::checkout`). For a capability that reads git, the index and the
+    /// files of the work tree, and nothing that fingerprint cannot see: no ignored file, no
+    /// other process, no network, no clock. A checkout git cannot fingerprint is not cached.
+    Checkout {
+        /// The most entries kept for this capability; the oldest is evicted first.
+        max_entries: usize,
+    },
 }
 
 impl CachePolicy {
@@ -345,24 +366,88 @@ impl CachePolicy {
     /// use majordomus_cli::capability::CachePolicy;
     /// assert!(CachePolicy::Disabled.validate().is_ok());
     /// assert!(CachePolicy::Process { max_entries: 0, ttl_seconds: None }.validate().is_err());
+    /// assert!(CachePolicy::Checkout { max_entries: 0 }.validate().is_err());
+    /// assert!(CachePolicy::Generation { max_entries: 4 }.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         match self {
             CachePolicy::Disabled => Ok(()),
-            CachePolicy::Process { max_entries: 0, .. } => {
+            _ if self.max_entries() == Some(0) => {
                 Err("a process cache with max_entries 0 keeps nothing".into())
             }
             CachePolicy::Process {
                 ttl_seconds: Some(0),
                 ..
             } => Err("a process cache with ttl_seconds 0 keeps nothing".into()),
-            CachePolicy::Process { .. } => Ok(()),
+            _ => Ok(()),
         }
     }
 
     /// Does the policy keep anything?
     pub fn is_enabled(&self) -> bool {
         !matches!(self, CachePolicy::Disabled)
+    }
+
+    /// The most entries the policy keeps per capability; `None` when it keeps nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert_eq!(CachePolicy::Disabled.max_entries(), None);
+    /// assert_eq!(CachePolicy::Checkout { max_entries: 2 }.max_entries(), Some(2));
+    /// ```
+    pub fn max_entries(&self) -> Option<usize> {
+        match *self {
+            CachePolicy::Disabled => None,
+            CachePolicy::Process { max_entries, .. }
+            | CachePolicy::Generation { max_entries }
+            | CachePolicy::Checkout { max_entries } => Some(max_entries),
+        }
+    }
+
+    /// Seconds an entry stays valid; `None` for as long as its key holds.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// let p = CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) };
+    /// assert_eq!(p.ttl_seconds(), Some(5));
+    /// assert_eq!(CachePolicy::Generation { max_entries: 2 }.ttl_seconds(), None);
+    /// ```
+    pub fn ttl_seconds(&self) -> Option<u64> {
+        match *self {
+            CachePolicy::Process { ttl_seconds, .. } => ttl_seconds,
+            _ => None,
+        }
+    }
+
+    /// The policy in a few words, as the Cockpit and the generated catalogue print it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert_eq!(CachePolicy::Disabled.summary(), "—");
+    /// assert_eq!(
+    ///     CachePolicy::Process { max_entries: 8, ttl_seconds: Some(5) }.summary(),
+    ///     "process, 8 entries, 5s"
+    /// );
+    /// assert_eq!(
+    ///     CachePolicy::Checkout { max_entries: 4 }.summary(),
+    ///     "process, 4 entries, per checkout state"
+    /// );
+    /// ```
+    pub fn summary(&self) -> String {
+        match *self {
+            CachePolicy::Disabled => "—".into(),
+            CachePolicy::Process {
+                max_entries,
+                ttl_seconds: Some(ttl),
+            } => format!("process, {max_entries} entries, {ttl}s"),
+            CachePolicy::Process { max_entries, .. } => format!("process, {max_entries} entries"),
+            CachePolicy::Generation { max_entries } => {
+                format!("process, {max_entries} entries, per generation")
+            }
+            CachePolicy::Checkout { max_entries } => {
+                format!("process, {max_entries} entries, per checkout state")
+            }
+        }
     }
 }
 
@@ -502,6 +587,14 @@ pub struct ExecutionPolicy {
     pub cancellable: bool,
     /// Whether two of them may overlap.
     pub concurrency: Concurrency,
+    /// Whether the input authenticates its caller.
+    ///
+    /// A handler whose input is a signed message, and which verifies the signature against
+    /// the trust policy before anything changes, admits its caller by that signature and not
+    /// by the address the request came from. Only such a handler changes state for a caller
+    /// on another host; see [`ExecutionPolicy::admits_remote`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub signed_input: bool,
 }
 
 impl ExecutionPolicy {
@@ -525,12 +618,14 @@ impl ExecutionPolicy {
                 effect: Effect::Read,
                 cancellable: false,
                 concurrency: Concurrency::Unrestricted,
+                signed_input: false,
             },
             // it changes this process's memory, so two of them are made to take turns
             CapabilityKind::Command => ExecutionPolicy {
                 effect: Effect::ProcessState,
                 cancellable: false,
                 concurrency: Concurrency::Serial,
+                signed_input: false,
             },
         }
     }
@@ -573,6 +668,45 @@ impl ExecutionPolicy {
             effect: Effect::RepositoryMutation,
             ..self
         }
+    }
+
+    /// The same policy, for a command whose input is a signed message the handler verifies
+    /// against the trust policy before it changes anything.
+    ///
+    /// The third documented addition, and the narrowest: the mesh's link and registration
+    /// handlers, whose callers are other machines by design and are admitted by a key the
+    /// trust policy names. It never combines with writing the repository: a signature
+    /// proves who sent a message, not that its sender may change tracked files here.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Command).authenticates_its_input();
+    /// assert!(p.signed_input && p.admits_remote());
+    /// ```
+    pub fn authenticates_its_input(self) -> Self {
+        ExecutionPolicy {
+            signed_input: true,
+            ..self
+        }
+    }
+
+    /// May a caller on another host run this?
+    ///
+    /// A request that arrives from an address that is not loopback has proved nothing about
+    /// who sent it: the server has no accounts and no tokens, and the `Origin` check stops a
+    /// browser, not a program. Such a caller reads, and changes nothing, unless the input
+    /// itself authenticates it ([`ExecutionPolicy::authenticates_its_input`]). A command
+    /// that only changes this process's memory is refused too, because some of that memory
+    /// is signed by this node and replicated to every runtime that trusts it (ADR 0126).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// assert!(ExecutionPolicy::classify(CapabilityKind::Query).admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().admits_remote());
+    /// ```
+    pub fn admits_remote(self) -> bool {
+        matches!(self.effect, Effect::Read) || self.signed_input
     }
 
     /// Should a client ask before running this? True for anything that changes something.

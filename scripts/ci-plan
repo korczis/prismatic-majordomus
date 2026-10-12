@@ -84,6 +84,12 @@ n_classes="$(printf '%s\n' "$class_ids" | wc -l | tr -d ' ')"
 i=0; while [ "$i" -lt "$n_classes" ]; do
   c="$(mj_yget "$FLAT" "classes.$i.id")"
   [ -n "$(mj_ylist "$FLAT" "classes.$i.paths")" ] || { echo "ci-plan: class $c names no paths" >&2; bad=1; }
+  # an exception names one path the class's patterns would otherwise take, never a pattern:
+  # a wildcard here would carve an open-ended hole in an escalating class, and a new file
+  # under it would leave the full plan on the day it appeared
+  for ex in $(mj_ylist "$FLAT" "classes.$i.except"); do
+    case "$ex" in *'*'*) echo "ci-plan: class $c excepts a pattern ($ex); an exception names one path" >&2; bad=1 ;; esac
+  done
   if [ "$(mj_yget "$FLAT" "classes.$i.gates")" != full ]; then
     for ref in $(mj_ylist "$FLAT" "classes.$i.gates"); do
       printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: class $c names a gate that does not exist: $ref" >&2; bad=1; }
@@ -141,16 +147,23 @@ MATCH="$(awk -F= -v files="$LIST" '
   }
   $1 ~ /^classes\.[0-9]+\.id$/ { split($1, a, "."); cid[a[2]] = $2; if (a[2] + 0 > nc) nc = a[2] + 0 }
   $1 ~ /^classes\.[0-9]+\.paths\.[0-9]+$/ { split($1, a, "."); pat[a[2] "." a[4]] = pat2re($2); np[a[2]] = (a[4] + 0 > np[a[2]] ? a[4] + 0 : np[a[2]]) }
+  $1 ~ /^classes\.[0-9]+\.except\.[0-9]+$/ { split($1, a, "."); exc[a[2] "." a[4]] = pat2re($2); ne[a[2]] = (a[4] + 0 > ne[a[2]] ? a[4] + 0 : ne[a[2]]) }
   $1 ~ /^classes\.[0-9]+\.gates$/ { split($1, a, "."); full[a[2]] = ($2 == "full") }
   $1 ~ /^classes\.[0-9]+\.gates\.[0-9]+$/ { split($1, a, "."); cg[a[2]] = cg[a[2]] " " $2 }
   END {
     while ((getline path < files) > 0) {
       hit = 0
-      for (c = 0; c <= nc; c++) for (i = 0; i <= np[c]; i++) if ((c "." i) in pat && match(path, pat[c "." i])) {
+      for (c = 0; c <= nc; c++) {
+        # a path a class excepts is not in that class, whatever its patterns say; it still
+        # falls in every other class that matches it, and in none it is unclassified
+        out = 0; for (i = 0; i <= ne[c]; i++) if ((c "." i) in exc && match(path, exc[c "." i])) { out = 1; break }
+        if (out) continue
+        for (i = 0; i <= np[c]; i++) if ((c "." i) in pat && match(path, pat[c "." i])) {
         hit = 1; print "class\t" cid[c] "\t" path
         if (full[c]) print "full\t" cid[c] "\t" path
         n = split(cg[c], gs, " "); for (k = 1; k <= n; k++) if (gs[k] != "") print "gate\t" gs[k] "\t" cid[c]
         break
+        }
       }
       if (!hit) print "unclassified\t-\t" path
     }

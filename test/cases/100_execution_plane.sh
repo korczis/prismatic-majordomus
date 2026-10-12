@@ -16,6 +16,144 @@
 command -v curl >/dev/null 2>&1 || skip "no curl"
 command -v python3 >/dev/null 2>&1 || skip "no python3"
 command -v jq >/dev/null 2>&1 || skip "no jq"
+command -v node >/dev/null 2>&1 || skip "no node"
+
+# ---------------------------------------------------------------- the Cockpit's client
+# share/cockpit/socket.js is the one client of the channel, and it is where a gap, a
+# duplicate and a dead connection are noticed. It is run here against a WebSocket and a
+# clock this case controls: no browser, no server, no wait. It must drop an event at or
+# below the last sequence seen, reconnect from that sequence when one is skipped (the
+# server replays the gap), retire a channel silent for 2.5 heartbeats (the server writes
+# `stream.heartbeat` on every quiet interval), and not ask the same gap twice.
+SOCKET_CHECK="$(mktemp "${TMPDIR:-/tmp}/mj100-socket.XXXXXX")"
+node --input-type=module - "$ROOT/share/cockpit/socket.js" > "$SOCKET_CHECK" 2>&1 <<'NODE' \
+  || { echo "    the Cockpit's live client does not keep the stream whole:"; sed 's/^/    | /' "$SOCKET_CHECK"; rm -f "$SOCKET_CHECK"; exit 1; }
+import { readFileSync } from 'node:fs';
+const source = readFileSync(process.argv[2], 'utf8');
+
+// a clock this script moves, so a watchdog of fifty seconds is proved in no time
+let now = 0;
+let timers = [];
+let nextTimer = 1;
+globalThis.setTimeout = (fn, ms) => {
+  const id = nextTimer++;
+  timers.push({ id, at: now + Math.max(0, ms || 0), fn });
+  return id;
+};
+globalThis.clearTimeout = (id) => { timers = timers.filter((t) => t.id !== id); };
+function advance(ms) {
+  const until = now + ms;
+  for (;;) {
+    timers.sort((a, b) => a.at - b.at || a.id - b.id);
+    const due = timers[0];
+    if (!due || due.at > until) break;
+    timers.shift();
+    now = due.at;
+    due.fn();
+  }
+  now = until;
+}
+Math.random = () => 0.5;
+
+// a WebSocket that is a list of what was opened and a way to speak for the server
+const sockets = [];
+class FakeSocket {
+  constructor(url) { this.url = url; this.listeners = {}; this.closed = false; sockets.push(this); }
+  addEventListener(name, fn) { (this.listeners[name] ||= []).push(fn); }
+  emit(name, event) { for (const fn of this.listeners[name] || []) fn(event); }
+  send(frame) { this.emit('message', { data: JSON.stringify(frame) }); }
+  close() { this.closed = true; }
+}
+globalThis.WebSocket = FakeSocket;
+globalThis.window = { location: { href: 'http://127.0.0.1:8741/cockpit/executions/x-1' } };
+
+const { follow } = await import('data:text/javascript,' + encodeURIComponent(source));
+
+const fail = (why) => { console.error(why); process.exit(1); };
+const eq = (a, b, why) => {
+  if (JSON.stringify(a) !== JSON.stringify(b)) fail(`${why}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`);
+};
+const event = (sequence) => ({ type: 'execution.log', execution_id: 'x-1', sequence, data: {} });
+const after = (s) => new URL(s.url).searchParams.get('after');
+
+const delivered = [];
+const resyncs = [];
+follow('/events?execution=x-1&after=2', {
+  message: (f) => delivered.push(f.sequence ?? f.type),
+  resync: (why) => resyncs.push(why),
+});
+let s = sockets.at(-1);
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, truncated: false } });
+
+// duplicates are dropped, and the heartbeat is the channel's own business
+[3, 4, 4, 3].forEach((n) => s.send(event(n)));
+s.send({ type: 'stream.heartbeat', data: { at: 'now' } });
+eq(delivered, [3, 4], 'an event at or below the last seen is a duplicate');
+
+// a gap on a one-execution channel reconnects from the last sequence seen
+s.send(event(6));
+eq(delivered, [3, 4], 'the event after a gap is not handed over');
+if (!s.closed) fail('a gap did not retire the socket');
+advance(1000);
+s = sockets.at(-1);
+eq(sockets.length, 2, 'a gap opens one new connection');
+eq(after(s), '4', 'the reconnect asks for what it missed');
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, truncated: false } });
+[5, 6].forEach((n) => s.send(event(n)));
+eq(delivered, [3, 4, 5, 6], 'the replay filled the gap');
+
+// a quiet channel with heartbeats stays; a silent one is retired after two and a half
+advance(40_000);
+s.send({ type: 'stream.heartbeat', data: { at: 'now' } });
+advance(40_000);
+eq(sockets.length, 2, 'a channel that heartbeats is not reconnected');
+advance(11_000);
+if (!s.closed) fail('a silent channel was not retired');
+advance(1000);
+s = sockets.at(-1);
+eq(sockets.length, 3, 'a silent channel reconnects');
+eq(after(s), '6', 'from its cursor');
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, truncated: false } });
+
+// a gap the replay did not fill is not asked again: the page reads the history instead
+s.send(event(8));
+advance(1000);
+s = sockets.at(-1);
+eq(sockets.length, 4, 'the first gap at 6 reconnects');
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, truncated: false } });
+s.send(event(8));
+eq(sockets.length, 4, 'the same gap twice does not reconnect again');
+eq(delivered.at(-1), 8, 'it is handed over');
+if (!resyncs.includes('gap')) fail(`the page was not told to read the history: ${resyncs}`);
+
+// a replay whose cursor's history was dropped starts the picture where it can
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20, truncated: true } });
+s.send(event(40));
+eq(delivered.at(-1), 40, 'the first event after a truncated replay is not a gap');
+eq(sockets.length, 4, 'and does not reconnect');
+
+// a channel that follows every execution drops repeats per execution
+const all = [];
+follow('/events', { message: (f) => all.push(`${f.execution_id}#${f.sequence}`) });
+s = sockets.at(-1);
+s.emit('open');
+s.send({ type: 'stream.ready', data: { heartbeat_seconds: 20 } });
+s.send({ ...event(1), execution_id: 'a' });
+s.send({ ...event(1), execution_id: 'b' });
+s.send({ ...event(1), execution_id: 'a' });
+s.send({ ...event(2), execution_id: 'a' });
+eq(all, ['a#1', 'b#1', 'a#2'], 'a repeat of one execution is dropped, another execution is not');
+if (new URL(s.url).searchParams.has('after')) fail('an unscoped channel names a cursor');
+console.log('socket.js: duplicates dropped, a gap reconnects from the cursor, a silent channel is retired');
+NODE
+grep -q '^socket.js: duplicates dropped' "$SOCKET_CHECK" \
+  || { echo "    the client check did not reach its end:"; sed 's/^/    | /' "$SOCKET_CHECK"; rm -f "$SOCKET_CHECK"; exit 1; }
+rm -f "$SOCKET_CHECK"
+
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

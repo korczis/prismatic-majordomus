@@ -10,6 +10,34 @@ use serde_json::Value;
 
 pub const BIN: &str = env!("CARGO_BIN_EXE_majordomus");
 
+/// The prefix every variable the executable reads as its configuration carries.
+pub const SESSION_PREFIX: &str = "MAJORDOMUS_";
+
+/// The executable as a test runs it: [`BIN`] with none of the caller's `MAJORDOMUS_*`
+/// environment, so that a test sets exactly what it means and nothing a session exported.
+pub fn majordomus() -> Command {
+    let mut command = Command::new(BIN);
+    without_session_environment(&mut command);
+    command
+}
+
+/// Remove from `command` every `MAJORDOMUS_*` variable the caller's environment carries.
+///
+/// A worker's session exports `MAJORDOMUS_HTTP_HOST`, `MAJORDOMUS_SHARE`, `MAJORDOMUS_URL`,
+/// `MAJORDOMUS_ROOT` and more (the checkout's `.envrc`); a child that inherited them bound
+/// `0.0.0.0` where a test expected loopback, or read another checkout's distribution. The
+/// list is the caller's own environment, read at spawn time, rather than a hand-written set
+/// that drifts as the crate reads a new variable. A variable the test sets on `command`
+/// after this call is kept.
+pub fn without_session_environment(command: &mut Command) -> &mut Command {
+    for (name, _) in std::env::vars_os() {
+        if name.to_str().is_some_and(|n| n.starts_with(SESSION_PREFIX)) {
+            command.env_remove(name);
+        }
+    }
+    command
+}
+
 /// The tool distribution beside this crate: `../../share`, with kinds.yaml and schemas/.
 pub fn dist_share() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -588,6 +616,10 @@ impl Fixture {
         );
         f.write(".ai/repo/features/fixture-feature.md", FEATURE);
         f.write(".ai/repo/deployments/fixture-deployment.yaml", DEPLOYMENT);
+        // A deployment's builder pins the Rust the repository builds with, read from here
+        // (`deploy::render::builder_rust`); a repository that declares one and no exact pin
+        // is refused by `generate`, so the fixture declares both, as this repository does.
+        f.write("rust-toolchain.toml", "[toolchain]\nchannel = \"1.98.1\"\n");
         f.write(
             "docs/claims/policy-parse.md",
             "# The policy is parsed
@@ -734,7 +766,7 @@ true
 pub fn run_in(cwd: &Path, args: &[&str], stdin: &str) -> (i32, String, String) {
     use std::io::Write;
     use std::process::Stdio;
-    let mut child = Command::new(BIN)
+    let mut child = majordomus()
         .args(args)
         .current_dir(cwd)
         .env("MAJORDOMUS_LOG", "debug")
@@ -809,7 +841,7 @@ impl Served {
         use std::process::Stdio;
         let mut args = vec!["serve", "--port", "0"];
         args.extend_from_slice(extra);
-        let mut command = Command::new(BIN);
+        let mut command = majordomus();
         for (key, value) in env {
             command.env(key, value);
         }

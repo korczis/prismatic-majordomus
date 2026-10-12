@@ -34,6 +34,7 @@
 
 pub(crate) mod benchmark;
 pub mod builtin;
+pub(crate) mod checkout;
 pub mod closure;
 pub(crate) mod declarative;
 pub mod executor;
