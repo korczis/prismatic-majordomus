@@ -347,10 +347,13 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 
     // one hash per gate, over the files that select it. Taken here rather than inside the
     // judgement so that a test drives the same function with hashes of its own.
+    // The gates overlap, so each file's digest is taken once for the whole report.
     let mut hashes: BTreeMap<String, Option<String>> = BTreeMap::new();
+    let mut digests = super::obligations::FileHashes::default();
     for gate in &m.gates {
         let specs = m.inputs_of(&gate.id);
-        let hash = super::obligations::inputs_hash(&root, &specs).map(|(h, _)| h);
+        let hash =
+            super::obligations::inputs_hash_with(&root, &specs, &mut digests).map(|(h, _)| h);
         // a token with no inputs hashes to the empty string in the ledger, and is compared
         // as such; `None` here means the hash could not be taken at all
         hashes.insert(
