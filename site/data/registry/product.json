@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.22.0"
   },
-  "fingerprint": "d8c53fc0fa4680243917f77b57dbdda80b6e9847fcd241dcf6eb6574d348f917",
+  "fingerprint": "f0185333cf1b04f57a54358d9ddcbbc91ac923a53260152979fe27c0f7132e3d",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 28,
     "featured": 15,
     "providers": 6,
-    "modules": 55,
+    "modules": 56,
     "modules_covered": 44,
     "commands": 30,
     "commands_covered": 30,
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 68,
+        "capabilities": 69,
         "moments": 17
       },
       "evidence": {
@@ -3194,7 +3194,7 @@
         "use_cases": 9,
         "rules": 14,
         "enforced_rules": 13,
-        "capabilities": 116,
+        "capabilities": 117,
         "moments": 38
       },
       "evidence": {
@@ -5517,6 +5517,14 @@
               "route": "POST /api/v1/mesh/reviews"
             },
             {
+              "id": "mesh.review.withdraw",
+              "title": "Withdraw a review request",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_withdraw",
+              "route": "POST /api/v1/mesh/reviews/withdraw"
+            },
+            {
               "id": "mesh.session.close",
               "title": "Close a session on the mesh",
               "kind": "command",
@@ -5676,10 +5684,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 23,
-        "mcp_tools": 20,
+        "capabilities": 24,
+        "mcp_tools": 21,
         "mcp_resources": 2,
-        "http_routes": 22,
+        "http_routes": 23,
         "cli_paths": 4,
         "commands": 0,
         "objects": 1,
@@ -7198,7 +7206,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 97
+          "objects": 98
         },
         {
           "name": "knowledge",
@@ -7206,7 +7214,7 @@
         },
         {
           "name": "document",
-          "objects": 338
+          "objects": 339
         }
       ],
       "rule_refs": [
@@ -7479,11 +7487,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 439,
+        "mcp_resources": 441,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 436,
+        "objects": 438,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9685,6 +9693,14 @@
               "route": "POST /api/v1/mesh/reviews"
             },
             {
+              "id": "mesh.review.withdraw",
+              "title": "Withdraw a review request",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_withdraw",
+              "route": "POST /api/v1/mesh/reviews/withdraw"
+            },
+            {
               "id": "mesh.session.close",
               "title": "Close a session on the mesh",
               "kind": "command",
@@ -10450,10 +10466,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 94,
-        "mcp_tools": 87,
+        "capabilities": 95,
+        "mcp_tools": 88,
         "mcp_resources": 16,
-        "http_routes": 91,
+        "http_routes": 92,
         "cli_paths": 41,
         "commands": 0,
         "objects": 0,
@@ -11917,7 +11933,7 @@
         },
         {
           "name": "issue",
-          "objects": 331
+          "objects": 332
         },
         {
           "name": "intent",
@@ -12119,11 +12135,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 373,
+        "mcp_resources": 374,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 370,
+        "objects": 371,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15253,6 +15269,11 @@
         ]
       },
       {
+        "id": "editors",
+        "title": "Editor and agent projections",
+        "features": []
+      },
+      {
         "id": "entity",
         "title": "Entities",
         "features": []
@@ -15757,7 +15778,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (97)",
+        "title": "adr (98)",
         "features": [
           "knowledge"
         ]
@@ -15854,7 +15875,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (331)",
+        "title": "issue (332)",
         "features": [
           "planning"
         ]
@@ -16859,19 +16880,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2271,
-    "builtin": 192,
-    "declarative": 2079,
-    "modules": 55,
-    "mcp_tools": 184,
-    "mcp_resources": 2133,
-    "http_routes": 188,
-    "cli_commands": 201,
+    "capabilities": 2277,
+    "builtin": 194,
+    "declarative": 2083,
+    "modules": 56,
+    "mcp_tools": 186,
+    "mcp_resources": 2138,
+    "http_routes": 190,
+    "cli_commands": 202,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2079,
+    "objects": 2083,
     "by_kind": {
-      "adr": 97,
+      "adr": 98,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -16882,13 +16903,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 338,
+      "document": 339,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 331,
+      "issue": 332,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16902,7 +16923,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 454,
+      "test": 455,
       "use-case": 48,
       "workspace": 1
     },

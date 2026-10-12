@@ -180,7 +180,7 @@ mod tests {
         let ctx = context(&repo);
         let c = cooperation();
         session(&c, "s1", "3d", "the runtime train");
-        c.request_review("s1", "1b, read #885".into(), vec![], None, None)
+        c.request_review("s1", "1b, read #885".into(), vec![], None, None, None)
             .unwrap();
         crate::mesh::testing::attach(&ctx, c);
 

@@ -25,6 +25,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Registry => &[Target::Registry],
         GenerateTarget::Allow => &[Target::Allow],
         GenerateTarget::Providers => &[Target::Providers],
+        GenerateTarget::Editors => &[Target::Editors],
         GenerateTarget::Site => &[Target::Site],
         GenerateTarget::Distribution => &[Target::Distribution],
         GenerateTarget::Manifest => &[Target::Manifest],
@@ -45,9 +46,41 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         .out
         .clone()
         .unwrap_or_else(|| app.repository.root().to_path_buf());
+    // An editor's project file at a projected path that this generator did not write is the
+    // person's, and nothing here overwrites it; a projection the plan no longer contains is
+    // ours and stale (ADR 0140). Both only where the editors were planned.
+    let editors = targets.contains(&Target::Editors);
+    let conflicts = if editors {
+        crate::editors::conflicts(&root, &artifacts)
+    } else {
+        Vec::new()
+    };
+    if !conflicts.is_empty() {
+        return Err(Error::Refused {
+            code: REFUSED,
+            reason: format!(
+                "generate: {} would overwrite a file this generator did not write: {}. Move each \
+                 aside or fold it into its canonical source (.ai/repo/skills/, the justfile), \
+                 then run `majordomus generate editors` again; `majordomus capabilities call \
+                 editors.status` names each file's state",
+                conflicts.len(),
+                conflicts.join(", ")
+            ),
+        });
+    }
+    let orphans = if editors {
+        crate::editors::orphans(&root, &artifacts)
+    } else {
+        Vec::new()
+    };
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     if args.check {
+        if !orphans.is_empty() {
+            return Err(Error::Stale {
+                files: orphans.iter().map(|o| format!("{o} (orphaned)")).collect(),
+            });
+        }
         generate::check(&root, &artifacts)?;
         for a in &artifacts {
             writeln!(
@@ -60,6 +93,12 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         }
         writeln!(out, "generate --check: in sync").map_err(Error::Transport)?;
     } else {
+        for removed in
+            crate::editors::remove_orphans(&root, &orphans).map_err(|e| Error::io(&root, e))?
+        {
+            writeln!(out, "{removed} (removed: its skill is no longer active)")
+                .map_err(Error::Transport)?;
+        }
         for path in generate::write(&root, &artifacts)? {
             writeln!(
                 out,

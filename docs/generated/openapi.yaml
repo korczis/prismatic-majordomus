@@ -53,6 +53,8 @@ tags:
     description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
   - name: economics
     description: "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows."
+  - name: editors
+    description: "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding."
   - name: entity
     description: "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object."
   - name: environment
@@ -3240,6 +3242,61 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_economics_runs
       x-majordomus-cli: economics runs
+  "/api/v1/editors":
+    get:
+      operationId: editors.status
+      summary: Editor and agent projections
+      description: "Every adapter (Zed, Antigravity) with each capability it supports, does not, or cannot be verified for, and the evidence; every projected file with the inputs it is derived from, its content address and its state here (current, stale, absent, or a conflict with a file this generator did not write); orphaned projections; and every finding with its remedy. Writes nothing: `majordomus generate editors` does."
+      tags:
+        - editors
+      parameters: []
+      responses:
+        "200":
+          description: "Editor and agent projections: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EditorProjection"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: editors.status
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::editors
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_editors
+        resource:
+          uri: majordomus://editors
+          name: editors
   "/api/v1/entity":
     get:
       operationId: entity.show
@@ -7143,6 +7200,77 @@ paths:
       x-majordomus-effect: process_state
       x-majordomus-mcp:
         tool: majordomus_mesh_review_answer
+  "/api/v1/mesh/reviews/withdraw":
+    post:
+      operationId: mesh.review.withdraw
+      summary: Withdraw a review request
+      description: "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only."
+      tags:
+        - mesh
+      requestBody:
+        required: true
+        description: "The input of `mesh.review.withdraw`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ReviewWithdrawInput"
+            examples:
+              unknown:
+                value:
+                  request: none/r-0
+                  session: bench
+                  note: superseded
+      responses:
+        "200":
+          description: "Withdraw a review request: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Written"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.review.withdraw
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_mesh_review_withdraw
   "/api/v1/mesh/sessions":
     post:
       operationId: mesh.session.open
@@ -20595,6 +20723,223 @@ components:
         - reason
         - refused
       description: "One edge of the composed graph, and what the compiler does with it.\n\nEvery edge kind the graph declares gets a row, followed or not, which is the property\nthat makes this projection worth reading: an edge added to the graph and not to the\ntraversal table appears here as `refused` with a reason saying the compiler has no rule\nfor it, rather than being silently unfollowed. A table that only listed the edges it\nfollowed could not tell you what it was ignoring.\n\n`forward` and `reverse` are absent rather than zero when the edge is not followed that\nway, so \"not followed\" is one representation and not two. `means` is the graph's own\naccount of the relation; `reason` is this compiler's account of why it is or is not\ncontext, in both directions.\n\n```\nuse majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// one row per edge kind the graph declares, followed or refused\nlet edges: &[EdgeRule] = &rules.edges;\nassert!(!edges.is_empty(), \"the graph declares edges\");\nfor e in edges {\n    // the row always says what the relation is and what was decided about it\n    assert!(!e.means.is_empty() && !e.reason.is_empty(), \"{}\", e.edge);\n\n    if e.refused {\n        // not followed in either direction, and absent rather than zero\n        assert!(e.forward.is_none() && e.reverse.is_none(), \"{}\", e.edge);\n        assert!(edge_policy(&e.edge).is_none(), \"{} is refused and in the table\", e.edge);\n    } else {\n        // followed at least one way, at a weight the table declares\n        assert!(e.forward.is_some() || e.reverse.is_some(), \"{}\", e.edge);\n        let p = edge_policy(&e.edge).expect(\"a followed edge has a policy\");\n        assert_eq!(e.forward, (p.forward > 0.0).then_some(p.forward));\n        assert_eq!(e.reverse, (p.reverse > 0.0).then_some(p.reverse));\n    }\n}\n```"
+    EditorAdapter:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "`zed` or `antigravity`."
+        title:
+          type: string
+          description: "The product's name."
+        verified_against:
+          type: string
+          description: The release the evidence was taken from.
+        capabilities:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EditorCapability"
+          description: "Its capabilities, by id."
+      required:
+        - id
+        - title
+        - verified_against
+        - capabilities
+      description: "One adapter: the product, the version its claims were verified against, its capabilities."
+    EditorCapability:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity within the adapter: `skills`, `tasks`, `instructions`, `mcp`, ..."
+        support:
+          "$ref": "#/components/schemas/EditorSupport"
+          description: What the adapter does with it.
+        artifacts:
+          type: array
+          items:
+            type: string
+          description: "The files that carry it, repository-relative. Empty when nothing is projected."
+        evidence:
+          type: string
+          description: Where the claim about the product comes from.
+        note:
+          type: string
+          description: "What it means here, and what to do when nothing is projected."
+      required:
+        - id
+        - support
+        - evidence
+        - note
+      description: One capability of one adapter.
+    EditorDerivation:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Repository-relative path.
+        document:
+          type: string
+          description: The document id in the generated-artifact manifest.
+        adapters:
+          type: array
+          items:
+            type: string
+          description: The adapters that read it.
+        sources:
+          type: array
+          items:
+            type: string
+          description: "The inputs it is derived from, by path."
+        key:
+          type: string
+          description: "The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes."
+        sha256:
+          type: string
+          description: SHA-256 of the projected content.
+        state:
+          "$ref": "#/components/schemas/EditorFileState"
+          description: The state of the file in this checkout.
+      required:
+        - path
+        - document
+        - adapters
+        - sources
+        - key
+        - sha256
+        - state
+      description: One projected file and how it came to be.
+    EditorDiagnostic:
+      type: object
+      properties:
+        severity:
+          "$ref": "#/components/schemas/Severity"
+          description: "`info`, `warning` or `error`."
+        code:
+          type: string
+          description: Stable identity of the finding.
+        adapter:
+          type:
+            - string
+            - "null"
+          description: "The adapter it concerns, when it concerns one."
+        path:
+          type:
+            - string
+            - "null"
+          description: "The file it concerns, when it concerns one."
+        message:
+          type: string
+          description: What was found.
+        remedy:
+          type: string
+          description: What to do about it.
+      required:
+        - severity
+        - code
+        - message
+        - remedy
+      description: Something about the projection worth acting on.
+    EditorFileState:
+      oneOf:
+        - type: string
+          const: current
+          description: Byte for byte what the projection says.
+        - type: string
+          const: stale
+          description: "Generator-owned and different: `majordomus generate editors` rewrites it."
+        - type: string
+          const: absent
+          description: "Not there: `majordomus generate editors` writes it."
+        - type: string
+          const: conflict
+          description: "A file without the generated banner sits at the path: it is someone's, and nothing\noverwrites it."
+      description: A projected file as this checkout holds it.
+    EditorInput:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Repository-relative path.
+        mutability:
+          "$ref": "#/components/schemas/EditorInputClass"
+          description: Tracked content or checkout state.
+        sha256:
+          type: string
+          description: SHA-256 of its content.
+      required:
+        - path
+        - mutability
+        - sha256
+      description: "One input of the projection: a file, what kind of input it is, and its content address."
+    EditorInputClass:
+      oneOf:
+        - type: string
+          const: repository
+          description: "Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte."
+      description: How far an input may change without the repository changing.
+    EditorProjection:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`SCHEMA`."
+        projection_version:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "`PROJECTION_VERSION`."
+        adapters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EditorAdapter"
+          description: "The adapters, by id."
+        inputs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EditorInput"
+          description: "The inputs, by path."
+        artifacts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EditorDerivation"
+          description: "The projected files, by path."
+        orphans:
+          type: array
+          items:
+            type: string
+          description: Generator-owned files under a projected directory that the plan no longer contains.
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EditorDiagnostic"
+          description: "The findings, by severity then code then path."
+      required:
+        - schema
+        - projection_version
+        - adapters
+        - inputs
+        - artifacts
+        - diagnostics
+      description: "`editors.status`: every adapter, every projected file and its state, every finding."
+    EditorSupport:
+      oneOf:
+        - type: string
+          const: supported
+          description: "Projected, from a verified format."
+        - type: string
+          const: unsupported
+          description: The product has no project-level form for it.
+        - type: string
+          const: unknown
+          description: A project-level form is claimed somewhere and could not be verified; nothing written.
+        - type: string
+          const: deprecated
+          description: "The product reads it, from a form this projection will not write."
+        - type: string
+          const: requires_user_action
+          description: "A person can enable it, outside the repository; the remedy says how."
+      description: "What an adapter can do with one capability. Never a boolean: \"we do not know\" is an\nanswer of its own and is not \"no\"."
     EffectiveEntry:
       type: object
       properties:
@@ -36232,6 +36577,11 @@ components:
             - string
             - "null"
           description: "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+        body:
+          type:
+            - string
+            - "null"
+          description: "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines."
       required:
         - subject
       description: "The input of `mesh.review.request`."
@@ -36243,7 +36593,13 @@ components:
         - type: string
           const: answered
           description: At least one answer.
-      description: "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+        - type: string
+          const: withdrawn
+          description: "The runtime that asked ended the request: done, void or superseded. Whatever was\nanswered before stays with it."
+        - type: string
+          const: expired
+          description: "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
+      description: "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
     ReviewView:
       type: object
       properties:
@@ -36271,6 +36627,11 @@ components:
             - string
             - "null"
           description: "The runtime asked, when one was."
+        body:
+          type:
+            - string
+            - "null"
+          description: "What the reviewer needs beyond the subject, when the requester wrote it."
         state:
           "$ref": "#/components/schemas/ReviewState"
           description: Its standing.
@@ -36279,6 +36640,11 @@ components:
           items:
             "$ref": "#/components/schemas/ReviewAnswer"
           description: "The answers, in Lamport order."
+        result:
+          type:
+            - string
+            - "null"
+          description: "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
       required:
         - key
         - session
@@ -36286,7 +36652,27 @@ components:
         - scope
         - state
         - answers
-      description: "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+      description: "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+    ReviewWithdrawInput:
+      type: object
+      additionalProperties: false
+      properties:
+        request:
+          type: string
+          description: "The request's key, `<stream>/<review>`."
+        session:
+          type:
+            - string
+            - "null"
+          description: "The withdrawing session of the asking runtime; the calling MCP session's own when\nomitted."
+        note:
+          type:
+            - string
+            - "null"
+          description: "The requester's result or reason, up to 8 KiB: what came of it, or why it is void."
+      required:
+        - request
+      description: "The input of `mesh.review.withdraw`."
     Role:
       oneOf:
         - type: string

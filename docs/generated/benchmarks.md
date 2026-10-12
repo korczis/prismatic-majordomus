@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 192 | 164 | 0 | 28 |
-| http | 188 | 164 | 0 | 24 |
-| mcp | 184 | 160 | 0 | 24 |
+| direct | 194 | 165 | 0 | 29 |
+| http | 190 | 165 | 0 | 25 |
+| mcp | 186 | 161 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 578 | 502 | 0 | 76 |
+| total | 584 | 505 | 0 | 79 |
 
 ## Capabilities
 
@@ -65,6 +65,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `economics.explain` | economics | query | process, 32 entries, 5s | covered | covered | covered | `primary` |
 | `economics.runs` | economics | query | process, 16 entries, 5s | covered | covered | covered | `all`, `narrowed` |
 | `economics.summary` | economics | query | process, 8 entries, 5s | covered | covered | covered | `default`, `narrowed` |
+| `editors.status` | editors | query | — | covered | covered | covered | `default` |
 | `entity.kinds` | entity | query | — | covered | covered | covered | `default` |
 | `entity.show` | entity | query | — | covered | covered | covered | `first-object` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
@@ -135,6 +136,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.release` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.request` | mesh | command | — | waived | waived | waived | — |
+| `mesh.review.withdraw` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.close` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.open` | mesh | command | — | waived | waived | waived | — |
 | `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |

@@ -877,6 +877,7 @@ mod tests {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                body: None,
             })
             .unwrap();
             if answered {
@@ -958,6 +959,7 @@ mod tests {
             scope: vec!["apps/x".into()],
             issue: None,
             reviewer: None,
+            body: None,
         })
         .unwrap();
         fold(&j.events(), &|_| StreamLiveness::Own)
