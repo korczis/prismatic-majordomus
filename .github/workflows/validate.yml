@@ -858,8 +858,11 @@ jobs:
     needs: plan
     if: needs.plan.outputs.interaction_probe == 'true'
     # the full probe measured 599 s on a 4-job local run over every page with a control; a hosted runner is slower,
-    # and a job killed at its bound reports cancelled, which the verdict counts as red
-    timeout-minutes: 45
+    # and a job killed at its bound reports cancelled, which the verdict counts as red. The probe grows with the
+    # site: on 2026-10-12 (run 38202851612, the v0.21.0 top) it reached page 1850 of 1865 at its 2400 s bound, so
+    # the step's bound is 3300 s and the job's 65 minutes; selecting only the pages a change can reach is the fix
+    # that lets these come down again, not a larger runner.
+    timeout-minutes: 65
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -876,7 +879,7 @@ jobs:
       - name: build the site
         run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
       - name: exercise every control
-        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 2400 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
+        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 3300 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
       - if: always()
         run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()
