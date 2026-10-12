@@ -3373,7 +3373,8 @@ pub enum OutputFormat {
 /// How files are enumerated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
 pub enum DiscoveryMode {
-    /// Tracked files, through the version-control index (the layer's contract)
+    /// Tracked files, through the version-control index (the layer's contract); a layer none
+    /// of which is tracked is read from the work tree
     #[default]
     Vcs,
     /// A walk of the work tree with the same glob semantics; untracked files included

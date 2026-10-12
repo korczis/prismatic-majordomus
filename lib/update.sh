@@ -115,6 +115,13 @@ H
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
   if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
 
+  # Under a personal layer every target is covered before any is written, and a target the
+  # project tracks refuses the whole update: half of it written is worse than none (ADR 0145).
+  i=0
+  while [ -n "$(mj_pol "projections.$i.target")" ]; do
+    mj_personal_guard "$(mj_pol "projections.$i.target")"
+    i=$((i+1))
+  done
   # write atomically, every target
   i=0
   while [ -n "$(mj_pol "projections.$i.target")" ]; do

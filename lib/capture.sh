@@ -1855,6 +1855,9 @@ mj_capture_publish_record() {
   local abs="$1" rel idx tree parent new msg
   [ -n "$abs" ] && [ -f "$abs" ] || return 0
   [ "$(mj_pol session.commit_record_on_end)" != false ] || return 0
+  # A personal layer's record is one person's: committing it would put a file of the layer
+  # on a branch other people share (ADR 0145). It stays where it was written.
+  mj_personal_active && return 0
   rel="$(mj_rel "$abs")"
   case "$rel" in /*) return 0 ;; esac          # outside the repository: not ours to commit
 
@@ -1900,6 +1903,7 @@ the working tree reaches no surface that reads session records.
 mj_capture_push_record() {
   local new="$1" branch remote upstream
   [ "$(mj_pol session.push_record_on_end)" != false ] || return 0
+  mj_personal_active && return 0               # nothing of a personal layer is pushed
   branch="$(mj_git branch --show-current 2>/dev/null)" || return 0
   [ -n "$branch" ] || return 0                 # detached: nothing to publish onto
   remote="$(mj_git config "branch.$branch.remote" 2>/dev/null)" || remote=""
@@ -2138,6 +2142,7 @@ mj_capture_install_one() {
   mj_capture_install_mods "$p"
 
   if [ ! -f "$cfg" ]; then
+    mj_personal_guard "$(mj_capture_field "$p" 2)"
     mj_capture_config "$p" > "$cfg"
     mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
@@ -2206,11 +2211,14 @@ mj_capture_install_shim() {
     if [ "$(cat "$shim")" = "$body" ]; then
       mj_info capture "$rel" "already present; left as it is"; return 0
     fi
+    mj_personal_guard "$rel"
     printf '%s\n' "$body" > "$shim"
     chmod +x "$shim"
     mj_info capture "$rel" "rewritten ($latency)"
     return 0
   fi
+  # under a personal layer the shim is covered before it exists (ADR 0145); a no-op otherwise
+  mj_personal_guard "$rel"
   mkdir -p "$(dirname "$shim")"
   printf '%s\n' "$body" > "$shim"
   chmod +x "$shim"
@@ -2283,6 +2291,7 @@ mj_capture_install_mods() {
       mj_info capture "$rel" "already present; left as it is"; continue
     fi
     verb=written; [ -d "$dst" ] && verb=rewritten
+    mj_personal_guard "$rel"
     for f in $(mj_capture_mod_files "$src"); do
       mkdir -p "$dst/$(dirname "$f")" && cp "$src/$f" "$dst/$f"
     done

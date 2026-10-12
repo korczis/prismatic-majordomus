@@ -252,7 +252,12 @@ mj_validate_projection() {
 # distilled from, so a generated target that holds a rule corpus fails here.
 mj_validate_bootstrap() {
   local j=0 tgt mode bad=0
-  if [ -f "$MJ_ROOT/README.md" ]; then
+  if mj_personal_active; then
+    # The chain starts at the project's README, and a personal layer changes nothing the
+    # project shares: the README is the repository's, the layer is one person's. The agent
+    # finds AGENTS.md beside it all the same.
+    mj_doctrine_skip bootstrap "README.md" "not asked to name AGENTS.md: the layer is personal, and the README is the project's"
+  elif [ -f "$MJ_ROOT/README.md" ]; then
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
@@ -586,6 +591,8 @@ mj_validate_ai_layout() {
   elif [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
     mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
   else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
+  # a personal layer is held to what it claims on every doctor, not only when it was made
+  if mj_personal_active; then mj_personal_verify mj_doctrine_ok mj_doctrine_fail || bad=1; fi
   if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
     mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
   fi

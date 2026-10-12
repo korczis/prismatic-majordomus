@@ -1804,6 +1804,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:personal-layer-changes-nothing-shared",
+      "path": "/evidence/claims/personal-layer-changes-nothing-shared/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:pointer-integrity",
       "path": "/evidence/claims/pointer-integrity/"
     },
@@ -3756,6 +3761,11 @@
       "kind": "use_case",
       "subject": "use_case:trust-the-policy-before-reading-it",
       "path": "/evidence/use-cases/trust-the-policy-before-reading-it/"
+    },
+    {
+      "kind": "use_case",
+      "subject": "use_case:use-the-tool-as-your-own-in-a-shared-repository",
+      "path": "/evidence/use-cases/use-the-tool-as-your-own-in-a-shared-repository/"
     },
     {
       "kind": "use_case",
@@ -9580,6 +9590,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:personal-layer-changes-nothing-shared": {
+      "kind": "claim",
+      "id": "personal-layer-changes-nothing-shared",
+      "status": "guaranteed",
+      "page": "/evidence/claims/personal-layer-changes-nothing-shared/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/INSTALL.md",
+            "lib/common.sh",
+            "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:pointer-integrity": {
       "kind": "claim",
       "id": "pointer-integrity",
@@ -14429,9 +14462,21 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
           "category": "e2e"
         }
       ],
@@ -18234,6 +18279,7 @@
         "claim:installer-verifies-before-installing",
         "claim:legacy-migration",
         "claim:no-network",
+        "claim:personal-layer-changes-nothing-shared",
         "claim:release-is-complete-or-absent",
         "claim:rust-binary-artifact",
         "claim:tool-location-independent",
@@ -18241,13 +18287,15 @@
         "command:init",
         "command:migrate",
         "command:version",
+        "rule:project.a-personal-layer-changes-nothing-shared",
         "rule:project.distribution-canonical",
         "rule:project.no-network-no-eval",
         "rule:project.portable-shell",
         "use_case:hand-the-repository-to-a-reader",
         "use_case:install-the-tool-in-one-command",
         "use_case:know-which-tool-is-running",
-        "use_case:migrate-from-the-old-layout"
+        "use_case:migrate-from-the-old-layout",
+        "use_case:use-the-tool-as-your-own-in-a-shared-repository"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22148,6 +22196,37 @@
           "inputs": [
             "test/cases/560_a_case_number_names_one_case.sh",
             ".ai/repo/rules/project/a-number-names-one-case.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-personal-layer-changes-nothing-shared": {
+      "kind": "rule",
+      "id": "project.a-personal-layer-changes-nothing-shared",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2979_a_personal_layer_changes_nothing_shared",
+          "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+            ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:86_installer_platform",
+          "path": "test/cases/86_installer_platform.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/86_installer_platform.sh",
+            ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
           ]
         }
       ],
@@ -26650,6 +26729,30 @@
         {
           "via": "scenario",
           "path": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
+          "category": "scenario"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "use_case:use-the-tool-as-your-own-in-a-shared-repository": {
+      "kind": "use_case",
+      "id": "use-the-tool-as-your-own-in-a-shared-repository",
+      "status": "active",
+      "page": "/evidence/use-cases/use-the-tool-as-your-own-in-a-shared-repository/",
+      "programs": [],
+      "members": [
+        "claim:local-state-ignored",
+        "claim:personal-layer-changes-nothing-shared",
+        "command:doctor",
+        "command:init",
+        "command:update",
+        "rule:majordomus.ai-layout-integrity"
+      ],
+      "routes": [
+        {
+          "via": "scenario",
+          "path": ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md",
           "category": "scenario"
         }
       ],
