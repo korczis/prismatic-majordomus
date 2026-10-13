@@ -32,7 +32,7 @@ if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
   printf '==> derive-check: MAJORDOMUS_BIN=%s (not building)\n' "$RB" >&2
 else
   release=(); [ "$PROFILE" = release ] && release=(--release)
-  RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}" || exit 13
+  RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}" || exit 13
   # cargo, not a composed path: this check runs in the pre-commit hook's neighbourhood and
   # in CI, and a shared CARGO_TARGET_DIR would make it exit 127 rather than report staleness
   RB="$(mj_cargo_target_dir "$CRATE" ask-cargo)/$PROFILE/majordomus"

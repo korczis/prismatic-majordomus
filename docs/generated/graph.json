@@ -35052,6 +35052,26 @@
         }
       },
       {
+        "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
+        "kind": "knowledge",
+        "label": "a-commit-stood-behind-a-build-lock",
+        "summary": "A commit stood fourteen minutes behind another worktree's build lock, in silence",
+        "route": "/cockpit/objects/knowledge/a-commit-stood-behind-a-build-lock",
+        "source": ".ai/repo/knowledge/curated/a-commit-stood-behind-a-build-lock.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-10-13",
+          "epistemics": "observed",
+          "tags": [
+            "post-mortem",
+            "build",
+            "worktrees",
+            "liveness"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "label": "an-expedited-landing",
@@ -41605,6 +41625,28 @@
             "campaigns",
             "evidence",
             "records"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "kind": "rule",
+        "label": "project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "summary": "A build never waits in silence behind another build's lock",
+        "route": "/cockpit/objects/rule/project-a-build-never-waits-in-silence-on-anothers-lock-1",
+        "source": ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.every-wait-is-bounded@2",
+            "project.worktrees-share-build-intermediates@1"
+          ],
+          "tags": [
+            "process",
+            "shell",
+            "build",
+            "worktrees"
           ]
         }
       },
@@ -51615,6 +51657,13 @@
         "label": "test/cases/29_prompt_capture.sh",
         "route": "/cockpit/objects/test/test-cases-29-prompt-capture-sh",
         "source": "test/cases/29_prompt_capture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3002_a_build_never_waits_in_silence.sh",
+        "kind": "test",
+        "label": "test/cases/3002_a_build_never_waits_in_silence.sh",
+        "route": "/cockpit/objects/test/test-cases-3002-a-build-never-waits-in-silence-sh",
+        "source": "test/cases/3002_a_build_never_waits_in_silence.sh"
       },
       {
         "id": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
@@ -76778,6 +76827,11 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/an-expedited-landing",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -77955,6 +78009,21 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "target": "majordomus://rule/project.worktrees-share-build-intermediates@1",
         "kind": "depends_on"
       },
       {
@@ -80969,6 +81038,11 @@
       },
       {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3002_a_build_never_waits_in_silence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86284,8 +86358,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2748,
-      "edges": 6030,
+      "nodes": 2751,
+      "edges": 6035,
       "acyclic": false,
       "truncated": false
     }

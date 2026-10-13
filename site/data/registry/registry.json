@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "e1ea2022f87faa2c7012b369b5812744900ffb635ae3cb0cb8b588e857ab76a0",
+    "fingerprint": "c1829a079e2a0ccd9c8112da0205c58d96819b386390fb149fb5889e0ec7ff6b",
     "summary": {
-      "total": 2334,
+      "total": 2337,
       "builtin": 196,
-      "declarative": 2138,
+      "declarative": 2141,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2138
+        "resource": 2141
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2147
+        "implemented": 2150
       },
       "mcp_tools": 187,
-      "mcp_resources": 2193,
+      "mcp_resources": 2196,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80684,7 +80684,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -81084,7 +81084,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 178,
+        "capabilities": 179,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 470,
+        "capabilities": 471,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bdb4183f8245cd0ee6d5c97ee73955671702a5bdf1a216c520b7fae1e35aa79a",
+    "fingerprint": "82add4e970e028f8f70fa57cc11e4707d18c83f7e2741e98400d52d76aa56f19",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81359,7 +81359,7 @@
       "implementation": 52,
       "intent": 4,
       "issue": 343,
-      "knowledge": 2,
+      "knowledge": 3,
       "mesh-declaration": 1,
       "milestone": 35,
       "moment": 38,
@@ -81367,12 +81367,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 23,
-      "rule": 178,
+      "rule": 179,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 470,
+      "test": 471,
       "use-case": 49,
       "workspace": 1
     },
@@ -82938,7 +82938,7 @@
         "path": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5035,
+        "bytes": 5814,
         "tags": [
           "operations",
           "worktrees",
@@ -87521,7 +87521,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 27857
+        "bytes": 29290
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -90311,7 +90311,7 @@
         "identity": "bin/majordomus-cli",
         "path": "bin/majordomus-cli",
         "source_class": "entrypoint",
-        "bytes": 3632
+        "bytes": 3838
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-env",
@@ -90639,7 +90639,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 23009
+        "bytes": 28837
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -94531,6 +94531,23 @@
         "bytes": 3595
       },
       {
+        "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
+        "kind": "knowledge",
+        "identity": "a-commit-stood-behind-a-build-lock",
+        "title": "A commit stood fourteen minutes behind another worktree's build lock, in silence",
+        "description": "The post-mortem of 2026-10-13 - what was observed, the cause, what was changed, and what would have caught it earlier.",
+        "path": ".ai/repo/knowledge/curated/a-commit-stood-behind-a-build-lock.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4372,
+        "tags": [
+          "post-mortem",
+          "build",
+          "worktrees",
+          "liveness"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "identity": "an-expedited-landing",
@@ -96827,6 +96844,23 @@
           "campaigns",
           "evidence",
           "records"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "kind": "rule",
+        "identity": "project.a-build-never-waits-in-silence-on-anothers-lock@1",
+        "title": "A build never waits in silence behind another build's lock",
+        "description": "Every build of the executable that this repository's own tooling starts goes through one bounded launcher; a build that stands behind another worktree's lock on the shared build directory says so, stops waiting at a declared bound, and builds in its own directory instead.",
+        "path": ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5204,
+        "tags": [
+          "process",
+          "shell",
+          "build",
+          "worktrees"
         ]
       },
       {
@@ -101369,6 +101403,14 @@
         "bytes": 26890
       },
       {
+        "uri": "majordomus://test/test/cases/3002_a_build_never_waits_in_silence.sh",
+        "kind": "test",
+        "identity": "test/cases/3002_a_build_never_waits_in_silence.sh",
+        "path": "test/cases/3002_a_build_never_waits_in_silence.sh",
+        "source_class": "case",
+        "bytes": 8925
+      },
+      {
         "uri": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
         "kind": "test",
         "identity": "test/cases/3003_the_knowledge_screen_answers.sh",
@@ -104477,7 +104519,7 @@
       "identity": [
         "id"
       ],
-      "objects": 2
+      "objects": 3
     },
     {
       "name": "mesh-declaration",
@@ -104564,7 +104606,7 @@
         "id",
         "version"
       ],
-      "objects": 178
+      "objects": 179
     },
     {
       "name": "scope",
@@ -104619,7 +104661,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 470
+      "objects": 471
     },
     {
       "name": "use-case",
