@@ -82,9 +82,9 @@ H
   mj_init_file "$skel/policy.yaml" "$MJ_POLICY_FILE"
   # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
   # the section seeds the file and says the manifest must name it
-  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
+  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
   else
-    mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
+    mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
     printf 'note: %s names no scope section; add `scope: repo/scope.yaml` under sections: so that the file applies\n' "$(mj_rel "$MJ_AI_MANIFEST")" >&2
   fi
   mj_init_tree "$skel/profiles" "$MJ_PROFILES_DIR" '*.yaml'
@@ -196,6 +196,86 @@ mj_init_file() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
   MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")"
+}
+# The scope a repository is given names what its own tree holds. The skeleton is neutral: the
+# layer, and the places a repository of any stack keeps its source. What this one is made of
+# is read from git — every entry tracked at its root that the skeleton's `in` does not
+# already reach becomes a line of `in`: a directory as `<name>/**`, a file as itself. No
+# stack is recognised and no list of languages is kept: a tree of mix.exs and apps/ gets
+# those, a tree of package.json and scripts/ gets those, and neither gets the other's.
+#
+# `out` still wins, so the additions admit nothing the rules below them refuse. What a rule
+# does refuse although the repository tracks it is said rather than decided: a tracked
+# directory an `out.paths` rule names (a committed dist/), and tracked files over
+# `out.max_bytes`, each with the key to change. A guess that is reported can be corrected;
+# one that is silent is found the day a worker cannot read the deliverable.
+#
+# Written once, as every seeded file is: an existing scope is the repository's and is left alone.
+mj_init_scope() {
+  local src="$1" dst="$2" tops ins outs t name line add='' held='' n=0 odd=0 cap big tmp
+  [ -e "$dst" ] && return 0
+  mj_init_file "$src" "$dst"
+  # the tracked entries of the root: a directory with its slash, a file as it is
+  tops="$(mj_git ls-files -z 2>/dev/null | tr '\0' '\n' | awk -F/ '{ print (NF > 1 ? $1 "/" : $1) }' | LC_ALL=C sort -u)"
+  [ -n "$tops" ] || return 0
+  ins="$(mj_init_scope_list "$src" in)"; outs="$(mj_init_scope_list "$src" out.paths)"
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    # a name the glob subset would read as a pattern, or YAML as something other than a
+    # plain scalar, is not guessed at: the repository adds it by hand, quoted as it means it
+    case "$t" in *[!A-Za-z0-9._/@+-]*|-*) odd=$((odd+1)); continue ;; esac
+    case "$t" in
+      */) name="${t%/}"
+          if printf '%s\n' "$outs" | grep -qxF -e "$name/" -e "**/$name/"; then
+            held="$held $t"; continue
+          fi
+          # already reached, wholly or in part, by a line of the skeleton
+          printf '%s\n' "$ins" | grep -q "^$(printf '%s' "$name" | sed 's/[.[\*^$]/\\&/g')/" && continue
+          line="$name/**" ;;
+      *)  printf '%s\n' "$ins" | grep -qxF -e "$t" && continue
+          line="$t" ;;
+    esac
+    add="$add
+  - $line"; n=$((n+1))
+  done <<EOF
+$tops
+EOF
+  if [ "$n" -gt 0 ]; then
+    tmp="$(mktemp "${TMPDIR:-/tmp}/mj.scope.XXXXXX")"
+    # after the last line of `in`, before the blank line that ends it
+    ADD="  # found tracked at the root of this repository by \`majordomus init\`; \`out\` still
+  # wins over every line here, and the list is the repository's to edit$add" \
+    awk '
+      /^out:/ && !done { print ENVIRON["ADD"]; done = 1 }
+      /^[[:space:]]*$/ { held = held $0 "\n"; next }
+      { printf "%s", held; held = ""; print }
+      END { printf "%s", held }
+    ' "$dst" > "$tmp" && cat "$tmp" > "$dst"
+    rm -f "$tmp"
+    printf 'note: %s names %s path(s) found tracked at the root of this repository:%s\n' \
+      "$(mj_rel "$dst")" "$n" "$(printf '%s' "$add" | sed 's/^  - //' | tr '\n' ' ' | sed 's/ $//')" >&2
+  fi
+  for t in $held; do
+    printf 'note: %s leaves %s out although %s file(s) under it are tracked (out.paths); remove the rule there if they are source\n' \
+      "$(mj_rel "$dst")" "$t" "$(mj_git ls-files -- "$t" 2>/dev/null | wc -l | tr -d ' ')" >&2
+  done
+  [ "$odd" = 0 ] || printf 'note: %s: %s tracked root entr(ies) with a name outside [A-Za-z0-9._/@+-] were not guessed; add them under in:, quoted\n' "$(mj_rel "$dst")" "$odd" >&2
+  cap="$(awk '/^  max_bytes:/ { print $2; exit }' "$src")"
+  case "$cap" in ''|*[!0-9]*) return 0 ;; esac
+  big="$(mj_git ls-tree -r -l HEAD 2>/dev/null | awk -v m="$cap" '
+    $4 ~ /^[0-9]+$/ && $4 + 0 > m { n++; if ($4 + 0 > top) { top = $4 + 0; p = $0; sub(/^[^\t]*\t/, "", p) } }
+    END { if (n) printf "%d file(s) over out.max_bytes %d are tracked and out, the largest %s (%d bytes)", n, m, p, top }')"
+  [ -z "$big" ] || printf 'note: %s: %s; raise the limit there if they are meant to be read\n' "$(mj_rel "$dst")" "$big" >&2
+  return 0
+}
+# the items of one list of a scope declaration, one per line, unquoted: `in`, or `out.paths`
+mj_init_scope_list() {
+  awk -v want="$2" '
+    /^[A-Za-z_]+:/ { top = $1; sub(/:.*/, "", top); key = top; next }
+    /^  [A-Za-z_]+:/ { k = $1; sub(/:.*/, "", k); key = top "." k; next }
+    /^    [A-Za-z_]+:/ { key = ""; next }
+    key == want && /^ *- / { v = $0; sub(/^ *- */, "", v); gsub(/^\047|\047$/, "", v); print v }
+  ' "$1"
 }
 # copy every matching file of a skeleton directory into place, one by one, never overwriting
 mj_init_tree() {

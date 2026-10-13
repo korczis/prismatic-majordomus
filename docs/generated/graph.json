@@ -30965,6 +30965,8 @@
           "acceptance_criteria": [
             "init in a fixture JavaScript repository writes no Elixir or Rust paths into its scope"
           ],
+          "completed_at": "2026-10-13T07:30:45Z",
+          "completed_event": "sha256:9cd2687f8fc02e544220ebb38b048dc7b18cf1d5d55afcaf49379e2f0667a7ad",
           "created_at": "2026-10-04",
           "current_state": "share/skeleton scope is stack-specific.",
           "desired_state": "init writes a scope that names what the adopter's tree contains, and says what it guessed.",
@@ -30982,11 +30984,15 @@
             "test/cases"
           ],
           "slug": "init-seeds-a-scope-for-the-stack-it-finds",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-13T07:30:23Z",
+          "started_event": "sha256:c56ad5e01f29c5c5ffca5585a3296e99c489eb9db5e1d511c3865d8eb0317519",
+          "updated_at": "2026-10-13T07:30:45Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-13T07:30:32Z",
+          "verified_event": "sha256:48c96df0f5c35177a1adb431f87325be6a35ba04a2397dccca5b2e20b04768c2"
         }
       },
       {
@@ -51284,6 +51290,13 @@
         "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2991_init_seeds_a_scope_for_the_stack_it_finds.sh",
+        "kind": "test",
+        "label": "test/cases/2991_init_seeds_a_scope_for_the_stack_it_finds.sh",
+        "route": "/cockpit/objects/test/test-cases-2991-init-seeds-a-scope-for-the-stack-it-finds-sh",
+        "source": "test/cases/2991_init_seeds_a_scope_for_the_stack_it_finds.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -80430,6 +80443,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2991_init_seeds_a_scope_for_the_stack_it_finds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -85736,8 +85754,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2732,
-      "edges": 5988,
+      "nodes": 2733,
+      "edges": 5989,
       "acyclic": false,
       "truncated": false
     }

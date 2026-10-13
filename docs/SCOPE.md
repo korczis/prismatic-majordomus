@@ -138,6 +138,23 @@ pathspecs it declares, and that every key is one the schema declares; a manifest
 no scope section is an `INFO` saying the default applies. `init --extend` seeds the file
 into a layer written before the section existed and says the manifest must name it.
 
+## What init seeds
+
+The distribution's default names the layer and the places a repository of any stack keeps
+its source and its documents (`src/**`, `lib/**`, `test/**`, `docs/**`), and no language.
+`majordomus init` copies it and then reads the repository it is in: every entry git tracks
+at the root that the default does not already reach becomes a line of `in`, a directory as
+`<name>/**` and a file as itself, under a comment that says where the lines came from. No
+stack is recognised; a tree of `mix.exs` and `apps/` is given those, a tree of
+`package.json` and `scripts/` is given those.
+
+`out` still wins, so the additions admit nothing a rule refuses. What a rule refuses
+although the repository tracks it is reported on stderr with the key to change: a tracked
+directory an `out.paths` rule names (a committed `dist/`), tracked files over
+`out.max_bytes` with the largest named, and root entries whose name the glob subset cannot
+carry as a plain scalar, which are left for the repository to add quoted. An existing
+`scope.yaml` is never rewritten, by `init --extend` or anything else.
+
 ## Changing it
 
 Edit `.ai/repo/scope.yaml`, never the tool. A repository made of something the default
