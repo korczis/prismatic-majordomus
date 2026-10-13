@@ -47,6 +47,102 @@ fn the_policy_is_data_with_a_default_and_a_file_that_overrides_it() {
     assert_eq!(err.exit_code(), 10);
 }
 
+/// One measurement of `key` in `cache_mode`, every sample `micros` long.
+fn measured(key: &str, cache_mode: CacheMode, micros: u64, samples: usize) -> BenchmarkResult {
+    BenchmarkResult {
+        key: key.into(),
+        kind: TargetKind::System {
+            target: SystemTarget::McpPing,
+        },
+        cache_mode,
+        stats: Statistics::of(&vec![Duration::from_micros(micros); samples]),
+        handler_invocations: None,
+    }
+}
+
+/// A budget is an absolute bound of the policy: read from the file with every key it needs,
+/// held without a baseline and on a host no baseline was recorded on, on the cache mode and
+/// prefix it names and nothing else, and reported with the target, its value and its bound.
+#[test]
+fn a_budget_is_held_with_no_baseline_on_any_host_and_names_what_is_over_it() {
+    use majordomus_cli::bench::baseline::Check;
+    let f = Fixture::new();
+    let repo = Repository::discover(&f.root()).unwrap();
+    assert!(
+        Policy::default().budgets.is_empty(),
+        "this crate declares no bound"
+    );
+    f.write(
+        ".ai/repo/benchmarks/rust/policy.yaml",
+        "version: 1\nbudgets:\n  - prefix: system.http.live.ui.\n    cache: warm\n    metric: p95\n    milliseconds: 100\n    minimum_samples: 5\n",
+    );
+    let policy = Policy::load(&repo).unwrap();
+    assert_eq!(policy.budgets.len(), 1);
+    assert_eq!(policy.budgets[0].microseconds, 100_000.0);
+    assert_eq!(policy.budgets[0].cache, CacheMode::Warm);
+
+    let mut run = document("f");
+    run.results = vec![
+        measured("system.http.live.ui.index", CacheMode::Warm, 4_000, 20),
+        measured("system.http.live.ui.roadmap", CacheMode::Warm, 250_000, 20),
+        // the same screen cold is not what this budget bounds
+        measured("system.http.live.ui.roadmap", CacheMode::Cold, 900_000, 20),
+        // too few samples to say
+        measured("system.http.live.ui.mesh", CacheMode::Warm, 900_000, 3),
+        // another surface
+        measured("system.http.cockpit_overview", CacheMode::Warm, 900_000, 20),
+    ];
+    let check = Check::compare(&run, None, &policy);
+    assert!(!check.baseline_found && !check.comparable);
+    let verdicts: Vec<(&str, &str)> = check
+        .budgets
+        .iter()
+        .map(|l| (l.key.as_str(), l.verdict.as_str()))
+        .collect();
+    assert_eq!(
+        verdicts,
+        [
+            ("system.http.live.ui.index", "PASS"),
+            ("system.http.live.ui.roadmap", "OVER"),
+            ("system.http.live.ui.mesh", "SHORT"),
+        ]
+    );
+    assert!(check.over_budget());
+    assert!(
+        check.failed(),
+        "over a budget fails with no baseline to compare"
+    );
+    let report = check.render();
+    assert!(report.contains("system.http.live.ui.roadmap"), "{report}");
+    assert!(
+        report.contains("250000.0") && report.contains("100000.0"),
+        "{report}"
+    );
+    assert!(report.contains("bench --check: over budget"), "{report}");
+
+    // within the bound, nothing fails, and a run the policy bounds nothing of says nothing
+    run.results.remove(1);
+    let check = Check::compare(&run, None, &policy);
+    assert!(!check.failed());
+    assert!(check.render().contains("bench --check: within budget"));
+    let unbounded = Check::compare(&document("f"), None, &policy);
+    assert!(unbounded.budgets.is_empty());
+    assert!(!unbounded.render().contains("budget"));
+
+    // a bound with a key missing, or a mode that is not one, is a policy error that names it
+    for (text, names) in [
+        ("budgets:\n  - prefix: a.\n    cache: warm\n    metric: p95\n", "budgets[0].milliseconds"),
+        ("budgets:\n  - cache: warm\n    metric: p95\n    milliseconds: 5\n", "budgets[0].prefix"),
+        ("budgets:\n  - prefix: a.\n    cache: hot\n    metric: p95\n    milliseconds: 5\n", "budgets[0].cache"),
+        ("budgets:\n  - prefix: a.\n    cache: warm\n    metric: p95\n    milliseconds: 5\n    minimum_samples: some\n", "budgets[0].minimum_samples"),
+    ] {
+        f.write(".ai/repo/benchmarks/rust/policy.yaml", &format!("version: 1\n{text}"));
+        let err = Policy::load(&repo).unwrap_err();
+        assert!(err.to_string().contains(names), "{names}: {err}");
+        assert_eq!(err.exit_code(), 10);
+    }
+}
+
 fn document(fingerprint: &str) -> ResultDocument {
     ResultDocument {
         schema: RESULT_SCHEMA.into(),
