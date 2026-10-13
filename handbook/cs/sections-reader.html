@@ -1,0 +1,45 @@
+<section id="citarna">
+  <h2>Čítárna: dokumenty repozitáře</h2>
+  <p>Všechny dokumenty, rozhodnutí, pravidla, garance a use cases repozitáře jsou tady vložené celé a vykreslené na místě, jednotně s příručkou. Nic z toho není přepsané ručně: stavební skript je vytáhl z <code>origin/master</code> na commitu <code id="rd-commit">?</code> a při dalším sestavení je vytáhne znovu. Odkazy mezi dokumenty vedou sem, ne ven, a u každého dokumentu vidíš, kam odkazuje, kdo odkazuje na něj a ve kterých kapitolách příručky se o něm mluví.</p>
+  <div class="lab rd" id="lab-reader">
+    <p class="lab-h">Čítárna · <span id="rd-total"></span></p>
+    <div class="seg" id="rd-views" role="tablist" aria-label="Pohled">
+      <button type="button" class="seg-b" role="tab" data-v="list" aria-selected="true">Seznam</button>
+      <button type="button" class="seg-b" role="tab" data-v="graph" aria-selected="false">Mapa odkazů</button>
+      <button type="button" class="seg-b" role="tab" data-v="tree" aria-selected="false">Velikost podle druhu</button>
+    </div>
+    <div class="rd-chart-wrap" id="rd-chart-wrap" hidden>
+      <div class="rd-chart" id="rd-chart" role="img" aria-label="Graf dokumentů repozitáře"></div>
+      <p class="lab-note" id="rd-chart-note"></p>
+    </div>
+    <div class="rd-browse" id="rd-browse">
+      <div class="seg rd-kinds" id="rd-kinds" role="tablist" aria-label="Druh dokumentu"></div>
+      <div class="rd-filter">
+        <input class="inp" id="rd-q" type="search" placeholder="hledej v názvu a cestě, např. mesh, scope, worktree" autocomplete="off" aria-label="Filtr dokumentů">
+        <label class="chk"><input type="checkbox" id="rd-full"> i v textu</label>
+        <label class="chk"><input type="checkbox" id="rd-hot"> nejvíc odkazované nahoře</label>
+      </div>
+      <p class="lab-note" id="rd-count" aria-live="polite"></p>
+      <ol class="rd-list" id="rd-list"></ol>
+    </div>
+    <article class="rd-doc" id="rd-doc" hidden aria-live="polite">
+      <header class="rd-head" id="rd-head"></header>
+      <div class="rd-cols">
+        <div class="md" id="rd-body"></div>
+        <aside class="rd-side" id="rd-side" aria-label="Souvislosti dokumentu"></aside>
+      </div>
+    </article>
+  </div>
+  <h3>Jak se čítárna drží v souladu s repozitářem</h3>
+  <p>Stránka v prohlížeči nemá přístup k síti, takže nic nestahuje za běhu. Soulad drží sestavení: jeden skript vezme strom z <code>origin/master</code>, sestaví index odkazů a selže, když odkaz mezi dokumenty nikam nevede. Proto je u čítárny vždy vidět commit, ze kterého pochází. Trvale živá verze téhož patří na <a href="https://majordomus.dev">majordomus.dev</a>, kde se web odvozuje při každé změně masteru.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Co</th><th>Odkud se bere</th><th>Co hlídá soulad</th></tr></thead>
+    <tbody>
+      <tr><td>text dokumentů</td><td>soubory <code>*.md</code> ze stromu commitu</td><td>sestavení je čte znovu, nic se nepřepisuje</td></tr>
+      <tr><td>odkazy mezi dokumenty</td><td>relativní odkazy, čísla ADR a identifikátory pravidel v textu</td><td>sestavení vypíše každý odkaz, který nikam nevede</td></tr>
+      <tr><td>zpětné odkazy</td><td>obrácený index téhož</td><td>počítá se, nezapisuje se</td></tr>
+      <tr><td>kapitoly příručky u dokumentu</td><td>odkazy na zdroje v kapitolách</td><td>počítá prohlížeč při načtení</td></tr>
+      <tr><td>mapa odkazů a velikosti</td><td>index čítárny</td><td>stejná data jako seznam</td></tr>
+    </tbody>
+  </table></div>
+</section>
