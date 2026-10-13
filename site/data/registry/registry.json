@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "baf3f81337b22b1dc5d780c0db70ab9ffe6bc66b649820aa3d3a74f5eeb00e7a",
+    "fingerprint": "229ef4c2bbbfc74693a9d8e29fd275ca7edc1a5be8439f773c1669e51c9a3e6b",
     "summary": {
-      "total": 2300,
+      "total": 2302,
       "builtin": 196,
-      "declarative": 2104,
+      "declarative": 2106,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2104
+        "resource": 2106
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2113
+        "implemented": 2115
       },
       "mcp_tools": 187,
-      "mcp_resources": 2159,
+      "mcp_resources": 2161,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -1013,6 +1013,17 @@
               "execution": {
                 "$ref": "#/$defs/ExecutionPolicy",
                 "description": "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+              },
+              "skill": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SkillExposure"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The short name a person invokes it by from an agent's prompt, when it has one."
               }
             },
             "required": [
@@ -1599,6 +1610,24 @@
                   }
                 ],
                 "description": "Whether two executions of one capability may overlap."
+              },
+              "SkillExposure": {
+                "type": "object",
+                "properties": {
+                  "alias": {
+                    "type": "string",
+                    "description": "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+                  },
+                  "argument": {
+                    "type": "string",
+                    "description": "The input field the text typed after the name fills, verbatim."
+                  }
+                },
+                "required": [
+                  "alias",
+                  "argument"
+                ],
+                "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
               }
             }
           }
@@ -40957,6 +40986,10 @@
           "cancellable": false,
           "concurrency": "serial"
         },
+        "skill": {
+          "alias": "intent",
+          "argument": "statement"
+        },
         "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
       },
       {
@@ -80033,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 101,
+        "capabilities": 102,
         "capability_ids": []
       },
       {
@@ -81195,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 459,
+        "capabilities": 460,
         "capability_ids": []
       },
       {
@@ -81285,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b3b4287a18e71c0f325c13456e44c8fa798268b240ed36fb75b48e0c0f5c7119",
+    "fingerprint": "6ced70b62bfddffe37ede52b7a1ec3603671a2dec9552a272d9b73069b40885f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81308,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 101,
+      "adr": 102,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81339,7 +81372,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 459,
+      "test": 460,
       "use-case": 49,
       "workspace": 1
     },
@@ -82996,6 +83029,22 @@
           "adoption",
           "discovery",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0146",
+        "kind": "adr",
+        "identity": "adr-0146",
+        "title": "A capability is invoked by name through a generated skill",
+        "description": "A capability is invoked by name through a generated skill",
+        "path": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4058,
+        "tags": [
+          "capabilities",
+          "providers",
+          "editors"
         ]
       },
       {
@@ -86815,7 +86864,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44447
+        "bytes": 44853
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -87004,7 +87053,7 @@
         "title": "Editors and agents",
         "path": "docs/EDITORS.md",
         "source_class": "document",
-        "bytes": 4234
+        "bytes": 5264
       },
       {
         "uri": "majordomus://document/docs/ENTRY.md",
@@ -100937,6 +100986,14 @@
         "bytes": 17378
       },
       {
+        "uri": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "kind": "test",
+        "identity": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "path": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "source_class": "case",
+        "bytes": 7902
+      },
+      {
         "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "test",
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
@@ -103872,7 +103929,7 @@
       "identity": [
         "id"
       ],
-      "objects": 101
+      "objects": 102
     },
     {
       "name": "application",
@@ -104187,7 +104244,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 459
+      "objects": 460
     },
     {
       "name": "use-case",

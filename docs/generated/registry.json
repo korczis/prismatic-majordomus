@@ -1435,6 +1435,17 @@
             "execution": {
               "$ref": "#/$defs/ExecutionPolicy",
               "description": "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+            },
+            "skill": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SkillExposure"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The short name a person invokes it by from an agent's prompt, when it has one."
             }
           },
           "required": [
@@ -2021,6 +2032,24 @@
                 }
               ],
               "description": "Whether two executions of one capability may overlap."
+            },
+            "SkillExposure": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "description": "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+                },
+                "argument": {
+                  "type": "string",
+                  "description": "The input field the text typed after the name fills, verbatim."
+                }
+              },
+              "required": [
+                "alias",
+                "argument"
+              ],
+              "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
             }
           }
         }
@@ -41378,6 +41407,10 @@
         "effect": "repository_mutation",
         "cancellable": false,
         "concurrency": "serial"
+      },
+      "skill": {
+        "alias": "intent",
+        "argument": "statement"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
     },
