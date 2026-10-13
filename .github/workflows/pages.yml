@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     # Every inspector the screens link to, read at one commit, takes minutes rather than
     # seconds; the bound is behind the reading's own budget below, not instead of it.
-    timeout-minutes: 35
+    timeout-minutes: 45
     # This job reads and publishes nothing: the forge is asked what it holds (the open pull
     # requests, every deployment, every release) so that the snapshot shows them, and no
     # token here can write.
@@ -315,10 +315,24 @@ jobs:
       - name: the UI, read once at this commit
         timeout-minutes: 22
         run: apps/majordomus-cli/target/debug/majordomus web report ui-snapshot --limit 4000 --budget-seconds 1200
+      # The Cockpit by the same exporter (ADR 0147), after the UI: it reads first the pages the
+      # UI's snapshot links to, and then leads the UI's links to the pages it wrote, so the
+      # UI's files are final only once this step is over and are uploaded after it. Its bound
+      # is smaller than the UI's: the Cockpit has a page per capability and per object, and a
+      # publication holds the routes and what the UI cites, not the whole registry.
+      - name: the Cockpit, read once at this commit
+        timeout-minutes: 9
+        run: apps/majordomus-cli/target/debug/majordomus web report cockpit-snapshot --limit 1500 --budget-seconds 360
       - uses: actions/upload-artifact@v4
         with:
           name: ui-snapshot
           path: target/web/ui-snapshot
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cockpit-snapshot
+          path: target/web/cockpit-snapshot
           if-no-files-found: error
           retention-days: 1
 
@@ -350,7 +364,7 @@ jobs:
     needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 41
+    timeout-minutes: 45
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -443,17 +457,30 @@ jobs:
         with:
           name: ui-snapshot
           path: target/web/ui-snapshot
-      - name: the UI's snapshot, at its mount
+      - name: the Cockpit's snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: cockpit-snapshot
+          path: target/web/cockpit-snapshot
+      # Every snapshot the publication model declares (deploy.snapshots), placed where the
+      # model and the topology say: no mount and no artifact directory is written here.
+      - name: the snapshots, each at its mount
         run: |
-          declared=target/web/ui-snapshot/surface.json
-          mount="$(jq -er '.mount' "$declared")"
-          built="$(jq -er '.built_from' "$declared")"
-          [ -n "$built" ] || { echo "the UI's snapshot names no commit it was read at" >&2; exit 1; }
-          case "$GITHUB_SHA" in "$built"*) ;; *) echo "the UI's snapshot was read at $built, and this run publishes $GITHUB_SHA" >&2; exit 1 ;; esac
-          [ ! -e "site/public$mount" ] || { echo "the site itself built site/public$mount, the snapshot's mount; one path has one owner" >&2; exit 1; }
-          mkdir -p "site/public$mount"
-          cp -R target/web/ui-snapshot/. "site/public$mount/"
-          echo "the UI's snapshot of $built is at $mount: $(find "site/public$mount" -name index.html | wc -l | tr -d ' ') page(s)"
+          scripts/pages snapshots > snapshots.tsv
+          while IFS="$(printf '\t')" read -r id mount artifact _; do
+            [ -n "$id" ] || continue
+            declared="$artifact/surface.json"
+            [ -f "$declared" ] || { echo "no snapshot of the $id surface was produced at $artifact" >&2; exit 1; }
+            at="$(jq -er '.mount' "$declared")"
+            built="$(jq -er '.built_from' "$declared")"
+            [ "$at" = "$mount" ] || { echo "the $id snapshot declares mount $at, and the model places it at $mount" >&2; exit 1; }
+            [ -n "$built" ] || { echo "the $id snapshot names no commit it was read at" >&2; exit 1; }
+            case "$GITHUB_SHA" in "$built"*) ;; *) echo "the $id snapshot was read at $built, and this run publishes $GITHUB_SHA" >&2; exit 1 ;; esac
+            [ ! -e "site/public$mount" ] || { echo "the site itself built site/public$mount, the $id snapshot's mount; one path has one owner" >&2; exit 1; }
+            mkdir -p "site/public$mount"
+            cp -R "$artifact/." "site/public$mount/"
+            echo "the $id snapshot of $built is at $mount: $(find "site/public$mount" -name index.html | wc -l | tr -d ' ') page(s)"
+          done < snapshots.tsv
 
       # the one deploy path, the same script a person runs
       - name: publish
@@ -534,6 +561,13 @@ jobs:
         if: steps.public.outcome == 'success'
         timeout-minutes: 3
         run: scripts/pages verify-ui --commit "$GITHUB_SHA" --timeout 120
+      # the Cockpit beside it, held the same way: its declaration, its first page, its record
+      # and every page the record lists (ADR 0147). Until this, /cockpit/ answered the site's
+      # own not-found page and nothing asked.
+      - name: the Cockpit it publishes
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 3
+        run: scripts/pages verify-ui --surface cockpit --commit "$GITHUB_SHA" --timeout 120
 
       # The release it offers, as served: the homepage's offered release, /releases/latest.json
       # and GitHub's newest release name one version, or GitHub published it less than

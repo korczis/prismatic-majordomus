@@ -2905,6 +2905,133 @@ cli:
                   setup: []
                   expectation: "exits 0; prints web report, ui-snapshot"
               subcommands: []
+            - path:
+                - majordomus
+                - web
+                - report
+                - cockpit-snapshot
+              route: /docs/cli/web/report/cockpit-snapshot/
+              executable: true
+              usage: "majordomus web report cockpit-snapshot [OPTIONS]"
+              about: "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)"
+              args:
+                - name: limit
+                  long: limit
+                  positional: false
+                  help: "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to"
+                  value_name: LIMIT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "240"
+                - name: budget_seconds
+                  long: budget-seconds
+                  positional: false
+                  help: The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost
+                  value_name: BUDGET_SECONDS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults:
+                    - "180"
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+                - name: only
+                  long: only
+                  positional: false
+                  help: "Only these surfaces, by discovered id (repeat or separate with commas)"
+                  value_name: ONLY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: exclude
+                  long: exclude
+                  positional: false
+                  help: "Every surface except these, by discovered id"
+                  value_name: EXCLUDE
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+              examples:
+                - id: web-report-cockpit-snapshot
+                  title: Read the Cockpit once and write it as the pages a publication carries at /cockpit
+                  description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it."
+                  argv:
+                    - web
+                    - report
+                    - cockpit-snapshot
+                    - "--limit"
+                    - "12"
+                  command: majordomus web report cockpit-snapshot --limit 12
+                  setup: []
+                  expectation: "exits 0; prints web report, cockpit-snapshot"
+              subcommands: []
         - path:
             - majordomus
             - web
