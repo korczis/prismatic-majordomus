@@ -45,6 +45,17 @@ one line, with:
 </div>
 
 
+A `file:` or `test:` reference names evidence as it was when the record was written, and the
+file may since have been deleted or renamed. Such a reference is resolved through git before
+it is called dangling: `file:<path>@<commit>` is the file at that commit and resolves when
+that commit holds that path, and a bare `file:<path>` the tree no longer holds resolves when
+some commit in HEAD's history touched that path. `majordomus knowledge check` reports each
+one as historical, with the commit, and counts them in its last line; it is not a finding.
+A path no commit ever held, or a pin to a commit that never held it, fails as before. A
+shallow clone knows less history and may refuse what a full one resolves. The Rust
+executable's `knowledge record` resolves the same references the same way, as `external`
+with the commit as its target.
+
 A record is never a summary of a conversation and never quotes a prompt or a turn; the check
 that keeps `project.never-store-transcripts` applies to its title, its description and its
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
