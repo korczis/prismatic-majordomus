@@ -561,6 +561,43 @@ a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, 
 assertion is a mutation rather than a description: a variant of the workflow with `git tag`
 appended is refused, naming the tag.
 
+### Who cuts the tag
+
+Since 2026-10-12, a clock. The owner made the decision a standing one — a version every hour,
+arranged without a person in the loop (ADR 0151) — so the decision `version.yml` leaves alone
+is no longer taken afresh each time: it was taken once, with its conditions, and
+[`scripts/release-cadence`](../scripts/release-cadence) applies them. `version.yml` is
+unchanged and still tags nothing; the two do different things.
+
+Each hour [`.github/workflows/cadence.yml`](../.github/workflows/cadence.yml) asks the actor,
+which takes the newest commit of the trunk's first-parent history since the last release
+whose `ci` concluded success (`scripts/ci/release-verdict`, asked per commit) and then:
+
+| It finds | It does | It says |
+|---|---|---|
+| that commit declares a version above the last release, and no tag holds it | creates the tag **at that commit** and dispatches `release.yml` with it | `cut v… at <commit>` |
+| the trunk is the last release itself | nothing | `current` |
+| no commit since the last release has a green `ci` | nothing | `no-verdict`, with how many concluded otherwise and how many are not judged yet |
+| the newest green commit still declares the released version | nothing | `not-raised` |
+| the version already has a tag | nothing | `tagged` |
+
+Three things follow from that table. The tag need not be the trunk's tip: a red or an unjudged
+commit on top of a green one does not hold the release back, and is never what gets tagged. An
+hour with nothing to cut is a run whose summary states the reason, so "no release" is always a
+sentence somebody can read and never silence. And the binding constraint is a green trunk, not
+the clock: the actor cannot make a version appear, it only stops one from waiting.
+
+It judges nothing itself and changes no branch. It never pushes to the trunk, never raises the
+version — a landing does — and never merges; the release workflow asks the verdict again and
+checks the tag against the version before it builds. A tag created with a workflow's own token
+starts no workflow, which is why the release is dispatched by name. A verdict that cannot be
+read, a tag or a dispatch that is refused, is exit 12 with the command that reproduces it.
+`test/cases/2990_a_release_is_cut_on_the_hour.sh` drives every row against a stub forge and
+holds the workflow to the hour and to its three permissions.
+
+By hand it is the same command a person may run first: `scripts/release-cadence --dry-run`
+decides and changes nothing.
+
 ## What proves it
 
 | | |

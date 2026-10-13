@@ -1,0 +1,70 @@
+# The release cadence: each hour, the trunk is asked whether a release can be cut, and when it
+# can, it is cut. No person is in this loop (ADR 0151).
+#
+# This file is an adapter over scripts/release-cadence and carries no rule of its own: which
+# commit is the candidate, what "green" means and which version is cut are that script's, and
+# test/cases/2990_a_release_is_cut_on_the_hour.sh holds both to it. What the script decides it
+# reports in the run summary, including every hour in which there was nothing to cut and why:
+# an hour without a release is a stated reason, never silence.
+#
+# What it may do, and nothing more: create one tag at a commit whose `ci` concluded success
+# and dispatch release.yml with it. It never pushes to master, never raises the version (a
+# landing does), never merges a pull request, and never tags a red or an unjudged commit. The
+# release workflow then asks the same verdict again before it builds anything.
+name: cadence
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: decide and report, change nothing
+        type: boolean
+        default: false
+
+# contents: write for the one tag; actions: write to dispatch release.yml; checks: read for
+# the verdict. Nothing here can change a branch.
+permissions:
+  contents: write
+  actions: write
+  checks: read
+
+# One decision at a time: two runs cannot both decide to cut the same version, and a waiting
+# run is not cancelled, it decides after the one before it, on what that one left.
+concurrency:
+  group: release-cadence
+  cancel-in-progress: false
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # the whole history and every tag: the last release is the highest version tag the
+      # trunk contains, and the candidates are the first-parent commits since it
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          fetch-tags: true
+
+      - id: decide
+        name: cut the release the trunk has earned, or say why there is none
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(--trunk HEAD)
+          [ "${DRY_RUN:-false}" != true ] || args+=(--dry-run)
+          rc=0
+          scripts/release-cadence "${args[@]}" > "$RUNNER_TEMP/cadence.txt" 2> "$RUNNER_TEMP/cadence.err" || rc=$?
+          cat "$RUNNER_TEMP/cadence.txt"; cat "$RUNNER_TEMP/cadence.err" >&2
+          {
+            printf '## The release cadence, this hour\n\n```\n'
+            cat "$RUNNER_TEMP/cadence.txt" "$RUNNER_TEMP/cadence.err"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"

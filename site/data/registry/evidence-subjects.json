@@ -22387,6 +22387,37 @@
       ],
       "findings": []
     },
+    "rule:project.a-release-is-cut-on-the-hour": {
+      "kind": "rule",
+      "id": "project.a-release-is-cut-on-the-hour",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2990_a_release_is_cut_on_the_hour",
+          "path": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2990_a_release_is_cut_on_the_hour.sh",
+            ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:362_a_release_follows_the_ci_verdict",
+          "path": "test/cases/362_a_release_follows_the_ci_verdict.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/362_a_release_follows_the_ci_verdict.sh",
+            ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-tool-that-cannot-match-the-tree-refuses": {
       "kind": "rule",
       "id": "project.a-tool-that-cannot-match-the-tree-refuses",
@@ -27074,7 +27105,6 @@
     "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
     "suite:360_the_crate_boundary_is_measured",
-    "suite:362_a_release_follows_the_ci_verdict",
     "suite:365_new_shell_is_refused",
     "suite:366_automation_inventory_agrees_with_the_tree",
     "suite:373_delivery_is_computed",

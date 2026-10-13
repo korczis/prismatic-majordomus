@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 101,
+      "count": 102,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 173,
+      "count": 174,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 101
+      "count": 102
     },
     {
       "kind": "application",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 173
+      "count": 174
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 459
+      "count": 460
     },
     {
       "kind": "use-case",
@@ -3352,6 +3352,13 @@
           "label": "adr-0134",
           "kind": "adr",
           "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
           "external": false
         }
       ]
@@ -7136,7 +7143,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7801,6 +7816,94 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0151",
+      "identity": "adr-0151",
+      "slug": "adr-0151",
+      "cockpit": "/cockpit/objects/adr/adr-0151",
+      "title": "A release is cut by a clock when the trunk has earned one",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "ci",
+        "automation"
+      ],
+      "source": ".ai/repo/adrs/0151-a-release-is-cut-by-a-clock-when-the-trunk-has-earned-one.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/cadence.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/version.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-verdict",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/release-cadence",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0051",
+          "kind": "adr",
+          "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RELEASE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -10885,6 +10988,46 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+      "identity": "project.a-release-is-cut-on-the-hour@1",
+      "slug": "project-a-release-is-cut-on-the-hour-1",
+      "cockpit": "/cockpit/objects/rule/project-a-release-is-cut-on-the-hour-1",
+      "title": "A release is cut by a clock when the trunk has earned one, and an hour without one says why",
+      "status": "active",
+      "tags": [
+        "release",
+        "ci",
+        "cadence"
+      ],
+      "source": ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.never-reported-is-not-green@1",
+          "kind": "rule",
+          "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0151",
+          "kind": "adr",
+          "route": "/adrs/adr-0151/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -13506,6 +13649,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
           "route": "/rules/project-integration-follows-the-current-master-3/",
@@ -13811,6 +13961,13 @@
           "label": "project.a-closing-question-is-answered-by-measurement@1",
           "kind": "rule",
           "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-release-is-cut-on-the-hour@1",
+          "kind": "rule",
+          "route": "/rules/project-a-release-is-cut-on-the-hour-1/",
           "external": false
         },
         {

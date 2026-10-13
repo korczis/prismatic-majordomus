@@ -1,0 +1,97 @@
+---
+schema: adr/v1
+id: adr-0151
+kind: adr
+title: "A release is cut by a clock when the trunk has earned one"
+status: proposed
+date: 2026-10-13
+tags:
+  - release
+  - ci
+  - automation
+provenance:
+  origin: authored
+related:
+  - file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md
+  - file:.ai/repo/adrs/0134-the-version-is-allocated-at-landing.md
+  - file:.ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md
+  - file:scripts/release-cadence
+  - file:scripts/ci/release-verdict
+  - file:.github/workflows/cadence.yml
+  - file:.github/workflows/release.yml
+  - file:.github/workflows/version.yml
+  - file:test/cases/2990_a_release_is_cut_on_the_hour.sh
+  - file:docs/RELEASE.md
+---
+
+# 151. A release is cut by a clock when the trunk has earned one
+
+## Context
+
+Three mechanisms already stand between a commit and a release. The version is authored in one
+place and measured against the public contract (ADR 0051), and `version.yml` proposes the
+bump the surface owes. `scripts/ci/release-verdict` refuses a commit whose `ci` check did not
+conclude success. `release.yml` builds every target, verifies, publishes and records what a
+tag names.
+
+Nothing created the tag. `version.yml` stops before it on purpose: "creating that tag is a
+decision; an automation that made it would turn a decision into a side effect, on a schedule,
+without anybody choosing it" (`docs/RELEASE.md`, case 353). That was right while the decision
+was taken release by release.
+
+On 2026-10-12 the owner took it once, for all of them: *"chci videt verzi kazdou hodinu,
+domluvte se s peers a nejak to zaridte bez cloveka (without human in loop)"*. The same
+evening showed what the absence of an actor costs. Version 0.22.0 had been declared on master
+for hours; five sessions were each asked to release it; an integrator held a landing freeze to
+get one green commit; and at no point did anything say, in one place, why there was no
+release: of the fifteen first-parent commits since v0.21.0, fourteen had a `ci` that concluded
+otherwise and one was not judged yet.
+
+## Decision
+
+1. **The cut is a standing decision, applied by a clock.** `scripts/release-cadence` is the
+   actor; `.github/workflows/cadence.yml` asks it every hour and on dispatch.
+2. **The conditions are the ones a person applied.** The candidate is the newest commit of
+   the trunk's first-parent history since the last release whose `ci` concluded success. It
+   is cut when its manifest declares a version above that release and no tag holds the
+   version. The verdict is `release-verdict`'s, per commit; the actor has no reading of its
+   own.
+3. **The tag goes on the candidate, not on the tip.** A red, cancelled, running or unjudged
+   commit above a green one neither blocks the release nor is tagged. This is what lets
+   landings continue behind a candidate instead of freezing the trunk for a release.
+4. **The release is dispatched by name.** A tag created with a workflow's own token starts no
+   workflow, so the actor dispatches `release.yml` with the tag. That workflow checks the tag
+   against the version and asks the verdict again before it builds: the actor is not trusted
+   by the thing it starts.
+5. **Nothing to cut is an answer with a reason.** `current`, `no-verdict`, `not-raised` or
+   `tagged`, in the run's summary, every hour.
+6. **It changes no branch and raises no version.** The version rises by a landing (ADR 0134,
+   or a pull request's own bump); the release record reaches master as the pull request the
+   release workflow already opens. The cadence holds the permissions to create a tag, dispatch
+   a workflow and read checks, and no others.
+
+`version.yml` is unchanged and still tags nothing; case 353 still holds it to that. What ADR
+0051's consequence called "a decision" is not overturned: it is recorded here as having been
+made, by the person whose decision it was, with the conditions under which it applies.
+
+## Consequences
+
+- An hour in which the trunk has a green, raised commit ends with a release in progress. An
+  hour in which it has not ends with a sentence saying why. Neither needs a person.
+- The binding constraint becomes visible as what it is: a green trunk. "A version every hour"
+  is met by the cadence only as often as master is green and raised that often; the cadence
+  cannot make one, and says so instead of cutting from a red commit.
+- A trunk that is raised by every landing (`release.allocation: landing`, a `release.floor`)
+  gets a release per green landing at most hourly. This repository's policy has allocation
+  off; turning it on is a separate decision, and the cadence works under either.
+- The record pull request the release opens is still landed by whoever lands pull requests.
+  Until it lands, the site offers the previous release; the cadence does not merge it.
+- Two actors could cut the same version only by racing; the concurrency group serialises
+  the cadence, and a tag that appears between its decision and its write is reported as
+  somebody else's cut, not as a failure.
+
+## What this does not decide
+
+Whether landings allocate versions, how the record pull request is merged without a person,
+and a cadence other than hourly. Each is a line of policy or a second actor, and none is
+needed for this one to be correct.

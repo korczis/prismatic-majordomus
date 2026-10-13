@@ -2124,6 +2124,14 @@
         "external": true
       },
       {
+        "id": "file:.github/workflows/cadence.yml",
+        "kind": "file",
+        "label": "cadence.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/cadence.yml",
+        "external": true
+      },
+      {
         "id": "file:.github/workflows/pages.yml",
         "kind": "file",
         "label": "pages.yml",
@@ -2145,6 +2153,14 @@
         "label": "validate.yml",
         "summary": "named by the layer; not an object of this index",
         "source": ".github/workflows/validate.yml",
+        "external": true
+      },
+      {
+        "id": "file:.github/workflows/version.yml",
+        "kind": "file",
+        "label": "version.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/version.yml",
         "external": true
       },
       {
@@ -3636,6 +3652,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/release-verdict",
+        "kind": "file",
+        "label": "release-verdict",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/release-verdict",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci/rule-proof-check",
         "kind": "file",
         "label": "rule-proof-check",
@@ -3769,6 +3793,14 @@
         "label": "pages",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/pages",
+        "external": true
+      },
+      {
+        "id": "file:scripts/release-cadence",
+        "kind": "file",
+        "label": "release-cadence",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/release-cadence",
         "external": true
       },
       {
@@ -7131,6 +7163,35 @@
             "language",
             "governance",
             "derivation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0151",
+        "kind": "adr",
+        "label": "adr-0151",
+        "summary": "A release is cut by a clock when the trunk has earned one",
+        "route": "/cockpit/objects/adr/adr-0151",
+        "source": ".ai/repo/adrs/0151-a-release-is-cut-by-a-clock-when-the-trunk-has-earned-one.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
+            "file:.ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
+            "file:.ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md",
+            "file:scripts/release-cadence",
+            "file:scripts/ci/release-verdict",
+            "file:.github/workflows/cadence.yml",
+            "file:.github/workflows/release.yml",
+            "file:.github/workflows/version.yml",
+            "file:test/cases/2990_a_release_is_cut_on_the_hour.sh",
+            "file:docs/RELEASE.md"
+          ],
+          "tags": [
+            "release",
+            "ci",
+            "automation"
           ]
         }
       },
@@ -41275,6 +41336,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "kind": "rule",
+        "label": "project.a-release-is-cut-on-the-hour@1",
+        "summary": "A release is cut by a clock when the trunk has earned one, and an hour without one says why",
+        "route": "/cockpit/objects/rule/project-a-release-is-cut-on-the-hour-1",
+        "source": ".ai/repo/rules/project/a-release-is-cut-on-the-hour.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.land-and-publish@1",
+            "project.never-reported-is-not-green@1"
+          ],
+          "tags": [
+            "release",
+            "ci",
+            "cadence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -48932,6 +49014,13 @@
         "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2990_a_release_is_cut_on_the_hour.sh",
+        "kind": "test",
+        "label": "test/cases/2990_a_release_is_cut_on_the_hour.sh",
+        "route": "/cockpit/objects/test/test-cases-2990-a-release-is-cut-on-the-hour-sh",
+        "source": "test/cases/2990_a_release_is_cut_on_the_hour.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -60913,6 +61002,61 @@
       {
         "source": "majordomus://adr/adr-0149",
         "target": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "file:.github/workflows/cadence.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "file:.github/workflows/release.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "file:.github/workflows/version.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "file:scripts/ci/release-verdict",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "file:scripts/release-cadence",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "majordomus://adr/adr-0051",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "majordomus://adr/adr-0134",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0151",
+        "target": "majordomus://test/test/cases/2990_a_release_is_cut_on_the_hour.sh",
         "kind": "put_in_force"
       },
       {
@@ -75156,6 +75300,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-is-cut-on-the-hour@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -77887,6 +78046,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2990_a_release_is_cut_on_the_hour.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -83192,8 +83356,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2712,
-      "edges": 5951,
+      "nodes": 2719,
+      "edges": 5966,
       "acyclic": false,
       "truncated": false
     }
