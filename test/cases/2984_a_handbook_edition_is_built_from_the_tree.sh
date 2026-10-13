@@ -33,6 +33,13 @@ expect_exit 0 build
 expect_grep 'cs edition holds'
 expect_grep 'every anchor resolves'
 [ -s "$DERIVED/cs/prirucka-majordomusu.html" ] || { echo "    the build wrote no page"; exit 1; }
+# The build reads the handbook and writes beside it nothing at all: no bytecode cache, no
+# scratch file. A cache was tracked once, and every tree that ran this gate was dirty after it.
+left="$(find "$HB" -name '__pycache__' -o -name '*.pyc' | head -3)"
+[ -z "$left" ] || { echo "    the build left bytecode in the handbook it read: $left"; exit 1; }
+if git -C "$ROOT" ls-files | grep -qE '(^|/)__pycache__/|\.pyc$'; then
+  echo "    a bytecode cache is tracked"; exit 1
+fi
 # what the page states is what the tree holds: the commit it was built from is this one
 head_sha="$(git -C "$ROOT" rev-parse --short=10 HEAD)"
 grep -q "\"commit\": *\"$head_sha\"\|\"commit\":\"$head_sha\"" "$DERIVED/corpus-index.json" \
@@ -144,5 +151,10 @@ grep -qE '^edition handbook/cs cs ' "$ROOT/scripts/ci/english-only-allow.txt" \
   || { echo "    the Czech edition is not declared in scripts/ci/english-only-allow.txt"; exit 1; }
 grep -qE '^lang = "cs"' "$ROOT/handbook/cs/edition.toml" \
   || { echo "    handbook/cs/edition.toml does not declare its language"; exit 1; }
+# an edition's source pages are chapters and nothing else: no page shell, no stylesheet of
+# their own and no script, so the only design an edition wears is the declared one
+if grep -lE '<!doctype|<style|<script' "$ROOT"/handbook/cs/sources/*.html 2>/dev/null | grep -q .; then
+  echo "    a source page of the Czech edition carries a page shell, a stylesheet or a script"; exit 1
+fi
 grep -q 'handbook/build.py --check' "$ROOT/.ai/repo/ci/gates.yaml" \
   || { echo "    no gate runs the handbook build"; exit 1; }

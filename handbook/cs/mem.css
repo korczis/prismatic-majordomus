@@ -3,33 +3,24 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 /* Layout: a field manual — sticky chapter rail on wide screens, one reading column, schematics drawn in the same ink as the text. */
 :root {
-  --bg: #f2f4f7;
-  --panel: #ffffff;
-  --fg: #142030;
-  --muted: #556275;
-  --line: #d3dae4;
-  --tint: #e6ecf4;
-  --accent: #b9500d;   /* claims, leases: things that are held */
-  --link: #1f5fbf;     /* links, journal: things that travel */
-  --good: #1e7f4f;
-  --warn: #a8700f;
-  --bad: #b42318;
-  --code-bg: #e9edf3;
+  /* The edition's vocabulary, as synonyms of the roles share/design/tokens.yaml declares.
+     handbook/build.py inlines the projection that gives the roles their values, in both
+     themes; no colour is chosen here. */
+  --bg: var(--mj-sunken);
+  --panel: var(--mj-raised);
+  --fg: var(--mj-fg);
+  --muted: var(--mj-muted);
+  --line: var(--mj-line);
+  --tint: var(--mj-accent-soft);
+  --accent: var(--mj-series-2);   /* claims, leases: things that are held */
+  --link: var(--mj-accent);       /* links, journal: things that travel */
+  --good: var(--mj-ok);
+  --warn: var(--mj-warn);
+  --bad: var(--mj-bad);
+  --code-bg: var(--mj-sunken);
   --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e141c; --panel: #151d28; --fg: #e6ecf3; --muted: #93a1b4; --line: #2a3647;
-    --tint: #1b2533; --accent: #f08a3e; --link: #6ea3f0; --good: #4cc38a; --warn: #e3b341;
-    --bad: #f2766b; --code-bg: #1a2330; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0e141c; --panel: #151d28; --fg: #e6ecf3; --muted: #93a1b4; --line: #2a3647;
-  --tint: #1b2533; --accent: #f08a3e; --link: #6ea3f0; --good: #4cc38a; --warn: #e3b341;
-  --bad: #f2766b; --code-bg: #1a2330; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }

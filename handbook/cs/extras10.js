@@ -33,15 +33,20 @@
   var TRACKED = {};
   try { JSON.parse($('data-repo-paths').textContent).forEach(function (p) { TRACKED[p] = 1; }); } catch (e) { /* optional */ }
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function dark() {
-    var t = document.documentElement.getAttribute('data-theme');
-    return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  }
+  function dark() { return document.documentElement.classList.contains(document.body.getAttribute('data-theme-class') || ''); }
   function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-  function palette() {
-    return dark() ? ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#9085e9']
-                  : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6'];
+  /* The series of the declared design, read from the page and resolved to red, green and blue: a chart
+     library parses colours itself and does not know every notation a stylesheet may use. */
+  function paint(name) {
+    var c = document.createElement('canvas'); c.width = c.height = 1;
+    var x = c.getContext('2d');
+    x.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    x.fillRect(0, 0, 1, 1);
+    var d = x.getImageData(0, 0, 1, 1).data;
+    return '#' + [d[0], d[1], d[2]].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
   }
+  function series() { return [1, 2, 3, 4, 5, 6].map(function (i) { return paint('--mj-series-' + i); }); }
+  function palette() { return series(); }
 
   /* ---------- loading ---------- */
   var scripts = {};
@@ -278,13 +283,13 @@
         startOnLoad: false, securityLevel: 'strict', theme: 'base',
         fontFamily: cssv('--body') || 'sans-serif',
         themeVariables: {
-          darkMode: dark(), background: cssv('--panel'), primaryColor: cssv('--tint') || cssv('--code-bg'),
-          primaryTextColor: cssv('--fg'), primaryBorderColor: cssv('--s1'), lineColor: cssv('--muted'),
-          secondaryColor: cssv('--code-bg'), tertiaryColor: cssv('--panel'), textColor: cssv('--fg'),
-          mainBkg: cssv('--tint') || cssv('--code-bg'), nodeBorder: cssv('--s1'), clusterBkg: cssv('--panel'),
-          clusterBorder: cssv('--line'), edgeLabelBackground: cssv('--panel'), actorBkg: cssv('--tint') || cssv('--code-bg'),
-          actorBorder: cssv('--s1'), actorTextColor: cssv('--fg'), signalColor: cssv('--fg'), signalTextColor: cssv('--fg'),
-          noteBkgColor: cssv('--tldr-bg'), noteTextColor: cssv('--fg'), noteBorderColor: cssv('--tldr-line'), fontSize: '14px'
+          darkMode: dark(), background: paint('--panel'), primaryColor: paint('--tint') || paint('--code-bg'),
+          primaryTextColor: paint('--fg'), primaryBorderColor: paint('--s1'), lineColor: paint('--muted'),
+          secondaryColor: paint('--code-bg'), tertiaryColor: paint('--panel'), textColor: paint('--fg'),
+          mainBkg: paint('--tint') || paint('--code-bg'), nodeBorder: paint('--s1'), clusterBkg: paint('--panel'),
+          clusterBorder: paint('--line'), edgeLabelBackground: paint('--panel'), actorBkg: paint('--tint') || paint('--code-bg'),
+          actorBorder: paint('--s1'), actorTextColor: paint('--fg'), signalColor: paint('--fg'), signalTextColor: paint('--fg'),
+          noteBkgColor: paint('--tldr-bg'), noteTextColor: paint('--fg'), noteBorderColor: paint('--tldr-line'), fontSize: '14px'
         }
       });
       Array.prototype.forEach.call(blocks, function (pre, i) {
@@ -461,7 +466,7 @@
       if (chart) { chart.dispose(); chart = null; }
       chart = window.echarts.init(box, null, { renderer: 'canvas' });
       chartView = view;
-      var pal = palette(), fg = cssv('--fg'), muted = cssv('--muted'), panel = cssv('--panel'), line = cssv('--line');
+      var pal = palette(), fg = paint('--fg'), muted = paint('--muted'), panel = paint('--panel'), line = paint('--line');
       var tip = { backgroundColor: panel, borderColor: line, textStyle: { color: fg, fontSize: 13 }, confine: true };
       if (view === 'graph') {
         var cats = KINDS.map(function (k) { return { name: k[1] }; }), sel = {};
@@ -502,7 +507,7 @@
           }, tip),
           series: [{
             type: 'treemap', roam: false, nodeClick: false, breadcrumb: { show: false }, top: 4, bottom: 4, left: 4, right: 4,
-            label: { show: true, formatter: '{b}', fontSize: 11, color: '#0d1420', overflow: 'truncate' },
+            label: { show: true, formatter: '{b}', fontSize: 11, color: paint('--mj-on-accent'), overflow: 'truncate' },
             upperLabel: { show: true, height: 22, color: fg, fontWeight: 600 },
             itemStyle: { borderColor: panel, borderWidth: 1, gapWidth: 2 },
             levels: [{ itemStyle: { borderWidth: 0, gapWidth: 4 } }, { itemStyle: { gapWidth: 2 }, upperLabel: { show: true } }, { colorSaturation: [0.35, 0.6], itemStyle: { gapWidth: 1, borderColorSaturation: 0.6 } }],

@@ -379,7 +379,16 @@ data_scripts += '<script type="application/json" id="data-corpus-index">%s</scri
 data_scripts += '<script type="application/json" id="data-repo-paths">%s</script>\n' % json.dumps(REPO_PATHS).replace("</", "<\\/")
 data_scripts += '<script type="application/octet-stream" id="data-graphdb">%s</script>\n' % read(os.path.join(GEN, "graph.b64"))
 data_scripts += '<script type="application/octet-stream" id="data-corpus">%s</script>\n' % read(os.path.join(GEN, "corpus.b64"))
-css = "\n".join(line for line in read(mem_css_path).splitlines() if not line.startswith("<link"))
+ROOT = os.environ.get("HANDBOOK_ROOT") or os.path.dirname(os.path.dirname(HERE))
+# The design is declared once, in share/design/tokens.yaml. The projection that gives its
+# roles their values is inlined as generated, and the class that selects the dark theme is
+# read from the declaration; this edition chooses neither.
+DESIGN = read(os.path.join(ROOT, "share", "design", "surface.css"))
+_theme = re.search(r"^theme:\n(?:[ \t]+.*\n)*?[ \t]+class:[ \t]*([A-Za-z0-9_-]+)", read(os.path.join(ROOT, "share", "design", "tokens.yaml")), re.M)
+if not _theme:
+    sys.exit("share/design/tokens.yaml declares no theme class")
+THEME_CLASS = _theme.group(1)
+css = DESIGN + "\n" + "\n".join(line for line in read(mem_css_path).splitlines() if not line.startswith("<link"))
 
 template = read(template_path)
 page = (template.replace("/*BASE_CSS*/", css)
@@ -389,7 +398,7 @@ page = (template.replace("/*BASE_CSS*/", css)
         .replace("<!--DATA-->", data_scripts)
         .replace("/*WIDGETS_JS*/", read(os.path.join(HERE, "widgets.js")))
         .replace("/*EXTRAS_JS*/", read(os.path.join(HERE, "extras.js")) + "\n" + read(os.path.join(HERE, "extras2.js")) + "\n" + read(os.path.join(HERE, "extras3.js")) + "\n" + read(os.path.join(HERE, "extras4.js")) + "\n" + read(os.path.join(HERE, "extras5.js")) + "\n" + read(os.path.join(HERE, "extras6.js")) + "\n" + read(os.path.join(HERE, "extras7.js")) + "\n" + read(os.path.join(HERE, "extras8.js")) + "\n" + read(os.path.join(HERE, "extras9.js")) + "\n" + read(os.path.join(HERE, "extras10.js")) + "\n" + read(os.path.join(HERE, "extras11.js")) + "\n" + read(os.path.join(HERE, "extras12.js")) + "\n" + read(os.path.join(HERE, "extras13.js")) + "\n" + read(os.path.join(HERE, "extras14.js"))))
-page = link_sources(page)
+page = link_sources(page).replace("@@THEME_CLASS@@", THEME_CLASS)
 # every number a caption states is a fact of the data the page embeds, never typed
 _ex = json.loads(read(os.path.join(GEN, "explorer-data.json")))
 _ci = json.loads(CORPUS_INDEX)
@@ -515,6 +524,12 @@ page = page.replace('<script type="application/json" id="data-arch">',
                     % json.dumps(evidence, separators=(",", ":")), 1)
 print("evidence: %d chapter(s), %d seed object(s), %d neighbouring" % (
     len(evidence), sum(len(v["s"]) for v in evidence.values()), sum(v["nt"] for v in evidence.values())))
+# The built page is a whole document: opened from a file it is read in standards mode, laid
+# out at the device's width, and says which language it is in — the one edition.toml declares.
+_lang = re.search(r'^\s*lang\s*=\s*"([a-z-]+)"', read(os.path.join(HERE, "edition.toml")), re.M).group(1)
+page = ('<!doctype html>\n<html lang="%s">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n' % _lang
+        + page + "\n</body>\n</html>\n")
 with open(out_path, "w", encoding="utf-8") as fh:
     fh.write(page)
 print("links", link_count, "sections", len(ordered), "ids", len(ids), "bytes", len(page.encode("utf-8")))

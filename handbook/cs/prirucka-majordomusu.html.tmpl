@@ -113,6 +113,17 @@ header.hero .links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px
 </div>
 <!--DATA-->
 <script>
+/* The theme follows the reader's system. The class is the one the design declares; the build
+   writes it here. Set before any widget draws, so a chart reads the right roles. */
+(function () {
+  var name = '@@THEME_CLASS@@', root = document.documentElement, q = matchMedia('(prefers-color-scheme: dark)');
+  document.body.setAttribute('data-theme-class', name);
+  function apply() { root.classList.toggle(name, q.matches); }
+  apply();
+  if (q.addEventListener) q.addEventListener('change', apply);
+})();
+</script>
+<script>
 /*WIDGETS_JS*/
 /*EXTRAS_JS*/
 </script>
