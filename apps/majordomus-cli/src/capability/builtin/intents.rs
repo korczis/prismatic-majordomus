@@ -603,7 +603,9 @@ pub fn module() -> ModuleDescriptor {
             }
             // The one thing its kind cannot say: this writes a tracked record, so every
             // surface's exposure ceiling is the one a repository write has.
-            .writes_repository(),
+            .writes_repository()
+            // `/intent <sentence>`: the sentence is the statement, verbatim.
+            .skill("intent", "statement"),
         ],
     }
 }

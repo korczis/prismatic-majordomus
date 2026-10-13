@@ -1,7 +1,8 @@
-//! Editors and agents as projections of the layer: the files Zed and Google Antigravity
-//! read from a project, derived from the canonical registries and from nothing else.
+//! Editors and agents as projections of the layer: the files Zed, Google Antigravity and
+//! Claude Code read from a project, derived from the canonical registries and from nothing
+//! else.
 //!
-//! # One core, two adapters
+//! # One core, three adapters
 //!
 //! [`EditorEnvironment`] is what the repository says that an editor or an agent can use —
 //! its skills, from the index, and its workflows, from the tracked justfile — each with the
@@ -10,6 +11,10 @@
 //! maps the environment onto the files it reads. Neither adapter discovers anything: adding
 //! a skill to `.ai/repo/skills/` or a recipe to the justfile changes what both project, and
 //! no list here names either.
+//!
+//! The third adapter, [`claude`], projects something else from the same plan: the
+//! capabilities of the registry that declare a skill ([`commands`]), each as the file
+//! Claude Code reads to call it by name (ADR 0146).
 //!
 //! Where two products read the same file the projection is written once. Zed and
 //! Antigravity both discover `.agents/skills/<name>/SKILL.md`, so one artifact serves both
@@ -39,6 +44,7 @@
 //! `editors.status` explains and what a cache would be keyed by if one ever earned its place.
 
 pub mod antigravity;
+pub mod claude;
 pub mod zed;
 
 use std::path::{Path, PathBuf};
@@ -116,6 +122,30 @@ pub struct SkillRef {
     /// The canonical definition, repository-relative.
     pub path: String,
     /// The content address of the definition.
+    pub sha256: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// A capability as an agent's user invokes it by name: the alias and the field its typed
+/// text fills, both from the capability's own declaration, with how it is reached.
+pub struct CommandRef {
+    /// The name typed after the slash, which is also the projected directory name.
+    pub alias: String,
+    /// The input field the typed text fills.
+    pub argument: String,
+    /// The capability's id.
+    pub capability: String,
+    /// The capability's own title.
+    pub title: String,
+    /// Its MCP tool, when it has one.
+    pub tool: Option<String>,
+    /// The words after `majordomus` on the command line, when it has them.
+    pub cli: Option<String>,
+    /// Whether running it changes anything, so that only a person may invoke it.
+    pub changes_something: bool,
+    /// The file that declares it, repository-relative.
+    pub source: String,
+    /// The content address of its descriptor.
     pub sha256: String,
 }
 
@@ -336,6 +366,39 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
     env
 }
 
+/// The crate's sources, repository-relative: where a builtin capability's module lives.
+const CRATE_SRC: &str = "apps/majordomus-cli/src";
+
+/// Every capability that declares a skill, as an agent's user will invoke it, by alias.
+/// Nothing here is listed: a capability gains a command by saying `.skill(..)` in its own
+/// declaration, and loses it the same way.
+pub fn commands(registry: &crate::capability::CapabilityRegistry) -> Vec<CommandRef> {
+    registry
+        .skills()
+        .filter_map(|c| {
+            let skill = c.skill.as_ref()?;
+            let source = match &c.provenance {
+                crate::capability::Provenance::Builtin { module } => format!(
+                    "{CRATE_SRC}/{}.rs",
+                    module.split("::").skip(1).collect::<Vec<_>>().join("/")
+                ),
+                crate::capability::Provenance::Declarative { path, .. } => path.clone(),
+            };
+            Some(CommandRef {
+                alias: skill.alias.clone(),
+                argument: skill.argument.clone(),
+                capability: c.id.to_string(),
+                title: c.title.clone(),
+                tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
+                cli: c.exposure.cli.as_ref().map(|cli| cli.path.join(" ")),
+                changes_something: c.execution.effect != crate::capability::Effect::Read,
+                source,
+                sha256: sha256_hex(&serde_json::to_string(c).unwrap_or_default()),
+            })
+        })
+        .collect()
+}
+
 /// The recipes of the *tracked* justfile: `justfile` and `.just/*.just`, read through `just`
 /// from a private copy. The root justfile also imports `.ai/local/cache/command-graph/
 /// bridge.just`, which each checkout materialises for itself; read in place, a checkout that
@@ -490,10 +553,27 @@ pub fn derivation_key(document: &str, sources: &[&EditorInput]) -> String {
 }
 
 /// Every artifact both adapters read, every finding, every capability — as data.
-pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
-    let env = environment(index, root);
+pub fn plan(
+    index: &Index,
+    registry: &crate::capability::CapabilityRegistry,
+    root: &Path,
+    version: &str,
+) -> Plan {
+    let mut env = environment(index, root);
+    let commands = commands(registry);
+    // a command's input is its capability's descriptor, named by the capability
+    for c in &commands {
+        env.inputs.push(EditorInput {
+            path: format!("capability:{}", c.capability),
+            mutability: EditorInputClass::Repository,
+            sha256: c.sha256.clone(),
+        });
+    }
+    crate::order::canonical(&mut env.inputs);
     let mut diagnostics = env.diagnostics.clone();
     let mut artifacts: Vec<(Artifact, Vec<String>, Vec<String>)> = Vec::new();
+
+    // .agents/ sorts before .claude/, and the commands are by alias: path order holds
 
     for skill in &env.skills {
         match skill_artifact(skill, version) {
@@ -505,6 +585,13 @@ pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
             Err(d) => diagnostics.push(*d),
         }
     }
+    for c in &commands {
+        artifacts.push((
+            claude::command_artifact(c, version),
+            vec![claude::ID.into()],
+            vec![format!("capability:{}", c.capability)],
+        ));
+    }
     if let Some(a) = zed::tasks_artifact(&env, version) {
         let sources = env
             .inputs
@@ -515,9 +602,10 @@ pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
         artifacts.push((a, vec!["zed".into()], sources));
     }
     // in path order by construction: every skill (canonical by identity) under
-    // .agents/, then the task list under .zed/
+    // .agents/, every command (by alias) under .claude/, then the task list under .zed/
 
     diagnostics.extend(description_findings(&env.skills));
+    diagnostics.extend(claude::name_findings(&commands, &env.skills));
     diagnostics.extend(checkout_findings(root));
     sort_diagnostics(&mut diagnostics);
 
@@ -540,7 +628,11 @@ pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
             }
         })
         .collect();
-    let adapters = vec![antigravity::adapter(&env), zed::adapter(&env)];
+    let adapters = vec![
+        antigravity::adapter(&env),
+        claude::adapter(&commands),
+        zed::adapter(&env),
+    ];
     Plan {
         artifacts: artifacts.into_iter().map(|(a, _, _)| a).collect(),
         derivations,
@@ -551,8 +643,13 @@ pub fn plan(index: &Index, root: &Path, version: &str) -> Plan {
 }
 
 /// The report `editors.status` answers with.
-pub fn report(index: &Index, root: &Path, version: &str) -> EditorProjection {
-    let plan = plan(index, root, version);
+pub fn report(
+    index: &Index,
+    registry: &crate::capability::CapabilityRegistry,
+    root: &Path,
+    version: &str,
+) -> EditorProjection {
+    let plan = plan(index, registry, root, version);
     let orphans = orphans(root, &plan.artifacts);
     EditorProjection {
         schema: SCHEMA.into(),
@@ -794,18 +891,22 @@ pub fn orphans(root: &Path, artifacts: &[Artifact]) -> Vec<String> {
     let planned: std::collections::BTreeSet<&str> =
         artifacts.iter().map(|a| a.path.as_str()).collect();
     let mut out = Vec::new();
-    let Ok(entries) = std::fs::read_dir(root.join(SKILLS_DIR)) else {
-        return out;
-    };
-    for e in entries.filter_map(|e| e.ok()) {
-        let rel = format!("{SKILLS_DIR}/{}/SKILL.md", e.file_name().to_string_lossy());
-        if planned.contains(rel.as_str()) {
+    // both directories a skill is projected to; a hand-written skill beside ours carries no
+    // banner and is never an orphan
+    for dir in [SKILLS_DIR, claude::SKILLS_DIR] {
+        let Ok(entries) = std::fs::read_dir(root.join(dir)) else {
             continue;
-        }
-        let path = root.join(&rel);
-        let is_file = std::fs::symlink_metadata(&path).is_ok_and(|m| m.file_type().is_file());
-        if is_file && head(&path).is_some_and(|h| banner_is_present(&h)) {
-            out.push(rel);
+        };
+        for e in entries.filter_map(|e| e.ok()) {
+            let rel = format!("{dir}/{}/SKILL.md", e.file_name().to_string_lossy());
+            if planned.contains(rel.as_str()) {
+                continue;
+            }
+            let path = root.join(&rel);
+            let is_file = std::fs::symlink_metadata(&path).is_ok_and(|m| m.file_type().is_file());
+            if is_file && head(&path).is_some_and(|h| banner_is_present(&h)) {
+                out.push(rel);
+            }
         }
     }
     crate::order::canonical_strings(&mut out);
@@ -1110,7 +1211,12 @@ mod tests {
     fn a_repository_projects_its_active_skills_and_its_runnable_recipes() {
         let repo = repository(true);
         let index = repo.index().unwrap();
-        let plan = plan(&index, repo.root(), "0.0.0");
+        let plan = plan(
+            &index,
+            &repo.context().unwrap().registry,
+            repo.root(),
+            "0.0.0",
+        );
         let paths: Vec<&str> = plan.artifacts.iter().map(|a| a.path.as_str()).collect();
         assert!(
             paths.contains(&".agents/skills/triage/SKILL.md"),
@@ -1156,7 +1262,12 @@ mod tests {
                 .any(|d| d.code == WORKFLOWS_UNREADABLE));
         }
         // the derivation keys are the inputs: the same repository, the same keys
-        let again = super::plan(&index, repo.root(), "0.0.0");
+        let again = super::plan(
+            &index,
+            &repo.context().unwrap().registry,
+            repo.root(),
+            "0.0.0",
+        );
         assert_eq!(plan.derivations, again.derivations);
     }
 
@@ -1165,7 +1276,7 @@ mod tests {
         let repo = repository(false);
         let root = repo.root().to_path_buf();
         let index = repo.index().unwrap();
-        let first = report(&index, &root, "0.0.0");
+        let first = report(&index, &repo.context().unwrap().registry, &root, "0.0.0");
         assert_eq!(first.schema, SCHEMA);
         let state = |r: &EditorProjection, path: &str| {
             r.artifacts.iter().find(|a| a.path == path).map(|a| a.state)
@@ -1173,24 +1284,33 @@ mod tests {
         let triage = ".agents/skills/triage/SKILL.md";
         assert_eq!(state(&first, triage), Some(EditorFileState::Absent));
 
-        let planned = plan(&index, &root, "0.0.0").artifacts;
+        let planned = plan(&index, &repo.context().unwrap().registry, &root, "0.0.0").artifacts;
         crate::generate::write(&root, &planned).unwrap();
         assert_eq!(
-            state(&report(&index, &root, "0.0.0"), triage),
+            state(
+                &report(&index, &repo.context().unwrap().registry, &root, "0.0.0"),
+                triage
+            ),
             Some(EditorFileState::Current)
         );
 
-        let older = plan(&index, &root, "older").artifacts;
+        let older = plan(&index, &repo.context().unwrap().registry, &root, "older").artifacts;
         crate::generate::write(&root, &older).unwrap();
         assert_eq!(
-            state(&report(&index, &root, "0.0.0"), triage),
+            state(
+                &report(&index, &repo.context().unwrap().registry, &root, "0.0.0"),
+                triage
+            ),
             Some(EditorFileState::Stale)
         );
 
         std::fs::remove_file(root.join(triage)).unwrap();
         std::fs::create_dir_all(root.join(triage)).unwrap();
         assert_eq!(
-            state(&report(&index, &root, "0.0.0"), triage),
+            state(
+                &report(&index, &repo.context().unwrap().registry, &root, "0.0.0"),
+                triage
+            ),
             Some(EditorFileState::Conflict)
         );
         assert_eq!(conflicts(&root, &planned), vec![triage.to_string()]);
@@ -1204,7 +1324,7 @@ mod tests {
                 .content,
         );
         assert_eq!(
-            report(&index, &root, "0.0.0").orphans,
+            report(&index, &repo.context().unwrap().registry, &root, "0.0.0").orphans,
             vec![".agents/skills/gone/SKILL.md"]
         );
     }
@@ -1275,7 +1395,12 @@ mod tests {
         let repo = repository(false);
         write(repo.root(), "justfile", "this is { not a justfile\n");
         let index = repo.index().unwrap();
-        let plan = plan(&index, repo.root(), "0.0.0");
+        let plan = plan(
+            &index,
+            &repo.context().unwrap().registry,
+            repo.root(),
+            "0.0.0",
+        );
         let found = plan
             .diagnostics
             .iter()

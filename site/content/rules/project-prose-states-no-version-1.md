@@ -1,7 +1,7 @@
 +++
 title = "Prose describes the tool as it stands, without a version label"
 description = "Prose describes the tool as it stands, without a version label"
-weight = 135
+weight = 137
 [extra]
 kind = "rule"
 slug = "project-prose-states-no-version-1"

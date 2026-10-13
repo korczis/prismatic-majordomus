@@ -1,0 +1,152 @@
+# The GitHub projection is applied by the landing, not by somebody remembering to.
+#
+# GitHub's issues and milestones are a projection of the plan on the trunk
+# (`scripts/github-sync`), and until this file the projection reached GitHub when a person ran
+# `scripts/github-sync --apply` from master after a landing. `scripts/ci/github-check` gave
+# that step a declared window and refused master once it had passed. On 2026-10-12 it did:
+# the landings up to 81178f5362 changed I2460 to I2478, the executor was busy with the next
+# landing, the window passed, and validate's run 38278173940 turned master red for a step
+# nothing performed. The judge existed and nothing was the actor, which is the shape
+# .github/workflows/version.yml was written to remove for the version.
+#
+# The model is .ai/repo/ci/github.yaml and this file is an adapter over it: the trigger, the
+# permissions, the phases and what is forbidden are declared there, and
+# test/cases/1097_the_projection_is_applied_at_landing.sh holds the two to each other. The
+# rule is project.the-projection-is-applied-at-landing.
+#
+# What this does NOT do, deliberately: overwrite a person's edit of a generated region
+# (`--force`), lower or write the drift baseline, or run for a pull request. A head's plan is
+# never the shared one; the adapter refuses any tree that is not the tip of the default
+# branch, and this workflow has no trigger a pull request can reach.
+name: github-projection
+
+on:
+  # Every push to master, with no path filter. What GitHub shows is rendered from the plan
+  # records, the adapter and the tool beside it, and a status is derived, so a list of paths
+  # here would be a second declaration of what can move a rendering. It also carries the
+  # promise the apply step relies on: a run that finds the trunk has moved on applies nothing,
+  # because the landing that moved it has a run of its own.
+  push:
+    branches: [master]
+  # A clock as well: a run that failed or was cancelled must not leave the question unasked
+  # until the next landing.
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+# Milestones and labels are written through the issues permission. Nothing here pushes a
+# commit, opens a pull request or publishes anything.
+permissions:
+  contents: read
+  issues: write
+
+# One apply at a time, and never cancelled: a cancelled apply is a remote left half written.
+# The adapter takes a lock of its own, which is per clone and so cannot see another runner.
+concurrency:
+  group: github-projection
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TRUNK: ${{ github.event.repository.default_branch }}
+    steps:
+      # The tip of the default branch, whatever commit or branch started the run: the adapter
+      # projects the trunk's current plan and refuses anything else. The whole history,
+      # because the gate reads the age of a landing from it and says so of a shallow clone.
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      # `--apply` finds the trunk through refs/remotes/origin/HEAD, which a runner's clone
+      # does not carry.
+      - name: the remote's default branch, as the adapter asks for it
+        timeout-minutes: 2
+        run: git remote set-head origin --auto
+
+      - uses: ./.github/actions/setup-rust
+        timeout-minutes: 10
+
+      # The plan is read by the Rust executable. Without it the adapter falls back to the
+      # shell reading of the model, which on 2026-10-12 reported 318 drift findings where the
+      # executable reported 26: an apply from that reading would rewrite records that have not
+      # moved. So the executable is built here and every step below refuses to run without it.
+      - name: the executable that reads the plan
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+
+      # Exit 0: GitHub already shows the trunk's plan, and that reading is the proof. Exit 11:
+      # something is owed, and the next two steps apply it and prove it. Anything else is a
+      # reading that could not be taken, and it fails the run.
+      - id: owed
+        name: what GitHub does not show yet
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+            echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); the projection is not read through the shell fallback"
+            exit 12
+          }
+          rc=0
+          scripts/github-sync --check > "$RUNNER_TEMP/github-check.txt" 2>&1 || rc=$?
+          awk '/^DRIFT / && n++ < 60' "$RUNNER_TEMP/github-check.txt"
+          tail -n 1 "$RUNNER_TEMP/github-check.txt"
+          case "$rc" in
+            0)  echo "owed=no" >> "$GITHUB_OUTPUT"
+                echo "::notice::GitHub shows the plan at $(git rev-parse --short=12 HEAD); nothing is owed" ;;
+            11) echo "owed=yes" >> "$GITHUB_OUTPUT" ;;
+            *)  echo "::error::scripts/github-sync --check could not read the remote (exit $rc)"
+                exit "$rc" ;;
+          esac
+
+      # The trunk is asked of the remote first. If it has moved past this checkout, the landing
+      # that moved it started a run of this workflow, which waits in the concurrency group
+      # behind this one and applies the newer plan: this run applies nothing and proves
+      # nothing. The adapter makes the same check and refuses (exit 15) if the trunk moves
+      # between this line and its own; that is a red run, and the newer one repairs it.
+      - id: apply
+        name: apply the trunk's plan
+        if: steps.owed.outputs.owed == 'yes'
+        timeout-minutes: 30
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+            echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); nothing is applied from the shell fallback"
+            exit 12
+          }
+          tip="$(git ls-remote --exit-code origin "refs/heads/$TRUNK" | cut -f1)"
+          head="$(git rev-parse HEAD)"
+          if [ "$tip" != "$head" ]; then
+            echo "superseded=yes" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TRUNK moved to ${tip:0:12} while this run held ${head:0:12}; the run of that landing applies"
+            exit 0
+          fi
+          echo "superseded=no" >> "$GITHUB_OUTPUT"
+          scripts/github-sync --apply
+
+      # The same gate validate runs, on the trunk, after the apply: an apply that left a record
+      # behind, a region a person edited, or a remote issue claiming an unknown record is a
+      # failed run here and not a red master half an hour later.
+      - name: GitHub shows the trunk's plan
+        if: steps.owed.outputs.owed == 'yes' && steps.apply.outputs.superseded == 'no'
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+            echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); the gate does not judge the shell fallback's reading"
+            exit 12
+          }
+          scripts/ci/github-check
