@@ -47,5 +47,8 @@ current head are left alone.
 
 A red on the trunk has one carrier, named by the integrator. Do not build a second fix.
 
+Between a tag and the merge of its record pull request nobody lands anything else: the
+record carries derived files generated against the master of that minute.
+
 A tag is outside all of this. It goes on a commit whose `ci` check concluded success, and
 `scripts/ci/release-verdict` refuses anything else.

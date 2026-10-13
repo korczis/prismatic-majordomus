@@ -567,6 +567,12 @@ publication queue never cancels the deploy in flight.
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.
 
+Between a tag and its record nothing else lands. The record pull request the release
+workflow opens is the record and the files derived from it, generated against the master of
+that minute; a landing in that window moves those files under it, and the site keeps naming
+the previous release until the record has been merged with master and derived again. The
+record is merged first, pinned, as soon as its own gates are read.
+
 A release is never expedited. A tag is pushed only on a commit whose `ci` check concluded
 success; `scripts/ci/release-verdict` refuses anything else, the release workflow asks it
 before it builds, and no gate is disabled, skipped or edited to get there. A merge is

@@ -55,6 +55,7 @@ went wrong in them is the evidence this decision is written from:
 | a landing went in with the structure job unfinished | shell-lint and finding-reproduce red on master |
 | a merged branch's run kept going | the trunk's run of the merged commit queued behind it |
 | two sessions carried the same red fix, twice | a second cold build took the disk to 1 GiB free |
+| landings went in between a tag and its record pull request | the record needed master merged and a derive; the site named the previous release for 2.5 hours |
 | an intra-doc link to a private item was merged | the publication failed and production stayed on the old commit for hours |
 
 Nothing went wrong in a release: every tag in the period was cut on a commit whose `ci`
@@ -87,6 +88,9 @@ commit. The trunk's only run of a commit, a deployment in flight, a release run 
 session's run on a current head are not stale and are not cancelled.
 
 **A red on the trunk has one carrier**, named by the integrator.
+
+**Between a tag and its record nothing else lands.** The record pull request carries files
+derived against the master of that minute, and it is merged first.
 
 **A release is never expedited.** A tag goes on a commit whose `ci` check concluded success.
 No gate, hook or check is disabled, skipped or edited to reach it.

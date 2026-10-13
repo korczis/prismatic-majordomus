@@ -81,6 +81,10 @@ grep -qF 'merge --admin --merge --match-head-commit <head>' "$RULE" \
   || note "the rule no longer pins the expedited merge to the judged head"
 grep -qF '**A release is never expedited.**' "$RULE" \
   || note "the rule no longer says a release is never expedited"
+grep -qF '**Between a tag and its record nothing else lands.**' "$RULE" \
+  || note "the rule no longer holds landings between a tag and its record"
+grep -qF 'Between a tag and its record nothing else lands.' "$DOC" \
+  || note "docs/INTEGRATION.md no longer holds landings between a tag and its record"
 grep -qF "These are never cancelled: the trunk's only run of a commit, a deployment in" "$RULE" \
   || note "the rule no longer names the runs that are never cancelled"
 grep -qF '**The integration executor never passes `--admin`.**' "$RULE" \

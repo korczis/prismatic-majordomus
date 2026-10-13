@@ -40,6 +40,9 @@ makes it safe and what does not, each measured rather than argued:
   request merged, and the trunk's run of the merged commit waited behind it.
 - **Two carriers of one red cost a disk.** Twice in one night two sessions built the same
   fix; the second build took the machine to one gibibyte free.
+- **A landing between a tag and its record delays the release it follows.** The record of
+  v0.21.0 waited two and a half hours behind landings that moved the derived files under
+  it, and the site named v0.20.0 for all of them.
 - **A release is the one thing that cannot be taken back.** A merge is corrected by the next
   merge. A tag publishes binaries that people install.
 
@@ -74,7 +77,13 @@ makes it safe and what does not, each measured rather than argued:
    flight, a release run, and another session's run on a head that is still current.
 8. **A red on the trunk has one carrier.** The integrator names it. Everyone else builds
    nothing for that red until the carrier yields or its stated time passes.
-9. **A release is never expedited.** A tag is pushed only on a commit whose required check
+9. **Between a tag and its record nothing else lands.** The release workflow proposes the
+   record of what it published as a pull request made of the record and the files derived
+   from it, generated against the master of that minute. A landing in that window moves
+   those derived files under it and costs the record a merge and a derive, while the site
+   keeps naming the previous release. The record pull request is merged first, pinned, as
+   soon as its own gates are read; then the claim is open again.
+10. **A release is never expedited.** A tag is pushed only on a commit whose required check
    concluded success, and no gate, hook or check is disabled, skipped or edited to get
    there. `scripts/ci/release-verdict` is that refusal, and the release workflow runs it
    before it publishes.
@@ -87,7 +96,7 @@ accepts a commit whose check is missing, pending or failed, when a landing on th
 could cancel the trunk's run in flight or a deployment in flight, when the integration code
 names `--admin`, or when the documented merge command loses its pin to the judged head.
 
-Clauses 1, 2, 4 and 8 are acts of a session and are decided by the record: the landing
+Clauses 1, 2, 4, 8 and 9 are acts of a session and are decided by the record: the landing
 claim on the mesh, the gates named in the pull request, and the board. A landing whose pull
 request names no judged commit is a finding of review.
 
