@@ -1,0 +1,29 @@
+id: I2687
+milestone: development-runtime
+title: "The /ui cluster panel is updated by the stream, not by polling, when the readings stream exists"
+slug: the-cluster-page-is-pushed-when-the-stream-lands
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Use the one streaming mechanism of I2487 for the cluster panel so that a session that starts, ends or claims is on the screen within the stream's lifetime."
+why: "The owner, 2026-10-13/14: a brief report every minute with deliveries, plan, charts, dependencies and estimates, for every peer of the mesh, derived and generated, real time in /ui, nice in the console, on every surface and enforced from .ai. See ADR 0159."
+current_state: "Measured on master a3a67a307e on 2026-10-14: the UI polls fragments on a 60 s interval (share/ui/ui.js); I2487 plans one WebSocket telling the page which readings changed."
+desired_state: "The cluster panel subscribes to the readings that feed it and re-asks on change; the polling interval is its fallback."
+scope:
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "share/ui/ui.js"
+non_scope:
+  - "A channel of its own (ADR 0033)"
+depends_on:
+  - I2685
+  - I2487
+acceptance_criteria:
+  - "A session opening on another machine appears on the panel without a reload within the stream's lifetime"
+  - "With no stream the panel still refreshes on its interval"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+evidence_required:
+  - "panel_live_probe"
+created_at: 2026-10-14
+updated_at: 2026-10-14

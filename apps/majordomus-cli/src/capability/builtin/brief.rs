@@ -812,7 +812,10 @@ pub(crate) fn keep_awake(interval: u64) -> String {
          brief`, never from memory. If your client can schedule its own prompts (Claude Code: \
          `/loop {interval}m majordomus brief`, or a session cron), schedule that now. Where the \
          majordomus-brief mod is loaded it shows the one-line brief as the status line and puts \
-         the full brief in front of you on the same interval."
+         the full brief in front of you on the same interval. For the whole picture — every \
+         machine with its sessions and claims, how far each milestone is, and the integration \
+         and derive queues — read `majordomus dashboard cluster` (ADR 0159): the same text is on \
+         the /ui dashboard, so a report that quotes it quotes what everyone sees."
     )
 }
 
@@ -1206,6 +1209,10 @@ mod tests {
         assert_eq!(percent_encode("a b/c-d_e.f~"), "a%20b%2Fc-d_e.f~");
         assert_eq!(state_word(BriefSectionState::Partial), "partial");
         assert!(keep_awake(7).contains("every 7 minutes"));
+        assert!(
+            keep_awake(7).contains("majordomus dashboard cluster"),
+            "the long form is named where a session is told to report"
+        );
     }
 
     #[test]

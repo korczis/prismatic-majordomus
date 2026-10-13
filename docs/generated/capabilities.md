@@ -16,7 +16,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
 | `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
-| `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
+| `dashboard` | Dashboards | behaviorally_verified | 2 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
 | `deploy` | Deployment | behaviorally_verified | 4 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
@@ -91,6 +91,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity.status` | `continuity` | query | experimental | `majordomus_continuity_status` | — | `GET /api/v1/continuity/status` | `majordomus continuity status` | — | required |
 | `continuity.sync` | `continuity` | command | experimental | `majordomus_continuity_sync` | — | `POST /api/v1/continuity/sync` | `majordomus continuity sync` | — | waived (external_dependency) |
 | `convergence.report` | `convergence` | query | behaviorally_verified | `majordomus_convergence` | `majordomus://convergence` | `GET /api/v1/convergence` | `majordomus convergence` | — | required |
+| `dashboard.cluster` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_cluster` | — | `GET /api/v1/dashboard/cluster` | `majordomus dashboard cluster` | — | required |
 | `dashboard.overview` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_overview` | — | `GET /api/v1/dashboard/overview` | `majordomus dashboard overview` | — | required |
 | `delivery.feature` | `delivery` | query | experimental | `majordomus_delivery_feature` | — | `GET /api/v1/delivery/feature` | `majordomus delivery show` | — | waived (external_dependency) |
 | `delivery.report` | `delivery` | query | experimental | `majordomus_delivery` | — | `GET /api/v1/delivery` | `majordomus delivery report` | — | waived (external_dependency) |

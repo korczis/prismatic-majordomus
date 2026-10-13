@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 196 | 166 | 0 | 30 |
-| http | 191 | 166 | 0 | 25 |
-| mcp | 187 | 162 | 0 | 25 |
+| direct | 197 | 167 | 0 | 30 |
+| http | 192 | 167 | 0 | 25 |
+| mcp | 188 | 163 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 588 | 508 | 0 | 80 |
+| total | 591 | 511 | 0 | 80 |
 
 ## Capabilities
 
@@ -40,6 +40,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `continuity.status` | continuity | query | — | covered | covered | covered | `default` |
 | `continuity.sync` | continuity | command | — | waived | waived | waived | — |
 | `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
+| `dashboard.cluster` | dashboard | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
 | `delivery.report` | delivery | query | — | waived | waived | waived | — |
@@ -269,6 +270,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.knowledge` | `/ui/knowledge` | live | — |
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |
 | `system.http.live.ui.governance` | `/ui/governance` | live | — |
+| `system.http.ui.panels.cluster` | `/ui/panels/cluster` | pinned | yes |
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
