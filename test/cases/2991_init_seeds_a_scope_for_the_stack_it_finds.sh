@@ -93,5 +93,5 @@ echo x > README.md; git add -A >/dev/null; git commit -qm base
 "$MJ" init > /dev/null 2> "$ERR"
 cmp -s .ai/repo/scope.yaml "$SKEL" || { echo "    a tree the skeleton already covers was not given the skeleton"; exit 1; }
 grep -q 'scope.yaml' "$ERR" && { echo "    init reported a guess where it made none"; cat "$ERR"; exit 1; }
-cd "$HERE"
+cd "$HERE" || exit 1
 exit 0

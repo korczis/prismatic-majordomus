@@ -348,6 +348,7 @@ exec "$mj" --repo "$root" capture session --provider claude-code --event start</
       <ul>
         <li><strong>Ohlášení je jeden řádek záměru a cesty.</strong> Žije jen v paměti serveru. Patří spojení, takže po reconnectu je potřeba ohlásit se znovu.</li>
         <li><strong>Board patří repozitáři, ne checkoutu.</strong> Každý worktree má svůj server, <code>majordomus_peers</code> sesbírá boardy všech a u každého workera uvede worktree. Pole <code>complete: false</code> říká, že se některý checkout nepodařilo zeptat. Krátký board není důkaz, že tam nikdo není.</li>
+        <li><strong>Board se dá přečíst i z příkazové řádky.</strong> <code>majordomus peers</code> je třetí projekce téže capability jako MCP tool <code>majordomus_peers</code> a <code>GET /api/v1/peers</code>, pro workera, kterému klient žádné <code>majordomus_*</code> tooly nedal. Vypíše každý checkout se stavem jeho serveru, pod ním jeho peery a pod každým jeho claimy s cestami; <code>--format json</code> vrátí odpověď capability beze změny. Když neodpovídá žádný server, žádný board není: příkaz to řekne a skončí kódem 12, ne nulou nad prázdným boardem, který nikdo nečetl.</li>
         <li><strong>Id peera je pozice, ne identita.</strong> <code>p1</code> se po reconnectu přidělí znovu a jiný board ho používá taky. Trvalá polovina identity je checkout.</li>
         <li><strong>Překryv je informace, ne zámek.</strong> Dva scope se potkají, když jsou stejné, nebo jeden obsahuje druhý. <code>start</code> a <code>check --overlap</code> to hlásí. Výlučný claim napříč stroji je <code>majordomus_mesh_claim</code> a jeho odmítnutí jmenuje claim, na který narazilo.</li>
       </ul>
@@ -377,6 +378,7 @@ exec "$mj" --repo "$root" capture session --provider claude-code --event start</
           <h4>Scope tasku: kam se píše</h4>
           <p><code>start --scope &lt;cesty&gt;</code>. <code>check</code> a <code>finish --outcome completed</code> selžou na změněném souboru mimo scope.</p>
           <p>Ostatní výsledky soubory jen vyjmenují jako varování, aby worker, kterému scope vyšel úzký, nezůstal zaseknutý.</p>
+          <p>Projekce, které z té změny zapíše derive, do scope jmenovat nemusíš. Cestu, kterou git označuje atributem <code>merge=derived</code>, kontrola připustí, pokud task změnil i něco kanonického: soubor vrstvy nebo nederivovaný soubor uvnitř scope. Větev, která nese jen projekce, je odmítnuta jako dřív, a repozitář, který nic jako derivované nedeklaruje, nepřipustí nic.</p>
         </div>
       </div>
       <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/scope.yaml (výřez)</span>
@@ -395,6 +397,7 @@ out:                     <span class="c"># vyhrává nad in</span>
   fixtures:
     paths: ['**/fixtures/', '**/testdata/']
     max_bytes: 65536     <span class="c"># fixture nad limit jsou data, ne kontext</span></code></pre></div>
+      <p>Výchozí <code>scope.yaml</code> nejmenuje žádný jazyk: jen vrstvu a místa, kam zdrojáky a dokumenty ukládá kdokoli (<code>src/**</code>, <code>lib/**</code>, <code>test/**</code>, <code>docs/**</code>). <code>majordomus init</code> k tomu přidá, co v repozitáři skutečně je: každou položku trackovanou v kořeni, na kterou výchozí seznam nedosáhne, adresář jako <code>&lt;jméno&gt;/**</code> a soubor jménem. Přidané řádky stojí pod komentářem, který říká, odkud jsou, a každý odhad vypíše. Vypíše i to, co pravidla <code>out</code> vyřadí, přestože je to trackované: commitnutý <code>dist/</code> nebo soubory nad <code>max_bytes</code>, vždy s klíčem, který to mění. Existující <code>scope.yaml</code> nepřepíše nikdy.</p>
       <p>Na každou cestu dá <code>majordomus scope</code> odpověď i s důvodem (<code>secret</code>, <code>generated</code>, <code>over_limit</code>, <code>binary</code>…). Trackovaný soubor se jménem tajemství je varování <code>tracked_secret</code>: nikdy se nečte ani neservíruje a v repu by neměl být.</p>
     </section>
 
@@ -511,6 +514,7 @@ majordomus finish --outcome completed --verify-command "cargo test -p majordomus
         <li><div><h4>Poradci dodávají důkaz, ne verdikt</h4><p>Externí modely (jiný vendor, jiný nástroj) dávají hlubší revizi. Rozhodnutí patří agentovi, který pracuje. Neshoda se řeší experimentem, ne hlasováním.</p></div></li>
         <li><div><h4>Závěr je typovaný záznam</h4><p>Rozhodnutí s důkazy, zamítnuté alternativy, zbývající rizika a plán ověření. Pak práce pokračuje.</p></div></li>
       </ol>
+      <p><code>majordomus reasoning check</code> hlídá, aby ten návrh držel, a ne všechny jeho rodiny pravidel se týkají každého repozitáře. <code>catalogue</code> a <code>records</code> platí všude, kde nástroj běží. <code>adapters</code>, <code>coupling</code>, <code>ci</code> a <code>claims</code> jsou pravidla o domově návrhu a vážou jen repozitář, který sám píše katalog poradců (<code>share/advisors.yaml</code>). Workflow adoptéra, který jmenuje klíč k modelu, nebo jeho vlastní ADR o tom, že produkt vyžaduje lokální model, je jeho produkt a <code>doctor</code> na něm neselže. Odpověď jmenuje rodiny, které proběhly.</p>
       <p>Chybějící poradce není chyba ani důvod zastavit se a ptát člověka. Checkout bez nainstalovaného poradce, bez klíče a bez sítě rozhoduje stejně a jen zapíše, že to bylo lokálně. Vendor není v logice nikde: protokol „zeptej se tohohle, pak tamtoho“ by se rozbil v den, kdy vyprší klíč.</p>
     </section>
 
