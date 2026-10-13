@@ -70,6 +70,15 @@
     },
     "nodes": [
       {
+        "id": "capability:accumulation.status",
+        "kind": "capability",
+        "label": "accumulation.status",
+        "summary": "Is anything piling up past its budget?",
+        "route": "/cockpit/capabilities/accumulation.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:artifacts.list",
         "kind": "capability",
         "label": "artifacts.list",
@@ -2156,6 +2165,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/accumulation.rs",
+        "kind": "file",
+        "label": "accumulation.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/accumulation.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/app.rs",
         "kind": "file",
         "label": "app.rs",
@@ -2177,6 +2194,14 @@
         "label": "coverage.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/bench/coverage.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+        "kind": "file",
+        "label": "accumulation.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
         "external": true
       },
       {
@@ -2484,11 +2509,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/commands/accumulation.rs",
+        "kind": "file",
+        "label": "accumulation.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commands/accumulation.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/commands/prs.rs",
         "kind": "file",
         "label": "prs.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/commands/prs.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commands/worktree.rs",
+        "kind": "file",
+        "label": "worktree.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commands/worktree.rs",
         "external": true
       },
       {
@@ -3369,6 +3410,14 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/state.rs",
+        "kind": "file",
+        "label": "state.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/state.rs",
         "external": true
       },
       {
@@ -7169,6 +7218,38 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0150",
+        "kind": "adr",
+        "label": "adr-0150",
+        "summary": "Accumulation is watched at the episode's events: worktrees, merged branches and free disk are read against budgets the policy declares, said where a worker is listening, and reduced on the policy's consent",
+        "route": "/cockpit/objects/adr/adr-0150",
+        "source": ".ai/repo/adrs/0150-accumulation-is-watched-at-the-episodes-events.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:.ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+            "file:.ai/repo/rules/project/accumulation-is-measured.v2.md",
+            "file:apps/majordomus-cli/src/accumulation.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+            "file:apps/majordomus-cli/src/commands/accumulation.rs",
+            "file:apps/majordomus-cli/src/commands/worktree.rs",
+            "file:apps/majordomus-cli/src/worktree/state.rs",
+            "file:lib/capture.sh",
+            "file:lib/derive.sh",
+            "file:test/cases/2986_accumulation_is_watched.sh"
+          ],
+          "tags": [
+            "architecture",
+            "operations",
+            "worktree",
+            "lifecycle",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -7788,6 +7869,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/413_a_skipped_case_is_not_a_proof.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/accumulation-is-watched",
+        "kind": "claim",
+        "label": "accumulation-is-watched",
+        "summary": "Worktrees, merged branches and free disk are measured against budgets the policy declares at the provider's episode events, a crossed budget is said in the briefing, and nothing is removed without the policy's consent",
+        "route": "/cockpit/objects/claim/accumulation-is-watched",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/accumulation.rs",
+          "responsibility": "layer",
+          "source": "docs/ACCUMULATION.md",
+          "test": "test/cases/2986_accumulation_is_watched.sh"
         }
       },
       {
@@ -13912,6 +14008,14 @@
         "source": "SECURITY.md"
       },
       {
+        "id": "majordomus://document/docs/ACCUMULATION.md",
+        "kind": "document",
+        "label": "docs/ACCUMULATION.md",
+        "summary": "The accumulation watch",
+        "route": "/cockpit/objects/document/docs-accumulation-md",
+        "source": "docs/ACCUMULATION.md"
+      },
+      {
         "id": "majordomus://document/docs/ADOPTION.md",
         "kind": "document",
         "label": "docs/ADOPTION.md",
@@ -14534,6 +14638,14 @@
         "summary": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
         "route": "/cockpit/objects/document/docs-claims-a-skipped-case-is-not-a-proof-md",
         "source": "docs/claims/a-skipped-case-is-not-a-proof.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/accumulation-is-watched.md",
+        "kind": "document",
+        "label": "docs/claims/accumulation-is-watched.md",
+        "summary": "Worktrees, merged branches and free disk are measured against budgets the policy declares at the provider's episode events, a crossed budget is said in the briefing, and nothing is removed without the policy's consent",
+        "route": "/cockpit/objects/document/docs-claims-accumulation-is-watched-md",
+        "source": "docs/claims/accumulation-is-watched.md"
       },
       {
         "id": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -18322,7 +18434,8 @@
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0021"
+            "adr-0021",
+            "adr-0150"
           ],
           "areas": [
             "coordination",
@@ -18331,13 +18444,15 @@
           "claims": [
             "worktree-topology-derived",
             "worktree-migration-lossless",
-            "worktree-ownership"
+            "worktree-ownership",
+            "accumulation-is-watched"
           ],
           "cockpit": [
             "worktrees"
           ],
           "docs": [
-            "docs/WORKTREES.md"
+            "docs/WORKTREES.md",
+            "docs/ACCUMULATION.md"
           ],
           "domain": "coordination",
           "featured": true,
@@ -18351,7 +18466,8 @@
           ],
           "rules": [
             "project.worktree-topology",
-            "project.no-machine-paths"
+            "project.no-machine-paths",
+            "project.accumulation-is-watched"
           ],
           "short_title": "Worktrees",
           "tags": [
@@ -34852,6 +34968,64 @@
         }
       },
       {
+        "id": "majordomus://issue/I2500",
+        "kind": "issue",
+        "label": "I2500",
+        "summary": "Accumulation is watched: worktrees, merged branches and free disk are read against the policy's budgets at the provider's episode events, said in the briefing, and reduced on the policy's consent",
+        "route": "/cockpit/objects/issue/i2500",
+        "source": ".ai/repo/project/issues/I2500.yaml",
+        "facts": {
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "accumulation_watch_case_2986",
+            "accumulation_unit_tests"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Build output of branches that are pushed and not merged: scripts/reap-orphans and pull request #921",
+            "A timer or daemon: the watch reads at the provider's events only",
+            "A Cockpit page of its own: the capability is listed with every other"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/accumulation.rs",
+            "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+            "apps/majordomus-cli/src/commands/accumulation.rs",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "lib/capture.sh",
+            "lib/derive.sh",
+            "lib/rust_bin.sh",
+            "test/run.sh",
+            ".ai/repo/policy.yaml",
+            "share/skeleton/policy.yaml",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "docs/ACCUMULATION.md",
+            "docs/WORKTREES.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/accumulation-is-watched.md",
+            ".ai/repo/adrs/0150-accumulation-is-watched-at-the-episodes-events.md",
+            ".ai/repo/rules/project/accumulation-is-watched.v1.md",
+            ".ai/repo/features/worktrees.md",
+            "test/cases/2986_accumulation_is_watched.sh",
+            ".ai/repo/project/issues/I2500.yaml"
+          ],
+          "slug": "accumulation-is-watched",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 2986_accumulation_is_watched 611_the_reclaim_refuses_what_it_cannot_prove 54_session_lifecycle_hooks",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib accumulation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -41674,6 +41848,33 @@
             "coordination",
             "ci",
             "disk"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.accumulation-is-watched@1",
+        "kind": "rule",
+        "label": "project.accumulation-is-watched@1",
+        "summary": "What accumulates is watched at the episode's events, against budgets the policy declares",
+        "route": "/cockpit/objects/rule/project-accumulation-is-watched-1",
+        "source": ".ai/repo/rules/project/accumulation-is-watched.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.accumulation-is-measured@2",
+            "project.destructive-sweeps-fail-closed@1",
+            "project.reclaim-only-what-you-own@1",
+            "project.worktree-topology@1",
+            "project.no-claim-without-test@1"
+          ],
+          "tags": [
+            "operations",
+            "git",
+            "worktree",
+            "disk",
+            "lifecycle",
+            "enforcement"
           ]
         }
       },
@@ -51286,6 +51487,13 @@
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2986_accumulation_is_watched.sh",
+        "kind": "test",
+        "label": "test/cases/2986_accumulation_is_watched.sh",
+        "route": "/cockpit/objects/test/test-cases-2986-accumulation-is-watched-sh",
+        "source": "test/cases/2986_accumulation_is_watched.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "label": "test/cases/29_prompt_capture.sh",
@@ -55433,6 +55641,11 @@
         }
       },
       {
+        "id": "module:accumulation",
+        "kind": "module",
+        "label": "accumulation"
+      },
+      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -55794,6 +56007,26 @@
       }
     ],
     "edges": [
+      {
+        "source": "capability:accumulation.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:accumulation.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:accumulation.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:accumulation.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
       {
         "source": "capability:artifacts.list",
         "target": "projection:cockpit",
@@ -63315,6 +63548,66 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0150",
+        "target": "file:apps/majordomus-cli/src/accumulation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "file:apps/majordomus-cli/src/commands/accumulation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "file:apps/majordomus-cli/src/commands/worktree.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "file:apps/majordomus-cli/src/worktree/state.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://adr/adr-0052",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://adr/adr-0055",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://implementation/lib/derive.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0150",
+        "target": "majordomus://test/test/cases/2986_accumulation_is_watched.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -63577,6 +63870,26 @@
       {
         "source": "majordomus://claim/a-skipped-case-is-not-a-proof",
         "target": "majordomus://test/test/cases/413_a_skipped_case_is_not_a_proof.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/accumulation-is-watched",
+        "target": "file:apps/majordomus-cli/src/accumulation.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/accumulation-is-watched",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/accumulation-is-watched",
+        "target": "majordomus://document/docs/ACCUMULATION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/accumulation-is-watched",
+        "target": "majordomus://test/test/cases/2986_accumulation_is_watched.sh",
         "kind": "tested_by"
       },
       {
@@ -69050,6 +69363,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/ACCUMULATION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/ADOPTION.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -69436,6 +69754,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/a-skipped-case-is-not-a-proof.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/accumulation-is-watched.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -76305,6 +76628,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2500",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2500",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -77701,6 +78034,36 @@
       },
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-watched@1",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -80426,6 +80789,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2986_accumulation_is_watched.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -84755,6 +85123,11 @@
         "kind": "is_a"
       },
       {
+        "source": "module:accumulation",
+        "target": "capability:accumulation.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -85736,8 +86109,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2732,
-      "edges": 5988,
+      "nodes": 2746,
+      "edges": 6020,
       "acyclic": false,
       "truncated": false
     }

@@ -29,6 +29,7 @@
 //! assert!(matches!(cli.command, Command::Quality(_)));
 //! ```
 
+pub(crate) mod accumulation;
 pub(crate) mod bench;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
@@ -94,6 +95,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Prs(args) => prs::run(args),
         Command::Offload(args) => offload::run(args),
         Command::Convergence(args) => convergence::run(args),
+        Command::Accumulation(args) => accumulation::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),

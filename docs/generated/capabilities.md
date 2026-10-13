@@ -9,6 +9,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | module | title | stability | capabilities | reference |
 |---|---|---|---|---|
+| `accumulation` | Accumulation | experimental | 1 | [`modules/accumulation.md`](modules/accumulation.md) |
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
 | `brief` | The session brief | behaviorally_verified | 1 | [`modules/brief.md`](modules/brief.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
@@ -70,6 +71,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | id | module | kind | stability | MCP tool | MCP resource | HTTP | CLI | cache | benchmark |
 |---|---|---|---|---|---|---|---|---|---|
+| `accumulation.status` | `accumulation` | query | experimental | `majordomus_accumulation` | `majordomus://accumulation` | `GET /api/v1/accumulation` | `majordomus accumulation` | — | required |
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | process, 512 entries | required |

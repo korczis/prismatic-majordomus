@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.23.0"
   },
-  "fingerprint": "8ed0e06fb9db89128cc0fd896e90e638adae554c9f137211d9eab5dba4755659",
+  "fingerprint": "be27c43e9aeffec350225bec1b9c8145724aaf93d7d284877f191e423c0c7b4a",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 28,
     "featured": 15,
     "providers": 6,
-    "modules": 56,
+    "modules": 57,
     "modules_covered": 44,
     "commands": 30,
     "commands_covered": 30,
@@ -688,8 +688,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 3,
-          "tested": 3,
+          "claims": 4,
+          "tested": 4,
           "use_cases": 2
         },
         {
@@ -877,6 +877,12 @@
         }
       ],
       "claim_refs": [
+        {
+          "id": "accumulation-is-watched",
+          "claim": "Worktrees, merged branches and free disk are measured against budgets the policy declares at the provider's episode events, a crossed budget is said in the briefing, and nothing is removed without the policy's consent",
+          "status": "guaranteed",
+          "test": "test/cases/2986_accumulation_is_watched.sh"
+        },
         {
           "id": "advice-is-weighed-not-counted",
           "claim": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
@@ -1157,17 +1163,17 @@
       ],
       "counts": {
         "features": 6,
-        "claims": 41,
-        "tested": 40,
+        "claims": 42,
+        "tested": 41,
         "use_cases": 6,
-        "rules": 13,
-        "enforced_rules": 11,
+        "rules": 14,
+        "enforced_rules": 12,
         "capabilities": 69,
         "moments": 17
       },
       "evidence": {
         "claims": {
-          "guaranteed": 40,
+          "guaranteed": 41,
           "rejected": 1
         },
         "modules": {}
@@ -3485,7 +3491,7 @@
         },
         {
           "name": "claim",
-          "objects": 245
+          "objects": 246
         }
       ],
       "rule_refs": [
@@ -3758,11 +3764,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 317,
+        "mcp_resources": 318,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 310,
+        "objects": 311,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -5093,18 +5099,22 @@
       "kinds": [],
       "rules": [
         "project.worktree-topology",
-        "project.no-machine-paths"
+        "project.no-machine-paths",
+        "project.accumulation-is-watched"
       ],
       "docs": [
-        "docs/WORKTREES.md"
+        "docs/WORKTREES.md",
+        "docs/ACCUMULATION.md"
       ],
       "adrs": [
-        "adr-0021"
+        "adr-0021",
+        "adr-0150"
       ],
       "claims": [
         "worktree-topology-derived",
         "worktree-migration-lossless",
-        "worktree-ownership"
+        "worktree-ownership",
+        "accumulation-is-watched"
       ],
       "use_cases": [
         "work-on-a-branch-in-its-canonical-worktree",
@@ -5197,12 +5207,24 @@
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/project/no-machine-paths.v1.md"
+        },
+        {
+          "id": "project.accumulation-is-watched",
+          "identity": "project.accumulation-is-watched@1",
+          "title": "What accumulates is watched at the episode's events, against budgets the policy declares",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/accumulation-is-watched.v1.md"
         }
       ],
       "doc_refs": [
         {
           "path": "docs/WORKTREES.md",
           "title": "Worktrees"
+        },
+        {
+          "path": "docs/ACCUMULATION.md",
+          "title": "The accumulation watch"
         }
       ],
       "adr_refs": [
@@ -5211,6 +5233,12 @@
           "title": "The branch-to-worktree topology is derived from git identity and enforced everywhere",
           "status": "accepted",
           "path": ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md"
+        },
+        {
+          "id": "adr-0150",
+          "title": "Accumulation is watched at the episode's events: worktrees, merged branches and free disk are read against budgets the policy declares, said where a worker is listening, and reduced on the policy's consent",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0150-accumulation-is-watched-at-the-episodes-events.md"
         }
       ],
       "claim_refs": [
@@ -5231,6 +5259,12 @@
           "claim": "A task record names the checkout it belongs to, and another checkout is never held to its scope",
           "status": "guaranteed",
           "test": "test/cases/27_foreign_task.sh"
+        },
+        {
+          "id": "accumulation-is-watched",
+          "claim": "Worktrees, merged branches and free disk are measured against budgets the policy declares at the provider's episode events, a crossed budget is said in the briefing, and nothing is removed without the policy's consent",
+          "status": "guaranteed",
+          "test": "test/cases/2986_accumulation_is_watched.sh"
         }
       ],
       "use_case_refs": [
@@ -5285,17 +5319,17 @@
         "cli_paths": 4,
         "commands": 0,
         "objects": 0,
-        "rules": 2,
-        "enforced_rules": 2,
-        "docs": 1,
-        "adrs": 1,
-        "claims": 3,
+        "rules": 3,
+        "enforced_rules": 3,
+        "docs": 2,
+        "adrs": 2,
+        "claims": 4,
         "use_cases": 2,
         "moments": 3
       },
       "evidence": {
         "claims": {
-          "guaranteed": 3
+          "guaranteed": 4
         },
         "modules": {
           "behaviorally_verified": 1
@@ -7217,7 +7251,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 102
+          "objects": 103
         },
         {
           "name": "knowledge",
@@ -7225,7 +7259,7 @@
         },
         {
           "name": "document",
-          "objects": 342
+          "objects": 344
         }
       ],
       "rule_refs": [
@@ -7498,11 +7532,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 448,
+        "mcp_resources": 451,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 445,
+        "objects": 448,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7718,7 +7752,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 177
+          "objects": 178
         }
       ],
       "rule_refs": [
@@ -8094,11 +8128,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 179,
+        "mcp_resources": 180,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 177,
+        "objects": 178,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -11986,7 +12020,7 @@
         },
         {
           "name": "issue",
-          "objects": 341
+          "objects": 342
         },
         {
           "name": "intent",
@@ -12188,11 +12222,11 @@
       "counts": {
         "capabilities": 23,
         "mcp_tools": 23,
-        "mcp_resources": 383,
+        "mcp_resources": 384,
         "http_routes": 23,
         "cli_paths": 11,
         "commands": 1,
-        "objects": 380,
+        "objects": 381,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14702,8 +14736,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 3,
-        "claims": 3
+        "proven": 4,
+        "claims": 4
       },
       {
         "id": "mesh",
@@ -15220,6 +15254,11 @@
       }
     ],
     "modules": [
+      {
+        "id": "accumulation",
+        "title": "Accumulation",
+        "features": []
+      },
       {
         "id": "artifacts",
         "title": "Generated artifacts",
@@ -15839,7 +15878,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (102)",
+        "title": "adr (103)",
         "features": [
           "knowledge"
         ]
@@ -15867,7 +15906,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (245)",
+        "title": "claim (246)",
         "features": [
           "declare-once"
         ]
@@ -15936,7 +15975,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (341)",
+        "title": "issue (342)",
         "features": [
           "planning"
         ]
@@ -15999,7 +16038,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (177)",
+        "title": "rule (178)",
         "features": [
           "doctrine"
         ]
@@ -16493,6 +16532,14 @@
       "path": ".ai/repo/rules/project/a-personal-layer-changes-nothing-shared.v1.md"
     },
     {
+      "id": "project.accumulation-is-watched",
+      "identity": "project.accumulation-is-watched@1",
+      "title": "What accumulates is watched at the episode's events, against budgets the policy declares",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/accumulation-is-watched.v1.md"
+    },
+    {
       "id": "project.advisors-are-optional",
       "identity": "project.advisors-are-optional@1",
       "title": "Advisors are optional; reasoning, governance and CI never depend on one",
@@ -16949,36 +16996,36 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2319,
-    "builtin": 196,
-    "declarative": 2123,
-    "modules": 56,
-    "mcp_tools": 187,
-    "mcp_resources": 2178,
-    "http_routes": 191,
-    "cli_commands": 203,
+    "capabilities": 2327,
+    "builtin": 197,
+    "declarative": 2130,
+    "modules": 57,
+    "mcp_tools": 188,
+    "mcp_resources": 2186,
+    "http_routes": 192,
+    "cli_commands": 204,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2123,
+    "objects": 2130,
     "by_kind": {
-      "adr": 102,
+      "adr": 103,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 245,
+      "claim": 246,
       "command": 31,
       "context": 37,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 342,
+      "document": 344,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 341,
+      "issue": 342,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -16987,12 +17034,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 22,
-      "rule": 177,
+      "rule": 178,
       "scope": 1,
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 464,
+      "test": 465,
       "use-case": 49,
       "workspace": 1
     },
@@ -17010,7 +17057,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 227,
+    "declared": 228,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -17032,6 +17079,12 @@
         "supported": false
       },
       "a-skipped-case-is-not-a-proof": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "accumulation-is-watched": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

@@ -401,6 +401,122 @@ pub fn merged_into(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
         .collect())
 }
 
+/// Delete the name of a branch whose work the trunk already holds, or say why it stays.
+///
+/// `None` means the name is gone; `Some(reason)` means nothing was changed. Every reading is
+/// taken here, at the moment of deletion, and the deletion is conditional on the head that
+/// was read: `git update-ref -d <ref> <head>` removes the ref only while it still points
+/// there, so a commit made between the reading and the removal keeps the branch.
+///
+/// Three things keep a name:
+///
+/// - a worktree has it checked out — the worktree goes first, by its own checks;
+/// - it stands at the trunk's own tip, or at the tip of the branch the trunk follows: that
+///   is where new work starts, and a branch created a minute ago with nothing on it yet is
+///   indistinguishable from it;
+/// - neither of those tips reaches its head — it is not merged after all.
+///
+/// Nothing is lost when a name goes: every commit it named is in the trunk.
+///
+/// ```
+/// use majordomus_cli::worktree::state::retire_branch;
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     assert!(std::process::Command::new("git")
+///         .current_dir(dir.path())
+///         .args(["-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false"])
+///         .args(args)
+///         .status()
+///         .unwrap()
+///         .success());
+/// };
+/// git(&["init", "-q", "-b", "main"]);
+/// std::fs::write(dir.path().join("a"), "a").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-q", "-m", "one"]);
+/// git(&["branch", "landed"]);
+/// git(&["branch", "ahead"]);
+/// std::fs::write(dir.path().join("b"), "b").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-q", "-m", "two"]);
+/// git(&["branch", "fresh"]);
+/// git(&["checkout", "-q", "ahead"]);
+/// std::fs::write(dir.path().join("c"), "c").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-q", "-m", "its own"]);
+///
+/// // behind the trunk and checked out nowhere: the name goes, and nothing else does
+/// assert_eq!(retire_branch(dir.path(), "main", "landed"), None);
+/// assert!(retire_branch(dir.path(), "main", "landed").unwrap().contains("no longer exists"));
+/// // at the trunk's tip: where new work starts
+/// assert!(retire_branch(dir.path(), "main", "fresh").unwrap().contains("trunk's own tip"));
+/// // checked out, and holding a commit the trunk does not
+/// assert!(retire_branch(dir.path(), "main", "ahead").unwrap().contains("checked out"));
+/// git(&["checkout", "-q", "main"]);
+/// assert!(retire_branch(dir.path(), "main", "ahead").unwrap().contains("not merged"));
+/// assert!(retire_branch(dir.path(), "main", "main").unwrap().contains("is the trunk"));
+/// ```
+pub fn retire_branch(primary: &Path, trunk: &str, name: &str) -> Option<String> {
+    if name == trunk {
+        return Some("it is the trunk".into());
+    }
+    let now = match branch(primary, name) {
+        Ok(Some(now)) => now,
+        Ok(None) => return Some("the branch no longer exists".into()),
+        Err(e) => return Some(format!("could not read the branch: {e}")),
+    };
+    let reference = format!("refs/heads/{name}");
+    match git::run(primary, &["worktree", "list", "--porcelain"]) {
+        Ok(out) => {
+            let held = format!("branch {reference}");
+            if String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .any(|l| l == held)
+            {
+                return Some("a worktree has it checked out".into());
+            }
+        }
+        Err(e) => return Some(format!("could not read the worktrees: {e}")),
+    }
+    let tip = |rev: &str| {
+        git::try_run(primary, &["rev-parse", "--verify", "--quiet", rev])
+            .ok()
+            .filter(|o| o.status == Some(0))
+            .and_then(|o| o.text().ok())
+            .filter(|t| !t.is_empty())
+    };
+    let tips: Vec<String> = [
+        format!("refs/heads/{trunk}^{{commit}}"),
+        format!("{trunk}@{{upstream}}^{{commit}}"),
+    ]
+    .iter()
+    .filter_map(|rev| tip(rev))
+    .collect();
+    if tips.is_empty() {
+        return Some(format!("the trunk {trunk} could not be read"));
+    }
+    if tips.contains(&now.head) {
+        return Some("it stands at the trunk's own tip, where new work starts".into());
+    }
+    let reached = tips.iter().any(|t| {
+        git::try_run(
+            primary,
+            &["merge-base", "--is-ancestor", now.head.as_str(), t.as_str()],
+        )
+        .is_ok_and(|o| o.status == Some(0))
+    });
+    if !reached {
+        return Some(format!("it is not merged into {trunk}"));
+    }
+    match git::run(
+        primary,
+        &["update-ref", "-d", reference.as_str(), now.head.as_str()],
+    ) {
+        Ok(_) => None,
+        Err(e) => Some(format!("git kept it: {e}")),
+    }
+}
+
 /// The issue ids this repository's project model declares: the file names under
 /// `.ai/repo/project/issues/`, read from the primary checkout. A filesystem read, not an
 /// index build, so the topology stays cheap.
@@ -450,6 +566,81 @@ pub fn issue_of(branch: &str, ids: &[String]) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn git_in(dir: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .current_dir(dir)
+            .args([
+                "-c",
+                "user.email=t@example.com",
+                "-c",
+                "user.name=t",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args)
+            .status()
+            .expect("git runs")
+            .success();
+        assert!(ok, "git {args:?}");
+    }
+
+    /// A landed name goes and nothing else does: the trunk, a name at the trunk's tip, a
+    /// checked-out branch and a branch with work of its own are each kept for their own
+    /// reason, and so is anything git cannot be asked about.
+    #[test]
+    fn a_landed_name_is_retired_and_every_other_one_is_kept_for_a_reason() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        git_in(root, &["init", "-q", "-b", "main"]);
+        std::fs::write(root.join("a"), "a").unwrap();
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-q", "-m", "one"]);
+        git_in(root, &["branch", "landed"]);
+        git_in(root, &["branch", "locked"]);
+        git_in(root, &["branch", "ahead"]);
+        std::fs::write(root.join("b"), "b").unwrap();
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-q", "-m", "two"]);
+        git_in(root, &["branch", "fresh"]);
+        git_in(root, &["checkout", "-q", "ahead"]);
+        std::fs::write(root.join("c"), "c").unwrap();
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-q", "-m", "its own"]);
+
+        let kept = |name: &str| retire_branch(root, "main", name).expect("kept");
+        assert_eq!(kept("main"), "it is the trunk");
+        assert_eq!(
+            kept("fresh"),
+            "it stands at the trunk's own tip, where new work starts"
+        );
+        assert_eq!(kept("ahead"), "a worktree has it checked out");
+        git_in(root, &["checkout", "-q", "main"]);
+        assert_eq!(kept("ahead"), "it is not merged into main");
+        assert_eq!(kept("absent"), "the branch no longer exists");
+        assert_eq!(
+            retire_branch(root, "no-such-trunk", "landed").unwrap(),
+            "the trunk no-such-trunk could not be read"
+        );
+        // a ref git cannot take the lock of is kept, in git's own words
+        std::fs::write(root.join(".git/refs/heads/locked.lock"), "").unwrap();
+        assert!(
+            kept("locked").starts_with("git kept it: "),
+            "{}",
+            kept("locked")
+        );
+        std::fs::remove_file(root.join(".git/refs/heads/locked.lock")).unwrap();
+
+        assert_eq!(retire_branch(root, "main", "landed"), None);
+        assert_eq!(branch(root, "landed").unwrap(), None, "the name is gone");
+        assert!(branch(root, "main").unwrap().is_some());
+        assert!(root.join("a").exists(), "and nothing else is");
+
+        let nowhere = tempfile::tempdir().unwrap();
+        assert!(retire_branch(nowhere.path(), "main", "landed")
+            .unwrap()
+            .starts_with("could not read the branch: "));
+    }
 
     #[test]
     fn a_gone_upstream_has_no_distance() {

@@ -1,6 +1,23 @@
 {
   "capabilities": [
     {
+      "api_anchor": "/docs/api/accumulation/#op-accumulation-status",
+      "claims": [],
+      "cli": "majordomus accumulation",
+      "id": "accumulation.status",
+      "kind": "query",
+      "module": "accumulation",
+      "module_route": "/registry/modules/accumulation/",
+      "resource": "majordomus://accumulation",
+      "route": "/registry/capabilities/accumulation-status/",
+      "slug": "accumulation-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+      "tests": [],
+      "title": "Is anything piling up past its budget?",
+      "tool": "majordomus_accumulation"
+    },
+    {
       "api_anchor": "/docs/api/artifacts/#op-artifacts-list",
       "claims": [],
       "cli": null,
@@ -3545,6 +3562,13 @@
         "test": "test/cases/84_distribution_model.sh"
       },
       {
+        "id": "accumulation-is-watched",
+        "implementation": "apps/majordomus-cli/src/accumulation.rs",
+        "route": "/guarantees/accumulation-is-watched/",
+        "status": "guaranteed",
+        "test": "test/cases/2986_accumulation_is_watched.sh"
+      },
+      {
         "id": "context-selection-counted",
         "implementation": "apps/majordomus-cli/src/economics/context.rs",
         "route": "/guarantees/context-selection-counted/",
@@ -4132,12 +4156,28 @@
     ]
   },
   "counts": {
-    "capabilities": 196,
-    "claims": 92,
-    "modules": 56
+    "capabilities": 197,
+    "claims": 93,
+    "modules": 57
   },
   "generator": "majordomus-cli 0.23.0",
   "modules": [
+    {
+      "capabilities": [
+        {
+          "id": "accumulation.status",
+          "route": "/registry/capabilities/accumulation-status/",
+          "slug": "accumulation-status"
+        }
+      ],
+      "claims": [],
+      "id": "accumulation",
+      "route": "/registry/modules/accumulation/",
+      "slug": "accumulation",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+      "title": "Accumulation"
+    },
     {
       "capabilities": [
         {

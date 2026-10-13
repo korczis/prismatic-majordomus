@@ -118,11 +118,15 @@ run_case() {
   # is too late -- the subshell is already in this shell's group by then, and a killed case
   # leaves its background server holding a port for the next one.
   set -m
+  # MAJORDOMUS_ACCUMULATION=off: a case that fires a provider's event in this repository
+  # would otherwise run the accumulation watch against the machine it runs on, and this
+  # repository's policy lets that watch remove worktrees (ADR 0150). A case that tests the
+  # watch unsets it for the one command it measures.
   # the runner's own selection never reaches a case: a case that runs test/run.sh itself
   # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
       MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
-    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
+    && T="$T" MJ_SKIP_MARK="$mark" MAJORDOMUS_ACCUMULATION=off bash -eu "$case" ) &
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then

@@ -185,6 +185,7 @@ majordomus worktree cleanup                    # what is merged and clean; delet
 <!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
 ```bash
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
+majordomus worktree cleanup --remove --branches  # and deletes the names of landed branches nothing has checked out
 ```
 
 <div class="overflow-x-auto" tabindex="0">
@@ -206,6 +207,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree cleanup --remove --branches` | the same, then deletes the name of every landed branch no worktree has checked out: re-read first, deleted only while it still points where it was read, kept when it stands at the trunk's own tip | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -286,10 +288,16 @@ that removed a worktree on the strength of a merged branch would eventually remo
 somebody had not finished. The cost is real and was paid here on 2026-09-08, eighteen hours
 after the topology landed: fifteen worktrees between them held 104 GB of Rust `target/`
 directories, nine of those with branches already merged into the trunk, and the volume
-reached 124 MiB free. Nothing in the topology reclaims anything and no budget is declared
-for the container, so the disk is what says stop — and it says it in whatever vocabulary
-the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
-for why the mechanism is absent rather than missing.
+reached 124 MiB free. Nothing in the topology reclaimed anything and no budget was declared
+for the container, so the disk was what said stop — and it said it in whatever vocabulary
+the next subsystem to fail happened to use. Three said their content was wrong. See ADR 0021
+for why the topology itself has no such mechanism.
+
+The budget and the trigger are now the policy's: the `accumulation:` block declares how many
+worktrees and merged branches a repository may hold and how much disk must stay free, the
+provider's episode events read them, and a crossed budget is said in the briefing and — when
+the policy says `act: reduce` — reduced without anybody being prompted (ADR 0150,
+[`ACCUMULATION.md`](@/docs/accumulation.md)).
 
 If you hold a worktree whose branch has landed, `worktree cleanup` tells you; `git worktree
 remove <path>` and `git branch -d <branch>` are the two commands, and the `target/`
@@ -413,9 +421,12 @@ topology changes outside the process.
 ## Reclaiming
 
 `majordomus worktree cleanup` lists what is spare: every branch merged into the trunk whose
-worktree is clean or absent. `--remove` removes those worktrees, and nothing else — branches
-are never deleted, because the disk is what runs out and a branch is the only durable name a
-piece of work has.
+worktree is clean or absent. `--remove` removes those worktrees, and nothing else — no
+branch is deleted, because the disk is what runs out and a branch is the only durable name a
+piece of work has. Deleting names is a separate consent, `--branches`: after the worktrees
+have gone it deletes the name of every landed branch nothing has checked out, with
+`git update-ref -d <ref> <head>` so that a ref that moved since it was read stays, and it
+keeps a branch that stands at the trunk's own tip, which is where new work starts.
 
 The listing and the removal are two moments, and everything that makes a worktree safe to
 remove can change between them, so the listing only nominates: `--remove` reads the branch's

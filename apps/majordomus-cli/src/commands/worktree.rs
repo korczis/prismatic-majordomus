@@ -85,7 +85,9 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
         Some(WorktreeCommand::Remove { selector, force }) => {
             remove(&svc()?, &selector, force, format, &mut out)
         }
-        Some(WorktreeCommand::Cleanup { remove }) => cleanup(&svc()?, format, remove, &mut out),
+        Some(WorktreeCommand::Cleanup { remove, branches }) => {
+            cleanup(&svc()?, format, remove, branches, &mut out)
+        }
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -527,14 +529,23 @@ fn cleanup(
     svc: &WorktreeService,
     format: OutputFormat,
     remove: bool,
+    branches: bool,
     out: &mut Out<'_>,
 ) -> Result<u8> {
+    if remove {
+        let reduction = reduce(svc, branches)?;
+        match format {
+            OutputFormat::Json => json(out, &reduction)?,
+            OutputFormat::Text => {
+                for line in reduction.lines() {
+                    w(out, line)?;
+                }
+            }
+        }
+        return Ok(0);
+    }
     let t = svc.topology(Detail::Full).map_err(refuse)?;
     let eligible: Vec<&BranchState> = t.branches.iter().filter(|b| b.cleanup_eligible).collect();
-
-    if remove {
-        return reclaim(svc, &eligible, format, out);
-    }
     match format {
         OutputFormat::Json => json(out, &eligible)?,
         OutputFormat::Text => {
@@ -585,7 +596,68 @@ fn occupied(path: &str) -> Option<bool> {
     }))
 }
 
-/// Remove the worktrees the listing offers, each re-measured immediately before it goes.
+/// A candidate that was kept, and why.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize, schemars::JsonSchema)]
+pub struct Kept {
+    /// The branch.
+    pub branch: String,
+    /// The reading that kept it.
+    pub reason: String,
+}
+
+/// What one reduction did: the worktrees it removed, the branch names it deleted, and every
+/// candidate it kept with the reading that kept it.
+#[derive(
+    Debug, Clone, Default, PartialEq, Eq, Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct Reduction {
+    /// Branches whose worktree was removed.
+    pub removed: Vec<String>,
+    /// Branches whose name was deleted: every commit each named is in the trunk.
+    #[serde(default)]
+    pub deleted: Vec<String>,
+    /// Candidates that were kept.
+    pub refused: Vec<Kept>,
+    /// Whether deleting names was asked for at all.
+    #[serde(default)]
+    pub branches: bool,
+}
+
+impl Reduction {
+    /// The report a person reads: one line per act and per refusal, then the tally.
+    pub fn lines(&self) -> Vec<String> {
+        let mut lines: Vec<String> = Vec::new();
+        for n in &self.removed {
+            lines.push(format!("removed   {n}"));
+        }
+        for n in &self.deleted {
+            lines.push(format!("deleted   {n}"));
+        }
+        for k in &self.refused {
+            lines.push(format!("refused   {:<44} {}", k.branch, k.reason));
+        }
+        lines.push(self.summary());
+        lines
+    }
+
+    /// The tally, in one line.
+    pub fn summary(&self) -> String {
+        format!(
+            "worktree cleanup: {} removed, {} refused; {}",
+            self.removed.len(),
+            self.refused.len(),
+            if self.branches {
+                format!("{} branch name(s) deleted", self.deleted.len())
+            } else {
+                "no branch was deleted".to_string()
+            }
+        )
+    }
+}
+
+/// Remove the worktrees a listing would offer, each re-measured immediately before it goes,
+/// and — when `branches` is set — delete the names of landed branches nothing has checked
+/// out.
 ///
 /// The listing and the removal are two moments, and everything that makes a worktree safe to
 /// remove can change between them. So the listing only nominates: the branch's standing against
@@ -593,60 +665,58 @@ fn occupied(path: &str) -> Option<bool> {
 /// read again by [`refusal`], one worktree at a time, and a candidate that fails any of them is
 /// named and skipped rather than removed.
 ///
-/// Branches are never deleted. `git branch -d` refuses an unmerged branch on its own, but a
-/// branch is the only durable name a piece of work has, and the disk is what was scarce.
-fn reclaim(
-    svc: &WorktreeService,
-    eligible: &[&BranchState],
-    format: OutputFormat,
-    out: &mut Out<'_>,
-) -> Result<u8> {
-    let mut removed: Vec<String> = Vec::new();
-    let mut refused: Vec<(String, String)> = Vec::new();
-
-    for b in eligible {
+/// A name is deleted only on a separate consent, because a branch is the only durable name a
+/// piece of work has. [`crate::worktree::state::retire_branch`] deletes one whose every commit
+/// the trunk holds, conditionally on the head it read, and keeps one that stands at the
+/// trunk's own tip. The names are read again after the worktrees have gone, so a branch whose
+/// worktree was just removed is a candidate and one whose worktree was kept is not.
+pub(crate) fn reduce(svc: &WorktreeService, branches: bool) -> Result<Reduction> {
+    let t = svc.topology(Detail::Full).map_err(refuse)?;
+    let mut reduction = Reduction {
+        branches,
+        ..Reduction::default()
+    };
+    for b in t.branches.iter().filter(|b| b.cleanup_eligible) {
         let Some(path) = b.worktree.clone() else {
-            continue; // no worktree to reclaim; the branch alone costs nothing
+            continue; // no worktree to reclaim; the name is the second pass's question
         };
         if let Some(why) = refusal(svc, &b.name, &path) {
-            refused.push((b.name.clone(), why));
+            reduction.refused.push(Kept {
+                branch: b.name.clone(),
+                reason: why,
+            });
             continue;
         }
         match svc.remove(&b.name, false) {
-            Ok(_) => removed.push(b.name.clone()),
-            Err(e) => refused.push((b.name.clone(), format!("{e}"))),
-        }
-    }
-
-    match format {
-        OutputFormat::Json => json(
-            out,
-            &serde_json::json!({
-                "removed": removed,
-                "refused": refused
-                    .iter()
-                    .map(|(n, r)| serde_json::json!({ "branch": n, "reason": r }))
-                    .collect::<Vec<_>>(),
+            Ok(_) => reduction.removed.push(b.name.clone()),
+            Err(e) => reduction.refused.push(Kept {
+                branch: b.name.clone(),
+                reason: format!("{e}"),
             }),
-        )?,
-        OutputFormat::Text => {
-            for n in &removed {
-                w(out, format!("removed   {n}"))?;
-            }
-            for (n, r) in &refused {
-                w(out, format!("refused   {n:<44} {r}"))?;
-            }
-            w(
-                out,
-                format!(
-                    "worktree cleanup: {} removed, {} refused; no branch was deleted",
-                    removed.len(),
-                    refused.len()
-                ),
-            )?;
         }
     }
-    Ok(0)
+    if !branches {
+        return Ok(reduction);
+    }
+    let after = svc.topology(Detail::Fast).map_err(refuse)?;
+    let Some(trunk) = after.trunk.branch.clone() else {
+        return Ok(reduction); // no trunk was decided, so nothing is known to have landed
+    };
+    let primary = &svc.identity().primary_worktree().path;
+    for b in after
+        .branches
+        .iter()
+        .filter(|b| !b.trunk && b.merged_into_trunk == Some(true) && b.worktree.is_none())
+    {
+        match crate::worktree::state::retire_branch(primary, &trunk, &b.name) {
+            None => reduction.deleted.push(b.name.clone()),
+            Some(why) => reduction.refused.push(Kept {
+                branch: b.name.clone(),
+                reason: why,
+            }),
+        }
+    }
+    Ok(reduction)
 }
 
 /// Why this worktree must not be removed now, or `None` when every reading says it is spare.
@@ -1120,5 +1190,94 @@ mod tests {
         .expect("write");
         let why = refusal(&svc, &b.name, &path).expect("refused");
         assert!(why.contains("uncommitted work"), "{why}");
+    }
+
+    /// Without the consent no name is deleted; with it the worktree of a landed branch goes
+    /// first and its name after it, a landed name nothing has checked out goes too, and a
+    /// name at the trunk's own tip and a branch that reached no remote are kept and named.
+    #[test]
+    fn a_reduction_removes_what_is_spare_and_deletes_names_only_on_consent() {
+        let (tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        if occupied(&path).is_none() {
+            eprintln!("no lsof: every candidate is refused, which is its own test");
+            return;
+        }
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        // landed and checked out nowhere
+        git(&repo, &["switch", "-q", "-c", "named"]);
+        std::fs::write(repo.join("named.txt"), "named\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "named"]);
+        git(&repo, &["switch", "-q", "master"]);
+        git(
+            &repo,
+            &["merge", "-q", "--no-ff", "-m", "merge named", "named"],
+        );
+        // landed, never pushed, and checked out: on this disk only
+        git(&repo, &["switch", "-q", "-c", "local"]);
+        std::fs::write(repo.join("local.txt"), "local\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "local"]);
+        git(&repo, &["switch", "-q", "master"]);
+        git(
+            &repo,
+            &["merge", "-q", "--no-ff", "-m", "merge local", "local"],
+        );
+        git(&repo, &["push", "-q", "origin", "master"]);
+        let at = svc.expected_path_of("local").expect("the path of local");
+        let at = at.to_string_lossy().to_string();
+        git(&repo, &["worktree", "add", "-q", at.as_str(), "local"]);
+        // where new work starts
+        git(&repo, &["branch", "tip", "master"]);
+        // the service reads git's registry when it is opened, as every command line does
+        let svc = WorktreeService::open(&repo).expect("open the service");
+
+        let first = reduce(&svc, false).expect("a reduction");
+        assert_eq!(first.removed, ["spare"], "{:?}", first.refused);
+        assert!(first.deleted.is_empty(), "no consent, no name deleted");
+        assert_eq!(first.refused.len(), 1, "{:?}", first.refused);
+        assert_eq!(first.refused[0].branch, "local");
+        assert!(first.refused[0].reason.contains("no upstream"));
+        assert!(!Path::new(&path).exists(), "the worktree is gone");
+        assert_eq!(
+            first.summary(),
+            "worktree cleanup: 1 removed, 1 refused; no branch was deleted"
+        );
+        assert_eq!(
+            first.lines(),
+            [
+                "removed   spare".to_string(),
+                format!("refused   {:<44} {}", "local", first.refused[0].reason),
+                first.summary(),
+            ]
+        );
+
+        let second = reduce(&svc, true).expect("a reduction");
+        assert!(second.removed.is_empty());
+        assert_eq!(second.deleted, ["named", "spare"]);
+        let kept: Vec<&str> = second.refused.iter().map(|k| k.branch.as_str()).collect();
+        assert_eq!(kept, ["local", "tip"], "{:?}", second.refused);
+        assert!(second.refused[1].reason.contains("trunk's own tip"));
+        assert_eq!(
+            second.summary(),
+            "worktree cleanup: 0 removed, 2 refused; 2 branch name(s) deleted"
+        );
+        assert!(second.lines().contains(&"deleted   named".to_string()));
+        for gone in ["named", "spare"] {
+            assert_eq!(
+                crate::worktree::state::branch(&repo, gone).expect("read"),
+                None
+            );
+        }
+        for stays in ["local", "tip", "master"] {
+            assert!(crate::worktree::state::branch(&repo, stays)
+                .expect("read")
+                .is_some());
+        }
+        assert!(
+            repo.join("named.txt").exists(),
+            "the trunk holds what the name pointed at"
+        );
     }
 }

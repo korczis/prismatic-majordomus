@@ -87,7 +87,10 @@ grep -qF "href=\"${base%/}/rustdoc/\"" site/public/index.html \
   || { echo "    the built home page's menu does not link ${base%/}/rustdoc/"; exit 1; }
 expect_exit 0 scripts/site-check --no-sync
 expect_grep "^OK   surfaces +1 composed surface\(s\) \(/rustdoc\) are in the build, each built from ${built:0:12}, the commit this build is$"
-expect_grep '^OK   nav +every navigation link on the homepage resolves$'
+# The line also says how many of those links are the root of a snapshot the publication holds
+# and this build does not compose (the published UI, since the landing page links it): the
+# count is the publication's, not this case's, so the sentence is held and the count is not.
+expect_grep '^OK   nav +every navigation link on the homepage resolves \([0-9]+ of them the root of a snapshot the publication holds and this build does not compose\)$'
 expect_grep "^OK   link +.* the [0-9]+ page\(s\) under /rustdoc/ are composed surfaces' own and were not scanned"
 
 # ---------------------------------------------------------------- a build that lost the compose

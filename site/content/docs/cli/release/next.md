@@ -1,7 +1,7 @@
 +++
 title = "majordomus release next"
 description = "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)"
-weight = 117
+weight = 118
 [extra]
 route = "/docs/cli/release/next/"
 command = "majordomus release next"
