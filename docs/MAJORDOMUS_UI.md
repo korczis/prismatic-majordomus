@@ -55,6 +55,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
+| Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
 
