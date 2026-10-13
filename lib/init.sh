@@ -165,7 +165,7 @@ H
       printf '%s\n' "$after" | grep -vxF -f <(printf '%s\n' "$before") | sed 's/^/  now shown: /' >&2
       exit "$MJ_EX_CONTRACT"
     fi
-    mj_personal_verify mj_ok mj_fail || exit "$MJ_EX_CONTRACT"
+    mj_personal_verify plain || exit "$MJ_EX_CONTRACT"
     printf 'personal: this layer is yours; nothing the repository shares was changed. The cover is %s\n' "$(mj_personal_exclude_file)"
     printf 'personal: it stays on this machine. To propose it to the team: majordomus init --extend --shared\n'
   fi

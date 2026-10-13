@@ -92,7 +92,7 @@ serve() {
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$dir/releases/latest.json"
   # and what the model says a publication holds beside its pages (the UI's snapshot), read at
   # the commit the identity names: a whole site, so that every refusal below is the one asked
-  # for. test/cases/1096_the_published_ui_is_the_trunks.sh holds the gate's refusal of a UI
+  # for. test/cases/2983_the_published_ui_is_the_trunks.sh holds the gate's refusal of a UI
   # that is missing or another commit's.
   publication_snapshots "$ROOT" "$dir" "$identity_commit"
 }

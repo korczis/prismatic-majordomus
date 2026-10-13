@@ -1,7 +1,7 @@
 +++
 title = "Complexity is optional, not ambient"
 description = "Complexity is optional, not ambient"
-weight = 130
+weight = 132
 [extra]
 kind = "rule"
 slug = "project-optional-complexity-1"

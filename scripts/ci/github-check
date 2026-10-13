@@ -29,9 +29,10 @@
 # deliberate act with a reason, exactly as scripts/ci/pipefail-check treats its own.
 #
 # A head is judged against what it changes, not against GitHub's live state. The adapter
-# projects the trunk and nothing else, and nothing applies it automatically, so a record a
-# head changed is `behind` on GitHub for exactly as long as that head is unmerged, and for a
-# little longer on the trunk, until the executor applies. Refusing that made a pull request
+# projects the trunk and nothing else, so a record a head changed is `behind` on GitHub for
+# exactly as long as that head is unmerged, and for a little longer on the trunk, until the
+# landing has applied it (.github/workflows/github.yml, on every push to the default branch;
+# a person's `scripts/github-sync --apply` is the fallback). Refusing that made a pull request
 # that edits a projected record red from birth with no way to go green on its own head (#855
 # changed one line of I1900; #820 closed eight records), and would have left the trunk red
 # after it landed. So the four states an apply writes — `behind`, `state`, `milestone` and
@@ -43,8 +44,8 @@
 #                   in a pull request's run, MJ_GH_BASE=<ref> when a person names one, and
 #                   otherwise the remote's default branch for a tree that is not on it.
 #   on the trunk    the records that changed in a landing younger than the window declared
-#                   in .ai/repo/ci/github.yaml as apply.window: "the executor applies after
-#                   landing". Older than the window they are refused, and the refusal names
+#                   in .ai/repo/ci/github.yaml as apply.window: "the landing applies".
+#                   Older than the window they are refused, and the refusal names
 #                   the remedy. The trunk is a run whose GITHUB_REF is the default branch,
 #                   or, with no CI event, a HEAD the remote's default branch contains.
 #
@@ -79,8 +80,8 @@ SYNC="$SELF/../github-sync"
 ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
 cd "$ROOT"
 BASELINE="${MJ_GH_BASELINE:-.ai/repo/ci/github-drift-baseline.txt}"
-# The model of this gate: how long the trunk may carry a landed change the executor has not
-# applied. Declared there, read here, and written nowhere else.
+# The model of this gate: how long the trunk may carry a landed change nothing has applied
+# yet. Declared there, read here, and written nowhere else.
 MODEL=".ai/repo/ci/github.yaml"
 REMOTE="${MJ_GH_REMOTE:-origin}"
 WRITE=0
@@ -288,7 +289,7 @@ for s in $REFUSED; do
     why="the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
     case " $PENDABLE " in *" $s "*)
       case "$KIND" in
-        trunk) why="$why; nothing changed them inside the ${WINDOW}s the executor is given after a landing ($MODEL), so they are owed now — run: scripts/github-sync --apply from $TRUNK" ;;
+        trunk) why="$why; nothing changed them inside the ${WINDOW}s a landing is given to apply them ($MODEL), so they are owed now and the github-projection workflow has not applied them — run: scripts/github-sync --apply from $TRUNK" ;;
         head)  why="$why; this head did not change them: they drifted before it, or the trunk has moved past this tree's base" ;;
       esac ;;
     esac
@@ -299,8 +300,8 @@ for s in $REFUSED; do
   fi
   if [ "$p" -gt 0 ]; then
     case "$KIND" in
-      trunk) pend "$p record(s) $s, $ABOUT — the executor applies after landing (scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
-      *)     pend "$p record(s) $s, $ABOUT — projected after merge: GitHub shows the trunk's plan, and the executor runs scripts/github-sync --apply once this has landed" ;;
+      trunk) pend "$p record(s) $s, $ABOUT — the landing applies (.github/workflows/github.yml; the fallback is scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
+      *)     pend "$p record(s) $s, $ABOUT — projected after merge: GitHub shows the trunk's plan, and the landing applies it once this has merged" ;;
     esac
     sample "$waits"
   fi
