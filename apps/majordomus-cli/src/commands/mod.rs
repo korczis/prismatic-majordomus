@@ -56,6 +56,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub(crate) mod offload;
 pub(crate) mod pack;
+pub(crate) mod peers;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -119,6 +120,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
+        Command::Peers(args) => peers::run(args),
     }
 }
 

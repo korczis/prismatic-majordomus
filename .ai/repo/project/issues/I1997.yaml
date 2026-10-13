@@ -25,4 +25,25 @@ evidence_required:
   - "cli_peers_lists_an_mcp_peer_case"
   - "cli_peers_without_server_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-13T11:04:59Z
+started_at: 2026-10-13T09:56:20Z
+started_event: sha256:1403e0d64fd40b84f69925da613c4b2d24d6e35dba7cc276326b09710f758c0d
+verified_at: 2026-10-13T11:04:40Z
+verified_event: sha256:8cdf5c9aecd81e5a2c1d09b36ef5963756d24e040d4ba69ff5244b6ee97b4115
+completed_at: 2026-10-13T11:04:59Z
+completed_event: sha256:51c52e92d07852f493efb65d4924389e966ee4649be63441a88db77eefc2d392
+evidence:
+  - covers: cli_peers_lists_an_mcp_peer_case
+    type: test
+    command: "bash test/run.sh 2993_the_peer_board_is_read_from_the_command_line"
+    result: "ok: a peer announced over MCP by a real client in a worktree is listed by majordomus peers with its worktree, its claim and its paths, as text and as JSON, from its own checkout's server and from a checkout nothing serves; the command is bound to peers.list by the capability's own cli exposure and the shell tool routes it"
+    artifact: "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh"
+    commit: ba3fd916b311a438b9eb1f8179cccf6e3cef671e
+    recorded_at: 2026-10-13T11:04:50Z
+  - covers: cli_peers_without_server_case
+    type: test
+    command: "bash test/run.sh 2993_the_peer_board_is_read_from_the_command_line"
+    result: "ok: with no server answering for any checkout the answer covers, majordomus peers says no board could be asked and exits 12, before any server starts, for --checkouts this, and after the server stops; with no layer it exits 12 naming the missing repository"
+    artifact: "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh"
+    commit: ba3fd916b311a438b9eb1f8179cccf6e3cef671e
+    recorded_at: 2026-10-13T11:04:54Z
