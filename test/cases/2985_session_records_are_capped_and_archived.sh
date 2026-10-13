@@ -28,7 +28,7 @@ close_one() {
 }
 close_one one; close_one two; close_one three
 S=.ai/repo/sessions
-records() { ls -1 "$S"/*.md | grep -v '/README\.md$' | LC_ALL=C sort; }
+records() { find "$S" -maxdepth 1 -name '*.md' ! -name README.md | LC_ALL=C sort; }
 [ "$(records | wc -l | tr -d ' ')" = 3 ] || { echo "    expected three records, have: $(records)"; exit 1; }
 oldest="$(records | sed -n 1p)"; second="$(records | sed -n 2p)"; newest="$(records | sed -n 3p)"
 mkdir -p keep && cp "$oldest" "$second" "$newest" keep/
