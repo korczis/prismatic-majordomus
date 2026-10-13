@@ -988,6 +988,39 @@ mod tests {
         assert!(findings.is_empty());
     }
 
+    /// The committed registry manifest is judged by what is there: a repository that commits
+    /// none has nothing to drift from and is `ok`; one whose manifest exists and cannot be
+    /// read is `unknown`, because this process cannot say whether it drifted.
+    #[test]
+    fn an_uncommitted_registry_manifest_is_ok_and_an_unreadable_one_is_unknown() {
+        let check = |repo: &SyntheticRepository| {
+            let ctx = repo.context().expect("a context");
+            health(&ctx, Empty {})
+                .expect("a report")
+                .checks
+                .into_iter()
+                .find(|c| c.id == "generated-registry")
+                .expect("the check is reported")
+        };
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let manifest = repo.root().join(generate::OUT_DIR).join("registry.json");
+        assert!(!manifest.exists(), "the fixture commits no manifest");
+        let absent = check(&repo);
+        assert_eq!(absent.status, HealthStatus::Ok, "{absent:?}");
+        assert!(absent.detail.contains("not committed here"), "{absent:?}");
+        assert!(absent.findings.is_empty(), "{absent:?}");
+
+        // a directory where the file belongs: it exists, and it cannot be read as a manifest
+        std::fs::create_dir_all(&manifest).expect("a directory at the manifest's path");
+        let unreadable = check(&repo);
+        assert_eq!(unreadable.status, HealthStatus::Unknown, "{unreadable:?}");
+        assert!(
+            unreadable.detail.contains("could not be read"),
+            "{unreadable:?}"
+        );
+        assert_eq!(unreadable.findings.len(), 1, "{unreadable:?}");
+    }
+
     /// A layer read with an error diagnostic is served as read: readiness names it as a
     /// reason, reports the layer as a warning, and is still ready.
     #[test]
