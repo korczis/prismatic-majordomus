@@ -399,13 +399,17 @@
 
   /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of
      acceptance criteria. Read as text, at a measure a sentence can be read at. */
+  /* A record's prose names paths and commands, which have no place to break: without this a
+     long one is wider than a phone and the page scrolls sideways. */
   .mj-ui-prose {
     @apply mb-3 max-w-prose text-sm leading-relaxed;
     color: var(--mj-body);
+    overflow-wrap: anywhere;
   }
   .mj-ui-prose-list {
     @apply mb-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed;
     color: var(--mj-body);
+    overflow-wrap: anywhere;
   }
   .mj-ui-code {
     @apply rounded px-1 py-0.5 font-mono text-small;

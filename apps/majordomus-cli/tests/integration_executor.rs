@@ -73,6 +73,12 @@ case "$1 $2" in
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
   "api graphql")
+    # the forge's deployments and releases, which `prs refresh` observes beside the queue
+    # (deploy::observed): none here, and no test of this file is about them
+    case "$*" in *"deployments(last"*)
+      echo '{"data":{"repository":{"url":"https://example.invalid/o/r","deployments":{"nodes":[]},"releases":{"nodes":[]}}}}'
+      exit 0 ;;
+    esac
     case "$*" in *timelineItems*)
       if [ -f "$S/declarations-transient" ]; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
       if [ -f "$S/declarations-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
@@ -981,7 +987,12 @@ fn the_declarations_are_read_with_every_open_pull_request() {
     // nothing open: nothing is asked about declarations
     let (code, out, err) = f.prs(&["refresh"]);
     assert_eq!(code, 0, "{out}{err}");
-    assert!(!f.log().contains("api graphql"), "{}", f.log());
+    assert_eq!(
+        declarations_asked(&f, false) + declarations_asked(&f, true),
+        0,
+        "{}",
+        f.log()
+    );
 
     // #7 said it supersedes #1, and was merged with a merge commit; #1 is still open
     let seven = f.branch(7);

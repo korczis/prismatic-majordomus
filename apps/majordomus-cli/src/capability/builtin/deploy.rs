@@ -9,7 +9,7 @@
 //! a network call on a read that a client may poll is not an ordinary read; it belongs to
 //! an explicit operation with its own cost, not behind `deploy.list`.
 //!
-//! `deploy.observed` keeps to that: it answers from the record `majordomus prs refresh` wrote
+//! `deploy.observed` keeps to that: it answers from the record `majordomus served forge` wrote
 //! when it last asked the forge ([`crate::deploy::observed`]) — every deployment to every
 //! environment and every release — and says so when this checkout has never asked.
 
@@ -222,7 +222,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "deploy.observed",
                 title: "What was deployed, and where",
-                description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+                description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
                 input: Empty,
                 output: crate::deploy::observed::ObservedDeployments,
                 stability: Stability::BehaviorallyVerified,
@@ -293,7 +293,7 @@ mod tests {
         let ctx = repo.context().unwrap();
         let answer = deploy_observed(&ctx, Empty {}).unwrap();
         assert!(!answer.observed);
-        assert!(answer.reason.unwrap().contains("prs refresh"));
+        assert!(answer.reason.unwrap().contains("served forge"));
 
         let observation = crate::deploy::observed::parse(
             "o/r",

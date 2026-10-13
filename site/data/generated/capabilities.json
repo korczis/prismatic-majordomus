@@ -1268,7 +1268,7 @@
       "implementation": "scripts/ci/github-check",
       "test": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
       "status": "guaranteed",
-      "note": "GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
+      "note": "GitHub shows the trunk's plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.",
       "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
@@ -2512,7 +2512,7 @@
     {
       "id": "published-translation-is-declared",
       "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
-      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "source": ".ai/repo/rules/project/english-only.v3.md",
       "implementation": "scripts/ci/english-only-check",
       "test": "test/cases/403_published_translation.sh",
       "status": "guaranteed",

@@ -1,7 +1,7 @@
 +++
 title = "Every object of the layer has an address of its own, and every kind says where it is published"
 description = "Every object of the layer has an address of its own, and every kind says where it is published"
-weight = 94
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-entities-are-routable-1"

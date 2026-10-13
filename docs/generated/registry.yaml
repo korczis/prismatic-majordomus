@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.22.0
+# Generator: majordomus-cli 0.23.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.22.0
+generator: majordomus-cli 0.23.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -292,7 +292,7 @@ modules:
     description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: server
     title: Server
     description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
@@ -1061,6 +1061,11 @@ capabilities:
           execution:
             "$ref": "#/$defs/ExecutionPolicy"
             description: "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+          skill:
+            anyOf:
+              - "$ref": "#/$defs/SkillExposure"
+              - type: "null"
+            description: "The short name a person invokes it by from an agent's prompt, when it has one."
         required:
           - id
           - module
@@ -1444,6 +1449,19 @@ capabilities:
                 const: serial
                 description: "One at a time. A second execution of the same capability waits for the first, which\nis what a capability that changes anything — this process's own memory included —\nneeds in order to be reasoned about at all."
             description: Whether two executions of one capability may overlap.
+          SkillExposure:
+            type: object
+            properties:
+              alias:
+                type: string
+                description: "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+              argument:
+                type: string
+                description: "The input field the text typed after the name fills, verbatim."
+            required:
+              - alias
+              - argument
+            description: "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::capabilities
@@ -8544,7 +8562,7 @@ capabilities:
     module: deploy
     kind: query
     title: "What was deployed, and where"
-    description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."
+    description: "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."
     input:
       name: Empty
       schema:
@@ -29159,6 +29177,9 @@ capabilities:
       effect: repository_mutation
       cancellable: false
       concurrency: serial
+    skill:
+      alias: intent
+      argument: statement
     source_path: apps/majordomus-cli/src/capability/builtin/intents.rs
   - id: intents.record
     module: intents
@@ -51119,6 +51140,93 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/rules.rs
+  - id: served.forge
+    module: served
+    kind: command
+    title: Ask the forge what it recorded as deployed and released
+    description: "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ForgeObserved
+      schema:
+        type: object
+        properties:
+          observed:
+            type: boolean
+            description: Whether the forge answered and the answer was recorded.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why not, in the words of whatever refused; absent when it answered."
+          repository:
+            type:
+              - string
+              - "null"
+            description: "`owner/name`, as the forge named the repository."
+          observed_at:
+            type:
+              - string
+              - "null"
+            description: "When the forge was asked, RFC 3339."
+          deployments:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many deployments the answer held.
+          releases:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many releases the answer held.
+          environments:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many environments those deployments went to.
+          exit_code:
+            type: integer
+            format: int32
+            description: "The exit status the command line reports: 0 observed, 12 not answered."
+        required:
+          - observed
+          - deployments
+          - releases
+          - environments
+          - exit_code
+        description: "What `served.forge` came to: whether the forge answered, and what its answer held. The\nanswer itself is read through `deploy.observed`; this is the receipt of having asked.\n\n```\nuse majordomus_cli::capability::builtin::served::ForgeObserved;\n// a forge that could not be asked is said, with the reason, and is exit 12: not answered\nlet json = r#\"{\"observed\":false,\"reason\":\"gh repo view failed: no network\",\n  \"deployments\":0,\"releases\":0,\"environments\":0,\"exit_code\":12}\"#;\nlet got: ForgeObserved = serde_json::from_str(json).unwrap();\nassert!(!got.observed);\nassert_eq!(got.exit_code, 12);\nassert!(got.repository.is_none());\n```"
+        title: ForgeObserved
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::served
+    exposure:
+      cli:
+        path:
+          - served
+          - forge
+    availability: runtime
+    visibility: developer
+    stability: behaviorally_verified
+    tags:
+      - deployment
+      - evidence
+      - forge
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/served.rs
   - id: served.observe
     module: served
     kind: command

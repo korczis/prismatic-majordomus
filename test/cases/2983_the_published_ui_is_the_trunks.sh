@@ -28,7 +28,7 @@
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj1096.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj2983.XXXXXX")"; trap 'stop_http; rm -rf "$S"' EXIT
 gitq() { git -c user.email=t@example.com -c user.name=t -c core.hooksPath=/dev/null "$@"; }
 TAB="$(printf '\t')"
 pages() { env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE "$ROOT/scripts/pages" "$@"; }
@@ -279,7 +279,7 @@ awk '/^  - id: pages-live$/{f=1} f && /^    summary:/{print; exit}' "$ROOT/.ai/r
   || { echo "    the pages-live gate's summary does not state the UI"; exit 1; }
 RULE="$ROOT/.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
 grep -q '^class: blocking$' "$RULE" || { echo "    the rule is missing or not blocking"; exit 1; }
-grep -q 'test/cases/1096_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
+grep -q 'test/cases/2983_the_published_ui_is_the_trunks.sh' "$RULE" && grep -q 'scripts/ci/pages-check' "$RULE" \
   || { echo "    the rule's tests do not name this case and the gate"; exit 1; }
 echo "    the workflow, the gate, the deploy, the gate's summary and the rule carry it"
 

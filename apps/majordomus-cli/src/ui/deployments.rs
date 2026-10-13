@@ -107,12 +107,14 @@ fn observed_panels(observed: &Answer) -> Vec<El> {
                 .child(el("td").child(commit(&forge, &text(e, "sha"))))
                 .child(el("td").class("mj-ui-mono").text(value(e, "deployed_at")))
                 .child(el("td").child(outside_field(e, "url", &text(e, "url"))))
+                // how many deployments the environment has: the count the observation states,
+                // and `none` when it states none, never a zero nobody counted
                 .child(
                     el("td").class("mj-ui-mono").text(
                         e.get("deployments")
                             .and_then(Value::as_u64)
-                            .unwrap_or(0)
-                            .to_string(),
+                            .map(|count| count.to_string())
+                            .unwrap_or_else(|| "none".into()),
                     ),
                 )
         })
@@ -469,7 +471,7 @@ pub(crate) mod tests {
         let repo = furnished();
         let ctx = repo.context().expect("a context");
         let unasked = screen(&ctx).main.render();
-        assert!(unasked.contains("majordomus prs refresh"), "{unasked}");
+        assert!(unasked.contains("majordomus served forge"), "{unasked}");
         assert!(
             !unasked.contains("Where each environment stands"),
             "{unasked}"
@@ -521,6 +523,35 @@ pub(crate) mod tests {
     }
 
     /// A source that did not answer is drawn as unanswered, not as "never asked".
+    /// An environment's count of deployments is the number the observation states, and
+    /// `none` when it states none: an absent count is never drawn as a zero nobody counted
+    /// (`project.ui-derived-state`, the ui-integrity gate's count-default).
+    #[test]
+    fn an_environment_without_a_count_reads_none_and_never_zero() {
+        let rows = |environments: Value| {
+            observed_panels(&answer(
+                OBSERVED,
+                Ok(serde_json::json!({ "observed": true, "environments": environments })),
+            ))
+            .iter()
+            .map(|panel| panel.render())
+            .collect::<String>()
+        };
+        let counted = rows(serde_json::json!([{ "name": "github-pages", "deployments": 7 }]));
+        assert!(counted.contains(">7</td>"), "{counted}");
+        let zero = rows(serde_json::json!([{ "name": "github-pages", "deployments": 0 }]));
+        assert!(
+            zero.contains(">0</td>"),
+            "a zero the source states is shown: {zero}"
+        );
+        let absent = rows(serde_json::json!([{ "name": "github-pages" }]));
+        assert!(absent.contains(">none</td>"), "{absent}");
+        assert!(
+            !absent.contains(">0</td>"),
+            "an absent count is not a zero: {absent}"
+        );
+    }
+
     #[test]
     fn an_unanswered_observation_is_drawn_as_unanswered() {
         let drawn = observed_panels(&answer(OBSERVED, Err("no such capability".into())));
