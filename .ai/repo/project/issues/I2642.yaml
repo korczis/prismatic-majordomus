@@ -1,0 +1,42 @@
+id: I2642
+milestone: architecture-is-enforced
+title: "The ui job's bound has room: the audit's budget is measured, its margin is reported, and a shrinking margin warns before it is a timeout"
+slug: the-ui-jobs-bound-has-room
+priority: p2
+profile: implementation
+parallel_safe: true
+risk: "Sampling pages would let a defect on an unsampled page through. If the audit is sampled rather than sharded, the sample is declared, every page is still visited within a stated number of runs, and the full sweep stays on the scheduled plan."
+objective: "Keep the browser audit of the UI from exceeding its bound by the growth of the corpus alone: the bound follows a measured budget with declared headroom, or the audit's duration stops growing linearly with the number of pages, and the margin is a number every run prints."
+why: "Measured on 2026-10-13 on e506c041a4. In validate 38379385624 the audit ran 3162 s against a bound of 3600 s, a margin of 438 s, for 7414 visits over 2178 pages. The page count grows with every rule, session record and documentation page, so the step will be killed at its bound by growth alone, on a change that touches nothing the audit measures. A killed step reports no finding and no margin: the last warning is the timeout."
+current_state: "The bound is a literal in .github/workflows/validate.yml: the ui job runs scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report under timeout-minutes 75, after a site build bounded at 2400 s and a budget check bounded at 600 s. Nothing derives 3600 from a measurement, .ai/repo/ci/gates.yaml declares the ui-audit gate without a budget, and scripts/ci/timed records the duration without comparing it to the bound. The suite has a derived budget with its measurements in .ai/repo/ci/suite.yaml; the audit has none."
+desired_state: "The audit's bound is declared once in the CI model with the runs it was measured from and the headroom it keeps, in the manner of .ai/repo/ci/suite.yaml, and the workflow reads it rather than repeating a literal; a case refuses a workflow whose bound disagrees with the model. Each run prints and records the margin, bound minus duration, and a margin below the declared headroom is a warning in the job summary that names both numbers. Either the bound is re-derived when the warning fires, or the audit is sharded across jobs or sampled by a declared rule, so that its duration no longer grows linearly with the corpus. The sum of the ui job's step bounds stays below its timeout-minutes. The new case takes its number from scripts/case-numbers next when the work starts, and its path joins this scope then."
+scope:
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci/timed"
+  - "scripts/ci/summary"
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/ui"
+  - "docs/CI.md"
+  - "docs/UI.md"
+  - ".ai/repo/project/issues/I2642.yaml"
+non_scope:
+  - "Retrying an unreachable visit or naming its cause, which is I2641"
+  - "Removing pages, widths or invariants from the audit to make it fit"
+  - "The latency budgets of the UI's screens, which are benchmark policy (I2489)"
+depends_on: []
+acceptance_criteria:
+  - "The audit's bound is declared in the CI model with the measurements and the headroom it was derived from, and the workflow does not repeat it as a literal"
+  - "A run prints the audit's duration, its bound and the margin, and the job's timing record carries the margin"
+  - "A run whose margin is below the declared headroom raises a warning that names the margin and the headroom and does not fail the job"
+  - "A case fails when the workflow's bound and the model's disagree, or when the ui job's step bounds sum to more than its timeout-minutes"
+  - "The record states which of the two remedies was taken, a re-derived bound or a sharded or sampled audit, and for sampling the rule by which every page is still visited"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 26_ci_wiring"
+  - "scripts/ci/shell-lint"
+evidence_required:
+  - "ui_audit_bound_case"
+  - "ui_job_run_reporting_its_margin"
+created_at: 2026-10-13
+updated_at: 2026-10-13

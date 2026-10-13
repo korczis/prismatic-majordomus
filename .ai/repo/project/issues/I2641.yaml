@@ -1,0 +1,38 @@
+id: I2641
+milestone: architecture-is-enforced
+title: "The UI audit retries one unreachable visit and names the cause in its log"
+slug: the-ui-audit-retries-an-unreachable-visit
+priority: p1
+profile: implementation
+parallel_safe: true
+risk: "A retry can hide a page that is slow every time. The retry is one, it is counted and printed in the run, and a second failure of the same visit is critical exactly as today."
+objective: "Keep one navigation timeout from failing a whole browser audit, and make the audit's own log say why a visit was unreachable, so that the verdict can be read without downloading an artifact."
+why: "Measured on 2026-10-13 on e506c041a4. In validate 38379385624, job ui (115235815811), the browser audit made 7414 visits over 2178 pages in 3162 s and reported one finding: page.unreachable, route /docs/rules/majordomus-rule-package-integrity-1/ at width 1024, with the detail page.goto: Timeout 20000ms exceeded. That detail was read from the run-ui.json artifact; the job log printed no cause. The same route was reached at the other widths. One navigation timeout failed 53 minutes of work with exit 10, and no earlier run had recorded such a finding. On the peer board of that day the session that owns the UI audit was peer p12, the likely executor."
+current_state: "scripts/lib/ui-audit.mjs calls page.goto once per visit with a 20000 ms timeout. A rejection becomes a page.unreachable finding whose detail carries the first line of the error, and the visit is over. The detail reaches target/web/run-ui.json and the rendered report, and the line the job prints does not carry it. A finding of this rule is critical, so one of 7414 visits decides the exit status of the gate."
+desired_state: "A visit whose navigation is rejected is tried once more on a fresh page before anything is recorded. If the second attempt loads, the visit is audited as usual and the run counts and prints one retried visit with its route, width and first cause. If it fails again, page.unreachable is recorded as critical as today. The line the audit prints for the finding names the route, the width and the cause as a class, timeout, HTTP status or network error, with the original message. The count of retried visits is in run-ui.json and in the summary line, so a rising number is visible before it is a failure. The new case takes its number from scripts/case-numbers next when the work starts, and its path joins this scope then."
+scope:
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/ui"
+  - "docs/UI.md"
+  - "test/cases/334_ui_audit_hears_uncaught_errors.sh"
+  - ".ai/repo/project/issues/I2641.yaml"
+non_scope:
+  - "Raising the 20000 ms navigation timeout"
+  - "Retrying any finding other than a rejected navigation: a page that answers with a status of 400 or more, or that fails an invariant, is judged on the first visit"
+  - "Shortening the audit or changing its bound, which is I2642"
+depends_on: []
+acceptance_criteria:
+  - "A fixture route that rejects its first navigation and loads on the second yields no finding, and the run reports one retried visit with the route, the width and the cause"
+  - "A fixture route that rejects both navigations yields one critical page.unreachable finding and exit 10"
+  - "The audit's printed line for a page.unreachable finding names the route, the width and the cause class with the browser's message, with no artifact opened"
+  - "run-ui.json carries the number of retried visits and the summary line prints it"
+  - "A case fails if the retry is removed or if the cause is dropped from the printed line"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 334_ui_audit_hears_uncaught_errors"
+  - "scripts/ui audit --report"
+evidence_required:
+  - "ui_audit_retry_case"
+  - "ui_job_log_naming_an_unreachable_cause"
+created_at: 2026-10-13
+updated_at: 2026-10-13

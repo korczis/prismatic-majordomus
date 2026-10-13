@@ -34852,6 +34852,248 @@
         }
       },
       {
+        "id": "majordomus://issue/I2639",
+        "kind": "issue",
+        "label": "I2639",
+        "summary": "shell-lint names the shellcheck version it needs: a local pass and the runner's verdict come from the same linter",
+        "route": "/cockpit/objects/issue/i2639",
+        "source": ".ai/repo/project/issues/I2639.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ci/shell-lint prints the shellcheck version it found and the version or range it declares, before the first finding",
+            "With a shellcheck outside the declared range on the path, a local run warns by name of both versions and a run in CI mode exits non-zero without linting",
+            "The structure job installs the declared shellcheck version rather than the runner image's package, and reads the number from the place shell-lint declares it",
+            "The SC2015 shape that 0.10.0 reports and 0.11.0 does not is judged identically by a local run inside the range and by the structure job",
+            "A case fails when the declaration is removed from shell-lint or when the workflow installs an unpinned shellcheck"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "shell_lint_version_case",
+            "structure_job_run_with_pinned_shellcheck"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Rewriting shell that an older shellcheck reports: github.yml was repaired in 8d852d79f0, and any further finding is a finding of its own",
+            "Pinning actionlint, which the structure job already pins",
+            "Vendoring a shellcheck binary into the repository"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/shell-lint",
+            ".github/workflows/validate.yml",
+            "docs/CI.md",
+            "test/cases/26_ci_wiring.sh",
+            ".ai/repo/project/issues/I2639.yaml"
+          ],
+          "slug": "shell-lint-names-the-shellcheck-version-it-needs",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/shell-lint",
+            "MJ_TEST_JOBS=2 bash test/run.sh 26_ci_wiring"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2640",
+        "kind": "issue",
+        "label": "I2640",
+        "summary": "The pages gate holds its verdict while a deploy of the judged commit is in flight",
+        "route": "/cockpit/objects/issue/i2640",
+        "source": ".ai/repo/project/issues/I2640.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With an owed publication older than the window and a pages run for the judged commit in progress, pages-check waits and passes once the run has published the commit",
+            "With the same debt and a pages run that concluded in failure, or with no run for the commit or a descendant, pages-check refuses and names the run or its absence",
+            "The wait is bounded by a value declared in .ai/repo/ci/pages.yaml, the bound is smaller than the pages job's timeout, and reaching it reports pending with the run's id rather than a failure",
+            "The ci verdict does not report green while the pages gate is pending",
+            "Case 180 exercises in-flight, failed and absent deploys against a fixture and fails if any of the three verdicts changes"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "pages_gate_in_flight_case_180",
+            "validate_run_green_on_a_deploy_repairing_commit"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Making the pages deploy itself more reliable, or changing what the link check refuses",
+            "Moving the pages job behind other jobs so that it merely runs later: a later start is a guess at the deploy's duration, not an observation of it",
+            "Changing OWED_AFTER"
+          ],
+          "objective": "Stop the pages gate from refusing a commit for a publication debt that the commit's own deploy is paying at that moment, without weakening its refusal of a failed or absent deploy.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/pages-check",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/pages.yaml",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases/180_publication_is_observed.sh",
+            "docs/CI.md",
+            ".ai/repo/project/issues/I2640.yaml"
+          ],
+          "slug": "the-pages-gate-waits-for-a-deploy-in-flight",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 180_publication_is_observed",
+            "scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2641",
+        "kind": "issue",
+        "label": "I2641",
+        "summary": "The UI audit retries one unreachable visit and names the cause in its log",
+        "route": "/cockpit/objects/issue/i2641",
+        "source": ".ai/repo/project/issues/I2641.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture route that rejects its first navigation and loads on the second yields no finding, and the run reports one retried visit with the route, the width and the cause",
+            "A fixture route that rejects both navigations yields one critical page.unreachable finding and exit 10",
+            "The audit's printed line for a page.unreachable finding names the route, the width and the cause class with the browser's message, with no artifact opened",
+            "run-ui.json carries the number of retried visits and the summary line prints it",
+            "A case fails if the retry is removed or if the cause is dropped from the printed line"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "ui_audit_retry_case",
+            "ui_job_log_naming_an_unreachable_cause"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Raising the 20000 ms navigation timeout",
+            "Retrying any finding other than a rejected navigation: a page that answers with a status of 400 or more, or that fails an invariant, is judged on the first visit",
+            "Shortening the audit or changing its bound, which is I2642"
+          ],
+          "objective": "Keep one navigation timeout from failing a whole browser audit, and make the audit's own log say why a visit was unreachable, so that the verdict can be read without downloading an artifact.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A retry can hide a page that is slow every time. The retry is one, it is counted and printed in the run, and a second failure of the same visit is critical exactly as today.",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/ui",
+            "docs/UI.md",
+            "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+            ".ai/repo/project/issues/I2641.yaml"
+          ],
+          "slug": "the-ui-audit-retries-an-unreachable-visit",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 334_ui_audit_hears_uncaught_errors",
+            "scripts/ui audit --report"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2642",
+        "kind": "issue",
+        "label": "I2642",
+        "summary": "The ui job's bound has room: the audit's budget is measured, its margin is reported, and a shrinking margin warns before it is a timeout",
+        "route": "/cockpit/objects/issue/i2642",
+        "source": ".ai/repo/project/issues/I2642.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The audit's bound is declared in the CI model with the measurements and the headroom it was derived from, and the workflow does not repeat it as a literal",
+            "A run prints the audit's duration, its bound and the margin, and the job's timing record carries the margin",
+            "A run whose margin is below the declared headroom raises a warning that names the margin and the headroom and does not fail the job",
+            "A case fails when the workflow's bound and the model's disagree, or when the ui job's step bounds sum to more than its timeout-minutes",
+            "The record states which of the two remedies was taken, a re-derived bound or a sharded or sampled audit, and for sampling the rule by which every page is still visited"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "ui_audit_bound_case",
+            "ui_job_run_reporting_its_margin"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Retrying an unreachable visit or naming its cause, which is I2641",
+            "Removing pages, widths or invariants from the audit to make it fit",
+            "The latency budgets of the UI's screens, which are benchmark policy (I2489)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci/timed",
+            "scripts/ci/summary",
+            "scripts/lib/ui-audit.mjs",
+            "scripts/ui",
+            "docs/CI.md",
+            "docs/UI.md",
+            ".ai/repo/project/issues/I2642.yaml"
+          ],
+          "slug": "the-ui-jobs-bound-has-room",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 26_ci_wiring",
+            "scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2643",
+        "kind": "issue",
+        "label": "I2643",
+        "summary": "An issue number is allocated by one command that reads the refs, the worktrees and the board, and claims it in the same step",
+        "route": "/cockpit/objects/issue/i2643",
+        "source": ".ai/repo/project/issues/I2643.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One command returns the next free issue id and the allocation is visible as a claim to every other session before the command returns",
+            "Two callers started concurrently against one repository receive different ids, in a case that fails if the claim is recorded after the answer",
+            "An id present only as an untracked record in another worktree, only on an origin branch, or only as a board or mesh claim is not returned",
+            "When a checkout's board or the mesh cannot be read, the answer says which and is marked incomplete",
+            "The capability is declared once with capability! and its CLI, MCP and HTTP projections are generated; no shell unit allocates an issue id",
+            "docs/PLANNING.md and rule project.work-is-claimed-before-it-is-built name the command as the way an issue or milestone id is taken"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "issue_allocation_concurrency_case",
+            "issue_allocation_unit_tests"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Renumbering any existing issue, or resolving the overlaps of 2026-10-13, which the sessions settled by releasing numbers",
+            "Allocating ADR or case numbers: scripts/case-numbers and the ADR allocation of case 271 stay as they are until this one is proven",
+            "Turning an advisory board announcement into a lock for paths; this is about identifiers only"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/PLANNING.md",
+            ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            ".ai/repo/project/issues/I2643.yaml"
+          ],
+          "slug": "an-issue-number-is-allocated-by-one-command",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml",
+            "bin/majordomus generate --check",
+            "bin/majordomus shell check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -76305,6 +76547,56 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2639",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2639",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2640",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2640",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2641",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2641",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2642",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2642",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2643",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2643",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -85736,8 +86028,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2732,
-      "edges": 5988,
+      "nodes": 2737,
+      "edges": 5998,
       "acyclic": false,
       "truncated": false
     }

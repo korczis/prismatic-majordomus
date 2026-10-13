@@ -1,0 +1,38 @@
+id: I2639
+milestone: architecture-is-enforced
+title: "shell-lint names the shellcheck version it needs: a local pass and the runner's verdict come from the same linter"
+slug: shell-lint-names-the-shellcheck-version-it-needs
+priority: p2
+profile: implementation
+parallel_safe: true
+risk: "Refusing every version but one would stop a contributor whose package manager is a release ahead. The mitigation is a declared range with a loud warning outside it locally and a refusal only in CI, where the version is installed by the job and is the job's to pin."
+objective: "Make scripts/ci/shell-lint say which shellcheck it was written against and what it found installed, so that a local run and the structure job judge a file with the same linter, or the local run says in its own output that they do not."
+why: "Measured on 2026-10-13. Master ba3fd916b3's validate run 38364727993 failed in the structure job on shell-lint alone: actionlint reported SC2015 three times in .github/workflows/github.yml, lines 93, 122 and 146, all of one shape: a test that MAJORDOMUS_BIN is set, && a test that it is executable, || a brace group that reports and exits 12. Reproduced in containers: shellcheck 0.9.0 and 0.10.0 report SC2015 for that shape, and shellcheck 0.11.0, which is this Mac's Homebrew version and the one in the rhysd/actionlint:latest image, reports nothing. Every local scripts/ci/shell-lint therefore passed a file the runner refused. The file was repaired in 8d852d79f0 (pull request 1079); the cause, two linters behind one gate name, was not."
+current_state: "scripts/ci/shell-lint requires shellcheck to be installed and asks nothing about its version. The structure job of .github/workflows/validate.yml installs shellcheck with apt-get install -y shellcheck, so the runner image's package decides the version, while actionlint is pinned in the same job through ACTIONLINT_VERSION. docs/CI.md describes shellcheck as one package. A developer on Homebrew runs a newer shellcheck than the runner, and nothing on either side prints the version it judged with."
+desired_state: "scripts/ci/shell-lint declares the shellcheck version or range it was written against, prints the installed version in its first lines, and outside that range warns loudly on a local run and refuses in CI. The structure job installs a pinned shellcheck the same way it pins actionlint, from the same declaration, so the number is written once. docs/CI.md states the pin and how to match it locally. A case holds it: a shellcheck of an undeclared version on the path changes the gate's output and, in CI mode, its exit status. The new case takes its number from scripts/case-numbers next when the work starts, and its path joins this scope then."
+scope:
+  - "scripts/ci/shell-lint"
+  - ".github/workflows/validate.yml"
+  - "docs/CI.md"
+  - "test/cases/26_ci_wiring.sh"
+  - ".ai/repo/project/issues/I2639.yaml"
+non_scope:
+  - "Rewriting shell that an older shellcheck reports: github.yml was repaired in 8d852d79f0, and any further finding is a finding of its own"
+  - "Pinning actionlint, which the structure job already pins"
+  - "Vendoring a shellcheck binary into the repository"
+depends_on: []
+acceptance_criteria:
+  - "scripts/ci/shell-lint prints the shellcheck version it found and the version or range it declares, before the first finding"
+  - "With a shellcheck outside the declared range on the path, a local run warns by name of both versions and a run in CI mode exits non-zero without linting"
+  - "The structure job installs the declared shellcheck version rather than the runner image's package, and reads the number from the place shell-lint declares it"
+  - "The SC2015 shape that 0.10.0 reports and 0.11.0 does not is judged identically by a local run inside the range and by the structure job"
+  - "A case fails when the declaration is removed from shell-lint or when the workflow installs an unpinned shellcheck"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/shell-lint"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 26_ci_wiring"
+evidence_required:
+  - "shell_lint_version_case"
+  - "structure_job_run_with_pinned_shellcheck"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,40 @@
+id: I2640
+milestone: architecture-is-enforced
+title: "The pages gate holds its verdict while a deploy of the judged commit is in flight"
+slug: the-pages-gate-waits-for-a-deploy-in-flight
+priority: p1
+profile: implementation
+parallel_safe: true
+risk: "A gate that waits can wait for ever, and a gate that reports pending can be read as green. The wait is bounded by a declared number, and pending is a state of its own that the ci verdict does not count as a pass."
+objective: "Stop the pages gate from refusing a commit for a publication debt that the commit's own deploy is paying at that moment, without weakening its refusal of a failed or absent deploy."
+why: "Measured on 2026-10-13. The pages job of .github/workflows/validate.yml needs only plan, so it runs in the first two minutes of a run, and scripts/ci/pages-check refuses by the age of the oldest commit the site owes (OWED_AFTER, 1800 s). Production served 73d3c8cc31 while master had moved on since 06:41Z, because the pages deploys had failed on three external links. On the fixing commit e506c041a4 the pages job of validate 38379385624 failed at once, although the pages workflow run 38379385622 on that same commit was running and published it at 10:15Z. The ci status was red for a state the commit itself was repairing, and the release verdict needed a rerun of the failed jobs."
+current_state: "scripts/ci/pages-check compares what is served with master and refuses when the oldest owed commit is older than OWED_AFTER. It does not ask whether a pages workflow run for the judged commit or a descendant of it is queued or in progress. After any period of failed deploys, the first commit that repairs them is refused by the gate that measures the damage, and its verdict is corrected only by a person rerunning the job after the deploy finished."
+desired_state: "When the debt is older than the window, pages-check asks the pages workflow's runs for the judged commit and its descendants on master. A queued or in-progress run makes the gate wait for it within a bound declared in .ai/repo/ci/pages.yaml and smaller than the job's timeout, then judge what is served; if the bound passes first, the gate reports pending with the run it waited for, and the ci verdict treats pending as not green and not a failure of the commit. A deploy that concluded in failure, or no deploy at all, refuses as today. test/cases/180_publication_is_observed.sh covers the three states with a fixture remote."
+scope:
+  - "scripts/ci/pages-check"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/pages.yaml"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases/180_publication_is_observed.sh"
+  - "docs/CI.md"
+  - ".ai/repo/project/issues/I2640.yaml"
+non_scope:
+  - "Making the pages deploy itself more reliable, or changing what the link check refuses"
+  - "Moving the pages job behind other jobs so that it merely runs later: a later start is a guess at the deploy's duration, not an observation of it"
+  - "Changing OWED_AFTER"
+depends_on: []
+acceptance_criteria:
+  - "With an owed publication older than the window and a pages run for the judged commit in progress, pages-check waits and passes once the run has published the commit"
+  - "With the same debt and a pages run that concluded in failure, or with no run for the commit or a descendant, pages-check refuses and names the run or its absence"
+  - "The wait is bounded by a value declared in .ai/repo/ci/pages.yaml, the bound is smaller than the pages job's timeout, and reaching it reports pending with the run's id rather than a failure"
+  - "The ci verdict does not report green while the pages gate is pending"
+  - "Case 180 exercises in-flight, failed and absent deploys against a fixture and fails if any of the three verdicts changes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 180_publication_is_observed"
+  - "scripts/ci/shell-lint"
+evidence_required:
+  - "pages_gate_in_flight_case_180"
+  - "validate_run_green_on_a_deploy_repairing_commit"
+created_at: 2026-10-13
+updated_at: 2026-10-13

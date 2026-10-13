@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "1434297a1bb253235ebbbb6013af2a663d6724a3f03cda05e015ccfd428893a2",
+    "fingerprint": "8e476f70e7acde0998aa9491ad5f650d5b89e038ca64d53b6c321addd0da8f35",
     "summary": {
-      "total": 2319,
+      "total": 2324,
       "builtin": 196,
-      "declarative": 2123,
+      "declarative": 2128,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2123
+        "resource": 2128
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2132
+        "implemented": 2137
       },
       "mcp_tools": 187,
-      "mcp_resources": 2178,
+      "mcp_resources": 2183,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 341,
+        "capabilities": 346,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b96d293222b093622798a8e7234e6a8ec5b7b67b2b59157731a4f2fda88a4161",
+    "fingerprint": "22ae64ba1954650814d48396abd27d8c8902d10d24f262e75590e8e4fb3c2301",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81358,7 +81358,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 341,
+      "issue": 346,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -87296,7 +87296,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 231593
+        "bytes": 247182
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94462,6 +94462,61 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4702
+      },
+      {
+        "uri": "majordomus://issue/I2639",
+        "kind": "issue",
+        "identity": "I2639",
+        "title": "shell-lint names the shellcheck version it needs: a local pass and the runner's verdict come from the same linter",
+        "description": "Make scripts/ci/shell-lint say which shellcheck it was written against and what it found installed, so that a local run and the structure job judge a file with the same linter, or the local run says in its own output that they do not.",
+        "path": ".ai/repo/project/issues/I2639.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4185
+      },
+      {
+        "uri": "majordomus://issue/I2640",
+        "kind": "issue",
+        "identity": "I2640",
+        "title": "The pages gate holds its verdict while a deploy of the judged commit is in flight",
+        "description": "Stop the pages gate from refusing a commit for a publication debt that the commit's own deploy is paying at that moment, without weakening its refusal of a failed or absent deploy.",
+        "path": ".ai/repo/project/issues/I2640.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4050
+      },
+      {
+        "uri": "majordomus://issue/I2641",
+        "kind": "issue",
+        "identity": "I2641",
+        "title": "The UI audit retries one unreachable visit and names the cause in its log",
+        "description": "Keep one navigation timeout from failing a whole browser audit, and make the audit's own log say why a visit was unreachable, so that the verdict can be read without downloading an artifact.",
+        "path": ".ai/repo/project/issues/I2641.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3855
+      },
+      {
+        "uri": "majordomus://issue/I2642",
+        "kind": "issue",
+        "identity": "I2642",
+        "title": "The ui job's bound has room: the audit's budget is measured, its margin is reported, and a shrinking margin warns before it is a timeout",
+        "description": "Keep the browser audit of the UI from exceeding its bound by the growth of the corpus alone: the bound follows a measured budget with declared headroom, or the audit's duration stops growing linearly with the number of pages, and the margin is a number every run prints.",
+        "path": ".ai/repo/project/issues/I2642.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4143
+      },
+      {
+        "uri": "majordomus://issue/I2643",
+        "kind": "issue",
+        "identity": "I2643",
+        "title": "An issue number is allocated by one command that reads the refs, the worktrees and the board, and claims it in the same step",
+        "description": "Give issue and milestone identifiers what case numbers already have, and one thing more: a single command that surveys every place a number can be taken and records the allocation as a claim before it answers, so that two sessions asking in the same minute cannot be given the same id.",
+        "path": ".ai/repo/project/issues/I2643.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4834
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -104291,7 +104346,7 @@
       "identity": [
         "id"
       ],
-      "objects": 341
+      "objects": 346
     },
     {
       "name": "knowledge",

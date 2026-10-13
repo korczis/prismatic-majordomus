@@ -1,0 +1,41 @@
+id: I2643
+milestone: development-runtime
+title: "An issue number is allocated by one command that reads the refs, the worktrees and the board, and claims it in the same step"
+slug: an-issue-number-is-allocated-by-one-command
+priority: p1
+profile: implementation
+parallel_safe: true
+risk: "An allocator that cannot reach a checkout's board or the mesh could hand out a number somebody holds. An incomplete survey is said in the answer, with the source that could not be read, and the caller decides; it is never reported as a complete one."
+objective: "Give issue and milestone identifiers what case numbers already have, and one thing more: a single command that surveys every place a number can be taken and records the allocation as a claim before it answers, so that two sessions asking in the same minute cannot be given the same id."
+why: "Measured on 2026-10-13 between about 11:05Z and 11:23Z, five sessions took overlapping issue numbers. A second-adopter planning session announced I2585 to I2608; session prismatic-majordomus-db announced I2585 and later I2635 to I2637; an unannounced I2585.yaml existed in the worktree feat/interactive-linkable-diagrams-and-charts; session 17db9780 took I2638; the release seat announced I2586 to I2589, then I2635 to I2638, and had to release both. Each took its number after a hand survey of refs and worktrees that was correct when it was made. Rule project.work-is-claimed-before-it-is-built says to announce the identifier, and an announcement made after a survey is two steps with a gap between them."
+current_state: "Cases have an allocator: scripts/case-numbers next surveys its sources and names the next free number, and case 560 holds that a number names one case. Issues and milestones have none. A session reads origin's refs and the local worktrees by hand, picks the next number, and then announces it on the board; nothing reads the gathered peer board or the mesh claims while choosing, and nothing makes choosing and claiming one act. The plan capabilities in apps/majordomus-cli/src/capability/builtin/plan.rs read and transition records and allocate nothing."
+desired_state: "One typed capability of kind command, declared with capability! beside the plan capabilities and projected to the CLI, MCP and HTTP by majordomus generate (ADR 0069, not shell), returns the next free issue id, or a run of n. It reads the issue records on every origin ref, the records in every local worktree including untracked ones, the gathered peer board and the mesh claims, and records the allocation as a claim in the same step, exclusive where the mesh is enabled. The answer names every source surveyed and says when one could not be read. docs/PLANNING.md documents it as the only way a number is taken, the rule names the command, and a case proves that two concurrent callers receive different ids. The new case takes its number from scripts/case-numbers next when the work starts, and its path joins this scope then."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/PLANNING.md"
+  - ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
+  - ".ai/repo/project/issues/I2643.yaml"
+non_scope:
+  - "Renumbering any existing issue, or resolving the overlaps of 2026-10-13, which the sessions settled by releasing numbers"
+  - "Allocating ADR or case numbers: scripts/case-numbers and the ADR allocation of case 271 stay as they are until this one is proven"
+  - "Turning an advisory board announcement into a lock for paths; this is about identifiers only"
+depends_on: []
+acceptance_criteria:
+  - "One command returns the next free issue id and the allocation is visible as a claim to every other session before the command returns"
+  - "Two callers started concurrently against one repository receive different ids, in a case that fails if the claim is recorded after the answer"
+  - "An id present only as an untracked record in another worktree, only on an origin branch, or only as a board or mesh claim is not returned"
+  - "When a checkout's board or the mesh cannot be read, the answer says which and is marked incomplete"
+  - "The capability is declared once with capability! and its CLI, MCP and HTTP projections are generated; no shell unit allocates an issue id"
+  - "docs/PLANNING.md and rule project.work-is-claimed-before-it-is-built name the command as the way an issue or milestone id is taken"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus shell check"
+evidence_required:
+  - "issue_allocation_concurrency_case"
+  - "issue_allocation_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13
