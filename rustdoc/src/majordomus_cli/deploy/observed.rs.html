@@ -8,8 +8,8 @@
 <a href=#8 id=8 data-nosnippet>8</a>//! an environment exists because the forge has a deployment in it, so a new target appears
 <a href=#9 id=9 data-nosnippet>9</a>//! the first time something is deployed there and no file names it.
 <a href=#10 id=10 data-nosnippet>10</a>//!
-<a href=#11 id=11 data-nosnippet>11</a>//! The reading is one GraphQL question through `gh`, asked by `majordomus prs refresh` (the
-<a href=#12 id=12 data-nosnippet>12</a>//! one command that observes the forge) and recorded beside the pull-request observation.
+<a href=#11 id=11 data-nosnippet>11</a>//! The reading is one GraphQL question through `gh`, asked by `majordomus served forge` and
+<a href=#12 id=12 data-nosnippet>12</a>//! recorded beside the pull-request observation, which `majordomus prs refresh` takes.
 <a href=#13 id=13 data-nosnippet>13</a>//! Every reader — `deploy.observed`, the Deployments screen, the published snapshot — reads
 <a href=#14 id=14 data-nosnippet>14</a>//! the record and never the network, and a checkout that has never observed says so rather
 <a href=#15 id=15 data-nosnippet>15</a>//! than showing an empty table.
@@ -273,7 +273,7 @@
 <a href=#273 id=273 data-nosnippet>273</a></span><span class="kw">pub const </span>GH: <span class="kw-2">&amp;</span>str = <span class="string">"gh"</span>;
 <a href=#274 id=274 data-nosnippet>274</a>
 <a href=#275 id=275 data-nosnippet>275</a><span class="doccomment">/// Observe the forge through `program` and record what it said. The network step, taken by
-<a href=#276 id=276 data-nosnippet>276</a>/// `prs refresh` with [`GH`].
+<a href=#276 id=276 data-nosnippet>276</a>/// `served forge` with [`GH`].
 <a href=#277 id=277 data-nosnippet>277</a></span><span class="kw">pub fn </span>refresh_with(program: <span class="kw-2">&amp;</span>str, root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;DeploymentObservation, String&gt; {
 <a href=#278 id=278 data-nosnippet>278</a>    observe_with(program, root).and_then(|observation| {
 <a href=#279 id=279 data-nosnippet>279</a>        store(root, <span class="kw-2">&amp;</span>observation)<span class="question-mark">?</span>;
@@ -308,7 +308,7 @@
 <a href=#308 id=308 data-nosnippet>308</a>            .map(<span class="prelude-val">Some</span>)
 <a href=#309 id=309 data-nosnippet>309</a>            .map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display())),
 <a href=#310 id=310 data-nosnippet>310</a>        other =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-<a href=#311 id=311 data-nosnippet>311</a>            <span class="string">"{}: schema {}, this reads {SCHEMA}; majordomus prs refresh records one this reads"</span>,
+<a href=#311 id=311 data-nosnippet>311</a>            <span class="string">"{}: schema {}, this reads {SCHEMA}; majordomus served forge records one this reads"</span>,
 <a href=#312 id=312 data-nosnippet>312</a>            path.display(),
 <a href=#313 id=313 data-nosnippet>313</a>            other.map_or(<span class="string">"none"</span>.to_string(), |s| s.to_string())
 <a href=#314 id=314 data-nosnippet>314</a>        )),
@@ -363,7 +363,7 @@
 <a href=#363 id=363 data-nosnippet>363</a>            releases: o.releases,
 <a href=#364 id=364 data-nosnippet>364</a>        },
 <a href=#365 id=365 data-nosnippet>365</a>        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; unobserved(
-<a href=#366 id=366 data-nosnippet>366</a>            <span class="string">"the forge has not been observed from this checkout; majordomus prs refresh asks it"
+<a href=#366 id=366 data-nosnippet>366</a>            <span class="string">"the forge has not been observed from this checkout; majordomus served forge asks it"
 <a href=#367 id=367 data-nosnippet>367</a>                </span>.into(),
 <a href=#368 id=368 data-nosnippet>368</a>        ),
 <a href=#369 id=369 data-nosnippet>369</a>        <span class="prelude-val">Err</span>(reason) =&gt; unobserved(reason),
@@ -452,7 +452,7 @@
 <a href=#452 id=452 data-nosnippet>452</a>        <span class="macro">assert_eq!</span>(load(dir.path()).unwrap(), <span class="prelude-val">None</span>);
 <a href=#453 id=453 data-nosnippet>453</a>        <span class="kw">let </span>unobserved = report(dir.path());
 <a href=#454 id=454 data-nosnippet>454</a>        <span class="macro">assert!</span>(!unobserved.observed);
-<a href=#455 id=455 data-nosnippet>455</a>        <span class="macro">assert!</span>(unobserved.reason.unwrap().contains(<span class="string">"prs refresh"</span>));
+<a href=#455 id=455 data-nosnippet>455</a>        <span class="macro">assert!</span>(unobserved.reason.unwrap().contains(<span class="string">"served forge"</span>));
 <a href=#456 id=456 data-nosnippet>456</a>
 <a href=#457 id=457 data-nosnippet>457</a>        <span class="kw">let </span>o = parse(<span class="string">"o/r"</span>, <span class="string">"2026-10-12T14:00:00Z"</span>, <span class="kw-2">&amp;</span>answer());
 <a href=#458 id=458 data-nosnippet>458</a>        store(dir.path(), <span class="kw-2">&amp;</span>o).unwrap();

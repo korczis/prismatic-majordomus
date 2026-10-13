@@ -9,7 +9,7 @@
 <a href=#9 id=9 data-nosnippet>9</a>//! a network call on a read that a client may poll is not an ordinary read; it belongs to
 <a href=#10 id=10 data-nosnippet>10</a>//! an explicit operation with its own cost, not behind `deploy.list`.
 <a href=#11 id=11 data-nosnippet>11</a>//!
-<a href=#12 id=12 data-nosnippet>12</a>//! `deploy.observed` keeps to that: it answers from the record `majordomus prs refresh` wrote
+<a href=#12 id=12 data-nosnippet>12</a>//! `deploy.observed` keeps to that: it answers from the record `majordomus served forge` wrote
 <a href=#13 id=13 data-nosnippet>13</a>//! when it last asked the forge ([`crate::deploy::observed`]) — every deployment to every
 <a href=#14 id=14 data-nosnippet>14</a>//! environment and every release — and says so when this checkout has never asked.
 <a href=#15 id=15 data-nosnippet>15</a>
@@ -222,7 +222,7 @@
 <a href=#222 id=222 data-nosnippet>222</a>            <span class="macro">capability!</span> {
 <a href=#223 id=223 data-nosnippet>223</a>                id: <span class="string">"deploy.observed"</span>,
 <a href=#224 id=224 data-nosnippet>224</a>                title: <span class="string">"What was deployed, and where"</span>,
-<a href=#225 id=225 data-nosnippet>225</a>                description: <span class="string">"Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."</span>,
+<a href=#225 id=225 data-nosnippet>225</a>                description: <span class="string">"Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run."</span>,
 <a href=#226 id=226 data-nosnippet>226</a>                input: Empty,
 <a href=#227 id=227 data-nosnippet>227</a>                output: <span class="kw">crate</span>::deploy::observed::ObservedDeployments,
 <a href=#228 id=228 data-nosnippet>228</a>                stability: Stability::BehaviorallyVerified,
@@ -293,7 +293,7 @@
 <a href=#293 id=293 data-nosnippet>293</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
 <a href=#294 id=294 data-nosnippet>294</a>        <span class="kw">let </span>answer = deploy_observed(<span class="kw-2">&amp;</span>ctx, Empty {}).unwrap();
 <a href=#295 id=295 data-nosnippet>295</a>        <span class="macro">assert!</span>(!answer.observed);
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="macro">assert!</span>(answer.reason.unwrap().contains(<span class="string">"prs refresh"</span>));
+<a href=#296 id=296 data-nosnippet>296</a>        <span class="macro">assert!</span>(answer.reason.unwrap().contains(<span class="string">"served forge"</span>));
 <a href=#297 id=297 data-nosnippet>297</a>
 <a href=#298 id=298 data-nosnippet>298</a>        <span class="kw">let </span>observation = <span class="kw">crate</span>::deploy::observed::parse(
 <a href=#299 id=299 data-nosnippet>299</a>            <span class="string">"o/r"</span>,
