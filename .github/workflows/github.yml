@@ -92,10 +92,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+          if ! { [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; }; then
             echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); the projection is not read through the shell fallback"
             exit 12
-          }
+          fi
           rc=0
           scripts/github-sync --check > "$RUNNER_TEMP/github-check.txt" 2>&1 || rc=$?
           awk '/^DRIFT / && n++ < 60' "$RUNNER_TEMP/github-check.txt"
@@ -121,10 +121,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+          if ! { [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; }; then
             echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); nothing is applied from the shell fallback"
             exit 12
-          }
+          fi
           tip="$(git ls-remote --exit-code origin "refs/heads/$TRUNK" | cut -f1)"
           head="$(git rev-parse HEAD)"
           if [ "$tip" != "$head" ]; then
@@ -145,8 +145,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ] || {
+          if ! { [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; }; then
             echo "::error::no executable at MAJORDOMUS_BIN ('${MAJORDOMUS_BIN:-}'); the gate does not judge the shell fallback's reading"
             exit 12
-          }
+          fi
           scripts/ci/github-check
