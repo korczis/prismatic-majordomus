@@ -232,6 +232,21 @@ the local review path runs. A CI runner is `ci` mode: no advisor at all, and no 
 may name a model credential — `reasoning check` refuses a workflow or gate that does. Every
 reasoning test runs against fakes: scripted fixture adapters, a fake fetch, a fake process.
 
+## Whose rules the check holds
+
+`reasoning check` has six families, and they are not all about the same repository.
+`catalogue` and `records` judge what a repository holds of the reasoning layer and hold
+wherever the tool runs. `adapters`, `coupling`, `ci` and `claims` are rules about the
+design's own home — what its code may name, what its CI may depend on, what its documents
+may claim — and bind the repository that authors the advisor catalogue
+(`share/advisors.yaml` in its own tree). A repository that only uses the tool reads the
+catalogue from the distribution; its workflows and its documents are its product, and are
+not judged: an archived workflow naming a model credential or an architecture decision
+saying the product requires a local model is no finding there. The answer's `checks` names
+the families that ran, and `majordomus doctor` prints them, so "no finding" never covers a
+family that was not asked. Every hint doctor prints for these lines is `majordomus
+reasoning check`, which runs wherever the tool is installed.
+
 ## Surfaces
 
 <div class="overflow-x-auto" tabindex="0">
