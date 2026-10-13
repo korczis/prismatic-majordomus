@@ -23,4 +23,18 @@ validation:
 evidence_required:
   - "historical_file_reference_case"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-13T09:36:05Z
+started_at: 2026-10-13T09:35:33Z
+started_event: sha256:0d3d52c5bbfe1abf534eda724acfee4da8142c116a2c6a35a71d5e49aeaf5105
+verified_at: 2026-10-13T09:35:46Z
+verified_event: sha256:de8aa9c8992b45512921574c573e91c2c2d9b1e3bfa95bf37df08d27acb3095c
+completed_at: 2026-10-13T09:36:05Z
+completed_event: sha256:cd87a40fe2bcc4088f36052c6e7d14359f3e156c73e757b6b06fc449ddb3b082
+evidence:
+  - covers: historical_file_reference_case
+    type: test
+    command: "bash test/run.sh 2992_a_file_reference_survives_the_files_deletion"
+    result: "ok: a record citing two since-deleted files passes knowledge check and each is reported historical with the commit; file:<path>@<commit> resolves; a path that never existed, a pin to a commit that never held it, a path climbing out and a file only on another branch still fail; the Rust executable resolves the same references as external and missing"
+    artifact: "test/cases/2992_a_file_reference_survives_the_files_deletion.sh"
+    commit: ba3fd916b311a438b9eb1f8179cccf6e3cef671e
+    recorded_at: 2026-10-13T09:35:58Z

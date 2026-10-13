@@ -880,6 +880,49 @@ fn candidates(ctx: &Context, _: Empty) -> Result<KnowledgeCandidates, Capability
 
 // --------------------------------------------------------------------- resolution
 
+/// The commit that vouches for a path the tree no longer holds, or `None` when no history
+/// this checkout has ever held it.
+///
+/// `<path>@<commit>` is the file at that commit and resolves when that commit holds that
+/// path. A bare path resolves when some commit HEAD reaches touched it, and the answer is the
+/// last one that did. The same two questions `majordomus knowledge check` asks, so the two
+/// programs call the same references historical and the same ones dangling.
+fn file_in_history(root: &Path, value: &str) -> Option<String> {
+    if !crate::policy::is_safe_relative(value) {
+        return None;
+    }
+    if let Some((path, commit)) = value.rsplit_once('@') {
+        let hex = (7..=40).contains(&commit.len())
+            && commit
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b));
+        if hex
+            && !path.is_empty()
+            && crate::git::read_only(root)
+                .args(["cat-file", "-e", &format!("{commit}:{path}")])
+                .output()
+                .is_ok_and(|o| o.status.success())
+        {
+            return Some(commit.to_string());
+        }
+    }
+    let out = crate::git::read_only(root)
+        .args([
+            "--literal-pathspecs",
+            "rev-list",
+            "-1",
+            "--abbrev-commit",
+            "--abbrev=10",
+            "HEAD",
+            "--",
+            value,
+        ])
+        .output()
+        .ok()?;
+    let commit = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (out.status.success() && !commit.is_empty()).then_some(commit)
+}
+
 /// Resolve one typed reference against the index, the ledger, the task store and git.
 ///
 /// The prefixes are the schema's; a prefix the schema does not admit resolves to nothing,
@@ -991,7 +1034,17 @@ fn resolve(
             if crate::policy::is_safe_relative(value) && root.join(value).exists() {
                 return (External, Some(value.to_string()), String::new());
             }
-            (Missing, None, format!("no such path in the tree: {value}"))
+            // a record's evidence is what was true when it was written: a file since deleted
+            // is answered by the history, as `<path>@<commit>` or as the last commit of
+            // HEAD's history that touched the path
+            if let Some(commit) = file_in_history(root, value) {
+                return (External, Some(format!("git:{commit}")), String::new());
+            }
+            (
+                Missing,
+                None,
+                format!("no such path in the tree or in its history: {value}"),
+            )
         }
         "knowledge" | "rule" | "adr" | "issue" => match by_kind(prefix) {
             Some(uri) => (Object, Some(uri), String::new()),
