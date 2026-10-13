@@ -153,13 +153,13 @@
 
   <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-3 lg:grid-cols-6">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">97</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">166</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">167</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">72</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/9e50ce2af3670c17c5707af5d3e3e4593663f0aa/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="https://majordomus.dev/docs/planning/" class="text-fg-brand underline">How that works</a>.</p><div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/73d3c8cc31aeccd185416bd6b2973d134e565c13/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="https://majordomus.dev/docs/planning/" class="text-fg-brand underline">How that works</a>.</p><div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
     <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
     <p class="mt-2 text-lg font-semibold text-heading"><a href="https://majordomus.dev/plan/i0806/" class="text-fg-brand underline">I0806</a> — Make the session rules doctrines, with retention and archiving</p>
     <p class="mt-2 text-sm text-body">Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.</p>
@@ -334,7 +334,7 @@
         <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">development-runtime</span><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
 </span>
         <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">The runtime has a development surface</h3>
-        <p class="text-sm leading-relaxed text-body">A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.</p><p class="mt-4 font-mono text-xs text-body-subtle">15 of 42 done · 20 ready · 7 blocked</p>
+        <p class="text-sm leading-relaxed text-body">A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.</p><p class="mt-4 font-mono text-xs text-body-subtle">15 of 43 done · 20 ready · 8 blocked</p>
       </a>
     </li>
     <li>
@@ -660,7 +660,7 @@
 <span class="min-w-0 break-words text-sm text-heading">The UI is published as a snapshot: read once at the published commit and carried by the site at /ui</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2487/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2487</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">A screen is streamed, and one stream tells an open page which readings changed</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2488/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2488</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2489/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2489</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">A screen over its budget fails the build: the UI&#39;s latency budgets are policy, measured by the bench</span></a></li>
+<span class="min-w-0 break-words text-sm text-heading">A screen over its budget fails the build: the UI&#39;s latency budgets are benchmark policy, and bench --check holds them</span></a></li>
       </ul>
     </div>
     <div>
@@ -707,7 +707,8 @@
 <span class="min-w-0 break-words text-sm text-heading">The stream is documented where a reader looks</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2471/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2471</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">The roadmap opens a milestone: what it holds, what can start, its critical path, and what it waits for</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2473/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2473</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">A pull request shows its trail: what the executor did to it, and the drain what the lane did lately</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2481/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2481</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
-<span class="min-w-0 break-words text-sm text-heading">The UI links every entity it names, and says none where a source has no value</span></a></li>
+<span class="min-w-0 break-words text-sm text-heading">The UI links every entity it names, and says none where a source has no value</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2485/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2485</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">The bench measures the first request after the repository moved, and a budget bounds it</span></a></li>
       </ul>
     </div>
     <div>
@@ -1181,10 +1182,11 @@
     I2482[&quot;I2482&lt;br/&gt;Every screen of the UI has a case, and no link on the UI is dead&quot;]:::blocked
     I2483[&quot;I2483&lt;br/&gt;The UI is published as a snapshot: read once at the published commit and carried by the site at /ui&quot;]:::ready
     I2484[&quot;I2484&lt;br/&gt;majordomus ui ensures the shared server and opens the UI&#39;s dashboard&quot;]:::ready
+    I2485[&quot;I2485&lt;br/&gt;The bench measures the first request after the repository moved, and a budget bounds it&quot;]:::blocked
     I2486[&quot;I2486&lt;br/&gt;No screen waits for a source: a page shows the latest reading with its age, read again behind the reader&quot;]:::ready
     I2487[&quot;I2487&lt;br/&gt;A screen is streamed, and one stream tells an open page which readings changed&quot;]:::blocked
     I2488[&quot;I2488&lt;br/&gt;The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum&quot;]:::blocked
-    I2489[&quot;I2489&lt;br/&gt;A screen over its budget fails the build: the UI&#39;s latency budgets are policy, measured by the bench&quot;]:::blocked
+    I2489[&quot;I2489&lt;br/&gt;A screen over its budget fails the build: the UI&#39;s latency budgets are benchmark policy, and bench --check holds them&quot;]:::blocked
     I2491[&quot;I2491&lt;br/&gt;A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person&#39;s own, verify it, and --shared hands it to the team&quot;]:::ready
     I0001 --&gt; I0002
     I0002 --&gt; I0003
@@ -1542,6 +1544,7 @@
     I2486 --&gt; I2487
     I2486 --&gt; I2488
     I2486 --&gt; I2489
+    I2489 --&gt; I2485
     classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
@@ -1626,9 +1629,9 @@ majordomus plan done &lt;id&gt;</code></pre></div>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9e50ce2af3670c17c5707af5d3e3e4593663f0aa/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9e50ce2af3670c17c5707af5d3e3e4593663f0aa/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9e50ce2af3670c17c5707af5d3e3e4593663f0aa/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1636,7 +1639,7 @@ majordomus plan done &lt;id&gt;</code></pre></div>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9e50ce2af3670c17c5707af5d3e3e4593663f0aa" class="font-mono underline">9e50ce2</a> · inputs <span class="font-mono">83e5007f9472</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/73d3c8cc31aeccd185416bd6b2973d134e565c13" class="font-mono underline">73d3c8c</a> · inputs <span class="font-mono">8f0c25ba4fda</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "9e50ce2af3670c17c5707af5d3e3e4593663f0aa",
+  "commit": "73d3c8cc31aeccd185416bd6b2973d134e565c13",
   "source_version": "0.22.0",
-  "registry_fingerprint": "c89e6b56b5dba23a6262bb18dbbd2021bd601c2675918b0ad80d56468647cb34"
+  "registry_fingerprint": "04b3bfc54772ab2c201025cb1f62f0eebdad95d3c3bf49a8dd1b7c80bea49797"
  },
  "counts": {
-  "pages": 2149,
-  "capabilities": 2301,
+  "pages": 2150,
+  "capabilities": 2303,
   "cli_commands": 107,
   "http_routes": 191,
   "mcp_tools": 187,
-  "mcp_resources": 2160,
+  "mcp_resources": 2162,
   "modules": 90
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 337
+   "count": 338
   },
   {
    "kind": "knowledge",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 459
+   "count": 460
   },
   {
    "kind": "use-case",
@@ -7842,6 +7842,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2485/",
+   "title": "I2485 — The bench measures the first request after the repository moved, and a budget bounds it",
+   "description": "Measure what a reader pays on the first request after the repository changed, as a benchmark target of its own, so that the budget of I2489 covers the case ADR 0142 was written for and not only the warm one.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2486/",
    "title": "I2486 — No screen waits for a source: a page shows the latest reading with its age, read again behind the reader",
    "description": "Take every handler, git call and file read off the path of a UI request: the executor keeps the latest reading of each source a page asked for, a screen is rendered from those readings at once, and a worker reads a source again behind the reader whenever the reading is not of the repository as it is now.",
@@ -7861,8 +7867,8 @@
   },
   {
    "route": "/plan/i2489/",
-   "title": "I2489 — A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
-   "description": "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails.",
+   "title": "I2489 — A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them",
+   "description": "Make the owner's UI latency budget something CI enforces: the benchmark policy declares absolute bounds, bench --check holds them with or without a baseline and on every host, and the ui job runs that check on every change that can slow a screen.",
    "section": "The plan"
   },
   {
@@ -11183,7 +11189,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.22.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 9e50ce2af3670c17c5707af5d3e3e4593663f0aa: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.22.0, built from commit 73d3c8cc31aeccd185416bd6b2973d134e565c13: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.22.0 — Rust API reference"
   },
   {
