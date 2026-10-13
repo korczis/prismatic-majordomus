@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 102,
+      "count": 103,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 102
+      "count": 103
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 404
+      "count": 405
     },
     {
       "kind": "knowledge",
@@ -237,7 +237,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 22
+      "count": 23
     },
     {
       "kind": "rule",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 464
+      "count": 466
     },
     {
       "kind": "use-case",
@@ -803,6 +803,13 @@
           "label": "adr-0142",
           "kind": "adr",
           "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
           "external": false
         }
       ]
@@ -7211,6 +7218,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0142/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
+          "external": false
         }
       ]
     },
@@ -7485,7 +7499,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7795,6 +7817,96 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0147",
+      "identity": "adr-0147",
+      "slug": "adr-0147",
+      "cockpit": "/cockpit/objects/adr/adr-0147",
+      "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "cockpit",
+        "ui",
+        "pages"
+      ],
+      "source": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/pages.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/web/report/snapshot.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
           "kind": "test",
           "route": null,
           "external": false
