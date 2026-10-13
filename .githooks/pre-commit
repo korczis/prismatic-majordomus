@@ -10,3 +10,6 @@ bin/majordomus-cli worktree guard --quiet || exit $?
 # lands next. `pages current` compares the recorded input hash with this tree's in a fifth of
 # a second, which is why it can run here rather than only in CI.
 scripts/pages current || exit $?
+
+# Keep the owner-authorized SSH permissions in every native client configuration.
+scripts/ci/providers-check --permissions-only || exit $?

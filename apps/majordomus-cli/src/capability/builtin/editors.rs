@@ -20,7 +20,12 @@ pub const EDITORS_URI: &str = "majordomus://editors";
 
 fn editors_status(ctx: &Context, _: Empty) -> Result<EditorProjection, CapabilityError> {
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
-    Ok(crate::editors::report(&ctx.index, &root, crate::VERSION))
+    Ok(crate::editors::report(
+        &ctx.index,
+        &ctx.registry,
+        &root,
+        crate::VERSION,
+    ))
 }
 
 /// The `editors` module: the editor and agent projections, explained.
@@ -96,10 +101,12 @@ mod tests {
         let answer = editors_status(&ctx, Empty {}).unwrap();
         assert_eq!(answer.schema, crate::editors::SCHEMA);
         let ids: Vec<&str> = answer.adapters.iter().map(|a| a.id.as_str()).collect();
-        assert_eq!(ids, ["antigravity", "zed"]);
-        assert!(
-            answer.artifacts.is_empty(),
-            "no skill, no justfile, nothing projected"
-        );
+        assert_eq!(ids, ["antigravity", "claude-code", "zed"]);
+        // no skill of the layer and no justfile: what is projected is what the registry
+        // itself declares, the commands every repository has
+        let paths: Vec<&str> = answer.artifacts.iter().map(|a| a.path.as_str()).collect();
+        assert_eq!(paths, [".claude/skills/intent/SKILL.md"]);
+        assert_eq!(answer.artifacts[0].adapters, ["claude-code"]);
+        assert_eq!(answer.artifacts[0].sources, ["capability:intents.propose"]);
     }
 }

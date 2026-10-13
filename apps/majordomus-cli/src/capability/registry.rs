@@ -219,6 +219,7 @@ pub struct CapabilityRegistry {
     by_mcp_uri: BTreeMap<String, CapabilityId>,
     by_http: BTreeMap<(HttpMethod, String), CapabilityId>,
     by_cli: BTreeMap<Vec<String>, CapabilityId>,
+    by_skill: BTreeMap<String, CapabilityId>,
 }
 
 /// The one composition point.
@@ -624,6 +625,44 @@ impl Builder {
                     registry.by_cli.insert(cli.path.clone(), c.id.clone());
                 }
             }
+            if let Some(skill) = &c.skill {
+                // A skill is a second way to call the capability, so everything it says is
+                // held to the declaration it adapts: the name must be one an agent product
+                // accepts and no other capability took, and the typed text must have exactly
+                // one place to go — a string field, with nothing else required.
+                let refuse = |reason: String| RegistryError::InvalidExposure {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    projection: "skill".into(),
+                    reason,
+                };
+                let (properties, required) = c.input.properties();
+                let argument = properties.iter().find(|(name, _)| *name == skill.argument);
+                if !c.stability.executable() {
+                    errors.push(not_executable(c, "skill"));
+                }
+                if let Err(reason) = skill.validate() {
+                    errors.push(refuse(reason));
+                } else if let Some(first) = registry.by_skill.get(&skill.alias) {
+                    errors.push(refuse(format!(
+                        "alias '{}' is already the skill of {first}",
+                        skill.alias
+                    )));
+                } else if !argument.is_some_and(|(_, schema)| {
+                    schema.get("type").and_then(|t| t.as_str()) == Some("string")
+                }) {
+                    errors.push(refuse(format!(
+                        "argument '{}' is not a string field of the input",
+                        skill.argument
+                    )));
+                } else if let Some(other) = required.iter().find(|r| **r != skill.argument) {
+                    errors.push(refuse(format!(
+                        "the input also requires '{other}', which the typed text cannot supply"
+                    )));
+                } else {
+                    registry.by_skill.insert(skill.alias.clone(), c.id.clone());
+                }
+            }
             if c.kind == CapabilityKind::Resource
                 && (c.exposure.http.is_some()
                     || c.exposure.cli.is_some()
@@ -800,6 +839,40 @@ impl CapabilityRegistry {
     /// The capability a CLI path projects.
     pub fn by_cli(&self, path: &[String]) -> Option<&Capability> {
         self.by_cli.get(path).and_then(|id| self.get(id.as_str()))
+    }
+
+    /// The capability a skill alias names, when one declares it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityRegistry};
+    /// let r = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+    /// // `/intent <sentence>` is intents.propose, because its declaration says so
+    /// assert_eq!(r.by_skill("intent").map(|c| c.id.as_str()), Some("intents.propose"));
+    /// assert!(r.by_skill("no-such-alias").is_none());
+    /// ```
+    pub fn by_skill(&self, alias: &str) -> Option<&Capability> {
+        self.by_skill
+            .get(alias)
+            .and_then(|id| self.get(id.as_str()))
+    }
+
+    /// Every capability that declares a skill, by alias.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityRegistry};
+    /// let r = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+    /// let aliases: Vec<&str> =
+    ///     r.skills().filter_map(|c| c.skill.as_ref()).map(|s| s.alias.as_str()).collect();
+    /// // few by design: a skill is for what a person types by name, not for every tool
+    /// assert!(aliases.contains(&"intent"));
+    /// let mut ordered = aliases.clone();
+    /// ordered.sort_unstable();
+    /// assert_eq!(aliases, ordered, "by alias");
+    /// ```
+    pub fn skills(&self) -> impl Iterator<Item = &Capability> {
+        self.by_skill
+            .values()
+            .filter_map(|id| self.get(id.as_str()))
     }
 
     /// The fingerprint of this registry and the repository state it was built from.
