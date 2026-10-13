@@ -3,8 +3,13 @@
 //! Evidence carries text nobody wrote for a reader outside the machine it ran on: the reason
 //! a case skipped, the tail of a failure, a command's captured output. Any of it can hold a
 //! credential the command echoed or a path that names the account it ran under, and once it
-//! is on a public page it cannot be taken back. So every such text goes through
-//! [`public_text`], and nothing else decides what is fit to publish.
+//! is on a public page it cannot be taken back. [`public_text`] is the rule for that text;
+//! wiring the evidence publication to it is I1955, and until then nothing calls it.
+//!
+//! [`redact_secrets`] alone is applied today wherever this process hands back or sends text
+//! it did not write (I2161): every HTTP error body (`http::router::Response::error`), every
+//! JSON-RPC error and MCP tool refusal, the request fields the server logs, and a handover
+//! body before it is signed into the mesh journal and replicated in clear.
 //!
 //! The credential shapes are not a second table. They are a port of `MJ_CAPTURE_SECRETS` and
 //! `MJ_CAPTURE_SECRET_ASSIGN` in `lib/capture.sh`, the table the prompt archive has redacted

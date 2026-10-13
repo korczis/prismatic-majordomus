@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `plan` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Module `plan` — The plan and its derivations
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
@@ -17,7 +17,7 @@ One record per issue with its derived status, its wave, the dependencies it decl
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_issues` |
 | HTTP | `GET /api/v1/plan/issues` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, issues |
@@ -62,7 +62,7 @@ The lowest-wave READY issue of the active milestone, highest priority first, the
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_next` |
 | HTTP | `GET /api/v1/plan/next` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, next |
@@ -105,7 +105,7 @@ The milestone graph laid out by rank, with `order` breaking ties inside a rank o
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_roadmap` |
 | HTTP | `GET /api/v1/plan/roadmap` |
-| cache | — |
+| cache | process, 4 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, roadmap |
@@ -124,7 +124,7 @@ Every milestone with its derived status and its issues counted by status, the mi
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_status` |
 | HTTP | `GET /api/v1/plan/status` |
-| cache | — |
+| cache | process, 16 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, status |

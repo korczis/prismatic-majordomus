@@ -107,6 +107,7 @@ pub struct Server {
     initialized: bool,
     client: Option<ClientInfo>,
     endpoint: Option<String>,
+    remote: bool,
 }
 
 impl Server {
@@ -118,7 +119,17 @@ impl Server {
             initialized: false,
             client: None,
             endpoint: None,
+            remote: false,
         }
+    }
+
+    /// Whether the message about to be handled came from another host. A transport that
+    /// knows the caller's address says so before every message, because the next message
+    /// of one session may come from somewhere else: a session id is a name, not a proof.
+    /// A caller beyond loopback reads; a tool that changes something is refused to it
+    /// unless its input authenticates it (ADR 0126).
+    pub(crate) fn set_remote(&mut self, remote: bool) {
+        self.remote = remote;
     }
 
     /// The base URL of the shared server (`http://127.0.0.1:8741`) the `initialize`
@@ -283,7 +294,7 @@ impl Server {
                         "params.arguments must be an object".to_string(),
                     ));
                 }
-                match self.surface.call(name, &args) {
+                match self.surface.call_from(name, &args, self.remote) {
                     Ok(ToolOutcome::Ok(value)) => {
                         // compact: a client that wants the data reads structuredContent
                         let text = value.to_string();
@@ -457,6 +468,8 @@ pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
 }
 
 fn error(id: Value, code: i64, message: &str) -> Value {
+    // the one place a JSON-RPC error is made: it may echo a tool name or an argument
+    let message = crate::redaction::redact_secrets(message).text;
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
 

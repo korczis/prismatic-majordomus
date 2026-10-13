@@ -38,7 +38,7 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>184 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>101 of 184</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>181 of 184</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>177 of 184</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>196 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>107 of 196</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>191 of 196</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>187 of 196</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
     "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>48 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>48 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
@@ -62,10 +62,10 @@
   "exposure": {
     "by_module": [
       {
-        "capabilities": 21,
-        "cli": 2,
-        "http": 21,
-        "mcp": 19,
+        "capabilities": 24,
+        "cli": 4,
+        "http": 23,
+        "mcp": 21,
         "module": "mesh"
       },
       {
@@ -90,10 +90,17 @@
         "module": "executions"
       },
       {
-        "capabilities": 6,
-        "cli": 6,
-        "http": 6,
-        "mcp": 6,
+        "capabilities": 7,
+        "cli": 5,
+        "http": 7,
+        "mcp": 7,
+        "module": "integration"
+      },
+      {
+        "capabilities": 7,
+        "cli": 7,
+        "http": 7,
+        "mcp": 7,
         "module": "intents"
       },
       {
@@ -133,13 +140,6 @@
       },
       {
         "capabilities": 5,
-        "cli": 4,
-        "http": 5,
-        "mcp": 5,
-        "module": "integration"
-      },
-      {
-        "capabilities": 5,
         "cli": 0,
         "http": 5,
         "mcp": 5,
@@ -151,6 +151,13 @@
         "http": 4,
         "mcp": 4,
         "module": "commit"
+      },
+      {
+        "capabilities": 4,
+        "cli": 0,
+        "http": 4,
+        "mcp": 4,
+        "module": "deploy"
       },
       {
         "capabilities": 4,
@@ -175,6 +182,13 @@
       },
       {
         "capabilities": 4,
+        "cli": 0,
+        "http": 4,
+        "mcp": 4,
+        "module": "release"
+      },
+      {
+        "capabilities": 4,
         "cli": 4,
         "http": 4,
         "mcp": 4,
@@ -193,13 +207,6 @@
         "http": 3,
         "mcp": 3,
         "module": "commands"
-      },
-      {
-        "capabilities": 3,
-        "cli": 0,
-        "http": 3,
-        "mcp": 3,
-        "module": "deploy"
       },
       {
         "capabilities": 3,
@@ -238,13 +245,6 @@
       },
       {
         "capabilities": 3,
-        "cli": 0,
-        "http": 3,
-        "mcp": 3,
-        "module": "release"
-      },
-      {
-        "capabilities": 3,
         "cli": 1,
         "http": 3,
         "mcp": 3,
@@ -256,6 +256,13 @@
         "http": 3,
         "mcp": 3,
         "module": "rules"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 1,
+        "mcp": 1,
+        "module": "served"
       },
       {
         "capabilities": 3,
@@ -350,13 +357,6 @@
       },
       {
         "capabilities": 2,
-        "cli": 2,
-        "http": 1,
-        "mcp": 1,
-        "module": "served"
-      },
-      {
-        "capabilities": 2,
         "cli": 0,
         "http": 2,
         "mcp": 2,
@@ -368,6 +368,13 @@
         "http": 1,
         "mcp": 1,
         "module": "artifacts"
+      },
+      {
+        "capabilities": 1,
+        "cli": 1,
+        "http": 1,
+        "mcp": 1,
+        "module": "brief"
       },
       {
         "capabilities": 1,
@@ -395,7 +402,21 @@
         "cli": 0,
         "http": 1,
         "mcp": 1,
+        "module": "editors"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
         "module": "mcp"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "monitor"
       },
       {
         "capabilities": 1,
@@ -433,39 +454,39 @@
         "module": "web"
       }
     ],
-    "capabilities": 184,
+    "capabilities": 196,
     "combinations": [
       {
-        "count": 98,
+        "count": 102,
         "surfaces": "cli + http + mcp"
       },
       {
-        "count": 79,
+        "count": 85,
         "surfaces": "http + mcp"
+      },
+      {
+        "count": 5,
+        "surfaces": "cli"
       },
       {
         "count": 4,
         "surfaces": "http"
-      },
-      {
-        "count": 3,
-        "surfaces": "cli"
       }
     ],
-    "modules": 53,
+    "modules": 56,
     "surfaces": [
       {
-        "count": 101,
+        "count": 107,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 181,
+        "count": 191,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 177,
+        "count": 187,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
@@ -515,7 +536,7 @@
       {
         "route": "/doctrines/deployment-contract/",
         "slug": "deployment-contract",
-        "title": "A deployment is described once, and every provider artifact is generated from it"
+        "title": "A deployment is described once, and every artifact built from it is generated from it"
       },
       {
         "route": "/doctrines/prompt-continuity/",

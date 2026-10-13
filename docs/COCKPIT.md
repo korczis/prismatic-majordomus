@@ -73,6 +73,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |
 | `/cockpit/design` | the design system as this executable carries it: every role with its light and dark value, the statuses, the type scale, the layout values and the theme contract | `design.system`, `design.tokens` |
 | `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
+| `/cockpit/monitor` | everything that happens around the repository as one live list, newest first: mesh sessions, claims, handovers and reviews, the executor's outcomes and GitHub's pull requests and runs, with what names the reader (`?for=`) first, the noise folded away counted, and every source's state (ADR 0133) | `monitor.stream` |
 | `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
@@ -80,6 +81,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
 | `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
+| `/cockpit/trains` | the trains of stacked pull requests, drawn as an interactive graph in the manner of the Neo4j Browser (master as the anchor, links coloured by disposition, `STACKED_ON` / `DEPENDS_ON` arrows, a property panel, filters, search, fit and zoom, keyboard navigation) and listed as one table per train that needs no JavaScript; polls its route once a minute (ADR 0138) | `integration.trains` |
 | `/cockpit/reasoning` | the optional advisors, and the open task's uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
 | `/cockpit/economics` | token economics, measured | `economics.summary` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
@@ -462,6 +464,15 @@ and `share/schemas/` are where it keeps its kinds. They are read from disk, once
 served from memory with the digest of their bytes in the URL — so a changed file is a
 changed URL, and a versioned asset is answered `immutable` for a year.
 
+Only the exact version a page emits is immutable; any other `v` (empty, a prefix, a stale
+one) and no `v` at all are answered `no-cache`. Every answer carries the digest as its
+`ETag`, and an `If-None-Match` that still holds is a `304 Not Modified` with no body. Every
+asset URL a page loads carries its digest: a script module's relative imports are rewritten,
+when it is read, to the digested URLs of what they import, so a module's digest covers its
+imports and every importer names one URL; the libraries the scripts load at run time get
+theirs from the page body's `data-vendor` (`cockpit::VENDOR`); the favicon is digested like
+the stylesheet. A warm navigation therefore fetches only the page.
+
 ```sh
 scripts/cockpit-assets            # compile the stylesheet, vendor the pinned libraries
 scripts/cockpit-assets --check    # fail if the committed stylesheet differs from its source
@@ -531,7 +542,8 @@ disposable repository:
 - the runner form is generated from the input schema,
 - a graph page lists every node and edge before any library loads,
 - the health page shows the verdicts the engines reach,
-- assets are immutable by digest and no traversal escapes the directory,
+- assets are immutable by their exact digest, every URL a page emits carries one, a
+  revalidation that holds is a 304, and no traversal escapes the directory,
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,

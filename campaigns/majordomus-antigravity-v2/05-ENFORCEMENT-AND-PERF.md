@@ -1,0 +1,3 @@
+# Phase 05: Enforcement, performance, UX
+
+Read master prompt. Connect DAG and projections to existing Majordomus `.ai` gates, CLI, API, MCP, UI and docs only through their existing canonical boundaries. Verify no parallel source inventories. Test fuzz/property order stability, Merkle invalidation, cache corruption, same input across processes, safety and offline behavior. Benchmark cold/warm derive, invalidated node counts, p50/p95, `cargo check` incremental costs and `cd` overhead. Implement performance gates only after observing stable baselines, with guarded tolerances and environment normalization. Document `explain` DAG and diagnostic repair steps.

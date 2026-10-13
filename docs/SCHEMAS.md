@@ -1138,8 +1138,8 @@ See [`CLI.md`](CLI.md) for `majordomus adr`.
 ## `.ai/repo/deployments/<id>.yaml`
 
 One deployment of this repository's executable, and the only authoritative statement of
-it. The container image definition, its ignore file and the provider configuration
-(`fly.toml`) are **generated** from this object; each carries a provenance header naming
+it. The container image definition (`deploy/Dockerfile`) and its ignore file
+(`.dockerignore`) are **generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
 [`share/schemas/majordomus/deployment/deployment.v1.schema.json`](../share/schemas/majordomus/deployment/deployment.v1.schema.json)
@@ -1153,7 +1153,7 @@ title: ...                      # one line, for a listing
 description: ...                # one line: what it serves and to whom
 status: declared                # declared | active | retired
 
-application: majordomus         # the application's name at the provider
+application: majordomus         # the application's name, for a listing
 
 build:
   package: majordomus-cli       # the Cargo package built
@@ -1184,7 +1184,7 @@ machines:
   autostart: true
   autostop: true
 
-region: fra                     # the provider's own vocabulary
+region: fra                     # required; no generated artifact reads it now
 
 budgets:                        # each written by the run that measured it; none guessed
   image_bytes: ...
@@ -1194,18 +1194,16 @@ budgets:                        # each written by the run that measured it; none
   resident_memory_mb: ...
   blocking_check_ms: ...
   request_p99_ms: ...
-
-provider:
-  name: fly                     # provider-specific facts live here and nowhere else
-  fly:
-    org: ...
-    force_https: true
-    concurrency: { soft_limit: 20, hard_limit: 40 }
 ```
 
-**The port is stated once.** The process, the image and the provider configuration all
-read this one field; a literal port anywhere else is the drift this kind exists to
-prevent. The same holds for the region, the resources, the machine count, the health
+**No hosting provider is named.** None is a target: the release binaries, GitHub Pages and
+the GHCR image built from `deploy/Dockerfile` are what ships. The object once carried a
+`provider` block naming Fly.io, rendered into `fly.toml`; nothing ever ran there, and on
+2026-10-12 the block, its reader and `fly.toml` were removed together. A `provider` key is
+now refused like any other key the contract does not have.
+
+**The port is stated once.** The process and the image both read this one field; a literal
+port anywhere else is the drift this kind exists to prevent. The same holds for the health
 routes and the build inputs.
 
 **No credential belongs here.** The token that authorises a deployment comes from outside
@@ -1216,6 +1214,30 @@ The schema decides shape; `majordomus deploy doctor` decides sense — a health 
 capability registers, a package or binary the workspace does not contain, a build input
 that does not resolve, a `min_running` above `count` — and each refusal names the file, the
 key, the value found and the correction.
+
+**The image is built in stages that a cache can carry.** `deploy/Dockerfile` is rendered with
+four builder stages before the runtime (`BUILDER_STAGES` in `src/deploy/render.rs`):
+`toolchain` (the Rust image at the exact `channel` of `rust-toolchain.toml` — the generator
+refuses a repository without one rather than pin a second version), `recipe` (the manifest
+and lockfile with the package's own version masked, so a release bump reaches the same
+recipe), `deps` (every dependency compiled against stub sources, as layer content) and
+`build` (the real sources; the only stage that reads the commit). A cache mount would keep
+compiled dependencies only on the machine that built them; a layer travels with a registry
+cache export, so a fresh runner compiles only the package. `.github/workflows/docker-image.yml`
+builds the image, runs it and checks that `/api/v1/live` names the commit, and publishes
+`ghcr.io/korczis/prismatic-majordomus:sha-<commit>` only after that commit's `validate` run on
+master succeeded; it alone writes the shared `:buildcache` ref.
+A release image compiles nothing: `.github/workflows/release.yml` downloads the release's
+published Linux musl archives, holds each to `SHA256SUMS`, to its provenance attestation and to
+the tagged commit, and builds with `MAJORDOMUS_BINARY_FROM=release` and the `release-binary`
+build context, so the image published as `:<tag>` runs the bytes the archives ship, for every
+platform they ship.
+
+```console
+$ docker buildx build -f deploy/Dockerfile \
+    --cache-from type=registry,ref=ghcr.io/korczis/prismatic-majordomus:buildcache \
+    --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)" -t majordomus:dev --load .
+```
 
 ---
 
@@ -1456,6 +1478,7 @@ Events and their extra fields:
 | `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
 | `provider.event.received` | `provider`, `provider_event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `provider_event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
+| `observation.recorded` | `task_id` (`none` outside a task), `kind`, `subject`, `statement`, `evidence` (a list of typed references, possibly empty). Written by `knowledge observe`; the episode boundary derives a candidate from it (ADR 0118) |
 | `knowledge.derived` | `episode`, `written`, `unchanged`, `paths`; `skipped` when a line was refused. Written by every non-dry-run derivation that resolved an episode, even when it wrote nothing; `episode` is explicit because the envelope's `session` stamp is present only while the episode is open |
 | `knowledge.promoted` | `id`, `path` (the curated record's repository-relative path). A person promoted a candidate to verified with evidence |
 | `knowledge.rejected` | `id`, `reason`; `superseded_by` when `--by` named the record that replaces it. A person rejected a candidate; it is superseded in place |

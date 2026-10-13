@@ -19,7 +19,14 @@ GATE="$ROOT/scripts/ci/cockpit-projection-check"
 fixture() {
   local f="$T/tree$1"
   rm -rf "$f"
-  mkdir -p "$f/apps/majordomus-cli/src/cockpit" "$f/apps/majordomus-cli/src/capability/builtin"
+  mkdir -p "$f/apps/majordomus-cli/src/cockpit" "$f/apps/majordomus-cli/src/ui" \
+    "$f/apps/majordomus-cli/src/capability/builtin"
+  # the UI (ADR 0135) is a subject of the same check: a screen that asks
+  cat > "$f/apps/majordomus-cli/src/ui/dashboard.rs" <<'RS'
+pub fn screen(ctx: &Context) -> View {
+    View::new(ask(ctx, Source::of("plan.status")))
+}
+RS
   cat > "$f/apps/majordomus-cli/src/cockpit/nav.rs" <<'RS'
 //! The kinds are asked for, never read: ctx.index is what ADR 0012 forbids here.
 pub fn build(ctx: &Context) -> Navigation {
@@ -105,6 +112,11 @@ F="$(fixture 4)"
 rm -rf "$F/apps/majordomus-cli/src/cockpit"
 expect_exit 12 env MJ_ROOT="$F" "$GATE"
 expect_grep 'no Cockpit at'
+# and so is a tree with no UI: both surfaces are its subject
+F="$(fixture 5)"
+rm -rf "$F/apps/majordomus-cli/src/ui"
+expect_exit 12 env MJ_ROOT="$F" "$GATE"
+expect_grep 'no UI at'
 
 # --- and this repository's own Cockpit passes, which is the state the gate defends
 expect_exit 0 "$GATE"

@@ -22,8 +22,14 @@ expect_exit 15 "$MJ" bench version --samples 1 --warmup 0 --check --no-save
 expect_grep 'not comparable: schema is not majordomus/benchmark-baseline/v1'
 rm -f "$B"
 
-# --- within thresholds: the same command measured twice on one machine
+# --- within thresholds: a fresh measurement against a baseline it cannot exceed. Holding a
+# second measurement of the same ~9 ms command to the first was a verdict on the runner, not
+# on the gate: with three samples p95 and p99 are the slowest one, and on PR #864 (job
+# 114104046492) one slow sample read 9 -> 18 ms cold and 10 -> 21 ms warm, over the 50%.
+# The written baseline is raised to ten seconds per metric, so OK depends only on the
+# comparison; the regression below is still a real measurement against one millisecond.
 expect_exit 0 "$MJ" bench version --samples 3 --warmup 1 --write-baseline --no-save
+jq -c '.results |= map(.p50_ms = 10000 | .p95_ms = 10000 | .p99_ms = 10000)' "$B" > "$B.tmp" && mv "$B.tmp" "$B"
 git add "$B" && git commit -qm baseline
 expect_exit 0 "$MJ" bench version --samples 3 --warmup 1 --check --no-save
 expect_grep 'OK +bench +version cold .* within thresholds'

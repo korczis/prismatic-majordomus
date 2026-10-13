@@ -1,0 +1,54 @@
+id: I2476
+milestone: development-runtime
+title: "An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it"
+slug: an-intent-opens-what-serves-it
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a reader of majordomus ui open any intent (/ui/roadmap?intent=<id>) into an inspector that shows what it says, the invariants it holds the work to, each criterion of its satisfaction with its evidence, state and how to reproduce it, and the milestones and issues that serve it, each a link."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (pack v3 M06-02, milestone, issue and intent detail inspector). The roadmap lists intents as rows that open nothing; intents.list already answers each intent's statement, invariants, milestones and satisfaction with state and reproduce command, and plan.issues each issue's serves."
+current_state: "An intent is a row of the roadmap; the milestone inspector's Serves leads to the roadmap."
+desired_state: "?intent=<id> opens the inspector above the roadmap, asked with plan.issues only when an intent or a milestone is picked. It shows the intent's stage, verdict and how many criteria are met, its statement, its invariants, the milestones that serve it with their status (each a link to its inspector), the issues that serve it (an issue serves the intent when a serves entry names it or one of its criteria, intent#criterion; each a link to its inspector), and its criteria with their evidence, state, whether met and the command that reproduces them. The roadmap's intent rows and the milestone inspector's Serves lead here. An id the repository does not hold says so; a value that is no id opens nothing."
+scope:
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2476.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1081_an_intent_opens_what_serves_it.sh"
+depends_on: ["I2471"]
+acceptance_criteria:
+  - "?intent=<id> opens the inspector with its criteria and the milestones and issues serving it as links"
+  - "an issue serving one of its criteria serves the intent"
+  - "the roadmap's intent rows and the milestone inspector's Serves lead to it"
+  - "an unknown id says so and a value that is no id opens nothing"
+validation:
+  - "cargo test --lib ui::intent"
+  - "test/run.sh 1081_an_intent_opens_what_serves_it"
+evidence_required:
+  - "ui_intent_unit_tests"
+  - "ui_intent_case_1081"
+created_at: 2026-10-11
+updated_at: 2026-10-12T11:05:13Z
+started_at: 2026-10-12T11:04:55Z
+started_event: sha256:6dd72dfaef426a3824085abb32653b5639e75207b9641aab87e27100492f9024
+verified_at: 2026-10-12T11:05:01Z
+verified_event: sha256:fde09edd323f366979e119123a44655dc0fae5339dc4d7330bcf5472f41dac54
+completed_at: 2026-10-12T11:05:13Z
+completed_event: sha256:534be51f9249c8328de1f6b5475c36ecda2fde8feb2343c2d7af275e27586309
+evidence:
+  - covers: ui_intent_unit_tests
+    type: ci
+    command: "cargo test --lib ui::intent (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "3 ui::intent tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:05:07Z
+  - covers: ui_intent_case_1081
+    type: ci
+    command: "test/run.sh 1081_an_intent_opens_what_serves_it (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1081_an_intent_opens_what_serves_it ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:05:10Z

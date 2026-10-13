@@ -1,0 +1,41 @@
+id: I2489
+milestone: development-runtime
+title: "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them"
+slug: a-screen-over-its-budget-fails-the-build
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the owner's UI latency budget something CI enforces: the benchmark policy declares absolute bounds, bench --check holds them with or without a baseline and on every host, and the ui job runs that check on every change that can slow a screen."
+why: "ADR 0142, part 4. The owner's pack set the budgets (a cached capability under 50 ms at p95, a warm server-rendered page under 100 ms, a live update under 250 ms) and said they are 'measured, never invented'. Today nothing holds them: the bench times the UI's screens since the UI-performance batch, and reports; it refuses nothing. The UI was eight seconds slow on master for a day before a person said so."
+current_state: "majordomus bench times every screen of the UI (system.http.ui.* over a pinned context, system.http.live.ui.* over the live view) and bench --check compares a run with a baseline of the same host. A target that was always too slow never regresses, and a platform with no baseline compares nothing, so nothing held a screen to a bound. Measured before this change, debug build at load 57: every warm screen at 1-21 ms p95 except /ui/command at 400-660 ms."
+desired_state: ".ai/repo/benchmarks/rust/policy.yaml gains budgets: each a prefix of target keys, a cache mode, a metric, a bound in milliseconds and a minimum number of samples, every key but the last required and a malformed one a policy error that names it. Check::compare judges every measurement a budget bounds, whether or not a baseline exists and whatever host recorded it, as PASS, OVER or SHORT; bench --check prints the budget lines with the target, its value and its bound, says within or over budget, and exits 10 when anything is over. The policy declares a warm screen of the UI within 100 ms at p95 for both views. The ui job of validate runs bench system.http. --check before the browser audit, as a step of the ui-audit gate. /ui/command no longer walks the registry once per command: it indexes command lines once per screen. Not done here: measuring the first request after the repository moved, which is I2485."
+scope:
+  - "apps/majordomus-cli/src/bench/baseline.rs"
+  - "apps/majordomus-cli/src/ui/command.rs"
+  - "apps/majordomus-cli/tests/bench_units.rs"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/ci/gates.yaml"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/benchmarks/rust/README.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1099_a_screen_over_its_budget_fails.sh"
+  - ".ai/repo/project/issues/I2489.yaml"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "A warm screen measured over its budget fails bench --check with exit 10 and no baseline to compare, and the report names the screen, its value and its bound"
+  - "A budget bounds only the prefix and the cache mode it names, and a measurement of fewer samples than its minimum is SHORT and does not fail"
+  - "A budget with a required key missing, or a cache mode that is not one, is a policy error that names the key"
+  - "The repository's policy declares the UI's budget for the pinned and the live view, and every screen is within it"
+  - "The ui job runs the check before the browser audit, under a bound smaller than the job's"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test bench_units"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails"
+  - "majordomus bench system.http. --transport system --profile ci --no-write --check"
+evidence_required:
+  - "bench_budget_unit_tests"
+  - "ui_budget_gate_case_1099"
+  - "ui_budget_bench_results"
+created_at: 2026-10-12
+updated_at: 2026-10-12

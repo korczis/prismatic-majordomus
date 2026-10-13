@@ -1,0 +1,45 @@
+id: I2483
+milestone: development-runtime
+title: "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui"
+slug: the-ui-is-published-as-a-snapshot
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a person who has not cloned the repository open majordomus ui on the public site: the UI's own answers for every screen and panel, and for the inspectors they link to up to a bound, written as static files at the commit the site publishes, every page saying it is a snapshot and none of them leading to nothing."
+why: "The owner asked on 2026-10-12 that majordomus ui be on GitHub Pages and chose a static snapshot read at a pinned commit over documentation only (ADR 0141). Until now the web topology declared the UI served-only, the site never named it, and the product's primary surface (ADR 0135) could be seen only by running a server in a checkout."
+current_state: "The UI is a native route of the shared server and of nothing else. gh-pages holds no /ui. A static copy made by saving the pages would keep links to routes and queries a file host cannot answer, and its script would read the page again from a host that ignores the query."
+desired_state: "`majordomus web report ui-snapshot [--limit N] [--budget-seconds S]` asks the UI in-process for every screen and panel and then, one page per family in turn until the page bound or the time budget is reached, for the pages they link to, and writes each answer under target/web/ui-snapshot: links between pages relative, an inspector's query a directory of its own, a link only a process answers led to the snapshot's page about the live UI with the path it meant, a link to a published surface kept, the assets copied, the body marked data-snapshot so the script reads nothing again, and every page stamped with the commit, the time and the executable. The producer's surface.json declares it published-only at /ui, built from this commit, so the topology holds it beside the served UI without a collision. The Pages workflow builds it in a job of its own beside rustdoc and the deploy job places it at /ui after the site's checks, refusing a snapshot of another commit. docs/MAJORDOMUS_UI.md and docs/GITHUB_PAGES_ARCHITECTURE.md say what a visitor sees and what a snapshot cannot know."
+scope:
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/web/report/mod.rs"
+  - "apps/majordomus-cli/src/commands/web.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "share/ui/ui.js"
+  - ".github/workflows/pages.yml"
+  - ".ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md"
+  - ".ai/repo/project/issues/I2483.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+  - "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "the snapshot holds every screen its own navigation names, and a second run with a smaller bound leaves no page of the first"
+  - "no page keeps an absolute link under /ui, and every relative link names a file the snapshot holds"
+  - "a link to the Cockpit, the API or a form leads to the page about the live UI, carrying the path it meant"
+  - "every page says the commit it was read at, and the script fetches no panel and refreshes nothing in a snapshot"
+  - "the declaration is a published-only surface at /ui built from this commit, and the topology validates with it beside the served UI"
+  - "the Pages deploy places the snapshot of the commit it publishes at /ui and refuses one of another commit"
+validation:
+  - "cargo test --lib web::report::snapshot"
+  - "test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+  - "test/run.sh 1093_the_ui_snapshot_links_nothing_absent"
+  - "test/run.sh 97_pages_fast_path"
+  - "test/run.sh 26_ci_wiring"
+evidence_required:
+  - "ui_snapshot_unit_tests"
+  - "ui_snapshot_case_1092"
+  - "ui_snapshot_case_1093"
+  - "ui_snapshot_on_pages"
+created_at: 2026-10-12
+updated_at: 2026-10-12

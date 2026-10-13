@@ -1,0 +1,37 @@
+id: I2416
+milestone: test-evidence
+title: "The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red"
+slug: every-selected-gate-leaves-a-receipt
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make scripts/ci/verdict green only when every gate the plan selected left a receipt from the step that ran it, every receipt `success`: a job's success is not a gate's, because a job carries many gates and a step its condition skipped does not fail the job. Cancelled, skipped, missing and absent never pass, and each has a fixture."
+why: "CI Delivery V4 item V4-02-03 (the owner's mission, relayed by ce on 2026-10-10). The verdict decided from job results alone. scripts/ci/verdict already turned a selected gate red when its job was cancelled, skipped or absent, but a job reports `success` when one of its steps was skipped by its own `if:`, and validate.yml runs most gates in steps with conditions of their own, reading the plan's outputs rather than the plan. A selected gate whose step was skipped — a condition reading another output, a step id renamed, a gate moved to another job — passed without running. The cockpit job's vendoring step was even labelled with the site job's gate `cockpit-assets`, so its success would have answered for a skipped `--check`."
+current_state: "scripts/ci/verdict reads the plan and the `needs` context only. scripts/ci/timed and scripts/ci/run-plan record timings, not outcomes. No artifact says which gate's step ran."
+desired_state: "Every gate job sets MJ_CI_RECEIPTS and uploads its receipts as ci-receipts-<job>: scripts/ci/timed and scripts/ci/run-plan append \"<gate><TAB><success|failure><TAB><source>\" per step and per gate, and a closing `if: always()` step records `steps.<id>.outcome` for each gate step that runs any other way. The ci job downloads every ci-receipts-* artifact and runs the verdict with --receipts, which is required. A selected gate whose job succeeded is red with no receipt, and red when any receipt is `skipped`, `cancelled`, `failure` or empty (read as `absent`); no receipts at all is red for every selected gate."
+scope:
+  - "scripts/ci/verdict"
+  - "scripts/ci/timed"
+  - "scripts/ci/run-plan"
+  - ".github/workflows/validate.yml"
+  - "test/cases/94_ci_plan.sh"
+  - "test/cases/26_ci_wiring.sh"
+non_scope:
+  - "Cancelling moot runs (V4-02-04), the build-once artifact (V4-03), case selection by impact (V4-04-01), the long tail (V4-04-02) and the 300 s budget (V4-05-04): the other items of the mission."
+  - "Requiring receipts from each matrix lane by name: a gate is green with at least one receipt and every receipt `success`; which lanes must each report is not declared in the gate model."
+depends_on: []
+acceptance_criteria:
+  - "A selected gate whose job succeeded and which left no receipt makes the verdict red, naming the gate and its job"
+  - "A selected gate with a receipt `skipped`, `cancelled`, `failure` or an empty outcome makes the verdict red, naming the outcome, whatever its job reported"
+  - "No receipts directory, or an empty one, is red for every selected gate; a verdict asked without --receipts is a usage error"
+  - "A receipt of a gate the plan did not select changes nothing"
+  - "scripts/ci/timed and scripts/ci/run-plan write one receipt per step and per gate they ran, and none for a gate run-plan skips"
+  - "Every gate job of validate.yml uploads ci-receipts-<job>, and the ci job passes --receipts"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 26_ci_wiring"
+  - "actionlint .github/workflows/validate.yml"
+evidence_required:
+  - "receipt_verdict_fixtures"
+created_at: 2026-10-11
+updated_at: 2026-10-11

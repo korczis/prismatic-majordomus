@@ -6,7 +6,7 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::capability::Context;
 use crate::error::Result;
@@ -18,6 +18,12 @@ use crate::lease::{Lease, LeaseFile};
 /// How often the server looks for expired sessions while it waits for peers to leave.
 pub const REAP_INTERVAL: Duration = Duration::from_millis(500);
 
+/// How long a server asked to stop by a signal waits for its peers to leave before it closes
+/// their sessions itself: long enough for a request in flight to be answered, short enough
+/// that the whole ordered stop sits well inside `serve stop`'s default wait and the
+/// [`crate::lease::STOP_BOUND`] after which the process is ended anyway.
+pub(crate) const STOP_PEER_GRACE: Duration = Duration::from_secs(2);
+
 /// A running shared server.
 pub struct SharedServer {
     running: Running,
@@ -27,12 +33,26 @@ pub struct SharedServer {
     stopping: Arc<AtomicBool>,
     /// The mesh runtime this server activated (or left inactive, with the reason).
     mesh: Arc<crate::mesh::MeshRuntime>,
+    /// Set by whichever of the two stoppers runs the ordered stop first — [`SharedServer::stop`]
+    /// on the owner's thread, or the reader thread answering a signal — so that it runs once.
+    claimed: Arc<AtomicBool>,
+    /// Set by [`SharedServer::take_stop_requests`]: the owner's loop answers a stop signal
+    /// itself, and the reader thread leaves it to it.
+    owner_answers: Arc<AtomicBool>,
 }
 
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
 fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
-    let Some(parsed) = crate::capability::builtin::mesh::declaration(ctx) else {
+    let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
+    if !resolved.narrowed.is_empty() {
+        // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
+        tracing::warn!(
+            ignored = %resolved.narrowed.join("; "),
+            "the working tree's mesh declaration widens what the trunk's copy says; those lines are ignored"
+        );
+    }
+    let Some(parsed) = resolved.declaration else {
         return;
     };
     let config = match parsed {
@@ -86,6 +106,14 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         repos,
         version,
     ) {
+        Ok(()) if !ctx.mesh.status().active => {
+            // closed by the trust list (or otherwise declined): no cooperation either,
+            // because a link is a socket too
+            let why = ctx.mesh.status().reason.unwrap_or_default();
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh not active: {why}");
+            ctx.mesh.decline_cooperation(&why);
+            return;
+        }
         Ok(()) => {
             tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
         }
@@ -165,7 +193,8 @@ impl SharedServer {
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
         let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
-            .with_cockpit(share_dir);
+            .with_cockpit(share_dir)
+            .with_ui(share_dir);
         // The mesh, when the repository declares one — before the workers pick up their
         // first request, so a client that connects on the "listening" line already sees
         // the activated runtime. Never blocking: providers open sockets on their own
@@ -187,11 +216,20 @@ impl SharedServer {
         // that the lease is still its own. A lease another process took over is that
         // process's to remove; this one stops claiming it and retires from the mesh,
         // serves the peers it has, and ends with them.
+        //
+        // It is also the stopper of last resort. A signal asking this process to stop is only
+        // recorded by its handler (`crate::lease` says why); when the owner's loop does not
+        // answer it — `majordomus mcp`, whose main thread is its client's stdio session — this
+        // thread runs the ordered stop and then ends the process with that signal.
         let stopping = Arc::new(AtomicBool::new(false));
+        let claimed = Arc::new(AtomicBool::new(false));
+        let owner_answers = Arc::new(AtomicBool::new(false));
         {
             let endpoint = Arc::clone(&endpoint);
-            let mesh = Arc::clone(&ctx_for_mesh.mesh);
             let stopping = Arc::clone(&stopping);
+            let claimed = Arc::clone(&claimed);
+            let owner_answers = Arc::clone(&owner_answers);
+            let mesh = ctx_for_mesh.mesh.clone();
             let path = lease.path().to_path_buf();
             let token = lease.token().to_string();
             let _ = std::thread::Builder::new()
@@ -200,6 +238,22 @@ impl SharedServer {
                     let mut lost = false;
                     while !stopping.load(Ordering::SeqCst) {
                         std::thread::sleep(REAP_INTERVAL);
+                        if let Some(signal) = crate::lease::stop_requested() {
+                            if !owner_answers.load(Ordering::SeqCst)
+                                && !claimed.swap(true, Ordering::SeqCst)
+                            {
+                                tracing::info!(
+                                    signal,
+                                    "asked to stop by signal {signal}; stopping in order"
+                                );
+                                mesh.begin_stop();
+                                endpoint.close_all();
+                                crate::lease::release_held();
+                                mesh.stop();
+                                tracing::info!("shared server stopped");
+                                crate::lease::end_by_signal(signal);
+                            }
+                        }
                         let gone = endpoint.reap();
                         if !gone.is_empty() {
                             tracing::info!(peers = ?gone, "peer(s) expired: no message within the idle timeout");
@@ -234,12 +288,15 @@ impl SharedServer {
             // thing a person reads when a client starts one (ADR 0044).
             "shared server listening on {url} — {surfaces}; the one server of this checkout: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
+        crate::lease::answer_stop_requests();
         Ok(SharedServer {
             running,
             endpoint,
             lease,
             stopping,
             mesh: ctx_for_mesh.mesh.clone(),
+            claimed,
+            owner_answers,
         })
     }
 
@@ -259,13 +316,48 @@ impl SharedServer {
         self.endpoint.active()
     }
 
-    /// Block until no HTTP session remains.
+    /// Block until no HTTP session remains, or a signal asks this process to stop: a server
+    /// lingering for its peers is still a server that `serve stop` must be able to end in
+    /// order.
     pub fn wait_until_peers_leave(&self) {
+        self.wait_for_peers(None);
+    }
+
+    /// The owner's loop answers a stop signal itself: it polls
+    /// [`crate::lease::stop_requested`] and calls [`SharedServer::stop_within`], so that the
+    /// process ends by returning from `main`. Without this, the server's reader thread answers
+    /// the signal (see [`SharedServer::start`]).
+    pub(crate) fn take_stop_requests(&self) {
+        self.owner_answers.store(true, Ordering::SeqCst);
+    }
+
+    /// The ordered stop a signal asks for: wait up to `grace` for the attached peers to leave,
+    /// then [`SharedServer::stop`], which closes whatever sessions and episodes remain.
+    pub(crate) fn stop_within(self, grace: Duration) {
+        self.wait_for_peers(Some(Instant::now() + grace));
+        self.stop();
+    }
+
+    /// Wait until no HTTP session remains: until `deadline` when there is one, and otherwise
+    /// until a stop signal arrives.
+    fn wait_for_peers(&self, deadline: Option<Instant>) {
         let mut announced = false;
         loop {
             let n = self.peers_attached();
             if n == 0 {
                 break;
+            }
+            match deadline {
+                Some(deadline) if Instant::now() >= deadline => {
+                    tracing::info!(
+                        peers = n,
+                        "closing the sessions of the peers still attached"
+                    );
+                    break;
+                }
+                Some(_) => {}
+                None if crate::lease::stop_requested().is_some() => break,
+                None => {}
             }
             if !announced {
                 tracing::info!(
@@ -278,15 +370,29 @@ impl SharedServer {
         }
     }
 
-    /// Stop serving and release the lease.
+    /// Stop serving and release the lease. This is the ordered stop: the owner's session
+    /// ending runs it, and so does `serve stop` — its `SIGTERM` is answered by the `serve`
+    /// loop through `SharedServer::stop_within`, or, in a process whose loop does not
+    /// answer it, by the reader thread [`SharedServer::start`] spawns, which runs the same
+    /// steps short of joining the listeners and then ends the process with the signal.
     ///
     /// The order is what matters. Telling the mesh to stop is immediate, but draining its
     /// link table needs a lock a worker can hold across a dial that waits out the link
     /// timeout — several seconds. Everything a waiting `serve stop` measures happens before
-    /// that: the listeners close and the lease is released, and only then does the mesh
+    /// that: every session and every episode is closed, the listeners close (an answer in
+    /// flight is finished first) and the lease is released — only if the file is still this
+    /// server's, checked under the lock a take-over takes — and only then does the mesh
     /// drain. A lease released late is read by the next process as a server still holding
-    /// the port, which is what `serve stop` answers 10 for.
+    /// the port, which is what `serve stop` answers 10 for; `serve stop` then waits for the
+    /// process to exit, which is after the drain.
     pub fn stop(self) {
+        if self.claimed.swap(true, Ordering::SeqCst) {
+            // the reader thread is running this stop for a signal and ends the process when
+            // it is done; there is nothing left for this thread to do but not interfere
+            loop {
+                std::thread::sleep(REAP_INTERVAL);
+            }
+        }
         self.mesh.begin_stop();
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
@@ -396,5 +502,146 @@ mod tests {
             None,
         )
         .is_err());
+    }
+
+    /// The variable that makes a run of this test binary one of the child processes below.
+    #[cfg(unix)]
+    const CHILD: &str = "MAJORDOMUS_SHARED_TEST_CHILD";
+
+    /// Run `test` of this binary in a process of its own, and insist that it ran and passed:
+    /// a filter that matched nothing would pass too.
+    #[cfg(unix)]
+    fn passes_in_a_process_of_its_own(test: &str) {
+        let out = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                &format!("shared::tests::{test}"),
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .expect("the child process runs");
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A shared server over a fresh synthetic repository, holding its lease. The repository
+    /// is handed back too: it is removed when dropped, and the server's lease with it.
+    #[cfg(unix)]
+    fn a_shared_server() -> (SyntheticRepository, SharedServer) {
+        let fixture = SyntheticRepository::small().unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let crate::lease::Role::Server(lease) = crate::lease::elect(&app.repository).unwrap()
+        else {
+            panic!("a fresh repository has no server");
+        };
+        let shared = SharedServer::start(
+            Arc::new(crate::live::Live::pinned(app.context)),
+            crate::VERSION,
+            "127.0.0.1",
+            0,
+            false,
+            None,
+            lease,
+            None,
+        )
+        .unwrap();
+        (fixture, shared)
+    }
+
+    /// A server lingering for its last peer is still a server a stop signal ends: the wait
+    /// returns with the peer still attached, and the ordered stop that follows releases the
+    /// lease. In a process of its own, because the signal is the process's.
+    #[cfg(unix)]
+    #[test]
+    fn a_server_waiting_for_its_last_peer_stops_on_a_signal() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own("a_server_waiting_for_its_last_peer_stops_on_a_signal");
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        shared.take_stop_requests();
+        let init = serde_json::json!({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": { "name": "unit", "version": "0" }
+            }
+        })
+        .to_string();
+        let reply = crate::mcp::bridge::request(
+            &shared.url(),
+            "POST",
+            "/mcp",
+            &[("content-type", "application/json")],
+            Some(&init),
+            Duration::from_secs(10),
+        )
+        .expect("the server answers /mcp");
+        assert_eq!(reply.status, 200, "{}", reply.body);
+        assert_eq!(shared.peers_attached(), 1, "one peer attached");
+        assert_eq!(crate::lease::stop_requested(), None);
+        // SAFETY: raising a signal whose handler, installed by the election, only touches
+        // atomics
+        unsafe { libc::raise(libc::SIGHUP) };
+        assert_eq!(crate::lease::stop_requested(), Some(libc::SIGHUP));
+        shared.wait_until_peers_leave();
+        assert_eq!(
+            shared.peers_attached(),
+            1,
+            "the wait ended on the signal, not because the peer left"
+        );
+        let lease = shared.lease.path().to_path_buf();
+        shared.stop();
+        assert_eq!(
+            LeaseFile::read(&lease),
+            LeaseFile::Absent,
+            "the lease is released"
+        );
+    }
+
+    /// When the reader thread has claimed the ordered stop for a signal, a stop on the owner's
+    /// thread does not run a second one: it closes nothing and releases nothing, and leaves
+    /// the process to the thread that will end it. In a process of its own, because that
+    /// stop never returns.
+    #[cfg(unix)]
+    #[test]
+    fn a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it() {
+        if std::env::var_os(CHILD).is_none() {
+            passes_in_a_process_of_its_own(
+                "a_stop_after_the_signal_claimed_the_stop_leaves_everything_to_it",
+            );
+            return;
+        }
+        let (_fixture, shared) = a_shared_server();
+        // what the reader thread does when it answers a signal itself
+        shared.claimed.store(true, Ordering::SeqCst);
+        let url = shared.url();
+        let lease = shared.lease.path().to_path_buf();
+        let token = shared.lease.token().to_string();
+        let root = shared.lease.root().to_path_buf();
+        let stopper = std::thread::spawn(move || shared.stop());
+        std::thread::sleep(REAP_INTERVAL * 4);
+        assert!(!stopper.is_finished(), "the second stop does not return");
+        assert!(crate::lease::probe(&url, &root), "the server still answers");
+        assert_eq!(
+            LeaseFile::read(&lease).document().map(|d| d.token.clone()),
+            Some(token),
+            "the lease is still this server's"
+        );
     }
 }

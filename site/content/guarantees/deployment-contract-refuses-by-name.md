@@ -1,7 +1,7 @@
 +++
 title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named"
 description = "A deployment of the executable is one YAML object under the layer's deployments section,"
-weight = 195
+weight = 198
 [extra]
 claim_id = "deployment-contract-refuses-by-name"
 status = "guaranteed"
@@ -72,8 +72,8 @@ module's own tests, not by this case.
 The credential check matches the prefixes of known token formats. A secret in a format it
 does not know, written into a field the contract allows, is not recognised as one.
 
-It does not prove that the generated container definition and provider configuration match
-the object; `majordomus generate --check` holds that, and its own case proves it. Nothing
+It does not prove that the generated container definition and its ignore file match the
+object; `majordomus generate --check` holds that, and its own case proves it. Nothing
 here contacts a hosting provider or proves that a deployment, once accepted, will start.
 
 ## Why it exists

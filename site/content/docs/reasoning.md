@@ -1,7 +1,7 @@
 +++
 title = "Reasoning"
 description = "provider-independent reasoning: material uncertainty assessed with evidence, optional advisors discovered by capability and consulted through one transport contract, disagreement settled by experiment rather than count, conclusions and review recorded, and the state carried across sessions, with no advisor required"
-weight = 59
+weight = 66
 [extra]
 source = "docs/REASONING.md"
 +++
@@ -162,6 +162,7 @@ written, and the shapes removed are named in the record.
 </div>
 
 
+<!-- majordomus:unrun it reads assessment.json, a record the reader writes for their own task, and it writes checkout state; the example reasoning-record-refused runs the command and case 730 records through the same writer -->
 ```sh
 majordomus reasoning record --file assessment.json      # or JSON on standard input
 ```

@@ -1,11 +1,389 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.19.1**
+Current version: **0.23.0**
+
+## v0.22.0 — 2026-10-13
+
+### Added
+
+- **docs**: the handbook is built from the tree it describes (ADR 0149) (`fc7917367`)
+- **install**: personal mode is a switch — init --personal, verified, and --shared (ADR 0145) (`3bf63db8e`)
+- **intent**: an intent is proposed by a capability, and its stage stays derived (`ee7f3373c`)
+- **ui**: every entity the UI names is a link, and every screen has a case (I2481, I2482) (`995496f6f`)
+- **ui**: the snapshot is bounded, declared, documented and wired into Pages (I2483, ADR 0141) (`41cc4dddd`)
+- **ui**: the UI links what it names and says none (I2481, work in progress) (`64dca8303`)
+- **ui**: the UI is read once and written as a static snapshot (`6f55316bc`)
+- **editors**: Zed and Antigravity read projections of the layer (ADR 0140) (`17e99c068`)
+- **mesh**: a review request carries a body, is withdrawn by its asker, and ends with it (`76dc4b399`)
+
+### Fixed
+
+- **test**: the deployments reading is asked for by served forge, and the test says so (`e6d0371cf`)
+- **test**: the served doctest names served.forge, and the handbook page is a whole document (`c03a5ff76`)
+- **served**: the module's documentation names the three capabilities it has (`ebf01655f`)
+- **docs**: the handbook wears the declared design, and its sources are chapters only (`ab498d5c0`)
+- **ci**: every red of the tag candidate's validate run is paid at its cause (`3e8225a43`)
+- **test**: case 2979 looks for a session record without ls | grep (`54263f8ba`)
+- **ui**: an absent deployment count reads none, and the stub forges answer the deployments read (`897bc430a`)
+- **ci**: master's seven reds after the backlog landings are paid in one commit (`5631447ff`)
+- **site**: a Markdown table is aligned by a class, so one column cannot stop a publication (`3c48889f8`)
+- **quality**: the readings carry their examples (`c40dbb86a`)
+- **ci**: top 2 pins a sort to the C locale and classifies web report ui-snapshot (`6cb8009ad`)
+- **ci**: the landing top's members meet — what the first combined run found (`102a08dd4`)
+- **site**: every badge states the one offer, and no surface lists release records (`5dab8737b`)
+- **site**: pages-check finds the repository for release-live, and case 180 holds it (`d38d3bc56`)
+- **site**: the site offers the release that was published, on every surface at once (`1c15652c0`)
+- **editors**: the projection meets the structure gates it added a module to (`19b6416d4`)
+- **editors**: rustdoc reads no path placeholder as an HTML tag (`7cf2dfb56`)
+- **http**: the live stream misses nothing a client can be told about (`000e2b047`)
+- **build**: each worktree builds its own crate in the shared build directory (`a29738743`)
+- **scope**: a path that holds a space is one path (I2464) (`dea8e07a7`)
+- **mesh**: a review request is withdrawn and expires with its runtime, not its session (`3daef42ca`)
+- **mesh**: a clone on a machine its trust list does not name opens no mesh socket (`9e1d9cc37`)
+
+### Performance
+
+- **ui**: no screen waits for a source (I2486, ADR 0142) (`344cb306c`)
+- **ci**: a release record and its projections plan a light validate (`22de3c496`)
+- **capability**: the slow screens read once (`99ea09509`)
+- **bench**: the bench measures the UI and the live view (`2fcb023e5`)
+- **cockpit**: assets are cached by their digest (`66bc00bd2`)
+- **integration**: the queue reads its relations once (`a865e3207`)
+- **ci**: the projection renders every record in one process, adr check resolves rules once (`89db623dc`)
+- **test**: derivation cases generate site data without executing the scenarios (`26898026f`)
+- **gates**: digest each file once per completion report (`9df08e7bd`)
+- **doctor**: one python3 for every schema, one awk for every case header (`0221b4779`)
+- **site**: page literals without a subshell each; modules checked in one jq (`141acab6d`)
+- **site**: one jq per section for the page literals, one awk for case coverage (`202efbac8`)
+- **ci**: the pipeline's data files are planned by their readers (`84de132df`)
+- **ci**: shellcheck runs in batches over a bounded pool (`39b0587db`)
+- **site**: invert the OpenAPI reference walks and drop jarr's per-line forks (`e5e4bcf36`)
+
+### Documentation
+
+- **adoption**: the arrangement is called personal mode, and its way to a shared layer is measured (`4b66ef5f5`)
+- **adoption**: using the tool without leaving anything in git, measured (`98bee6156`)
+- **ui**: the UI is the accepted primary surface, and its plan says what landed (`0e458b2c6`)
+
+### Tests
+
+- **editors**: `generate editors` is proven over a real repository, with `just` where coverage runs (`c46ff6c72`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master 9d31c4d456 and the readings (`8d35e7165`)
+- **deploy**: Fly.io is not a target; the provider block and fly.toml leave the contract (`9af3fa65a`)
+- **derive**: the derived data follows the UI-performance batch with the slow screens (`c66f49e40`)
+- **release**: record v0.21.0 and the metadata it publishes (`7bc7e662c`)
+- **derive**: the derived data follows the UI-performance batch on v0.21.0 (`39d682a26`)
+- **derive**: the derived data follows the v0.21.0 top and the per-tree build (`1906935a4`)
+- **derive**: the derived data follows the remembered queue (`64352fc6a`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.22.0-aarch64-apple-darwin.tar.gz (`bd4f69a863cc`)
+- `macos-x86_64` — majordomus-v0.22.0-x86_64-apple-darwin.tar.gz (`aa02c341feb0`)
+- `linux-x86_64-gnu` — majordomus-v0.22.0-x86_64-unknown-linux-gnu.tar.gz (`879d2aa20108`)
+- `linux-x86_64-musl` — majordomus-v0.22.0-x86_64-unknown-linux-musl.tar.gz (`7ab2dd2fbe34`)
+- `linux-aarch64-gnu` — majordomus-v0.22.0-aarch64-unknown-linux-gnu.tar.gz (`7051bc83be12`)
+- `linux-aarch64-musl` — majordomus-v0.22.0-aarch64-unknown-linux-musl.tar.gz (`2c289bd004a0`)
+
+
+## v0.21.0 — 2026-10-12
+
+### Added
+
+- **build**: worktrees share what cargo compiles on the way (ADR 0139) (`c56b5b87c`)
+- **ui**: a rule opens its proof, and the rules it depends on and that depend on it (I2478) (`ae556b894`)
+- **ui**: an intent opens what serves it, its criteria and their evidence (I2476) (`5ba4b928a`)
+- **ui**: the issues are browsed by status, milestone, priority and text (I2475) (`bc8ee345d`)
+- **ui**: the drain draws its merge throughput over the fortnight its trail ends on (I2474) (`6a69100eb`)
+- **ui**: a pull request shows its trail, and the drain the lane's recent activity (I2473) (`41008d555`)
+- **integration**: how long CI takes is measured, and the CI/CD screen draws it (I2472) (`306cf3b05`)
+- **ui**: the roadmap opens a milestone, its critical path and its neighbours (I2471) (`6c8c17a44`)
+- **commands**: the effect class is declared per subcommand and flag (`378f93cc2`)
+- **ui**: the pull requests drain in the UI, narrowed, inspected and followed (I2470) (`2df014b2d`)
+- **integration**: a train of stacked pull requests is typed, served and drawn (`b60351428`)
+- **monitor**: a machine is named, a withdrawn review is news, a merge is told once (`73855209f`)
+- **offload**: a derive offloaded to a declared host waits its turn in a FIFO queue (`c1958f5d1`)
+- **ui**: the UI has every screen, and the mesh is an inspectable graph (I2462) (`59a993753`)
+- **integration**: a head stacked on a landed pull request merges on the verdict it has (`361fecf07`)
+- **session**: every session briefs itself on an interval (I2399, ADR 0136) (`dd5a6336c`)
+- **ui**: majordomus ui is the product, served at /ui (I2461, ADR 0135) (`9bcebb9f8`)
+- **integration**: a head that contains master still owes its allocated version (`606d9c61a`)
+- **site**: one search, opened from every page, over what the build published (`988aec549`)
+- **integration**: the executor allocates the version where it refreshes (`99c3eafd5`)
+- **site**: a number in prose is a number the repository states (`0824947bf`)
+- **site**: the landing page is a click-through story (`76fb37abe`)
+- **release**: the version a landing allocates is decided once, under a typed policy floor (`0e38ab5bf`)
+- **monitor**: everything that happens is followed in one stream (`bf08180a4`)
+- **mesh**: mesh.state and mesh.peers answer a summary that fits one tool answer (`1eb8d5fa8`)
+- **release**: a release publishes its metadata before its record lands (`45efcfead`)
+- **gates**: the closing question is answered by measurement (`303f8384f`)
+- **integration**: a head stacked on a landed pull request merges on the verdict it has (`e97caa007`)
+- **integration**: the executor reopens a record pull request no run was started for (I2296) (`44e2af08b`)
+- **knowledge**: a session leaves what it observed, and one candidate per defect is routed (`4afbde69e`)
+- **mesh**: the host firewall is a derived requirement with a verdict (`88fe975fc`)
+
+### Fixed
+
+- **test**: case 991's no-root probe defers its root, as case 1074's library now roots every script (`e95cbeed1`)
+- **test**: the published pair is compared on the figures it cites, not only the ones it types (`217e1b501`)
+- **ci**: case 1022 is renumbered 1086 and the mesh's test fixtures live in the mesh (`94ca56fe3`)
+- **ci**: the interaction probe is bounded at 3300 s, the site it walks having grown (`d7b1c82d6`)
+- **offload**: a refused apply no longer spoils the next offload of the same tree (`66600867a`)
+- **deploy**: a stage line is asserted with contains, not a manual any (`f48fcbca9`)
+- **cli**: two error paths no test can reach are folded into the answer (`57c27f784`)
+- **ui**: a slow panel cannot take the browser's connections (`1a552beb5`)
+- **integration**: a version conflict that cannot be resolved aborts the refresh merge (`7517f7c4a`)
+- **deploy**: an image that builds, caches, starts, and reuses the release binary (`d62f7e258`)
+- **test**: integration tests ignore the session's MAJORDOMUS_* environment (`f38533dba`)
+- **reap-orphans**: the shared build directory is removed through $target (`3312a5a3a`)
+- **deploy**: preserve generated artifact header contract (`045f576f5`)
+- **release**: the record is staged without naming an ignored path (`8517b0a12`)
+- **ci**: what #963's structure job and the ui audit found is paid (`24ab7f820`)
+- **evidence**: a file moved since the run changed at its old path too (`0e97eae55`)
+- **ci**: the coverage job's bound follows the crate it measures (`326a13a68`)
+- **ui**: a busy panel keeps its contrast, and a long fact value wraps (`05fa7e561`)
+- **ci**: the rest of what #957's run found below the top is paid (`c6c04bfd8`)
+- **train**: what #957's run found below the top is paid in one commit (`79bb4e3c1`)
+- **ui**: an unnumbered pull request is shown as unknown, not as #0 (`34d029bef`)
+- **ui**: a milestone named by a slug opens, and the roadmap's tests ask the screen as it is (I2471) (`08333dc61`)
+- **integration**: the trains command's doc renders under rustdoc (`aa1b399b1`)
+- **ui**: a mesh session shows the claims the summary counts (`bbc547e6c`)
+- **ui**: every screen renders in-process and passes the audit and design gates (I2461, I2462) (`d5580ae82`)
+- **lib**: a script that sources the library leaves no temporary files (`bcc6347d5`)
+- **mesh**: the mesh's own cases and lab ask for the full view (`1f9c8a0ec`)
+- **ci**: the slowest-case budget is re-derived from 2026-10-11's runs (`841ed86e8`)
+- **ui**: the UI is a described service and keeps its internals to itself (I2461, I2462) (`572494c22`)
+- **ci**: the slowest-case budget follows the 4127 s measured under a saturated pool (`4fb1dbd16`)
+- **release**: only the change that adds a release's record escapes the floor (`32999fa85`)
+- **monitor**: the withdrawal rule takes no context it does not read (`7d1d467ad`)
+- **release**: the record of the trunk's release lands at its number (`388353292`)
+- **release**: the record is staged without naming an ignored path (`1ba11643c`)
+- **integration**: carries_master owes a minor version, and its two branches are tested (`9993844bd`)
+- **integration**: the tests leave no temporary directory beside the system's (`770b464bc`)
+- **release**: the review of slice A, on the mesh: renames, empty changes, the floor's mode (`8e833d463`)
+- **release**: a landing measures the movement from where the head forked (`c8c6a9205`)
+- **ci**: the verdict asks every selected gate for a receipt (`f220f5e02`)
+- **integration**: carries_master owes a minor version, and its two branches are tested (`6dde8d38e`)
+- **gates**: every way a closing reading can fail is one a test reaches (`225f6ab38`)
+- **ci**: a projected record edited by a head is pending, not refused (`a8c7c77ad`)
+- **release**: the record is staged without naming an ignored path (`ca488f87a`)
+- **plan**: I2123 names the files it touches (`4868514a4`)
+- **mesh**: the nftables commands are ones nft accepts, and a command is ok by its exit (`47fc2d6a6`)
+- **mesh**: a lab node commits its declaration, and the trust root's paths are tested (`11472da40`)
+- **http**: a slow or silent client cannot hold the shared server (`ee9053efe`)
+- **ci**: a bench check and a status probe are not verdicts on the runner (`56a337e1a`)
+- **mesh**: no port is derived open to every source, and the firewall's code is tested (`e30630c99`)
+- **mesh**: a sync message stays under the link bound whatever the marks weigh (`060311a90`)
+- **mcp**: every MCP transport has a bound, and a session outlives its longest request (`9e018a302`)
+- **ci**: the suite is dealt from measured seconds, and case 51 runs beside the others (`37b825efe`)
+- **ci**: a registry hiccup and a slow sample are not verdicts (`71c3284e1`)
+- **lease**: a newer client replaces an older server, and an older client says it is older (`383309ae0`)
+- **integration**: unmirrored reads git's list without a branch nothing reaches (`4189fa949`)
+- **release**: an installed release serves a foreign repository (I2162) (`5f654cae6`)
+- **http**: a server busy with slow calls still answers the lease probe (`3be5cbbda`)
+- **serve**: a server someone is using is not idle, whatever the transport (`e80c336ba`)
+- **serve**: a superseded server hands its sessions on and ends (`5bb27f421`)
+- **serve**: the declared lease timings are the ones an election uses (`59dbfd1c0`)
+- **mesh**: a key withdrawn from the trust list loses its links without a restart (`9d09a4a5f`)
+- **mesh**: every mesh input has a bound, and a registration learns only its own trusted peers (`a0553dd19`)
+- **mesh**: paging mesh.events returns every event exactly once (`f820f5ab0`)
+- **http**: no answer, log line or handover carries a credential the redactor knows (`adb513dce`)
+- **mesh**: a hello names the runtime it is meant for, and no other runtime accepts it (`aa28332ca`)
+- **health**: ready means ready, and the mesh is a dimension of health (`721e9a917`)
+- **http**: the API page runs only what it ships, and a rebinding host reads nothing (`21ea43629`)
+- **http**: the writer list and the doc examples follow executions.start (`bde38800c`)
+- **mesh**: an accepted event is on disk before it counts, and a torn journal line is reported (`bb63c9439`)
+- **mesh**: a working tree may narrow the mesh's trust and never widen it (`4816d7c8a`)
+- **serve**: a lease is removed only by the process that holds it, and serve stop stops in order (`632acc00d`)
+- **mcp**: a tool call that may have run is never sent a second time (`7f956339a`)
+- **mesh**: an event reloaded from disk meets the trust policy in force (`477f417d9`)
+- **mesh**: the MacBook hubs are named by their tailnet address (`a9cf1f295`)
+- **http**: a caller beyond loopback reads, and changes nothing it cannot authenticate (`8d6e0c76e`)
+- **integration**: a missing pull ref is one unknown head, not a failed refresh (`fe13037d1`)
+
+### Performance
+
+- **docker**: materialize generated cached multistage image (`4069a90b7`)
+- **deploy**: derive BuildKit dependency and local compiler cache stages (`4a221398f`)
+- **release**: the changelog asks git when each decision was added side by side (`65429c638`)
+- **dashboard**: the overview asks its sources at once (I2460) (`51b8def04`)
+
+### Documentation
+
+- **rustdoc**: the batch documents with -D warnings (`58b31d489`)
+- **ui**: the pull-request detail is documented and accepted (I2462) (`8d34e1f7a`)
+- **campaigns**: the living-site V2 pack is measured against its premise (`6d5254e96`)
+- **mesh**: every public item of the summary view carries an example (`642a4563a`)
+- **ci**: the critical path of 2026-10-10 is measured and recorded (`705890da2`)
+- **plan**: I2282, the record pull request's dispatched verdict does not satisfy branch protection (`fdcdb3916`)
+
+### Tests
+
+- **coverage**: the lease's lock warning and the test network's refusal are covered (`d765ef1d5`)
+- **monitor**: the monitor, the lease and their neighbours are covered to the last line (`dbbcb1228`)
+- **ui**: the drain, timings and train views are covered to the last line (`c4686c286`)
+- **release**: the allocation, the landing and the prs commands are covered to the last line (`a706d00ee`)
+- **mesh**: every changed line of the mesh command and runtime is covered (`0c65eedf6`)
+- **integration**: the drain, the relation and their neighbours are covered (`f4283b34b`)
+- **runtime**: the monitor, the lease, the server and the MCP transports are covered (`0963cda5b`)
+- **deploy**: enforce cache stages and canonical Rust toolchain (`3ca910911`)
+- **brief,train**: every changed line of the brief and the train view is covered (`e8b1c6235`)
+- **offload**: every changed line of the derive offload is covered (`ee320559e`)
+- **coverage**: the UI, the landing and the allocation code of the train are covered (`cbd0b6525`)
+- **integration**: the trains command, the allocation repair and their neighbours are covered (`ca05abf0b`)
+- **mesh**: the journal's file paths and the trunk's refusals are covered (`0cd52569c`)
+- **release**: the release module's declaration test names release.next (`6c2531385`)
+- **http**: a forbidden capability error is covered on every path it takes (`554734807`)
+- **mesh**: a value that is not a key is rejected by every trust policy (`3a0eec0d6`)
+- **serve**: a server stops on a signal whether it reads a pipe or runs unbounded (`19fdd2a0d`)
+- **executions**: the all-executions channel is subscribed before the execution it must see (`969c2d289`)
+- **integration**: the fallback's own failures are tested, and refresh reads what was fetched (`7513bd1ce`)
+
+### Pipeline
+
+- **docker**: publish SHA images and reusable GHCR BuildKit cache (`ea8c47dc8`)
+
+### Housekeeping
+
+- **derive**: the derived data follows #963's assembled head 01c76facd0 (`17aab87ac`)
+- **derive**: the derived data follows master 00496ba981 and ADR 0139 (`e88e4a3b3`)
+- **derive**: the derived data follows ADR 0139 and the merged head (`6ffacd1ac`)
+- **derive**: the derived data follows the merged head (I1981) (`ac95d3b32`)
+- **derive**: regenerate the derived data for the per-subcommand effects (I1981) (`63ee47852`)
+- **derive**: the derived data follows master 7377fe6568 (#944) (`58d0516f2`)
+- **derive**: the derived data follows the train's segment-2 top refs/prep/948 (3935dc8c49) (`74747e93e`)
+- **release**: the mesh views declare the 0.21.0 their public contract requires (`be515d65c`)
+- **derive**: the derived data follows the release-record fix on the first link (`320651645`)
+- **derive**: the derived data follows the first link on master 1393d9ef2a (`0feda12a1`)
+- **derive**: the derived data follows master 1393d9ef2a (`7624fbd2f`)
+- **campaigns**: the Operation Zero night-shift pack is tracked (`236b4691b`)
+- **campaigns**: every pack that arrived after the first import is tracked (`c9f20dc7b`)
+- **integration**: derive slice B on slice A's review fixes (`3b883e284`)
+- **derive**: the derived data follows the head this branch is stacked on (fabcbcfcb5) (`68369163c`)
+- **derive**: the derived data follows the head this branch is stacked on (42053b941b) (`fabcbcfcb`)
+- **derive**: the derived data follows the head this branch is stacked on (54a91603bb) (`42053b941`)
+- **derive**: the derived data follows the head this branch is stacked on (cd4d0fac1a) (`54a91603b`)
+- **derive**: the derived data follows the head this branch is stacked on (7d1cb5c8e5) (`cd4d0fac1`)
+- **campaigns**: every pack the owner handed over is tracked, and named with its plan (`9b44f6db5`)
+- **derive**: the derived data follows the head this branch is stacked on (684af31491) (`7d1cb5c8e`)
+- **derive**: the derived data follows the head this branch is stacked on (dc6d7bd088) (`684af3149`)
+- **derive**: the derived data follows the head this branch is stacked on (0c9c59a268) (`dc6d7bd08`)
+- **derive**: the derived data follows #909's head 969316d06d (`dcb097394`)
+- **release**: raise to 0.21.0 for the public surface #860 moves, and derive (`0c9c59a26`)
+- **release**: raise to 0.21.0, and derive on master's merge (`e87106f98`)
+- **release**: raise to 0.21.0 for the reopen trail words, and derive (`969316d06`)
+- **plan**: I2301 is done, with its evidence at ecb51b2772 (`2841459fa`)
+- **release**: raise to 0.21.0, and derive on master's merge (`ded406196`)
+- **derive**: the derived data follows #909's head dcf87a48cc (`f37c0facb`)
+- **derive**: the derived data follows master 890e112 (`dcf87a48c`)
+- **campaigns**: file the Opus/Fable mesh-pack prompt pack as received (`eebab6b00`)
+- **derive**: regenerate after merging master (890e112d04) (`ecb51b277`)
+- **derive**: the derived data follows master 4dfd1856d2 (0.20.0) (`8e648aa8e`)
+- **derive**: the derived data follows the head this branch is stacked on (50abe5d31d) (`77cdfcbae`)
+- **derive**: the derived data follows the head this branch is stacked on (8408185fa5) (`50abe5d31`)
+- **derive**: the derived data follows the head this branch is stacked on (a313ef424c) (`8408185fa`)
+- **derive**: the derived data follows the head this branch is stacked on (75667858da) (`a313ef424`)
+- **derive**: the derived data follows the head this branch is stacked on (d3d6cedac9) (`75667858d`)
+- **derive**: the derived data follows the head this branch is stacked on (e85b3c6c14) (`d3d6cedac`)
+- **derive**: the derived data follows the head this branch is stacked on (f09bee167b) (`e85b3c6c1`)
+- **derive**: the derived data follows the head this branch is stacked on (c69ffe4196) (`f09bee167`)
+- **derive**: the derived data follows the head this branch is stacked on (396ba67341) (`c69ffe419`)
+- **derive**: the derived data follows the head this branch is stacked on (10ebd1a1e4) (`eae89cd3f`)
+- **derive**: the derived data follows the head this branch is stacked on (451576e426) (`10ebd1a1e`)
+- **release**: record v0.20.0 and the metadata it publishes (`451576e42`)
+- **integration**: carry the review fixes to origin without a run (`db90c48c0`)
+- **integration**: carry the review fixes to origin without a run (`2bbbe6928`)
+- **derive**: the projections of the committed merge (`07cc1b819`)
+- **derive**: the derived data follows the head this branch is stacked on (1c5be3baa8) (`6c547edd9`)
+- **derive**: the derived data follows the head this branch is stacked on (c343e834c0) (`1c5be3baa`)
+- **derive**: the derived data follows the head this branch is stacked on (e8a75ddb75) (`c343e834c`)
+- **derive**: the derived data follows the head this branch is stacked on (f37b129016) (`e8a75ddb7`)
+- **derive**: the derived data follows the head this branch is stacked on (3fd1894393) (`f37b12901`)
+- **derive**: the derived data follows the head this branch is stacked on (d9251c6a6f) (`3fd189439`)
+- **derive**: the derived data follows the head this branch is stacked on (29b33daf93) (`d9251c6a6`)
+- **derive**: the derived data follows the head this branch is stacked on (12d2524e5f) (`bfc0dd709`)
+- **derive**: the derived data follows the head this branch is stacked on (2b782e1280) (`12d2524e5`)
+- **derive**: the derived data follows #855's head 192ace8d0a (`2b782e128`)
+- **integration**: carry the hand-made merge to origin without a run (`210b2194d`)
+- **derive**: regenerate after merging master (`75a1962a0`)
+- **derive**: regenerate after merging master (`adeda4a74`)
+- **derive**: regenerate after merging master (`5fc4d6b37`)
+- **derive**: regenerate after merging master (`a1da0ba23`)
+- **derive**: regenerate after merging master (`437dad018`)
+- **derive**: regenerate after merging master (`3804c84b1`)
+- **derive**: regenerate after merging master (`4e555bf3a`)
+- **derive**: regenerate after merging master (`71022ef7a`)
+- **derive**: the derived data follows the merged master (`e927547a8`)
+- **derive**: regenerate after merging master (`265750f78`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.21.0-aarch64-apple-darwin.tar.gz (`0aa31ca2883e`)
+- `macos-x86_64` — majordomus-v0.21.0-x86_64-apple-darwin.tar.gz (`93bf75213ab0`)
+- `linux-x86_64-gnu` — majordomus-v0.21.0-x86_64-unknown-linux-gnu.tar.gz (`9ad96b9f7f53`)
+- `linux-x86_64-musl` — majordomus-v0.21.0-x86_64-unknown-linux-musl.tar.gz (`d68f1e86c855`)
+- `linux-aarch64-gnu` — majordomus-v0.21.0-aarch64-unknown-linux-gnu.tar.gz (`b81832a45721`)
+- `linux-aarch64-musl` — majordomus-v0.21.0-aarch64-unknown-linux-musl.tar.gz (`904210a20060`)
+
+
+## v0.20.0 — 2026-10-10
+
+### Added
+
+- **release**: a released archive carries a provenance attestation the installer checks (I2165) (`dd5ec84ac`)
+
+### Fixed
+
+- **plan**: I2114 names the files it touches, and I1900 is left as master has it (`192ace8d0`)
+- **derive**: the lock's script holds under pipefail, and its cases see it (`7455ed364`)
+- **derive**: one derive at a time, no orphans, sees what commits will (`6a1e63bbe`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master a804ae2045 (0.20.0) (`f1a892ebc`)
+- **release**: raise to 0.20.0 for the provenance feature, and derive (`7fb5e276c`)
+- **release**: record v0.19.1 and the metadata it publishes (`03e1d8a59`)
+- **ci**: the case bound and the slowest-case budget are measured, not typed (`b1ab190d0`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.20.0-aarch64-apple-darwin.tar.gz (`74c11b2a46fb`)
+- `macos-x86_64` — majordomus-v0.20.0-x86_64-apple-darwin.tar.gz (`7eb3e79b5125`)
+- `linux-x86_64-gnu` — majordomus-v0.20.0-x86_64-unknown-linux-gnu.tar.gz (`beb2cd4bcf6d`)
+- `linux-x86_64-musl` — majordomus-v0.20.0-x86_64-unknown-linux-musl.tar.gz (`7e544a0de55d`)
+- `linux-aarch64-gnu` — majordomus-v0.20.0-aarch64-unknown-linux-gnu.tar.gz (`9bce00acf355`)
+- `linux-aarch64-musl` — majordomus-v0.20.0-aarch64-unknown-linux-musl.tar.gz (`84b4201b176e`)
+
+
+## v0.19.1 — 2026-10-10
+
+### Fixed
+
+- **mcp**: a refusal from a serving shared server is answered, and elects nobody (`8425606a1`)
+
+### Housekeeping
+
+- **derive**: follow the v0.19.0 record (`19aa4ff6a`)
+- **release**: record v0.19.0 and the metadata it publishes (`121f7dd87`)
+- **release**: raise to 0.19.1 and derive (`8811c8a23`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.19.1-aarch64-apple-darwin.tar.gz (`9fd32a821069`)
+- `macos-x86_64` — majordomus-v0.19.1-x86_64-apple-darwin.tar.gz (`01665bd8de68`)
+- `linux-x86_64-gnu` — majordomus-v0.19.1-x86_64-unknown-linux-gnu.tar.gz (`6271f177b590`)
+- `linux-x86_64-musl` — majordomus-v0.19.1-x86_64-unknown-linux-musl.tar.gz (`3e91ceb9e396`)
+- `linux-aarch64-gnu` — majordomus-v0.19.1-aarch64-unknown-linux-gnu.tar.gz (`62589191c7cd`)
+- `linux-aarch64-musl` — majordomus-v0.19.1-aarch64-unknown-linux-musl.tar.gz (`d508e4c54d30`)
+
 
 ## v0.19.0 — 2026-10-09
 

@@ -11,6 +11,7 @@
 //! claims, handovers, reviews. There is no remote execution here for a linked peer to gain.
 
 use std::collections::BTreeMap;
+use std::net::Ipv4Addr;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -18,15 +19,18 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
-    BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, Stability, WaiverReason,
+    BenchmarkPolicy, CachePolicy, CapabilityKind, CliExposure, Exposure, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::mesh::address::interfaces;
 use crate::mesh::cooperation::{
     Cooperation, CooperationError, CooperationStatus, MeshVerifyReport, PeerView, RefusedView,
     Written,
 };
+use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
 use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
+use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
 use crate::mesh::rendezvous::REGISTER_PATH;
 use crate::mesh::state::{ClaimView, CooperationState, HandoverView, SessionState};
 use crate::mesh::{
@@ -124,21 +128,89 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
     let runtime = ctx.mesh.decided().then(|| ctx.mesh.status());
-    Ok(crate::mesh::doctor::doctor_at(
-        declaration(ctx),
-        Some(root),
-        runtime.as_ref(),
-    ))
+    let resolved = resolved_declaration(ctx);
+    let source = crate::mesh::doctor::declaration_source(&resolved);
+    let mut report =
+        crate::mesh::doctor::doctor_at(resolved.declaration, Some(root), runtime.as_ref());
+    if let Some(check) = source {
+        report.checks.push(check);
+    }
+    // the journal is judged only where a runtime holds one
+    if let Some(cooperation) = ctx.mesh.cooperation() {
+        report.checks.push(crate::mesh::doctor::journal_check(
+            &cooperation.journal().tallies(),
+        ));
+    }
+    // one conjunction over every check, so neither added check's failure can be lost
+    report.ok = report.checks.iter().all(|c| c.ok);
+    Ok(report)
 }
 
-/// The repository's mesh declaration, as the index discovered it: `None` when no object
-/// of the kind exists, the parse verdict when one does.
+// ---------------------------------------------------------------- mesh.firewall
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.firewall` and `mesh.firewall.apply`.
+pub struct FirewallInput {
+    /// The port this checkout's server listens on beyond loopback, when it does: a peer
+    /// dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+    /// holds the discovery ports and the hub ports the declaration gives this machine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+}
+
+impl BenchmarkCases for FirewallInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("declared", FirewallInput { port: None })]
+    }
+}
+
+/// The report over this checkout's declaration and this machine's interfaces.
+fn firewall_report(ctx: &Context, input: &FirewallInput) -> FirewallReport {
+    let config = declaration(ctx).and_then(|d| d.ok());
+    let local: Vec<Ipv4Addr> = interfaces().into_iter().map(|(_, ip)| ip).collect();
+    crate::mesh::firewall::report(config.as_ref(), &local, input.port)
+}
+
+fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
+    Ok(firewall_report(ctx, &input))
+}
+
+fn mesh_firewall_apply(
+    ctx: &Context,
+    input: FirewallInput,
+) -> Result<FirewallApplyReport, CapabilityError> {
+    Ok(crate::mesh::firewall::apply(firewall_report(ctx, &input)))
+}
+
+/// Put the declaration's trust in force on a running cooperation runtime, ending the links of
+/// every key it no longer trusts (I2134). The server calls this with each new generation of the
+/// repository it reads, so a key withdrawn from `trust.allow` and committed loses its links
+/// without a restart. Returns the runtime keys whose links ended.
+pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
+    let (Some(cooperation), Some(Ok(config))) = (ctx.mesh.cooperation(), declaration(ctx)) else {
+        return Vec::new();
+    };
+    cooperation.retrust(config.trust)
+}
+
+/// The repository's mesh declaration in force: `None` when no object of the kind exists,
+/// the parse verdict when one does — the working tree's copy with every widening of the
+/// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,
+/// so the runtime, the doctor and every status agree on what is obeyed.
 pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
-    ctx.index
+    resolved_declaration(ctx).declaration
+}
+
+/// [`declaration`], with the trunk it was held against and what was narrowed.
+pub(crate) fn resolved_declaration(ctx: &Context) -> crate::mesh::root::Resolved {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let working = ctx
+        .index
         .objects
         .iter()
-        .find(|o| o.kind == crate::mesh::KIND)
-        .map(MeshConfig::parse)
+        .find(|o| o.kind == crate::mesh::KIND);
+    crate::mesh::root::resolve(root, working)
 }
 
 // ---------------------------------------------------------------- mesh.register
@@ -229,8 +301,10 @@ pub struct SessionNode {
     pub info: SessionInfo,
     /// Its standing.
     pub state: SessionState,
-    /// The claims it holds or held.
+    /// The claims it holds or held; empty in the summary view, which counts them instead.
     pub claims: Vec<ClaimView>,
+    /// How many of its claims are live.
+    pub claims_held: usize,
     /// The review requests it opened, by key.
     pub reviews: Vec<String>,
 }
@@ -250,7 +324,10 @@ pub struct RuntimeNode {
     /// This runtime's link to it, when there is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub link: Option<PeerView>,
-    /// Its sessions.
+    /// Its newest live claim, told briefly.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub newest_claim: Option<ClaimBrief>,
+    /// Its sessions; in the summary view only the active ones.
     pub sessions: Vec<SessionNode>,
 }
 
@@ -281,6 +358,8 @@ impl crate::order::Ordered for MachineNode {
 pub struct PeerTree {
     /// Whether cooperation runs.
     pub active: bool,
+    /// What the answer carries: `summary` or `full`.
+    pub view: View,
     /// Why not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
@@ -307,10 +386,15 @@ fn rank(l: StreamLiveness) -> u8 {
     }
 }
 
-/// Build the peer tree from a running cooperation.
-pub fn peer_tree(c: &Cooperation) -> PeerTree {
+/// Build the peer tree from a running cooperation, narrowed and viewed as `query` asks. The
+/// summary view keeps every runtime and only the active sessions, each with its claims
+/// counted rather than listed and its intent cut; the full view is every session with every
+/// claim. Either way the digest is the whole fold's.
+pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
     let status = c.status();
-    let state = c.state();
+    let whole = c.state();
+    let state = page::narrow(&whole, query);
+    let summary = query.view() == View::Summary;
     let links: BTreeMap<String, PeerView> = status
         .peers
         .iter()
@@ -330,6 +414,7 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
                 liveness,
                 last_beat_ms: age,
                 link: None,
+                newest_claim: None,
                 sessions: Vec::new(),
             });
         if rank(liveness) < rank(node.liveness) {
@@ -348,13 +433,41 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
     for (key, node) in runtimes.iter_mut() {
         node.link = links.get(key).cloned();
     }
+    for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
+        // every claim's runtime is a node: each stream of the journal was touched above
+        runtimes.entry(claim.runtime.clone()).and_modify(|runtime| {
+            let newer = runtime
+                .newest_claim
+                .as_ref()
+                .is_none_or(|b| claim.acquired_lamport > b.acquired_lamport);
+            if newer {
+                runtime.newest_claim = Some(ClaimBrief {
+                    key: claim.key.clone(),
+                    session: claim.session.clone(),
+                    issue: claim.issue.clone(),
+                    intent: claim.intent.as_deref().map(page::cut),
+                    paths: claim.scope.len(),
+                    mode: claim.mode,
+                    acquired_lamport: claim.acquired_lamport,
+                });
+            }
+        });
+    }
     for session in &state.sessions {
-        let claims = state
+        if summary && session.state != SessionState::Active {
+            continue;
+        }
+        let claims: Vec<ClaimView> = state
             .claims
             .iter()
             .filter(|cl| cl.session == session.key)
             .cloned()
             .collect();
+        let claims_held = claims.iter().filter(|cl| cl.state.is_live()).count();
+        let mut info = session.info.clone();
+        if summary {
+            info.intent = info.intent.as_deref().map(page::cut);
+        }
         let reviews = state
             .reviews
             .iter()
@@ -364,9 +477,10 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
         if let Some(runtime) = runtimes.get_mut(&session.runtime) {
             runtime.sessions.push(SessionNode {
                 key: session.key.clone(),
-                info: session.info.clone(),
+                info,
                 state: session.state,
-                claims,
+                claims: if summary { Vec::new() } else { claims },
+                claims_held,
                 reviews,
             });
         }
@@ -401,20 +515,22 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
     crate::order::canonical(&mut machines);
     PeerTree {
         active: status.active,
+        view: query.view(),
         reason: status.reason,
         runtime: status.runtime,
         repository: status.repository.map(|r| r.id),
         machines,
         refused: status.refused,
-        digest: Some(state.digest),
+        digest: Some(whole.digest),
     }
 }
 
-fn mesh_peers(ctx: &Context, _: Empty) -> Result<PeerTree, CapabilityError> {
+fn mesh_peers(ctx: &Context, query: Query) -> Result<PeerTree, CapabilityError> {
     Ok(match ctx.mesh.cooperation() {
-        Some(c) => peer_tree(&c),
+        Some(c) => peer_tree(&c, &query),
         None => PeerTree {
             active: false,
+            view: query.view(),
             reason: ctx.mesh.cooperation_status().reason,
             runtime: None,
             repository: None,
@@ -474,7 +590,11 @@ fn mesh_peer(ctx: &Context, input: PeerInput) -> Result<PeerDetail, CapabilityEr
             refused: Vec::new(),
         });
     };
-    let tree = peer_tree(&c);
+    let full = Query {
+        view: Some(View::Full),
+        ..Query::default()
+    };
+    let tree = peer_tree(&c, &full);
     let wanted = input.runtime.trim();
     let hit = tree.machines.iter().find_map(|m| {
         m.runtimes
@@ -524,37 +644,69 @@ pub struct StreamView {
 pub struct MeshStateAnswer {
     /// Whether cooperation runs.
     pub active: bool,
+    /// What the answer carries: `summary` or `full`.
+    pub view: View,
     /// Why not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
-    /// The folded state, when cooperation runs.
+    /// The summary, in the summary view: counts, each runtime's newest live claim, the
+    /// open reviews and the untaken handovers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<Summary>,
+    /// The folded state narrowed by the filters, in the full view; its digest is the whole
+    /// fold's.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
 }
 
-fn mesh_state(ctx: &Context, _: Empty) -> Result<MeshStateAnswer, CapabilityError> {
-    Ok(match ctx.mesh.cooperation() {
-        Some(c) => MeshStateAnswer {
-            active: true,
-            reason: None,
-            state: Some(c.state()),
-            streams: c
-                .streams()
-                .into_iter()
-                .map(|(stream, liveness, last_beat_ms)| StreamView {
-                    stream,
-                    liveness,
-                    last_beat_ms,
-                })
-                .collect(),
-        },
-        None => MeshStateAnswer {
+fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, CapabilityError> {
+    let view = query.view();
+    let Some(c) = ctx.mesh.cooperation() else {
+        return Ok(MeshStateAnswer {
             active: false,
+            view,
             reason: ctx.mesh.cooperation_status().reason,
+            summary: None,
             state: None,
             streams: Vec::new(),
+        });
+    };
+    let state = page::narrow(&c.state(), &query);
+    let streams: Vec<StreamView> = c
+        .streams()
+        .into_iter()
+        .filter(|(stream, _, _)| query.admits_runtime(&stream.runtime_key()))
+        .map(|(stream, liveness, last_beat_ms)| StreamView {
+            stream,
+            liveness,
+            last_beat_ms,
+        })
+        .collect();
+    Ok(match view {
+        View::Summary => {
+            let beats: Vec<_> = streams
+                .iter()
+                .map(|s| (s.stream.runtime_key(), s.liveness, s.last_beat_ms))
+                .collect();
+            MeshStateAnswer {
+                active: true,
+                view,
+                reason: None,
+                summary: Some(page::summarize(&state, &beats)),
+                state: None,
+                // the streams are the summary's runtimes, told once
+                streams: Vec::new(),
+            }
+        }
+        View::Full => MeshStateAnswer {
+            active: true,
+            view,
+            reason: None,
+            summary: None,
+            state: Some(state),
+            streams,
         },
     })
 }
@@ -592,7 +744,9 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The highest Lamport stamp the journal has seen: the `after` of the next page.
+    /// The `after` of the next page: the stamp of the last event this page carries, or the
+    /// `after` that was asked when it carries none. A page never ends inside a run of equal
+    /// stamps, so resuming after it misses nothing (I2140).
     pub lamport: u64,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
@@ -608,11 +762,12 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
-    let events = c.journal().events_after(input.after.unwrap_or(0), limit);
+    let after = input.after.unwrap_or(0);
+    let events = c.journal().events_after(after, limit);
     Ok(EventList {
         active: true,
         count: events.len(),
-        lamport: c.journal().tallies().lamport,
+        lamport: events.last().map_or(after, |e| e.lamport),
         events,
     })
 }
@@ -979,6 +1134,10 @@ pub struct ReviewRequestInput {
     /// The runtime asked (`<node>-<runtime>`); anyone when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question. Up to
+    /// 8 KiB, several lines.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
 }
 
 impl BenchmarkCases for ReviewRequestInput {
@@ -991,6 +1150,7 @@ impl BenchmarkCases for ReviewRequestInput {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                body: None,
             },
         )]
     }
@@ -1008,6 +1168,7 @@ fn mesh_review_request(
         input.scope,
         input.issue,
         input.reviewer,
+        input.body,
     )
     .map_err(map_error)
 }
@@ -1046,6 +1207,44 @@ fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
     c.answer_review(&input.request, &session, input.verdict, input.note)
+        .map_err(map_error)
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.review.withdraw`.
+pub struct ReviewWithdrawInput {
+    /// The request's key, `<stream>/<review>`.
+    pub request: String,
+    /// The withdrawing session of the asking runtime; the calling MCP session's own when
+    /// omitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// The requester's result or reason, up to 8 KiB: what came of it, or why it is void.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+impl BenchmarkCases for ReviewWithdrawInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "unknown",
+            ReviewWithdrawInput {
+                request: "none/r-0".into(),
+                session: Some("bench".into()),
+                note: Some("superseded".into()),
+            },
+        )]
+    }
+}
+
+fn mesh_review_withdraw(
+    ctx: &Context,
+    input: ReviewWithdrawInput,
+) -> Result<Written, CapabilityError> {
+    let c = cooperation(ctx)?;
+    let session = session_of(ctx, input.session)?;
+    c.withdraw_review(&input.request, &session, input.note)
         .map_err(map_error)
 }
 
@@ -1159,6 +1358,41 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_doctor,
             },
             capability! {
+                id: "mesh.firewall",
+                title: "The host firewall, as the mesh needs it",
+                description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+                input: FirewallInput,
+                output: FirewallReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_firewall"),
+                    http: get("/api/v1/mesh/firewall"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "firewall".into()] }),
+                },
+                tags: ["mesh", "diagnostics", "firewall"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_firewall,
+            },
+            capability! {
+                id: "mesh.firewall.apply",
+                kind: CapabilityKind::Command,
+                title: "Admit the mesh through the host firewall",
+                description: "Run the commands mesh.firewall renders, on this host, as root: one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall; nothing else is touched, and every rule written carries the comment `majordomus mesh` so it can be told from an operator's own. Refuses, running nothing, without root or without a backend; records every command with its exit and output; and asks the firewall again afterwards, so the verdict is the firewall's. Offered on the command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP may do.",
+                input: FirewallInput,
+                output: FirewallApplyReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "firewall".into(), "apply".into()] }),
+                },
+                tags: ["mesh", "firewall"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_firewall_apply,
+            },
+            capability! {
                 id: "mesh.register",
                 kind: CapabilityKind::Command,
                 title: "Register with this node's mesh",
@@ -1169,7 +1403,10 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_register"), http: post(REGISTER_PATH), cli: None },
                 tags: ["mesh", "coordination", "discovery"],
                 handler: mesh_register,
-            },
+            }
+            // the caller is another machine by design, admitted by the signature on its envelope
+            // and the trust policy, never by its address (ADR 0126)
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.cooperation",
                 title: "Cooperation, at a glance",
@@ -1184,8 +1421,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.peers",
                 title: "Who cooperates, machine by machine",
-                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
-                input: Empty,
+                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.",
+                input: Query,
                 output: PeerTree,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_peers"), http: get("/api/v1/mesh/peers"), cli: None },
@@ -1206,8 +1443,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.state",
                 title: "The state every linked runtime converges on",
-                description: "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
-                input: Empty,
+                description: "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
+                input: Query,
                 output: MeshStateAnswer,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_state"), http: get("/api/v1/mesh/state"), cli: None },
@@ -1343,6 +1580,19 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_review_answer,
             },
             capability! {
+                id: "mesh.review.withdraw",
+                kind: CapabilityKind::Command,
+                title: "Withdraw a review request",
+                description: "End a review request this runtime asked for — done, void or superseded — with an optional result note the request then carries. Any session of the asking runtime may (a reconnected asker is another session of it); no other runtime may, and it is never counted as an answer. An unanswered request also reads expired while its runtime has stopped beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+                input: ReviewWithdrawInput,
+                output: Written,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_review_withdraw"), http: post("/api/v1/mesh/reviews/withdraw"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_review_withdraw,
+            },
+            capability! {
                 id: "mesh.link.hello",
                 kind: CapabilityKind::Command,
                 title: "Open a link (the handshake)",
@@ -1353,7 +1603,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(HELLO_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_hello,
-            },
+            }
+            // a hello is signed by the dialling node and verified before a link is admitted
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.link.sync",
                 kind: CapabilityKind::Command,
@@ -1365,7 +1617,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(SYNC_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_sync,
-            },
+            }
+            // a sync round is signed under the link's key and verified before anything is ingested
+            .authenticates_its_input(),
         ],
     }
 }
@@ -1397,6 +1651,13 @@ mod tests {
                 Some("majordomus_mesh_doctor"),
                 "/api/v1/mesh/doctor",
             ),
+            (
+                "mesh.firewall",
+                Some("majordomus_mesh_firewall"),
+                "/api/v1/mesh/firewall",
+            ),
+            // the one command served nowhere over HTTP: it runs a privileged host tool
+            ("mesh.firewall.apply", None, ""),
             (
                 "mesh.register",
                 Some("majordomus_mesh_register"),
@@ -1472,6 +1733,11 @@ mod tests {
                 Some("majordomus_mesh_review_answer"),
                 "/api/v1/mesh/reviews/answer",
             ),
+            (
+                "mesh.review.withdraw",
+                Some("majordomus_mesh_review_withdraw"),
+                "/api/v1/mesh/reviews/withdraw",
+            ),
             ("mesh.link.hello", None, HELLO_PATH),
             ("mesh.link.sync", None, SYNC_PATH),
         ];
@@ -1494,7 +1760,7 @@ mod tests {
             );
             assert_eq!(
                 exposure.http.as_ref().map(|h| h.path.as_str()),
-                Some(*path),
+                (!path.is_empty()).then_some(*path),
                 "{id} lost or renamed its HTTP route"
             );
         }
@@ -1510,6 +1776,7 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.firewall",
             "mesh.cooperation",
             "mesh.peers",
             "mesh.peer",
@@ -1526,12 +1793,22 @@ mod tests {
                 c.id
             );
             if !is_query {
-                assert_eq!(
-                    c.exposure.http.as_ref().map(|h| h.method.as_str()),
-                    Some("POST"),
-                    "{} changes state and must be a POST",
-                    c.id
-                );
+                match c.exposure.http.as_ref() {
+                    Some(h) => assert_eq!(
+                        h.method.as_str(),
+                        "POST",
+                        "{} changes state and must be a POST",
+                        c.id
+                    ),
+                    // a command served nowhere over HTTP runs a privileged host tool,
+                    // which nothing reachable over the network may do; there is one
+                    None => assert_eq!(
+                        c.id.as_str(),
+                        "mesh.firewall.apply",
+                        "{}: a command without an HTTP route must be the firewall's",
+                        c.id
+                    ),
+                }
             }
             assert_ne!(
                 c.execution.effect,
@@ -1540,5 +1817,182 @@ mod tests {
                 c.id
             );
         }
+    }
+
+    /// A cooperation runtime that dials nobody until it is started, which these never are.
+    fn cooperation() -> std::sync::Arc<Cooperation> {
+        crate::mesh::testing::cooperation()
+    }
+
+    /// A context over a synthetic repository, with a mesh declaration in its working tree
+    /// when `declared`.
+    fn context(declared: bool) -> (crate::synthetic::SyntheticRepository, Context) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        if declared {
+            index.objects.push(crate::model::Object {
+                kind: crate::mesh::KIND.into(),
+                identity: "majordomus".into(),
+                uri: "majordomus://mesh-declaration/majordomus".into(),
+                title: None,
+                description: None,
+                metadata: serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus",
+                    "enabled": true, "trust": { "policy": "deny_unknown", "allow": [] },
+                }),
+                body: String::new(),
+                content: String::new(),
+                media_type: "application/yaml",
+                provenance: crate::model::Provenance {
+                    path: ".ai/repo/mesh/majordomus.yaml".into(),
+                    directory: ".ai/repo/mesh".into(),
+                    source_class: "mesh-declaration".into(),
+                    section: None,
+                    bytes: 0,
+                    member: None,
+                },
+            });
+        }
+        let registry = capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        (repo, ctx)
+    }
+
+    #[test]
+    fn retrust_asks_the_running_cooperation_with_the_declaration_in_force() {
+        let (_repo, ctx) = context(true);
+        assert!(
+            matches!(declaration(&ctx), Some(Ok(_))),
+            "the declaration parses"
+        );
+        assert!(retrust(&ctx).is_empty(), "no cooperation, nothing to end");
+        ctx.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&ctx).is_empty(),
+            "a runtime with no links ends none"
+        );
+        let (_repo, undeclared) = context(false);
+        undeclared.mesh.attach_cooperation(cooperation());
+        assert!(
+            retrust(&undeclared).is_empty(),
+            "no declaration, no trust to put in force"
+        );
+    }
+
+    #[test]
+    fn a_peer_asked_of_a_server_without_cooperation_is_not_found_with_the_reason() {
+        let (_repo, ctx) = context(false);
+        ctx.mesh.decline_cooperation("no endpoint to be dialed at");
+        let detail = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "anything".into(),
+            },
+        )
+        .unwrap();
+        assert!(!detail.found);
+        assert_eq!(
+            detail.reason.as_deref(),
+            Some("no endpoint to be dialed at")
+        );
+        assert!(detail.machine.is_none() && detail.runtime.is_none() && detail.refused.is_empty());
+    }
+
+    #[test]
+    fn a_peer_is_found_by_its_runtime_key_in_the_full_tree_and_another_is_not() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let own = c.runtime_key().to_string();
+        let found = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: format!(" {own} "),
+            },
+        )
+        .unwrap();
+        assert!(found.found, "{found:?}");
+        assert_eq!(found.runtime.map(|r| r.runtime), Some(own));
+        let missing = mesh_peer(
+            &ctx,
+            PeerInput {
+                runtime: "nobody".into(),
+            },
+        )
+        .unwrap();
+        assert!(!missing.found);
+        assert_eq!(
+            missing.reason.as_deref(),
+            Some("no runtime nobody is linked or heard here")
+        );
+    }
+
+    #[test]
+    fn the_summary_tree_lists_active_sessions_counted_and_the_full_one_every_claim() {
+        let c = cooperation();
+        let s1 = SessionInfo::named("s1", "test");
+        c.open_session(s1.clone()).unwrap();
+        // the older claim's id sorts last, so the fold lists the newer one first and the
+        // older one meets a newest it does not replace
+        for (claim, path, issue) in [("z1", "apps", "#1"), ("a2", "docs", "#2")] {
+            c.journal()
+                .append_own(crate::mesh::journal::EventBody::ClaimAcquired {
+                    claim: claim.into(),
+                    session: s1.session.clone(),
+                    scope: vec![path.into()],
+                    intent: Some("a long intent ".repeat(20)),
+                    mode: ClaimMode::Exclusive,
+                    issue: Some(issue.into()),
+                })
+                .unwrap();
+        }
+        c.open_session(SessionInfo::named("s2", "test")).unwrap();
+        c.close_session("s2").unwrap();
+        c.request_review("s1", "feature/x".into(), vec![], None, None, None)
+            .unwrap();
+        let own = |tree: &PeerTree| -> RuntimeNode {
+            tree.machines
+                .iter()
+                .flat_map(|m| m.runtimes.iter())
+                .find(|r| r.this_runtime)
+                .cloned()
+                .expect("this runtime is in its own tree")
+        };
+
+        let summary = own(&peer_tree(&c, &Query::default()));
+        assert_eq!(
+            summary
+                .newest_claim
+                .as_ref()
+                .and_then(|b| b.issue.as_deref()),
+            Some("#2"),
+            "the newest live claim"
+        );
+        assert_eq!(summary.sessions.len(), 1, "only the active session");
+        let s = &summary.sessions[0];
+        assert_eq!(s.state, SessionState::Active);
+        assert!(s.claims.is_empty(), "counted, not listed");
+        assert_eq!(s.claims_held, 2);
+        assert_eq!(s.reviews.len(), 1, "the review the session asked for");
+
+        let full = own(&peer_tree(
+            &c,
+            &Query {
+                view: Some(View::Full),
+                ..Query::default()
+            },
+        ));
+        assert_eq!(full.sessions.len(), 2, "every session");
+        let s1 = full
+            .sessions
+            .iter()
+            .find(|s| s.state == SessionState::Active)
+            .unwrap();
+        assert_eq!(s1.claims.len(), 2, "every claim listed");
+        assert_eq!(s1.claims_held, 2);
     }
 }

@@ -143,7 +143,7 @@ fn connected(s: &Served) -> usize {
 }
 
 fn state(s: &Served) -> Value {
-    s.get("/api/v1/mesh/state").1["state"].clone()
+    s.get("/api/v1/mesh/state?view=full").1["state"].clone()
 }
 
 fn claims_in(s: &Served, st: &str) -> Vec<Value> {
@@ -278,6 +278,44 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
         })
     });
 
+    // B asks again, with a body; nobody else may end it, B withdraws it with its result,
+    // and A folds the request withdrawn with that result and no answer.
+    let (status, requested) = post(
+        &sb,
+        "/api/v1/mesh/reviews",
+        json!({"session": "b1", "subject": "pre-flight", "body": "45 gates\n12 cases"}),
+    );
+    assert_eq!(status, 200, "{requested}");
+    let preflight = requested["key"].as_str().unwrap().to_string();
+    wait_until("A sees the request's body", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter()
+                .any(|x| x["key"] == json!(preflight) && x["body"] == json!("45 gates\n12 cases"))
+        })
+    });
+    let (status, refused) = post(
+        &sa,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "a1"}),
+    );
+    assert_eq!(status, 400, "only the asker withdraws: {refused}");
+    let (status, withdrawn) = post(
+        &sb,
+        "/api/v1/mesh/reviews/withdraw",
+        json!({"request": preflight, "session": "b1", "note": "clean"}),
+    );
+    assert_eq!(status, 200, "{withdrawn}");
+    wait_until("A sees the withdrawal", Duration::from_secs(10), || {
+        state(&sa)["reviews"].as_array().is_some_and(|r| {
+            r.iter().any(|x| {
+                x["key"] == json!(preflight)
+                    && x["state"] == json!("withdrawn")
+                    && x["result"] == json!("clean")
+                    && x["answers"] == json!([])
+            })
+        })
+    });
+
     // A publishes its handover; B consumes it into its own handovers directory.
     a.fixture.write(
         ".ai/local/state/handovers/20260915T120000Z--feature-mesh--0123456--00000000000000aa.md",
@@ -331,6 +369,30 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
     let http = sb.get("/api/v1/mesh/peers").1;
     assert_eq!(cli["runtime"], http["runtime"]);
     assert_eq!(cli["repository"], http["repository"]);
+    assert_eq!(http["view"], json!("summary"), "the default is the summary");
+
+    // The state's default answer is the summary too: bounded, closed by the whole fold's
+    // digest; a filter narrows the full view and never changes that digest.
+    let whole = state(&sb)["digest"].clone();
+    let summary = sb.get("/api/v1/mesh/state").1;
+    assert_eq!(summary["view"], json!("summary"));
+    assert!(
+        summary["state"].is_null(),
+        "the summary does not carry the fold"
+    );
+    assert_eq!(summary["summary"]["digest"], whole);
+    assert!(summary.to_string().len() < 16 * 1024);
+    let nobody = sb
+        .get("/api/v1/mesh/state?view=full&claims=live&session=nobody")
+        .1;
+    assert_eq!(nobody["state"]["claims"], json!([]));
+    assert_eq!(nobody["state"]["sessions"], json!([]));
+    assert_eq!(nobody["state"]["digest"], whole);
+    let (status, refused) = sb.get("/api/v1/mesh/state?view=everything");
+    assert_eq!(
+        status, 400,
+        "an unknown view is refused, not read as the default: {refused}"
+    );
     let (code, _, _) = run_in(
         &b.fixture.root(),
         &[
@@ -616,6 +678,7 @@ fn malformed_forged_and_future_link_messages_are_typed_refusals_over_http() {
         card: card.clone(),
         nonce: majordomus_cli::mesh::link::fresh_token(),
         ts: majordomus_cli::mesh::protocol::now(),
+        to: None,
     };
     let future = sign(
         &stranger,

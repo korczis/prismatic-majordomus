@@ -21,6 +21,12 @@
 #
 # Nothing here reaches the real network: the site is a directory behind test/lib.sh's own
 # local server, and GitHub's build API is a stub on PATH. Neither is what is being asserted.
+#
+# Since 2026-10-12 the gate asks a fifth question of the same network, the release the site
+# offers (project.the-site-offers-the-release-it-published): the fixture serves a homepage
+# offer, a build.json release and a releases/latest.json, the stub answers GitHub's newest
+# release, and the gate is held to refusing a homepage that offers the previous release.
+# test/cases/1087 holds the probe itself; this holds that the gate asks it and reads it.
 . "$ROOT/test/lib.sh"
 
 GATE="$ROOT/scripts/ci/pages-check"
@@ -44,6 +50,9 @@ fixture() {
   cp "$ROOT/.ai/manifest.yaml" "$ROOT/.ai/README.md" "$dir/.ai/"
   cp "$ROOT/.ai/repo/ci/pages.yaml" "$dir/.ai/repo/ci/pages.yaml"
   cp "$ROOT/.ai/repo/ci/gates.yaml" "$dir/.ai/repo/ci/gates.yaml"
+  # the topology, which is where the mount of a snapshot the model declares is read from
+  mkdir -p "$dir/docs/generated"
+  cp "$ROOT/docs/generated/web.json" "$dir/docs/generated/web.json"
   printf 'base_url = "%s"\n' "$base" > "$dir/site/config.toml"
   (
     cd "$dir" || exit 1
@@ -69,12 +78,23 @@ fixture() {
 # What the site serves: the identity document the model names, and a page whose footer names a
 # commit the way every rendered page does. The two are produced by different steps of one
 # deploy, which is why the gate reads both.
+#
+# And the release it offers, on the three surfaces the site owns: the homepage's trust strip,
+# build.json's `release`, and releases/latest.json. The fourth argument is what the homepage
+# and its build offer; the published metadata always names 0.21.0, as GitHub's stub does.
 serve() {
-  local dir="$1" identity_commit="$2" footer_commit="$3"
-  rm -rf "$dir"; mkdir -p "$dir"
-  jq -n --arg c "$identity_commit" '{schema: 1, commit: $c, dirty: false}' > "$dir/build.json"
-  printf '<html><body><a href="https://example.invalid/commit/%s">%s</a></body></html>\n' \
-    "$footer_commit" "$footer_commit" > "$dir/index.html"
+  local dir="$1" identity_commit="$2" footer_commit="$3" offer="${4:-0.21.0}"
+  rm -rf "$dir"; mkdir -p "$dir/releases"
+  jq -n --arg c "$identity_commit" --arg v "$offer" \
+    '{schema: 1, commit: $c, dirty: false, release: {version: $v}}' > "$dir/build.json"
+  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="%s"><dd>%s</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' \
+    "$offer" "$offer" "$footer_commit" "$footer_commit" > "$dir/index.html"
+  jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$dir/releases/latest.json"
+  # and what the model says a publication holds beside its pages (the UI's snapshot), read at
+  # the commit the identity names: a whole site, so that every refusal below is the one asked
+  # for. test/cases/2983_the_published_ui_is_the_trunks.sh holds the gate's refusal of a UI
+  # that is missing or another commit's.
+  publication_snapshots "$ROOT" "$dir" "$identity_commit"
 }
 
 # GitHub's Pages build API, as a stub: the one endpoint the gate reads, answering what this
@@ -85,9 +105,11 @@ stub_gh() {
   mkdir -p "$dir"
   cat > "$dir/gh" <<STUB
 #!/usr/bin/env bash
-# only the pages/builds endpoint is answered; anything else is not this stub's business
+# the pages/builds endpoint and the newest release are answered; anything else is not this
+# stub's business. The release is v0.21.0, published long enough ago to be past any window.
 case "\$*" in
   *pages/builds*) printf '%s\t%s\t%s\n' "$status" "$commit" "$message"; exit 0 ;;
+  *releases/latest*) printf 'v0.21.0\t2026-10-12T10:23:43Z\n'; exit 0 ;;
 esac
 exit 1
 STUB
@@ -186,6 +208,23 @@ if gate "$T/built.out"; then rc=0; else rc=$?; fi
 grep -q "is built" "$T/built.out" || {
   echo "    the gate does not say GitHub built the branch:"; cat "$T/built.out"; exit 1; }
 
+# ---------------------------------------------------------------- the release it offers
+#
+# 2026-10-12 in a fixture: GitHub published v0.21.0 hours ago, releases/latest.json names it,
+# and the homepage beside the install command still offers 0.20.0. Every line above is `ok`
+# for such a site — the branch is right, it is served, GitHub built it — which is why it went
+# unnoticed. The gate asks `scripts/pages release-live` and must refuse on its answer.
+grep -q "name one release, v0.21.0" "$T/built.out" || {
+  echo "    the gate does not say which release the live site offers:"; cat "$T/built.out"; exit 1; }
+serve "$WWW" "$PUB" "$PUB" 0.20.0
+if gate "$T/behind.out"; then rc=0; else rc=$?; fi
+[ "$rc" = 10 ] || { echo "    the gate accepted a homepage offering the previous release (exit $rc):"; cat "$T/behind.out"; exit 1; }
+grep -q "does not offer the release that was published" "$T/behind.out" || {
+  echo "    the refusal does not say the offer is behind:"; cat "$T/behind.out"; exit 1; }
+grep -q "the homepage offers 0.20.0 while /releases/latest.json names 0.21.0" "$T/behind.out" || {
+  echo "    the refusal does not name the two releases:"; cat "$T/behind.out"; exit 1; }
+serve "$WWW" "$PUB" "$PUB"
+
 # ---------------------------------------------------------------- a build that is not a verdict
 #
 # GitHub has not built this commit yet, or the token cannot read the endpoint. That is weather,
@@ -216,6 +255,8 @@ if ( cd "$T/repo" && PATH="$T/deaf:$PATH" env -u MAJORDOMUS_ROOT -u MAJORDOMUS_S
 [ "$rc" = 12 ] || { echo "    an unreadable Pages build passed (exit $rc, want 12):"; cat "$T/unread.out"; exit 1; }
 grep -q "^note  GitHub's Pages build could not be read" "$T/unread.out" || {
   echo "    the unreadable build was not named:"; cat "$T/unread.out"; exit 1; }
+grep -q "^note  the release the live site offers could not be judged" "$T/unread.out" || {
+  echo "    a newest release nobody could read was not named as unmeasured:"; cat "$T/unread.out"; exit 1; }
 grep -q "NOT DETERMINED" "$T/unread.out" || {
   echo "    the verdict line does not name the unmeasured half:"; cat "$T/unread.out"; exit 1; }
 

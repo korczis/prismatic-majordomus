@@ -591,6 +591,15 @@
       "note": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads."
     },
     {
+      "id": "claim:personal-layer-changes-nothing-shared",
+      "kind": "claim",
+      "label": "A layer installed with --personal is one person's own in a shared repository: it changes no tracked file, no .gitignore line and nothing git status shows, and the command that makes the claim verifies it",
+      "status": "guaranteed",
+      "route": "/guarantees/personal-layer-changes-nothing-shared/",
+      "external": false,
+      "note": "The cover is a marked block in the common git directory's info/exclude. init --personal exits 10 unless git status reads the same after it as before, the installer compares it again by itself, update and capture install cover each path before writing it and refuse a tracked one whole, and doctor re-verifies on every run. Whether a layer is personal is read from the block and stored nowhere. init --extend --shared removes the cover and commits nothing."
+    },
+    {
       "id": "claim:local-state-ignored",
       "kind": "claim",
       "label": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
@@ -867,7 +876,16 @@
       "status": "guaranteed",
       "route": "/guarantees/github-projection-gated/",
       "external": false,
-      "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise."
+      "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise. The one drift it reports without refusing is the drift a head or a young landing made itself, which projected-record-edit-is-landable covers."
+    },
+    {
+      "id": "claim:projected-record-edit-is-landable",
+      "kind": "claim",
+      "label": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+      "status": "guaranteed",
+      "route": "/guarantees/projected-record-edit-is-landable/",
+      "external": false,
+      "note": "GitHub shows the trunk's plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured."
     },
     {
       "id": "claim:intent-stage-derived",
@@ -1635,6 +1653,15 @@
       "note": "a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability."
     },
     {
+      "id": "claim:ui-dashboard-cites-its-sources",
+      "kind": "claim",
+      "label": "The UI's dashboard at /ui links every capability it read to that capability's page, serves under the Cockpit's security policy, and never waits for the pull-request queue, which is a page and a fragment of its own",
+      "status": "guaranteed",
+      "route": "/guarantees/ui-dashboard-cites-its-sources/",
+      "external": false,
+      "note": "the_dashboard_is_served_at_ui_under_the_cockpits_policy starts a real server on a fixture repository and asserts that the page links /cockpit/capabilities/<id> for each of health.report, release.version, distribution.releases, plan.status, plan.roadmap and mesh.peers, carries the Cockpit's content-security policy, and pulls the queue from /ui/panels/pull-requests rather than citing integration.queue; the_queue_panel_is_a_page_and_a_fragment proves the queue's own route."
+    },
+    {
       "id": "claim:deployment-contract-refuses-by-name",
       "kind": "claim",
       "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
@@ -1896,6 +1923,15 @@
       "note": "The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand."
     },
     {
+      "id": "claim:mesh-firewall-is-derived",
+      "kind": "claim",
+      "label": "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-firewall-is-derived/",
+      "external": false,
+      "note": "The plan, the backend detection and every judgement of a firewall's output are pure functions with doctests; only observing and applying touch the host, and each says when it could not (unobservable without root is an absence, not a failure, unless the kernel log shows drops). The case runs the report over this repository's declaration and over fixtures, and never applies anything. It does not make a firewall nobody runs the command on admit anything."
+    },
+    {
       "id": "claim:models-one-declaration",
       "kind": "claim",
       "label": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
@@ -1975,6 +2011,33 @@
       "route": "/guarantees/knowledge-promotion-is-an-act/",
       "external": false,
       "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary."
+    },
+    {
+      "id": "claim:a-session-records-what-it-observed",
+      "kind": "claim",
+      "label": "knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing",
+      "status": "guaranteed",
+      "route": "/guarantees/a-session-records-what-it-observed/",
+      "external": false,
+      "note": "The kinds are friction, workaround, defect, drift and repetition. A subject is a repository-relative path without '..' or capability:, rule:, command:, gate: followed by an identifier; an evidence reference is file:, test:, commit:, issue: or claim: followed by what it names. A statement that spans lines or opens like a turn of a conversation is refused. A malformed observation exits 2; one recorded with no open episode exits 10, naming session start, because the deriver selects lines by their episode stamp. Every refusal leaves the ledger as it was. The observation is derived into a candidate at the episode boundary (ADR 0118)."
+    },
+    {
+      "id": "claim:an-observation-becomes-a-grouped-candidate",
+      "kind": "claim",
+      "label": "Each observation an episode recorded becomes, at that episode's end and with no model, a candidate of its own that says what it is about, and knowledge candidates groups the records about one subject with the episodes behind them; an episode that observed nothing records that it found nothing",
+      "status": "guaranteed",
+      "route": "/guarantees/an-observation-becomes-a-grouped-candidate/",
+      "external": false,
+      "note": "The id is ADR 0091's, the episode followed by a digest of the kind, the subject and the statement, so every file is one episode's own and nothing is read, merged and written back. A rejected record stays rejected and a later observation of its subject is a new candidate listed beside it in the same group. The Rust reader knowledge_base.candidates answers the same groups. ADR 0118."
+    },
+    {
+      "id": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "kind": "claim",
+      "label": "Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject's structure and never from its wording, and in a repository that adopted the tool its own share/ routes project",
+      "status": "guaranteed",
+      "route": "/guarantees/a-candidate-is-routed-by-what-it-is-about/",
+      "external": false,
+      "note": "platform is a command:, capability: or rule:majordomus.* subject, a path under the vendored rules, or the tool's own share/ only when it lies inside the repository; enforcement is another rule: or a gate:; generator a path the scope declares generated or .gitattributes marks merge=derived; documentation a path under docs/; anything else is project. The route decides nothing; promotion and rejection stay acts. ADR 0118."
     },
     {
       "id": "claim:briefing-names-candidates",
@@ -2146,6 +2209,15 @@
       "route": "/guarantees/review-is-never-fabricated/",
       "external": false,
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
+    },
+    {
+      "id": "claim:the-closing-question-is-measured",
+      "kind": "claim",
+      "label": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
+      "status": "guaranteed",
+      "route": "/guarantees/the-closing-question-is-measured/",
+      "external": false,
+      "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass."
     },
     {
       "id": "impl:.github/workflows/pages.yml",
@@ -2330,6 +2402,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/gates/closing.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/gates/closing.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/generate.rs",
@@ -2410,6 +2489,13 @@
       "id": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mesh/doctor.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/firewall.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/firewall.rs",
       "route": null,
       "external": false
     },
@@ -2557,6 +2643,13 @@
       "id": "impl:apps/majordomus-cli/src/site.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/site.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/ui/dashboard.rs",
       "route": null,
       "external": false
     },
@@ -3072,9 +3165,9 @@
       "external": false
     },
     {
-      "id": "source:.ai/repo/rules/project/english-only.v2.md",
+      "id": "source:.ai/repo/rules/project/english-only.v3.md",
       "kind": "source",
-      "label": ".ai/repo/rules/project/english-only.v2.md",
+      "label": ".ai/repo/rules/project/english-only.v3.md",
       "route": null,
       "external": false
     },
@@ -3251,6 +3344,13 @@
       "kind": "source",
       "label": "docs/KNOWLEDGE.md",
       "route": "/docs/knowledge/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "source",
+      "label": "docs/MAJORDOMUS_UI.md",
+      "route": "/docs/majordomus-ui/",
       "external": false
     },
     {
@@ -3492,6 +3592,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/registry.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/ui_surface.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/ui_surface.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/why.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/why.rs",
@@ -3560,6 +3667,20 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/1037_the_closing_question_is_measured.sh",
+      "kind": "test",
+      "label": "test/cases/1037_the_closing_question_is_measured.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1037_the_closing_question_is_measured.sh"
+    },
+    {
+      "id": "test:test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+      "kind": "test",
+      "label": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
     },
     {
       "id": "test:test/cases/103_obligations.sh",
@@ -3742,6 +3863,13 @@
       "label": "test/cases/28_no_hardcoded_values.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
+    },
+    {
+      "id": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "kind": "test",
+      "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
     },
     {
       "id": "test:test/cases/29_prompt_capture.sh",
@@ -3938,6 +4066,13 @@
       "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/494_the_mesh_is_declared_and_held.sh"
+    },
+    {
+      "id": "test:test/cases/495_the_firewall_admits_the_mesh.sh",
+      "kind": "test",
+      "label": "test/cases/495_the_firewall_admits_the_mesh.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/495_the_firewall_admits_the_mesh.sh"
     },
     {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
@@ -4339,6 +4474,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_product_features.sh"
     },
     {
+      "id": "test:test/cases/980_a_session_records_what_it_observed.sh",
+      "kind": "test",
+      "label": "test/cases/980_a_session_records_what_it_observed.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/980_a_session_records_what_it_observed.sh"
+    },
+    {
+      "id": "test:test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "kind": "test",
+      "label": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+    },
+    {
+      "id": "test:test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+      "kind": "test",
+      "label": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+    },
+    {
       "id": "test:test/cases/99_adr.sh",
       "kind": "test",
       "label": "test/cases/99_adr.sh",
@@ -4668,6 +4824,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -4819,6 +4980,11 @@
     },
     {
       "source": "claim:github-projection-gated",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:projected-record-edit-is-landable",
       "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
     },
@@ -5248,6 +5414,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "source:docs/MAJORDOMUS_UI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
       "kind": "specified_by"
@@ -5294,7 +5465,7 @@
     },
     {
       "source": "claim:published-translation-is-declared",
-      "target": "source:.ai/repo/rules/project/english-only.v2.md",
+      "target": "source:.ai/repo/rules/project/english-only.v3.md",
       "kind": "specified_by"
     },
     {
@@ -5393,6 +5564,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:models-one-declaration",
       "target": "source:docs/MODELS.md",
       "kind": "specified_by"
@@ -5434,6 +5610,21 @@
     },
     {
       "source": "claim:knowledge-promotion-is-an-act",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
       "target": "source:docs/KNOWLEDGE.md",
       "kind": "specified_by"
     },
@@ -5530,6 +5721,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "source:docs/CLI.md",
       "kind": "specified_by"
     },
     {
@@ -5853,6 +6049,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -5959,6 +6160,11 @@
     },
     {
       "source": "claim:github-projection-gated",
+      "target": "impl:scripts/ci/github-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:projected-record-edit-is-landable",
       "target": "impl:scripts/ci/github-check",
       "kind": "implemented_by"
     },
@@ -6373,6 +6579,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "impl:apps/majordomus-cli/src/ui/dashboard.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "impl:lib/deployment.sh",
       "kind": "implemented_by"
@@ -6518,6 +6729,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "impl:apps/majordomus-cli/src/mesh/firewall.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:models-one-declaration",
       "target": "impl:apps/majordomus-cli/src/models/mod.rs",
       "kind": "implemented_by"
@@ -6559,6 +6775,21 @@
     },
     {
       "source": "claim:knowledge-promotion-is-an-act",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
       "target": "impl:lib/knowledge.sh",
       "kind": "implemented_by"
     },
@@ -6655,6 +6886,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "impl:apps/majordomus-cli/src/reasoning/check.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "impl:apps/majordomus-cli/src/gates/closing.rs",
       "kind": "implemented_by"
     },
     {
@@ -6978,6 +7214,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:personal-layer-changes-nothing-shared",
+      "target": "test:test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:local-state-ignored",
       "target": "test:test/cases/01_init.sh",
       "kind": "proved_by"
@@ -7085,6 +7326,11 @@
     {
       "source": "claim:github-projection-gated",
       "target": "test:test/cases/97_github_gate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:projected-record-edit-is-landable",
+      "target": "test:test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
       "kind": "proved_by"
     },
     {
@@ -7498,6 +7744,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:ui-dashboard-cites-its-sources",
+      "target": "test:apps/majordomus-cli/tests/ui_surface.rs",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:deployment-contract-refuses-by-name",
       "target": "test:test/cases/84_deployment_contract.sh",
       "kind": "proved_by"
@@ -7643,6 +7894,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:mesh-firewall-is-derived",
+      "target": "test:test/cases/495_the_firewall_admits_the_mesh.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:models-one-declaration",
       "target": "test:test/cases/131_models.sh",
       "kind": "proved_by"
@@ -7685,6 +7941,21 @@
     {
       "source": "claim:knowledge-promotion-is-an-act",
       "target": "test:test/cases/709_knowledge_promotion_is_an_act.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "test:test/cases/980_a_session_records_what_it_observed.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "test:test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "target": "test:test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
       "kind": "proved_by"
     },
     {
@@ -7780,6 +8051,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "test:test/cases/1037_the_closing_question_is_measured.sh",
       "kind": "proved_by"
     }
   ]

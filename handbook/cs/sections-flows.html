@@ -1,0 +1,22 @@
+<section id="toky">
+  <h2>Toky spočítané z repozitáře</h2>
+  <p>Dva další toky, které nikdo nekreslil (první sada je v kapitole <a href="#graf">Stavba z grafu repozitáře</a>). Oba se při sestavení příručky spočítají ze souborů na <code>origin/master</code>: první z hlaviček pravidel pod <code>.ai/repo/rules/</code>, druhý z <code>.ai/repo/ci/gates.yaml</code>. Když někdo přidá pravidlo bez důkazu nebo změní výběr gates, diagram se při dalším sestavení změní sám. Každý uzel je klikací: vede do čítárny nebo do průzkumníku.</p>
+  <h3>Od pravidla k důkazu</h3>
+  <p>Pravidlo je buď blokující, nebo doporučující. Aby platilo, musí ho něco volat: test, validátor, jmenované vynucení, nebo aspoň zapsaný důvod, proč ho posuzuje člověk. Šířka pruhu je počet pravidel.</p>
+  <div class="lab" id="lab-flow-rules">
+    <p class="lab-h">Spočítáno · <span id="fr-total"></span></p>
+    <div class="rd-chart" id="fr-chart" role="img" aria-label="Sankey: třída pravidla, jmenný prostor, druh důkazu"></div>
+    <p class="flow-note" id="fr-note" aria-live="polite">Klikni na uzel nebo pruh.</p>
+    <ol class="rd-list" id="fr-list" hidden></ol>
+    <details class="md-src"><summary>Tabulka místo grafu</summary><div class="table-wrap"><table id="fr-table"></table></div></details>
+  </div>
+  <h3>Od změněné cesty ke gates</h3>
+  <p>CI nepouští všechno. Změněné cesty spadnou do tříd a každá třída vybere své gates; k nim se vždy přidají ty, které běží pokaždé. Vlevo třídy cest, vpravo joby, do kterých vybrané gates patří.</p>
+  <div class="lab" id="lab-flow-gates">
+    <p class="lab-h">Spočítáno · <span id="fg-total"></span></p>
+    <div class="rd-chart" id="fg-chart" role="img" aria-label="Sankey: třída cest, vybrané gates podle jobu"></div>
+    <p class="flow-note" id="fg-note" aria-live="polite">Klikni na třídu cest nebo na job.</p>
+    <div class="chips-btn" id="fg-chips"></div>
+    <details class="md-src"><summary>Tabulka místo grafu</summary><div class="table-wrap"><table id="fg-table"></table></div></details>
+  </div>
+</section>

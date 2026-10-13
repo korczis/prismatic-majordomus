@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `intents` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Module `intents` — Intent
 
 What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
 
-Stability: behaviorally_verified. Capabilities: 6.
+Stability: behaviorally_verified. Capabilities: 7.
 
 ## `intents.binding` — What a piece of work is bound to before it starts
 
@@ -65,7 +65,7 @@ Every intent the project model declares, each with the status the plan derives f
 | MCP resource | `majordomus://intents` |
 | HTTP | `GET /api/v1/intents` |
 | CLI | `majordomus intent list` |
-| cache | — |
+| cache | process, 2 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::intents |
 | tags | intent, project |
@@ -96,6 +96,30 @@ Given the issue a piece of work executes, or the paths it will touch, one verdic
 | `paths` | string | no | Repository-relative paths the work will touch, separated by commas. |
 
 Output: `IntentPreflight`.
+
+## `intents.propose` — Propose an intent: what must become true
+
+Write a new intent record under `.ai/repo/project/intents/` from a statement of what must become true, with an optional title (the statement's first line when absent) and id (the title's slug when absent). The record names no milestone, criterion or invariant: its stage derives as `declared`, `intent validate` reports the two absences as warnings rather than failures, and no work can serve it until it is planned (ADR 0144). Nothing about its standing is stored. An existing record is refused, never overwritten, and the file appears whole or not at all. The answer names the identity and the file; `intents.record` answers the derived stage once the index holds it.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_intent_propose` |
+| HTTP | `POST /api/v1/intents/propose` |
+| CLI | `majordomus intent propose` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::intents |
+| tags | intent, project |
+
+| input | type | required | description |
+|---|---|---|---|
+| `statement` | string | yes | What must become true, in the proposer's words; kept verbatim. |
+| `title` | string or null | no | One line naming it; the statement's first line when absent. |
+| `id` | string or null | no | The identity and file name; the title's slug when absent. |
+
+Output: `Proposed`.
 
 ## `intents.record` — One intent, with everything derived about it
 

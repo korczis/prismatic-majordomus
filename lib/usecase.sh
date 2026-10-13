@@ -174,9 +174,11 @@ mj_uc_file() { local n="MJ_UC_FILE_$1"; printf '%s' "${!n}"; }
 mj_ap_v()    { mj_yv "MJAP$1" "$2"; }
 mj_ap_list() { mj_yvlist "MJAP$1" "$2"; }
 mj_ap_file() { local n="MJ_AP_FILE_$1"; printf '%s' "${!n}"; }
-# the index of a use case by id, or failure
-mj_uc_index() { local i=0; while [ "$i" -lt "$MJ_UC_N" ]; do [ "$(mj_uc_v "$i" id)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
-mj_ap_index() { local j=0; while [ "$j" -lt "$MJ_AP_N" ]; do [ "$(mj_ap_v "$j" id)" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
+# the index of a use case by id, or failure; each id is read by expansion (mj_uc_get), not
+# by a command substitution per entry: a run asks this for every id several times, which made
+# the lookup quadratic in subshells
+mj_uc_index() { local i=0 MJ_V; while [ "$i" -lt "$MJ_UC_N" ]; do mj_uc_get "$i" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
+mj_ap_index() { local j=0 MJ_V; while [ "$j" -lt "$MJ_AP_N" ]; do mj_ap_get "$j" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
 # the categories of the taxonomy, one id per line
 mj_uc_categories() {
   local t="$MJ_UC_DIR/taxonomy.yaml" flat
@@ -380,10 +382,15 @@ mj_uc_validate_all() {
           # A live scenario is a question about this repository, never an action on it.
           # The class is read from share/commands.yaml, which already declares it, so
           # safety is a property of the declaration and not of the author's care (ADR 38).
+          # The whole argument vector is judged, not its first word: a command's class is
+          # its worst case, and the registry's `effects` say where a subcommand or a flag
+          # differs (I1981).
           if [ "$mode" = live ] && [ -n "$cmd" ]; then
             mj_cmdreg_load || true
-            local cls; cls="$(mj_cmdreg_class "$cmd")"
-            [ "$cls" = read-only ] || mj_uc_bad "$id" "step '$sid' runs '$cmd', which is ${cls:-undeclared}, in a live scenario; only read-only commands may run against this repository" "share/commands.yaml"
+            local cls why eff av="" an=1
+            while mj_uc_get "$i" "scenario.steps.$k.run.$an"; [ -n "$MJ_V" ]; do av="$av $MJ_V"; an=$((an+1)); done
+            eff="$(mj_cmdreg_effective "$cmd" $av)"; cls="${eff%%"$MJ_TAB"*}"; why="${eff#*"$MJ_TAB"}"
+            [ "$cls" = read-only ] || mj_uc_bad "$id" "step '$sid' runs 'majordomus $cmd$av', which is ${cls:-undeclared} by ${why:-the registry}, in a live scenario; only read-only commands may run against this repository" "share/commands.yaml"
           fi
         fi
         k=$((k+1))
@@ -667,7 +674,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
 # steps are independent questions about one tree, and a gate that answered only the first
 # of them would send a worker round the loop once per finding.
 mj_uc_run_live() { # index, evidence-file
-  local i="$1" out="$2" id W k sid cmd obl argv_n a rc want pat ok all_ok=1 t0 t1 dur
+  local i="$1" out="$2" id W k sid cmd obl argv_n a rc want pat ok all_ok=1 t0 t1 dur eff ecls ewhy
   local steps_json="" first=1 raw norm asserts fail_reason n tmp j jstate jrest jmsg jrep task
   id="$(mj_uc_v "$i" id)"; W="$MJ_ROOT"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uclive.XXXXXX")"
@@ -697,6 +704,17 @@ mj_uc_run_live() { # index, evidence-file
     set --; argv_n=0
     while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
     want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
+    # validate refuses a writing step when the scenario is authored; the runner asks again
+    # about the whole argument vector, because nothing that writes may run in this
+    # repository whatever the file said when it was last validated (I1981)
+    mj_cmdreg_load || true
+    eff="$(mj_cmdreg_effective "$@")"; ecls="${eff%%"$MJ_TAB"*}"; ewhy="${eff#*"$MJ_TAB"}"
+    if [ "$ecls" != read-only ]; then
+      fail_reason="majordomus $* is ${ecls:-undeclared} by ${ewhy:-the registry}; a live scenario runs only read-only argument vectors, and this one was not run"
+      [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
+      steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"exit\":null,\"expected_exit\":$want,\"output\":\"\",\"assertions\":[],\"result\":\"unmet\",\"reason\":\"$(mj_json_esc "$fail_reason")\",\"timing\":{\"duration_ms\":0}}"
+      all_ok=0; k=$((k+1)); continue
+    fi
     raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
     ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?
     t1="$(mj_ms)"; dur=$((t1 - t0))

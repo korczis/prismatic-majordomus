@@ -79,9 +79,7 @@ fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, Capabili
             write_cache: false,
         },
     );
-    let ledger =
-        crate::evidence::Ledger::load(root).unwrap_or_else(|_| crate::evidence::Ledger::empty());
-    let tally = RulesTally::of(&crate::rules::report(&ctx.index, &ledger));
+    let tally = RulesTally::of(&rules_report(ctx, root));
     let policy = crate::policy::LoadedPolicy::load(&repository).map_err(|e| e.to_string());
     let mut observations = preflight::observe(
         root,
@@ -105,6 +103,22 @@ fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, Capabili
         observations.peers = Ok(preflight::PeersObservation::of(&ctx.peers.list()));
     }
     Ok(preflight::derive(&observations))
+}
+
+/// The rule corpus counted against the ledger, as `rules.report` answers it: asked through
+/// the executor, so that a preflight and every other reader of the same checkout state share
+/// one computation of the most expensive thing a preflight reads. A ledger that cannot be
+/// read is counted as an empty one, as the preflight always counted it — `rules.report`
+/// refuses that ledger, so the refusal is the one case computed here.
+fn rules_report(ctx: &Context, root: &std::path::Path) -> crate::rules::RulesReport {
+    ctx.execute("rules.report", serde_json::json!({}))
+        .ok()
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_else(|| {
+            let ledger = crate::evidence::Ledger::load(root)
+                .unwrap_or_else(|_| crate::evidence::Ledger::empty());
+            crate::rules::report(&ctx.index, &ledger)
+        })
 }
 
 /// What to include in the snapshot.
@@ -307,6 +321,28 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The preflight counts the rules `rules.report` answers, and a ledger `rules.report`
+    /// refuses is counted as an empty one, as the preflight always counted it.
+    #[test]
+    fn the_preflight_counts_the_rules_rules_report_answers() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let root = std::path::Path::new(&ctx.index.repository.root);
+        let ledger = crate::evidence::Ledger::load(root).expect("a readable ledger");
+        assert_eq!(
+            rules_report(&ctx, root),
+            crate::rules::report(&ctx.index, &ledger)
+        );
+        let path = root.join(crate::evidence::LEDGER_PATH);
+        std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+        std::fs::write(&path, "{ not a ledger").expect("an unreadable ledger");
+        assert!(ctx.execute("rules.report", serde_json::json!({})).is_err());
+        assert_eq!(
+            rules_report(&ctx, root),
+            crate::rules::report(&ctx.index, &crate::evidence::Ledger::empty())
+        );
+    }
 
     /// The declaration is the only place these names exist, and every projection — the MCP
     /// tool, the resource, the HTTP route, the OpenAPI operation, the benchmark target —

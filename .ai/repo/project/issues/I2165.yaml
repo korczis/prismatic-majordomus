@@ -1,0 +1,29 @@
+id: I2165
+milestone: safe-self-update
+title: "A released archive carries a provenance attestation the installer can check"
+slug: releases-carry-provenance
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies."
+why: "Artifacts are checksummed, not signed: per-artifact sha256 and size sit in releases/<tag>.json and latest.json and are checked by verify_checksum in site/static/install.sh:478 (called at :706); SHA256SUMS is uploaded to the GitHub release (.github/workflows/release.yml). There is no signature, attestation or Sigstore, and docs/DISTRIBUTION.md:151-153 records that as deferred on purpose. A checksum fetched from the same origin as the archive proves integrity in transit, not provenance. The pack's premise that releases are signed is false, as is its premise that majordomus update is a self-updater: it regenerates provider projections (lib/update.sh:4), and there is no self-update command (docs/DISTRIBUTION.md:416-439). Lowest priority because the deferral is a recorded decision. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 12 and premises 1-2."
+current_state: "install.sh verifies a checksum served beside the archive; provenance is not verifiable."
+desired_state: "The publish job attests each archive with GitHub artifact attestations; install.sh verifies the attestation when the gh tool is present and says which it verified, provenance or checksum only; docs/DISTRIBUTION.md states it."
+scope:
+  - ".github/workflows/release.yml"
+  - "site/static/install.sh"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/85_installer.sh"
+depends_on: []
+acceptance_criteria:
+  - "Each archive of a release carries an attestation that gh attestation verify accepts for this repository"
+  - "install.sh reports whether it verified provenance or only the checksum"
+  - "docs/DISTRIBUTION.md names what each installation path verifies"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+evidence_required:
+  - "attested_release"
+  - "installer_reports_verification_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

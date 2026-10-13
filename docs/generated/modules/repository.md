@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `repository` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Module `repository` — Repository
 
 The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.
@@ -18,7 +18,7 @@ The repository root, layer sections, git state, discovery mode, kinds present, e
 | MCP tool | `majordomus_repository` |
 | MCP resource | `majordomus://repository` |
 | HTTP | `GET /api/v1/repository` |
-| cache | — |
+| cache | process, 1 entries, per generation |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::repository |
 | tags | repository, introspection |
