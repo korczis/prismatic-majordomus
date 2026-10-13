@@ -471,7 +471,7 @@ pub(crate) mod tests {
         let repo = furnished();
         let ctx = repo.context().expect("a context");
         let unasked = screen(&ctx).main.render();
-        assert!(unasked.contains("majordomus prs refresh"), "{unasked}");
+        assert!(unasked.contains("majordomus served forge"), "{unasked}");
         assert!(
             !unasked.contains("Where each environment stands"),
             "{unasked}"

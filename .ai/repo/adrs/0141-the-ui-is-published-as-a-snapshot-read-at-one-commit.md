@@ -22,7 +22,7 @@ related:
   - file:docs/GITHUB_PAGES_ARCHITECTURE.md
   - file:test/cases/1092_the_ui_snapshot_holds_every_screen.sh
   - file:test/cases/1093_the_ui_snapshot_links_nothing_absent.sh
-  - file:test/cases/1096_the_published_ui_is_the_trunks.sh
+  - file:test/cases/2983_the_published_ui_is_the_trunks.sh
   - file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md
 ---
 
@@ -116,7 +116,7 @@ somewhere:
   `the UI it publishes` and by section 2c of `scripts/ci/pages-check` (the `pages-live` gate),
   with `scripts/site-deploy` refusing a site that lacks the snapshot the publication model
   declares (`deploy.snapshots` in `.ai/repo/ci/pages.yaml`). The rule is
-  `project.the-published-ui-is-the-trunks`; `test/cases/1096_the_published_ui_is_the_trunks.sh`
+  `project.the-published-ui-is-the-trunks`; `test/cases/2983_the_published_ui_is_the_trunks.sh`
   holds it.
 - The top bar's search form leads to the page about the live UI in a snapshot, because search
   asks the process.

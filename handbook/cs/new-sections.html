@@ -1,0 +1,492 @@
+<section id="uvod">
+  <h2>Co je Majordomus</h2>
+  <p>Majordomus je supervizní vrstva pro repozitář, ve kterém pracují AI agenti. Nevolá model a nespouští nástroje agenta. Drží to, co má přežít konkrétní session a konkrétní nástroj: pravidla, rozhodnutí, znalosti, rozdělanou práci a kritéria hotového. Všechno ukládá jako malé typované záznamy ve vrstvě <code>.ai/</code> uvnitř repa a z jedné deklarace servíruje přes příkazovou řádku, MCP, HTTP a webové rozhraní.</p>
+  <p>Příručka spojuje tři dřívější stránky (harness, paměť a pravidla, mesh) a přidává k nim mapu problémů, celkovou stavbu, slovník a referenci příkazů. Každá kapitola odkazuje na související kapitoly v rámečku <em>Souvisí</em> a skoro každý pojem ve slovníku vede na místo, kde je vysvětlený.</p>
+  <div class="facts">
+    <div><b>191</b><span>deklarovaných capabilities v 55 modulech</span></div>
+    <div><b>244</b><span>veřejných garancí, 226 z nich s testem</span></div>
+    <div><b>95</b><span>architektonických rozhodnutí (ADR)</span></div>
+    <div><b>74</b><span>CI gates v <code>gates.yaml</code></span></div>
+  </div>
+  <p class="small">Počty platí pro <code>origin/master</code> repozitáře Majordomusu k 12. 10. 2026, verze 0.21.0. Podrobnosti jsou v <a href="#pruzkumnik">průzkumníku</a> a v části <a href="#cisla-tempo">Repozitář v číslech</a>.</p>
+</section>
+
+<section id="problemy">
+  <h2>Problémy a jejich root causes</h2>
+  <p>Na Majordomusu nezáleží tolik jako na problémech, které řeší. Jsou pojmenované a každý tým s AI agenty na ně dřív nebo později narazí. Tabulka je rozcestník: z každého problému vede odkaz na kapitoly, které popisují mechanismus.</p>
+  <div class="table-wrap"><table class="hub">
+    <thead><tr><th>Problém</th><th>Root cause</th><th>Mechanismus</th><th>Kapitoly</th></tr></thead>
+    <tbody>
+      <tr><td>Kontext se ztrácí mezi sessions</td><td>stav práce žije v konverzaci, kterou compaction zkrátí a konec session zahodí</td><td>checkpoint, handover, hooky na hranicích session</td><td><a href="#p-session">Session</a>, <a href="#h-hooky">Hooky</a>, <a href="#p-zaznamy">Záznamy</a></td></tr>
+      <tr><td>Rozhodnutí se dělají pořád znovu</td><td>rozhodnutí zůstalo v chatu nebo v hlavě, bez důvodu a zamítnutých variant</td><td>decision s povinným důvodem, ADR, reasoning záznam</td><td><a href="#p-rozhodnuti">Decision a ADR</a>, <a href="#h-reasoning">Nejistota</a></td></tr>
+      <tr><td>Know-how je v hlavách a v paměti jednoho nástroje</td><td>poznatek nemá formát, důkaz ani místo v repu</td><td>kandidáti znalostí odvození z ledgeru, povýšení člověkem s důkazem</td><td><a href="#p-znalosti">Knowledge base</a>, <a href="#p-pamet">Co je paměť</a></td></tr>
+      <tr><td>Instrukce pro agenty si odporují</td><td>každý nástroj čte jiný soubor a nikdo je neporovnává</td><td>jedna policy, generované projekce s razítkem</td><td><a href="#h-bootstrap">Bootstrap</a></td></tr>
+      <tr><td>Pravidlo je napsané, ale neplatí</td><td>nic ho nespouští; Markdown není kontrola</td><td>doktrína s validátorem, režim vynucení odvozený z kódu, řetěz v <code>doctor</code></td><td><a href="#p-pravidla">Pravidla</a>, <a href="#h-vynuceni">Vynucení</a></td></tr>
+      <tr><td>„Hotovo“ bez důkazu</td><td>agent i člověk mají jinou definici hotového</td><td>finish contract, závazky, důkaz vázaný na strom</td><td><a href="#h-finish">Finish</a>, <a href="#h-zavazky">Závazky</a>, <a href="#h-doctor">Doctor</a></td></tr>
+      <tr><td>Paralelní práce se srazí</td><td>nikdo neví, kdo na čem dělá, dokud nepřijde merge</td><td>scope tasku, board, překryv, exkluzivní claims v meshi</td><td><a href="#koordinace">Kruhy koordinace</a>, <a href="#h-server">Board</a>, <a href="#m-claims">Claims</a></td></tr>
+      <tr><td>Kontext je velký a nerelevantní</td><td>agent čte všechno, protože neví, co platí</td><td>scoped context, rozpočet briefingu, profily, scope repozitáře</td><td><a href="#p-briefing">Briefing</a>, <a href="#h-profily">Profily</a>, <a href="#h-scope">Scope</a></td></tr>
+      <tr><td>Popisy systému se rozcházejí</td><td>README, help, API a dashboard udržuje každý zvlášť</td><td>jedna deklarace capability, všechna rozhraní jsou projekce</td><td><a href="#projekce">Projekce</a></td></tr>
+      <tr><td>Zelené CI lže</td><td>chybějící verdikt se čte jako pass, nulový exit jako úspěch</td><td><code>queued</code> není pass, diagnostika rozhoduje exit</td><td><a href="#h-ci">CI gates</a></td></tr>
+      <tr><td>Práce mezi stroji</td><td>lokální stav necestuje gitem</td><td>podepsaná continuity, mesh handovery a reviews</td><td><a href="#p-stroje">Kontinuita</a>, <a href="#m-handovery">Mesh handovery</a></td></tr>
+      <tr><td>Plán a stav práce si odporují</td><td>status se píše ručně na několika místech</td><td>plán v repu bez pole status, stav odvozený z důkazů</td><td><a href="#x-plan">Plán</a>, <a href="#x-intent">Intents</a></td></tr>
+      <tr><td>„Je to otestované“ nejde ověřit</td><td>odkaz na test se zaměňuje za jeho běh</td><td>zaznamenaný běh s commitem, platnost vůči stromu</td><td><a href="#x-evidence">Důkazy</a>, <a href="#x-claims">Garance</a></td></tr>
+      <tr><td>Tvrzení o úspoře bez měření</td><td>číslo napsané do prózy nikdo neověřuje</td><td>párová měření, třídy čísel, <code>economics check</code></td><td><a href="#h-mereni">Měření</a></td></tr>
+    </tbody>
+  </table></div>
+  <p>Polovina z toho se dá řešit čistě konvencí v repu, bez jakéhokoli nástroje. Co přesně, shrnuje kapitola <a href="#h-prenos">Co se dá přenést i bez Majordomusu</a>.</p>
+</section>
+
+<section id="stavba">
+  <h2>Celá stavba na jednom obrázku</h2>
+  <p>Shora dolů: model, harness providera, Majordomus a pod ním vrstva <code>.ai/</code>, git, CI a ostatní stroje. Každý rámeček je odkaz na kapitolu, která ho vysvětluje. Obrázek je kreslený ručně kvůli čitelnosti; čísla v rámečcích a toky pod ním se berou z dat repozitáře a tatáž stavba spočítaná celá z grafu je v kapitole <a href="#graf">Stavba z grafu repozitáře</a>.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 640" role="img" aria-label="Vrstvy: model, harness providera (Claude Code, Codex, Gemini CLI), Majordomus (hooky, sdílený server, task lifecycle, kontext, registr, doctor), vrstva .ai/repo a .ai/local, pod ní git, CI a mesh. Každý rámeček odkazuje na kapitolu.">
+        <defs>
+          <marker id="st-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+        </defs>
+        <rect x="230" y="12" width="260" height="40" rx="6" class="box" stroke-width="1.25"/>
+        <text x="360" y="37" text-anchor="middle" font-size="13" font-weight="600" class="ink">Model · Claude, GPT, Gemini…</text>
+        <path d="M360 52V78" stroke="var(--muted)" stroke-width="1.25" marker-end="url(#st-arrow)"/>
+
+        <a href="#h-co-je"><g class="hit">
+          <rect x="16" y="80" width="688" height="84" rx="8" class="zone" stroke-width="1.25"/>
+          <text x="30" y="102" font-size="13" font-weight="600" class="ink">Harness providera</text>
+          <text x="30" y="124" font-size="11" class="mut">smyčka, nástroje, oprávnění,</text>
+          <text x="30" y="140" font-size="11" class="mut">compaction, hooky, MCP klient</text>
+        </g></a>
+        <g font-size="12.5" font-weight="600" class="ink" text-anchor="middle">
+          <rect x="336" y="98" width="112" height="48" rx="6" class="box" stroke-width="1.25"/><text x="392" y="127">Claude Code</text>
+          <rect x="458" y="98" width="112" height="48" rx="6" class="box" stroke-width="1.25"/><text x="514" y="127">Codex</text>
+          <rect x="580" y="98" width="112" height="48" rx="6" class="box" stroke-width="1.25"/><text x="636" y="127">Gemini CLI</text>
+        </g>
+
+        <g stroke="var(--muted)" stroke-width="1.25" marker-end="url(#st-arrow)">
+          <path d="M135 164V214"/>
+          <path d="M360 164V214"/>
+          <path d="M585 164V214"/>
+        </g>
+        <g font-size="10.5" class="mut">
+          <text x="142" y="184">hooky</text>
+          <text x="367" y="184">MCP</text>
+          <text x="592" y="184">CLI</text>
+        </g>
+
+        <rect x="16" y="188" width="688" height="180" rx="8" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="30" y="363" font-size="11" font-weight="600" class="acc">MAJORDOMUS · HARNESS REPOZITÁŘE</text>
+
+        <a href="#h-hooky"><g class="hit">
+          <rect x="30" y="216" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="44" y="240" font-size="13" font-weight="600" class="ink">Hooky session</text>
+          <text x="44" y="259" font-size="11" class="mut">start · prompt · compact · end</text>
+        </g></a>
+        <a href="#h-server"><g class="hit">
+          <rect x="255" y="216" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="269" y="240" font-size="13" font-weight="600" class="ink">Sdílený server</text>
+          <text x="269" y="259" font-size="11" class="mut">MCP · HTTP · Cockpit · board</text>
+        </g></a>
+        <a href="#h-finish"><g class="hit">
+          <rect x="480" y="216" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="494" y="240" font-size="13" font-weight="600" class="ink">Task lifecycle</text>
+          <text x="494" y="259" font-size="11" class="mut">start · check · finish</text>
+        </g></a>
+        <a href="#p-briefing"><g class="hit">
+          <rect x="30" y="292" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="44" y="316" font-size="13" font-weight="600" class="ink">Kontext a briefing</text>
+          <text x="44" y="335" font-size="11" class="mut">context · resolve · rozpočet</text>
+        </g></a>
+        <a href="#projekce"><g class="hit">
+          <rect x="255" y="292" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="269" y="316" font-size="13" font-weight="600" class="ink">Registr capabilities</text>
+          <text x="269" y="335" font-size="11" class="mut">1 deklarace → všechna rozhraní</text>
+        </g></a>
+        <a href="#h-doctor"><g class="hit">
+          <rect x="480" y="292" width="210" height="58" rx="6" class="box" stroke-width="1.25"/>
+          <text x="494" y="316" font-size="13" font-weight="600" class="ink">Doctor a preflight</text>
+          <text x="494" y="335" font-size="11" class="mut">zapojení · verdikty · důkazy</text>
+        </g></a>
+
+        <path d="M360 368V392" stroke="var(--muted)" stroke-width="1.25" marker-end="url(#st-arrow)"/>
+        <text x="368" y="384" font-size="10.5" class="mut">čte a zapisuje</text>
+
+        <a href="#p-mapa"><g class="hit">
+          <rect x="16" y="394" width="430" height="150" rx="8" class="zone" stroke-width="1.25"/>
+          <text x="30" y="414" font-size="12.5" font-weight="600" class="ink mono">.ai/repo/ · trackované, cestuje gitem</text>
+        </g></a>
+        <a href="#p-mapa"><g class="hit">
+          <rect x="460" y="394" width="244" height="150" rx="8" class="zone" stroke-width="1.25"/>
+          <text x="474" y="414" font-size="12.5" font-weight="600" class="ink mono">.ai/local/ · jen checkout</text>
+        </g></a>
+        <g font-size="11.5" class="ink">
+          <a href="#h-profily"><g class="hit"><rect x="30" y="424" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="40" y="440">policy a profily</text></g></a>
+          <a href="#p-pravidla"><g class="hit"><rect x="236" y="424" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="246" y="440">pravidla a doktríny</text></g></a>
+          <a href="#p-rozhodnuti"><g class="hit"><rect x="30" y="454" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="40" y="470">ADR</text></g></a>
+          <a href="#p-znalosti"><g class="hit"><rect x="236" y="454" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="246" y="470">knowledge</text></g></a>
+          <a href="#p-session"><g class="hit"><rect x="30" y="484" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="40" y="500">session records</text></g></a>
+          <a href="#p-skills"><g class="hit"><rect x="236" y="484" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="246" y="500">skills a prompty</text></g></a>
+          <a href="#h-ci"><g class="hit"><rect x="30" y="514" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="40" y="530">ci/gates.yaml</text></g></a>
+          <a href="#m-stroje"><g class="hit"><rect x="236" y="514" width="198" height="24" rx="4" class="box" stroke-width="1"/><text x="246" y="530">mesh deklarace</text></g></a>
+
+          <a href="#p-zaznamy"><g class="hit"><rect x="474" y="424" width="216" height="24" rx="4" class="box" stroke-width="1"/><text x="484" y="440">task a checkpointy</text></g></a>
+          <a href="#p-zaznamy"><g class="hit"><rect x="474" y="454" width="216" height="24" rx="4" class="box" stroke-width="1"/><text x="484" y="470">handovery a rozhodnutí</text></g></a>
+          <a href="#p-zaznamy"><g class="hit"><rect x="474" y="484" width="216" height="24" rx="4" class="box" stroke-width="1"/><text x="484" y="500">ledger</text></g></a>
+          <a href="#p-session"><g class="hit"><rect x="474" y="514" width="216" height="24" rx="4" class="box" stroke-width="1"/><text x="484" y="530">prompty, session-contexts</text></g></a>
+        </g>
+
+        <g stroke="var(--muted)" stroke-width="1.25" marker-end="url(#st-arrow)">
+          <path d="M126 544V570"/>
+          <path d="M360 544V570"/>
+          <path d="M594 544V570"/>
+        </g>
+
+        <a href="#h-git"><g class="hit">
+          <rect x="16" y="572" width="220" height="56" rx="6" class="box" stroke-width="1.25"/>
+          <text x="30" y="596" font-size="13" font-weight="600" class="ink">Git</text>
+          <text x="30" y="614" font-size="11" class="mut">commity · hooky · continuity ref</text>
+        </g></a>
+        <a href="#h-ci"><g class="hit">
+          <rect x="250" y="572" width="220" height="56" rx="6" class="box" stroke-width="1.25"/>
+          <text x="264" y="596" font-size="13" font-weight="600" class="ink">CI</text>
+          <text x="264" y="614" font-size="11" class="mut">plán · gates · verdikty</text>
+        </g></a>
+        <a href="#m-vrstvy"><g class="hit">
+          <rect x="484" y="572" width="220" height="56" rx="6" class="box" stroke-width="1.25"/>
+          <text x="498" y="596" font-size="13" font-weight="600" class="ink">Mesh</text>
+          <text x="498" y="614" font-size="11" class="mut">jiné stroje · claims · handovery</text>
+        </g></a>
+      </svg>
+    </div>
+    <figcaption>Majordomus jsou ve skutečnosti dva programy pod jedním jménem. Shellový nástroj (<code>bin/majordomus</code>) drží task lifecycle, handover, kontext, zachytávání session a <code>doctor</code>. Rustový (<code>bin/majordomus-cli</code>) drží registr capabilities, server, MCP, HTTP, Cockpit, mesh, worktrees a důkazy. Oba se postupně sbíhají na stranu Rustu.</figcaption>
+  </figure>
+</section>
+
+<section id="stav">
+  <h2>Šest druhů stavu</h2>
+  <p>Každá hodnota, kterou Majordomus ukáže, patří do jednoho z šesti druhů. Druh určuje, kdo ji smí zapsat a jestli může přepsat něco jiného. Většina chyb v systémech s víc agenty vzniká tak, že se jeden druh stavu začne vydávat za jiný: pozorování za fakt, odvozená kopie za zdroj, stará vzpomínka za přítomnost.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Druh</th><th>Příklady</th><th>Kdo ho vytváří</th><th>Smí přepsat kanonický stav?</th><th>Zneplatní ho</th></tr></thead>
+    <tbody>
+      <tr><td><strong>autorský kanonický</strong></td><td>pravidla, ADR, policy, milníky a issues, deklarace capabilities</td><td>člověk nebo worker, v commitu</td><td>je to zdroj</td><td>nový commit</td></tr>
+      <tr><td><strong>objevený</strong></td><td>index objektů, seznam worktree z gitu, sledované soubory</td><td>executable, čtením autoritativních struktur</td><td>nikdy</td><td>změna zdroje</td></tr>
+      <tr><td><strong>odvozený</strong></td><td>stav důkazů pravidel, status issues, <code>docs/generated/</code>, snímek prostředí</td><td>deterministická funkce vstupů</td><td>nikdy; ruční úpravu odmítne <code>generate --check</code></td><td>změna kteréhokoli vstupu</td></tr>
+      <tr><td><strong>pozorovaný</strong></td><td>připojení peeři, stav serveru, přítomnost nodů v meshi, špinavý strom</td><td>sonda v jednom okamžiku</td><td>nikdy</td><td>čas: TTL, odpojení, další sonda</td></tr>
+      <tr><td><strong>odhadnutý</strong></td><td>skóre relevance v kontextovém kompilátoru</td><td>heuristika</td><td>nikdy; je vždy pod deklarovaným vztahem</td><td>změna vstupů</td></tr>
+      <tr><td><strong>lokální kontinuita</strong></td><td>handovery, checkpointy, aktivní task, otevřená epizoda, ledger</td><td>shellový nástroj za workera</td><td>nikdy; starý handover je historie</td><td>stáří a vzdálenost v gitu</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Objevení není odhad.</strong> Objevené už někde autoritativně existuje a Majordomus to jen najde. Jediný odhad v kontextovém kompilátoru je relevance podle klíčových slov a test drží, že nikdy není jistější než deklarace.</li>
+    <li><strong>Pozorované není kanonické.</strong> Že je peer online, nikdo nedeklaroval. Je to současnost a vyprší. Nic z boardu ani z registru meshe se neukládá, jako by to byl fakt o repozitáři.</li>
+  </ul>
+</section>
+
+<section id="projekce">
+  <h2>Jeden fakt, mnoho rozhraní</h2>
+  <p>Repozitář, ve kterém pracuje víc lidí a agentů, hromadí popisy sám sebe: seznam příkazů v README, další v nápovědě, třetí ve schématu API, čtvrtý v dashboardu, pátý v seznamu nástrojů agenta. Každý je správně v den, kdy vznikl, a udržuje ho ten, kdo si vzpomene. Víc workerů a víc rozhraní znamená víc kopií, které se rozcházejí rychleji.</p>
+  <p>Majordomus jde opačně: jeden model, mnoho projekcí. Projekce smí fakt vykreslit jinak, filtrovat nebo spojit s jinými. Nesmí mít o něm vlastní názor.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Deklarace capability v Rustu vede do registru; registr se promítá do příkazové řádky, MCP, HTTP a OpenAPI, Swagger UI, Cockpitu a generované dokumentace pro web; generate --check hlídá rozdíl.">
+        <defs>
+          <marker id="pj-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+        </defs>
+        <rect x="16" y="106" width="176" height="74" rx="6" class="box" stroke-width="1.25"/>
+        <text x="30" y="130" font-size="13" font-weight="600" class="ink">Deklarace</text>
+        <text x="30" y="149" font-size="11.5" class="ink mono">capability!</text>
+        <text x="30" y="167" font-size="11" class="mut">jedno místo v kódu</text>
+        <path d="M192 143H234" stroke="var(--muted)" stroke-width="1.25" marker-end="url(#pj-arrow)"/>
+
+        <rect x="236" y="96" width="196" height="94" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="250" y="122" font-size="13" font-weight="600" class="ink">Registr</text>
+        <text x="250" y="142" font-size="11.5" class="ink">191 deklarací, 55 modulů</text>
+        <text x="250" y="160" font-size="11" class="mut">jeden executor,</text>
+        <text x="250" y="176" font-size="11" class="mut">jedno schéma vstupu a výstupu</text>
+
+        <g stroke="var(--muted)" stroke-width="1.15" fill="none" marker-end="url(#pj-arrow)">
+          <path d="M432 143C458 143 458 35 486 35"/>
+          <path d="M432 143C460 143 460 75 486 75"/>
+          <path d="M432 143C462 143 462 115 486 115"/>
+          <path d="M432 143C462 143 462 155 486 155"/>
+          <path d="M432 143C460 143 460 195 486 195"/>
+          <path d="M432 143C458 143 458 235 486 235"/>
+        </g>
+        <g font-size="12" class="ink">
+          <rect x="488" y="20" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="40">příkazová řádka</text>
+          <rect x="488" y="60" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="80">MCP · 183 nástrojů</text>
+          <rect x="488" y="100" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="120">HTTP /api/v1 → OpenAPI 3.1</text>
+          <rect x="488" y="140" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="160">Swagger UI</text>
+          <rect x="488" y="180" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="200">Cockpit</text>
+          <rect x="488" y="220" width="216" height="30" rx="5" class="box" stroke-width="1"/><text x="500" y="240">docs/generated → web</text>
+        </g>
+        <text x="16" y="286" font-size="11.5" class="mut">generate --check: projekce, která se liší od modelu, shodí build dřív, než se dostane ke čtenáři.</text>
+      </svg>
+    </div>
+    <figcaption>Novou operaci nikdo nepřidává úpravou registru transportu, OpenAPI, tabulky v dokumentaci nebo seznamu benchmarků. Mění se deklarace a spustí se <code>majordomus generate</code>. Opakovaná definice téhož napříč projekcemi je vada návrhu (ADR 0004).</figcaption>
+  </figure>
+  <p>Stejný princip platí o patro výš. Instrukce pro providery jsou projekce policy (<a href="#h-bootstrap">bootstrap</a>), anotace MCP nástrojů jsou projekce deklarovaného efektu (<a href="#h-server">sdílený server</a>) a commit hook, CI i MCP nástroj se ptají stejného soudce (<a href="#h-git">git hooky</a>).</p>
+</section>
+
+<section id="kudy">
+  <h2>Kudy číst</h2>
+  <div class="three">
+    <div class="card">
+      <h4>Chci pochopit principy</h4>
+      <ol class="path">
+        <li><a href="#problemy">Problémy a root causes</a></li>
+        <li><a href="#stavba">Celá stavba</a></li>
+        <li><a href="#h-proc">Proč nestačí harness providera</a></li>
+        <li><a href="#p-pamet">Co je „paměť“</a></li>
+        <li><a href="#koordinace">Kruhy koordinace</a></li>
+        <li><a href="#h-prenos">Co se dá přenést</a></li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4>Chci to nasadit do repa</h4>
+      <ol class="path">
+        <li><a href="#h-bootstrap">Jedna policy, víc providerů</a></li>
+        <li><a href="#h-hooky">Hooky providera</a></li>
+        <li><a href="#h-profily">Profily</a></li>
+        <li><a href="#h-finish">Finish contract</a></li>
+        <li><a href="#p-pravidla">Pravidla a doktríny</a></li>
+        <li><a href="#h-git">Git hooky</a> a <a href="#h-ci">CI gates</a></li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4>Pracuju s víc agenty a stroji</h4>
+      <ol class="path">
+        <li><a href="#h-server">Sdílený server a board</a></li>
+        <li><a href="#koordinace">Kruhy koordinace</a></li>
+        <li><a href="#m-claims">Claims a leases</a></li>
+        <li><a href="#m-handovery">Handovery mezi stroji</a></li>
+        <li><a href="#m-stroje">Topologie a nastavení</a></li>
+        <li><a href="#m-diagnostika">Diagnostika</a></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="koordinace">
+  <h2>Kruhy koordinace</h2>
+  <p>Kolizím paralelní práce brání čtyři vrstvy s rostoucím dosahem. Vnitřní dvě patří tasku a gitu, vnější dvě sdílenému serveru a meshi. Odmítají jen nejvnitřnější a nejvnější, prostřední dvě hlásí. Podrobně je popisuje kapitola <a href="#m-vrstvy">Čtyři vrstvy koordinace</a>.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 316" role="img" aria-label="Soustředné vrstvy: task scope v jednom checkoutu (odmítá), překryv worktrees na jednom stroji (hlásí), peer board všech checkoutů repa (hlásí), mesh napříč stroji (odmítá exkluzivní claim).">
+        <a href="#m-claims"><g class="hit">
+          <rect x="16" y="12" width="688" height="292" rx="14" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="32" y="36" font-size="13" font-weight="600" class="ink">Mesh · stroje</text>
+          <text x="140" y="36" font-size="11.5" class="mut mono">mesh claim · handover · review</text>
+          <text x="688" y="36" text-anchor="end" font-size="11.5" font-weight="600" class="acc">ODMÍTÁ</text>
+        </g></a>
+        <a href="#h-server"><g class="hit">
+          <rect x="46" y="52" width="628" height="232" rx="12" class="zone" stroke-width="1.25"/>
+          <text x="62" y="76" font-size="13" font-weight="600" class="ink">Peer board · všechny checkouty repa</text>
+          <text x="358" y="76" font-size="11.5" class="mut mono">announce · peers</text>
+          <text x="658" y="76" text-anchor="end" font-size="11.5" font-weight="600" class="mut">HLÁSÍ</text>
+        </g></a>
+        <a href="#m-vrstvy"><g class="hit">
+          <rect x="76" y="92" width="568" height="172" rx="10" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.25"/>
+          <text x="92" y="116" font-size="13" font-weight="600" class="ink">Překryv worktrees · jeden stroj</text>
+          <text x="350" y="116" font-size="11.5" class="mut mono">start · check --overlap</text>
+          <text x="628" y="116" text-anchor="end" font-size="11.5" font-weight="600" class="mut">HLÁSÍ</text>
+        </g></a>
+        <a href="#h-scope"><g class="hit">
+          <rect x="106" y="132" width="508" height="112" rx="8" class="zone" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="122" y="156" font-size="13" font-weight="600" class="ink">Task scope · jeden checkout</text>
+          <text x="598" y="156" text-anchor="end" font-size="11.5" font-weight="600" class="acc">ODMÍTÁ</text>
+          <text x="360" y="192" text-anchor="middle" font-size="12" class="ink mono">start --scope · check · finish · pre-push</text>
+          <text x="360" y="218" text-anchor="middle" font-size="11.5" class="mut">soubor mimo scope: exit 10, finish nic nezapíše</text>
+        </g></a>
+      </svg>
+    </div>
+    <figcaption>Dva scope se potkají, když jsou stejné nebo jeden obsahuje druhý, na hranici cesty: <code>apps</code> se potká s <code>apps/majordomus-cli</code>, <code>app</code> ne. Pravidlo je stejné na všech čtyřech vrstvách.</figcaption>
+  </figure>
+</section>
+
+<section id="velka-org">
+  <h2>Pro velkou organizaci</h2>
+  <p>Majordomus je stavěný pro jeden repozitář, jednoho vlastníka a jednotky souběžných sessions. Firma s tisícem vývojářů a HW inženýrů potřebuje věci, které nemá. Principy se přenést dají, nástroj ne.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Potřeba</th><th>Majordomus dnes</th><th>Co s tím</th></tr></thead>
+    <tbody>
+      <tr><td>identita, SSO, role</td><td>jediný aktér je volný řetězec <code>owner</code>; mesh důvěřuje klíčům v allowlistu</td><td>identita z firemního IdP, role na úrovni repozitářů a pravidel</td></tr>
+      <tr><td>pravidla napříč stovkami repozitářů</td><td>vrstva <code>.ai/</code> je per repo; sdílí se jen vendorovaný balíček pravidel</td><td>centrální balíček pravidel verzovaný jako závislost, vynucení v CI každého repa</td></tr>
+      <tr><td>ne-kódové artefakty (HW)</td><td>všechno stojí na gitu a textu</td><td>vlastní druhy záznamů a důkazů pro specifikace, schémata, měření</td></tr>
+      <tr><td>audit a compliance</td><td>ledger je lokální; historie je v gitu</td><td>centrální, neměnný záznam událostí</td></tr>
+      <tr><td>stovky souběžných writerů</td><td>při devíti sessions na jednom stroji je úzkým hrdlem disk, odvozování a fronta CI</td><td>záznamy mimo hlavní větev, odvozování na straně CI</td></tr>
+      <tr><td>provoz a podpora</td><td>projekt jednoho autora</td><td>vlastní tým platformy</td></tr>
+    </tbody>
+  </table></div>
+  <p>Co se dá vzít hned a bez nástroje, je v kapitole <a href="#h-prenos">Co se dá přenést i bez Majordomusu</a>.</p>
+</section>
+
+<section id="slovnik">
+  <h2>Slovník</h2>
+  <p>Pojmy, které Majordomus používá, a kde jsou vysvětlené. Filtr hledá v názvu i popisu.</p>
+  <label class="filter" for="gloss-filter">Filtrovat pojmy</label>
+  <input id="gloss-filter" class="filter-input" type="search" placeholder="např. claim, handover, gate" autocomplete="off">
+  <dl class="gloss" id="gloss">
+    <div><dt><a href="#p-rozhodnuti">ADR</a></dt><dd>architektonické rozhodnutí repa: kontext, rozhodnutí, důsledky; přijímá ho jen člověk</dd></div>
+    <div><dt><a href="#p-briefing">briefing</a></dt><dd>výstup <code>majordomus context</code>: trvalý stav v pořadí autority, s rozpočtem a vyjmenovanými výpadky</dd></div>
+    <div><dt><a href="#projekce">capability</a></dt><dd>jedna operace executable, deklarovaná jednou a promítnutá do všech rozhraní</dd></div>
+    <div><dt><a href="#p-zaznamy">checkpoint</a></dt><dd>krátký průběžný stav tasku s omezenou délkou, aby se dal citovat celý</dd></div>
+    <div><dt><a href="#m-claims">claim</a></dt><dd>cesty, které drží session v meshi; exkluzivní, nebo advisory; žije, dokud držitel bije</dd></div>
+    <div><dt><a href="#p-stroje">continuity</a></dt><dd>podepsaný handover v <code>refs/majordomus/continuity</code>, převzatý na jiném stroji podle plánu</dd></div>
+    <div><dt><a href="#p-rozhodnuti">decision</a></dt><dd>rozhodnutí tasku s povinným důvodem a zamítnutými variantami; nikdy se needituje</dd></div>
+    <div><dt><a href="#h-doctor">doctor</a></dt><dd>kontrola jen pro čtení: je harness zapojený, sedí razítka, prochází řetěz každé doktríny</dd></div>
+    <div><dt><a href="#p-pravidla">doktrína</a></dt><dd>pravidlo, které nástroj vynucuje: jmenuje validátor, příkazy, které ho spouští, a testy</dd></div>
+    <div><dt><a href="#h-doctor">důkaz (evidence)</a></dt><dd>zaznamenaný běh testu s commitem a stavem stromu; platnost se počítá vůči stromu, ne podle času</dd></div>
+    <div><dt><a href="#p-session">epizoda</a></dt><dd>jedno sezení jednoho workera; nemá scope a zavírá se do neměnné obálky referencí</dd></div>
+    <div><dt><a href="#x-exec">execution</a></dt><dd>volání capability s identitou, typovanými událostmi a možností zrušení; nepřežije proces</dd></div>
+    <div><dt><a href="#h-finish">finish contract</a></dt><dd>řádky, které musí projít, než se zapíše <code>completed</code>; selhání jednoho znamená, že se nic nezapíše</dd></div>
+    <div><dt><a href="#m-journal">fold</a></dt><dd>výpočet stavu meshe ze stejných událostí; každý runtime dojde ke stejnému digestu</dd></div>
+    <div><dt><a href="#x-claims">garance</a></dt><dd>veřejné tvrzení o nástroji se zdrojem, implementací, testem a statusem</dd></div>
+    <div><dt><a href="#h-ci">gate</a></dt><dd>kontrola v CI vybraná třídami změněných cest; gate bez odpovědi je <code>queued</code>, ne pass</dd></div>
+    <div><dt><a href="#p-zaznamy">handover</a></dt><dd>záměrný balíček pro pokračování: Objective, Current State, Next Action</dd></div>
+    <div><dt><a href="#m-handshake">handshake</a></dt><dd>podepsané hello a welcome s osmi kontrolami na každé straně; teprve pak vzniká link</dd></div>
+    <div><dt><a href="#h-co-je">harness</a></dt><dd>všechno kolem modelu: kontext, nástroje, oprávnění, hranice session a brány, které změnu odmítnou</dd></div>
+    <div><dt><a href="#x-intent">intent</a></dt><dd>čemu práce slouží: tvrzení, milníky a kritéria, která splní jen aktuální důkaz</dd></div>
+    <div><dt><a href="#x-plan">issue</a></dt><dd>ohraničený kontrakt provedení se scope, závislostmi a požadovanými důkazy; bez pole status</dd></div>
+    <div><dt><a href="#m-journal">journal</a></dt><dd>podepsané události meshe: sessions, claims, handovery, reviews</dd></div>
+    <div><dt><a href="#p-znalosti">kandidát znalosti</a></dt><dd>tvrzení odvozené z ledgeru na konci epizody; čeká na rozhodnutí člověka</dd></div>
+    <div><dt><a href="#p-briefing">kontextový dokument</a></dt><dd><code>README.md</code> pod <code>.ai/</code> se scope; pro každou cestu se počítá řetěz od nejobecnějšího</dd></div>
+    <div><dt><a href="#p-zaznamy">ledger</a></dt><dd>append-only historie událostí, kterou píše jen Majordomus</dd></div>
+    <div><dt><a href="#x-plan">milník</a></dt><dd>specifikace výsledku: problém, cílový stav, kritéria a požadované důkazy</dd></div>
+    <div><dt><a href="#m-identita">node</a></dt><dd>klíč Majordomusu na jednom stroji, Ed25519</dd></div>
+    <div><dt><a href="#h-server">ohlášení</a></dt><dd>záměr a cesty peera na boardu; claim, ne zámek; patří spojení</dd></div>
+    <div><dt><a href="#h-finish">outcome</a></dt><dd>výsledek tasku: completed, partial, blocked, no_match, failed, handed_over</dd></div>
+    <div><dt><a href="#h-server">peer</a></dt><dd>připojený MCP klient na boardu, očíslovaný <code>p1</code>, <code>p2</code>…; id je pozice, ne identita</dd></div>
+    <div><dt><a href="#h-bootstrap">policy</a></dt><dd><code>.ai/repo/policy.yaml</code>: jedna kanonická, na providerovi nezávislá politika</dd></div>
+    <div><dt><a href="#p-briefing">pořadí autority</a></dt><dd>git, task a profil, blokery, autorské záznamy, historie</dd></div>
+    <div><dt><a href="#h-doctor">preflight</a></dt><dd>verdikt pro každé tvrzení o checkoutu s důkazem, na kterém stojí</dd></div>
+    <div><dt><a href="#h-profily">profil</a></dt><dd>pracovní režim: třída modelu, effort, verbosity, kontext a co finish vyžaduje</dd></div>
+    <div><dt><a href="#h-bootstrap">projekce</a></dt><dd>soubor nebo rozhraní odvozené z kanonické deklarace; nesmí mít vlastní názor</dd></div>
+    <div><dt><a href="#m-vrstvy">překryv</a></dt><dd>dva scope, které jsou stejné nebo jeden obsahuje druhý; informace, ne zámek</dd></div>
+    <div><dt><a href="#h-bootstrap">razítko</a></dt><dd>hash policy a obsahu ve vygenerovaném souboru; nesoulad znamená ruční úpravu</dd></div>
+    <div><dt><a href="#h-reasoning">reasoning</a></dt><dd>záznam podstatné nejistoty, důkazů, poradců a závěru, aby se další session nemusela ptát znovu</dd></div>
+    <div><dt><a href="#h-vynuceni">režim vynucení</a></dt><dd>dispatched, gated, reviewed, declarative; odvozuje se z kódu, nedeklaruje se</dd></div>
+    <div><dt><a href="#m-identita">runtime</a></dt><dd>server jednoho checkoutu na nodu; dva worktrees jsou dva runtimes</dd></div>
+    <div><dt><a href="#h-scope">scope repozitáře</a></dt><dd><code>scope.yaml</code>: co se nikdy nečte ani neservíruje</dd></div>
+    <div><dt><a href="#h-scope">scope tasku</a></dt><dd>cesty, kam smí task psát; mimo ně selže <code>check</code> i <code>finish</code></dd></div>
+    <div><dt><a href="#h-server">sdílený server</a></dt><dd>jeden server na checkout zvolený přes lease; MCP, HTTP, Cockpit a board</dd></div>
+    <div><dt><a href="#p-session">session-context</a></dt><dd>zmrazený snímek toho, co worker dostal při otevření epizody</dd></div>
+    <div><dt><a href="#p-skills">skill</a></dt><dd>procedura pro jeden druh práce: účel, postup, tvar výstupu</dd></div>
+    <div><dt><a href="#p-pamet">štítek divergence</a></dt><dd><code>exact</code>, <code>advanced</code>, <code>diverged</code>, <code>different_context</code>: jak se zapsaný HEAD má k dnešku</dd></div>
+    <div><dt><a href="#osobni">osobní režim</a></dt><dd>použití Majordomusu bez stopy v gitu: lokální exclude, soukromá policy, zjišťování z disku</dd></div>
+    <div><dt><a href="#h-finish">task</a></dt><dd>jediná aktivní jednotka práce v checkoutu se scope, profilem a závazky</dd></div>
+    <div><dt><a href="#m-stroje">trust.allow</a></dt><dd>veřejné klíče strojů, kterým mesh věří; distribuuje se gitem</dd></div>
+    <div><dt><a href="#x-claims">use case</a></dt><dd>úkol, který nástroj předvede scénářem sám na sobě; zralost se pozoruje z důkazů</dd></div>
+    <div><dt><a href="#h-doctor">verdikt</a></dt><dd>verified, active, fresh, stale, degraded, unavailable, failed, unknown, not_applicable</dd></div>
+    <div><dt><a href="#x-plan">vlna</a></dt><dd>Kahnova vrstva issue v grafu závislostí; říká, co by mohlo běžet souběžně</dd></div>
+    <div><dt><a href="#x-worktree">worktree</a></dt><dd>pracovní adresář jedné branche na kanonické cestě odvozené z jejího jména</dd></div>
+    <div><dt><a href="#h-zavazky">závazek</a></dt><dd>token z <code>--requires</code>, co task dluží: tests, docs, commit, push, pages…</dd></div>
+  </dl>
+  <p class="small" id="gloss-empty" hidden>Žádný pojem neodpovídá filtru.</p>
+</section>
+
+<section id="prikazy">
+  <h2>Reference příkazů</h2>
+  <p>Příkazy jsou rozdělené podle oblasti. Každý bere <code>--format json</code> a stejné operace jsou dostupné přes HTTP, MCP i Cockpit. Pod touto tabulkou následují podrobné tabulky pro <a href="#p-prikazy">paměť a pravidla</a> a pro <a href="#m-prikazy">mesh</a>.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Oblast</th><th>Příkaz</th><th>Co dělá</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="6">Task</td><td><code>start "&lt;task&gt;" --scope … [--requires …] [--profile …]</code></td><td>založí task; odmítne, když jiný běží</td></tr>
+      <tr><td><code>context</code></td><td>briefing; na začátku každé session</td></tr>
+      <tr><td><code>checkpoint &lt; note.md</code></td><td>průběžný stav</td></tr>
+      <tr><td><code>check [--overlap]</code></td><td>scope, závazky, gates; překryv s jinými tasky</td></tr>
+      <tr><td><code>handover &lt; note.md</code></td><td>předání další session</td></tr>
+      <tr><td><code>finish --outcome … --verify-command "…"</code></td><td>uzavře task přes finish contract; <code>--check</code> jen ověří</td></tr>
+      <tr><td rowspan="3">Provider</td><td><code>update [--diff | --force]</code></td><td>vyrenderuje bootstrap soubory z policy</td></tr>
+      <tr><td><code>capture install --provider claude-code</code></td><td>zapojí hooky session</td></tr>
+      <tr><td><code>capture prompt / session</code></td><td>to, co hooky volají</td></tr>
+      <tr><td rowspan="4">Server</td><td><code>serve [ensure | status | stop]</code></td><td>sdílený server checkoutu</td></tr>
+      <tr><td><code>mcp [--inspect | --standalone]</code></td><td>MCP klient; první se stane serverem</td></tr>
+      <tr><td><code>capabilities list</code></td><td>registr a jeho projekce</td></tr>
+      <tr><td><code>generate [--check]</code></td><td>projekce z registru; kontrola rozdílu</td></tr>
+      <tr><td rowspan="4">Brány</td><td><code>doctor</code></td><td>zapojení harness, jen pro čtení</td></tr>
+      <tr><td><code>env preflight</code></td><td>verdikty s důkazy</td></tr>
+      <tr><td><code>commit validate &lt;soubor&gt; --paths …</code></td><td>soudce commit zpráv</td></tr>
+      <tr><td><code>scope [--check] &lt;cesty&gt;</code></td><td>je cesta ve scope repozitáře a proč</td></tr>
+      <tr><td rowspan="3">Ostatní</td><td><code>worktree [create | migrate | guard]</code></td><td>kanonické worktrees</td></tr>
+      <tr><td><code>reasoning …</code></td><td>záznam nejistoty, plán poradců, závěr</td></tr>
+      <tr><td><code>models list / route</code></td><td>katalog modelů podle třídy</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="mapa-prirucky">
+  <h2>Mapa příručky</h2>
+  <p>Každý sloupec je jedna část, každý bod kapitola, každá čára vazba z rámečku <em>Souvisí</em>. Najetím na bod zvýrazníš jeho sousedy, kliknutím na něj skočíš do kapitoly. Nejvíc propojené kapitoly jsou uzly, přes které vede většina cest: finish contract, sdílený server, git hooky, doctor a CI gates.</p>
+  <div class="lab" id="lab-graph">
+    <div class="graph-wrap"><svg id="chapter-graph" role="img" aria-label="Graf kapitol příručky a jejich vazeb"></svg></div>
+    <p class="lab-note" id="graph-readout">Najeď na kapitolu.</p>
+  </div>
+</section>
+
+<section id="cisla-tempo">
+  <h2>Tempo vývoje</h2>
+  <p>Commity bez merge po dnech od prvního commitu, s vydanými verzemi. Data jsou z <code>origin/master</code> na commitu <code>%%commit%%</code>. Projekt vznikl 3. 9. 2026. Prvních deset dní jsou stovky commitů denně, protože se stavěl základ. Pak se tempo ustálilo a od konce září vychází nová verze zhruba každé dva dny.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-cadence"></div></div>
+</section>
+
+<section id="cisla-commity">
+  <h2>Commity: typy a délka subjectu</h2>
+  <p>Typy z konvenční hlavičky <code>type(scope): subject</code>. Opravy převažují nad funkcemi téměř dvakrát, což u nástroje, který sám sebe měří, odpovídá: velká část práce je zavírání mezer, které našly vlastní brány.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-types"></div></div>
+  <p>Délka subjectu je důvod, proč je limit v <code>commit-msg</code> 100 znaků a ne konvenčních 72. Medián je 72, 95. percentil 94. Limit 72 by porušovala polovina historie.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-subject"></div></div>
+</section>
+
+<section id="cisla-adr">
+  <h2>Rozhodnutí v čase</h2>
+  <p>Kumulativní počet ADR podle data, kdy soubor poprvé vstoupil do historie. Většina architektury se rozhodla v prvních dvou týdnech. Pozdější ADR jsou spíš opravy a zpřesnění, často reakce na konkrétní incident.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-adr"></div></div>
+</section>
+
+<section id="cisla-pravidla">
+  <h2>Pravidla a brány v číslech</h2>
+  <p>Stav důkazu každého z %%rules%% pravidel, přepočítaný ze stromu commitu stejně, jako ho počítá <code>rules report</code> (%%blocking%% blokujících, %%advisory%% poradních). <code>not run</code> neznamená, že test neexistuje: pravidlo jmenuje test i gate, ale lokální ledger jeho běh nezaznamenal. Pravidlo s předepsaným důkazem, který neexistuje (<code>dangling</code>), nemá žádné.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-proof"></div></div>
+  <p>CI gates podle jobu, který je spouští. Většina jsou levné strukturální kontroly, které běží v každém plánu. Drahé gates (Rust, coverage, mesh lab, macOS) vybírá až změněná cesta.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-jobs"></div></div>
+</section>
+
+<section id="hodnoceni">
+  <h2>Sebehodnocení týmu</h2>
+  <p>Dvanáct otázek, jedna za každý problém z <a href="#problemy">rozcestníku</a>. Odpovědi zůstávají jen v tomto prohlížeči. Výsledek seřadí mezery podle dopadu a ke každé navrhne první krok, který nevyžaduje Majordomus, a kapitolu, kde je mechanismus popsaný. Shrnutí jde zkopírovat a poslat dál.</p>
+  <div class="lab" id="lab-assess">
+    <p class="lab-h">Vyzkoušej si · kde je váš tým</p>
+    <div id="assess-rows"></div>
+    <div class="assess-sum" id="assess-sum" aria-live="polite"></div>
+    <div class="lab-row">
+      <button type="button" class="btn primary" id="assess-copy">Kopírovat shrnutí</button>
+      <button type="button" class="btn ghost" id="assess-reset">Vymazat odpovědi</button>
+      <span class="lab-note" id="assess-msg"></span>
+    </div>
+  </div>
+</section>
+
+<section id="nasazeni">
+  <h2>Nasazení krok za krokem</h2>
+  <p>Postup podle <code>docs/INSTALL.md</code> a <code>docs/ADOPTION.md</code> pro vlastní repozitář. Zaškrtnuté kroky si prohlížeč pamatuje. Instalační skript si před spuštěním přečti: běží pod tvým uživatelem a zapisuje jen do <code>~/.local</code>.</p>
+  <div class="lab" id="lab-adopt">
+    <p class="lab-h">Vyzkoušej si · checklist nasazení</p>
+    <div class="adopt-bar"><i id="adopt-fill"></i></div>
+    <p class="lab-note" id="adopt-count"></p>
+    <ol class="adopt" id="adopt-list"></ol>
+    <button type="button" class="btn ghost small" id="adopt-reset">Vymazat zaškrtnutí</button>
+  </div>
+</section>
+
+<section id="pruzkumnik">
+  <h2>Průzkumník repozitáře</h2>
+  <p>Rozhodnutí, pravidla, CI gates, capabilities, garance a use cases repozitáře Majordomusu na <code>origin/master</code> (<code>%%commit%%</code>), s filtrem a odkazem na zdrojový soubor na GitHubu. ADR ve stavu <code>proposed</code> jsou většina: přijetí je akt člověka a nástroj ho nikdy nezapíše sám.</p>
+  <div class="lab" id="lab-explore">
+    <div class="seg" id="ex-tabs" role="tablist"></div>
+    <div class="ex-stats" id="ex-stats"></div>
+    <label class="lbl" for="ex-q">Filtr</label>
+    <input class="inp" id="ex-q" type="search" placeholder="např. scope, mesh, release, worktree" autocomplete="off">
+    <div class="chips-btn" id="ex-chips"></div>
+    <p class="lab-note" id="ex-count"></p>
+    <ol class="ex-list" id="ex-list"></ol>
+  </div>
+</section>
