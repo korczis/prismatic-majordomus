@@ -582,3 +582,7 @@ ol.gc-chain { list-style: none; margin: 0; padding: 0; max-width: none; display:
 .ev-decl { font: 600 10px/1.5 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 0 4px; }
 .ev-more { margin-top: 8px; font-size: 13.5px; }
 .ev-more > summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
+
+/* Inline code is prose: a long identifier breaks rather than pushing the page sideways at
+   phone widths. Code blocks keep their lines and scroll inside their own box. */
+main p code, main li code, main td code, main dd code, .lab code { overflow-wrap: anywhere; }

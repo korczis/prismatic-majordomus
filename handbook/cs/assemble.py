@@ -524,6 +524,12 @@ page = page.replace('<script type="application/json" id="data-arch">',
                     % json.dumps(evidence, separators=(",", ":")), 1)
 print("evidence: %d chapter(s), %d seed object(s), %d neighbouring" % (
     len(evidence), sum(len(v["s"]) for v in evidence.values()), sum(v["nt"] for v in evidence.values())))
+# The built page is a whole document: opened from a file it is read in standards mode, laid
+# out at the device's width, and says which language it is in — the one edition.toml declares.
+_lang = re.search(r'^\s*lang\s*=\s*"([a-z-]+)"', read(os.path.join(HERE, "edition.toml")), re.M).group(1)
+page = ('<!doctype html>\n<html lang="%s">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n' % _lang
+        + page + "\n</body>\n</html>\n")
 with open(out_path, "w", encoding="utf-8") as fh:
     fh.write(page)
 print("links", link_count, "sections", len(ordered), "ids", len(ids), "bytes", len(page.encode("utf-8")))
