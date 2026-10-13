@@ -16,6 +16,7 @@
 #   not raised   the newest green commit still declares the released version: nothing is cut
 #   tagged       the version already has a tag: nothing is cut, and no second tag is asked for
 #   current      the trunk is the last release itself
+#   record owed  the newest green commit lacks the last release's record: nothing is cut
 #   lost race    the tag appeared while this run was deciding: said, not an error
 #   unread       an API that cannot be read, a tag or a dispatch that is refused: exit 12
 #   the workflow asks every hour, with the permissions to do this and none to change a branch
@@ -35,6 +36,13 @@ land() {   # each call is its own subshell, so the count is kept where they all 
   local n; n=$(( $(cat "$T/landings" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$T/landings"
   printf '[package]\nname = "majordomus-cli"\nversion = "%s"\n\n[dependencies]\nversion = "9.9.9"\n' "$1" > "$R/apps/majordomus-cli/Cargo.toml"
   echo "$n" > "$R/landing"
+  # a landing holds the record of every release cut before it, unless it is told to be the
+  # one that landed between a tag and its record
+  rm -rf "$R/.ai/repo/releases"
+  if [ -z "${NO_RECORD:-}" ]; then
+    mkdir -p "$R/.ai/repo/releases"
+    for t in $(gitq tag --list 'v*'); do echo "tag: $t" > "$R/.ai/repo/releases/$t.yaml"; done
+  fi
   gitq add -A && gitq commit -qm "feat: landing $n" && gitq rev-parse HEAD
 }
 C0="$(land 1.0.0)"; gitq tag v1.0.0
@@ -159,6 +167,18 @@ gitq tag v1.2.0 "$C5"
 expect_exit 0 act || exit 1
 expect_grep "nothing to cut: master is v1\.2\.0 itself" || exit 1
 grep -qx "reason=current" "$T/out" || { echo "    the reason is not current:"; cat "$T/out"; exit 1; }
+
+echo "  a commit that landed between a tag and its record is not the next release"
+fresh
+C6="$(NO_RECORD=1 land 1.3.0)"; verdict "$C6" completed '"success"'
+expect_exit 0 act || exit 1
+expect_grep "nothing to cut: the newest green commit ${C6:0:12} declares 1\.3\.0, and the record of v1\.2\.0 \(\.ai/repo/releases/v1\.2\.0\.yaml\) is not in it" || exit 1
+grep -qx "reason=record-owed" "$T/out" || { echo "    the reason is not record-owed:"; cat "$T/out"; exit 1; }
+[ "$(writes)" = 0 ] || { echo "    a release was cut on top of an unrecorded one"; cat "$T/writes.log"; exit 1; }
+# the record lands, green: that commit is the release
+C7="$(land 1.3.0)"; verdict "$C7" completed '"success"'
+expect_exit 0 act --dry-run || exit 1
+expect_grep "would cut v1\.3\.0 at ${C7:0:12} \(green ci, 1\.3\.0 above v1\.2\.0\)" || exit 1
 
 echo "  usage, and a trunk that is not there"
 expect_exit 2 act --max 0 || exit 1

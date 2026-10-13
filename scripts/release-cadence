@@ -20,7 +20,13 @@
 #                current      the trunk has not moved since the last release
 #                no-verdict   no commit since the last release has a green `ci` yet
 #                not-raised   the newest green commit still declares the released version
+#                record-owed  the last release's record is not in that commit yet
 #                tagged       the version it declares already has a tag
+#
+# A release is finished by its record: the release workflow writes `.ai/repo/releases/<tag>.yaml`
+# and it reaches the trunk as a pull request. Until it has, the trunk still describes the release
+# before, and a second tag cut from it would be a release built on an unrecorded one. So the next
+# release waits for a green commit that holds the last one's record, and says so while it waits.
 #
 # It judges nothing itself. The verdict is release-verdict's, asked per commit; the version is
 # the manifest's at that commit; whether the tag agrees with the tool is release.yml's first
@@ -48,7 +54,7 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY=1; shift ;;
     --trunk) TRUNK="${2:?--trunk needs a ref}"; shift 2 ;;
     --max) MAX="${2:?--max needs a count}"; shift 2 ;;
-    -h|--help) sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,47p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "release-cadence: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -58,6 +64,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "release-cadence: 
 cd "$ROOT"
 VERDICT="$ROOT/scripts/ci/release-verdict"
 MANIFEST="apps/majordomus-cli/Cargo.toml"
+RECORDS=".ai/repo/releases"
 [ -x "$VERDICT" ] || { echo "release-cadence: scripts/ci/release-verdict is missing; nothing here can say a commit passed" >&2; exit 12; }
 command -v gh >/dev/null 2>&1 || { echo "release-cadence: gh is not installed, so no verdict can be read and no tag created" >&2; exit 12; }
 SLUG="${GITHUB_REPOSITORY:-}"
@@ -137,6 +144,10 @@ version="$(declared "$candidate")"
 tag="v$version"
 if ! above "$version" "$released"; then
   say nothing not-raised "$tag" "$candidate" "nothing to cut: the newest green commit ${candidate:0:12} declares $version and the last release is ${last:-none}; the version is raised by a landing (majordomus release bump), not here"
+  exit 0
+fi
+if [ -n "$last" ] && ! git cat-file -e "$candidate:$RECORDS/$last.yaml" 2>/dev/null; then
+  say nothing record-owed "$tag" "$candidate" "nothing to cut: the newest green commit ${candidate:0:12} declares $version, and the record of $last ($RECORDS/$last.yaml) is not in it; a release follows the record of the one before it"
   exit 0
 fi
 if git rev-parse --verify -q "refs/tags/$tag" >/dev/null 2>&1; then

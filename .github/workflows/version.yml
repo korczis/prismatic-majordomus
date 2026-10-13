@@ -18,7 +18,12 @@
 # done it either.
 #
 # What this does NOT do, deliberately: tag, release, or push to master. `.github/workflows/release.yml`
-# triggers on a `v*` tag, and creating that tag is a decision. This performs the bump the
+# triggers on a `v*` tag, and creating that tag is a decision. Since 2026-10-12 it is a standing
+# one, made by the owner ("a version every hour, without a human in the loop") and carried out
+# by `.github/workflows/cadence.yml` under project.a-release-is-cut-on-the-hour (ADR 0151): the
+# tag is cut by a clock, only at a commit whose `ci` check-run concluded success, only when a
+# release is owed, and never on top of a release whose record is not on the trunk yet. It is
+# still not this workflow's to make. This performs the bump the
 # surface already requires and opens a pull request with it, which is the same shape #305
 # settled for the release record — "the record reaches master through review, not through a
 # protected push". Automatic up to the point where a person is the point.

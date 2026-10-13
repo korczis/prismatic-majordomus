@@ -607,6 +607,7 @@ whose `ci` concluded success (`scripts/ci/release-verdict`, asked per commit) an
 | the trunk is the last release itself | nothing | `current` |
 | no commit since the last release has a green `ci` | nothing | `no-verdict`, with how many concluded otherwise and how many are not judged yet |
 | the newest green commit still declares the released version | nothing | `not-raised` |
+| the newest green commit does not hold the last release's record (`.ai/repo/releases/<tag>.yaml`) | nothing | `record-owed` |
 | the version already has a tag | nothing | `tagged` |
 
 </div>

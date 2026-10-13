@@ -63,8 +63,13 @@ otherwise and one was not judged yet.
    workflow, so the actor dispatches `release.yml` with the tag. That workflow checks the tag
    against the version and asks the verdict again before it builds: the actor is not trusted
    by the thing it starts.
-5. **Nothing to cut is an answer with a reason.** `current`, `no-verdict`, `not-raised` or
-   `tagged`, in the run's summary, every hour.
+5. **Nothing to cut is an answer with a reason.** `current`, `no-verdict`, `not-raised`,
+   `record-owed` or `tagged`, in the run's summary, every hour.
+   `record-owed` is the integrator's condition of 2026-10-13: a release is finished by its
+   record reaching the trunk, so the candidate must hold the record of the release before it.
+   A commit that landed between a tag and its record is passed over, which is the hold the
+   integrator kept by hand for v0.22.0 (the record, #1064, was the first landing after the
+   tag) stated as something the actor refuses.
 6. **It changes no branch and raises no version.** The version rises by a landing (ADR 0134,
    or a pull request's own bump); the release record reaches master as the pull request the
    release workflow already opens. The cadence holds the permissions to create a tag, dispatch

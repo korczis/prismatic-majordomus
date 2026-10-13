@@ -35,10 +35,14 @@ clock or it is not applied.
    that is red, cancelled, still running or never judged does not hold the release back and
    is never the commit tagged.
 3. **Only a raised version.** The candidate's manifest declares a version above the last
-   release, and no tag holds that version. The actor raises nothing: a landing does.
+   release, and no tag holds that version. The actor raises nothing: a landing does. The
+   candidate also holds the record of the last release (`.ai/repo/releases/<tag>.yaml`): a
+   commit that landed between a tag and its record is not the next release, and nothing
+   should land there.
 4. **Nothing is a stated reason.** When nothing is cut, the run says which condition failed:
    the trunk has not moved, no commit is green yet (with how many concluded otherwise and how
-   many are not judged), the version is not raised, or the version is already tagged.
+   many are not judged), the version is not raised, the last release's record is not in the
+   candidate yet, or the version is already tagged.
 5. **It changes no branch.** The actor creates one tag and dispatches one workflow. It does
    not push, raise the version, open or merge a pull request. The workflow holds
    `contents: write`, `actions: write` and `checks: read`, and no other permission.
