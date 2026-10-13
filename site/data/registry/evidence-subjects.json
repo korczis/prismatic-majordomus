@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.22.0"
+    "version": "0.23.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -901,6 +901,11 @@
       "kind": "capability",
       "subject": "capability:rules.show",
       "path": "/evidence/capabilities/rules-show/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:served.forge",
+      "path": "/evidence/capabilities/served-forge/"
     },
     {
       "kind": "capability",
@@ -3161,6 +3166,11 @@
       "kind": "command",
       "subject": "command:serve",
       "path": "/evidence/commands/serve/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:served forge",
+      "path": "/evidence/commands/served-forge/"
     },
     {
       "kind": "command",
@@ -5729,6 +5739,18 @@
       "programs": [],
       "members": [
         "command:rules show"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:served.forge": {
+      "kind": "capability",
+      "id": "served.forge",
+      "page": "/evidence/capabilities/served-forge/",
+      "programs": [],
+      "members": [
+        "command:served forge"
       ],
       "routes": [],
       "mechanisms": [],
@@ -10109,7 +10131,7 @@
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/project/english-only.v2.md",
+            ".ai/repo/rules/project/english-only.v3.md",
             "scripts/ci/english-only-check",
             "test/cases/403_published_translation.sh"
           ]
@@ -13209,6 +13231,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:130_mesh",
           "path": "test/cases/130_mesh.sh",
           "category": "e2e"
@@ -13337,6 +13365,12 @@
           "via": "behaviour",
           "test": "suite:96_worktree_topology",
           "path": "test/cases/96_worktree_topology.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:999_a_parser_that_cannot_run_is_not_a_verdict",
+          "path": "test/cases/999_a_parser_that_cannot_run_is_not_a_verdict.sh",
           "category": "e2e"
         },
         {
@@ -16355,6 +16389,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:125_rule_proof",
           "path": "test/cases/125_rule_proof.sh",
           "category": "e2e"
@@ -16379,6 +16419,12 @@
         },
         {
           "via": "negative",
+          "test": "suite:1015_one_malformed_rule_is_one_finding",
+          "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
           "test": "suite:125_rule_proof",
           "path": "test/cases/125_rule_proof.sh",
           "category": "e2e"
@@ -16393,6 +16439,12 @@
           "via": "negative",
           "test": "suite:138_governance_gates",
           "path": "test/cases/138_governance_gates.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
           "category": "e2e"
         },
         {
@@ -16604,6 +16656,25 @@
       "kind": "command",
       "id": "serve stop",
       "page": "/evidence/commands/serve-stop/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:served forge": {
+      "kind": "command",
+      "id": "served forge",
+      "page": "/evidence/commands/served-forge/",
       "programs": [
         "native"
       ],
@@ -22250,6 +22321,27 @@
       ],
       "findings": []
     },
+    "rule:project.a-failed-read-is-not-an-empty-answer": {
+      "kind": "rule",
+      "id": "project.a-failed-read-is-not-an-empty-answer",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:894_github_sync_applies_only_the_trunk",
+          "path": "test/cases/894_github_sync_applies_only_the_trunk.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            ".ai/repo/rules/project/a-failed-read-is-not-an-empty-answer.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-number-names-one-case": {
       "kind": "rule",
       "id": "project.a-number-names-one-case",
@@ -22327,6 +22419,27 @@
           "inputs": [
             "test/cases/386_a_plan_is_held_to_its_intent.sh",
             ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-producer-declares-what-it-writes": {
+      "kind": "rule",
+      "id": "project.a-producer-declares-what-it-writes",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:357_ci_records_evidence",
+          "path": "test/cases/357_ci_records_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/357_ci_records_evidence.sh",
+            ".ai/repo/rules/project/a-producer-declares-what-it-writes.v1.md"
           ]
         }
       ],
@@ -23002,7 +23115,18 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/english-only.v3.md"
+          ]
+        }
+      ],
       "mechanisms": [
         "scripts/ci/english-only-check"
       ],
@@ -24858,6 +24982,27 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.ssh-key-access-is-preauthorized": {
+      "kind": "rule",
+      "id": "project.ssh-key-access-is-preauthorized",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:304_a_provider_is_declared_once",
+          "path": "test/cases/304_a_provider_is_declared_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/304_a_provider_is_declared_once.sh",
+            ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.tests-run-in-disposable-repos": {
       "kind": "rule",
       "id": "project.tests-run-in-disposable-repos",
@@ -24988,6 +25133,27 @@
       ],
       "findings": []
     },
+    "rule:project.the-handbook-is-built-from-the-tree": {
+      "kind": "rule",
+      "id": "project.the-handbook-is-built-from-the-tree",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.the-lease-is-read-once": {
       "kind": "rule",
       "id": "project.the-lease-is-read-once",
@@ -25013,6 +25179,47 @@
           "inputs": [
             "test/cases/110_lease_reader.sh",
             ".ai/repo/rules/project/the-lease-is-read-once.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.the-projection-is-applied-at-landing": {
+      "kind": "rule",
+      "id": "project.the-projection-is-applied-at-landing",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1097_the_projection_is_applied_at_landing",
+          "path": "test/cases/1097_the_projection_is_applied_at_landing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1097_the_projection_is_applied_at_landing.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:26_ci_wiring",
+          "path": "test/cases/26_ci_wiring.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/26_ci_wiring.sh",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
           ]
         }
       ],
@@ -25048,21 +25255,21 @@
         },
         {
           "via": "rule",
-          "test": "suite:1096_the_published_ui_is_the_trunks",
-          "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/1096_the_published_ui_is_the_trunks.sh",
-            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:180_publication_is_observed",
           "path": "test/cases/180_publication_is_observed.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/180_publication_is_observed.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2983_the_published_ui_is_the_trunks",
+          "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2983_the_published_ui_is_the_trunks.sh",
             ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
           ]
         },
@@ -26968,6 +27175,7 @@
     "suite:1089_the_work_and_mesh_screens_answer",
     "suite:1090_the_deployments_and_docs_screens_answer",
     "suite:1091_no_link_on_the_ui_is_dead",
+    "suite:1099_a_screen_over_its_budget_fails",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
     "suite:114_two_worktrees_one_repository",
@@ -26988,16 +27196,15 @@
     "suite:190_graph_drawing",
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
-    "suite:26_ci_wiring",
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
     "suite:2978_an_intent_is_proposed_by_a_capability",
+    "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
-    "suite:304_a_provider_is_declared_once",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",
