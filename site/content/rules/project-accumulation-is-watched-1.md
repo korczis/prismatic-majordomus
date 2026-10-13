@@ -1,7 +1,7 @@
 +++
 title = "What accumulates is watched at the episode's events, against budgets the policy declares"
 description = "What accumulates is watched at the episode's events, against budgets the policy declares"
-weight = 73
+weight = 75
 [extra]
 kind = "rule"
 slug = "project-accumulation-is-watched-1"

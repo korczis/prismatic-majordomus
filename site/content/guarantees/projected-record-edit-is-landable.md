@@ -18,7 +18,7 @@ compares the two does not hold that against the pull request. It reports the rec
 pull request changed as `PENDING` and refuses only drift the pull request did not cause.
 
 After the merge the same records are `PENDING` on the trunk for a declared window, which is
-the time the executor has to apply the projection. Past the window the trunk is refused and
+the time the landing has to apply the projection. Past the window the trunk is refused and
 the refusal names the command to run.
 
 ## How it works
@@ -34,7 +34,7 @@ which records changed since a reference commit.
 |---|---|---|
 | a pull request, or a tree given `MJ_GH_BASE=<ref>` | the merge base with the base branch | projected after merge |
 | a tree the default branch does not contain | the merge base with the remote's default branch | projected after merge |
-| the default branch | the youngest first-parent commit older than the window | the executor applies after landing |
+| the default branch | the youngest first-parent commit older than the window | the landing applies |
 
 </div>
 
@@ -65,10 +65,12 @@ bash test/run.sh 1038_a_head_is_judged_against_what_it_changes
 
 ## What it does not cover
 
-Nothing applies the projection. After a landing that changes plan records the executor runs
-`scripts/github-sync --apply` from master ([Pull-request integration](@/docs/integration.md)),
-and the gate only bounds how late that may be. A job that applies on every push to master is
-the owner's open choice and does not exist.
+The gate applies nothing. After a landing the projection is applied by
+`.github/workflows/github.yml`, which every push to master starts
+([Pull-request integration](@/docs/integration.md),
+`project.the-projection-is-applied-at-landing`), and the gate only bounds how late that may
+be. When that run fails, a person's `scripts/github-sync --apply` from master is the
+fallback.
 
 Only the four states an apply writes can be pending. A hand-edited region (`edited`,
 `conflict`) and a remote issue claiming an unknown record (`unmanaged`) are refused on every

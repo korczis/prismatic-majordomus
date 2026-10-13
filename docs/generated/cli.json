@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.22.0",
-  "version": "0.22.0",
+  "generator": "majordomus-cli 0.23.0",
+  "version": "0.23.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -1720,6 +1720,27 @@
             ],
             "command": "majordomus generate openapi",
             "setup": [],
+            "expectation": "exits 0"
+          },
+          {
+            "id": "generate-site-check",
+            "title": "Check one target without writing it",
+            "description": "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+            "argv": [
+              "generate",
+              "site",
+              "--check"
+            ],
+            "command": "majordomus generate site --check",
+            "setup": [
+              {
+                "argv": [
+                  "generate",
+                  "site"
+                ],
+                "command": "majordomus generate site"
+              }
+            ],
             "expectation": "exits 0"
           }
         ],
@@ -23151,6 +23172,20 @@
                 "command": "majordomus reasoning advisors",
                 "setup": [],
                 "expectation": "exits 0; prints reasoning   operational"
+              },
+              {
+                "id": "reasoning-advisors-json",
+                "title": "The same answer as one document",
+                "description": "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+                "argv": [
+                  "reasoning",
+                  "advisors",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus reasoning advisors --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity"
               }
             ],
             "subcommands": []
@@ -23303,6 +23338,22 @@
                   "material"
                 ],
                 "command": "majordomus reasoning plan --materiality material",
+                "setup": [],
+                "expectation": "exits 0; prints outcome, budget"
+              },
+              {
+                "id": "reasoning-plan-capabilities",
+                "title": "A high uncertainty that asks for named capabilities",
+                "description": "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+                "argv": [
+                  "reasoning",
+                  "plan",
+                  "--materiality",
+                  "high",
+                  "--capabilities",
+                  "independent_reasoning,code_review"
+                ],
+                "command": "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review",
                 "setup": [],
                 "expectation": "exits 0; prints outcome, budget"
               }

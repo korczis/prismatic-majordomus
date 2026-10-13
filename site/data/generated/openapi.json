@@ -1042,6 +1042,7 @@
     "schema-SkillDocumented": "docs/api/skills/",
     "schema-SkillEnforced": "docs/api/skills/",
     "schema-SkillEvidence": "docs/api/skills/",
+    "schema-SkillExposure": "docs/api/capabilities/",
     "schema-SkillFinding": "docs/api/skills/",
     "schema-SkillFindingLevel": "docs/api/skills/",
     "schema-SkillInvocation": "docs/api/skills/",
@@ -1218,7 +1219,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 192,
-    "schemas": 965,
+    "schemas": 966,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1248,7 +1249,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.22.0",
+  "generated_by": "majordomus-cli 0.23.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1257,7 +1258,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.22.0"
+    "version": "0.23.0"
   },
   "infrastructure": [
     {
@@ -2356,6 +2357,7 @@
     "SkillDocumented": "skills",
     "SkillEnforced": "skills",
     "SkillEvidence": "skills",
+    "SkillExposure": "capabilities",
     "SkillFinding": "skills",
     "SkillFindingLevel": "skills",
     "SkillInvocation": "skills",
@@ -6403,6 +6405,15 @@
           ],
           "required": true,
           "type": "ExecutionPolicy"
+        },
+        {
+          "description": "The short name a person invokes it by from an agent's prompt, when it has one.",
+          "name": "skill",
+          "refs": [
+            "SkillExposure"
+          ],
+          "required": false,
+          "type": "SkillExposure | null"
         }
       ],
       "type": "object",
@@ -50447,6 +50458,35 @@
           "value": "untested"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```",
+      "home": "capabilities",
+      "is_enum": false,
+      "name": "SkillExposure",
+      "properties": [
+        {
+          "description": "The name typed after the slash: lowercase letters, digits and hyphens, at most 64.",
+          "name": "alias",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The input field the text typed after the name fills, verbatim.",
+          "name": "argument",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability"
+      ],
+      "values": [],
       "variants": []
     },
     {
