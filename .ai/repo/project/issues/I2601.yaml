@@ -1,0 +1,30 @@
+id: I2601
+milestone: a-second-adopter-is-served
+title: "majordomus evidence reaches record, stamp and show"
+slug: majordomus-evidence-reaches-its-subcommands
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the documented `majordomus evidence record|stamp|show` work from the launcher."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G17); read again on master e506c041a4. docs/EVIDENCE.md documents `majordomus evidence record --suite …`; the installed launcher answers `evidence: unknown option record`, and the executable that does it is not on PATH."
+current_state: "bin/majordomus:162 routes `evidence` to lib/evidence.sh, which parses options only and dies on the word `record`."
+desired_state: "The shell command hands the subcommands the executable owns to it, keeps --covers and --gate, and its help lists both."
+scope:
+  - "lib/evidence.sh"
+  - "bin/majordomus"
+  - "share/commands.yaml"
+  - "docs/EVIDENCE.md"
+  - "docs/CLI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "`majordomus evidence show`, `record --help` and `stamp --help` answer through the launcher"
+  - "`majordomus evidence --covers` behaves as before"
+  - "The documented-command check runs the EVIDENCE.md lines it names"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "evidence_subcommands_through_launcher_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,30 @@
+id: I2594
+milestone: a-second-adopter-is-served
+title: "The declared version is read from where the repository declares it"
+slug: the-declared-version-is-read-where-it-is-declared
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let a repository say where its version is authored, and stop guessing a next version where nothing is declared."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G10); read again on master e506c041a4. Delivery showed `Declared unknown` and 'the commits since the last release imply a major release' in a repository with a package.json, a changelog and no tags."
+current_state: "apps/majordomus-cli/src/release/version.rs:43 fixes MANIFEST to apps/majordomus-cli/Cargo.toml; report() classifies every commit of HEAD when no release record exists."
+desired_state: "A policy key names the version source and its reader (cargo manifest, package.json, plain file); with nothing declared the report says `not declared` and infers nothing."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "docs/RELEASE.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With `release.version.source` naming a package.json, release.version reports its version"
+  - "With no source and no release record the report says not declared and proposes no bump"
+  - "This repository's report is unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "declared_version_source_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

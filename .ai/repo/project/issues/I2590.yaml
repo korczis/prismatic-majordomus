@@ -1,0 +1,30 @@
+id: I2590
+milestone: a-second-adopter-is-served
+title: "The bootstrap states a worktree layout only where the policy enforces it"
+slug: the-bootstrap-states-a-worktree-layout-only-when-enforced
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Move the worktree-topology paragraph of the provider templates behind the policy, so an adopter with its own worktree rule is not told a layout it does not use."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G06); read again on master e506c041a4. All six shipped templates state `<repository>-wt/<branch>` as this repository's layout; it contradicted the adopter's own worktree rule and the only remedy was copying and editing three templates."
+current_state: "share/providers/*.tmpl carry the paragraph as literal text; lib/update.sh substitutes three variables and whole-line fragments; no policy key mentions worktrees."
+desired_state: "The paragraph is a fragment rendered only when the policy's enforcement invokes the worktree guard, and absent otherwise."
+scope:
+  - "share/providers"
+  - "lib/update.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "docs/WORKTREES.md"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A policy that does not enforce the worktree guard renders no `-wt/` text in any projection target"
+  - "This repository's own projections are byte-identical after the change"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "worktree_paragraph_is_policy_driven_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

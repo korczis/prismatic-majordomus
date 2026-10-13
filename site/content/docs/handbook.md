@@ -1,7 +1,7 @@
 +++
 title = "The handbook"
 description = "the handbook: one interactive page per language, built from this tree; what is written and what is derived, and the gate that refuses a change which removes what a chapter rests on"
-weight = 33
+weight = 34
 [extra]
 source = "docs/HANDBOOK.md"
 +++

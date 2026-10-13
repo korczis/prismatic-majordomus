@@ -1,0 +1,28 @@
+id: I2607
+milestone: a-second-adopter-is-served
+title: "product validate measures an adopter against what the adopter owns"
+slug: product-validate-measures-what-the-adopter-owns
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Stop `product validate` from warning an adopter about the tool's own modules, commands and kinds."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G23); read again on master e506c041a4. The adopter got 99 warnings such as 'the kind profile is named by no stable feature' and a floor of `modules 0/56`."
+current_state: "apps/majordomus-cli/src/product.rs:1173-1244 measures the executable's capability registry and share/kinds.yaml against the repository's features."
+desired_state: "Module and command coverage is asked only where the repository holds the registry's sources; an adopter is measured on the kinds it declares, and the rest is reported as not applicable."
+scope:
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/capability/builtin/product.rs"
+  - "docs/PRODUCT.md"
+  - "test/cases"
+  - "apps/majordomus-cli/tests"
+depends_on: []
+acceptance_criteria:
+  - "In a foreign fixture `product validate` reports no uncovered module, command or tool kind"
+  - "In this repository the floors are unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "adopter_product_coverage_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

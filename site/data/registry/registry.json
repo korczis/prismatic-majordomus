@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "321f59120fda5258c6380ec6974fcd02e0baf2822699c0fe28bebf1211e9ab58",
+    "fingerprint": "06d836c6e7a648bfcc4510bcec4412092e5f846f1103f328e822c2e4182ee07d",
     "summary": {
-      "total": 2328,
+      "total": 2354,
       "builtin": 196,
-      "declarative": 2132,
+      "declarative": 2158,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2132
+        "resource": 2158
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2141
+        "implemented": 2167
       },
       "mcp_tools": 187,
-      "mcp_resources": 2187,
+      "mcp_resources": 2213,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80392,7 +80392,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 343,
         "capability_ids": []
       },
       {
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 366,
         "capability_ids": []
       },
       {
@@ -80792,7 +80792,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eecd41a76b9dd7fdeafea646d168fe7cb0927c92c4f6bab2f4f567c024ef7063",
+    "fingerprint": "d939c8753bef033d6dcfff5fad0572420b5b6f2567abd409dd0a9b9938be4ccb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81352,16 +81352,16 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 342,
+      "document": 343,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 342,
+      "issue": 366,
       "knowledge": 2,
       "mesh-declaration": 1,
-      "milestone": 35,
+      "milestone": 36,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -86866,6 +86866,15 @@
         "bytes": 13369
       },
       {
+        "uri": "majordomus://document/docs/ADOPTION_SECOND_RUN.md",
+        "kind": "document",
+        "identity": "docs/ADOPTION_SECOND_RUN.md",
+        "title": "Second adoption in a foreign repository — findings",
+        "path": "docs/ADOPTION_SECOND_RUN.md",
+        "source_class": "document",
+        "bytes": 14659
+      },
+      {
         "uri": "majordomus://document/docs/ARCHIVE.md",
         "kind": "document",
         "identity": "docs/ARCHIVE.md",
@@ -87331,7 +87340,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232014
+        "bytes": 392277
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87367,7 +87376,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25275
+        "bytes": 25540
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -94510,6 +94519,270 @@
         "bytes": 6346
       },
       {
+        "uri": "majordomus://issue/I2585",
+        "kind": "issue",
+        "identity": "I2585",
+        "title": "An untracked layer is read the same by both programs, and says that it is untracked",
+        "description": "Make the shell tool read an untracked layer the way the executable does since ADR 0145, and make both say once that the layer is on disk and not in the index.",
+        "path": ".ai/repo/project/issues/I2585.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2083
+      },
+      {
+        "uri": "majordomus://issue/I2586",
+        "kind": "issue",
+        "identity": "I2586",
+        "title": "doctor counts every failure it prints",
+        "description": "Make the number `doctor` reports, and the exit code it returns, account for every FAIL line it prints.",
+        "path": ".ai/repo/project/issues/I2586.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1517
+      },
+      {
+        "uri": "majordomus://issue/I2587",
+        "kind": "issue",
+        "identity": "I2587",
+        "title": "The reasoning check judges a gate, not every workflow that names a credential",
+        "description": "Stop `reasoning check` from failing a repository on a model credential named in a comment or in a workflow that gates nothing, and let a repository say which workflows are gates.",
+        "path": ".ai/repo/project/issues/I2587.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2042
+      },
+      {
+        "uri": "majordomus://issue/I2588",
+        "kind": "issue",
+        "identity": "I2588",
+        "title": "A region projection's host document is not judged as a bootstrap",
+        "description": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+        "path": ".ai/repo/project/issues/I2588.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1558
+      },
+      {
+        "uri": "majordomus://issue/I2589",
+        "kind": "issue",
+        "identity": "I2589",
+        "title": "init projects into a region where a hand-written target already exists, and update says append",
+        "description": "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file.",
+        "path": ".ai/repo/project/issues/I2589.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1851
+      },
+      {
+        "uri": "majordomus://issue/I2590",
+        "kind": "issue",
+        "identity": "I2590",
+        "title": "The bootstrap states a worktree layout only where the policy enforces it",
+        "description": "Move the worktree-topology paragraph of the provider templates behind the policy, so an adopter with its own worktree rule is not told a layout it does not use.",
+        "path": ".ai/repo/project/issues/I2590.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1722
+      },
+      {
+        "uri": "majordomus://issue/I2591",
+        "kind": "issue",
+        "identity": "I2591",
+        "title": "A projection target the policy declares is in scope without being listed twice",
+        "description": "Make a freshly initialised repository free of out-of-scope warnings about files the tool itself generates.",
+        "path": ".ai/repo/project/issues/I2591.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1740
+      },
+      {
+        "uri": "majordomus://issue/I2592",
+        "kind": "issue",
+        "identity": "I2592",
+        "title": "Every directory a command writes under the layer carries its contract",
+        "description": "Stop doctor from failing a repository for a missing context document in a directory the tool created or told it to create.",
+        "path": ".ai/repo/project/issues/I2592.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1818
+      },
+      {
+        "uri": "majordomus://issue/I2593",
+        "kind": "issue",
+        "identity": "I2593",
+        "title": "A deployment declares what runs where without inventing a cargo package",
+        "description": "Let a repository whose product is not one cargo binary on one machine pool declare its deployments truthfully.",
+        "path": ".ai/repo/project/issues/I2593.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1787
+      },
+      {
+        "uri": "majordomus://issue/I2594",
+        "kind": "issue",
+        "identity": "I2594",
+        "title": "The declared version is read from where the repository declares it",
+        "description": "Let a repository say where its version is authored, and stop guessing a next version where nothing is declared.",
+        "path": ".ai/repo/project/issues/I2594.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1732
+      },
+      {
+        "uri": "majordomus://issue/I2595",
+        "kind": "issue",
+        "identity": "I2595",
+        "title": "A repository declares its test runners, and a declared runner's tests are runnable",
+        "description": "Make evidence recordable for tests that are neither a shell case of this repository nor a crate test, through a declaration and a generic report.",
+        "path": ".ai/repo/project/issues/I2595.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1970
+      },
+      {
+        "uri": "majordomus://issue/I2596",
+        "kind": "issue",
+        "identity": "I2596",
+        "title": "An intent criterion's test reference resolves through the declared runners",
+        "description": "Let an intent criterion with `evidence: test` name any test a declared runner drives.",
+        "path": ".ai/repo/project/issues/I2596.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1415
+      },
+      {
+        "uri": "majordomus://issue/I2597",
+        "kind": "issue",
+        "identity": "I2597",
+        "title": "A plan derived from history is sealed at the times it happened",
+        "description": "Give a repository a verb that seals lifecycle stamps over their original times, so that a plan imported from history is not stamped with the day of the import.",
+        "path": ".ai/repo/project/issues/I2597.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2035
+      },
+      {
+        "uri": "majordomus://issue/I2598",
+        "kind": "issue",
+        "identity": "I2598",
+        "title": "plan answers in time linear in its issues and names a scope conflict once",
+        "description": "Make the plan commands usable at several hundred issues: bounded time, bounded output, and one call for several transitions.",
+        "path": ".ai/repo/project/issues/I2598.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1912
+      },
+      {
+        "uri": "majordomus://issue/I2599",
+        "kind": "issue",
+        "identity": "I2599",
+        "title": "plan status reports the project header",
+        "description": "Make the executable's plan report carry the name, repository and default branch that project.yaml declares.",
+        "path": ".ai/repo/project/issues/I2599.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1686
+      },
+      {
+        "uri": "majordomus://issue/I2600",
+        "kind": "issue",
+        "identity": "I2600",
+        "title": "A commit reference has one grammar for every writer and every checker",
+        "description": "Make an abbreviated commit reference either written as the full name or refused at writing, and accepted alike by both checkers.",
+        "path": ".ai/repo/project/issues/I2600.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1725
+      },
+      {
+        "uri": "majordomus://issue/I2601",
+        "kind": "issue",
+        "identity": "I2601",
+        "title": "majordomus evidence reaches record, stamp and show",
+        "description": "Make the documented `majordomus evidence record|stamp|show` work from the launcher.",
+        "path": ".ai/repo/project/issues/I2601.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1539
+      },
+      {
+        "uri": "majordomus://issue/I2602",
+        "kind": "issue",
+        "identity": "I2602",
+        "title": "A document with a front matter of its own is indexed, and a block scalar is read",
+        "description": "Let a repository index its own Markdown as documents when that Markdown carries front matter the tool does not define, without an error per file per command.",
+        "path": ".ai/repo/project/issues/I2602.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1954
+      },
+      {
+        "uri": "majordomus://issue/I2603",
+        "kind": "issue",
+        "identity": "I2603",
+        "title": "A document the index refused is named as refused, not as unknown",
+        "description": "Make a feature's `docs:` reference to a tracked file say why it does not resolve.",
+        "path": ".ai/repo/project/issues/I2603.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1285
+      },
+      {
+        "uri": "majordomus://issue/I2604",
+        "kind": "issue",
+        "identity": "I2604",
+        "title": "The pull-request lane integrates on the branch the repository declares",
+        "description": "Let a repository whose pull requests target an integration branch other than the default one use the lane, and stop reporting an unread setting as a negative.",
+        "path": ".ai/repo/project/issues/I2604.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1838
+      },
+      {
+        "uri": "majordomus://issue/I2605",
+        "kind": "issue",
+        "identity": "I2605",
+        "title": "Every record with a Markdown body has a rendered page in the UI, with its diagrams",
+        "description": "Give every indexed kind that carries a Markdown body a list and a page in the UI, rendered by the one renderer, with diagrams drawn, and hold it with a case.",
+        "path": ".ai/repo/project/issues/I2605.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2268
+      },
+      {
+        "uri": "majordomus://issue/I2606",
+        "kind": "issue",
+        "identity": "I2606",
+        "title": "A gate model without classes is a model",
+        "description": "Read a gates.yaml that declares gates and no classes instead of reporting that it does not parse.",
+        "path": ".ai/repo/project/issues/I2606.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1317
+      },
+      {
+        "uri": "majordomus://issue/I2607",
+        "kind": "issue",
+        "identity": "I2607",
+        "title": "product validate measures an adopter against what the adopter owns",
+        "description": "Stop `product validate` from warning an adopter about the tool's own modules, commands and kinds.",
+        "path": ".ai/repo/project/issues/I2607.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1561
+      },
+      {
+        "uri": "majordomus://issue/I2608",
+        "kind": "issue",
+        "identity": "I2608",
+        "title": "A plan is derived from what a repository already has, with provenance",
+        "description": "Decide, in a proposed ADR and a first slice, how milestones and issues are derived from a forge and a changelog so that an adopted repository's plan pages are not empty on its first day.",
+        "path": ".ai/repo/project/issues/I2608.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1979
+      },
+      {
         "uri": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "identity": "an-expedited-landing",
@@ -94602,6 +94875,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "identity": "a-second-adopter-is-served",
+        "title": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "description": "Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected.",
+        "path": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 1589
       },
       {
         "uri": "majordomus://milestone/a-session-leaves-what-it-observed",
@@ -104348,7 +104632,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 342
+      "objects": 343
     },
     {
       "name": "domain",
@@ -104405,7 +104689,7 @@
       "identity": [
         "id"
       ],
-      "objects": 342
+      "objects": 366
     },
     {
       "name": "knowledge",
@@ -104435,7 +104719,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "moment",
