@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.24.0"
+    "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "770894fabfb24775a26fc1c83fa5d0f17858cbd9e7f33f8844d81d2b30493fa0",
+    "fingerprint": "e1ea2022f87faa2c7012b369b5812744900ffb635ae3cb0cb8b588e857ab76a0",
     "summary": {
-      "total": 2331,
+      "total": 2334,
       "builtin": 196,
-      "declarative": 2135,
+      "declarative": 2138,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2135
+        "resource": 2138
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2144
+        "implemented": 2147
       },
       "mcp_tools": 187,
-      "mcp_resources": 2190,
+      "mcp_resources": 2193,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80392,7 +80392,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 343,
         "capability_ids": []
       },
       {
@@ -81193,7 +81193,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 7,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 469,
+        "capabilities": 470,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0b00183a9b6337565ed8a57315cda78de2258fa384f2cc96199e774d3e8c5b4e",
+    "fingerprint": "bdb4183f8245cd0ee6d5c97ee73955671702a5bdf1a216c520b7fae1e35aa79a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81352,7 +81352,7 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 342,
+      "document": 343,
       "domain": 6,
       "feature": 28,
       "gap": 3,
@@ -81370,9 +81370,9 @@
       "rule": 178,
       "scope": 1,
       "session": 89,
-      "skill": 7,
+      "skill": 8,
       "taxonomy": 10,
-      "test": 469,
+      "test": 470,
       "use-case": 49,
       "workspace": 1
     },
@@ -86633,6 +86633,16 @@
         "bytes": 500
       },
       {
+        "uri": "majordomus://document/.ai/repo/skills/evolve/examples/after-an-incident.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/evolve/examples/after-an-incident.md",
+        "title": "After an incident",
+        "path": ".ai/repo/skills/evolve/examples/after-an-incident.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 530
+      },
+      {
         "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "kind": "document",
         "identity": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -86790,7 +86800,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 6498
+        "bytes": 6763
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -99765,6 +99775,23 @@
         ]
       },
       {
+        "uri": "majordomus://skill/evolve",
+        "kind": "skill",
+        "identity": "evolve",
+        "title": "Evolve the repository's know-how",
+        "description": "Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.",
+        "path": ".ai/repo/skills/evolve/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 6280,
+        "tags": [
+          "knowledge",
+          "review",
+          "delivery",
+          "coordination"
+        ]
+      },
+      {
         "uri": "majordomus://skill/implement",
         "kind": "skill",
         "identity": "implement",
@@ -101348,6 +101375,14 @@
         "path": "test/cases/3003_the_knowledge_screen_answers.sh",
         "source_class": "case",
         "bytes": 2474
+      },
+      {
+        "uri": "majordomus://test/test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+        "kind": "test",
+        "identity": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+        "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+        "source_class": "case",
+        "bytes": 4905
       },
       {
         "uri": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -104375,7 +104410,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 342
+      "objects": 343
     },
     {
       "name": "domain",
@@ -104567,7 +104602,7 @@
       "identity": [
         "id"
       ],
-      "objects": 7
+      "objects": 8
     },
     {
       "name": "taxonomy",
@@ -104584,7 +104619,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 469
+      "objects": 470
     },
     {
       "name": "use-case",

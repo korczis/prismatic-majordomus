@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.24.0",
+  "generator": "majordomus-cli 0.24.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -13801,6 +13801,14 @@
         "summary": "Remove worktrees that look finished",
         "route": "/cockpit/objects/document/ai-repo-skills-assess-before-deleting-examples-remove-stale-worktrees-md",
         "source": ".ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/evolve/examples/after-an-incident.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/evolve/examples/after-an-incident.md",
+        "summary": "After an incident",
+        "route": "/cockpit/objects/document/ai-repo-skills-evolve-examples-after-an-incident-md",
+        "source": ".ai/repo/skills/evolve/examples/after-an-incident.md"
       },
       {
         "id": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -50104,6 +50112,37 @@
         }
       },
       {
+        "id": "majordomus://skill/evolve",
+        "kind": "skill",
+        "label": "evolve",
+        "summary": "Evolve the repository's know-how",
+        "route": "/cockpit/objects/skill/evolve",
+        "source": ".ai/repo/skills/evolve/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "a checkout on a branch of its own, with the tool's task open and its scope naming the knowledge section",
+            "the candidates awaiting review, and whatever this session met and has not yet recorded"
+          ],
+          "outputs": [
+            "every reviewed candidate promoted with its evidence or rejected with its reason",
+            "for each promoted lesson that asks for one, the change to the rule, skill, document or test it belongs in",
+            "a delivered change, and an announcement and a handover that name what moved"
+          ],
+          "related": [
+            "implement",
+            "report-verification-state",
+            "deploy-site"
+          ],
+          "tags": [
+            "knowledge",
+            "review",
+            "delivery",
+            "coordination"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/implement",
         "kind": "skill",
         "label": "implement",
@@ -51583,6 +51622,13 @@
         "label": "test/cases/3003_the_knowledge_screen_answers.sh",
         "route": "/cockpit/objects/test/test-cases-3003-the-knowledge-screen-answers-sh",
         "source": "test/cases/3003_the_knowledge_screen_answers.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+        "kind": "test",
+        "label": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+        "route": "/cockpit/objects/test/test-cases-3004-evolve-is-a-procedure-of-existing-commands-sh",
+        "source": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh"
       },
       {
         "id": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -69332,6 +69378,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/evolve/examples/after-an-incident.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -79922,6 +79973,26 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/evolve",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/evolve",
+        "target": "majordomus://skill/deploy-site",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/evolve",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/evolve",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/implement",
         "target": "kind:skill",
         "kind": "is_a"
@@ -80903,6 +80974,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86208,8 +86284,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2745,
-      "edges": 6024,
+      "nodes": 2748,
+      "edges": 6030,
       "acyclic": false,
       "truncated": false
     }
