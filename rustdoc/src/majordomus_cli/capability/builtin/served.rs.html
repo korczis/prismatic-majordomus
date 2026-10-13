@@ -444,14 +444,14 @@
 <a href=#444 id=444 data-nosnippet>444</a>    }
 <a href=#445 id=445 data-nosnippet>445</a>}
 <a href=#446 id=446 data-nosnippet>446</a>
-<a href=#447 id=447 data-nosnippet>447</a><span class="doccomment">/// The module: `served.observe` (a command of the trusted command line) and `served.show`
-<a href=#448 id=448 data-nosnippet>448</a>/// (a read on every surface).
+<a href=#447 id=447 data-nosnippet>447</a><span class="doccomment">/// The module: `served.observe` and `served.forge` (commands of the trusted command line)
+<a href=#448 id=448 data-nosnippet>448</a>/// and `served.show` (a read on every surface).
 <a href=#449 id=449 data-nosnippet>449</a>///
 <a href=#450 id=450 data-nosnippet>450</a>/// ```
 <a href=#451 id=451 data-nosnippet>451</a>/// use majordomus_cli::capability::builtin::served;
 <a href=#452 id=452 data-nosnippet>452</a>/// let ids: Vec&lt;_&gt; = served::module().capabilities.iter()
 <a href=#453 id=453 data-nosnippet>453</a>///     .map(|c| c.capability.id.as_str().to_string()).collect();
-<a href=#454 id=454 data-nosnippet>454</a>/// assert_eq!(ids, vec!["served.observe", "served.show"]);
+<a href=#454 id=454 data-nosnippet>454</a>/// assert_eq!(ids, vec!["served.observe", "served.forge", "served.show"]);
 <a href=#455 id=455 data-nosnippet>455</a>/// ```
 <a href=#456 id=456 data-nosnippet>456</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
 <a href=#457 id=457 data-nosnippet>457</a>    <span class="macro">module!</span> {
