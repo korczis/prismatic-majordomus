@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.23.0"
+    "version": "0.24.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -16816,6 +16816,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -21942,6 +21948,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/02_doctor_basic.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2985_session_records_are_capped_and_archived.sh",
             ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
           ]
         }
