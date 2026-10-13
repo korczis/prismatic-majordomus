@@ -41,7 +41,12 @@ nothing is told, truthfully and uselessly, that it promises nothing.
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other
 outcomes name the files as warnings and close the record, because `start` will not begin a
 task while one is active and refusing every outcome would strand a worker whose scope
-turned out too narrow. `finish --outcome completed` evaluates every line of the finish
+turned out too narrow. A path the repository declares derived — git's `merge=derived`
+attribute, which `scripts/gitattributes` writes from the generators — is admitted without
+being in the scope when the task also changed a file of the layer or a file inside its
+scope that is not derived: a scope names what a worker changes, not where a generator puts
+its projections. Projections committed with no such change beside them are refused as
+before. `finish --outcome completed` evaluates every line of the finish
 contract the policy selects and writes nothing when any line fails; the other outcomes are
 honest statements that the work did not complete, and each needs a note saying what comes
 next (`# Next Action`) or why (`# Reason`). `no_match` means the thing sought does not
