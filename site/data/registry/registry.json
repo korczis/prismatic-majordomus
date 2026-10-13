@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "95b643c32c2b22e4f6f4adb4186e014212142a624a890183f1dfb76f6c3b94fb",
+    "fingerprint": "8d47b00e7150da30f1ab93cc37015dfbcb1db419b9385f3d9490fd4771fdb503",
     "summary": {
-      "total": 2303,
+      "total": 2306,
       "builtin": 196,
-      "declarative": 2107,
+      "declarative": 2110,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2107
+        "resource": 2110
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2116
+        "implemented": 2119
       },
       "mcp_tools": 187,
-      "mcp_resources": 2162,
+      "mcp_resources": 2165,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80643,7 +80643,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 337,
+        "capabilities": 338,
         "capability_ids": []
       },
       {
@@ -81024,7 +81024,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 21,
+        "capabilities": 22,
         "capability_ids": []
       },
       {
@@ -81195,7 +81195,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 460,
+        "capabilities": 461,
         "capability_ids": []
       },
       {
@@ -81285,7 +81285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fb00cffa82eee680701f09c675897a09fd4f713cceec8c75816f43604f56d062",
+    "fingerprint": "83efffd8a0de7b7cd28aea80bac3a6ab66aed5e6460204ff425fc0f0ff3988d6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81325,7 +81325,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 337,
+      "issue": 338,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81333,13 +81333,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 21,
+      "release-record": 22,
       "rule": 174,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 460,
+      "test": 461,
       "use-case": 49,
       "workspace": 1
     },
@@ -86189,7 +86189,7 @@
         "description": "Per-platform baselines for the Rust executable's commands, with the policy that decides a regression.",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "source_class": "context",
-        "bytes": 1090
+        "bytes": 1468
       },
       {
         "uri": "majordomus://context/ai.repo.ci",
@@ -87128,7 +87128,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 13659
+        "bytes": 13764
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -87173,7 +87173,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 23529
+        "bytes": 24521
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87263,7 +87263,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 243738
+        "bytes": 243944
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90321,7 +90321,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 97764
+        "bytes": 98315
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -94332,6 +94332,17 @@
         "bytes": 2915
       },
       {
+        "uri": "majordomus://issue/I2485",
+        "kind": "issue",
+        "identity": "I2485",
+        "title": "The bench measures the first request after the repository moved, and a budget bounds it",
+        "description": "Measure what a reader pays on the first request after the repository changed, as a benchmark target of its own, so that the budget of I2489 covers the case ADR 0142 was written for and not only the warm one.",
+        "path": ".ai/repo/project/issues/I2485.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2343
+      },
+      {
         "uri": "majordomus://issue/I2486",
         "kind": "issue",
         "identity": "I2486",
@@ -94368,12 +94379,12 @@
         "uri": "majordomus://issue/I2489",
         "kind": "issue",
         "identity": "I2489",
-        "title": "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
-        "description": "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails.",
+        "title": "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them",
+        "description": "Make the owner's UI latency budget something CI enforces: the benchmark policy declares absolute bounds, bench --check holds them with or without a baseline and on every host, and the ui job runs that check on every change that can slow a screen.",
         "path": ".ai/repo/project/issues/I2489.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2840
+        "bytes": 3851
       },
       {
         "uri": "majordomus://issue/I2491",
@@ -95682,6 +95693,16 @@
         "identity": "v0.21.0",
         "title": "v0.21.0",
         "path": ".ai/repo/releases/v0.21.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.22.0",
+        "kind": "release-record",
+        "identity": "v0.22.0",
+        "title": "v0.22.0",
+        "path": ".ai/repo/releases/v0.22.0.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -97420,7 +97441,7 @@
         "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5371,
+        "bytes": 6201,
         "tags": [
           "web",
           "homepage",
@@ -100201,6 +100222,14 @@
         "bytes": 4294
       },
       {
+        "uri": "majordomus://test/test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "kind": "test",
+        "identity": "test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "path": "test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "source_class": "case",
+        "bytes": 3117
+      },
+      {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "identity": "test/cases/109_design_system.sh",
@@ -100822,7 +100851,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 22676
+        "bytes": 23390
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -101118,7 +101147,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 16622
+        "bytes": 21831
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -101470,7 +101499,7 @@
         "identity": "test/cases/406_one_declaration_every_surface.sh",
         "path": "test/cases/406_one_declaration_every_surface.sh",
         "source_class": "case",
-        "bytes": 6777
+        "bytes": 6796
       },
       {
         "uri": "majordomus://test/test/cases/408_a_receipt_is_provider_neutral.sh",
@@ -103278,7 +103307,7 @@
         "identity": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
         "path": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
         "source_class": "case",
-        "bytes": 8263
+        "bytes": 9647
       },
       {
         "uri": "majordomus://test/test/cases/992_the_local_bind_is_the_machines_to_name.sh",
@@ -104075,7 +104104,7 @@
       "identity": [
         "id"
       ],
-      "objects": 337
+      "objects": 338
     },
     {
       "name": "knowledge",
@@ -104161,7 +104190,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 21
+      "objects": 22
     },
     {
       "name": "rule",
@@ -104227,7 +104256,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 460
+      "objects": 461
     },
     {
       "name": "use-case",
@@ -152042,7 +152071,23 @@
             "minimum_samples": 200
           }
         }
-      }
+      },
+      "budgets": [
+        {
+          "prefix": "system.http.ui.",
+          "cache": "warm",
+          "metric": "p95",
+          "microseconds": 100000.0,
+          "minimum_samples": 20
+        },
+        {
+          "prefix": "system.http.live.ui.",
+          "cache": "warm",
+          "metric": "p95",
+          "microseconds": 100000.0,
+          "minimum_samples": 20
+        }
+      ]
     },
     "policy_path": ".ai/repo/benchmarks/rust/policy.yaml",
     "baselines": [

@@ -34423,6 +34423,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2485",
+        "kind": "issue",
+        "label": "I2485",
+        "summary": "The bench measures the first request after the repository moved, and a budget bounds it",
+        "route": "/cockpit/objects/issue/i2485",
+        "source": ".ai/repo/project/issues/I2485.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A result document carries, per screen of the live view, a measurement taken on the first request after the repository moved",
+            "A screen made to wait for a source after a move, in a fixture, is over its budget and fails the check",
+            "The budget is declared in the benchmark policy with the measurement it was set from"
+          ],
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2489"
+          ],
+          "evidence_required": [
+            "bench_moved_mode_tests",
+            "bench_moved_case_1095"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/benchmarks/rust/policy.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1095_the_bench_measures_the_request_after_a_move.sh",
+            ".ai/repo/project/issues/I2485.yaml"
+          ],
+          "slug": "the-bench-measures-the-request-after-a-move",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1095_the_bench_measures_the_request_after_a_move"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2486",
         "kind": "issue",
         "label": "I2486",
@@ -34565,21 +34605,23 @@
         "id": "majordomus://issue/I2489",
         "kind": "issue",
         "label": "I2489",
-        "summary": "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
+        "summary": "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them",
         "route": "/cockpit/objects/issue/i2489",
         "source": ".ai/repo/project/issues/I2489.yaml",
         "facts": {
           "acceptance_criteria": [
-            "A screen made slower than its budget in a fixture fails the gate, which names the screen, the measured p95 and the budget",
-            "The budget is read from the policy, and a policy without the key is a policy error and not a default",
-            "The bench measures the request after the repository moved as well as the warm one",
-            "The gate's verdict on a shared runner uses the same tolerance rule the existing bench-check does, and says which rule it applied"
+            "A warm screen measured over its budget fails bench --check with exit 10 and no baseline to compare, and the report names the screen, its value and its bound",
+            "A budget bounds only the prefix and the cache mode it names, and a measurement of fewer samples than its minimum is SHORT and does not fail",
+            "A budget with a required key missing, or a cache mode that is not one, is a policy error that names the key",
+            "The repository's policy declares the UI's budget for the pinned and the live view, and every screen is within it",
+            "The ui job runs the check before the browser audit, under a bound smaller than the job's"
           ],
           "created_at": "2026-10-12",
           "depends_on": [
             "I2486"
           ],
           "evidence_required": [
+            "bench_budget_unit_tests",
             "ui_budget_gate_case_1099",
             "ui_budget_bench_results"
           ],
@@ -34588,12 +34630,14 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/bench",
-            ".ai/repo/policy.yaml",
-            ".ai/repo/ci",
-            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
-            "scripts/ci",
-            "docs/PERFORMANCE.md",
+            "apps/majordomus-cli/src/bench/baseline.rs",
+            "apps/majordomus-cli/src/ui/command.rs",
+            "apps/majordomus-cli/tests/bench_units.rs",
+            ".ai/repo/benchmarks/rust/policy.yaml",
+            ".ai/repo/ci/gates.yaml",
+            ".github/workflows/validate.yml",
+            ".ai/repo/benchmarks/rust/README.md",
+            "docs/MAJORDOMUS_UI.md",
             "test/cases/1099_a_screen_over_its_budget_fails.sh",
             ".ai/repo/project/issues/I2489.yaml"
           ],
@@ -34601,7 +34645,9 @@
           "updated_at": "2026-10-12",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails"
+            "cargo test --test bench_units",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails",
+            "majordomus bench system.http. --transport system --profile ci --no-write --check"
           ]
         }
       },
@@ -39862,6 +39908,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.21.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.22.0",
+        "kind": "release-record",
+        "label": "v0.22.0",
+        "summary": "v0.22.0",
+        "route": "/cockpit/objects/release-record/v0-22-0",
+        "source": ".ai/repo/releases/v0.22.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.22.0",
+          "published_at": "2026-10-13T04:40:42Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.22.0"
         }
       },
       {
@@ -48328,6 +48397,13 @@
         "label": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "route": "/cockpit/objects/test/test-cases-1096-no-screen-waits-for-a-source-sh",
         "source": "test/cases/1096_no_screen_waits_for_a_source.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "kind": "test",
+        "label": "test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "route": "/cockpit/objects/test/test-cases-1099-a-screen-over-its-budget-fails-sh",
+        "source": "test/cases/1099_a_screen_over_its_budget_fails.sh"
       },
       {
         "id": "majordomus://test/test/cases/109_design_system.sh",
@@ -73935,6 +74011,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2485",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2485",
+        "target": "majordomus://issue/I2489",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2485",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2486",
         "target": "kind:issue",
         "kind": "is_a"
@@ -74556,6 +74647,11 @@
       },
       {
         "source": "majordomus://release-record/v0.21.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.22.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -77556,6 +77652,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1096_no_screen_waits_for_a_source.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1099_a_screen_over_its_budget_fails.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -83356,8 +83457,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2719,
-      "edges": 5966,
+      "nodes": 2722,
+      "edges": 5971,
       "acyclic": false,
       "truncated": false
     }
