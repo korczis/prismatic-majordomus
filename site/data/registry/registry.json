@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.22.0"
+    "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "04b3bfc54772ab2c201025cb1f62f0eebdad95d3c3bf49a8dd1b7c80bea49797",
+    "fingerprint": "d84bdc46e5fd92f1c9349a27f58cf45a20093bf7b6d051b4c72687891ba4b81a",
     "summary": {
-      "total": 2303,
+      "total": 2305,
       "builtin": 196,
-      "declarative": 2107,
+      "declarative": 2109,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2107
+        "resource": 2109
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2116
+        "implemented": 2118
       },
       "mcp_tools": 187,
-      "mcp_resources": 2162,
+      "mcp_resources": 2164,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -1013,6 +1013,17 @@
               "execution": {
                 "$ref": "#/$defs/ExecutionPolicy",
                 "description": "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
+              },
+              "skill": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SkillExposure"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The short name a person invokes it by from an agent's prompt, when it has one."
               }
             },
             "required": [
@@ -1599,6 +1610,24 @@
                   }
                 ],
                 "description": "Whether two executions of one capability may overlap."
+              },
+              "SkillExposure": {
+                "type": "object",
+                "properties": {
+                  "alias": {
+                    "type": "string",
+                    "description": "The name typed after the slash: lowercase letters, digits and hyphens, at most 64."
+                  },
+                  "argument": {
+                    "type": "string",
+                    "description": "The input field the text typed after the name fills, verbatim."
+                  }
+                },
+                "required": [
+                  "alias",
+                  "argument"
+                ],
+                "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
               }
             }
           }
@@ -40957,6 +40986,10 @@
           "cancellable": false,
           "concurrency": "serial"
         },
+        "skill": {
+          "alias": "intent",
+          "argument": "statement"
+        },
         "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
       },
       {
@@ -80033,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 101,
+        "capabilities": 102,
         "capability_ids": []
       },
       {
@@ -81195,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 460,
+        "capabilities": 461,
         "capability_ids": []
       },
       {
@@ -81285,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "71b3f499ed80e6489d686a6014b2f4bd04b78b1ec39ec929d4fab6ff4926e4ad",
+    "fingerprint": "0c13a5224634715babc49cfc5ea3a90caaa260c7b6521123990cf653f276bf03",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81308,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 101,
+      "adr": 102,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81339,7 +81372,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 460,
+      "test": 461,
       "use-case": 49,
       "workspace": 1
     },
@@ -82996,6 +83029,22 @@
           "adoption",
           "discovery",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0146",
+        "kind": "adr",
+        "identity": "adr-0146",
+        "title": "A capability is invoked by name through a generated skill",
+        "description": "A capability is invoked by name through a generated skill",
+        "path": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4058,
+        "tags": [
+          "capabilities",
+          "providers",
+          "editors"
         ]
       },
       {
@@ -86815,7 +86864,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44447
+        "bytes": 44853
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -87004,7 +87053,7 @@
         "title": "Editors and agents",
         "path": "docs/EDITORS.md",
         "source_class": "document",
-        "bytes": 4234
+        "bytes": 5264
       },
       {
         "uri": "majordomus://document/docs/ENTRY.md",
@@ -100966,6 +101015,14 @@
         "bytes": 17378
       },
       {
+        "uri": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "kind": "test",
+        "identity": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "path": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "source_class": "case",
+        "bytes": 7902
+      },
+      {
         "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "test",
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
@@ -103901,7 +103958,7 @@
       "identity": [
         "id"
       ],
-      "objects": 101
+      "objects": 102
     },
     {
       "name": "application",
@@ -104216,7 +104273,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 460
+      "objects": 461
     },
     {
       "name": "use-case",

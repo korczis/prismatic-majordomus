@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 101,
+      "count": 102,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 101
+      "count": 102
     },
     {
       "kind": "application",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 460
+      "count": 461
     },
     {
       "kind": "use-case",
@@ -456,6 +456,13 @@
           "label": "adr-0144",
           "kind": "adr",
           "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
           "external": false
         },
         {
@@ -7374,7 +7381,15 @@
       ],
       "source": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7606,7 +7621,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7705,6 +7728,73 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0146",
+      "identity": "adr-0146",
+      "slug": "adr-0146",
+      "cockpit": "/cockpit/objects/adr/adr-0146",
+      "title": "A capability is invoked by name through a generated skill",
+      "status": "proposed",
+      "tags": [
+        "capabilities",
+        "providers",
+        "editors"
+      ],
+      "source": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/claude.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0140",
+          "kind": "adr",
+          "route": "/adrs/adr-0140/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EDITORS.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
           "kind": "test",
           "route": null,
           "external": false

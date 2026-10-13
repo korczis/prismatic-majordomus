@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.22.0",
+  "generator": "majordomus-cli 0.23.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -2633,6 +2633,14 @@
         "label": "context.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/economics/context.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/editors/claude.rs",
+        "kind": "file",
+        "label": "claude.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/editors/claude.rs",
         "external": true
       },
       {
@@ -7098,6 +7106,32 @@
             "adoption",
             "discovery",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0146",
+        "kind": "adr",
+        "label": "adr-0146",
+        "summary": "A capability is invoked by name through a generated skill",
+        "route": "/cockpit/objects/adr/adr-0146",
+        "source": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:.ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
+            "file:.ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md",
+            "file:apps/majordomus-cli/src/capability/model.rs",
+            "file:apps/majordomus-cli/src/editors/claude.rs",
+            "file:docs/EDITORS.md",
+            "test:test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh"
+          ],
+          "tags": [
+            "capabilities",
+            "providers",
+            "editors"
           ]
         }
       },
@@ -48996,6 +49030,13 @@
         "source": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "kind": "test",
+        "label": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "route": "/cockpit/objects/test/test-cases-2980-a-capability-is-invoked-by-name-from-claude-code-sh",
+        "source": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "test",
         "label": "test/cases/2983_the_published_ui_is_the_trunks.sh",
@@ -60929,6 +60970,46 @@
       {
         "source": "majordomus://adr/adr-0145",
         "target": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "file:apps/majordomus-cli/src/capability/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "file:apps/majordomus-cli/src/editors/claude.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "majordomus://adr/adr-0140",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "majordomus://adr/adr-0144",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "majordomus://document/docs/EDITORS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0146",
+        "target": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
         "kind": "put_in_force"
       },
       {
@@ -77982,6 +78063,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -83293,8 +83379,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2715,
-      "edges": 5956,
+      "nodes": 2718,
+      "edges": 5965,
       "acyclic": false,
       "truncated": false
     }

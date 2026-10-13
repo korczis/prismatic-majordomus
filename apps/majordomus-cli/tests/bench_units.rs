@@ -424,6 +424,7 @@ where
             benchmark: BenchmarkPolicy::Required,
             cache: CachePolicy::Disabled,
             execution: ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<serde_json::Value, serde_json::Value, _>(|_, v| Ok(v)),
         cases: <I as BenchmarkCases>::benchmark_cases_json,
