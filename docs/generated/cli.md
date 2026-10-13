@@ -114,6 +114,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus offload probe`](#majordomus-offload-probe) | `/docs/cli/offload/probe/` | Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one |
 | [`majordomus offload derive`](#majordomus-offload-derive) | `/docs/cli/offload/derive/` | Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
+| [`majordomus accumulation`](#majordomus-accumulation) | `/docs/cli/accumulation/` | Is anything piling up past its budget? The worktrees git registers, the local branches the trunk already reaches and the free space under them, each against the budget the policy declares under `accumulation:`, with the command that reduces it; `--reduce` removes what is provably spare when the policy consents (ADR 0150) |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
 | [`majordomus commit scopes`](#majordomus-commit-scopes) | `/docs/cli/commit/scopes/` | Every scope this repository's commit history uses, how often, and the directories each one is written about |
@@ -249,7 +250,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus accumulation`](#majordomus-accumulation), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -2716,7 +2717,8 @@ majordomus worktree cleanup [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--remove` | flag | — | Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how |
+| `--remove` | flag | — | Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. No branch is deleted unless --branches says so; the listing still says how |
+| `--branches` | flag | — | With --remove, also delete the names of merged branches nothing has checked out: each re-read, deleted only while it still points where it was read, and kept when it stands at the trunk's own tip. Every commit a deleted name pointed at is in the trunk |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -2732,6 +2734,14 @@ Examples:
   ```
 
   Verified: exits 0; prints cleanup-eligible.
+
+- **Remove what is spare, and the names after it** — Removes the worktree of every branch merged into the trunk, each re-measured immediately before it goes, then deletes the name of every merged branch no worktree has checked out — only while the ref still points where it was read, and never a branch that stands at the trunk's own tip. Everything that is kept is named with the reading that kept it. Without `--branches` no name is deleted.
+
+  ```console
+  $ majordomus worktree cleanup --remove --branches
+  ```
+
+  Verified: exits 0; prints worktree cleanup: 0 removed.
 
 <a id="majordomus-worktree-branches"></a>
 ## `majordomus worktree branches`
@@ -3233,6 +3243,77 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /schema, /converged, /at_risk, /tallies.
+
+<a id="majordomus-accumulation"></a>
+## `majordomus accumulation`
+
+Is anything piling up past its budget? The worktrees git registers, the local branches the trunk already reaches and the free space under them, each against the budget the policy declares under `accumulation:`, with the command that reduces it; `--reduce` removes what is provably spare when the policy consents (ADR 0150)
+
+```text
+majordomus accumulation [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the verdict — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--brief` | flag | — | Only what a briefing carries: one line per quantity over its budget, nothing when every budget holds or the policy has the watch off; always exits 0 |
+| `--headline` | flag | — | Only what a mesh claim carries: one line naming every quantity over its budget with its reading and budget, when the policy says `accumulation.announce_on_mesh: true` and the watch is on; nothing otherwise; always exits 0 |
+| `--reduce` | flag | — | Remove what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget; every candidate is re-measured before it goes |
+| `--if-due` | flag | — | With --reduce, act only when `accumulation.cooldown_minutes` have passed since the last reduction in this repository |
+
+Examples:
+
+- **Is anything piling up past its budget?** — Every quantity that grows on its own — the worktrees git registers, the local branches the trunk already reaches, the free space on the volume under them — with its reading, the budget the policy declares for it under `accumulation:`, its state and the command that reduces it. A quantity with no declared budget is measured and reported as unbudgeted, one that could not be read as unknown with the reason; neither is a pass. A provider's episode events read this answer and say what is over budget before a worker's first tool call.
+
+  ```console
+  $ majordomus accumulation --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /schema, /quantities, /over, /within_budget.
+
+- **Every reading against its budget, for a person** — One line per quantity — its state, its reading, its budget or the policy key that would declare one, and the command that reduces it when the budget is crossed — then what the watch last removed here, if it ever acted, and the verdict. The exit code is the verdict: 10 when a quantity is over its budget.
+
+  ```console
+  $ majordomus accumulation
+  ```
+
+  Verified: exits 0; prints worktrees, merged_branches, disk_free, accumulation: 0 of 3 quantities over budget.
+
+- **What a briefing carries** — What a provider's start event puts in front of a worker: one line per quantity that is over its budget, and nothing at all when every budget holds or the policy has the watch off. It builds no index and always exits 0, because it runs inside a hook on every start of every session.
+
+  ```console
+  $ majordomus accumulation --brief
+  ```
+
+  Verified: exits 0.
+
+- **What a mesh claim carries** — One line naming every quantity over its budget with its reading and its budget, printed only when the policy says `accumulation.announce_on_mesh: true`, the watch is on and a budget is crossed. A provider's start event makes that line the intent of an advisory mesh claim, so every linked machine's monitor shows it, and closes the claim's session when the line is empty again. Always exits 0.
+
+  ```console
+  $ majordomus accumulation --headline
+  ```
+
+  Verified: exits 0.
+
+- **A reduction needs a crossed budget** — Removes what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget. Here no budget is crossed, so nothing is touched and the command says so. With a budget crossed and a policy that says `report`, it removes nothing either, names the command and exits 10.
+
+  ```console
+  $ majordomus accumulation --reduce
+  ```
+
+  Verified: exits 0; prints nothing is over budget, so nothing is reduced.
+
+- **What an episode event runs** — The same reduction, held to `accumulation.cooldown_minutes` since the last one in this repository: every session of a machine fires the same events, and one of them acting is enough. The provider's compaction and end events start exactly this, detached.
+
+  ```console
+  $ majordomus accumulation --reduce --if-due
+  ```
+
+  Verified: exits 0; prints nothing is over budget.
 
 <a id="majordomus-commit"></a>
 ## `majordomus commit`

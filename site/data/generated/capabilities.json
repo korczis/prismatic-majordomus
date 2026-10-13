@@ -859,6 +859,19 @@
       "test_case": "2979_a_personal_layer_changes_nothing_shared"
     },
     {
+      "id": "accumulation-is-watched",
+      "claim": "Worktrees, merged branches and free disk are measured against budgets the policy declares at the provider's episode events, a crossed budget is said in the briefing, and nothing is removed without the policy's consent",
+      "source": "docs/ACCUMULATION.md",
+      "implementation": "apps/majordomus-cli/src/accumulation.rs",
+      "test": "test/cases/2986_accumulation_is_watched.sh",
+      "status": "guaranteed",
+      "note": "The budgets are the policy's accumulation block and no reader carries a default; a reading that could not be taken is unknown and never a pass. The start event names what is over budget, the prompt event says once when the free disk is under its floor, and the compaction and end events start a reduction only when accumulation.act is reduce and the cooldown has passed. A reduction re-measures each candidate, keeps a branch at the trunk's own tip, and records what it removed and kept.",
+      "responsibility": "layer",
+      "source_route": "/docs/accumulation/",
+      "command": null,
+      "test_case": "2986_accumulation_is_watched"
+    },
+    {
       "id": "local-state-ignored",
       "claim": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
       "source": "docs/SCHEMAS.md",

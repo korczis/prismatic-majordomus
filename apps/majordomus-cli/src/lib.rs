@@ -12,6 +12,7 @@
 #![warn(missing_docs)]
 
 pub mod about;
+pub mod accumulation;
 pub mod app;
 pub(crate) mod automation;
 pub mod bench;

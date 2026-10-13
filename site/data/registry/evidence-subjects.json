@@ -44,6 +44,11 @@
   "pages": [
     {
       "kind": "capability",
+      "subject": "capability:accumulation.status",
+      "path": "/evidence/capabilities/accumulation-status/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:artifacts.list",
       "path": "/evidence/capabilities/artifacts-list/"
     },
@@ -1036,6 +1041,11 @@
       "kind": "claim",
       "subject": "claim:a-skipped-case-is-not-a-proof",
       "path": "/evidence/claims/a-skipped-case-is-not-a-proof/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:accumulation-is-watched",
+      "path": "/evidence/claims/accumulation-is-watched/"
     },
     {
       "kind": "claim",
@@ -2241,6 +2251,11 @@
       "kind": "claim",
       "subject": "claim:worktree-topology-derived",
       "path": "/evidence/claims/worktree-topology-derived/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:accumulation",
+      "path": "/evidence/commands/accumulation/"
     },
     {
       "kind": "command",
@@ -3784,6 +3799,18 @@
     }
   ],
   "subjects": {
+    "capability:accumulation.status": {
+      "kind": "capability",
+      "id": "accumulation.status",
+      "page": "/evidence/capabilities/accumulation-status/",
+      "programs": [],
+      "members": [
+        "command:accumulation"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:artifacts.list": {
       "kind": "capability",
       "id": "artifacts.list",
@@ -6084,6 +6111,29 @@
             "docs/EVIDENCE.md",
             "test/run.sh",
             "test/cases/413_a_skipped_case_is_not_a_proof.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:accumulation-is-watched": {
+      "kind": "claim",
+      "id": "accumulation-is-watched",
+      "status": "guaranteed",
+      "page": "/evidence/claims/accumulation-is-watched/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:2986_accumulation_is_watched",
+          "path": "test/cases/2986_accumulation_is_watched.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/ACCUMULATION.md",
+            "apps/majordomus-cli/src/accumulation.rs",
+            "test/cases/2986_accumulation_is_watched.sh"
           ]
         }
       ],
@@ -11573,6 +11623,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:accumulation": {
+      "kind": "command",
+      "id": "accumulation",
+      "page": "/evidence/commands/accumulation/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:adr": {
       "kind": "command",
       "id": "adr",
@@ -11941,6 +12010,12 @@
           "via": "behaviour",
           "test": "suite:282_the_ledger_envelope_is_reserved",
           "path": "test/cases/282_the_ledger_envelope_is_reserved.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:2986_accumulation_is_watched",
+          "path": "test/cases/2986_accumulation_is_watched.sh",
           "category": "e2e"
         },
         {
@@ -16740,6 +16815,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2986_accumulation_is_watched",
+          "path": "test/cases/2986_accumulation_is_watched.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -18650,13 +18731,27 @@
       "page": "/evidence/features/worktrees/",
       "programs": [],
       "members": [
+        "claim:accumulation-is-watched",
         "claim:worktree-migration-lossless",
         "claim:worktree-ownership",
         "claim:worktree-topology-derived",
+        "rule:project.accumulation-is-watched",
         "rule:project.no-machine-paths",
         "rule:project.worktree-topology",
         "use_case:resume-in-the-right-worktree",
         "use_case:work-on-a-branch-in-its-canonical-worktree"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_accumulation": {
+      "kind": "mcp",
+      "id": "majordomus_accumulation",
+      "alias_of": "capability:accumulation.status",
+      "programs": [],
+      "members": [
+        "capability:accumulation.status"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22428,6 +22523,27 @@
           "inputs": [
             "test/cases/276_disk_is_bounded.sh",
             ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.accumulation-is-watched": {
+      "kind": "rule",
+      "id": "project.accumulation-is-watched",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2986_accumulation_is_watched",
+          "path": "test/cases/2986_accumulation_is_watched.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2986_accumulation_is_watched.sh",
+            ".ai/repo/rules/project/accumulation-is-watched.v1.md"
           ]
         }
       ],

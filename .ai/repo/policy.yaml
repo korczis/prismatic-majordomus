@@ -161,6 +161,36 @@ knowledge:
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
 
+# ---------------------------------------------------------------- what grows on its own
+# Worktrees, the names of branches that have landed, and the disk under both grow because
+# nothing decided that they should, and each already has a command that reduces it safely
+# (project.accumulation-is-measured). What none had is what a session's context has: a watch
+# that reads the quantity at the moments a worker is already listening — the provider's
+# start, prompt, compaction and end events — says when a budget is crossed, and acts when
+# this file has consented to that (ADR 0150).
+#
+# The budgets are decisions and they are declared here, never in the reader: a quantity
+# with no budget is measured and reported as unbudgeted, which is neither a pass nor a
+# finding. `majordomus accumulation` prints every reading against them and exits 10 when one
+# is crossed.
+#
+# `act: reduce` is the consent. With it, a crossed budget runs `majordomus accumulation
+# --reduce --if-due` in the background: the worktrees of landed branches go, each re-measured
+# immediately before (a branch ahead of its remote, uncommitted work or a process working
+# inside is kept and named), then the names of landed branches nothing has checked out, each
+# deleted only while it still points where it was read and never when it stands at the
+# trunk's own tip. `act: report` says it and names the command, and removes nothing.
+accumulation:
+  watch: true                            # the episode events read the quantities
+  act: reduce                            # report | reduce
+  worktrees_max: 60                      # registered worktrees, the primary among them
+  merged_branches_max: 20                # local branches the trunk already reaches
+  disk_free_min_mb: 51200                # 50 GiB: ten times the build floor, so that the
+                                         # watch speaks long before a build is refused
+  cooldown_minutes: 30                   # one reduction per repository in this long
+  announce_on_mesh: true                 # a crossed budget is an advisory claim on the mesh,
+                                         # taken back when the budget holds again
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets

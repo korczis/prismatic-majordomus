@@ -71,6 +71,8 @@ pub enum Command {
     Offload(OffloadArgs),
     /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
     Convergence(ConvergenceArgs),
+    /// Is anything piling up past its budget? The worktrees git registers, the local branches the trunk already reaches and the free space under them, each against the budget the policy declares under `accumulation:`, with the command that reduces it; `--reduce` removes what is provably spare when the policy consents (ADR 0150)
+    Accumulation(AccumulationArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -1898,6 +1900,59 @@ pub struct ConvergenceArgs {
     #[arg(long)]
     /// List every holding, not only the ones whose work exists on one disk
     pub all: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus accumulation`: what this repository has piled up, against the budgets its
+/// policy declares. It exits 10 when a quantity is over its budget, so a hook or a script
+/// refuses on the verdict rather than on a parsed report.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{AccumulationArgs, Cli, Command, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "accumulation", "--format", "json"]).unwrap();
+/// let args: AccumulationArgs = match cli.command {
+///     Command::Accumulation(args) => args,
+///     other => panic!("expected `accumulation`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(!args.brief && !args.headline && !args.reduce && !args.if_due);
+///
+/// // what a provider's event runs: reduce, but only when the cooldown has passed
+/// let cli = Cli::try_parse_from(["majordomus", "accumulation", "--reduce", "--if-due"]).unwrap();
+/// assert!(matches!(
+///     cli.command,
+///     Command::Accumulation(AccumulationArgs { reduce: true, if_due: true, .. })
+/// ));
+/// // a cooldown is a property of a reduction, and a briefing is not one
+/// assert!(Cli::try_parse_from(["majordomus", "accumulation", "--if-due"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "accumulation", "--brief", "--reduce"]).is_err());
+/// ```
+pub struct AccumulationArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// How to render the verdict
+    pub format: OutputFormat,
+
+    #[arg(long, conflicts_with = "reduce")]
+    /// Only what a briefing carries: one line per quantity over its budget, nothing when every budget holds or the policy has the watch off; always exits 0
+    pub brief: bool,
+
+    #[arg(long, conflicts_with_all = ["reduce", "brief"])]
+    /// Only what a mesh claim carries: one line naming every quantity over its budget with its reading and budget, when the policy says `accumulation.announce_on_mesh: true` and the watch is on; nothing otherwise; always exits 0
+    pub headline: bool,
+
+    #[arg(long)]
+    /// Remove what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget; every candidate is re-measured before it goes
+    pub reduce: bool,
+
+    #[arg(long, requires = "reduce")]
+    /// With --reduce, act only when `accumulation.cooldown_minutes` have passed since the last reduction in this repository
+    pub if_due: bool,
 }
 
 #[derive(Debug, Args)]
@@ -3737,9 +3792,14 @@ pub enum WorktreeCommand {
     Cleanup {
         /// Remove the worktrees listed, each re-measured immediately before it goes: a branch
         /// ahead of its remote, uncommitted work, or a process working inside is refused and
-        /// named. Branches are never deleted; the listing still says how.
+        /// named. No branch is deleted unless --branches says so; the listing still says how.
         #[arg(long)]
         remove: bool,
+        /// With --remove, also delete the names of merged branches nothing has checked out:
+        /// each re-read, deleted only while it still points where it was read, and kept when
+        /// it stands at the trunk's own tip. Every commit a deleted name pointed at is in the trunk.
+        #[arg(long, requires = "remove")]
+        branches: bool,
     },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
@@ -5467,6 +5527,52 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "accumulation",
+        examples: &[ExampleDoc {
+            id: "accumulation-status-json",
+            title: "Is anything piling up past its budget?",
+            description: "Every quantity that grows on its own — the worktrees git registers, the local branches the trunk already reaches, the free space on the volume under them — with its reading, the budget the policy declares for it under `accumulation:`, its state and the command that reduces it. A quantity with no declared budget is measured and reported as unbudgeted, one that could not be read as unknown with the reason; neither is a pass. A provider's episode events read this answer and say what is over budget before a worker's first tool call.",
+            argv: &["accumulation", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/quantities", "/over", "/within_budget"]),
+        }, ExampleDoc {
+            id: "accumulation-status-text",
+            title: "Every reading against its budget, for a person",
+            description: "One line per quantity — its state, its reading, its budget or the policy key that would declare one, and the command that reduces it when the budget is crossed — then what the watch last removed here, if it ever acted, and the verdict. The exit code is the verdict: 10 when a quantity is over its budget.",
+            argv: &["accumulation"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktrees", "merged_branches", "disk_free", "accumulation: 0 of 3 quantities over budget"]),
+        }, ExampleDoc {
+            id: "accumulation-brief",
+            title: "What a briefing carries",
+            description: "What a provider's start event puts in front of a worker: one line per quantity that is over its budget, and nothing at all when every budget holds or the policy has the watch off. It builds no index and always exits 0, because it runs inside a hook on every start of every session.",
+            argv: &["accumulation", "--brief"],
+            setup: &[],
+            expect: Expect::Success,
+        }, ExampleDoc {
+            id: "accumulation-headline",
+            title: "What a mesh claim carries",
+            description: "One line naming every quantity over its budget with its reading and its budget, printed only when the policy says `accumulation.announce_on_mesh: true`, the watch is on and a budget is crossed. A provider's start event makes that line the intent of an advisory mesh claim, so every linked machine's monitor shows it, and closes the claim's session when the line is empty again. Always exits 0.",
+            argv: &["accumulation", "--headline"],
+            setup: &[],
+            expect: Expect::Success,
+        }, ExampleDoc {
+            id: "accumulation-reduce-nothing-over",
+            title: "A reduction needs a crossed budget",
+            description: "Removes what is provably spare — the worktrees of landed branches, then the names of landed branches nothing has checked out — when the policy says `accumulation.act: reduce` and a quantity is over its budget. Here no budget is crossed, so nothing is touched and the command says so. With a budget crossed and a policy that says `report`, it removes nothing either, names the command and exits 10.",
+            argv: &["accumulation", "--reduce"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing is over budget, so nothing is reduced"]),
+        }, ExampleDoc {
+            id: "accumulation-reduce-if-due",
+            title: "What an episode event runs",
+            description: "The same reduction, held to `accumulation.cooldown_minutes` since the last one in this repository: every session of a machine fires the same events, and one of them acting is enough. The provider's compaction and end events start exactly this, detached.",
+            argv: &["accumulation", "--reduce", "--if-due"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing is over budget"]),
+        }],
+    },
+    CommandExamples {
         command: "worktree",
         examples: &[ExampleDoc {
             id: "worktree-default-status",
@@ -5640,6 +5746,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "cleanup"],
             setup: &[],
             expect: Expect::StdoutContains(&["cleanup-eligible"]),
+        }, ExampleDoc {
+            id: "worktree-cleanup-remove-branches",
+            title: "Remove what is spare, and the names after it",
+            description: "Removes the worktree of every branch merged into the trunk, each re-measured immediately before it goes, then deletes the name of every merged branch no worktree has checked out — only while the ref still points where it was read, and never a branch that stands at the trunk's own tip. Everything that is kept is named with the reading that kept it. Without `--branches` no name is deleted.",
+            argv: &["worktree", "cleanup", "--remove", "--branches"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktree cleanup: 0 removed"]),
         }],
     },
     CommandExamples {

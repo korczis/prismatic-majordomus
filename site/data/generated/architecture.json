@@ -130,6 +130,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/accumulation/said-at",
+      "kind": "artifact",
+      "label": "local/state/accumulation/said-at",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/session.sh",
       "kind": "module",
       "label": "session",
@@ -183,6 +193,26 @@
       "id": ".ai/local/state/mcp/ensure.log",
       "kind": "artifact",
       "label": "local/state/mcp/ensure.log",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/accumulation/reduce.log",
+      "kind": "artifact",
+      "label": "local/state/accumulation/reduce.log",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/accumulation/announced",
+      "kind": "artifact",
+      "label": "local/state/accumulation/announced",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1728,6 +1758,16 @@
     },
     {
       "source": "lib/capture.sh",
+      "target": ".ai/local/state/accumulation/announced",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/accumulation/reduce.log",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
       "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
@@ -2189,6 +2229,11 @@
     {
       "source": "lib/adr.sh",
       "target": ".ai/repo/adrs/.id.lock",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/accumulation/said-at",
       "kind": "writes"
     },
     {

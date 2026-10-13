@@ -30,6 +30,7 @@
 //! );
 //! ```
 
+pub(crate) mod accumulation;
 pub mod artifacts;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
@@ -229,6 +230,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         worktree,
         integration,
         convergence,
+        accumulation,
         trace,
         product
     ]

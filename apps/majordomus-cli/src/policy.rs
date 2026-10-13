@@ -173,6 +173,11 @@ pub struct Policy {
     /// its version exactly as it did.
     #[serde(default)]
     pub release: crate::release::landing::ReleasePolicy,
+    /// `accumulation:` — the budgets for what grows on its own (worktrees, merged branches,
+    /// the disk under them) and what crossing one may do (ADR 0150). Absent watches nothing
+    /// and removes nothing: a repository whose policy predates the block behaves as it did.
+    #[serde(default)]
+    pub accumulation: crate::accumulation::AccumulationPolicy,
 }
 
 /// How strictly a start is held to its binding.

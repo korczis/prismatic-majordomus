@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 100,
+      "count": 101,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 172,
+      "count": 173,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 100
+      "count": 101
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 245
+      "count": 246
     },
     {
       "kind": "command",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 341
+      "count": 343
     },
     {
       "kind": "domain",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 337
+      "count": 338
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 172
+      "count": 173
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 458
+      "count": 459
     },
     {
       "kind": "use-case",
@@ -3464,6 +3464,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0123/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0150",
+          "kind": "adr",
+          "route": "/adrs/adr-0150/",
+          "external": false
         }
       ]
     },
@@ -3723,7 +3730,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0150",
+          "kind": "adr",
+          "route": "/adrs/adr-0150/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7698,6 +7713,103 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0150",
+      "identity": "adr-0150",
+      "slug": "adr-0150",
+      "cockpit": "/cockpit/objects/adr/adr-0150",
+      "title": "Accumulation is watched at the episode's events: worktrees, merged branches and free disk are read against budgets the policy declares, said where a worker is listening, and reduced on the policy's consent",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "operations",
+        "worktree",
+        "lifecycle",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0150-accumulation-is-watched-at-the-episodes-events.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/accumulation.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/accumulation.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commands/accumulation.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commands/worktree.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/worktree/state.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/derive.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2986_accumulation_is_watched.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -10968,10 +11080,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0150",
+          "kind": "adr",
+          "route": "/adrs/adr-0150/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-closing-question-is-answered-by-measurement@1",
           "kind": "rule",
           "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-watched@1",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-watched-1/",
           "external": false
         },
         {
@@ -10989,6 +11115,62 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.accumulation-is-watched@1",
+      "identity": "project.accumulation-is-watched@1",
+      "slug": "project-accumulation-is-watched-1",
+      "cockpit": "/cockpit/objects/rule/project-accumulation-is-watched-1",
+      "title": "What accumulates is watched at the episode's events, against budgets the policy declares",
+      "status": "active",
+      "tags": [
+        "operations",
+        "git",
+        "worktree",
+        "disk",
+        "lifecycle",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/accumulation-is-watched.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.destructive-sweeps-fail-closed@1",
+          "kind": "rule",
+          "route": "/rules/project-destructive-sweeps-fail-closed-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.reclaim-only-what-you-own@1",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.worktree-topology@1",
+          "kind": "rule",
+          "route": "/rules/project-worktree-topology-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -11855,6 +12037,13 @@
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-watched@1",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-watched-1/",
           "external": false
         },
         {
@@ -13818,6 +14007,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.accumulation-is-watched@1",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-watched-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.benchmarkable-commands@1",
           "kind": "rule",
           "route": "/rules/project-benchmarkable-commands-1/",
@@ -14674,6 +14870,13 @@
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-watched@1",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-watched-1/",
           "external": false
         },
         {
@@ -16200,6 +16403,13 @@
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-watched@1",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-watched-1/",
           "external": false
         },
         {

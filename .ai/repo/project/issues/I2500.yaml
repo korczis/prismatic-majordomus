@@ -1,0 +1,60 @@
+id: I2500
+milestone: adopter-upgrades
+title: "Accumulation is watched: worktrees, merged branches and free disk are read against the policy's budgets at the provider's episode events, said in the briefing, and reduced on the policy's consent"
+slug: accumulation-is-watched
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the three quantities that grow on their own the watch a session's context already has: budgets declared in the policy, one measurement read at the provider's start, prompt, compaction and end events, a crossed budget said before a worker's first tool call, and a reduction that runs without anybody typing a command when the policy consents."
+why: "ADR 0150. project.accumulation-is-measured gave each quantity a measuring command and a reducing one, and nothing ran either: docs/WORKTREES.md said 'nothing in the topology reclaims anything and no budget is declared'. On 2026-10-13 the repository had 247 registered worktrees, 118 merged local branches and 47 GiB free on a volume that had reached zero three times in two days; each time a session noticed, ran the command by hand and wrote the alert by hand. worktree cleanup --remove never deleted a branch name, so merged names only grew."
+current_state: "The measurements exist (majordomus worktree, worktree cleanup, scripts/reap-orphans) and are run by a person. No budget is declared anywhere. The start event's briefing does not mention worktrees, branches or the disk. No command deletes a landed branch name."
+desired_state: "The policy's accumulation block declares the budgets and whether crossing one may remove anything. accumulation.status measures and judges; majordomus accumulation prints it and exits 10 when a budget is crossed. The start event's briefing names what is over budget, the prompt event says once when the disk is under its floor, and the compaction and end events start a reduction when act is reduce and the cooldown has passed. worktree cleanup --remove --branches deletes landed names nothing has checked out, keeping one at the trunk's own tip."
+scope:
+  - "apps/majordomus-cli/src/accumulation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/accumulation.rs"
+  - "apps/majordomus-cli/src/commands/accumulation.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/src/worktree/state.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "lib/capture.sh"
+  - "lib/derive.sh"
+  - "lib/rust_bin.sh"
+  - "test/run.sh"
+  - ".ai/repo/policy.yaml"
+  - "share/skeleton/policy.yaml"
+  - "share/allow/policy.txt"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "docs/ACCUMULATION.md"
+  - "docs/WORKTREES.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/accumulation-is-watched.md"
+  - ".ai/repo/adrs/0150-accumulation-is-watched-at-the-episodes-events.md"
+  - ".ai/repo/rules/project/accumulation-is-watched.v1.md"
+  - ".ai/repo/features/worktrees.md"
+  - "test/cases/2986_accumulation_is_watched.sh"
+  - ".ai/repo/project/issues/I2500.yaml"
+non_scope:
+  - "Build output of branches that are pushed and not merged: scripts/reap-orphans and pull request #921"
+  - "A timer or daemon: the watch reads at the provider's events only"
+  - "A Cockpit page of its own: the capability is listed with every other"
+depends_on: []
+acceptance_criteria:
+  - "majordomus accumulation prints each quantity with its reading, budget and state and exits 10 when one is over budget; a quantity with no declared budget is unbudgeted and one that could not be read is unknown"
+  - "The start event's briefing names every quantity over its budget and what the policy allows, and prints nothing about accumulation when the watch is off or every budget holds"
+  - "With act: report, accumulation --reduce removes nothing, exits 10 and names the command"
+  - "With act: reduce, a reduction removes the worktrees of landed branches and deletes landed names nothing has checked out, keeps unlanded work, a name at the trunk's tip and a branch with no upstream, and records what it did"
+  - "A second reduction inside cooldown_minutes does not run under --if-due"
+  - "A compaction event starts a reduction with no command typed"
+  - "The prompt event says the free disk is under its floor once per cooldown"
+  - "With announce_on_mesh: true the start event makes an advisory mesh claim of the session accumulation-watch naming what is over budget, and closes that session when the budgets hold again"
+  - "MAJORDOMUS_ACCUMULATION=off silences every path, and test/run.sh sets it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2986_accumulation_is_watched 611_the_reclaim_refuses_what_it_cannot_prove 54_session_lifecycle_hooks"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib accumulation"
+evidence_required:
+  - "accumulation_watch_case_2986"
+  - "accumulation_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13
