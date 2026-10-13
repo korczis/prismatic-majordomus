@@ -35,6 +35,9 @@
 #                                       majordomus-cli.json beside it (commit, target triple,
 #                                       rustc, Cargo.lock digest, profile) for a later job
 #   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
+#   MJ_RUST_OUTPUTS=FILE                write the paths this run writes inside the checkout, one
+#                                       per line and relative to its root, for whoever measures
+#                                       the tree afterwards; name a file outside the checkout
 #   MJ_RUST_TEST_LANE=1|2|3            run one lane of `cargo test` (CI's rust matrix); 1 and 2 run
 #                                       their tests and exit, 3 runs the rest and every other gate
 #   scripts/rust-check --lanes          print which test targets each lane runs
@@ -69,6 +72,18 @@ fi
 # the timings file is the caller's, named from the caller's directory: the script is about
 # to leave it, and a relative name would then append to a file nobody reads
 case "${MJ_CI_TIMINGS:-}" in ''|/*) ;; *) MJ_CI_TIMINGS="$PWD/$MJ_CI_TIMINGS" ;; esac
+# What this run writes inside the checkout, said by the script that writes it and where it
+# resolves the names: the timings land where the caller stood, the artifact directory under
+# the crate this script is about to change into. A job that measured its tree from a list of
+# its own had the timings under the crate, where nothing was, and read every run as dirty.
+# Written before anything runs, so a run that fails has still said what it may have left.
+if [ -n "${MJ_RUST_OUTPUTS:-}" ]; then
+  inside() { case "$1" in "$ROOT"/*) printf '%s\n' "${1#"$ROOT"/}" ;; esac; }
+  {
+    [ -z "${MJ_CI_TIMINGS:-}" ] || inside "$MJ_CI_TIMINGS"
+    case "$ARTIFACT" in '') ;; /*) inside "$ARTIFACT" ;; *) inside "$CRATE/$ARTIFACT" ;; esac
+  } > "$MJ_RUST_OUTPUTS"
+fi
 cd "$CRATE"
 # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
 RUSTFLAGS=''; export RUSTFLAGS

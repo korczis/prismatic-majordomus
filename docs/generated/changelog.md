@@ -1,11 +1,107 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.22.0**
+Current version: **0.23.0**
+
+## v0.22.0 — 2026-10-13
+
+### Decisions
+
+- **ADR-0149** A handbook edition is a declared locale tree, built from the tree it describes _(proposed)_
+- **ADR-0145** A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command _(proposed)_
+- **ADR-0144** An intent is proposed by a capability, and its stage stays derived _(proposed)_
+- **ADR-0142** No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it _(proposed)_
+- **ADR-0141** The UI is published as a snapshot read at one commit, and a publication never pretends to be a process _(proposed)_
+- **ADR-0140** Editors and agents read projections of the layer, and cargo embeds none of it _(proposed)_
+
+### Added
+
+- **docs**: the handbook is built from the tree it describes (ADR 0149) (`fc7917367`)
+- **install**: personal mode is a switch — init --personal, verified, and --shared (ADR 0145) (`3bf63db8e`)
+- **intent**: an intent is proposed by a capability, and its stage stays derived (`ee7f3373c`)
+- **ui**: every entity the UI names is a link, and every screen has a case (I2481, I2482) (`995496f6f`)
+- **ui**: the snapshot is bounded, declared, documented and wired into Pages (I2483, ADR 0141) (`41cc4dddd`)
+- **ui**: the UI links what it names and says none (I2481, work in progress) (`64dca8303`)
+- **ui**: the UI is read once and written as a static snapshot (`6f55316bc`)
+- **editors**: Zed and Antigravity read projections of the layer (ADR 0140) (`17e99c068`)
+- **mesh**: a review request carries a body, is withdrawn by its asker, and ends with it (`76dc4b399`)
+
+### Fixed
+
+- **test**: the deployments reading is asked for by served forge, and the test says so (`e6d0371cf`)
+- **test**: the served doctest names served.forge, and the handbook page is a whole document (`c03a5ff76`)
+- **served**: the module's documentation names the three capabilities it has (`ebf01655f`)
+- **docs**: the handbook wears the declared design, and its sources are chapters only (`ab498d5c0`)
+- **ci**: every red of the tag candidate's validate run is paid at its cause (`3e8225a43`)
+- **test**: case 2979 looks for a session record without ls | grep (`54263f8ba`)
+- **ui**: an absent deployment count reads none, and the stub forges answer the deployments read (`897bc430a`)
+- **ci**: master's seven reds after the backlog landings are paid in one commit (`5631447ff`)
+- **site**: a Markdown table is aligned by a class, so one column cannot stop a publication (`3c48889f8`)
+- **quality**: the readings carry their examples (`c40dbb86a`)
+- **ci**: top 2 pins a sort to the C locale and classifies web report ui-snapshot (`6cb8009ad`)
+- **ci**: the landing top's members meet — what the first combined run found (`102a08dd4`)
+- **site**: every badge states the one offer, and no surface lists release records (`5dab8737b`)
+- **site**: pages-check finds the repository for release-live, and case 180 holds it (`d38d3bc56`)
+- **site**: the site offers the release that was published, on every surface at once (`1c15652c0`)
+- **editors**: the projection meets the structure gates it added a module to (`19b6416d4`)
+- **editors**: rustdoc reads no path placeholder as an HTML tag (`7cf2dfb56`)
+- **http**: the live stream misses nothing a client can be told about (`000e2b047`)
+- **build**: each worktree builds its own crate in the shared build directory (`a29738743`)
+- **scope**: a path that holds a space is one path (I2464) (`dea8e07a7`)
+- **mesh**: a review request is withdrawn and expires with its runtime, not its session (`3daef42ca`)
+- **mesh**: a clone on a machine its trust list does not name opens no mesh socket (`9e1d9cc37`)
+
+### Performance
+
+- **ui**: no screen waits for a source (I2486, ADR 0142) (`344cb306c`)
+- **ci**: a release record and its projections plan a light validate (`22de3c496`)
+- **capability**: the slow screens read once (`99ea09509`)
+- **bench**: the bench measures the UI and the live view (`2fcb023e5`)
+- **cockpit**: assets are cached by their digest (`66bc00bd2`)
+- **integration**: the queue reads its relations once (`a865e3207`)
+- **ci**: the projection renders every record in one process, adr check resolves rules once (`89db623dc`)
+- **test**: derivation cases generate site data without executing the scenarios (`26898026f`)
+- **gates**: digest each file once per completion report (`9df08e7bd`)
+- **doctor**: one python3 for every schema, one awk for every case header (`0221b4779`)
+- **site**: page literals without a subshell each; modules checked in one jq (`141acab6d`)
+- **site**: one jq per section for the page literals, one awk for case coverage (`202efbac8`)
+- **ci**: the pipeline's data files are planned by their readers (`84de132df`)
+- **ci**: shellcheck runs in batches over a bounded pool (`39b0587db`)
+- **site**: invert the OpenAPI reference walks and drop jarr's per-line forks (`e5e4bcf36`)
+
+### Documentation
+
+- **adoption**: the arrangement is called personal mode, and its way to a shared layer is measured (`4b66ef5f5`)
+- **adoption**: using the tool without leaving anything in git, measured (`98bee6156`)
+- **ui**: the UI is the accepted primary surface, and its plan says what landed (`0e458b2c6`)
+
+### Tests
+
+- **editors**: `generate editors` is proven over a real repository, with `just` where coverage runs (`c46ff6c72`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master 9d31c4d456 and the readings (`8d35e7165`)
+- **deploy**: Fly.io is not a target; the provider block and fly.toml leave the contract (`9af3fa65a`)
+- **derive**: the derived data follows the UI-performance batch with the slow screens (`c66f49e40`)
+- **release**: record v0.21.0 and the metadata it publishes (`7bc7e662c`)
+- **derive**: the derived data follows the UI-performance batch on v0.21.0 (`39d682a26`)
+- **derive**: the derived data follows the v0.21.0 top and the per-tree build (`1906935a4`)
+- **derive**: the derived data follows the remembered queue (`64352fc6a`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.22.0-aarch64-apple-darwin.tar.gz (`bd4f69a863cc`)
+- `macos-x86_64` — majordomus-v0.22.0-x86_64-apple-darwin.tar.gz (`aa02c341feb0`)
+- `linux-x86_64-gnu` — majordomus-v0.22.0-x86_64-unknown-linux-gnu.tar.gz (`879d2aa20108`)
+- `linux-x86_64-musl` — majordomus-v0.22.0-x86_64-unknown-linux-musl.tar.gz (`7ab2dd2fbe34`)
+- `linux-aarch64-gnu` — majordomus-v0.22.0-aarch64-unknown-linux-gnu.tar.gz (`7051bc83be12`)
+- `linux-aarch64-musl` — majordomus-v0.22.0-aarch64-unknown-linux-musl.tar.gz (`2c289bd004a0`)
+
 
 ## v0.21.0 — 2026-10-12
 

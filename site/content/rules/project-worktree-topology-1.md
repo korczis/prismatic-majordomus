@@ -1,7 +1,7 @@
 +++
 title = "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered"
 description = "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered"
-weight = 172
+weight = 176
 [extra]
 kind = "rule"
 slug = "project-worktree-topology-1"
