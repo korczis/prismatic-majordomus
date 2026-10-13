@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.23.1",
+  "generator": "majordomus-cli 0.24.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -12623,7 +12623,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Open, inspect and close one execution episode.",
-          "syntax": "majordomus session <start|status|close|list|show|latest|context> [options]",
+          "syntax": "majordomus session <start|status|close|list|show|latest|context|archive> [options]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/sessions-open/",
@@ -41326,7 +41326,7 @@
           "depends_on": [
             "majordomus.sessions-are-workers@1"
           ],
-          "statement": "The ledger, the handovers and the checkpoints stay under the caps the policy sets.",
+          "statement": "The ledger, the handovers, the checkpoints and the session records stay under the caps the policy sets, and a cap is met by moving records aside, never by deleting one.",
           "tags": [
             "retention"
           ]
@@ -51594,6 +51594,13 @@
         "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "kind": "test",
+        "label": "test/cases/2985_session_records_are_capped_and_archived.sh",
+        "route": "/cockpit/objects/test/test-cases-2985-session-records-are-capped-and-archived-sh",
+        "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
       },
       {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -80951,6 +80958,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -86272,8 +86284,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2747,
-      "edges": 6029,
+      "nodes": 2748,
+      "edges": 6030,
       "acyclic": false,
       "truncated": false
     }

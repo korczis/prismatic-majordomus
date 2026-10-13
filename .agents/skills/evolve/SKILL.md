@@ -4,7 +4,7 @@ description: "Turn what sessions observed into reviewed knowledge and into the r
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/evolve/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.23.1 -->
+     Generator: majordomus-cli 0.24.1 -->
 
 # Evolve the repository's know-how
 
