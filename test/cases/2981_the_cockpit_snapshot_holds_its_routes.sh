@@ -38,7 +38,7 @@ pages="$(jq -r '.pages | length' "$S/snapshot.json")"
   || { echo "    the files are not the pages the snapshot records and its one page about the live Cockpit"; exit 1; }
 for f in $(jq -r '.pages[]' "$S/snapshot.json") live/index.html; do
   dir="$(dirname "$S/$f")"
-  grep -oE '(href|src)="[^"#]+' "$S/$f" | sed 's/^[a-z]*="//' | sort -u > links.txt || true
+  grep -oE '(href|src)="[^"#]+' "$S/$f" | sed 's/^[a-z]*="//' | LC_ALL=C sort -u > links.txt || true
   while IFS= read -r link; do
     case "$link" in
       /cockpit|/cockpit/*) echo "    $f keeps an absolute link into the Cockpit: $link"; exit 1 ;;

@@ -289,8 +289,21 @@ ui_live() {
   esac
   # Every other snapshot the model declares is held by the same probe (ADR 0147: the Cockpit
   # is one). The UI above keeps its own wording, which the final line and case 1096 read.
-  local other
+  #
+  # A snapshot is asked of the publication only when the published commit's own model declares
+  # it. A tree that adds one declares what the *next* publication owes, and until then the
+  # live site rightly holds none: asked anyway, this gate refused every checkout from the
+  # commit that added the Cockpit's snapshot until its first deployment. Section 3 is what
+  # holds the trunk to being published; this section holds a publication to what it declared.
+  # A published commit this checkout cannot read (a shallow clone) is asked as before.
+  local other published_model
+  published_model="$(git -C "$ROOT" show "$source_sha:.ai/repo/ci/pages.yaml" 2>/dev/null || true)"
   for other in $(printf '%s\n' "$declared" | awk -F '\t' '$1 != "" && $1 != "ui" { print $1 }'); do
+    if [ -n "$published_model" ] \
+      && ! printf '%s\n' "$published_model" | grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+$other[[:space:]]*\$"; then
+      ok "the published commit ${source_sha:0:12} declares no $other snapshot; the one this tree declares is owed by the next publication"
+      continue
+    fi
     rc=0
     out="$(scripts/pages verify-ui --surface "$other" --url "$URL" --commit "$source_sha" --timeout 0 2>&1)" || rc=$?
     case "$rc" in

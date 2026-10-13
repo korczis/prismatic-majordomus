@@ -333,7 +333,7 @@ fn relink_into(
     .expect("the pattern of a link led to the live page compiles");
     let mut count = 0;
     let mut names: Vec<String> = files.into_values().collect();
-    names.sort();
+    crate::order::canonical_strings(&mut names);
     for name in names {
         let path = dir.join(&name);
         let Ok(html) = std::fs::read_to_string(&path) else {
@@ -380,13 +380,12 @@ pub fn cockpit_seeds(root: &Path) -> Vec<String> {
     ))
     .expect("the pattern of a link the UI led to its live page compiles");
     let ui = root.join(GENERATED_ROOT).join(UI.id);
-    let mut files: Vec<PathBuf> = pages_of(root, &UI)
+    let mut names: Vec<String> = pages_of(root, &UI)
         .unwrap_or_default()
         .into_values()
-        .map(|file| ui.join(file))
         .collect();
-    files.sort();
-    for file in files {
+    crate::order::canonical_strings(&mut names);
+    for file in names.into_iter().map(|name| ui.join(name)) {
         let Ok(html) = std::fs::read_to_string(&file) else {
             continue;
         };

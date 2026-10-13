@@ -21,7 +21,7 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 git add -A >/dev/null && git commit -qm install
 U=target/web/ui-snapshot
 C=target/web/cockpit-snapshot
-into() { grep -rhoE "$1" "$U" --include=index.html | sort -u; }
+into() { grep -rhoE "$1" "$U" --include=index.html | LC_ALL=C sort -u; }
 
 # ---------------------------------------------------------------- before
 "$RB" web report ui-snapshot --limit 30 --budget-seconds 0 >/dev/null 2> err.txt \
