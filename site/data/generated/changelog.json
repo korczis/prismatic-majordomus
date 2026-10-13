@@ -46,7 +46,56 @@
       "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
       "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.21.0...v0.22.0",
       "date": "2026-10-13T04:40:42Z",
-      "decisions": [],
+      "decisions": [
+        {
+          "added": "fc791736760769e93c0ace16b9cbe98472984188",
+          "date": "2026-10-12",
+          "id": "adr-0149",
+          "status": "proposed",
+          "title": "A handbook edition is a declared locale tree, built from the tree it describes",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md"
+        },
+        {
+          "added": "3bf63db8e8d795f960499920c4899284c9e422aa",
+          "date": "2026-10-12",
+          "id": "adr-0145",
+          "status": "proposed",
+          "title": "A personal layer changes nothing shared: it is covered by git's own exclude file, checked where it is claimed, and handed to the team by one command",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0145-a-personal-layer-changes-nothing-shared.md"
+        },
+        {
+          "added": "ee7f3373cbe09c0b4ca3387a63d2ff91a93a0cde",
+          "date": "2026-10-12",
+          "id": "adr-0144",
+          "status": "proposed",
+          "title": "An intent is proposed by a capability, and its stage stays derived",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md"
+        },
+        {
+          "added": "344cb306c3e83d16e65ea44d67fdc2f8aba9d267",
+          "date": "2026-10-12",
+          "id": "adr-0142",
+          "status": "proposed",
+          "title": "No screen waits for a source: a page shows the latest reading with its age, and the reading catches up behind it",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0142-no-screen-waits-for-a-source.md"
+        },
+        {
+          "added": "41cc4dddd2964cb0d69c3093221a190d0e36f74a",
+          "date": "2026-10-12",
+          "id": "adr-0141",
+          "status": "proposed",
+          "title": "The UI is published as a snapshot read at one commit, and a publication never pretends to be a process",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md"
+        },
+        {
+          "added": "17e99c068c2427344c9bcd4e2fda415f133a81dd",
+          "date": "2026-10-12",
+          "id": "adr-0140",
+          "status": "proposed",
+          "title": "Editors and agents read projections of the layer, and cargo embeds none of it",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md"
+        }
+      ],
       "groups": [
         {
           "changes": [
@@ -721,7 +770,88 @@
       "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
       "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.20.0...v0.21.0",
       "date": "2026-10-12T10:23:49Z",
-      "decisions": [],
+      "decisions": [
+        {
+          "added": "c56b5b87cd938456c7c986a6f198723546b524de",
+          "date": "2026-10-11",
+          "id": "adr-0139",
+          "status": "proposed",
+          "title": "Worktrees share what cargo compiles on the way, and keep their own finished artifacts",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md"
+        },
+        {
+          "added": "b60351428dbab1c0b025b1160857f3792e2e8473",
+          "date": "2026-10-11",
+          "id": "adr-0138",
+          "status": "proposed",
+          "title": "A train of pull requests is a typed object that can be seen",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md"
+        },
+        {
+          "added": "dd5a6336c6eb37971838da3969bfd030f45ca0af",
+          "date": "2026-10-11",
+          "id": "adr-0136",
+          "status": "proposed",
+          "title": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md"
+        },
+        {
+          "added": "9bcebb9f868b07cc15bac5c0f71e32c135733687",
+          "date": "2026-10-11",
+          "id": "adr-0135",
+          "status": "accepted",
+          "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md"
+        },
+        {
+          "added": "0e38ab5bf9783803aeb233d5e096369f07ca13ae",
+          "date": "2026-10-11",
+          "id": "adr-0134",
+          "status": "proposed",
+          "title": "The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0134-the-version-is-allocated-at-landing.md"
+        },
+        {
+          "added": "bf08180a4d1ffe07d0c071f4e58b06fa1ef63e74",
+          "date": "2026-10-10",
+          "id": "adr-0133",
+          "status": "proposed",
+          "title": "Everything that happens in the repository is followed in one stream, folded and addressed",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0133-everything-is-followed-in-one-stream.md"
+        },
+        {
+          "added": "45efcfead5622314971fbc0bc6b4643440202058",
+          "date": "2026-10-10",
+          "id": "adr-0131",
+          "status": "proposed",
+          "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md"
+        },
+        {
+          "added": "e97caa007dfdb91a65a92f13f4ad48db8d69dcb4",
+          "date": "2026-10-10",
+          "id": "adr-0129",
+          "status": "proposed",
+          "title": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md"
+        },
+        {
+          "added": "8d6e0c76e7cfe4db1808a3fbd665cdad3500b39a",
+          "date": "2026-10-09",
+          "id": "adr-0126",
+          "status": "proposed",
+          "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
+        },
+        {
+          "added": "4afbde69ed8958f2c6aafdd9a7534d0214dbdd33",
+          "date": "2026-10-09",
+          "id": "adr-0118",
+          "status": "proposed",
+          "title": "A session leaves what it observed, and the boundary keeps one routed candidate per defect",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0118-a-session-leaves-what-it-observed-and-one-candidate-per-defect-is-routed.md"
+        }
+      ],
       "groups": [
         {
           "changes": [
