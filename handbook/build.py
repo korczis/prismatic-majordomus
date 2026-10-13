@@ -26,6 +26,8 @@ import re
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.environ.get("HANDBOOK_ROOT") or os.path.dirname(HERE)
 DERIVED = os.environ.get("HANDBOOK_DERIVED") or os.path.join(ROOT, "target", "handbook")
@@ -70,7 +72,10 @@ def main():
         sys.stderr.write("handbook: %s has no docs/generated/graph.json; nothing to build from\n" % ROOT)
         sys.exit(12)
     os.makedirs(DERIVED, exist_ok=True)
-    py = [sys.executable, "-I"]
+    # -B: no bytecode is written. An edition's modules are imported by its assembler, and a
+    # cache beside them would be a file this build leaves in the tree it only reads; -I already
+    # ignores PYTHONDONTWRITEBYTECODE, so the flag is the one place that decides it.
+    py = [sys.executable, "-I", "-B"]
     run("the repository's numbers", py + [os.path.join(HERE, "derive_data.py"), "--out", DERIVED], check)
     run("the document corpus", py + [os.path.join(HERE, "corpus.py")], check)
     run("the repository graph", py + [os.path.join(HERE, "graph.py")], check)

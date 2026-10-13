@@ -33,6 +33,13 @@ expect_exit 0 build
 expect_grep 'cs edition holds'
 expect_grep 'every anchor resolves'
 [ -s "$DERIVED/cs/prirucka-majordomusu.html" ] || { echo "    the build wrote no page"; exit 1; }
+# The build reads the handbook and writes beside it nothing at all: no bytecode cache, no
+# scratch file. A cache was tracked once, and every tree that ran this gate was dirty after it.
+left="$(find "$HB" -name '__pycache__' -o -name '*.pyc' | head -3)"
+[ -z "$left" ] || { echo "    the build left bytecode in the handbook it read: $left"; exit 1; }
+if git -C "$ROOT" ls-files | grep -qE '(^|/)__pycache__/|\.pyc$'; then
+  echo "    a bytecode cache is tracked"; exit 1
+fi
 # what the page states is what the tree holds: the commit it was built from is this one
 head_sha="$(git -C "$ROOT" rev-parse --short=10 HEAD)"
 grep -q "\"commit\": *\"$head_sha\"\|\"commit\":\"$head_sha\"" "$DERIVED/corpus-index.json" \
