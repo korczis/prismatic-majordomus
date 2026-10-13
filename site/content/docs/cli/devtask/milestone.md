@@ -1,7 +1,7 @@
 +++
 title = "majordomus devtask milestone"
 description = "One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles"
-weight = 39
+weight = 40
 [extra]
 route = "/docs/cli/devtask/milestone/"
 command = "majordomus devtask milestone"
