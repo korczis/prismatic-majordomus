@@ -510,10 +510,18 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             format!("{path} differs from the registry this process built"),
             vec![format!("{path} (differs)")],
         ),
-        Err(_) => (
+        // A repository that commits no manifest has nothing to drift from: that is every
+        // repository but the ones that run `majordomus generate`, and reading it as
+        // `unknown` made the whole report unknown wherever the layer was merely adopted.
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (
+            HealthStatus::Ok,
+            format!("{path} is not committed here, so there is nothing to compare"),
+            Vec::new(),
+        ),
+        Err(e) => (
             HealthStatus::Unknown,
-            format!("{path} could not be read"),
-            vec![format!("{path} (missing)")],
+            format!("{path} could not be read: {e}"),
+            vec![format!("{path} (unreadable)")],
         ),
     };
     record(

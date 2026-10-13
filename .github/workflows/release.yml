@@ -122,10 +122,35 @@ jobs:
       - name: the target this artifact is for
         run: rustup target add "${{ matrix.target }}"
 
+      # The vendored browser libraries are built, not committed (.gitignore), and the archive
+      # is `share/` as it stands: without this step every installation shipped a UI and a
+      # Cockpit whose graphs asked for /ui/assets/vendor/cytoscape.min.js and got a 404.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: the browser assets the archive carries
+        run: |
+          npm ci --no-audit --no-fund
+          scripts/cockpit-assets
+
       - name: package
         env:
           MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
         run: scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist
+
+      - name: the archive carries every vendored library a page loads
+        run: |
+          artifact="$(printf '%s' "${{ matrix.artifact }}" | sed "s/{tag}/${{ needs.plan.outputs.tag }}/")"
+          tar -tzf "dist/$artifact" > listing.txt
+          missing=0
+          for file in share/ui/vendor/cytoscape.min.js share/cockpit/vendor/alpine.csp.min.js \
+                      share/cockpit/vendor/cytoscape.min.js share/cockpit/vendor/three.module.min.js \
+                      share/cockpit/vendor/three.core.min.js share/cockpit/vendor/p5.min.js; do
+            grep -q "/$file\$" listing.txt || { echo "::error::the archive holds no $file"; missing=1; }
+          done
+          [ "$missing" = 0 ]
 
       - name: verify the artifact is what the model says it is
         run: |
