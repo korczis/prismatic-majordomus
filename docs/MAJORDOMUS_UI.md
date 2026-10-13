@@ -102,8 +102,8 @@ since no capability the other screens ask at first paint states the forge's addr
 Drain, which asks the queue, and Deployments, which asks what was observed, do link the
 forge), and a path that is not an object of the index.
 
-What the forge recorded is read from one observation, taken by `majordomus prs refresh` — the
-one command that asks the forge — and kept beside the pull-request observation. A checkout
+What the forge recorded is read from one observation, taken by `majordomus served forge` and
+kept beside the pull-request observation, which `majordomus prs refresh` takes. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
 empty.
@@ -331,7 +331,7 @@ publication model declares that a publication holds it (`deploy.snapshots` in
 page the record lists. A snapshot that stopped at its bound passes and the probe states what
 it left out; one that is missing, names an older commit or does not say what ended its
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
-`test/cases/1096_the_published_ui_is_the_trunks.sh` holds them.
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
 ## What it does not do yet
 

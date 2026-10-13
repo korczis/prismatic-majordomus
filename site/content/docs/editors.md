@@ -1,7 +1,7 @@
 +++
 title = "Editors and agents"
 description = "what Zed and Google Antigravity read from the repository: the skills and tasks projected by `majordomus generate editors`, ownership and conflict refusal, what is left to the person (MCP, settings, permissions) and why"
-weight = 52
+weight = 53
 [extra]
 source = "docs/EDITORS.md"
 +++
