@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 58
+weight = 59
 [extra]
 source = "docs/WORKTREES.md"
 +++

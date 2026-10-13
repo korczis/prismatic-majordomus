@@ -1,7 +1,7 @@
 +++
 title = "The accumulation watch"
 description = "the accumulation watch: worktrees, merged branches and free disk measured against the budgets the policy declares at the provider's start, prompt, compaction and end events, what the briefing says, what `act: reduce` removes and what it keeps, and how to switch it off"
-weight = 63
+weight = 64
 [extra]
 source = "docs/ACCUMULATION.md"
 +++

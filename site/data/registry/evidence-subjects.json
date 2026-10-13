@@ -909,6 +909,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:served.forge",
+      "path": "/evidence/capabilities/served-forge/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:served.observe",
       "path": "/evidence/capabilities/served-observe/"
     },
@@ -3176,6 +3181,11 @@
       "kind": "command",
       "subject": "command:serve",
       "path": "/evidence/commands/serve/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:served forge",
+      "path": "/evidence/commands/served-forge/"
     },
     {
       "kind": "command",
@@ -5756,6 +5766,18 @@
       "programs": [],
       "members": [
         "command:rules show"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:served.forge": {
+      "kind": "capability",
+      "id": "served.forge",
+      "page": "/evidence/capabilities/served-forge/",
+      "programs": [],
+      "members": [
+        "command:served forge"
       ],
       "routes": [],
       "mechanisms": [],
@@ -10159,7 +10181,7 @@
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/project/english-only.v2.md",
+            ".ai/repo/rules/project/english-only.v3.md",
             "scripts/ci/english-only-check",
             "test/cases/403_published_translation.sh"
           ]
@@ -16472,6 +16494,12 @@
         },
         {
           "via": "negative",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
           "test": "suite:403_published_translation",
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e"
@@ -16679,6 +16707,25 @@
       "kind": "command",
       "id": "serve stop",
       "page": "/evidence/commands/serve-stop/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:served forge": {
+      "kind": "command",
+      "id": "served forge",
+      "page": "/evidence/commands/served-forge/",
       "programs": [
         "native"
       ],
@@ -23102,7 +23149,18 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/english-only.v3.md"
+          ]
+        }
+      ],
       "mechanisms": [
         "scripts/ci/english-only-check"
       ],
@@ -25088,6 +25146,27 @@
       ],
       "findings": []
     },
+    "rule:project.the-handbook-is-built-from-the-tree": {
+      "kind": "rule",
+      "id": "project.the-handbook-is-built-from-the-tree",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.the-lease-is-read-once": {
       "kind": "rule",
       "id": "project.the-lease-is-read-once",
@@ -25148,21 +25227,21 @@
         },
         {
           "via": "rule",
-          "test": "suite:1096_the_published_ui_is_the_trunks",
-          "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/1096_the_published_ui_is_the_trunks.sh",
-            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:180_publication_is_observed",
           "path": "test/cases/180_publication_is_observed.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/180_publication_is_observed.sh",
+            ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2983_the_published_ui_is_the_trunks",
+          "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2983_the_published_ui_is_the_trunks.sh",
             ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
           ]
         },

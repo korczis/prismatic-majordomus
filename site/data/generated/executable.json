@@ -3114,6 +3114,23 @@
     {
       "api_anchor": null,
       "claims": [],
+      "cli": "majordomus served forge",
+      "id": "served.forge",
+      "kind": "command",
+      "module": "served",
+      "module_route": "/registry/modules/served/",
+      "resource": null,
+      "route": "/registry/capabilities/served-forge/",
+      "slug": "served-forge",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "tests": [],
+      "title": "Ask the forge what it recorded as deployed and released",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
       "cli": "majordomus served observe",
       "id": "served.observe",
       "kind": "command",
@@ -4139,7 +4156,7 @@
     ]
   },
   "counts": {
-    "capabilities": 196,
+    "capabilities": 197,
     "claims": 93,
     "modules": 57
   },
@@ -5572,6 +5589,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "served.forge",
+          "route": "/registry/capabilities/served-forge/",
+          "slug": "served-forge"
+        },
         {
           "id": "served.observe",
           "route": "/registry/capabilities/served-observe/",

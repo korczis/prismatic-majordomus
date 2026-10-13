@@ -28810,6 +28810,12 @@
           "route": "/docs/cli/served/observe/"
         },
         {
+          "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+          "command": "majordomus served forge",
+          "name": "forge",
+          "route": "/docs/cli/served/forge/"
+        },
+        {
           "about": "Each deployment's newest record, re-judged against a commit",
           "command": "majordomus served show",
           "name": "show",
@@ -29037,6 +29043,135 @@
       ],
       "route": "/docs/cli/served/observe/",
       "usage": "majordomus served observe [OPTIONS]"
+    },
+    {
+      "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus served forge",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "served",
+            "forge"
+          ],
+          "command": "majordomus served forge",
+          "description": "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+          "expectation": "exits 12",
+          "id": "served-forge-unknown-repository",
+          "setup": [],
+          "title": "A forge that cannot be asked is said, and what was recorded before stands"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "forge",
+      "parent_route": "/docs/cli/served/",
+      "path": [
+        "majordomus",
+        "served",
+        "forge"
+      ],
+      "route": "/docs/cli/served/forge/",
+      "usage": "majordomus served forge [OPTIONS]"
     },
     {
       "about": "Each deployment's newest record, re-judged against a commit",
@@ -36836,10 +36971,10 @@
     }
   ],
   "counts": {
-    "arguments": 1600,
-    "commands": 230,
-    "examples": 237,
-    "runnable": 203
+    "arguments": 1605,
+    "commands": 231,
+    "examples": 238,
+    "runnable": 204
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.22.0",

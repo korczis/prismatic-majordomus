@@ -190,6 +190,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus evidence stamp`](#majordomus-evidence-stamp) | `/docs/cli/evidence/stamp/` | Measure the checkout as a run left it, for `record --provenance` |
 | [`majordomus served`](#majordomus-served) | `/docs/cli/served/` | Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit |
 | [`majordomus served observe`](#majordomus-served-observe) | `/docs/cli/served/observe/` | Probe the build identity a deployment serves, judge it against a commit and record it |
+| [`majordomus served forge`](#majordomus-served-forge) | `/docs/cli/served/forge/` | Ask the forge which deployments and releases it recorded, and keep the answer for the readers |
 | [`majordomus served show`](#majordomus-served-show) | `/docs/cli/served/show/` | Each deployment's newest record, re-judged against a commit |
 | [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
@@ -5466,7 +5467,7 @@ Examples:
 
 Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
 
-Subcommands: [`majordomus served observe`](#majordomus-served-observe), [`majordomus served show`](#majordomus-served-show).
+Subcommands: [`majordomus served observe`](#majordomus-served-observe), [`majordomus served forge`](#majordomus-served-forge), [`majordomus served show`](#majordomus-served-show).
 
 ```text
 majordomus served [OPTIONS] <COMMAND>
@@ -5509,6 +5510,33 @@ Examples:
 
   ```console
   $ majordomus served observe --url http://127.0.0.1:9 --timeout 1 --dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-served-forge"></a>
+## `majordomus served forge`
+
+Ask the forge which deployments and releases it recorded, and keep the answer for the readers
+
+```text
+majordomus served forge [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A forge that cannot be asked is said, and what was recorded before stands** — Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.
+
+  ```console
+  $ majordomus served forge
   ```
 
   Verified: exits 12.
