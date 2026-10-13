@@ -121,6 +121,44 @@ pub enum Command {
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked
+    Peers(PeersArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus peers`: the `peers.list` capability on the command line.
+///
+/// The board gathered across every checkout of the repository, for a worker with no MCP
+/// tools to ask with. The same capability the MCP tool `majordomus_peers` and
+/// `GET /api/v1/peers` project; nothing about the board is decided here.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::Checkouts;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PeersArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "peers"]).unwrap();
+/// let Command::Peers(args) = cli.command else { panic!("not the peers command") };
+/// let args: PeersArgs = args;
+/// assert_eq!(args.checkouts, Checkouts::Repository, "the board is the repository's");
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// let cli = Cli::try_parse_from(["majordomus", "peers", "--checkouts", "this", "--format", "json"]).unwrap();
+/// let Command::Peers(args) = cli.command else { panic!("not the peers command") };
+/// assert_eq!(args.checkouts, Checkouts::This);
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct PeersArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// Which checkouts to answer for: every checkout of the repository, or this one
+    /// alone — which reads no other checkout's lease and asks no other server
+    #[arg(long, value_enum, default_value_t = Checkouts::default())]
+    pub checkouts: Checkouts,
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -6254,6 +6292,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 "proposed every-page-answers-within-100-ms-when-warm",
                 ".ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
             ]),
+        }],
+    },
+    CommandExamples {
+        command: "peers",
+        examples: &[ExampleDoc {
+            id: "peers-no-board",
+            title: "Who else is working here, and what it says when nobody can be asked",
+            description: "The board of every checkout of the repository: each peer, the worktree it is attached to, whether it is still attached and the paths it claimed, from the same capability the MCP tool majordomus_peers projects. A board is a server's memory, so in a repository where no server answers for any checkout there is none to read: the command prints the checkouts it covered, says on stderr that no board could be asked, and exits 12 rather than reporting an empty board as if it had read one.",
+            argv: &["peers"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

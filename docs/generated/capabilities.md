@@ -206,7 +206,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack.plan` | `pack` | query | behaviorally_verified | `majordomus_pack_plan` | — | `GET /api/v1/pack/plan` | `majordomus pack plan` | — | required |
 | `pack.verify` | `pack` | query | behaviorally_verified | `majordomus_pack_verify` | — | `GET /api/v1/pack/verify` | `majordomus pack verify` | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
-| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
+| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | `majordomus peers` | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
 | `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
