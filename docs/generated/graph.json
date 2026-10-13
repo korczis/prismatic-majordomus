@@ -34539,6 +34539,8 @@
             "the declaration is a published-only surface at /ui built from this commit, and the topology validates with it beside the served UI",
             "the Pages deploy places the snapshot of the commit it publishes at /ui and refuses one of another commit"
           ],
+          "completed_at": "2026-10-13T12:49:21Z",
+          "completed_event": "sha256:5aad37576e44014743e1329eb0bec556598522695ba0f8021192f7ed8ed46bad",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2462"
@@ -34568,14 +34570,18 @@
             "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
           ],
           "slug": "the-ui-is-published-as-a-snapshot",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:47:49Z",
+          "started_event": "sha256:4f52ab1e849b1d06d6a508241dc2921a8f53c48581e9eaaca46c8b6818d3d22f",
+          "updated_at": "2026-10-13T12:49:21Z",
           "validation": [
             "cargo test --lib web::report::snapshot",
             "test/run.sh 1092_the_ui_snapshot_holds_every_screen",
             "test/run.sh 1093_the_ui_snapshot_links_nothing_absent",
             "test/run.sh 97_pages_fast_path",
             "test/run.sh 26_ci_wiring"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:48:08Z",
+          "verified_event": "sha256:e5df6e147d74cf8ebd081389110b17e72cce587c6922567e3c36ada5033efe40"
         }
       },
       {
@@ -34674,6 +34680,8 @@
         "route": "/cockpit/objects/issue/i2486",
         "source": ".ai/repo/project/issues/I2486.yaml",
         "facts": {
+          "completed_at": "2026-10-13T12:47:30Z",
+          "completed_event": "sha256:d227f7fbb5c4d7115d02ac791744512ab168677190d6bc39983c5ab0f76eec7c",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2461"
@@ -34705,13 +34713,17 @@
             ".ai/repo/project/issues/I2486.yaml"
           ],
           "slug": "no-screen-waits-for-a-source",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:45:05Z",
+          "started_event": "sha256:d44362e179b066d87d723c88b76e490bb5ccfd60485a9613729796404af12293",
+          "updated_at": "2026-10-13T12:47:30Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test executor",
             "cargo test --lib ui::",
             "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:45:29Z",
+          "verified_event": "sha256:922c5dee82fd3592d95d4d05e0e97a167d923dc7832078b0f8dab7ca9bfeae50"
         }
       },
       {
@@ -34820,6 +34832,8 @@
             "The repository's policy declares the UI's budget for the pinned and the live view, and every screen is within it",
             "The ui job runs the check before the browser audit, under a bound smaller than the job's"
           ],
+          "completed_at": "2026-10-13T12:50:44Z",
+          "completed_event": "sha256:f969b1727cb9977dd9378d5d67d2b2a648683bc65841b69c45fc9e5e676bdbe2",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2486"
@@ -34846,13 +34860,17 @@
             ".ai/repo/project/issues/I2489.yaml"
           ],
           "slug": "a-screen-over-its-budget-fails-the-build",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:50:07Z",
+          "started_event": "sha256:022c9b1364a58490655c313ce04cb4c48811df86e9b087cf8cb12fca609c3a74",
+          "updated_at": "2026-10-13T12:50:44Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test bench_units",
             "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails",
             "majordomus bench system.http. --transport system --profile ci --no-write --check"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:50:24Z",
+          "verified_event": "sha256:629858dc8d31de3a119cdf75cdee264f8a68f5cc74b60673a3e9eb861086c32c"
         }
       },
       {
@@ -34926,6 +34944,8 @@
         "route": "/cockpit/objects/issue/i2495",
         "source": ".ai/repo/project/issues/I2495.yaml",
         "facts": {
+          "completed_at": "2026-10-13T12:52:11Z",
+          "completed_event": "sha256:18755ed4e186b9ea84769fdab240052045776d1b1a5f9130010eba494681f6f7",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2483"
@@ -34958,13 +34978,17 @@
             ".ai/repo/project/issues/I2495.yaml"
           ],
           "slug": "the-cockpit-is-published-as-a-snapshot",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:51:02Z",
+          "started_event": "sha256:973877e19a18e6438a24a06f952ec555a8fa5ea32ebedf613e55e8fedf5e202b",
+          "updated_at": "2026-10-13T12:52:11Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib web::report::snapshot",
             "MJ_TEST_JOBS=2 bash test/run.sh 2981_the_cockpit_snapshot_holds_its_routes 2982_two_snapshots_link_what_the_other_holds",
             "scripts/pages verify-ui --surface cockpit"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:51:17Z",
+          "verified_event": "sha256:badc5d79f88beea02bc656a173f6da95aea7c3867ee3c20aba42889c5a18b014"
         }
       },
       {
@@ -40203,6 +40227,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.22.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.23.0",
+        "kind": "release-record",
+        "label": "v0.23.0",
+        "summary": "v0.23.0",
+        "route": "/cockpit/objects/release-record/v0-23-0",
+        "source": ".ai/repo/releases/v0.23.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "e506c041a44ca9e5853500e10452c648b19ca858",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.23.0",
+          "published_at": "2026-10-13T12:45:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.23.0"
         }
       },
       {
@@ -77164,6 +77211,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.23.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -86065,8 +86117,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2741,
-      "edges": 6018,
+      "nodes": 2742,
+      "edges": 6019,
       "acyclic": false,
       "truncated": false
     }

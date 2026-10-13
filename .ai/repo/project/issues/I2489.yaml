@@ -38,4 +38,30 @@ evidence_required:
   - "ui_budget_gate_case_1099"
   - "ui_budget_bench_results"
 created_at: 2026-10-12
-updated_at: 2026-10-12
+updated_at: 2026-10-13T12:50:44Z
+started_at: 2026-10-13T12:50:07Z
+started_event: sha256:022c9b1364a58490655c313ce04cb4c48811df86e9b087cf8cb12fca609c3a74
+verified_at: 2026-10-13T12:50:24Z
+verified_event: sha256:629858dc8d31de3a119cdf75cdee264f8a68f5cc74b60673a3e9eb861086c32c
+completed_at: 2026-10-13T12:50:44Z
+completed_event: sha256:f969b1727cb9977dd9378d5d67d2b2a648683bc65841b69c45fc9e5e676bdbe2
+evidence:
+  - covers: bench_budget_unit_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test bench_units"
+    result: "test result: ok. 7 passed; 0 failed, on a tree equal to master 3442ce68c5: a result over its budget fails the check and is named, one within it passes, a result with too few samples is reported and not judged"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:44:05Z
+  - covers: ui_budget_gate_case_1099
+    type: test
+    command: "bash test/run.sh 1099_a_screen_over_its_budget_fails"
+    result: "ok 1099_a_screen_over_its_budget_fails, on a tree equal to master 3442ce68c5: a screen over its budget fails the check and is named, one within it passes, the policy declares both views"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:50:34Z
+  - covers: ui_budget_bench_results
+    type: ci
+    command: "majordomus bench system.http. --transport system --profile ci --no-write --check"
+    result: "bench --check: within budget, in the ui job of validate run 38379385624 on master e506c041a4 (job 115235815811), a GitHub-hosted Linux runner; every system.http.ui. and system.http.live.ui. result warm, p95, at or under 100 ms with 20 samples. Not repeated on 3442ce68c5: a local run on a Mac at load 125 could not hold its own server (exit 13)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38379385624/job/115235815811"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:50:38Z
