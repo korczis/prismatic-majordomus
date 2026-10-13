@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "9fa8db5f5f0aa75b53645031ed49e0aecd5553f7017fb84bcb20d135380f6b69",
+    "fingerprint": "f32a8f0602b1720dbff1a2ae3a2fa645b47f6360bbb4029f49384a326b468224",
     "summary": {
-      "total": 2330,
+      "total": 2336,
       "builtin": 196,
-      "declarative": 2134,
+      "declarative": 2140,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2134
+        "resource": 2140
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2143
+        "implemented": 2149
       },
       "mcp_tools": 187,
-      "mcp_resources": 2189,
+      "mcp_resources": 2195,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80066,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 105,
         "capability_ids": []
       },
       {
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 343,
+        "capabilities": 347,
         "capability_ids": []
       },
       {
@@ -81084,7 +81084,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 178,
+        "capabilities": 179,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "13be66ac89016dc620c922f098f904234530b18031a5399ee46260b3ae161d3e",
+    "fingerprint": "7faecb2fec6a6125c0228b3211b477647831d7de1e4af83f3928e0ffefe5d921",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81341,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 104,
+      "adr": 105,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81358,7 +81358,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 343,
+      "issue": 347,
       "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81367,7 +81367,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 23,
-      "rule": 178,
+      "rule": 179,
       "scope": 1,
       "session": 89,
       "skill": 7,
@@ -83097,6 +83097,23 @@
           "governance",
           "ci",
           "release"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0156",
+        "kind": "adr",
+        "identity": "adr-0156",
+        "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+        "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+        "path": ".ai/repo/adrs/0156-a-session-joins-the-cluster-before-it-works.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6108,
+        "tags": [
+          "coordination",
+          "mesh",
+          "governance",
+          "enforcement"
         ]
       },
       {
@@ -87331,7 +87348,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232547
+        "bytes": 238948
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94521,6 +94538,50 @@
         "bytes": 3595
       },
       {
+        "uri": "majordomus://issue/I2660",
+        "kind": "issue",
+        "identity": "I2660",
+        "title": "A session reads whether it is current, attached, announced and useful, from one capability",
+        "description": "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
+        "path": ".ai/repo/project/issues/I2660.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2719
+      },
+      {
+        "uri": "majordomus://issue/I2661",
+        "kind": "issue",
+        "identity": "I2661",
+        "title": "start, check, finish and the commit and push hooks refuse a change from a session that has not joined",
+        "description": "Make the derived state of I2660 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is.",
+        "path": ".ai/repo/project/issues/I2661.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2446
+      },
+      {
+        "uri": "majordomus://issue/I2662",
+        "kind": "issue",
+        "identity": "I2662",
+        "title": "The join state is projected to the briefing, the Cockpit, the UI, the handbook, the site and GitHub Pages",
+        "description": "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together.",
+        "path": ".ai/repo/project/issues/I2662.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2298
+      },
+      {
+        "uri": "majordomus://issue/I2663",
+        "kind": "issue",
+        "identity": "I2663",
+        "title": "A session whose MCP server did not connect says so on the board, and a worker with nothing to do takes an open ask",
+        "description": "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open.",
+        "path": ".ai/repo/project/issues/I2663.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1976
+      },
+      {
         "uri": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "identity": "an-expedited-landing",
@@ -96984,6 +97045,22 @@
           "session",
           "capability",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
+        "kind": "rule",
+        "identity": "project.a-session-joins-the-cluster-before-it-works@1",
+        "title": "A session is current, attached, announced and useful before it changes anything",
+        "description": "Before a worker changes the repository it knows how far its checkout is behind the trunk, which transport it reaches the shared server by, that it is announced on the board with its intent and paths, and what the board leaves unheld; a worker that holds no claim takes an unheld ask or says why it takes none.",
+        "path": ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3405,
+        "tags": [
+          "coordination",
+          "mesh",
+          "process"
         ]
       },
       {
@@ -104261,7 +104338,7 @@
       "identity": [
         "id"
       ],
-      "objects": 104
+      "objects": 105
     },
     {
       "name": "application",
@@ -104424,7 +104501,7 @@
       "identity": [
         "id"
       ],
-      "objects": 343
+      "objects": 347
     },
     {
       "name": "knowledge",
@@ -104521,7 +104598,7 @@
         "id",
         "version"
       ],
-      "objects": 178
+      "objects": 179
     },
     {
       "name": "scope",

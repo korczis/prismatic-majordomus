@@ -1,0 +1,31 @@
+id: I2663
+milestone: development-runtime
+title: "A session whose MCP server did not connect says so on the board, and a worker with nothing to do takes an open ask"
+slug: a-fall-back-to-the-cli-announces-itself
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
+current_state: "Measured on master f0696ec535 on 2026-10-13: the session start line showed the majordomus MCP server as failed to connect and no session announced the fall-back; a peer's 'ASKS ALL: I am free, what is unheld' stood unanswered."
+desired_state: "The provider start hook announces the transport it found and, when it is CLI only, opens the mesh session itself with that fact in its intent; an idle worker's briefing lists the open asks to all, and answering one is one command."
+scope:
+  - ".claude/hooks/"
+  - "apps/majordomus-cli/src/capability/builtin/"
+  - ".ai/repo/providers/"
+  - "test/cases/3004_a_session_joins_the_cluster.sh"
+non_scope:
+  - "Making the MCP server connect: that is the runtime lifecycle milestone's"
+depends_on:
+  - "I2660"
+acceptance_criteria:
+  - "A start with the MCP server absent produces a board row naming the CLI as the transport"
+  - "A worker with no claim is shown the open asks to all and the command that answers one"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3004_a_session_joins_the_cluster"
+evidence_required:
+  - "cli_fallback_announced"
+  - "open_ask_shown"
+created_at: 2026-10-13
+updated_at: 2026-10-13
