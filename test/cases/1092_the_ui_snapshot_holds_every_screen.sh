@@ -56,6 +56,20 @@ jq -e '[.surfaces[] | select(.mount == "/ui")] | map(.id) | sort == ["ui", "ui-s
 "$RB" web validate > validate.txt 2>&1 \
   || { echo "    the topology refuses the snapshot beside the UI:"; sed 's/^/    | /' validate.txt; exit 1; }
 
+# ---------------------------------------------------------------- a face
+# The process that reads a snapshot is no server: it holds no board and runs no mesh. The
+# figures the dashboard leads with are still decided, every one, and none counts a zero for
+# what nobody asked.
+if grep -oE 'class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | grep -q .; then
+  echo "    the snapshot's dashboard leads with a figure nothing decided:"
+  grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | sed 's/^/    | /'
+  exit 1
+fi
+grep -q 'title="read from health.report /repository"' "$S/index.html" \
+  || { echo "    the dashboard's health figure is not the repository's verdict"; exit 1; }
+grep -q 'class="mj-ui-kpi-label">Mesh machines<' "$S/index.html" \
+  && { echo "    the dashboard counts mesh machines in a process that runs no mesh"; exit 1; }
+
 # ---------------------------------------------------------------- one reading
 "$RB" web report ui-snapshot --limit 3 >/dev/null 2>&1 || { echo "    a second run failed"; exit 1; }
 [ "$(find "$S" -name index.html | wc -l | tr -d ' ')" = 4 ] \

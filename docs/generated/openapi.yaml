@@ -24388,6 +24388,9 @@ components:
         status:
           "$ref": "#/components/schemas/HealthStatus"
           description: "The worst check's status."
+        repository:
+          "$ref": "#/components/schemas/HealthStatus"
+          description: "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
         tallies:
           type: object
           additionalProperties:
@@ -24407,6 +24410,7 @@ components:
           description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
       required:
         - status
+        - repository
         - tallies
         - checks
       description: The health of what this process serves.
