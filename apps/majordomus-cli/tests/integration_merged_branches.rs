@@ -100,7 +100,7 @@ case "$1 $2" in
       *) echo '[]' ;;
     esac ;;
   "api graphql")
-    # the forge's deployments and releases, which `prs refresh` observes beside the queue
+    # the forge's deployments and releases: `served forge` asks this now, `prs refresh` no longer does
     # (deploy::observed): none here. Any other question of this kind is not scripted.
     case "$*" in
       *"deployments(last"*) echo '{{"data":{{"repository":{{"url":"https://example.invalid/o/r","deployments":{{"nodes":[]}},"releases":{{"nodes":[]}}}}}}}}' ;;
