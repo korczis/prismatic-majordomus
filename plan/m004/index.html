@@ -158,10 +158,10 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
-<span class="text-sm text-body">12 of 28 issues done</span></p>
+<span class="text-sm text-body">12 of 32 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">6</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">10</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">10</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -423,6 +423,38 @@
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">A verdict that depends on the runner says so, and one cold sample is not a regression</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2660/" class="text-fg-brand hover:underline">I2660</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The site is published as an artifact by the job that built it, so a ready site waits for no second workflow</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2661/" class="text-fg-brand hover:underline">I2661</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A publication that did not arrive is a finding the next reader meets, never a green step</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2662/" class="text-fg-brand hover:underline">I2662</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">Validation leaves the deployment a runner: a branch&#39;s checks never hold the pool a publication or a release record needs</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2663/" class="text-fg-brand hover:underline">I2663</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">3</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i2489/" class="text-fg-brand hover:underline">I2489</a></td>
+          <td class="px-4 py-2 text-heading">The published UI is not read from nothing on every deployment</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -460,6 +492,10 @@
     I0842[&quot;I0842&lt;br/&gt;Before and after evidence for every optimisation&quot;]:::blocked
     I0843[&quot;I0843&lt;br/&gt;The performance workflow is discoverable and complete&quot;]:::blocked
     I2068[&quot;I2068&lt;br/&gt;A verdict that depends on the runner says so, and one cold sample is not a regression&quot;]:::ready
+    I2660[&quot;I2660&lt;br/&gt;The site is published as an artifact by the job that built it, so a ready site waits for no second workflow&quot;]:::ready
+    I2661[&quot;I2661&lt;br/&gt;A publication that did not arrive is a finding the next reader meets, never a green step&quot;]:::ready
+    I2662[&quot;I2662&lt;br/&gt;Validation leaves the deployment a runner: a branch&#39;s checks never hold the pool a publication or a release record needs&quot;]:::ready
+    I2663[&quot;I2663&lt;br/&gt;The published UI is not read from nothing on every deployment&quot;]:::ready
     I0817 --&gt; I0818
     I0817 --&gt; I0819
     I0817 --&gt; I0821
@@ -514,7 +550,7 @@
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/04b13641a43988fffcfcbf1e86574c75b83232bd/.ai/repo/project/milestones/M004.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/M004.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show M004</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/a3a67a307eb83bf7ddfe6260b6f278fe69050d9c/.ai/repo/project/milestones/M004.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/M004.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show M004</code>.</p>
 </div>
 
 </div>
@@ -564,9 +600,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/04b13641a43988fffcfcbf1e86574c75b83232bd/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/04b13641a43988fffcfcbf1e86574c75b83232bd/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/04b13641a43988fffcfcbf1e86574c75b83232bd/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a3a67a307eb83bf7ddfe6260b6f278fe69050d9c/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a3a67a307eb83bf7ddfe6260b6f278fe69050d9c/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a3a67a307eb83bf7ddfe6260b6f278fe69050d9c/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -574,7 +610,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/04b13641a43988fffcfcbf1e86574c75b83232bd" class="font-mono underline">04b1364</a> · inputs <span class="font-mono">107550235986</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3a67a307eb83bf7ddfe6260b6f278fe69050d9c" class="font-mono underline">a3a67a3</a> · inputs <span class="font-mono">409642ded2f3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
