@@ -408,7 +408,14 @@ EOF
 # Does the cover hold? One finding a fact, through the callbacks the caller names (doctor's
 # and init's differ only in how a finding is printed). Returns 1 when something shared shows it.
 mj_personal_verify() {
-  local ok_fn="$1" fail_fn="$2" rel bad=0 p seen
+  # The reporter is named by a word, not by its two functions: `doctrine` reports through the
+  # doctrine's ok and fail (so a class decides what a violation costs), anything else through
+  # the plain ones. A caller passing the functions themselves put the name of a reporting
+  # helper on a line that reports nothing, which scripts/ci/finding-reproduce-check reads as
+  # a finding with no command to reproduce it.
+  local reporter="" ok_fn fail_fn rel bad=0 p seen
+  [ "${1:-}" = doctrine ] && reporter=doctrine_
+  ok_fn="mj_${reporter}ok"; fail_fn="mj_${reporter}fail"
   rel="$(mj_rel "$MJ_AI_DIR")"
   if [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
     "$fail_fn" personal "$rel/" "carries tracked files; a personal layer is tracked nowhere (share it with: majordomus init --extend --shared)" "git ls-files $rel"; bad=1
@@ -1237,14 +1244,21 @@ mj_tmp_root_init() {
   # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
   # "write error: Broken pipe" line on stderr that was never there. So the root carries its
   # process id, and here every root of this user's whose process no longer exists goes. A
-  # process id that has been reused keeps a dead root until that process ends too; nothing
-  # living is removed, since `kill -0` answers for a process this user can signal.
-  local stale pid
+  # process id that has been reused keeps a dead root until that process ends too.
+  #
+  # Gone means the system said "no such process" and nothing else. `kill -0` also fails when
+  # this process may not signal that one, and a session inside a sandbox may signal nobody:
+  # read as "gone", that refusal removed the roots of every living command of this user's,
+  # and on 2026-10-12 three derives died mid-run with their temporary files deleted under
+  # them. Any other answer — permission, or a wording this cannot read — keeps the root:
+  # a root kept too long costs disk, and a root removed too soon costs somebody's work.
+  local stale pid why
   for stale in "${base%/}"/mj.[0-9]*.??????; do
     [ -d "$stale" ] && [ -O "$stale" ] || continue
     pid="${stale##*/mj.}"; pid="${pid%.*}"
     case "$pid" in ''|*[!0-9]*) continue ;; esac
-    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+    why="$(LC_ALL=C; export LC_ALL; kill -0 "$pid" 2>&1)" && continue
+    case "$why" in *[Nn]'o such process'*) rm -rf "$stale" 2>/dev/null || true ;; esac
   done
 }
 mktemp() {

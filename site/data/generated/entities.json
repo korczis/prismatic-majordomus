@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 100,
+      "count": 101,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 172,
+      "count": 173,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 100
+      "count": 101
     },
     {
       "kind": "application",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 341
+      "count": 342
     },
     {
       "kind": "domain",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 172
+      "count": 173
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 458
+      "count": 459
     },
     {
       "kind": "use-case",
@@ -456,6 +456,13 @@
           "label": "adr-0144",
           "kind": "adr",
           "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
           "external": false
         }
       ]
@@ -3093,9 +3100,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@2",
+          "label": "project.english-only@3",
           "kind": "rule",
-          "route": "/rules/project-english-only-2/",
+          "route": "/rules/project-english-only-3/",
           "external": false
         },
         {
@@ -4603,9 +4610,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@2",
+          "label": "project.english-only@3",
           "kind": "rule",
-          "route": "/rules/project-english-only-2/",
+          "route": "/rules/project-english-only-3/",
           "external": false
         },
         {
@@ -4616,7 +4623,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7449,7 +7464,7 @@
         },
         {
           "edge": "put_in_force",
-          "label": "test/cases/1096_the_published_ui_is_the_trunks.sh",
+          "label": "test/cases/2983_the_published_ui_is_the_trunks.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -7690,6 +7705,102 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0149",
+      "identity": "adr-0149",
+      "slug": "adr-0149",
+      "cockpit": "/cockpit/objects/adr/adr-0149",
+      "title": "A handbook edition is a declared locale tree, built from the tree it describes",
+      "status": "proposed",
+      "tags": [
+        "handbook",
+        "language",
+        "governance",
+        "derivation"
+      ],
+      "source": ".ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "handbook/build.py",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "handbook/cs/chapter_sources.py",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "handbook/cs/edition.toml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/english-only-allow.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/english-only-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0077",
+          "kind": "adr",
+          "route": "/adrs/adr-0077/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/HANDBOOK.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.english-only@3",
+          "kind": "rule",
+          "route": "/rules/project-english-only-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-handbook-is-built-from-the-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-handbook-is-built-from-the-tree-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -12111,16 +12222,16 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.english-only@2",
-      "identity": "project.english-only@2",
-      "slug": "project-english-only-2",
-      "cockpit": "/cockpit/objects/rule/project-english-only-2",
+      "id": "majordomus://rule/project.english-only@3",
+      "identity": "project.english-only@3",
+      "slug": "project-english-only-3",
+      "cockpit": "/cockpit/objects/rule/project-english-only-3",
       "title": "English only",
       "status": "active",
       "tags": [
         "language"
       ],
-      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "source": ".ai/repo/rules/project/english-only.v3.md",
       "references": [],
       "referenced_by": [
         {
@@ -12138,10 +12249,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "published-translation-is-declared",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-handbook-is-built-from-the-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-handbook-is-built-from-the-tree-1/",
           "external": false
         }
       ]
@@ -15359,6 +15484,39 @@
           "label": "project.the-published-ui-is-the-trunks@1",
           "kind": "rule",
           "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+      "identity": "project.the-handbook-is-built-from-the-tree@1",
+      "slug": "project-the-handbook-is-built-from-the-tree-1",
+      "cockpit": "/cockpit/objects/rule/project-the-handbook-is-built-from-the-tree-1",
+      "title": "The handbook is built from the tree it describes, and a chapter names what it rests on",
+      "status": "active",
+      "tags": [
+        "handbook",
+        "derivation",
+        "documentation"
+      ],
+      "source": ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.english-only@3",
+          "kind": "rule",
+          "route": "/rules/project-english-only-3/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
           "external": false
         }
       ]

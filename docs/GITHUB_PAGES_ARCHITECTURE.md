@@ -587,7 +587,7 @@ hold a publication to that entry (`project.the-published-ui-is-the-trunks`):
   `scripts/ci/pages-check`), so the live `/ui/` is held to the trunk within the window the
   site is.
 
-`test/cases/1096_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
 
 ### The release the site offers
 

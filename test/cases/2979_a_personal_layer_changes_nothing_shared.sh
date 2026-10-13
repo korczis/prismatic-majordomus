@@ -75,7 +75,7 @@ head_a="$(git -C "$A" rev-parse HEAD)"
   && printf '{"session_id":"p-personal","source":"startup"}' | ./.claude/hooks/majordomus-session-start >/dev/null 2>&1 \
   && printf '{"session_id":"p-personal","reason":"clear"}' | ./.claude/hooks/majordomus-session-end >/dev/null 2>&1 ) || true
 [ "$(git -C "$A" rev-parse HEAD)" = "$head_a" ] || { echo "    an episode's end committed onto the shared branch: $(git -C "$A" show --name-only --format=%s HEAD | tr '\n' ' ')"; exit 1; }
-[ -n "$(ls "$A/.ai/repo/sessions" 2>/dev/null | grep -v README.md || true)" ] || { echo "    the episode wrote no session record; nothing was measured"; exit 1; }
+[ -n "$(find "$A/.ai/repo/sessions" -type f ! -name README.md 2>/dev/null | head -1)" ] || { echo "    the episode wrote no session record; nothing was measured"; exit 1; }
 [ "$(status_of "$A")" = "$before" ] || { echo "    an episode changed what the repository shows:"; status_of "$A" | sed 's/^/      /'; exit 1; }
 
 # ------------------------------------------------------------------ doctor holds it

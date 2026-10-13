@@ -36,6 +36,7 @@ fixture scripts/ci/english-only-check the check carries the list of letters it t
 fixture docs/claims/authored-files-are-english.md the claim page names the letters the check looks for, so a reader knows what is decidable and what is not
 fixture test/cases/138_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language
 fixture test/cases/403_published_translation.sh the case writes a page in another language to prove the translation exemption refuses an undeclared one, which requires writing that language
+fixture test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh the case writes a file of an edition in another language to prove an undeclared edition is refused and a declared one is not, which requires writing that language
 fixture site/content/guarantees/authored-files-are-english.md the generated rendering of docs/claims/authored-files-are-english.md, which is itself a declared fixture; the derived copy inherits the letters the source names
 
 # Published translations (project.english-only v2, ADR 0077). Each names its language and its
@@ -48,3 +49,7 @@ translation site/content-src/dokumentace-kterou-lze-odmitnout.md cs a long-form 
 translation site/content/dokumentace-kterou-lze-odmitnout.md cs the generated projection of the Czech article above
 fixture campaigns/majordomus-idd-completion-prompt-pack/README.md an operator brief kept byte for byte as provenance (campaigns/README.md, scripts/ci/campaigns-check): its Czech opening is the owner's words on its date, and rewriting it would forge the record
 fixture campaigns/majordomus-release-15min-pack/README.md an operator brief kept byte for byte as provenance (campaigns/README.md, scripts/ci/campaigns-check): it quotes the owner in Czech, and rewriting it would forge the record
+
+# Editions of the handbook (project.english-only v3, ADR 0149). One directory per language,
+# which declares that language in its own edition.toml; the generator beside it is English.
+edition handbook/cs cs the Czech edition of the handbook: the product explained to Czech readers, built by handbook/build.py from the tree it describes
