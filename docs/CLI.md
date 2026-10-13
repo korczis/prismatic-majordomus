@@ -266,10 +266,15 @@ FAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.m
 OK   links       3 projections — all references resolve
 OK   retention   ledger 412 lines, cap 5000
 INFO env         bash 3.2.57, git 2.45, yq 4.44, jq 1.7
-doctor: 2 failures
+doctor: 2 failure(s)
 $ echo $?
 10
 ```
+
+The last line counts the `FAIL` lines above it, all of them and nothing else: every finding
+`doctor` prints as `FAIL` is one failure, whichever check reported it, and one is enough for
+a non-zero exit (`10`, or `12` when an artifact is missing). `majordomus doctor | grep -c '^FAIL'`
+and the number on the last line are the same number.
 
 ## `majordomus start <task>`
 

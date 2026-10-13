@@ -1568,9 +1568,9 @@ mj_knowledge_check_cmd() {
     while IFS= read -r f; do
       [ -n "$f" ] || continue
       if grep -q "^$(printf '%s' "$f" | sed 's/[][\.*^$]/\\&/g')$MJ_TAB" "$tmp/findings"; then
-        grep "^$(printf '%s' "$f" | sed 's/[][\.*^$]/\\&/g')$MJ_TAB" "$tmp/findings" | while IFS="$MJ_TAB" read -r rel code msg; do
+        while IFS="$MJ_TAB" read -r rel code msg; do
           mj_fail knowledge "$rel" "$msg" "majordomus knowledge check"
-        done
+        done < <(grep "^$(printf '%s' "$f" | sed 's/[][\.*^$]/\\&/g')$MJ_TAB" "$tmp/findings")
       else
         mj_ok knowledge "$f" "valid against knowledge/v1; every reference resolves"
       fi

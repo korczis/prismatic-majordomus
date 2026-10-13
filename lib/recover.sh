@@ -429,7 +429,7 @@ EOF
 }
 
 mj_recover_one_record() {
-  local store="$1" sid="$2" files keep f n started conflict=""
+  local store="$1" sid="$2" files keep f n started conflict="" line
   files="$(grep -l "^session_id: $sid\$" "$store"/*.md 2>/dev/null | LC_ALL=C sort)"
   n="$(printf '%s\n' "$files" | grep -c . || true)"
   printf '  %s — %s records\n' "$sid" "$n"
@@ -468,9 +468,9 @@ EOF
 $files
 EOF
   if [ -n "$conflict" ]; then
-    printf '%s' "$conflict" | while IFS= read -r line; do
+    while IFS= read -r line; do
       [ -n "$line" ] && mj_fail recover "$sid" "records disagree — $line" "grep -l '^session_id: $sid\$' $(mj_rel "$store")/*.md"
-    done
+    done < <(printf '%s' "$conflict")
     printf '    conflict: nothing folded, nothing removed\n'
     MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1))
     return 0

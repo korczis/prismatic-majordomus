@@ -170,7 +170,7 @@ H
 # report claims in other worktrees that contain or are contained by our scope
 mj_report_overlap() {
   local mine="$1" wt other oflat q ol
-  mj_git worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p' | while read -r wt; do
+  while read -r wt; do
     [ "$wt" = "$MJ_ROOT" ] && continue
     other="$wt/$(mj_rel "$MJ_STATE_DIR")/current.yaml"; [ -f "$other" ] || continue
     oflat="$(mktemp "${TMPDIR:-/tmp}/mj.ov.XXXXXX")"; mj_yaml_flatten "$other" > "$oflat" 2>/dev/null || { rm -f "$oflat"; continue; }
@@ -180,5 +180,5 @@ mj_report_overlap() {
       elif mj_path_contains "$q" "$ol"; then mj_info overlap "$(basename "$wt")" "claims $ol — contained by your $q" "majordomus check --overlap"; fi
     done; done
     rm -f "$oflat"
-  done
+  done < <(mj_git worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')
 }
