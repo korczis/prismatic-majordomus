@@ -1,212 +1,5 @@
-<title>Harness Majordomusu</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
-<style>
-/* Layout: a field manual — sticky chapter rail on wide screens, one reading column, schematics drawn in the same ink as the text. Same series as Mesh and Paměť a pravidla. */
-:root {
-  --bg: #f2f4f7;
-  --panel: #ffffff;
-  --fg: #142030;
-  --muted: #556275;
-  --line: #d3dae4;
-  --tint: #e6ecf4;
-  --accent: #b9500d;   /* control points that can refuse */
-  --link: #1f5fbf;     /* links, things that travel */
-  --good: #1e7f4f;
-  --bad: #b42318;
-  --code-bg: #e9edf3;
-  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e141c; --panel: #151d28; --fg: #e6ecf3; --muted: #93a1b4; --line: #2a3647;
-    --tint: #1b2533; --accent: #f08a3e; --link: #6ea3f0; --good: #4cc38a;
-    --bad: #f2766b; --code-bg: #1a2330; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0e141c; --panel: #151d28; --fg: #e6ecf3; --muted: #93a1b4; --line: #2a3647;
-  --tint: #1b2533; --accent: #f08a3e; --link: #6ea3f0; --good: #4cc38a;
-  --bad: #f2766b; --code-bg: #1a2330; color-scheme: dark;
-}
-
-* { box-sizing: border-box; }
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.6 var(--body);
-  padding-inline: 16px;
-  padding-block: 0 64px;
-}
-.shell {
-  max-width: 1120px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 40px;
-}
-@media (min-width: 1000px) {
-  .shell { grid-template-columns: 220px minmax(0, 1fr); }
-}
-main { min-width: 0; max-width: 780px; }
-
-nav.rail { padding-top: 40px; }
-@media (min-width: 1000px) {
-  nav.rail { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-bottom: 24px; }
-}
-nav.rail p { font: 600 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
-nav.rail p.grp { margin: 16px 0 6px; font-size: 11px; }
-nav.rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
-@media (min-width: 1000px) { nav.rail ol { flex-direction: column; gap: 1px; } }
-nav.rail a { color: var(--fg); text-decoration: none; font-size: 14px; padding: 2px 0; display: inline-block; border-bottom: 1px solid transparent; }
-nav.rail a:hover, nav.rail a:focus-visible { border-bottom-color: var(--link); outline: none; }
-
-header.hero { padding-top: 48px; padding-bottom: 8px; }
-.eyebrow { font: 600 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
-h1 { font: 700 clamp(40px, 7vw, 64px)/1.02 var(--display); letter-spacing: -.01em; margin: 0 0 18px; text-wrap: balance; }
-.lede { font-size: 19px; line-height: 1.55; max-width: 62ch; margin: 0 0 24px; }
-.axioms { border-left: 3px solid var(--link); padding: 4px 0 4px 18px; margin: 0; display: grid; gap: 6px; }
-.axioms p { margin: 0; font: 500 16px/1.45 var(--mono); }
-.axioms p span { color: var(--muted); font-family: var(--body); font-size: 14px; display: block; }
-
-section { padding-top: 56px; }
-.part { font: 600 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 72px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
-.part + section { padding-top: 20px; }
-h2 { font: 600 30px/1.15 var(--display); margin: 0 0 14px; text-wrap: balance; scroll-margin-top: 24px; }
-h3 { font: 600 20px/1.25 var(--display); margin: 28px 0 8px; text-wrap: balance; }
-p { margin: 0 0 14px; max-width: 68ch; }
-ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 68ch; }
-li { margin-bottom: 6px; }
-a { color: var(--link); }
-strong { font-weight: 600; }
-code { font: 14px/1.4 var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
-
-.code { position: relative; margin: 16px 0 20px; }
-.code pre {
-  margin: 0; padding: 16px 18px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px;
-  overflow-x: auto; font: 13.5px/1.6 var(--mono); color: var(--fg);
-}
-.code pre code { background: none; padding: 0; font: inherit; }
-.code .c { color: var(--muted); }
-.code button {
-  position: absolute; top: 8px; right: 8px; font: 500 12px/1 var(--body); color: var(--muted);
-  background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; cursor: pointer;
-}
-.code button:hover, .code button:focus-visible { color: var(--fg); border-color: var(--link); outline: none; }
-
-.table-wrap { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
-table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 600px; }
-th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-th { font: 600 12px/1.3 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--tint); }
-tr:last-child td { border-bottom: none; }
-td code { font-size: 13px; white-space: nowrap; }
-
-.pill { display: inline-block; font: 600 11.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; white-space: nowrap; }
-.pill.refuses { color: var(--accent); border: 1px solid var(--accent); }
-.pill.reports { color: var(--muted); border: 1px solid var(--line); }
-
-figure { margin: 20px 0 26px; }
-.fig { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 8px; }
-.fig svg { display: block; width: 100%; min-width: 620px; height: auto; }
-figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; max-width: 68ch; }
-svg text { font-family: var(--body); }
-svg .mono { font-family: var(--mono); }
-svg .ink { fill: var(--fg); }
-svg .mut { fill: var(--muted); }
-svg .acc { fill: var(--accent); }
-svg .zone { fill: var(--tint); stroke: var(--line); }
-svg .box { fill: var(--panel); stroke: var(--muted); }
-
-.two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin: 16px 0 22px; }
-@media (min-width: 700px) { .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-.three { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin: 16px 0 22px; }
-@media (min-width: 760px) { .three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; min-width: 0; }
-.card h4 { margin: 0 0 8px; font: 600 16px/1.3 var(--display); letter-spacing: .02em; }
-.card ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
-.card p { font-size: 14.5px; margin: 0 0 8px; }
-.card p:last-child { margin-bottom: 0; }
-.card.yes h4 { color: var(--good); }
-.card.no h4 { color: var(--bad); }
-
-.note { border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; margin: 16px 0 20px; max-width: 68ch; }
-.note p { margin: 0 0 8px; }
-.note p:last-child { margin: 0; }
-
-.steps { counter-reset: s; list-style: none; padding: 0; max-width: none; }
-.steps > li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; margin-bottom: 18px; }
-.steps > li::before { content: counter(s); font: 600 16px/34px var(--display); width: 34px; height: 34px; text-align: center; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); }
-.steps > li > div { min-width: 0; }
-.steps > li p { margin-bottom: 6px; }
-.steps h4 { margin: 5px 0 4px; font: 600 17px/1.3 var(--display); }
-.steps .code { margin: 8px 0 4px; }
-
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
-.chips code { font-size: 13px; }
-
-footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
-footer p { max-width: 80ch; }
-
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-</style>
-<div class="shell">
-  <nav class="rail" aria-label="Kapitoly">
-    <p>Kapitoly</p>
-    <p class="grp">Přehled</p>
-    <ol>
-      <li><a href="#co-je">Co je harness</a></li>
-      <li><a href="#proc">Proč druhý harness</a></li>
-      <li><a href="#mapa">Kontrolní body změny</a></li>
-      <li><a href="#prubeh">Jedna session krok za krokem</a></li>
-    </ol>
-    <p class="grp">Vstup do session</p>
-    <ol>
-      <li><a href="#bootstrap">Jedna policy, víc providerů</a></li>
-      <li><a href="#hooky">Hooky providera</a></li>
-      <li><a href="#server">Sdílený server a board</a></li>
-      <li><a href="#scope">Dva druhy scope</a></li>
-    </ol>
-    <p class="grp">Práce</p>
-    <ol>
-      <li><a href="#profily">Profily</a></li>
-      <li><a href="#zavazky">Závazky tasku</a></li>
-      <li><a href="#finish">Finish contract</a></li>
-      <li><a href="#reasoning">Nejistota a poradci</a></li>
-    </ol>
-    <p class="grp">Brány</p>
-    <ol>
-      <li><a href="#git">Git hooky</a></li>
-      <li><a href="#ci">CI gates</a></li>
-      <li><a href="#doctor">Doctor a preflight</a></li>
-      <li><a href="#vynuceni">Pravidlo musí něco volat</a></li>
-    </ol>
-    <p class="grp">Hranice</p>
-    <ol>
-      <li><a href="#mereni">Co harness stojí</a></li>
-      <li><a href="#hranice">Co to nedělá</a></li>
-      <li><a href="#prenos">Co se dá přenést</a></li>
-    </ol>
-  </nav>
-
-  <main>
-    <header class="hero">
-      <p class="eyebrow">Majordomus · harness kolem AI agenta</p>
-      <h1>Harness Majordomusu</h1>
-      <p class="lede">Model navrhuje změny. Harness je všechno kolem něj: co dostane do kontextu, jaké nástroje smí volat, co se stane na začátku a na konci session a kdo smí změnu odmítnout. Claude Code, Codex a Gemini CLI mají každý svůj harness. Majordomus přidává druhý, který patří repozitáři. Platí stejně pro každého providera a jeho verdikty se počítají z gitu, ne z toho, co agent napíše.</p>
-      <div class="axioms">
-        <p>Majordomus stores, validates, resolves, projects and verifies. It never calls a model.<span>Majordomus ukládá, validuje, rozlišuje, promítá a ověřuje. Model nikdy nevolá.</span></p>
-        <p>A rule existing is not a rule being enforced.<span>Že pravidlo existuje, ještě neznamená, že ho něco vynucuje.</span></p>
-        <p>A zero exit code is not a verdict.<span>Nulový exit code ještě není verdikt.</span></p>
-      </div>
-    </header>
-
-    <p class="part">Přehled</p>
-
-    <section id="co-je">
+<!-- The chapters of this source, as sections. assemble.py reads nothing else of it. -->
+<section id="co-je">
       <h2>Co je harness a čí je</h2>
       <p>Agent v terminálu jsou tři vrstvy. Model generuje text a volání nástrojů. Harness providera (Claude Code, Codex, Gemini CLI) z toho dělá smyčku: spouští nástroje, hlídá oprávnění, spravuje kontextové okno, komprimuje konverzaci a vystřeluje hooky. Třetí vrstva je repozitář sám: co v něm platí, co se v něm rozhodlo a co musí změna splnit, než ji někdo přijme.</p>
       <div class="two">
@@ -236,7 +29,7 @@ html { scroll-behavior: smooth; }
       <p>Harness providera rozhoduje, co agent <em>může udělat</em>. Harness repozitáře rozhoduje, co se z toho <em>počítá</em>: co projde commitem, pushem a merge a co se zapíše jako hotové. Druhý nenahrazuje první. Majordomus nespouští nástroje, nehlídá oprávnění a nevolá model.</p>
     </section>
 
-    <section id="proc">
+<section id="proc">
       <h2>Proč nestačí harness providera</h2>
       <p>Každý z následujících problémů se v repu Majordomusu skutečně stal. Harness providera ho nevyřeší, protože o repozitáři neví víc, než mu kdo napíše do instrukcí.</p>
       <div class="table-wrap"><table>
@@ -253,7 +46,7 @@ html { scroll-behavior: smooth; }
       </table></div>
     </section>
 
-    <section id="mapa">
+<section id="mapa">
       <h2>Kontrolní body jedné změny</h2>
       <p>Od otevření session po merge prochází změna čtyřmi pruhy. Hooky providera jen zapisují a nikdy nic neodmítnou, protože by tím zablokovaly člověka. Odmítat může task lifecycle, git a CI. Tam už je změna hotová a dá se posoudit podle toho, co skutečně obsahuje.</p>
       <figure>
@@ -345,7 +138,7 @@ html { scroll-behavior: smooth; }
       </table></div>
     </section>
 
-    <section id="prubeh">
+<section id="prubeh">
       <h2>Jedna session krok za krokem</h2>
       <p>Takhle vypadá typická session v Claude Code nad supervizovaným repem. Kroky 1, 2 a 9 se dějí samy, ostatní dělá agent podle bootstrapu.</p>
       <ol class="steps">
@@ -404,9 +197,7 @@ Run `majordomus context` for the full briefing, `majordomus check` before claimi
       </ol>
     </section>
 
-    <p class="part">Vstup do session</p>
-
-    <section id="bootstrap">
+<section id="bootstrap">
       <h2>Jedna policy, víc providerů</h2>
       <p>Každý provider čte svůj soubor: Claude Code <code>CLAUDE.md</code>, Codex <code>AGENTS.md</code>, Gemini <code>GEMINI.md</code>. Kdyby se psaly ručně, za týden by si odporovaly. V Majordomusu jsou to <em>projekce</em>: <code>majordomus update</code> je vyrenderuje z šablon v <code>.ai/repo/providers/*.tmpl</code> podle seznamu v policy a každou opatří razítkem s hashem policy a hashem vlastního obsahu.</p>
       <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/policy.yaml</span>
@@ -447,7 +238,7 @@ projections:
       <p>Nový provider je šablona a jeden řádek v <code>projections</code>. Nic jiného ho neregistruje. Nativní vnořené soubory providera (třeba <code>CLAUDE.md</code> v podadresáři) jsou optimalizace. Co pro danou cestu platí, rozhoduje <code>majordomus context resolve &lt;cesta&gt;</code>.</p>
     </section>
 
-    <section id="hooky">
+<section id="hooky">
       <h2>Hooky providera: zapisovat, nikdy blokovat</h2>
       <p>Hranice session kreslí hooky, ne model. Model zapomene zapsat handover, když mu dojde kontext. Hook <code>SessionEnd</code> vystřelí vždycky. V Claude Code jsou čtyři hooky zapojené v <code>.claude/settings.json</code>:</p>
       <div class="code"><button type="button">Kopírovat</button><pre><code>{
@@ -492,7 +283,7 @@ exec "$mj" --repo "$root" capture session --provider claude-code --event start</
       </ul>
     </section>
 
-    <section id="server">
+<section id="server">
       <h2>Sdílený server a board</h2>
       <p>Každý provider spouští MCP server přes svou konfiguraci (<code>.mcp.json</code>, <code>.gemini/settings.json</code>, <code>.codex/config.toml</code>), všechny ukazují na <code>bin/majordomus-mcp</code>. První proces v checkoutu se stane serverem, každý další se k němu připojí. Claude, Codex a Gemini nad jedním checkoutem tak sdílejí jeden server a vidí se navzájem.</p>
       <figure>
@@ -573,7 +364,7 @@ exec "$mj" --repo "$root" capture session --provider claude-code --event start</
       <p>V repu Majordomusu je ze 177 MCP nástrojů jen šest typu <code>repository_mutation</code>. Jmenuje je odpověď na <code>initialize</code>, odvozená z registru, ne seznam v dokumentaci.</p>
     </section>
 
-    <section id="scope">
+<section id="scope">
       <h2>Dva druhy scope</h2>
       <p>Slovo scope má v Majordomusu dva významy a je dobré je nemíchat.</p>
       <div class="two">
@@ -607,9 +398,7 @@ out:                     <span class="c"># vyhrává nad in</span>
       <p>Na každou cestu dá <code>majordomus scope</code> odpověď i s důvodem (<code>secret</code>, <code>generated</code>, <code>over_limit</code>, <code>binary</code>…). Trackovaný soubor se jménem tajemství je varování <code>tracked_secret</code>: nikdy se nečte ani neservíruje a v repu by neměl být.</p>
     </section>
 
-    <p class="part">Práce</p>
-
-    <section id="profily">
+<section id="profily">
       <h2>Profily: kolik harness stojí</h2>
       <p>Ne každá změna potřebuje stejný obřad. Profil je jeden pracovní režim: kolik kontextu task dostane, jak silný model a jak hluboké přemýšlení si zaslouží, jak stručně worker reportuje a co musí vyprodukovat, než smí skončit. Task nese profil, se kterým začal. Výchozí je <code>implementation</code>.</p>
       <div class="table-wrap"><table>
@@ -650,7 +439,7 @@ output_contract: [outcome, changes, verification, blockers, next_action]</code><
       </ul>
     </section>
 
-    <section id="zavazky">
+<section id="zavazky">
       <h2>Závazky tasku: co worker dluží</h2>
       <p>Scope říká, kam smí worker psát. <code>--requires</code> říká, co dluží, než bude výsledek <code>completed</code> k dispozici. Jsou to dva různé sliby: změna může být dokonale uvnitř scope a pořád ležet nezacommitovaná na notebooku.</p>
       <div class="table-wrap"><table>
@@ -671,7 +460,7 @@ output_contract: [outcome, changes, verification, blockers, next_action]</code><
       <p>Závazek, který umí rozhodnout git nebo existující příkaz, se rozhoduje živě a zaznamenaný důkaz se vůbec nečte. U ostatních je důkaz zahašovaný přes vstupní soubory, takže změna kteréhokoli z nich ho udělá <code>stale</code>, ne jen starý. Kde nic rozhodnout nemůže, je to v souboru napsané v poli <code>unestablished</code>. Poctivá mezera je lepší než kontrola, která vždycky projde. Neznámý token odmítne už <code>start</code>.</p>
     </section>
 
-    <section id="finish">
+<section id="finish">
       <h2>Finish contract: kdy je hotovo</h2>
       <p>„Hotovo“ je nejdražší slovo, které agent řekne. Majordomus ho agentovi nebere, ale nedovolí mu ho zapsat, dokud neprojde každý řádek kontraktu.</p>
       <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus start "&lt;task&gt;" --scope &lt;cesty&gt; [--requires tests,docs] [--profile debugging]
@@ -713,7 +502,7 @@ majordomus finish --outcome completed --verify-command "cargo test -p majordomus
       <div class="note"><p>Identitu záznamu (repozitář, branch, HEAD, stav pracovního stromu, změněné soubory) agent nikdy nepíše. Počítá ji Majordomus z gitu a tělo, které se ji pokusí nastavit, je odmítnuto.</p></div>
     </section>
 
-    <section id="reasoning">
+<section id="reasoning">
       <h2>Nejistota a poradci</h2>
       <p>Když agent narazí na podstatnou technickou nejistotu, nerozhoduje ji potichu. <code>majordomus reasoning</code> z ní dělá záznam, který další session přečte, místo aby se ptala znovu.</p>
       <ol class="steps">
@@ -725,9 +514,7 @@ majordomus finish --outcome completed --verify-command "cargo test -p majordomus
       <p>Chybějící poradce není chyba ani důvod zastavit se a ptát člověka. Checkout bez nainstalovaného poradce, bez klíče a bez sítě rozhoduje stejně a jen zapíše, že to bylo lokálně. Vendor není v logice nikde: protokol „zeptej se tohohle, pak tamtoho“ by se rozbil v den, kdy vyprší klíč.</p>
     </section>
 
-    <p class="part">Brány</p>
-
-    <section id="git">
+<section id="git">
       <h2>Git hooky: jeden soudce, víc míst</h2>
       <p>Agent může příkaz Majordomusu přeskočit. Commit a push přeskočit nemůže. Git hooky jsou proto poslední místo, kde harness repozitáře vidí každou změnu bez ohledu na to, kdo ji udělal: člověk, Claude, Codex, nebo skript. Instalují se jednou: <code>git config core.hooksPath .githooks</code>.</p>
       <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .githooks/pre-commit</span>
@@ -769,7 +556,7 @@ bin/majordomus finish --check || exit $?</code></pre></div>
       <p><code>finish --check</code> se ptá, jestli se práce tasku smí publikovat, a nic nezapíše. Výjimka je push, který nese jen <code>refs/majordomus/*</code>. To je úložiště kontinuity s podepsanými handovery a kontrakt by jinak odmítl handover právě pro task, který předává.</p>
     </section>
 
-    <section id="ci">
+<section id="ci">
       <h2>CI gates: co změna musí spustit</h2>
       <p><code>.ai/repo/ci/gates.yaml</code> je celý model CI: které gates existují, který job je spouští a které třídy změněných cest je vybírají. <code>scripts/ci-plan</code> čte jen tenhle soubor. Workflow v <code>.github/workflows/validate.yml</code> je tenký adaptér nad plánem a nemá vlastní seznam cest. V repu Majordomusu je 74 gates ve 28 třídách cest.</p>
       <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/ci/gates.yaml (výřez)</span>
@@ -801,7 +588,7 @@ gates:
       </div>
     </section>
 
-    <section id="doctor">
+<section id="doctor">
       <h2>Doctor a preflight</h2>
       <div class="two">
         <div class="card">
@@ -841,7 +628,7 @@ gates:
       </table></div>
     </section>
 
-    <section id="vynuceni">
+<section id="vynuceni">
       <h2>Pravidlo musí něco volat</h2>
       <p>Nejčastější vada harness není špatné pravidlo, ale pravidlo, které nic nespouští. V repu Majordomusu se našlo 17 nezávislých případů kontroly, která byla zdokumentovaná jako blokující, ležela na disku, šla spustit, a nic ji nevolalo. Proto se u každého pravidla způsob vynucení odvozuje z toho, co jeho blok <code>x-majordomus</code> skutečně jmenuje. Deklarovat se nedá.</p>
       <div class="table-wrap"><table>
@@ -858,9 +645,7 @@ gates:
       <p>Čte přitom zdrojový kód, ne popis, který o sobě registr dává. Gate <code>rule-proof</code> navíc vyžaduje, aby každé blokující pravidlo jmenovalo validátor, test nebo důvod lidské kontroly. Pravidla bez důkazu jsou v ratchetu, který se smí jen zmenšovat. Řeší se zapojením vynucení, nikdy přeřazením pravidla do poradní třídy. Podrobněji ve stránce o paměti a pravidlech.</p>
     </section>
 
-    <p class="part">Hranice</p>
-
-    <section id="mereni">
+<section id="mereni">
       <h2>Co harness stojí a co šetří</h2>
       <p>Harness přidává kontext, kroky a kontroly. Jestli se to vyplatí, je otázka měření, ne přesvědčení. Majordomus neuvádí žádné procento úspory, které nezměřil, a číslo o tokenech napsané do prózy odmítne <code>majordomus economics check</code>.</p>
       <ul>
@@ -881,7 +666,7 @@ gates:
       <p>Číslo spočítané z několika vstupů není nikdy silnější než nejslabší z nich.</p>
     </section>
 
-    <section id="hranice">
+<section id="hranice">
       <h2>Co Majordomus jako harness nedělá</h2>
       <div class="two">
         <div class="card yes">
@@ -913,7 +698,7 @@ gates:
       <p>Z toho plynou i limity. Je stavěný pro jeden repozitář, jednoho vlastníka a jednotky souběžných sessions. Nemá SSO, role ani oprávnění typu „tým X smí měnit pravidla Y“, neřeší sdílení pravidel napříč stovkami repozitářů a neumí ne-kódové artefakty, jako jsou HW specifikace nebo výsledky měření. Při devíti souběžných sessions na jednom stroji už je úzkým hrdlem stroj sám: disk, odvozování a fronta CI.</p>
     </section>
 
-    <section id="prenos">
+<section id="prenos">
       <h2>Co se dá přenést i bez Majordomusu</h2>
       <p>Na Majordomusu nezáleží tolik jako na tvaru řešení. Tohle funguje s jakýmkoli providerem, jakýmkoli CI a bez jediného řádku jeho kódu. Pořadí je zhruba podle poměru přínosu a ceny.</p>
       <ol class="steps">
@@ -927,26 +712,3 @@ gates:
         <li><div><h4>Práce se ohlašuje dřív, než se staví</h4><p>Ať je to board, issue tracker nebo kanál: kdo na čem pracuje a jaké cesty se chystá měnit. Kolize objevená při merge je nejdražší možná.</p></div></li>
       </ol>
     </section>
-
-    <footer>
-      <p>Stav k 12. 10. 2026, Majordomus 0.21.0. Zdroje v repozitáři: <code>docs/CONCEPTS.md</code>, <code>docs/MCP.md</code>, <code>docs/SCOPE.md</code>, <code>docs/COMMIT.md</code>, <code>docs/HOW_IT_WORKS.md</code>, <code>docs/PREFLIGHT.md</code>, <code>docs/REASONING.md</code>, <code>docs/ECONOMICS.md</code>, <code>docs/MODELS.md</code>, <code>docs/CLI.md</code>, <code>.ai/repo/workflows/task-lifecycle.md</code>, <code>.ai/repo/policy.yaml</code>, <code>.ai/repo/profiles/</code>, <code>.ai/repo/providers/</code>, <code>.ai/repo/ci/gates.yaml</code>, <code>share/obligations.yaml</code>, <code>.claude/settings.json</code>, <code>.claude/hooks/</code>, <code>.githooks/</code>.</p>
-    </footer>
-  </main>
-</div>
-<script>
-document.querySelectorAll('.code button').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    var pre = btn.parentElement.querySelector('pre');
-    var text = pre ? pre.innerText : '';
-    var done = function () { btn.textContent = 'Zkopírováno'; setTimeout(function () { btn.textContent = 'Kopírovat'; }, 1600); };
-    var fallback = function () {
-      var r = document.createRange(); r.selectNodeContents(pre);
-      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-      btn.textContent = 'Označeno';
-    };
-    try {
-      navigator.clipboard.writeText(text).then(done, fallback);
-    } catch (e) { fallback(); }
-  });
-});
-</script>

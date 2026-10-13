@@ -144,5 +144,10 @@ grep -qE '^edition handbook/cs cs ' "$ROOT/scripts/ci/english-only-allow.txt" \
   || { echo "    the Czech edition is not declared in scripts/ci/english-only-allow.txt"; exit 1; }
 grep -qE '^lang = "cs"' "$ROOT/handbook/cs/edition.toml" \
   || { echo "    handbook/cs/edition.toml does not declare its language"; exit 1; }
+# an edition's source pages are chapters and nothing else: no page shell, no stylesheet of
+# their own and no script, so the only design an edition wears is the declared one
+if grep -lE '<!doctype|<style|<script' "$ROOT"/handbook/cs/sources/*.html 2>/dev/null | grep -q .; then
+  echo "    a source page of the Czech edition carries a page shell, a stylesheet or a script"; exit 1
+fi
 grep -q 'handbook/build.py --check' "$ROOT/.ai/repo/ci/gates.yaml" \
   || { echo "    no gate runs the handbook build"; exit 1; }
