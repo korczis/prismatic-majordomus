@@ -4052,6 +4052,17 @@ pub enum CapabilitiesCommand {
     },
     /// Build the registry and every projection; exit 10 with every violation named
     Validate,
+    /// Run one capability by its canonical id, with its input as JSON; print what it answers
+    Invoke {
+        /// The canonical id, as `capabilities list` prints it.
+        id: String,
+        /// The input as one JSON object; `{}` when neither this nor --input-file is given
+        #[arg(long, conflicts_with = "input_file")]
+        input_json: Option<String>,
+        /// A file holding the input as one JSON object; `-` reads standard input
+        #[arg(long)]
+        input_file: Option<std::path::PathBuf>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
@@ -6330,6 +6341,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["capabilities", "describe", "objects.get"],
             setup: &[],
             expect: Expect::StdoutContains(&["objects.get", "GET /api/v1/object"]),
+        }],
+    },
+    CommandExamples {
+        command: "capabilities invoke",
+        examples: &[ExampleDoc {
+            id: "capabilities-invoke",
+            title: "Run a capability by its id",
+            description: "The one way to call any executable capability from a shell: the canonical id and its input as JSON (`--input-json`, or `--input-file`, `-` for standard input; `{}` when neither is given). The input is held to the capability's own schema and the answer is the same value its MCP tool and its HTTP route return, as JSON. A capability the registry does not hold exits 12; invalid input, a refusal and a failure exit 13 with the capability's own words. It is what a generated skill names when a capability has no command of its own.",
+            argv: &["capabilities", "invoke", "repository.info"],
+            setup: &[],
+            expect: Expect::Json(&["/repository"]),
         }],
     },
     CommandExamples {

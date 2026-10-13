@@ -68,11 +68,17 @@ pub fn command_artifact(command: &CommandRef, version: &str) -> Artifact {
             command.argument
         ));
     }
-    if let Some(cli) = &command.cli {
-        ways.push_str(&format!(
+    // every capability has the generic command; one with a command of its own names that,
+    // because a person reading the skill will recognise it
+    match &command.cli {
+        Some(cli) => ways.push_str(&format!(
             "- Otherwise run `majordomus {cli}` from the repository root, giving that text as its `{}` (`majordomus {cli} --help` shows how).\n",
             command.argument
-        ));
+        )),
+        None => ways.push_str(&format!(
+            "- Otherwise run `majordomus capabilities invoke {}` from the repository root with `--input-json` holding one JSON object whose `{}` is that text.\n",
+            command.capability, command.argument
+        )),
     }
     let once = if command.changes_something {
         "Call it once. It changes the repository: if the call is refused or its outcome is not \
@@ -205,7 +211,7 @@ mod tests {
     }
 
     /// A read is the model's to call, has no warning about a second attempt, and a
-    /// capability with no command line is not told to use one.
+    /// capability with no command of its own is reached by the generic one.
     #[test]
     fn a_read_may_be_invoked_by_the_model_and_names_only_the_ways_it_has() {
         let mut read = command(false);
@@ -213,7 +219,9 @@ mod tests {
         let c = command_artifact(&read, "1").content;
         assert!(!c.contains("disable-model-invocation"));
         assert!(!c.contains("another way"));
-        assert!(!c.contains("Otherwise run"));
+        assert!(c.contains(
+            "Otherwise run `majordomus capabilities invoke intents.propose` from the repository root with `--input-json`"
+        ));
         assert!(c.contains("Call it once and report what it answers."));
     }
 

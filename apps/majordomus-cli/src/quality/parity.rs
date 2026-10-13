@@ -208,7 +208,8 @@ pub fn inspect(
             }
             LocalReason::ProcessLifecycle
             | LocalReason::WritesRepository
-            | LocalReason::SessionLocal => {}
+            | LocalReason::SessionLocal
+            | LocalReason::InvokesNamedCapability => {}
         }
     }
 

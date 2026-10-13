@@ -62,6 +62,10 @@ pub enum LocalReason {
     /// logic is shared — the command and the capability read the same resolution — and
     /// only the shaping of the output is the command's own.
     RendersCapability(&'static str),
+    /// The command runs whichever capability its argument names. It adds no operation: the
+    /// operation is that capability's, already in the API under its own name, and this is
+    /// the command line's one generic way to reach it.
+    InvokesNamedCapability,
 }
 
 impl LocalReason {
@@ -107,6 +111,7 @@ impl LocalReason {
             LocalReason::WritesRepository => "writes_repository",
             LocalReason::SessionLocal => "session_local",
             LocalReason::RendersCapability(_) => "renders_capability",
+            LocalReason::InvokesNamedCapability => "invokes_named_capability",
         }
     }
 }
@@ -325,6 +330,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs the status of this checkout when no subcommand follows it, so the two are one operation typed two ways.",
     },
     // ---------------------------------------------------------------- renderings of a capability
+    LocalCommand {
+        command: "capabilities invoke",
+        reason: LocalReason::InvokesNamedCapability,
+        note: "runs the capability whose id it is given, through the one executor, with the input held to that capability's schema; over MCP and HTTP the same capability is called by its own tool and route.",
+    },
     LocalCommand {
         command: "capabilities schema",
         reason: LocalReason::RendersCapability("capabilities.describe"),
