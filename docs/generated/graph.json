@@ -1618,6 +1618,15 @@
         "status": "query"
       },
       {
+        "id": "capability:served.forge",
+        "kind": "capability",
+        "label": "served.forge",
+        "summary": "Ask the forge what it recorded as deployed and released",
+        "route": "/cockpit/capabilities/served.forge",
+        "source": "apps/majordomus-cli/src/capability/builtin/served.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:served.observe",
         "kind": "capability",
         "label": "served.observe",
@@ -3488,6 +3497,30 @@
         "label": "why.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/why.rs",
+        "external": true
+      },
+      {
+        "id": "file:handbook/build.py",
+        "kind": "file",
+        "label": "build.py",
+        "summary": "named by the layer; not an object of this index",
+        "source": "handbook/build.py",
+        "external": true
+      },
+      {
+        "id": "file:handbook/cs/chapter_sources.py",
+        "kind": "file",
+        "label": "chapter_sources.py",
+        "summary": "named by the layer; not an object of this index",
+        "source": "handbook/cs/chapter_sources.py",
+        "external": true
+      },
+      {
+        "id": "file:handbook/cs/edition.toml",
+        "kind": "file",
+        "label": "edition.toml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "handbook/cs/edition.toml",
         "external": true
       },
       {
@@ -6055,7 +6088,7 @@
             "rule:project.english-only",
             "claim:authored-files-are-english",
             "claim:published-translation-is-declared",
-            "file:.ai/repo/rules/project/english-only.v2.md",
+            "file:.ai/repo/rules/project/english-only.v3.md",
             "file:scripts/ci/english-only-check",
             "file:scripts/ci/english-only-allow.txt",
             "file:docs/claims/authored-files-are-english.md",
@@ -6970,7 +7003,7 @@
             "file:docs/GITHUB_PAGES_ARCHITECTURE.md",
             "file:test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
             "file:test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
-            "file:test/cases/1096_the_published_ui_is_the_trunks.sh",
+            "file:test/cases/2983_the_published_ui_is_the_trunks.sh",
             "file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md"
           ],
           "tags": [
@@ -7065,6 +7098,39 @@
             "adoption",
             "discovery",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0149",
+        "kind": "adr",
+        "label": "adr-0149",
+        "summary": "A handbook edition is a declared locale tree, built from the tree it describes",
+        "route": "/cockpit/objects/adr/adr-0149",
+        "source": ".ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "rule:project.english-only",
+            "rule:project.the-handbook-is-built-from-the-tree",
+            "file:.ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:.ai/repo/rules/project/english-only.v3.md",
+            "file:.ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
+            "file:scripts/ci/english-only-check",
+            "file:scripts/ci/english-only-allow.txt",
+            "file:handbook/build.py",
+            "file:handbook/cs/edition.toml",
+            "file:handbook/cs/chapter_sources.py",
+            "file:docs/HANDBOOK.md",
+            "test:test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+          ],
+          "tags": [
+            "handbook",
+            "language",
+            "governance",
+            "derivation"
           ]
         }
       },
@@ -10493,7 +10559,7 @@
           "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
           "implementation": "scripts/ci/english-only-check",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/english-only.v2.md",
+          "source": ".ai/repo/rules/project/english-only.v3.md",
           "test": "test/cases/403_published_translation.sh"
         }
       },
@@ -14098,6 +14164,14 @@
         "summary": "Guide — what Majordomus does for a team, how each part works, and the tests that prove it",
         "route": "/cockpit/objects/document/docs-guide-md",
         "source": "docs/GUIDE.md"
+      },
+      {
+        "id": "majordomus://document/docs/HANDBOOK.md",
+        "kind": "document",
+        "label": "docs/HANDBOOK.md",
+        "summary": "The handbook",
+        "route": "/cockpit/objects/document/docs-handbook-md",
+        "source": "docs/HANDBOOK.md"
       },
       {
         "id": "majordomus://document/docs/HOW_IT_WORKS.md",
@@ -39894,6 +39968,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.22.0",
+        "kind": "release-record",
+        "label": "v0.22.0",
+        "summary": "v0.22.0",
+        "route": "/cockpit/objects/release-record/v0-22-0",
+        "source": ".ai/repo/releases/v0.22.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.22.0",
+          "published_at": "2026-10-13T04:40:42Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.22.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -41911,12 +42008,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.english-only@2",
+        "id": "majordomus://rule/project.english-only@3",
         "kind": "rule",
-        "label": "project.english-only@2",
+        "label": "project.english-only@3",
         "summary": "English only",
-        "route": "/cockpit/objects/rule/project-english-only-2",
-        "source": ".ai/repo/rules/project/english-only.v2.md",
+        "route": "/cockpit/objects/rule/project-english-only-3",
+        "source": ".ai/repo/rules/project/english-only.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -43222,6 +43319,26 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+        "kind": "rule",
+        "label": "project.the-handbook-is-built-from-the-tree@1",
+        "summary": "The handbook is built from the tree it describes, and a chapter names what it rests on",
+        "route": "/cockpit/objects/rule/project-the-handbook-is-built-from-the-tree-1",
+        "source": ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.english-only@3"
+          ],
+          "tags": [
+            "handbook",
+            "derivation",
+            "documentation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "label": "project.the-lease-is-read-once@1",
@@ -43649,6 +43766,7 @@
             "tests/**",
             "config/**",
             "docs/**",
+            "handbook/**",
             "campaigns/**",
             "examples/**",
             "priv/**/*.exs",
@@ -50381,13 +50499,6 @@
         "source": "test/cases/1096_no_screen_waits_for_a_source.sh"
       },
       {
-        "id": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "kind": "test",
-        "label": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "route": "/cockpit/objects/test/test-cases-1096-the-published-ui-is-the-trunks-sh",
-        "source": "test/cases/1096_the_published_ui_is_the_trunks.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/1097_the_projection_is_applied_at_landing.sh",
         "kind": "test",
         "label": "test/cases/1097_the_projection_is_applied_at_landing.sh",
@@ -51065,6 +51176,20 @@
         "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
         "route": "/cockpit/objects/test/test-cases-2979-a-personal-layer-changes-nothing-shared-sh",
         "source": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "kind": "test",
+        "label": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "route": "/cockpit/objects/test/test-cases-2983-the-published-ui-is-the-trunks-sh",
+        "source": "test/cases/2983_the_published_ui_is_the_trunks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "kind": "test",
+        "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
+        "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -58551,6 +58676,16 @@
         "kind": "projects"
       },
       {
+        "source": "capability:served.forge",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.forge",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
         "source": "capability:served.observe",
         "target": "projection:cli",
         "kind": "projects"
@@ -60332,7 +60467,7 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://rule/project.english-only@2",
+        "target": "majordomus://rule/project.english-only@3",
         "kind": "put_in_force"
       },
       {
@@ -61127,7 +61262,7 @@
       },
       {
         "source": "majordomus://adr/adr-0077",
-        "target": "majordomus://rule/project.english-only@2",
+        "target": "majordomus://rule/project.english-only@3",
         "kind": "put_in_force"
       },
       {
@@ -62837,7 +62972,7 @@
       },
       {
         "source": "majordomus://adr/adr-0141",
-        "target": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
+        "target": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "put_in_force"
       },
       {
@@ -62983,6 +63118,66 @@
       {
         "source": "majordomus://adr/adr-0145",
         "target": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "file:handbook/build.py",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "file:handbook/cs/chapter_sources.py",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "file:handbook/cs/edition.toml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "file:scripts/ci/english-only-allow.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "file:scripts/ci/english-only-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://adr/adr-0077",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://document/docs/HANDBOOK.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://rule/project.english-only@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0149",
+        "target": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "kind": "put_in_force"
       },
       {
@@ -66722,7 +66917,7 @@
       },
       {
         "source": "majordomus://claim/published-translation-is-declared",
-        "target": "majordomus://rule/project.english-only@2",
+        "target": "majordomus://rule/project.english-only@3",
         "kind": "defined_in"
       },
       {
@@ -68897,6 +69092,11 @@
       },
       {
         "source": "majordomus://document/docs/GUIDE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/HANDBOOK.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -76511,6 +76711,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.22.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -77596,7 +77801,7 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.english-only@2",
+        "source": "majordomus://rule/project.english-only@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -78333,6 +78538,16 @@
       {
         "source": "majordomus://rule/project.the-crate-reference-is-published@1",
         "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+        "target": "majordomus://rule/project.english-only@3",
         "kind": "depends_on"
       },
       {
@@ -79561,11 +79776,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/1097_the_projection_is_applied_at_landing.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -80047,6 +80257,16 @@
       },
       {
         "source": "majordomus://test/test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -85237,6 +85457,11 @@
       },
       {
         "source": "module:served",
+        "target": "capability:served.forge",
+        "kind": "composes"
+      },
+      {
+        "source": "module:served",
         "target": "capability:served.observe",
         "kind": "composes"
       },
@@ -85352,8 +85577,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2718,
-      "edges": 5955,
+      "nodes": 2727,
+      "edges": 5975,
       "acyclic": false,
       "truncated": false
     }
