@@ -24,4 +24,18 @@ validation:
 evidence_required:
   - "unsupervised_exit_code_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-13T00:19:10Z
+started_at: 2026-10-13T00:18:57Z
+started_event: sha256:3fc48c1526cfd604e628f870aedb22d961bf8a612b8fc419a2b61822cf3c4657
+verified_at: 2026-10-13T00:19:02Z
+verified_event: sha256:bdee89adb4d542ef626a4cc0e697d26e5cb743fdfecc919d2d3af526c4b58151
+completed_at: 2026-10-13T00:19:10Z
+completed_event: sha256:636edb3b99c4b2dbd528d94e0cf1377a0b34f2134cd55ab57419102d89772fe4
+evidence:
+  - covers: unsupervised_exit_code_case
+    type: test
+    command: "bash test/run.sh 2989_an_unsupervised_repository_exits_12"
+    result: "ok: sixteen shell readers and five Rust commands exit 12 and name the missing layer in a git repository with no .ai/manifest.yaml; version, help and init --help exit 0; nothing is written"
+    artifact: "test/cases/2989_an_unsupervised_repository_exits_12.sh"
+    commit: 3491f35cabf9c6751a931a365425376218e3ad42
+    recorded_at: 2026-10-13T00:19:07Z
