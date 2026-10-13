@@ -55,6 +55,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
+| Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
 
@@ -321,7 +322,8 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | In the UI | In the snapshot |
 |---|---|
 | a link to another screen or inspector | a relative link to that page's file; an inspector's query is a directory (`governance/_rule/<id>/`) |
-| a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page past the bound, a filter of several fields, a form, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
@@ -338,6 +340,13 @@ publication holds the snapshot there, and `majordomus web validate` holds both w
 collision. `snapshot.json` beside it lists every page written, every page left to the live
 UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
 `test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
+
+The Cockpit is published the same way, by the same exporter (ADR 0147,
+[`COCKPIT.md`](COCKPIT.md#on-the-public-site-a-snapshot)). It is written after the UI's
+snapshot: it reads first the Cockpit pages the UI's snapshot wanted to link to, and then leads
+those links to the pages it wrote, so a capability a screen cites is a page a reader can
+open. Each surface is read once. `test/cases/2982_two_snapshots_link_what_the_other_holds.sh`
+holds it.
 
 The published snapshot is held to the trunk (`project.the-published-ui-is-the-trunks`). The
 publication model declares that a publication holds it (`deploy.snapshots` in

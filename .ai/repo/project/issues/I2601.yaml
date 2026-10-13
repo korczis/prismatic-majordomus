@@ -27,6 +27,13 @@ validation:
 evidence_required:
   - "evidence_subcommands_through_launcher_case"
 created_at: 2026-10-13
-updated_at: 2026-10-13T11:36:41Z
+updated_at: 2026-10-13T17:45:03Z
 started_at: 2026-10-13T11:36:41Z
 started_event: sha256:f6548a9a76dd197f58827bb78a2f525a918ae153a84a0d3a56716c34724b7506
+evidence:
+  - covers: evidence_subcommands_through_launcher_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 2998_evidence_reaches_the_subcommands_the_executable_owns"
+    result: "1 passed, 0 failed; fails on the launcher of e506c041a4 with 'evidence: unknown option claim'"
+    commit: c4a8f9c56824241e413b2fd651dde7a093846dab
+    recorded_at: 2026-10-13T17:45:03Z

@@ -726,7 +726,19 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence <show|claim|proves|record|stamp> [options]
 ```
+
+The third form is the other program's. Every argument this command takes is an option, so a
+word in the first position is never its own: `show`, `claim`, `proves`, `record` and `stamp`
+are subcommands of the Rust executable, which holds the ledger of what ran
+([`EVIDENCE.md`](EVIDENCE.md#the-capabilities)), and the launcher hands them to it with
+every argument unchanged — `--repo` on either side of the command included. Their exit
+codes are the executable's, and they need no active task. Which words those are is read
+from the executable's own declaration (`docs/generated/cli.yaml` in a checkout, the shipped
+executable's `help evidence <word>` in an installed tree), so `majordomus evidence --help`
+lists exactly the subcommands this installation reaches. A word neither program has is
+refused here, exit `2`. The rest of this section is about the first two forms.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line

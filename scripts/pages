@@ -66,7 +66,7 @@
 #                                         each: surface, mount, artifact, producer, marker.
 #                                         The mount is the topology's. 12 when a declared
 #                                         surface has no mount there or the entry is not whole
-#   scripts/pages verify-ui [--url URL] [--commit SHA] [--timeout N] [--max-pages N]
+#   scripts/pages verify-ui [--surface ID] [--url URL] [--commit SHA] [--timeout N] [--max-pages N]
 #                                         poll the public site until the UI's snapshot it holds
 #                                         at the UI's mount is that commit's and whole: its
 #                                         surface.json, the landing page and its banner,
@@ -1124,9 +1124,14 @@ cmd_snapshots() {
 # answered and holds no snapshot, another commit's, or part of one is 10; a site that never
 # answered, or a probe that cannot judge, is 12. Every finding is one `FAIL` line on stderr
 # that ends with the command which shows it again.
+#
+# --surface names which snapshot of the model is asked for; without it, the UI's. Every
+# snapshot is held the same way, because every one is written by the same exporter: the
+# Cockpit's (ADR 0147) is `--surface cockpit`.
 cmd_verify_ui() {
-  local url="" commit="" timeout=180 max=256 t0 rc round=0 row mount marker
+  local url="" commit="" timeout=180 max=256 t0 rc round=0 row mount marker surface=ui
   while [ $# -gt 0 ]; do case "$1" in
+    --surface) surface="$2"; shift 2 ;;
     --url) url="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
     --timeout) timeout="$2"; shift 2 ;;
@@ -1142,9 +1147,12 @@ cmd_verify_ui() {
   [ -n "$url" ] || { echo "pages verify-ui: no --url and site/config.toml declares no base_url" >&2; return 12; }
   command -v curl >/dev/null || { echo "pages verify-ui: curl is required" >&2; return 12; }
   url="${url%/}"
-  row="$(cmd_snapshots | awk -F '\t' '$1 == "ui"')" || return 12
-  [ -n "$row" ] || { echo "pages verify-ui: ${MODEL#"$ROOT"/} declares no snapshot of the ui surface (deploy.snapshots); there is none to verify" >&2; return 12; }
+  case "$surface" in ''|*[!a-z0-9-]*) echo "pages verify-ui: --surface takes a surface id, not '$surface'" >&2; exit 2 ;; esac
+  row="$(cmd_snapshots | awk -F '\t' -v s="$surface" '$1 == s')" || return 12
+  [ -n "$row" ] || { echo "pages verify-ui: ${MODEL#"$ROOT"/} declares no snapshot of the $surface surface (deploy.snapshots); there is none to verify" >&2; return 12; }
   mount="$(printf '%s' "$row" | cut -f2)"; marker="$(printf '%s' "$row" | cut -f5)"
+  # what a reader calls the surface, in the lines below: the UI is "the UI", as it always read
+  case "$surface" in ui) VR_NAME="UI" ;; cockpit) VR_NAME="Cockpit" ;; *) VR_NAME="$surface surface" ;; esac
   # Without --commit the question is whether the UI beside the site is the site's: the commit
   # is the one the site's own identity names. Whether that commit is the trunk's, and how old
   # it may be, is scripts/ci/pages-check's to judge; this holds the two surfaces to one commit.
@@ -1167,9 +1175,9 @@ cmd_verify_ui() {
   cat "$VR_WORK/lines"
   [ "$rc" = 0 ] || cat "$VR_WORK/findings" >&2
   case "$rc" in
-    0)  printf 'pages verify-ui: %s%s/ serves the UI read at %s: %s; after %s s\n' "$url" "$mount" "${commit:0:12}" "$(cat "$VR_WORK/summary")" "$(( $(now) - t0 ))" ;;
-    10) printf 'pages verify-ui: after %s s %s%s/ is not the UI read at %s, whole\n' "$(( $(now) - t0 ))" "$url" "$mount" "${commit:0:12}" >&2 ;;
-    *)  printf 'pages verify-ui: %s%s/ could not be judged within %s s; the UI was not verified\n' "$url" "$mount" "$timeout" >&2 ;;
+    0)  printf 'pages verify-ui: %s%s/ serves the %s read at %s: %s; after %s s\n' "$url" "$mount" "$VR_NAME" "${commit:0:12}" "$(cat "$VR_WORK/summary")" "$(( $(now) - t0 ))" ;;
+    10) printf 'pages verify-ui: after %s s %s%s/ is not the %s read at %s, whole\n' "$(( $(now) - t0 ))" "$url" "$mount" "$VR_NAME" "${commit:0:12}" >&2 ;;
+    *)  printf 'pages verify-ui: %s%s/ could not be judged within %s s; the %s was not verified\n' "$url" "$mount" "$timeout" "$VR_NAME" >&2 ;;
   esac
   rm -rf "$VR_WORK"
   return "$rc"
@@ -1190,14 +1198,14 @@ ui_round() {
   at="$(jq -r '.mount // empty' "$VR_WORK/body" 2>/dev/null || true)"
   if [ "$VR_STATUS" != 200 ] || [ -z "$v" ]; then
     vr_line fail "want 200 and a declaration naming built_from"
-    ui_finding "$VR_REQ is absent or unreadable (status $VR_STATUS): the publication holds no UI snapshot at $mount" "curl -fsS $VR_REQ"
+    ui_finding "$VR_REQ is absent or unreadable (status $VR_STATUS): the publication holds no $VR_NAME snapshot at $mount" "curl -fsS $VR_REQ"
     # the record and the pages are this declaration's; without it there is no snapshot to walk
     [ "$VR_ANSWERED" = 1 ] && return 10; return 12
   fi
   if ui_same_commit "$commit" "$v"; then vr_line ok "built_from=$v"
   else
     vr_line fail "built_from=$v, want $commit"; bad=1
-    ui_finding "the published UI was read at $v, not at $commit: $VR_REQ names another commit than the site it is served beside" "curl -fsS $VR_REQ | jq -r .built_from"
+    ui_finding "the published $VR_NAME was read at $v, not at $commit: $VR_REQ names another commit than the site it is served beside" "curl -fsS $VR_REQ | jq -r .built_from"
   fi
   if [ "$at" != "$mount" ]; then
     vr_line fail "mount=${at:-absent}, served at $mount"; bad=1
@@ -1213,7 +1221,7 @@ ui_round() {
         ui_finding "$VR_REQ does not state $marker=\"$v\": the page is not the snapshot its declaration names" "curl -fsS $VR_REQ | grep -o '$marker=\"[^\"]*\"'"
       fi ;;
     *) vr_line fail "want 200 text/html"; bad=1
-       ui_finding "$VR_REQ answered $VR_STATUS ${VR_TYPE:-with no content type}, not the UI's first screen" "curl -fsSI $VR_REQ" ;;
+       ui_finding "$VR_REQ answered $VR_STATUS ${VR_TYPE:-with no content type}, not the $VR_NAME's first page" "curl -fsSI $VR_REQ" ;;
   esac
   # 3. the run's own record: what it wrote, what it left out, and what ended the reading
   VR_REQ="$base$mount/snapshot.json"; vr_get "$VR_REQ"

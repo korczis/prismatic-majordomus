@@ -155,6 +155,44 @@ handover, the blockers of this checkout — and those records name this disk. Th
 reason the Cockpit is bound to the loopback interface and the reason this page has no
 counterpart on the website (ADR 0014).
 
+## On the public site: a snapshot
+
+The published site carries the Cockpit at `/cockpit/` as a **snapshot** (ADR 0147): the
+Cockpit's own pages, read once at the published commit and written as files, by the exporter
+that publishes the UI (ADR 0141).
+
+<!-- majordomus:unrun it reads the whole Cockpit of this repository in-process; the ui-snapshot job of the pages workflow runs it, and cases 2981 and 2982 run it against a fixture -->
+```bash
+majordomus web report cockpit-snapshot
+```
+
+It writes into `target/web/cockpit-snapshot`. In order it reads every static route, then
+every Cockpit page the UI's snapshot wanted to link to, then, one page per family in turn,
+what those link to, until `--limit` pages or `--budget-seconds`. What differs from the
+Cockpit a process serves:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| In the Cockpit | In the snapshot |
+|---|---|
+| a link to another page of the Cockpit | a relative link to that page's file |
+| a link to a page past the bound, a search, a form, a runner | the snapshot's page about the live Cockpit, carrying the path the link meant |
+| a link into the UI | that page of the UI's snapshot when it holds it, the live page when it does not |
+| the scripts: the runner, the palette, the live executions, the polling panels | none: no page carries a script, and every page is complete without one |
+| `/cockpit/continuity` | not in the snapshot, and no link reaches it: it is the one page about a machine |
+
+</div>
+
+
+Every page says that it is a snapshot, with the commit, the time and the executable that
+read it. A page that is about a machine and not withheld (peers, worktrees, health) shows the
+runner that rendered it. For the Cockpit of your own checkout, run `majordomus serve`.
+
+The directory declares itself (`surface.json`) as the surface `cockpit-snapshot`, mounted at
+`/cockpit`, `published-only`. `snapshot.json` beside it lists every page written and every
+page left to the live Cockpit. `test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh`
+holds it.
+
 It is also the page that has to answer two different readers, and it says which is which.
 
 **The worker** asks *what am I resuming from?* That is `continuity.state`: one episode — the

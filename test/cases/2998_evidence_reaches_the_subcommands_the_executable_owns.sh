@@ -43,7 +43,9 @@ done
 # case 638) could not see this: it reads `majordomus`, `bin/majordomus` and
 # `bin/majordomus-cli` as one command, and takes an example the executable ran as proof for
 # all three.
-DOCUMENTED="$(cat "$ROOT"/docs/*.md "$ROOT/README.md" | grep -oE 'majordomus evidence [a-z][a-z-]*' | sed 's/.* //' | LC_ALL=C sort -u)"
+# A command, not a sentence: the words open a line of a fence, a code span, or a workflow's
+# `run:`. An issue titled "majordomus evidence reaches ..." in a generated table is prose.
+DOCUMENTED="$(cat "$ROOT"/docs/*.md "$ROOT/README.md" | grep -oE '(^|`|run: )majordomus evidence [a-z][a-z-]*' | sed 's/.* //' | LC_ALL=C sort -u)"
 for w in show record stamp; do
   grep -Fxq "$w" <<<"$DOCUMENTED" || { echo "    no page prints majordomus evidence $w any more; this case no longer reads the pages"; exit 1; }
 done

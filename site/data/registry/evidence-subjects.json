@@ -3264,6 +3264,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:web report cockpit-snapshot",
+      "path": "/evidence/commands/web-report-cockpit-snapshot/"
+    },
+    {
+      "kind": "command",
       "subject": "command:web report tests",
       "path": "/evidence/commands/web-report-tests/"
     },
@@ -17483,6 +17488,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:web report cockpit-snapshot": {
+      "kind": "command",
+      "id": "web report cockpit-snapshot",
+      "page": "/evidence/commands/web-report-cockpit-snapshot/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:web report tests": {
       "kind": "command",
       "id": "web report tests",
@@ -22598,6 +22622,57 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.an-expedited-landing-is-the-owners-word": {
+      "kind": "rule",
+      "id": "project.an-expedited-landing-is-the-owners-word",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2999_delivery_is_expedited_only_where_the_rule_says",
+          "path": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:362_a_release_follows_the_ci_verdict",
+          "path": "test/cases/362_a_release_follows_the_ci_verdict.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/362_a_release_follows_the_ci_verdict.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:720_integration_follows_the_current_master",
+          "path": "test/cases/720_integration_follows_the_current_master.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/720_integration_follows_the_current_master.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:97_pages_fast_path",
+          "path": "test/cases/97_pages_fast_path.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/97_pages_fast_path.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.an-intent-outlives-its-sessions": {
       "kind": "rule",
       "id": "project.an-intent-outlives-its-sessions",
@@ -27185,7 +27260,10 @@
     "suite:280_capture_status_states_its_denominator",
     "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
+    "suite:2981_the_cockpit_snapshot_holds_its_routes",
+    "suite:2982_two_snapshots_link_what_the_other_holds",
     "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
+    "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",
@@ -27203,7 +27281,6 @@
     "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
     "suite:360_the_crate_boundary_is_measured",
-    "suite:362_a_release_follows_the_ci_verdict",
     "suite:365_new_shell_is_refused",
     "suite:366_automation_inventory_agrees_with_the_tree",
     "suite:373_delivery_is_computed",

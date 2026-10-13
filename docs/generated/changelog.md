@@ -7,6 +7,76 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.23.0**
 
+## v0.23.0 — 2026-10-13
+
+### Decisions
+
+- **ADR-0146** A capability is invoked by name through a generated skill _(proposed)_
+
+### Added
+
+- **editors**: a capability is invoked by name from Claude Code, through a generated skill (`37067ec23`)
+- **site**: the published UI is linked where the publication holds it (`8c9082664`)
+- **site**: the landing answers five questions, and the navigation is rendered once (`6c58b9974`)
+- **ci**: the GitHub projection is applied by the landing itself (`cf90345b7`)
+- **providers**: preserve owner-authorized SSH permissions (`eb76b216d`)
+
+### Fixed
+
+- **ci**: the projection workflow's guards are if-statements (`8d852d79f`)
+- **test**: case 1097's message no longer reads as an early exit (`93c9c2189`)
+- **test**: case 486 asserts what the site's check says today (`ba49c586c`)
+- **rules**: a rule cites an external page without linking it (`b7ef193ab`)
+- **http**: a stopped server refuses the next connection (`a178e1b2b`)
+- **docs**: the handbook build writes nothing into the tree it reads (`3b3ba8e77`)
+- **site**: Escape gives the focus back, and the hero's label wraps on a phone (`052b4ae49`)
+- **hooks**: a push that changes the crate builds its rustdoc with warnings denied first (`19a2f94f7`)
+- **docs**: the doc of a public function links no private constant (`115d67a39`)
+- **tmp**: a temporary root is swept only when its process is gone, never when it cannot be asked (`57ce0ccf6`)
+- **site**: a bar link to a snapshot's root is decided by the publication model (`b90699421`)
+- **rules**: one malformed rule file is one finding, not fifty-seven (`a28ab7032`)
+- **github**: a listing that failed is not an empty remote (`941ec686f`)
+- **docs**: the six commands that joined the doc-command baseline leave it (#720) (`bbbc44a4f`)
+- **doctor**: a JSON parser that cannot run is not read as the file's failure (`83fdc2932`)
+- **ci**: a lane's own output is not a dirty tree (`f0911e679`)
+- **live**: a failed reload consumes no write either (I1992) (`32d5b488a`)
+- **live**: a rebuild that fails consumes no change (I1992) (`260da7bf2`)
+
+### Performance
+
+- **ui**: a screen over its budget fails the build (I2489) (`664ebe4cf`)
+
+### Documentation
+
+- **plan**: I1992, a rebuild that fails consumes no change (`2adf44450`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master 62d6ca2e45 (`49f201108`)
+- **derive**: the derived data follows master 73d3c8cc31 (`71b3060cc`)
+- **derive**: the derived data follows master 9e50ce2af3 (`9d3ef5c78`)
+- **derive**: the derived data follows the merge of master 9e50ce2af3 (`9e2ed1041`)
+- **derive**: the derived data follows the merge of master b34259715e (`7c8b77de2`)
+- **release**: record v0.22.0 and the metadata it publishes (`c3ebd75b8`)
+- **derive**: the derived data follows the merge of master d1653776cc (`e28de1d22`)
+- **merge**: the handbook's cache files are master's bytes (`917f35a97`)
+- **derive**: the derived data follows the merge of master 23c5c31be3 (`bc6d8b8aa`)
+- **merge**: master 3d92c25c12 into the branch, derived files follow (`b09367dda`)
+- **derive**: the derived data follows the v0.18.0 record (`18cb398ce`)
+- **derive**: the derived data follows the v0.18.0 record (`9f513a514`)
+- **derive**: the derived data follows the v0.18.0 record (`6c3325eb9`)
+- **plan**: close the eight issues master already holds, and re-measure four (`a8a7830a4`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.23.0-aarch64-apple-darwin.tar.gz (`237ded653955`)
+- `macos-x86_64` — majordomus-v0.23.0-x86_64-apple-darwin.tar.gz (`b8dfb703363a`)
+- `linux-x86_64-gnu` — majordomus-v0.23.0-x86_64-unknown-linux-gnu.tar.gz (`b09b4716c76e`)
+- `linux-x86_64-musl` — majordomus-v0.23.0-x86_64-unknown-linux-musl.tar.gz (`f36a18a751fd`)
+- `linux-aarch64-gnu` — majordomus-v0.23.0-aarch64-unknown-linux-gnu.tar.gz (`0e090873567c`)
+- `linux-aarch64-musl` — majordomus-v0.23.0-aarch64-unknown-linux-musl.tar.gz (`7e251296b6b3`)
+
+
 ## v0.22.0 — 2026-10-13
 
 ### Decisions

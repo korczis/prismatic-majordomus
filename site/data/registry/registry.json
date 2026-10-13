@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "bdaafb2dd25953e5fdac87772670c73adc086ccdc2f6778fb7bb8559d5595605",
+    "fingerprint": "d1dd9bb08c7b37b002a9477b3de64f1b8b3d571b2835cace756b6c6481920ecc",
     "summary": {
-      "total": 2322,
+      "total": 2333,
       "builtin": 196,
-      "declarative": 2126,
+      "declarative": 2137,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2126
+        "resource": 2137
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2135
+        "implemented": 2146
       },
       "mcp_tools": 187,
-      "mcp_resources": 2181,
+      "mcp_resources": 2192,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80066,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 104,
         "capability_ids": []
       },
       {
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 344,
         "capability_ids": []
       },
       {
@@ -80684,7 +80684,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": []
       },
       {
@@ -81057,7 +81057,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 22,
+        "capabilities": 23,
         "capability_ids": []
       },
       {
@@ -81084,7 +81084,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 177,
+        "capabilities": 178,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 465,
+        "capabilities": 469,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3c46821f5e005cb12d4f9400b20591d9ca29f4d97602072f3f71bbceb8cff385",
+    "fingerprint": "6b0351f9f119efbe59fd152f53fe383904ed269a5d581ea3fd07924b93de0957",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81341,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 102,
+      "adr": 104,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81358,21 +81358,21 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 342,
-      "knowledge": 1,
+      "issue": 344,
+      "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 36,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 22,
-      "rule": 177,
+      "release-record": 23,
+      "rule": 178,
       "scope": 1,
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 465,
+      "test": 469,
       "use-case": 49,
       "workspace": 1
     },
@@ -83048,6 +83048,24 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0147",
+        "kind": "adr",
+        "identity": "adr-0147",
+        "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+        "description": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+        "path": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6184,
+        "tags": [
+          "architecture",
+          "interface",
+          "cockpit",
+          "ui",
+          "pages"
+        ]
+      },
+      {
         "uri": "majordomus://adr/adr-0149",
         "kind": "adr",
         "identity": "adr-0149",
@@ -83062,6 +83080,23 @@
           "language",
           "governance",
           "derivation"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0155",
+        "kind": "adr",
+        "identity": "adr-0155",
+        "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "description": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "path": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7460,
+        "tags": [
+          "integration",
+          "governance",
+          "ci",
+          "release"
         ]
       },
       {
@@ -86891,7 +86926,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 136362
+        "bytes": 137300
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -86900,7 +86935,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 48166
+        "bytes": 50142
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -87116,7 +87151,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 56677
+        "bytes": 57167
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -87161,7 +87196,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 13764
+        "bytes": 13869
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -87170,7 +87205,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 64565
+        "bytes": 67758
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -87206,7 +87241,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 24521
+        "bytes": 25504
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87296,7 +87331,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 237630
+        "bytes": 238584
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94384,7 +94419,7 @@
         "path": ".ai/repo/project/issues/I2483.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4045
+        "bytes": 5979
       },
       {
         "uri": "majordomus://issue/I2484",
@@ -94417,7 +94452,7 @@
         "path": ".ai/repo/project/issues/I2486.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4878
+        "bytes": 7341
       },
       {
         "uri": "majordomus://issue/I2487",
@@ -94450,7 +94485,7 @@
         "path": ".ai/repo/project/issues/I2489.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3851
+        "bytes": 5806
       },
       {
         "uri": "majordomus://issue/I2491",
@@ -94464,6 +94499,17 @@
         "bytes": 4702
       },
       {
+        "uri": "majordomus://issue/I2495",
+        "kind": "issue",
+        "identity": "I2495",
+        "title": "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it",
+        "description": "Publish the Cockpit on the public site as a snapshot read at the published commit, with the exporter that already reads the UI, so that /cockpit/ is a verified surface of the product and a capability the UI cites is a page a reader can open.",
+        "path": ".ai/repo/project/issues/I2495.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6346
+      },
+      {
         "uri": "majordomus://issue/I2601",
         "kind": "issue",
         "identity": "I2601",
@@ -94472,7 +94518,34 @@
         "path": ".ai/repo/project/issues/I2601.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1669
+        "bytes": 2053
+      },
+      {
+        "uri": "majordomus://issue/I2652",
+        "kind": "issue",
+        "identity": "I2652",
+        "title": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
+        "description": "Give the queue the work leaves behind a screen: what awaits a reviewer, what it is about, and whether a derivation still follows every closed episode, so that the result of a review is seen where every other state of the delivery is.",
+        "path": ".ai/repo/project/issues/I2652.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3595
+      },
+      {
+        "uri": "majordomus://knowledge/an-expedited-landing",
+        "kind": "knowledge",
+        "identity": "an-expedited-landing",
+        "title": "How a pull request is landed past the required check, and what that never reaches",
+        "description": "The lander's sequence for an expedited landing under the owner's standing order, the runs that are cancelled and the ones that never are, and why a tag is outside it.",
+        "path": ".ai/repo/knowledge/curated/an-expedited-landing.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2545,
+        "tags": [
+          "integration",
+          "deployment",
+          "ci"
+        ]
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -95796,6 +95869,16 @@
         "bytes": 2442
       },
       {
+        "uri": "majordomus://release-record/v0.23.0",
+        "kind": "release-record",
+        "identity": "v0.23.0",
+        "title": "v0.23.0",
+        "path": ".ai/repo/releases/v0.23.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
         "uri": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "identity": "v0.3.1",
@@ -97007,6 +97090,24 @@
           "advisors",
           "providers",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "rule",
+        "identity": "project.an-expedited-landing-is-the-owners-word@1",
+        "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "description": "While the owner's authorisation is in force, a named lander may merge a pull request past the required check, one at a time, under the landing claim, pinned to a head that contains master and whose merged tree it judged locally; every such landing is verified in production; a run nobody will read is cancelled; a red on the trunk has one carrier; and a release is still cut only on a commit whose required check succeeded.",
+        "path": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 8705,
+        "tags": [
+          "process",
+          "integration",
+          "deployment",
+          "governance",
+          "evidence"
         ]
       },
       {
@@ -101207,12 +101308,28 @@
         "bytes": 7902
       },
       {
+        "uri": "majordomus://test/test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "kind": "test",
+        "identity": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "path": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "source_class": "case",
+        "bytes": 5172
+      },
+      {
+        "uri": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "kind": "test",
+        "identity": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "path": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "source_class": "case",
+        "bytes": 3830
+      },
+      {
         "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "test",
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "source_class": "case",
-        "bytes": 19251
+        "bytes": 20904
       },
       {
         "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
@@ -101228,7 +101345,15 @@
         "identity": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "path": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "source_class": "case",
-        "bytes": 10613
+        "bytes": 10807
+      },
+      {
+        "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "kind": "test",
+        "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "path": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "source_class": "case",
+        "bytes": 5807
       },
       {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -101237,6 +101362,14 @@
         "path": "test/cases/29_prompt_capture.sh",
         "source_class": "case",
         "bytes": 26890
+      },
+      {
+        "uri": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "kind": "test",
+        "identity": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "path": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "source_class": "case",
+        "bytes": 2474
       },
       {
         "uri": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -104158,7 +104291,7 @@
       "identity": [
         "id"
       ],
-      "objects": 102
+      "objects": 104
     },
     {
       "name": "application",
@@ -104321,7 +104454,7 @@
       "identity": [
         "id"
       ],
-      "objects": 342
+      "objects": 344
     },
     {
       "name": "knowledge",
@@ -104331,7 +104464,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1
+      "objects": 2
     },
     {
       "name": "mesh-declaration",
@@ -104407,7 +104540,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 22
+      "objects": 23
     },
     {
       "name": "rule",
@@ -104418,7 +104551,7 @@
         "id",
         "version"
       ],
-      "objects": 177
+      "objects": 178
     },
     {
       "name": "scope",
@@ -104473,7 +104606,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 465
+      "objects": 469
     },
     {
       "name": "use-case",
@@ -108435,6 +108568,174 @@
                     "command": "majordomus web report ui-snapshot --limit 20",
                     "setup": [],
                     "expectation": "exits 0; prints web report, ui-snapshot"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "cockpit-snapshot"
+                ],
+                "route": "/docs/cli/web/report/cockpit-snapshot/",
+                "executable": true,
+                "usage": "majordomus web report cockpit-snapshot [OPTIONS]",
+                "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+                "args": [
+                  {
+                    "name": "limit",
+                    "long": "limit",
+                    "positional": false,
+                    "help": "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to",
+                    "value_name": "LIMIT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "240"
+                    ]
+                  },
+                  {
+                    "name": "budget_seconds",
+                    "long": "budget-seconds",
+                    "positional": false,
+                    "help": "The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost",
+                    "value_name": "BUDGET_SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "180"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-cockpit-snapshot",
+                    "title": "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+                    "description": "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "cockpit-snapshot",
+                      "--limit",
+                      "12"
+                    ],
+                    "command": "majordomus web report cockpit-snapshot --limit 12",
+                    "setup": [],
+                    "expectation": "exits 0; prints web report, cockpit-snapshot"
                   }
                 ],
                 "subcommands": []
@@ -147854,6 +148155,14 @@
         "route": "GET /ui/evidence"
       },
       {
+        "key": "system.http.ui.knowledge",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/knowledge"
+      },
+      {
         "key": "system.http.ui.docs",
         "kind": "page",
         "transport": "http",
@@ -147956,6 +148265,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/evidence"
+      },
+      {
+        "key": "system.http.live.ui.knowledge",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/knowledge"
       },
       {
         "key": "system.http.live.ui.docs",
