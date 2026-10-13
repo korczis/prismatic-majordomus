@@ -92,4 +92,52 @@ ls "$OUT"/*.tar.gz >/dev/null 2>&1 && {
   echo "    the packer left the malformed archive on disk; a later step could publish it"
   exit 1
 }
+
+# --- a release archive carries the browser libraries its pages load ---------------------------
+# v0.22.0 and v0.23.0 were published without them. cytoscape, three and p5 are built by
+# scripts/cockpit-assets from node_modules and are not committed, the packer copies share/ as
+# it stands, and the release build never ran the build step: every installation served
+# /ui/assets/vendor/cytoscape.min.js as a 404 and drew no graph. The packer and the plain
+# verifier stay as they are, since a checkout without node_modules still packs for the
+# installer's tests. What a release asks for is `release-verify --browser-assets`, and this is
+# what it refuses.
+BUILT="share/ui/vendor/cytoscape.min.js share/cockpit/vendor/alpine.csp.min.js
+share/cockpit/vendor/cytoscape.min.js share/cockpit/vendor/three.module.min.js
+share/cockpit/vendor/three.core.min.js share/cockpit/vendor/p5.min.js"
+pack_dir="$T/repack"; mkdir -p "$pack_dir/full" "$pack_dir/short" "$pack_dir/tree"
+archive="$(pack env | tail -n 1)"; expect_file "$archive"
+tar -xzf "$archive" -C "$pack_dir/tree"
+root="$(ls "$pack_dir/tree")"
+for file in $BUILT; do
+  mkdir -p "$pack_dir/tree/$root/$(dirname "$file")"
+  [ -f "$pack_dir/tree/$root/$file" ] || printf '/* a stand-in for the built library */\n' > "$pack_dir/tree/$root/$file"
+done
+name="$(basename "$archive")"
+( cd "$pack_dir/tree" && tar -czf "$pack_dir/full/$name" "$root" )
+verify_assets() { env MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-verify" \
+  --archive "$1" --target "$TARGET" --tag "$TAG" --browser-assets; }
+verify_assets "$pack_dir/full/$name" > "$T/assets-full.log" 2>&1 \
+  || { echo "    release-verify --browser-assets refused an archive that carries all six:"; tail -20 "$T/assets-full.log" | sed 's/^/      /'; exit 1; }
+tar -tzf "$pack_dir/full/$name" > "$T/assets-listing"
+for file in $BUILT; do
+  grep -q "/$file\$" "$T/assets-listing" || { echo "    the complete archive does not list $file"; exit 1; }
+done
+
+rm "$pack_dir/tree/$root/share/ui/vendor/cytoscape.min.js"
+( cd "$pack_dir/tree" && tar -czf "$pack_dir/short/$name" "$root" )
+verify_assets "$pack_dir/short/$name" > "$T/assets-short.log" 2>&1 && {
+  echo "    release-verify --browser-assets accepted an archive without share/ui/vendor/cytoscape.min.js;"
+  echo "    that is the archive v0.23.0 published"
+  exit 1
+}
+grep -q 'holds no .*share/ui/vendor/cytoscape.min.js' "$T/assets-short.log" || {
+  echo "    the archive was refused, but not for the missing library:"
+  tail -20 "$T/assets-short.log" | sed 's/^/      /'
+  exit 1
+}
+# and without the flag the same archive is still an archive: the installer's tests pack a tree
+# that never ran the asset build
+env MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-verify" \
+  --archive "$pack_dir/short/$name" --target "$TARGET" --tag "$TAG" > "$T/assets-plain.log" 2>&1 \
+  || { echo "    the plain verifier now refuses a checkout's archive:"; tail -20 "$T/assets-plain.log" | sed 's/^/      /'; exit 1; }
 exit 0

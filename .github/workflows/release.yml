@@ -140,25 +140,13 @@ jobs:
           MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
         run: scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist
 
-      - name: the archive carries every vendored library a page loads
-        run: |
-          artifact="$(printf '%s' "${{ matrix.artifact }}" | sed "s/{tag}/${{ needs.plan.outputs.tag }}/")"
-          tar -tzf "dist/$artifact" > listing.txt
-          missing=0
-          for file in share/ui/vendor/cytoscape.min.js share/cockpit/vendor/alpine.csp.min.js \
-                      share/cockpit/vendor/cytoscape.min.js share/cockpit/vendor/three.module.min.js \
-                      share/cockpit/vendor/three.core.min.js share/cockpit/vendor/p5.min.js; do
-            grep -q "/$file\$" listing.txt || { echo "::error::the archive holds no $file"; missing=1; }
-          done
-          [ "$missing" = 0 ]
-
       - name: verify the artifact is what the model says it is
         run: |
           artifact="$(printf '%s' "${{ matrix.artifact }}" | sed "s/{tag}/${{ needs.plan.outputs.tag }}/")"
           native=""
           [ "${{ matrix.native }}" = "true" ] && native="--native"
           # shellcheck disable=SC2086
-          scripts/release-verify --archive "dist/$artifact" \
+          scripts/release-verify --archive "dist/$artifact" --browser-assets \
             --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native
 
       - uses: actions/upload-artifact@v4
