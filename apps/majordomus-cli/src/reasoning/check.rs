@@ -17,12 +17,24 @@
 //!   its plan selected and one this repository knows, every conclusion's computed review
 //!   matches the consultations it cites.
 //!
+//! # Whose rules these are
+//!
+//! `catalogue` and `records` judge what a repository holds of the reasoning layer, and hold
+//! wherever the tool runs. The other four are rules about the reasoning design's own home:
+//! what its code may name, what its CI may depend on, what its documents may claim. They
+//! bind the repository that authors the catalogue ([`authors_the_design`]) and nobody else.
+//! An adopter's archived workflow that names a model credential, or its own architecture
+//! decision that says its product requires a local model, is the adopter's product and not
+//! a use of this layer; judged here, it failed `majordomus doctor` in a repository that had
+//! done nothing wrong. [`applied`] names the families that ran, so a clean answer says what
+//! it is clean of.
+//!
 //! The lifecycle: load the catalogue, its references and the store, then [`run`] every
 //! check over a repository root; an empty list is a clean repository.
 //!
 //! ```
 //! use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
-//! use majordomus_cli::reasoning::check::run;
+//! use majordomus_cli::reasoning::check::{applied, run, CATALOGUE_FILE};
 //! use majordomus_cli::reasoning::store::Store;
 //!
 //! let root = tempfile::tempdir().unwrap();
@@ -33,10 +45,19 @@
 //! let loaded = Store::at(root.path()).load();
 //! assert!(run(root.path(), &catalogue, &References::default(), &loaded).is_empty());
 //!
+//! // an adopter's document is the adopter's: the claims family is not applied to it
 //! std::fs::write(root.path().join("README.md"), "Consensus guarantees correctness.\n").unwrap();
+//! assert!(run(root.path(), &catalogue, &References::default(), &loaded).is_empty());
+//! assert_eq!(applied(root.path()), ["catalogue", "records"]);
+//!
+//! // the repository that authors the catalogue is held to what the catalogue forbids
+//! let file = root.path().join(CATALOGUE_FILE);
+//! std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+//! std::fs::write(&file, "version: 1\n").unwrap();
 //! let findings = run(root.path(), &catalogue, &References::default(), &loaded);
 //! assert_eq!(findings.len(), 1);
 //! assert_eq!((findings[0].check.as_str(), findings[0].subject.as_str()), ("claims", "README.md"));
+//! assert!(applied(root.path()).contains(&"claims"));
 //! ```
 
 use std::path::Path;
@@ -92,6 +113,57 @@ pub const INDEPENDENT_SOURCES: &[&str] = &[
 
 /// Where the transport adapters live, relative to the root.
 pub const ADAPTER_DIR: &str = "scripts/lib/advisors";
+
+/// The advisor catalogue as its author keeps it, relative to the root. A repository that
+/// only uses the tool reads the catalogue from the distribution's share directory and has
+/// no such file of its own.
+pub const CATALOGUE_FILE: &str = "share/advisors.yaml";
+
+/// Whether this repository is the reasoning design's home: the one that authors the
+/// advisor catalogue, and so the one its rules about code, CI and claims are written for.
+///
+/// ```
+/// use majordomus_cli::reasoning::check::{authors_the_design, CATALOGUE_FILE};
+///
+/// let root = tempfile::tempdir().unwrap();
+/// assert!(!authors_the_design(root.path()), "an adopter reads the distribution's catalogue");
+/// let file = root.path().join(CATALOGUE_FILE);
+/// std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+/// std::fs::write(&file, "version: 1\n").unwrap();
+/// assert!(authors_the_design(root.path()));
+/// ```
+pub fn authors_the_design(root: &Path) -> bool {
+    root.join(CATALOGUE_FILE).is_file()
+}
+
+/// The families [`run`] applies in this repository, in the order it performs them.
+///
+/// Every family of [`CHECKS`] in the design's home; `catalogue` and `records` alone
+/// anywhere else. What a report prints as performed, so that "no finding" never covers a
+/// family that was not asked.
+///
+/// ```
+/// use majordomus_cli::reasoning::check::{applied, CATALOGUE_FILE, CHECKS};
+///
+/// let root = tempfile::tempdir().unwrap();
+/// assert_eq!(applied(root.path()), ["catalogue", "records"]);
+/// let file = root.path().join(CATALOGUE_FILE);
+/// std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+/// std::fs::write(&file, "version: 1\n").unwrap();
+/// assert_eq!(applied(root.path()), CHECKS);
+/// ```
+pub fn applied(root: &Path) -> Vec<&'static str> {
+    let home = authors_the_design(root);
+    CHECKS
+        .iter()
+        .copied()
+        .filter(|c| home || !HOME_ONLY.contains(c))
+        .collect()
+}
+
+/// The families that are rules about the design's own repository: its adapters, its
+/// provider-independent code, its CI and its documents.
+pub const HOME_ONLY: &[&str] = &["adapters", "coupling", "ci", "claims"];
 
 fn files_under(root: &Path, rel: &str, ext: &[&str]) -> Vec<std::path::PathBuf> {
     let path = root.join(rel);
@@ -225,11 +297,15 @@ pub fn run(
         })
     };
 
+    // the rules about the design's own code, CI and documents bind the repository that
+    // authors the catalogue; an adopter's workflows and documents are its product
+    let home = authors_the_design(root);
+
     for d in catalogue.diagnostics(refs) {
-        push("catalogue", "share/advisors.yaml".into(), d);
+        push("catalogue", CATALOGUE_FILE.into(), d);
     }
 
-    if root.join(ADAPTER_DIR).is_dir() {
+    if home && root.join(ADAPTER_DIR).is_dir() {
         let mut adapters: Vec<&str> = catalogue
             .advisors
             .iter()
@@ -251,7 +327,8 @@ pub fn run(
     }
 
     let names = catalogue_names(catalogue);
-    for rel in INDEPENDENT_SOURCES {
+    let independent: &[&str] = if home { INDEPENDENT_SOURCES } else { &[] };
+    for rel in independent {
         for file in files_under(root, rel, &["rs", "mjs"]) {
             let Ok(text) = std::fs::read_to_string(&file) else {
                 continue;
@@ -272,8 +349,11 @@ pub fn run(
         .iter()
         .filter_map(|v| v.credential_env.as_deref())
         .collect();
-    let mut ci_files = files_under(root, ".github/workflows", &["yml", "yaml"]);
-    ci_files.extend(files_under(root, ".ai/repo/ci/gates.yaml", &["yaml"]));
+    let mut ci_files = Vec::new();
+    if home {
+        ci_files.extend(files_under(root, ".github/workflows", &["yml", "yaml"]));
+        ci_files.extend(files_under(root, ".ai/repo/ci/gates.yaml", &["yaml"]));
+    }
     for file in ci_files {
         let Ok(text) = std::fs::read_to_string(&file) else {
             continue;
@@ -304,10 +384,13 @@ pub fn run(
         phrases.push(format!("requires {t}"));
         phrases.push(format!("{t} is required"));
     }
-    let mut docs = files_under(root, "docs", &["md"]);
-    docs.extend(files_under(root, "site/content", &["md"]));
-    docs.extend(files_under(root, ".ai/repo", &["md"]));
-    docs.push(root.join("README.md"));
+    let mut docs = Vec::new();
+    if home {
+        docs.extend(files_under(root, "docs", &["md"]));
+        docs.extend(files_under(root, "site/content", &["md"]));
+        docs.extend(files_under(root, ".ai/repo", &["md"]));
+        docs.push(root.join("README.md"));
+    }
     for file in docs {
         let Ok(text) = std::fs::read_to_string(&file) else {
             continue;
@@ -432,6 +515,64 @@ mod tests {
             literals_naming("// the alpha advisor", &names),
             Vec::<String>::new()
         );
+    }
+
+    /// An adopter's workflow and its own architecture decision are its product: neither
+    /// the ci nor the claims family is applied to them, and the same two files in the
+    /// repository that authors the catalogue are refused.
+    #[test]
+    fn an_adopters_workflows_and_documents_are_not_judged() {
+        let catalogue: AdvisorCatalogue = crate::metadata::yaml::parse_into(
+            "version: 1\nadvisors:\n  - id: alpha\n    title: Alpha\n    transport: cli\n    adapter: alpha-cli\n    executable: alpha\n",
+        )
+        .unwrap();
+        let refs = References {
+            providers: vec![],
+            models: crate::metadata::yaml::parse_into(
+                "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    credential_env: ALPHA_API_KEY\nmodels: []\n",
+            )
+            .unwrap(),
+        };
+        let loaded = Loaded {
+            records: vec![],
+            unreadable: vec![],
+        };
+        let root = tempfile::tempdir().unwrap();
+        let at = |rel: &str, text: &str| {
+            let p = root.path().join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        };
+        at(
+            ".github/workflows/ci.yml",
+            "env:\n  K: ${{ secrets.ALPHA_API_KEY }}\n",
+        );
+        at("docs/adr-0023.md", "The product requires Alpha to run.\n");
+        let families = |found: &[ReasoningFinding]| -> Vec<String> {
+            found
+                .iter()
+                .filter(|f| HOME_ONLY.contains(&f.check.as_str()))
+                .map(|f| format!("{} {}", f.check, f.subject))
+                .collect()
+        };
+        assert_eq!(
+            families(&run(root.path(), &catalogue, &refs, &loaded)),
+            Vec::<String>::new(),
+            "an adopter is not judged on its own workflows and documents"
+        );
+        assert_eq!(applied(root.path()), ["catalogue", "records"]);
+
+        at(CATALOGUE_FILE, "version: 1\n");
+        let found = families(&run(root.path(), &catalogue, &refs, &loaded));
+        assert!(
+            found.contains(&"claims docs/adr-0023.md".to_string()),
+            "{found:?}"
+        );
+        assert!(
+            found.contains(&"ci .github/workflows/ci.yml".to_string()),
+            "{found:?}"
+        );
+        assert_eq!(applied(root.path()), CHECKS);
     }
 
     /// The anti-coupling proof for this crate: the shipped catalogue's names appear in no

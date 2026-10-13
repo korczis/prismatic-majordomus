@@ -25,4 +25,25 @@ evidence_required:
   - "adopter_reasoning_check_case"
   - "reproduce_hint_is_runnable_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-13T10:53:23Z
+started_at: 2026-10-13T10:52:49Z
+started_event: sha256:ecdd5b876c455a0b5a8cebd05e703947c48a812d037547325e46eb8c9d3e0e5e
+verified_at: 2026-10-13T10:53:00Z
+verified_event: sha256:02150cf8342d1fc84bd92188334bc536b6c5446d55648279b118052a401bdc7a
+completed_at: 2026-10-13T10:53:23Z
+completed_event: sha256:1c540eb7c641ff8120b422202609ffbf8e877f27a005825977d9ea3f5b04ad88
+evidence:
+  - covers: adopter_reasoning_check_case
+    type: test
+    command: "bash test/run.sh 2995_doctor_does_not_fail_an_adopter_on_our_own_check"
+    result: "ok: in an adopter fixture whose archived workflow names two model credentials and whose ADR says the product requires Ollama, reasoning check is clean and names the families that ran (catalogue, records) and doctor reports no reasoning failure; the same two files in the repository that authors the catalogue are refused by ci and claims"
+    artifact: "test/cases/2995_doctor_does_not_fail_an_adopter_on_our_own_check.sh"
+    commit: e506c041a44ca9e5853500e10452c648b19ca858
+    recorded_at: 2026-10-13T10:53:11Z
+  - covers: reproduce_hint_is_runnable_case
+    type: test
+    command: "bash test/run.sh 2995_doctor_does_not_fail_an_adopter_on_our_own_check"
+    result: "ok: doctor's output in the adopter fixture names bin/majordomus-cli nowhere, and its reasoning finding carries the hint 'majordomus reasoning check'"
+    artifact: "test/cases/2995_doctor_does_not_fail_an_adopter_on_our_own_check.sh"
+    commit: e506c041a44ca9e5853500e10452c648b19ca858
+    recorded_at: 2026-10-13T10:53:17Z

@@ -42,7 +42,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CapabilityKind, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::reasoning::availability::LinkedPeer;
-use crate::reasoning::check::{ReasoningFinding, CHECKS};
+use crate::reasoning::check::ReasoningFinding;
 use crate::reasoning::record::{ReasoningInput, ReasoningRecord, RECORD_SCHEMA, RECORD_VERSION};
 use crate::reasoning::state::{
     derive, explain, render_markdown, ReasoningExplanation, ReasoningState, ReasoningStep,
@@ -510,7 +510,8 @@ fn reasoning_explain(
 pub struct ReasoningCheck {
     /// No finding.
     pub ok: bool,
-    /// The checks performed, in order.
+    /// The checks performed here, in order: every family in the repository that authors
+    /// the advisor catalogue, and `catalogue` and `records` alone in any other.
     pub checks: Vec<String>,
     /// What they found.
     pub findings: Vec<ReasoningFinding>,
@@ -518,15 +519,16 @@ pub struct ReasoningCheck {
 
 fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, CapabilityError> {
     let s = setting(ctx)?;
-    let findings = crate::reasoning::check::run(
-        Path::new(&ctx.index.repository.root),
-        &s.catalogue,
-        &s.refs,
-        &s.loaded,
-    );
+    let root = Path::new(&ctx.index.repository.root);
+    let findings = crate::reasoning::check::run(root, &s.catalogue, &s.refs, &s.loaded);
     Ok(ReasoningCheck {
         ok: findings.is_empty(),
-        checks: CHECKS.iter().map(|c| c.to_string()).collect(),
+        // the families that hold in this repository: every one in the design's home, and
+        // only what an adopter adopted anywhere else
+        checks: crate::reasoning::check::applied(root)
+            .iter()
+            .map(|c| c.to_string())
+            .collect(),
         findings,
     })
 }
