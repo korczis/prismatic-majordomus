@@ -1,0 +1,52 @@
+id: I2558
+milestone: shell-shrinks-to-its-bootstrap
+title: "The lifecycle units leave lib: start, checkpoint, handover, evidence, finish and session are routed to their capabilities and their shell is deleted"
+slug: the-lifecycle-units-leave-lib
+priority: p2
+profile: deep-work
+parallel_safe: false
+objective: "Once the lifecycle transitions are capabilities, route bin/majordomus start, checkpoint, handover, evidence, finish and session to the executable with the same names, arguments, output and exit codes, and delete lib/start.sh, lib/checkpoint.sh, lib/handover.sh, lib/evidence.sh, lib/finish.sh and lib/session.sh together with their inventory records."
+why: "campaigns/majordomus-shellfall/05-remove-shell-legacy.md asks that the lifecycle handlers of bin/majordomus move to the Rust command graph with names, arguments and exit semantics preserved, that the old interface be routed to the new implementation and the old implementation then removed, and that no shell logic be left as a hidden process behind an API. The first half is planned: I1504, I1505 and I1506 of milestone development-runtime declare the transitions as capabilities. I1506 states that removing the shell tool is not its scope and that the shell stays as a front end that calls the capability. Without this issue the six files remain as a second implementation after their capabilities exist, which is the shadow the pack's definition of done forbids."
+current_state: "The six units are 2,340 lines (start 184, checkpoint 100, handover 174, evidence 480, finish 259, session 1,143). bin/majordomus sources lib/<command>.sh for 29 commands and execs the Rust executable only for a command it does not list. Each of the six has an exemption whose removal text is that a typed capability owns the behaviour and every caller asks it. The release archive ships lib beside the executable, and the pre-push hook and provider bootstrap call these commands by name."
+desired_state: "bin/majordomus no longer lists the six commands, so its existing fallback execs the executable for them; the six files and six records are gone; lib/common.sh keeps no function only they used. An installed release of the previous version upgraded to this one runs a task from start to finish with the same commands. What a shell case asserted about these commands is asserted against the routed command, unchanged."
+scope:
+  - "bin/majordomus"
+  - "lib/start.sh"
+  - "lib/checkpoint.sh"
+  - "lib/handover.sh"
+  - "lib/evidence.sh"
+  - "lib/finish.sh"
+  - "lib/session.sh"
+  - "lib/common.sh"
+  - "share/commands.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/04_start_check.sh"
+  - "test/cases/05_handover.sh"
+  - "test/cases/06_finish.sh"
+  - "docs/COMMANDS.md"
+  - ".ai/repo/project/issues/I2558.yaml"
+non_scope:
+  - "Declaring the capabilities, which is I1504, I1505 and I1506"
+  - "lib/session_context.sh (558 lines) and lib/context.sh: the compiled context is a separate body of work that I1506 also excludes"
+  - "The other 23 commands of the shell tool: each family leaves in an issue of its own when a capability owns it"
+  - "Removing bin/majordomus: it stays the launcher that finds or builds the executable"
+depends_on:
+  - "I1506"
+acceptance_criteria:
+  - "The six files do not exist and shell check passes with six fewer exempt units under lib than at the base"
+  - "Cases 04_start_check, 05_handover and 06_finish pass without an edit to what they assert"
+  - "For each of the six commands, a usage error exits 2, an unmet contract exits 10 and a refusal exits 15, as before, asserted by a case"
+  - "bin/majordomus <command> --help prints for each of the six, and completion offers them"
+  - "The install gate case passes: a release archive built from the head runs start, check and finish in a foreign repository"
+  - "git grep finds no caller that sources one of the six files"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 04_start_check 05_handover 06_finish 97_install_gate 1024_an_installed_release_serves_a_foreign_repository"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "lifecycle_units_removed"
+  - "exit_codes_preserved"
+  - "installed_release_runs_the_lifecycle"
+created_at: 2026-10-13
+updated_at: 2026-10-13

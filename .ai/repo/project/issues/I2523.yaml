@@ -1,0 +1,42 @@
+id: I2523
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "A node's key is computed from the bytes its producer reads, the index membership it enumerates and the generation of the executable"
+slug: a-node-key-covers-what-its-producer-reads
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give every node of the derivation graph a deterministic SHA-256 key over its identity, its operation version, its declared inputs as the producer actually reads them, the keys of the nodes it depends on and the generation of the executable, with a schema version of its own."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/03_03_HASHES_FINGERPRINT.md asks for length-framed content keys that honour both git index membership and working-tree bytes and never rely on modification time or on the HEAD tree alone. The repository already has both halves in separate places and neither per producer: apps/majordomus-cli/src/generation.rs frames path and content lengths into a SHA-256 over the crate's sources, and scripts/generate-site-data hashes one list of every input of the whole site. majordomus generate enumerates through the index (--discovery vcs) and reads working-tree bytes, which scripts/derive states as the reason it refuses untracked files, so a key over either alone would be wrong."
+current_state: "One fingerprint covers all of stage B and none covers a target of majordomus generate. A change to any input of the site moves the one hash; a change to an input of a single target moves nothing that can be read."
+desired_state: "derivation::key computes, for a node, a digest over a domain separator, the key schema version, the node id, the operation version, each input in canonical order as kind, path, presence and length-framed bytes, the dependency keys, and crate_generation of the tree. A missing file differs from an empty one, a rename moves the key, a path entering or leaving the index moves the key of a node that enumerates it, a symbolic link is hashed as a link and never followed outside the root, and an input kind the function cannot read makes the node always regenerate."
+scope:
+  - "apps/majordomus-cli/src/derivation/key.rs"
+  - "apps/majordomus-cli/src/derivation/mod.rs"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "apps/majordomus-cli/src/git"
+  - "apps/majordomus-cli/tests/derivation_key.rs"
+  - "apps/majordomus-cli/tests/properties.rs"
+  - ".ai/repo/project/issues/I2523.yaml"
+non_scope:
+  - "Changing the fingerprint committed in site/data/generated/source.json or any stamp a generated file carries; those are I1409's"
+  - "A new hash algorithm or a new cryptographic dependency; the crate already uses sha2"
+  - "Remembering keys by modification time or size"
+depends_on:
+  - "I2522"
+acceptance_criteria:
+  - "The key is equal for every permutation of the input declarations and of directory listing order"
+  - "Editing, renaming, deleting or staging a new file under a declared selector changes the key, and the same change to an undeclared path does not"
+  - "A missing declared file and an empty one give different keys"
+  - "A different crate generation or operation version changes every key that depends on it"
+  - "A symbolic link pointing outside the repository root is not read, and its node is reported as always regenerating"
+  - "For each node, the declared inputs contain every path the producer was observed to read in I2521"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::key"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_key"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc generation"
+evidence_required:
+  - "node_key_property_tests"
+  - "declared_inputs_cover_observed_reads"
+created_at: 2026-10-13
+updated_at: 2026-10-13

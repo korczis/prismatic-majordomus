@@ -1,0 +1,38 @@
+id: I2564
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "A link a reader points at has its readings taken before it is opened"
+slug: a-pointed-at-link-is-read-ahead
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Take the readings of a UI link when a reader points at it, focuses it or it has been visible while the page is idle, so that opening an inspector does not wait for a first reading."
+why: "campaigns/majordomus-ui-speed-pack/04-ROUTES-PRELOAD.md asks for safe prefetch on hover, focus and idle with a network and save-data budget and cancellation; 00-MASTER.md step 6 says it never prefetches a mutation. The background pass of I2486 walks SCREENS and PANELS only, which have no query, so an inspector (one issue, one claim, one rule, one mesh node) is read for the first time when it is opened, and a first reading is waited for whole."
+current_state: "share/ui/ui.js fetches a panel's fragment, refreshes the visible screen every 60 s and re-reads a screen that is catching up. It issues no request for a link. readings.rs starts one background pass over SCREENS and PANELS on the first reader."
+desired_state: "ui.js asks for a same-origin link under /ui with GET when the pointer rests on it, when it takes focus, or when it has been in the viewport while the page is idle: at most two requests at once, each aborted when the pointer leaves before it is sent, none when the browser reports Save-Data or a reduced-data preference, and none for a link already asked for in this page view. The request is the link's own address, so the server takes its readings and, after I2563, the later navigation is a conditional request. A link that is not under /ui, has a method other than GET, or carries data-no-read-ahead is never asked for."
+scope:
+  - "share/ui/ui.js"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2564.yaml"
+non_scope:
+  - "Navigation by the script: opening a link stays a page load, and every link works with scripts off"
+  - "Reading ahead any capability with an effect other than read"
+  - "A list of routes in the script: it reads the links the server drew"
+depends_on:
+  - I2563
+acceptance_criteria:
+  - "After the pointer rests on an inspector link, opening it finds the reading in the store: the handler ran once, before the navigation"
+  - "No more than two read-ahead requests are in flight, and none is sent with Save-Data on"
+  - "The script holds no route string: a scan of ui.js finds no path under /ui other than the ones the server wrote into the page"
+  - "With scripts off every link still opens its screen"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1091_no_link_on_the_ui_is_dead"
+evidence_required:
+  - "read_ahead_browser_probe"
+  - "read_ahead_request_cap_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

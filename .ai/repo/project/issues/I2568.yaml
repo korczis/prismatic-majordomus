@@ -1,0 +1,42 @@
+id: I2568
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "A move of the repository reads again only the sources that read what moved"
+slug: a-move-rereads-only-what-read-it
+priority: p2
+profile: deep-work
+parallel_safe: false
+objective: "Measure how many handler runs a move of the repository causes in the readings store and how many of them answer what they answered before, then let a source that reads nothing that moved keep its reading as current."
+why: "campaigns/majordomus-ui-speed-pack/00-MASTER.md says relevant source changes invalidate exactly the affected projection families and irrelevant changes remain hot, and 03-CACHE.md asks to prove that irrelevant changes do not invalidate. ADR 0142 chose the opposite on purpose for its first step: when the repository moves, every source read in the last five minutes is read again. A commit that changes one document therefore runs every remembered handler, the delivery panel's among them, which ADR 0142 measured at 75.7 s on a debug build."
+current_state: "capability/model.rs CachePolicy has Disabled, Process, Generation and Checkout. Generation keys an entry by the context, so a reload is a new key for every capability; Checkout fingerprints HEAD, the staging index, the refs and the changed paths. readings.rs marks every reading stale when the repository's stamp changes and queues each for one of four workers. No capability declares which part of the repository it reads."
+desired_state: "A recorded measurement states, for a day's worth of moves on this repository or a fixture that replays them, how many handler runs followed each move and how many returned a value equal to the one before. From it a decision is recorded: either a capability declares the families it reads (the index's kinds, the plan, git refs, the work tree, the forge observation, the clock) and a move that touches none of them leaves its reading current, or the measurement shows the saving is not worth a declaration that can be wrong and the issue closes with that record. If declared, an undeclared capability is read again on every move as today, and a test changes each family and asserts which readings ran."
+scope:
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/tests/executor.rs"
+  - ".ai/repo/adrs"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/project/issues/I2568.yaml"
+non_scope:
+  - "Answering execute from an entry of another state of the repository: project.cache-is-invisible stands"
+  - "A file watcher or a background thread that hashes the tree: live.rs refuses both and says why"
+  - "The derive, which has its own inputs and its own milestone"
+depends_on:
+  - I2567
+acceptance_criteria:
+  - "The measurement is recorded with the commit, the build profile and the command that produced it, and the decision cites it"
+  - "If families are declared: a commit that changes only a file outside every family a source declares does not run that source's handler, counted by handler_invocations"
+  - "If families are declared: a change inside a declared family runs the handler, and a capability with no declaration is read again on every move"
+  - "A reading kept as current across a move is byte-equal to what its handler answers after the move, for every declared capability, in a test that runs both"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test hot_path"
+evidence_required:
+  - "rereads_per_move_measurement"
+  - "scoped_rereading_decision_record"
+  - "kept_reading_equals_handler_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -220,7 +220,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `e31f5e4f3bb6330f` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `3a83709449781710` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `1278f3284573f59f` |
-| `docs/generated/graph.json` | `graph` | json | 3252774 | `9d4e6940c03cbce9` |
+| `docs/generated/graph.json` | `graph` | json | 3493016 | `78ec54c0153cc764` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `ca6e52d8ba7abc11` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `fbbeb575da2dc6d8` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `522dc38d83b7f8fb` |
@@ -343,9 +343,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `e51ee4cd1ca731b8` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `f7ab31437db1ca67` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 774397 | `bc986b944b84daaf` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 96179 | `199d572ec190d130` |
-| `site/data/registry/product.json` | `site-product` | json | 701835 | `fd54bba8c9f4443e` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6704574 | `7787dec0a6e9892e` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 96179 | `7512887e6012de1d` |
+| `site/data/registry/product.json` | `site-product` | json | 701835 | `7cc070ac7a5e940e` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6758237 | `abcdae2419e4ede3` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `e7a217dd9fc4ad92` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `3b0df99050f86958` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `f072a9800925fb06` |

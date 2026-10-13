@@ -1,0 +1,43 @@
+id: I2502
+milestone: started-work-is-explained-bounded-and-survives-a-restart
+title: "plan dispatch says which ready issue may start now, and why each other one may not"
+slug: plan-dispatch-explains-what-may-start
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add one read capability, plan.dispatch, that judges every ready issue against the live exclusive claims, the issues already started and a declared cap on open pull requests, and answers a deterministic decision per issue with the cause of each rejection."
+why: "campaigns/majordomus-autonomous-idd-maximal/10_SCHEDULER_WORKER_RUNTIME.md asks for a deterministic scheduling decision that names the selected issue, the rationale and the rejected candidates, rejects incompatible scopes and exclusive claims, favours draining the pull-request backlog over new work when it exceeds a policy cap, and offers an explanation without launching anything; campaigns/majordomus-autonomous-idd-maximal/02_ORCHESTRATOR_MESH.md asks for the same with bounded work in progress. The repository answers what is ready and, separately, who claims what; nothing joins the two, so a worker starts a ready issue and learns of the overlap afterwards from check --overlap, which only reports."
+current_state: "plan.next answers the first ready issue of the dependency graph (apps/majordomus-cli/src/plan.rs, next_ready), and apps/majordomus-cli/src/capability/builtin/plan.rs reads neither the peer board, the mesh claims nor the integration queue. Scope overlap inside one wave is a warning of plan validate. .ai/repo/policy.yaml declares no limit on open pull requests or on started issues."
+desired_state: "plan.dispatch is a Query with effect Read. For one snapshot of the plan, the gathered board, the mesh claims and the recorded forge observation it lists each ready issue as admitted or rejected, each rejection with a cause and the entity that caused it, in the canonical order. A policy key names the cap on open pull requests above which no issue is admitted; an absent key means no cap."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I2502.yaml"
+non_scope:
+  - "Starting, assigning or claiming anything: the capability reads, and plan.transition and mesh.claim stay the acts"
+  - "Choosing a worker or a provider: no adapter in the tree starts one"
+  - "Cost, token or time budgets, which the economics module measures and no policy caps yet"
+  - "Changing what plan.next answers"
+depends_on: []
+acceptance_criteria:
+  - "Two calls over one unchanged snapshot answer byte-identical output"
+  - "A ready issue whose scope overlaps a live exclusive claim is rejected with the cause, the claim and the checkout that holds it; an advisory claim is reported and does not reject"
+  - "A ready issue whose scope overlaps a started issue that is not parallel safe is rejected naming that issue"
+  - "With the cap declared and exceeded, every ready issue is rejected with the count and the cap, and with the key absent none is"
+  - "When the gathered board reports complete false, an issue that would otherwise be admitted reads unknown and names the checkout that could not be asked"
+  - "The capability declares effect Read and a test asserts that calling it appends nothing to the ledger"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test peer_claims"
+  - "majordomus generate --check"
+evidence_required:
+  - "dispatch_is_deterministic_and_explained"
+  - "incomplete_board_reads_unknown"
+created_at: 2026-10-13
+updated_at: 2026-10-13
