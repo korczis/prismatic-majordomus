@@ -300,7 +300,7 @@ ui_live() {
   published_model="$(git -C "$ROOT" show "$source_sha:.ai/repo/ci/pages.yaml" 2>/dev/null || true)"
   for other in $(printf '%s\n' "$declared" | awk -F '\t' '$1 != "" && $1 != "ui" { print $1 }'); do
     if [ -n "$published_model" ] \
-      && ! printf '%s\n' "$published_model" | grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+$other[[:space:]]*\$"; then
+      && ! printf '%s\n' "$published_model" | grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+${other}[[:space:]]*\$"; then
       ok "the published commit ${source_sha:0:12} declares no $other snapshot; the one this tree declares is owed by the next publication"
       continue
     fi
