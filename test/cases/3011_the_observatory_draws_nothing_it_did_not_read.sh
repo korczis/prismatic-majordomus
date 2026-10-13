@@ -7,7 +7,7 @@
 #                     state each answered in, and eight scenes
 #   /ui/kiosk         the same screen and the same projection as a preset, not a second
 #                     application
-#   /ui/screensaver   a permanent redirect to the Observatory, as is /ui/obsrvatory
+#   /ui/screensaver   a permanent redirect to the kiosk; /ui/obsrvatory one to the Observatory
 #   a scene           is available with a model, or unavailable with no model and the
 #                     reason its source gave; a scene whose source failed is never
 #                     available, so nothing is drawn that was not read
@@ -102,13 +102,16 @@ grep -qF 'data-observatory-mode="kiosk"' kiosk.html || { echo "    /ui/kiosk is 
 [ "$(jq -c '[.scenes[] | [.id, .available]]' kiosk.json)" = "$(jq -c '[.scenes[] | [.id, .available]]' obs.json)" ] \
   || { echo "    /ui/kiosk and /ui/observatory disagree about the scenes"; exit 1; }
 
-for alias in /ui/screensaver /ui/obsrvatory; do
-  out="$(curl -s --max-time 120 -o /dev/null -w '%{http_code} %{redirect_url}' "$U$alias")"
-  case "$out" in
-    "308 "*/ui/observatory) ;;
-    *) echo "    $alias answered '$out', expected 308 to /ui/observatory"; exit 1 ;;
-  esac
-done
+out="$(curl -s --max-time 120 -o /dev/null -w '%{http_code} %{redirect_url}' "$U/ui/screensaver")"
+case "$out" in
+  "308 "*/ui/kiosk) ;;
+  *) echo "    /ui/screensaver answered '$out', expected 308 to /ui/kiosk"; exit 1 ;;
+esac
+out="$(curl -s --max-time 120 -o /dev/null -w '%{http_code} %{redirect_url}' "$U/ui/obsrvatory")"
+case "$out" in
+  "308 "*/ui/observatory) ;;
+  *) echo "    /ui/obsrvatory answered '$out', expected 308 to /ui/observatory"; exit 1 ;;
+esac
 
 # the navigation of another screen leads to it
 [ "$(code /ui/knowledge nav.html)" = 200 ] || { echo "    /ui/knowledge did not answer 200"; exit 1; }

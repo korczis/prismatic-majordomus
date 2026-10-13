@@ -261,7 +261,8 @@ adds no capability:
 |---|---|
 | `/ui/observatory` | the screen, inside the application's frame |
 | `/ui/kiosk` | the same screen, projection and script, filling the window over the frame, for a display left running |
-| `/ui/screensaver`, `/ui/obsrvatory` | permanent redirects to `/ui/observatory` |
+| `/ui/screensaver` | a permanent redirect to `/ui/kiosk`, its better name |
+| `/ui/obsrvatory` | a permanent redirect to `/ui/observatory` |
 
 The scenes are one list, `SCENES` in `apps/majordomus-cli/src/ui/observatory.rs`. Each
 declares its label, the capabilities it requires, what its marks mean, the screen that shows

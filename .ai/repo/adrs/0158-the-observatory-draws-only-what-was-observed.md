@@ -58,8 +58,8 @@ implementations of it would disagree within a week.
 2. **One address, one preset, two redirects.** `/ui/observatory` is the screen.
    `/ui/kiosk` is the same screen, the same projection and the same script with the
    application's chrome removed; it differs by one attribute, never by a second
-   implementation. `/ui/screensaver` and `/ui/obsrvatory` answer a permanent redirect to
-   `/ui/observatory`.
+   implementation. `/ui/screensaver` answers a permanent redirect to `/ui/kiosk`, the name
+   that says what it is, and `/ui/obsrvatory` one to `/ui/observatory`.
 
 3. **One inventory of scenes.** The scenes are declared once, in the screen's module:
    identity, label, character, the capabilities each requires, what its marks mean, the
@@ -81,7 +81,10 @@ implementations of it would disagree within a week.
 6. **An event is projected by its identity, never its body.** What the Observatory takes
    from a mesh event is its stream and sequence, its kind, its node, its logical time and
    its wall time. Intents, paths and message bodies stay in the screens that are already
-   decided to show them.
+   decided to show them. The events are the journal's newest: `mesh.events` reads the journal
+   forward from a clock, so a reader of "what is happening" asks it with `newest`, an input
+   this decision added to the capability because the first page from the beginning was
+   what the mesh screen had been showing as the latest.
 
 7. **The status word is true.** The page says `LIVE` only when it was read again within a
    stated bound, `STALE` when it was not, and `SNAPSHOT` on the public site, where it reads

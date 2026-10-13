@@ -309,8 +309,8 @@ impl Ui {
         let ctx = reading.ctx;
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
-        // an earlier or mistyped name of the Observatory leads to it, query kept
-        if observatory::REDIRECTS.contains(&path) {
+        // an earlier or mistyped name leads to the route it meant, query kept
+        if let Some((_, target)) = observatory::REDIRECTS.iter().find(|(old, _)| *old == path) {
             let query = req
                 .query
                 .iter()
@@ -318,8 +318,8 @@ impl Ui {
                 .collect::<Vec<_>>()
                 .join("&");
             let to = match query.is_empty() {
-                true => observatory::ROUTE.to_string(),
-                false => format!("{}?{query}", observatory::ROUTE),
+                true => target.to_string(),
+                false => format!("{target}?{query}"),
             };
             return Response::new(308, "text/plain; charset=utf-8", format!("{to}\n"))
                 .with_header("Location", to);
@@ -448,7 +448,8 @@ mod tests {
     }
 
     /// The Observatory has one screen and three more names: the kiosk is the same screen told
-    /// to run unattended, and an earlier or mistyped name redirects with its query kept.
+    /// to run unattended, its earlier name redirects to it, and the misspelling to the screen,
+    /// each with its query kept.
     #[test]
     fn the_observatory_is_one_screen_under_its_names() {
         let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
@@ -462,16 +463,23 @@ mod tests {
         let kiosk = get(observatory::KIOSK);
         assert_eq!(kiosk.status, 200);
         assert!(text(&kiosk).contains("data-observatory-mode=\"kiosk\""));
-        for old in observatory::REDIRECTS {
+        for (old, target) in observatory::REDIRECTS {
             let r = get(&format!("{old}?scene=delivery"));
             assert_eq!(r.status, 308, "{old}");
             let to = r
                 .headers
                 .iter()
                 .find(|(k, _)| k == "Location")
-                .map(|(_, v)| v.as_str());
-            assert_eq!(to, Some("/ui/observatory?scene=delivery"), "{old}");
+                .map(|(_, v)| v.clone());
+            assert_eq!(to, Some(format!("{target}?scene=delivery")), "{old}");
         }
+        assert_eq!(
+            observatory::REDIRECTS,
+            &[
+                ("/ui/screensaver", "/ui/kiosk"),
+                ("/ui/obsrvatory", "/ui/observatory")
+            ]
+        );
     }
 
     /// The UI answers in-process exactly as it does over a socket: every screen and panel as

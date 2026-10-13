@@ -39,8 +39,9 @@ pub const ROUTE: &str = "/ui/observatory";
 /// to fill the display and rotate without a reader.
 pub const KIOSK: &str = "/ui/kiosk";
 
-/// Earlier and mistyped names of the route, each answered with a redirect to [`ROUTE`].
-pub const REDIRECTS: &[&str] = &["/ui/screensaver", "/ui/obsrvatory"];
+/// Earlier and mistyped names, each with the route it is answered with a redirect to: the
+/// screensaver is the kiosk under its earlier name, and the misspelling is the screen.
+pub const REDIRECTS: &[(&str, &str)] = &[("/ui/screensaver", KIOSK), ("/ui/obsrvatory", ROUTE)];
 
 /// The projection's schema word: what the script checks before it draws.
 pub const SCHEMA: &str = "observatory/v1";
