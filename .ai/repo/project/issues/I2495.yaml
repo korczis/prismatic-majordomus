@@ -46,4 +46,30 @@ evidence_required:
   - "cockpit_snapshot_cases_2981_2982"
   - "public_cockpit_verified"
 created_at: 2026-10-12
-updated_at: 2026-10-12
+updated_at: 2026-10-13T12:52:11Z
+started_at: 2026-10-13T12:51:02Z
+started_event: sha256:973877e19a18e6438a24a06f952ec555a8fa5ea32ebedf613e55e8fedf5e202b
+verified_at: 2026-10-13T12:51:17Z
+verified_event: sha256:badc5d79f88beea02bc656a173f6da95aea7c3867ee3c20aba42889c5a18b014
+completed_at: 2026-10-13T12:52:11Z
+completed_event: sha256:18755ed4e186b9ea84769fdab240052045776d1b1a5f9130010eba494681f6f7
+evidence:
+  - covers: cockpit_snapshot_unit_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib web::report::snapshot"
+    result: "test result: ok. 7 passed; 0 failed, on a tree equal to master 3442ce68c5; three of them are the Cockpit subject's"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:51:37Z
+  - covers: cockpit_snapshot_cases_2981_2982
+    type: test
+    command: "bash test/run.sh 2981_the_cockpit_snapshot_holds_its_routes 2982_two_snapshots_link_what_the_other_holds"
+    result: "ok 2981_the_cockpit_snapshot_holds_its_routes, ok 2982_two_snapshots_link_what_the_other_holds, on a tree equal to master 3442ce68c5"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:51:47Z
+  - covers: public_cockpit_verified
+    type: manual
+    command: "scripts/pages verify-ui --surface cockpit --url https://majordomus.dev --commit 3442ce68c56cb360117df24da8268006aa9814c7 --timeout 0"
+    result: "exit 0 at 2026-10-13T12:26Z, after pages run 38395021350: https://majordomus.dev/cockpit/ serves the Cockpit read at 3442ce68c56c: 256 of 1500 page(s) snapshot.json lists were asked for and 0 did not answer, 1244 not asked (--max-pages 256); the snapshot left out 1628 page(s), stopped by limit. The route answered 404 before that run"
+    artifact: "https://majordomus.dev/cockpit/snapshot.json"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:51:58Z
