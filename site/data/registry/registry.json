@@ -6,28 +6,28 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "87e4157287a7d0844879547c163f95393b0a511d0d79ed1e50b5f6a220e0efa7",
+    "fingerprint": "2197328d94958879e349cb64644c31edb46c84ae41ad6e591038aa1d051ec481",
     "summary": {
-      "total": 2299,
-      "builtin": 195,
+      "total": 2300,
+      "builtin": 196,
       "declarative": 2104,
       "by_kind": {
-        "command": 29,
+        "command": 30,
         "query": 166,
         "resource": 2104
       },
       "by_stability": {
-        "behaviorally_verified": 135,
+        "behaviorally_verified": 136,
         "experimental": 51,
         "implemented": 2113
       },
       "mcp_tools": 187,
       "mcp_resources": 2159,
       "http_routes": 191,
-      "cli_commands": 106,
+      "cli_commands": 107,
       "modules": 90,
       "benchmark_required": 166,
-      "benchmark_waived": 29,
+      "benchmark_waived": 30,
       "cached": 54
     },
     "builtin": [
@@ -11839,7 +11839,7 @@
         "module": "deploy",
         "kind": "query",
         "title": "What was deployed, and where",
-        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -71539,6 +71539,120 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs"
       },
       {
+        "id": "served.forge",
+        "module": "served",
+        "kind": "command",
+        "title": "Ask the forge what it recorded as deployed and released",
+        "description": "Asks the forge, through its own command-line tool and with the caller's credential, for the newest deployments to every environment and the newest releases, in one query, and records the answer in the checkout-local state `deploy.observed` reads. Exit 0 when the forge answered and the answer was recorded, 12 when it could not be asked (no tool, no credential, no network, a repository the forge does not know): what was recorded before then stands, with its age.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ForgeObserved",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "boolean",
+                "description": "Whether the forge answered and the answer was recorded."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, in the words of whatever refused; absent when it answered."
+              },
+              "repository": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`owner/name`, as the forge named the repository."
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the forge was asked, RFC 3339."
+              },
+              "deployments": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many deployments the answer held."
+              },
+              "releases": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many releases the answer held."
+              },
+              "environments": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many environments those deployments went to."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The exit status the command line reports: 0 observed, 12 not answered."
+              }
+            },
+            "required": [
+              "observed",
+              "deployments",
+              "releases",
+              "environments",
+              "exit_code"
+            ],
+            "description": "What `served.forge` came to: whether the forge answered, and what its answer held. The\nanswer itself is read through `deploy.observed`; this is the receipt of having asked.\n\n```\nuse majordomus_cli::capability::builtin::served::ForgeObserved;\n// a forge that could not be asked is said, with the reason, and is exit 12: not answered\nlet json = r#\"{\"observed\":false,\"reason\":\"gh repo view failed: no network\",\n  \"deployments\":0,\"releases\":0,\"environments\":0,\"exit_code\":12}\"#;\nlet got: ForgeObserved = serde_json::from_str(json).unwrap();\nassert!(!got.observed);\nassert_eq!(got.exit_code, 12);\nassert!(got.repository.is_none());\n```",
+            "title": "ForgeObserved"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::served"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "served",
+              "forge"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "evidence",
+          "forge"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
+      },
+      {
         "id": "served.observe",
         "module": "served",
         "kind": "command",
@@ -80973,8 +81087,9 @@
         "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
+          "served.forge",
           "served.observe",
           "served.show"
         ],
@@ -81170,7 +81285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d770afa6945689f57e72bbfafea9b5bde2cd031772dd9aa9bf90908f706802a2",
+    "fingerprint": "5948409a8458005bffe3a1ca77fee34b2ccb77976e2d4708e7fa3dbeb79f7021",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -85666,7 +85781,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/archive",
@@ -85676,7 +85791,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/bench",
@@ -85686,7 +85801,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/capture",
@@ -85696,7 +85811,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/check",
@@ -85706,7 +85821,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -85716,7 +85831,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/context",
@@ -85726,7 +85841,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/decision",
@@ -85736,7 +85851,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/doctor",
@@ -85746,7 +85861,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -85756,7 +85871,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/evidence",
@@ -85766,7 +85881,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/finish",
@@ -85776,7 +85891,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/handover",
@@ -85786,7 +85901,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/help",
@@ -85796,7 +85911,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/history",
@@ -85806,7 +85921,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/init",
@@ -85816,7 +85931,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -85826,7 +85941,7 @@
         "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/migrate",
@@ -85836,7 +85951,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/plan",
@@ -85846,7 +85961,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/prompt",
@@ -85856,7 +85971,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/question",
@@ -85866,7 +85981,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/recover",
@@ -85876,7 +85991,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/rules",
@@ -85886,7 +86001,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/search",
@@ -85896,7 +86011,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/session",
@@ -85906,7 +86021,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/skills",
@@ -85916,7 +86031,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/start",
@@ -85926,7 +86041,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/update",
@@ -85936,7 +86051,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/usecase",
@@ -85946,7 +86061,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/version",
@@ -85956,7 +86071,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://command/watch",
@@ -85966,7 +86081,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 33104
+        "bytes": 33106
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -87042,7 +87157,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 23534
+        "bytes": 23529
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -90190,7 +90305,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 97239
+        "bytes": 97764
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -90238,7 +90353,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 83929
+        "bytes": 83906
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -90294,7 +90409,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 14652
+        "bytes": 14644
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -99891,7 +100006,7 @@
         "identity": "test/cases/1077_ci_timings_are_measured.sh",
         "path": "test/cases/1077_ci_timings_are_measured.sh",
         "source_class": "case",
-        "bytes": 5485
+        "bytes": 5915
       },
       {
         "uri": "majordomus://test/test/cases/1078_a_pull_request_shows_its_trail.sh",
@@ -100052,14 +100167,6 @@
         "path": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "source_class": "case",
         "bytes": 4294
-      },
-      {
-        "uri": "majordomus://test/test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "kind": "test",
-        "identity": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "path": "test/cases/1096_the_published_ui_is_the_trunks.sh",
-        "source_class": "case",
-        "bytes": 19251
       },
       {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
@@ -100379,7 +100486,7 @@
         "identity": "test/cases/139_release_record_schema.sh",
         "path": "test/cases/139_release_record_schema.sh",
         "source_class": "case",
-        "bytes": 6457
+        "bytes": 6500
       },
       {
         "uri": "majordomus://test/test/cases/13_region_projection.sh",
@@ -100828,6 +100935,14 @@
         "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
         "source_class": "case",
         "bytes": 17378
+      },
+      {
+        "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "kind": "test",
+        "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
+        "source_class": "case",
+        "bytes": 19251
       },
       {
         "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
@@ -128885,6 +129000,118 @@
             "path": [
               "majordomus",
               "served",
+              "forge"
+            ],
+            "route": "/docs/cli/served/forge/",
+            "executable": true,
+            "usage": "majordomus served forge [OPTIONS]",
+            "about": "Ask the forge which deployments and releases it recorded, and keep the answer for the readers",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "served-forge-unknown-repository",
+                "title": "A forge that cannot be asked is said, and what was recorded before stands",
+                "description": "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+                "argv": [
+                  "served",
+                  "forge"
+                ],
+                "command": "majordomus served forge",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "served",
               "show"
             ],
             "route": "/docs/cli/served/show/",
@@ -136048,7 +136275,7 @@
         "name": "majordomus_deployments_observed",
         "id": "deploy.observed",
         "title": "What was deployed, and where",
-        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus prs refresh` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
+        "description": "Every deployment the forge recorded, to every environment it has one in — GitHub Pages among them — with the commit, the ref, who created it, how it ended, where it is served and the run that did it; every environment described by its newest deployment; and every release the forge published. Read from the record `majordomus served forge` wrote when it last asked the forge: nothing here reaches the network, and a checkout that has never asked answers `observed: false` with what to run.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -151058,6 +151285,14 @@
           "cases": 1
         },
         {
+          "subject": "served.forge",
+          "module": "served",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "served.observe",
           "module": "served",
           "transport": "direct",
@@ -151628,10 +151863,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 195,
+          "required": 196,
           "covered": 166,
           "missing": 0,
-          "waived": 29,
+          "waived": 30,
           "inapplicable": 0
         },
         "http": {
@@ -151656,10 +151891,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 587,
+          "required": 588,
           "covered": 508,
           "missing": 0,
-          "waived": 79,
+          "waived": 80,
           "inapplicable": 0
         }
       }
