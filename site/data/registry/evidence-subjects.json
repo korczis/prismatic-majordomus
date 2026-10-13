@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.23.0"
+    "version": "0.24.1"
   },
   "route": "/evidence/",
   "kinds": [
@@ -14726,6 +14726,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3004_evolve_is_a_procedure_of_existing_commands",
+          "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
           "category": "e2e"
@@ -16812,6 +16818,12 @@
           "via": "behaviour",
           "test": "suite:284_a_record_reads_the_whole_declaration",
           "path": "test/cases/284_a_record_reads_the_whole_declaration.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
           "category": "e2e"
         },
         {
@@ -21942,6 +21954,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/02_doctor_basic.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2985_session_records_are_capped_and_archived.sh",
             ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
           ]
         }
