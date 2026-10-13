@@ -392,6 +392,7 @@ what it announced, before its first tool call.
 | tool | capability | arguments | answers |
 |---|---|---|---|
 | `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
+| `majordomus_board` | `peers.board` | `checkouts?` | the board whole: every worker with its checkout, branch and standing; every claim of every worker, newest first; every path named, with its holders and whether two workers hold it; every pair of claims that meet, both sides named; the exclusive claims the mesh holds, each with the board claims announced under it; the checkouts covered, read or not; and the counts of all of these |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 An announcement is one line of intent and the repository-relative paths the peer expects
@@ -400,6 +401,32 @@ to touch. The board lives in the server's memory and is gone with the process;
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.
+
+### The board, whole
+
+`peers.list` answers the peers and one list of overlaps, and every reader derived the rest
+for itself: the Cockpit drew each worker's latest claim, the dashboard counted overlaps, and
+nothing said who holds a path. `peers.board` (`GET /api/v1/peers/board`, `majordomus_board`)
+is the one place it is derived. It stores nothing and is computed on every read from the
+same gather:
+
+- **workers**: every peer of every checkout under the key `<checkout id>/<peer id>`, because
+  `p1` is the first session of every board;
+- **claims**: every claim of every worker, not only the latest, newest first, each with the
+  claims of other workers it meets;
+- **paths**: every path somebody named, with the claims and workers that name it, contested
+  when a second worker holds it by the same path or by one above or below it;
+- **collisions**: every pair of claims of two different workers whose scope meets, once, the
+  earlier first, with the paths they meet on and whether both workers are still attached;
+- **exclusive**: the exclusive claims the mesh holds now, each with the board claims
+  announced under it; `mesh` is false with `mesh_reason` when the mesh is not active;
+- **checkouts** and **complete**: as `peers.list` answers them, so a short board is never
+  mistaken for an empty repository;
+- **counts**: each the length of a list in the same answer.
+
+A worker's key is a position in this answer, not an identity across time: a peer id is
+handed out again after a reconnect, and the checkout is the durable half. The screen
+`/ui/board` draws the answer ([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md)).
 
 ### The board is the repository's (ADR 0044)
 

@@ -36,6 +36,7 @@
 //! assert_ne!(PREFIX, majordomus_cli::cockpit::PREFIX, "the Cockpit is another surface");
 //! ```
 
+pub(crate) mod board;
 pub(crate) mod capabilities;
 pub(crate) mod claim;
 pub(crate) mod command;
@@ -160,6 +161,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Mesh",
         icon: "nodes",
         answers: "Which machines and runtimes are on the mesh, and what they recorded.",
+    },
+    Screen {
+        route: board::ROUTE,
+        title: "Board",
+        icon: "users",
+        answers: "Who is working here, on what, and where two workers' claims meet.",
     },
     Screen {
         route: delivery::ROUTE,
@@ -302,6 +309,7 @@ impl Ui {
             issues::ROUTE => issues::screen(&ctx, &req.query),
             prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
+            board::ROUTE => board::screen(&ctx),
             delivery::ROUTE => delivery::screen(&ctx),
             deployments::ROUTE => deployments::screen(&ctx),
             command::ROUTE => command::screen(&ctx, &req.query),
@@ -493,6 +501,7 @@ mod tests {
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
+            (board::ROUTE, board::screen(&ctx)),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (
                 evidence::ROUTE,
