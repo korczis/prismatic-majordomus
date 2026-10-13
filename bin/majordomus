@@ -117,6 +117,20 @@ mj_rust_command() {
   local doc="$MJ_BIN_DIR/../docs/generated/cli.yaml" shipped="$MJ_BIN_DIR/../libexec/majordomus-cli"
   [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 1
   case "$1" in ''|-*|help) return 1 ;; esac
+  # asked about a subcommand: `mj_rust_command evidence record`
+  if [ $# -ge 2 ]; then
+    case "$2" in ''|-*|help) return 1 ;; esac
+    if [ ! -f "$doc" ]; then
+      [ -x "$shipped" ] || return 1
+      "$shipped" help "$1" "$2" >/dev/null 2>&1
+      return
+    fi
+    # a here-string and one awk, never `| grep -q`: a reader that leaves at the first match
+    # closes the pipe on the writer behind it
+    awk -F '\t' -v want="$2" '$1 == want { found = 1 } END { if (found) exit 0; exit 1 }' \
+      <<<"$(mj_rust_subcommands "$1")"
+    return
+  fi
   if [ ! -f "$doc" ]; then
     [ -x "$shipped" ] || return 1
     "$shipped" help "$1" >/dev/null 2>&1
@@ -139,6 +153,101 @@ mj_rust_command() {
   ' "$doc"
 }
 
+# mj_rust_subcommands <command>
+#
+# The subcommands the executable has under one of its commands, as "<word><TAB><what it
+# does>", one per line and in the executable's own order. Read from the same two sources as
+# above and for the same reasons: the tracked projection of the clap declaration in a
+# checkout, the shipped executable's own `help <command>` in an installed tree. Nothing when
+# neither is there. `help` is clap's and is never listed.
+#
+# Two readers share it, so that neither keeps a list: the dispatch below asks whether a word
+# is one of them, and `majordomus evidence --help` prints them beside its own options.
+mj_rust_subcommands() {
+  local doc="$MJ_BIN_DIR/../docs/generated/cli.yaml" shipped="$MJ_BIN_DIR/../libexec/majordomus-cli"
+  if [ -f "$doc" ]; then
+    # A top-level item opens with `    - path:` and its elements sit eight columns in; the
+    # subcommands directly under it open with `        - path:`, their elements twelve
+    # columns in and their `about:` ten. A subcommand of a subcommand is indented further
+    # again and matches none of these.
+    awk -v want="$1" '
+      /^    - path:$/ { intop = 1; n = 0; mine = 0; insub = 0; next }
+      intop && /^        - / {
+        n += 1
+        if (n == 2) { v = $0; sub(/^ *- */, "", v); mine = (v == want) }
+        next
+      }
+      { intop = 0 }
+      !mine { next }
+      /^        - path:$/ { insub = 1; m = 0; name = ""; next }
+      insub && /^            - / {
+        m += 1
+        if (m == 3) { name = $0; sub(/^ *- */, "", name) }
+        next
+      }
+      { insub = 0 }
+      /^          about: / && name != "" {
+        about = $0; sub(/^ *about: */, "", about)
+        if (about ~ /^".*"$/) { about = substr(about, 2, length(about) - 2); gsub(/\\"/, "\"", about) }
+        printf "%s\t%s\n", name, about
+        name = ""
+      }
+    ' "$doc"
+    return 0
+  fi
+  [ -x "$shipped" ] || return 0
+  # clap prints them as a block: `Commands:`, one indented line each, a blank line after
+  "$shipped" help "$1" 2>/dev/null | awk '
+    /^Commands:$/ { on = 1; next }
+    on && !/^  [a-z]/ { on = 0 }
+    on {
+      name = $1; if (name == "help") next
+      about = $0; sub(/^ *[^ ]+ */, "", about)
+      printf "%s\t%s\n", name, about
+    }
+  ' || true
+  return 0
+}
+
+# mj_words_are_the_executables <shell-command>
+#
+# Is this one of the shell commands that takes no word of its own? Every argument such a
+# command understands is an option, so a word in the first position cannot be meant for it:
+# it is a subcommand the other program has under the same name, or it is a mistake. For a
+# command that takes words (`plan start`, `adr next`) both programs may answer the same
+# word, and which one a person means is not a question a launcher can settle, so those are
+# never handed over.
+#
+# `evidence` is the one. The shell tool records what a task owes (`--covers`, `--gate`);
+# the executable holds the ledger of what ran (`show`, `record`, `stamp`, ...). The pages
+# name `majordomus evidence record`, and a person with an installed tool has only
+# `majordomus` on PATH: the launcher used to hand the word to the option parser, which
+# answered `evidence: unknown option record`. Which words are the executable's is still
+# read, never listed (mj_rust_subcommands).
+mj_words_are_the_executables() {
+  case "$1" in evidence) return 0 ;; esac
+  return 1
+}
+
+# mj_first_word <arguments after the command>
+#
+# The first argument that is not one of this tool's global options, into MJ_FIRST_WORD:
+# `majordomus evidence --repo <path> show` names the same subcommand as
+# `majordomus --repo <path> evidence show`. Set, not printed, so that the launcher spends no
+# subshell on it.
+MJ_FIRST_WORD=""
+mj_first_word() {
+  MJ_FIRST_WORD=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --repo) shift; if [ $# -gt 0 ]; then shift; fi ;;
+      --repo=*|--json) shift ;;
+      *) MJ_FIRST_WORD="$1"; return 0 ;;
+    esac
+  done
+  return 0
+}
+
 # global options may precede the command
 pre=()
 while [ $# -gt 0 ]; do
@@ -151,6 +260,7 @@ done
 cmd="$1"; shift
 # arguments that followed the command, before the global options are merged back in
 nargs=$#
+mj_first_word "$@"
 set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
@@ -160,6 +270,12 @@ case "$cmd" in
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
   init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence|archive)
+    # a word this command does not take, which the other program has under the same name:
+    # that program's, arguments unchanged, as for a command that is wholly its own
+    if mj_words_are_the_executables "$cmd" && [ -n "$MJ_FIRST_WORD" ] \
+      && mj_rust_command "$cmd" "$MJ_FIRST_WORD"; then
+      exec "$MJ_BIN_DIR/majordomus-cli" "$cmd" "$@"
+    fi
     mj_parse_global_opts "$@"
     # after the dispatch and not before it: a command handed to the other program is an
     # exec, and an exec runs no exit trap to remove the root
