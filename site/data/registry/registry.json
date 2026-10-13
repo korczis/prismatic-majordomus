@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "30fb53572cc7e5d3384104c61c87013f9888dea22efe6d19c335d42c96a5613c",
+    "fingerprint": "2f79c634bde9860a314548e76ba6f3da1fc61847c28527f4e6ee7bed7139983e",
     "summary": {
-      "total": 2315,
+      "total": 2317,
       "builtin": 196,
-      "declarative": 2119,
+      "declarative": 2121,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2119
+        "resource": 2121
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2128
+        "implemented": 2130
       },
       "mcp_tools": 187,
-      "mcp_resources": 2174,
+      "mcp_resources": 2176,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80643,7 +80643,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 340,
+        "capabilities": 341,
         "capability_ids": []
       },
       {
@@ -81195,7 +81195,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 462,
+        "capabilities": 463,
         "capability_ids": []
       },
       {
@@ -81285,7 +81285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "48863605edd5ba19392368bf4b9c9bcbc560decd032b5db2947b908cc4db9152",
+    "fingerprint": "26331743ac1c644a9e92f6f747e6bed40c0c2cdb5e1cf100f8b69bd7e35b7cdd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81325,7 +81325,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 340,
+      "issue": 341,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81339,7 +81339,7 @@
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 462,
+      "test": 463,
       "use-case": 49,
       "workspace": 1
     },
@@ -86173,7 +86173,7 @@
         "description": "Per-platform baselines for the Rust executable's commands, with the policy that decides a regression.",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "source_class": "context",
-        "bytes": 1090
+        "bytes": 1468
       },
       {
         "uri": "majordomus://context/ai.repo.ci",
@@ -87157,7 +87157,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 23529
+        "bytes": 24521
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87247,7 +87247,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 231387
+        "bytes": 231593
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94349,6 +94349,17 @@
         "bytes": 2915
       },
       {
+        "uri": "majordomus://issue/I2485",
+        "kind": "issue",
+        "identity": "I2485",
+        "title": "The bench measures the first request after the repository moved, and a budget bounds it",
+        "description": "Measure what a reader pays on the first request after the repository changed, as a benchmark target of its own, so that the budget of I2489 covers the case ADR 0142 was written for and not only the warm one.",
+        "path": ".ai/repo/project/issues/I2485.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2343
+      },
+      {
         "uri": "majordomus://issue/I2486",
         "kind": "issue",
         "identity": "I2486",
@@ -94385,12 +94396,12 @@
         "uri": "majordomus://issue/I2489",
         "kind": "issue",
         "identity": "I2489",
-        "title": "A screen over its budget fails the build: the UI's latency budgets are policy, measured by the bench",
-        "description": "Make the owner's UI-performance budgets something CI enforces: the budgets are keys of the policy, the bench measures every screen and panel against them on the build CI makes, and a screen over its budget, or one that reads a source without asking for a reading, fails.",
+        "title": "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them",
+        "description": "Make the owner's UI latency budget something CI enforces: the benchmark policy declares absolute bounds, bench --check holds them with or without a baseline and on every host, and the ui job runs that check on every change that can slow a screen.",
         "path": ".ai/repo/project/issues/I2489.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2840
+        "bytes": 3851
       },
       {
         "uri": "majordomus://issue/I2491",
@@ -100341,6 +100352,14 @@
         "bytes": 17022
       },
       {
+        "uri": "majordomus://test/test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "kind": "test",
+        "identity": "test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "path": "test/cases/1099_a_screen_over_its_budget_fails.sh",
+        "source_class": "case",
+        "bytes": 3117
+      },
+      {
         "uri": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "identity": "test/cases/109_design_system.sh",
@@ -104215,7 +104234,7 @@
       "identity": [
         "id"
       ],
-      "objects": 340
+      "objects": 341
     },
     {
       "name": "knowledge",
@@ -104367,7 +104386,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 462
+      "objects": 463
     },
     {
       "name": "use-case",
@@ -152233,7 +152252,23 @@
             "minimum_samples": 200
           }
         }
-      }
+      },
+      "budgets": [
+        {
+          "prefix": "system.http.ui.",
+          "cache": "warm",
+          "metric": "p95",
+          "microseconds": 100000.0,
+          "minimum_samples": 20
+        },
+        {
+          "prefix": "system.http.live.ui.",
+          "cache": "warm",
+          "metric": "p95",
+          "microseconds": 100000.0,
+          "minimum_samples": 20
+        }
+      ]
     },
     "policy_path": ".ai/repo/benchmarks/rust/policy.yaml",
     "baselines": [
