@@ -31031,6 +31031,8 @@
             "init, version and help in the same repository exit 0",
             "The shell tool and the Rust executable exit with the same code for the same missing layer"
           ],
+          "completed_at": "2026-10-13T00:19:10Z",
+          "completed_event": "sha256:636edb3b99c4b2dbd528d94e0cf1377a0b34f2134cd55ab57419102d89772fe4",
           "created_at": "2026-10-08",
           "current_state": "The shell tool's read-only commands print the missing-manifest line and exit 0 outside a supervised repository.",
           "desired_state": "Outside a supervised repository every command that reports on the layer exits 12 with the line it prints today. Commands whose purpose is to work there — init, version, help — are unchanged.",
@@ -31048,11 +31050,15 @@
             "test/cases"
           ],
           "slug": "a-health-command-in-an-unsupervised-repository-does-not-exit-0",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-13T00:18:57Z",
+          "started_event": "sha256:3fc48c1526cfd604e628f870aedb22d961bf8a612b8fc419a2b61822cf3c4657",
+          "updated_at": "2026-10-13T00:19:10Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-13T00:19:02Z",
+          "verified_event": "sha256:bdee89adb4d542ef626a4cc0e697d26e5cb743fdfecc919d2d3af526c4b58151"
         }
       },
       {
@@ -48830,6 +48836,13 @@
         "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
         "route": "/cockpit/objects/test/test-cases-2979-a-personal-layer-changes-nothing-shared-sh",
         "source": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2989_an_unsupervised_repository_exits_12.sh",
+        "kind": "test",
+        "label": "test/cases/2989_an_unsupervised_repository_exits_12.sh",
+        "route": "/cockpit/objects/test/test-cases-2989-an-unsupervised-repository-exits-12-sh",
+        "source": "test/cases/2989_an_unsupervised_repository_exits_12.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -77699,6 +77712,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2989_an_unsupervised_repository_exits_12.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82995,8 +83013,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2704,
-      "edges": 5932,
+      "nodes": 2705,
+      "edges": 5933,
       "acyclic": false,
       "truncated": false
     }
