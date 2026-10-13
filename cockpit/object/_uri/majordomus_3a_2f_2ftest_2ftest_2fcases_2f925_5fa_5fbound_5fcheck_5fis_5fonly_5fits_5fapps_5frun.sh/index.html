@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/925_a_bound_check_is_only_its_apps_run.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/925_a_bound_check_is_only_its_apps_run.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/925_a_bound_check_is_only_its_apps_run.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/925_a_bound_check_is_only_its_apps_run.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/925_a_bound_check_is_only_its_apps_run.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F925_a_bound_check_is_only_its_apps_run.sh">test.test/cases/925_a_bound_check_is_only_its_apps_run.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: none
+# A required check the base binds to an app is only that app&#39;s check run: another app&#39;s check
+# run of the name neither passes it nor overrides the bound app&#39;s failure, and what is not
+# ready is never merged (ADR 0101; rule project.integration-follows-the-current-master).
+# Through the real command line against a scripted forge and a local bare origin, as cases 850
+# and 857 do. The protection is the live shape, `ci` bound to app 15368, and the forge lists
+# three pull requests that contain master. `gh pr list` names no app on any check run, so who
+# wrote each is known only from the writers read (`gh api graphql`), which the scripted forge
+# answers only when it is called with exactly the arguments the adapter documents.
+#
+#   1. the first observation. #1: `ci` passed, written by app 15368: ready, the next merge,
+#      its evidence `ci (app 15368): passed`. #2: `ci` FAILED from app 15368, then a newer
+#      `ci` PASSED from app 99: needs_repair with required_check_failed, the foreign pass
+#      overrides nothing. #3: only app 99&#39;s passing `ci`: waiting_for_checks, its required
+#      checks missing, because another app&#39;s run is not the check.
+#   2. the writers were read as the adapter reads them: one page for each observation of the
+#      open pull requests, owner and name as strings (`-f`), only the page size typed (`-F`),
+#      and never the per-pull-request form, since no rollup was truncated.
+#   3. `prs drain --max 3` merges #1 only: the forge&#39;s log holds one `pr merge 1`, pinned to
+#      its head, none for #2 or #3, no --admin, and master contains #1&#39;s head alone.
+#   4. nothing was asked of the forge that this harness does not answer.
+. &quot;$ROOT/test/lib.sh&quot;
+command -v jq &gt;/dev/null 2&gt;&amp;1 || skip &quot;jq is not installed&quot;
+RB=&quot;$(rust_bin)&quot; || rust_bin_exit $?
+
+gitq() { git -c user.email=t@example.com -c user.name=t &quot;$@&quot;; }
+ORIGIN=&quot;$T/../origin-925.git&quot;; W=&quot;$T/../work-925&quot;; STATE=&quot;$T/../forge-925&quot;; BIN=&quot;$T/../bin-925&quot;
+rm -rf &quot;$ORIGIN&quot; &quot;$W&quot; &quot;$STATE&quot; &quot;$BIN&quot;; mkdir -p &quot;$STATE&quot; &quot;$BIN&quot;
+gitq init -q --bare -b master &quot;$ORIGIN&quot;
+gitq clone -q &quot;$ORIGIN&quot; &quot;$W&quot; 2&gt;/dev/null
+# the person&#39;s identity, in the clone: the executor merges and commits here, and a machine
+# with none configured (a CI runner) must not decide the outcome
+git -C &quot;$W&quot; config user.email t@example.com; git -C &quot;$W&quot; config user.name t
+cd &quot;$W&quot; || exit 1
+echo base &gt; a.txt; gitq add a.txt; gitq commit -qm base; gitq push -q origin HEAD:master
+M0=&quot;$(git rev-parse HEAD)&quot;
+for n in 1 2 3; do
+  gitq checkout -q -b &quot;feature/$n&quot; &quot;$M0&quot;; echo &quot;$n&quot; &gt; &quot;$n.txt&quot;; gitq add &quot;$n.txt&quot;; gitq commit -qm &quot;$n&quot;
+  gitq push -q origin &quot;HEAD:refs/heads/feature/$n&quot; &quot;HEAD:refs/pull/$n/head&quot;
+done
+H1=&quot;$(git rev-parse feature/1)&quot;; H2=&quot;$(git rev-parse feature/2)&quot;; H3=&quot;$(git rev-parse feature/3)&quot;
+gitq checkout -q master
+&quot;$MJ&quot; init &gt;&quot;$STATE/init.log&quot; 2&gt;&amp;1 || { echo &quot;    majordomus init failed in the scratch clone:&quot;; tail -5 &quot;$STATE/init.log&quot;; exit 1; }
+
+# the checks, as `gh pr list` projects them: a check run names no app there
+run() {   # &lt;conclusion&gt; &lt;started&gt; &lt;completed&gt;
+  printf &#39;{&quot;__typename&quot;:&quot;CheckRun&quot;,&quot;name&quot;:&quot;ci&quot;,&quot;status&quot;:&quot;COMPLETED&quot;,&quot;conclusion&quot;:&quot;%s&quot;,&quot;startedAt&quot;:&quot;%s&quot;,&quot;completedAt&quot;:&quot;%s&quot;}&#39; &quot;$1&quot; &quot;$2&quot; &quot;$3&quot;
+}
+passed=&quot;$(run SUCCESS 2026-09-01T00:00:00Z 2026-09-01T00:05:00Z)&quot;
+failed=&quot;$(run FAILURE 2026-09-01T00:00:00Z 2026-09-01T00:05:00Z)&quot;
+later=&quot;$(run SUCCESS 2026-09-01T00:08:00Z 2026-09-01T00:09:00Z)&quot;
+# and as the GraphQL rollup answers them: the same entry, with the app of its suite
+by() {   # &lt;entry&gt; &lt;app&gt;
+  printf &#39;%s,&quot;checkSuite&quot;:{&quot;app&quot;:{&quot;databaseId&quot;:%s}}}&#39; &quot;${1%\}}&quot; &quot;$2&quot;
+}
+listed() {   # &lt;number&gt; &lt;head&gt; &lt;rollup entries&gt;
+  printf &#39;{&quot;number&quot;:%s,&quot;title&quot;:&quot;change %s&quot;,&quot;author&quot;:{&quot;login&quot;:&quot;someone&quot;},&quot;headRefName&quot;:&quot;feature/%s&quot;,&quot;headRefOid&quot;:&quot;%s&quot;,&quot;baseRefName&quot;:&quot;master&quot;,&quot;isDraft&quot;:false,&quot;labels&quot;:[],&quot;createdAt&quot;:&quot;2026-09-0%sT00:00:00Z&quot;,&quot;updatedAt&quot;:&quot;2026-09-0%sT00:00:00Z&quot;,&quot;body&quot;:&quot;&quot;,&quot;statusCheckRollup&quot;:[%s],&quot;reviewDecision&quot;:&quot;&quot;,&quot;latestReviews&quot;:[],&quot;reviewRequests&quot;:[],&quot;autoMergeRequest&quot;:null,&quot;isCrossRepository&quot;:false}&#39; \
+    &quot;$1&quot; &quot;$1&quot; &quot;$1&quot; &quot;$2&quot; &quot;$1&quot; &quot;$1&quot; &quot;$3&quot;
+}
+written() {   # &lt;number&gt; &lt;head&gt; &lt;contexts&gt;
+  printf &#39;{&quot;number&quot;:%s,&quot;headRefOid&quot;:&quot;%s&quot;,&quot;statusCheckRollup&quot;:{&quot;contexts&quot;:{&quot;pageInfo&quot;:{&quot;hasNextPage&quot;:false,&quot;endCursor&quot;:null},&quot;nodes&quot;:[%s]}}}&#39; \
+    &quot;$1&quot; &quot;$2&quot; &quot;$3&quot;
+}
+# #1: the bound app&#39;s pass. #2: the bound app&#39;s failure, then app 99&#39;s newer pass. #3: app 99&#39;s
+# pass alone. One file per pull request for each read, so a merged one stops being listed.
+listed 1 &quot;$H1&quot; &quot;$passed&quot; &gt; &quot;$STATE/pr-1.json&quot;
+listed 2 &quot;$H2&quot; &quot;$failed,$later&quot; &gt; &quot;$STATE/pr-2.json&quot;
+listed 3 &quot;$H3&quot; &quot;$passed&quot; &gt; &quot;$STATE/pr-3.json&quot;
+written 1 &quot;$H1&quot; &quot;$(by &quot;$passed&quot; 15368)&quot; &gt; &quot;$STATE/w-1.json&quot;
+written 2 &quot;$H2&quot; &quot;$(by &quot;$failed&quot; 15368),$(by &quot;$later&quot; 99)&quot; &gt; &quot;$STATE/w-2.json&quot;
+written 3 &quot;$H3&quot; &quot;$(by &quot;$passed&quot; 99)&quot; &gt; &quot;$STATE/w-3.json&quot;
+for f in &quot;$STATE&quot;/pr-?.json &quot;$STATE&quot;/w-?.json; do
+  jq -e . &quot;$f&quot; &gt;/dev/null || { echo &quot;    the fixture $f is not JSON&quot;; exit 1; }
+done
+# the query the adapter sends (forge.rs WRITERS_QUERY), one line: the forge answers no other
+cat &gt; &quot;$STATE/query&quot; &lt;&lt;&#39;Q&#39;
+query($owner:String!,$name:String!,$n:Int!,$after:String){repository(owner:$owner,name:$name){pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){pageInfo{hasNextPage endCursor}nodes{number headRefOid statusCheckRollup{contexts(first:100){pageInfo{hasNextPage endCursor}nodes{__typename ...on CheckRun{name status conclusion startedAt completedAt checkSuite{app{databaseId}}}...on StatusContext{context state startedAt:createdAt}}}}}}}}
+Q
+
+# the forge. The open list and the writers page answer the pull requests not yet merged,
+# newest first, as GitHub does; the writers page is answered only for the exact argv of the
+# page read (ten entries, no cursor), anything else is UNEXPECTED. The declarations read every
+# observation makes (ADR 0101 §6, D4) is answered from the same list: each open pull request
+# an owner&#39;s, a branch of this repository, mentioned by none
+cat &gt; &quot;$BIN/gh&quot; &lt;&lt;EOF
+#!/bin/sh
+echo &quot;\$*&quot; &gt;&gt; &quot;$STATE/log&quot;
+case &quot; \$* &quot; in *&quot; --admin &quot;*) echo &quot;ADMIN&quot; &gt;&gt; &quot;$STATE/log&quot;; exit 1 ;; esac
+open() {   # &lt;prefix&gt; &lt;separator-free JSON files of the open pull requests, newest first&gt;
+  sep=&#39;&#39;
+  for n in 3 2 1; do
+    [ -f &quot;$STATE/merged-\$n&quot; ] &amp;&amp; continue
+    printf &#39;%s&#39; &quot;\$sep&quot;; cat &quot;$STATE/\$1-\$n.json&quot;; sep=&#39;,&#39;
+  done
+}
+case &quot;\$1 \$2&quot; in
+  &quot;repo view&quot;) echo &#39;{&quot;nameWithOwner&quot;:&quot;o/r&quot;,&quot;defaultBranchRef&quot;:{&quot;name&quot;:&quot;master&quot;}}&#39; ;;
+  &quot;api repos/o/r&quot;) echo &#39;{&quot;allow_merge_commit&quot;:true,&quot;allow_squash_merge&quot;:true,&quot;allow_rebase_merge&quot;:false}&#39; ;;
+  &quot;api repos/o/r/commits/master&quot;) printf &#39;{&quot;sha&quot;:&quot;%s&quot;}\n&#39; &quot;\$(git -C &quot;$ORIGIN&quot; rev-parse master)&quot; ;;
+  &quot;api repos/o/r/branches/master/protection&quot;) echo &#39;{&quot;required_status_checks&quot;:{&quot;checks&quot;:[{&quot;context&quot;:&quot;ci&quot;,&quot;app_id&quot;:15368}],&quot;contexts&quot;:[&quot;ci&quot;]}}&#39; ;;
+  &quot;api repos/o/r/rules/branches/master&quot;) echo &#39;[]&#39; ;;
+  &quot;pr list&quot;)
+    case &quot; \$* &quot; in
+      *&quot; --state open &quot;*) printf &#39;[&#39;; open pr; printf &#39;]\n&#39; ;;
+      *) echo &quot;UNEXPECTED&quot; &gt;&gt; &quot;$STATE/log&quot;; exit 1 ;;
+    esac ;;
+  &quot;api graphql&quot;)
+    case &quot;\$4&quot; in *timelineItems*) { printf &#39;[&#39;; open pr; printf &#39;]&#39;; } | jq -c &#39;{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|{number,authorAssociation:&quot;OWNER&quot;,isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}&#39;; exit 0 ;; esac
+    asked=no
+    if [ &quot;\$#&quot; = 10 ] &amp;&amp; [ &quot;\$3|\$5|\$6|\$7|\$8|\$9|\${10}&quot; = &quot;-f|-f|owner=o|-f|name=r|-F|n=50&quot; ]; then
+      [ &quot;\$4&quot; = &quot;query=\$(cat &quot;$STATE/query&quot;)&quot; ] &amp;&amp; asked=yes
+    fi
+    [ &quot;\$asked&quot; = yes ] || { echo &quot;UNEXPECTED&quot; &gt;&gt; &quot;$STATE/log&quot;; exit 1; }
+    printf &#39;{&quot;data&quot;:{&quot;repository&quot;:{&quot;pullRequests&quot;:{&quot;pageInfo&quot;:{&quot;hasNextPage&quot;:false,&quot;endCursor&quot;:null},&quot;nodes&quot;:[&#39;
+    open w
+    printf &#39;]}}}}\n&#39; ;;
+  &quot;pr merge&quot;)
+    n=&quot;\$3&quot;; want=&#39;&#39;; prev=&#39;&#39;
+    for a in &quot;\$@&quot;; do [ &quot;\$prev&quot; = --match-head-commit ] &amp;&amp; want=&quot;\$a&quot;; prev=&quot;\$a&quot;; done
+    have=&quot;\$(git -C &quot;$ORIGIN&quot; rev-parse &quot;refs/pull/\$n/head&quot;)&quot;
+    [ -z &quot;\$want&quot; ] || [ &quot;\$want&quot; = &quot;\$have&quot; ] || { echo &quot;head moved&quot; &gt;&amp;2; exit 1; }
+    t=&quot;\$(mktemp -d)&quot;
+    git clone -q &quot;$ORIGIN&quot; &quot;\$t/c&quot; 2&gt;/dev/null &amp;&amp; cd &quot;\$t/c&quot; &amp;&amp;
+      git fetch -q origin &quot;refs/pull/\$n/head&quot; &amp;&amp;
+      git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m &quot;Merge pull request #\$n&quot; &amp;&amp;
+      git push -q origin HEAD:master &amp;&amp; touch &quot;$STATE/merged-\$n&quot; ;;
+  &quot;pr view&quot;)
+    # the executor&#39;s read of whether its merge is visible
+    case &quot; \$* &quot; in
+      *&quot; --json state --jq .state &quot;*) if [ -f &quot;$STATE/merged-\$3&quot; ]; then echo MERGED; else echo OPEN; fi ;;
+      *) echo &quot;UNEXPECTED&quot; &gt;&gt; &quot;$STATE/log&quot;; exit 1 ;;
+    esac ;;
+  *) echo &quot;UNEXPECTED&quot; &gt;&gt; &quot;$STATE/log&quot;; exit 1 ;;
+esac
+EOF
+chmod +x &quot;$BIN/gh&quot;
+export PATH=&quot;$BIN:$PATH&quot;
+MAJORDOMUS_SHARE=&quot;$ROOT/share&quot;; export MAJORDOMUS_SHARE
+prs() { &quot;$RB&quot; prs --repo &quot;$W&quot; &quot;$@&quot;; }
+: &gt; &quot;$STATE/log&quot;
+unexpected() {   # &lt;when&gt;: the forge was asked something it does not answer
+  if grep -q UNEXPECTED &quot;$STATE/log&quot;; then
+    echo &quot;    $1: the forge was asked something this harness does not answer:&quot;
+    grep -B1 UNEXPECTED &quot;$STATE/log&quot; | cut -c1-200 | head -4
+    exit 1
+  fi
+}
+field() { printf &#39;%s&#39; &quot;$q&quot; | jq -r --argjson n &quot;$1&quot; &quot;.assessments[] | select(.number == \$n) | $2&quot;; }
+expect_field() {   # &lt;number&gt; &lt;jq path&gt; &lt;want&gt; &lt;what&gt;
+  local got
+  got=&quot;$(field &quot;$1&quot; &quot;$2&quot;)&quot;
+  [ &quot;$got&quot; = &quot;$3&quot; ] || { echo &quot;    #$1 ($4): $2 is ${got:-nothing}, not $3&quot;; field &quot;$1&quot; &#39;{disposition, reasons, required_checks}&#39; | sed &#39;s/^/      /&#39;; exit 1; }
+}
+count() { local c; c=&quot;$(grep -c -- &quot;$1&quot; &quot;$STATE/log&quot;)&quot; || :; printf &#39;%s&#39; &quot;${c:-0}&quot;; }
+
+# ---------------------------------------------------------------- 1. the first observation
+expect_exit 0 prs refresh || { unexpected &quot;the first refresh&quot;; tail -5 &quot;$STATE/log&quot; | cut -c1-200; exit 1; }
+unexpected &quot;the first refresh&quot;
+# status exits non-zero when it has a diagnostic; the queue it prints is the subject either way
+q=&quot;$(prs status --format json 2&gt;/dev/null)&quot; || :
+[ -n &quot;$q&quot; ] || { echo &quot;    status printed no queue&quot;; exit 1; }
+
+expect_field 1 .disposition ready &quot;ci passed, written by the bound app&quot;
+expect_field 1 .required_checks passed &quot;ci passed, written by the bound app&quot;
+detail=&quot;$(field 1 &#39;.evidence[] | select(.kind == &quot;required_checks&quot;) | .detail&#39;)&quot;
+case &quot;$detail&quot; in *&quot;ci (app 15368): passed&quot;*) ;; *) echo &quot;    #1&#39;s evidence does not name the bound check as passed: ${detail:-nothing}&quot;; exit 1 ;; esac
+next=&quot;$(printf &#39;%s&#39; &quot;$q&quot; | jq -r .next_merge)&quot;
+[ &quot;$next&quot; = 1 ] || { echo &quot;    the next merge is $next, not #1, the one pull request whose bound check passed&quot;; exit 1; }
+
+expect_field 2 .disposition needs_repair &quot;the bound app&#39;s ci failed, app 99&#39;s newer ci passed&quot;
+expect_field 2 &#39;.reasons[0]&#39; required_check_failed &quot;the bound app&#39;s ci failed, app 99&#39;s newer ci passed&quot;
+expect_field 2 .required_checks failed &quot;the bound app&#39;s ci failed, app 99&#39;s newer ci passed&quot;
+detail=&quot;$(field 2 &#39;.evidence[] | select(.kind == &quot;required_checks&quot;) | .detail&#39;)&quot;
+case &quot;$detail&quot; in *&quot;ci (app 15368): failed&quot;*) ;; *) echo &quot;    #2&#39;s evidence does not name the bound check as failed: ${detail:-nothing}&quot;; exit 1 ;; esac
+
+expect_field 3 .disposition waiting_for_checks &quot;only app 99&#39;s ci passed&quot;
+expect_field 3 &#39;.reasons[0]&#39; required_checks:missing &quot;only app 99&#39;s ci passed&quot;
+expect_field 3 .required_checks missing &quot;only app 99&#39;s ci passed&quot;
+detail=&quot;$(field 3 &#39;.evidence[] | select(.kind == &quot;required_checks&quot;) | .detail&#39;)&quot;
+case &quot;$detail&quot; in *&quot;ci (app 15368): missing&quot;*) ;; *) echo &quot;    #3&#39;s evidence does not name the bound check as missing: ${detail:-nothing}&quot;; exit 1 ;; esac
+
+# ---------------------------------------------------------------- 2. the writers read
+# a writers read in the forge&#39;s log, apart from the declarations read beside it
+WRITERS=&#39;api graphql -f query=query(.*statusCheckRollup&#39;
+grep -q &quot;^$WRITERS&quot;&#39;.* -f owner=o -f name=r -F n=50$&#39; &quot;$STATE/log&quot; \
+  || { echo &quot;    the writers were not read as the adapter reads them:&quot;; grep &#39;^api&#39; &quot;$STATE/log&quot; | cut -c1-160; exit 1; }
+[ &quot;$(count &quot;^$WRITERS&quot;)&quot; = 1 ] || { echo &quot;    one observation asked for the writers $(count &quot;^$WRITERS&quot;) times, not once&quot;; exit 1; }
+
+# ---------------------------------------------------------------- 3. the drain merges #1 only
+out=&quot;$(prs drain --max 3 2&gt;&amp;1)&quot; || { echo &quot;    the drain failed:&quot;; printf &#39;%s\n&#39; &quot;$out&quot; | sed &#39;s/^/      /&#39;; unexpected &quot;the drain&quot;; tail -8 &quot;$STATE/log&quot; | cut -c1-200; exit 1; }
+unexpected &quot;the drain&quot;
+merged=&quot;$(grep &#39;^pr merge&#39; &quot;$STATE/log&quot; | awk &#39;{print $3}&#39; | tr &#39;\n&#39; &#39; &#39;)&quot; || :
+[ &quot;$merged&quot; = &quot;1 &quot; ] || { echo &quot;    the drain merged [$merged], not #1 alone:&quot;; printf &#39;%s\n&#39; &quot;$out&quot; | sed &#39;s/^/      /&#39;; exit 1; }
+grep -q &quot;^pr merge 1 --merge --match-head-commit $H1\$&quot; &quot;$STATE/log&quot; \
+  || { echo &quot;    #1 was not merged pinned to its head:&quot;; grep &#39;^pr merge&#39; &quot;$STATE/log&quot;; exit 1; }
+if grep -qE &#39;^pr merge (2|3) &#39; &quot;$STATE/log&quot;; then echo &quot;    #2 or #3 reached the forge&#39;s merge&quot;; exit 1; fi
+if grep -q ADMIN &quot;$STATE/log&quot;; then echo &quot;    a call carried --admin&quot;; exit 1; fi
+master=&quot;$(git -C &quot;$ORIGIN&quot; rev-parse master)&quot;
+git -C &quot;$ORIGIN&quot; merge-base --is-ancestor &quot;$H1&quot; &quot;$master&quot; || { echo &quot;    master does not contain #1&#39;s head&quot;; exit 1; }
+for h in &quot;$H2&quot; &quot;$H3&quot;; do
+  if git -C &quot;$ORIGIN&quot; merge-base --is-ancestor &quot;$h&quot; &quot;$master&quot;; then echo &quot;    master contains $h, a head whose bound check never passed&quot;; exit 1; fi
+done
+# every observation of the open pull requests read the writers, once, by the page form
+lists=&quot;$(count &#39;^pr list --state open &#39;)&quot;; pages=&quot;$(count &quot;^$WRITERS&quot;)&quot;
+# the refresh, the drain&#39;s first look, and the second look its merge decision is re-taken from
+[ &quot;$lists&quot; -ge 3 ] || { echo &quot;    the drain did not re-take its decision from a new observation: $lists open list(s) in all&quot;; exit 1; }
+[ &quot;$pages&quot; = &quot;$lists&quot; ] || { echo &quot;    $lists observation(s) of the open pull requests, $pages writers read(s): not one each&quot;; exit 1; }
+if grep -q -- &#39;-F number=&#39; &quot;$STATE/log&quot;; then echo &quot;    a per-pull-request writers read was asked for, and no rollup was truncated&quot;; exit 1; fi
+
+# ---------------------------------------------------------------- 4. the forge&#39;s log
+unexpected &quot;at the end&quot;
+echo &quot;    bound to app 15368: its pass is ready and merged; its failure stands under app 99&#39;s newer pass; app 99&#39;s pass alone is missing&quot;
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

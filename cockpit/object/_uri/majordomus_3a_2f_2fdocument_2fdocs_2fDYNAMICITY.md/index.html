@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/DYNAMICITY.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/DYNAMICITY.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/DYNAMICITY.md</h1><p class="mj-page-subtitle">Canonical ownership and derivation</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/DYNAMICITY.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DYNAMICITY.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DYNAMICITY.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FDYNAMICITY.md">document.docs/DYNAMICITY.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Canonical ownership and derivation
+
+How this repository decides where a fact lives, what may be written down twice, and what
+must be derived. The companion file is [`HARDCODING_LEDGER.yaml`](HARDCODING_LEDGER.yaml),
+which records every place the rules below are currently broken, with a reproduce command
+for each.
+
+Statements here describing behaviour that is not yet implemented are phrased as targets.
+
+## The rule
+
+&gt; One fact has one canonical owner. Every other place that fact appears is derived from
+&gt; the owner, or is a check that the two agree.
+
+The failure this prevents is not untidiness. It is the failure the tool exists to catch:
+a declared rule that nothing enforces, a documented command that no longer exists, a
+count that was true once. Every such defect begins as one fact written in two places and
+one of them changing.
+
+## What counts as hardcoding
+
+Not every constant is a defect, and a sweep that treats them alike produces unreadable
+indirection while missing the real drift.
+
+**A contract stays literal.** These are decisions, not discoverable facts, and writing
+them down is how they become a contract:
+
+| Kind | Example here |
+|---|---|
+| Protocol constants | the exit codes in `lib/common.sh` |
+| Schema versions | `version: 1` in every canonical file |
+| Standard filenames | `.ai/repo/policy.yaml`, `CLAUDE.md` |
+| Bootstrap defaults | the default profile name |
+| A support decision | the operating systems in the CI matrix |
+| A schema itself | `share/allow/*.txt`, which define the permitted keys |
+| Editorial judgement | the audience and purpose columns in `docs/README.md` |
+
+**A mirror is a defect.** A list is a mirror when something else already knows its
+contents:
+
+| Mirror of | Where the truth is |
+|---|---|
+| filesystem contents | the directory |
+| CLI commands | the dispatch table |
+| tests | `test/cases/` and the metadata in each case |
+| routes | the generated content collections |
+| doctrines | the rule files under `.ai/repo/rules/` |
+| providers | the declared projections |
+| claims | `docs/CLAIMS.yaml` |
+| counts of any of the above | the thing being counted |
+
+The distinguishing question is not &quot;could this be data?&quot; but &quot;does something else
+already know this, and will the two disagree?&quot; A curated list whose completeness is
+enforced against the directory it describes is not a mirror — `docs/README.md` is the
+model: the rows are editorial, and `scripts/generate-site-data` refuses to build when a
+file in `docs/` appears in no row.
+
+## Canonical owners
+
+| Entity | Canonical owner | Discovery | Derived surfaces |
+|---|---|---|---|
+| Policy | `.ai/repo/policy.yaml` | schema in `share/allow/policy.txt` | provider projections |
+| Profile | `.ai/repo/profiles/*.yaml` | directory glob | context, finish requirements, site |
+| Doctrine | `.ai/repo/rules/` and the vendored packages | registry walk | `check`, `finish`, `doctor`, `watch`, site |
+| Validator | `mj_validate_*` in `lib/` | source scan, reconciled against the registry | doctrine dispatch |
+| Claim | `docs/CLAIMS.yaml` | registry walk | guarantees pages, `docs/SITE_CLAIMS.md` |
+| Responsibility | `docs/RESPONSIBILITIES.yaml` | registry walk | site, doctrine registry |
+| Document | `docs/*.md` + the index tables | directory glob, index enforced | site routes |
+| Command (shell tool) | `share/commands.yaml` | validated against the dispatch table | docs, pages, demos, coverage, the command graph |
+| Command (executable) | the clap declaration, `apps/majordomus-cli/src/cli.rs` | tree walk | `--help`, `docs/generated/cli.*`, `/docs/cli/**`, the command graph |
+| Workflow | the `justfile` and `.just/*.just` | `just --dump --dump-format json` | the environment snapshot, the banner, the command graph |
+| Command semantics (effect, interactivity, requirements, value sources, compatibility aliases) | `command_graph/semantics.rs`, beside the declaration | completeness enforced against the clap tree in both directions | the graph, and every projection of it |
+| Where a command is exposed | `command_graph/policy.rs` | derived from the effect and the interactivity | the workflow bridge, the completion, MCP, HTTP, the Cockpit, the reference |
+| Event type | `share/events.yaml` | registry walk | ledger validation, `history`, `docs/SCHEMAS.md` |
+| Projection | `.ai/repo/policy.yaml` `projections[]` | policy walk | `update`, `doctor`, `watch` |
+| Context provider | *target:* one table in `lib/context.sh` | registry walk | assembly, budget dropping, JSON |
+| Generated artifact | `generate::Target` and the `Document`s each target builds | the generation plan | `docs/generated/**`, `share/allow/*.txt`, the provider bootstraps, `site/data/registry/registry.json` — and `docs/generated/artifacts.{json,yaml,md}`, the generated index of all of them |
+
+The rows marked *target* are the entities that have no owner today. Each is a row in the
+ledger with the evidence for why it needs one.
+
+## Derivation, not duplication
+
+A derived surface is regenerated from its owner and is never authority. The three
+generated surfaces here are provider instruction files (`majordomus update`), the site&#39;s
+data and content (`scripts/generate-site-data`), and `docs/SITE_CLAIMS.md`. Each is
+fingerprinted or diffed against a fresh generation, so a hand edit is a reported failure
+rather than a silent divergence.
+
+Two properties every generator must have:
+
+- **Transactional.** Render to a temporary location, validate the whole result, then
+  replace. A generator that truncates its output and then discovers an error has
+  destroyed the last good state. `majordomus update` does this; the site generator
+  renders to a temporary directory and compares.
+- **Complete freshness.** The check that a generated artifact is current must iterate
+  what the generator produced, not a list someone wrote next to it. The ledger&#39;s
+  `generated-json-inventory` finding is this property missing.
+
+## Events
+
+A durable state change is an event. The ledger is append-only and already the canonical
+record; the target is a registered vocabulary over it, not a second log.
+
+`share/events.yaml` declares every name the ledger accepts, the command that writes it,
+and the payload keys that name requires. `mj_ledger_append` refuses an unregistered name
+and one missing a required field; `history --event` refuses to filter on a name that is
+not declared, rather than answering with the empty result a declared-but-absent name would
+give; `history --validate` reports a stored line whose name no reader recognises. Before
+that, a mistyped name produced a durable record that every reader silently ignored, and
+`docs/SCHEMAS.md` documented a `bootstrap` event that nothing had ever written.
+
+Two constraints shaped the work:
+
+- **Existing names are kept.** Renaming breaks every ledger that exists, including this
+  repository&#39;s own, and a reader that silently omits everything before a rename is worse
+  than an inconsistent name. The vocabulary is registered as written.
+- **Ledger order is load-bearing.** `mj_record_rank` uses ledger position to break
+  resolution ties between records created in the same second. Nothing may reorder,
+  rewrite, or rotate lines without accounting for it.
+
+Rendering is the one place a per-event branch is still allowed to exist, because how an
+event reads to a person is presentation rather than vocabulary. There is exactly one such
+branch, in `lib/history.sh`, and it is reconciled against the registry rather than removed:
+an event with no rendering, and a rendering for an event that is not declared, both fail.
+
+The one absent event still worth adding is a refused `finish`: an accepted completion is
+recorded and a refusal leaves no trace, so a task refused four times looks exactly like one
+that passed first try. `test/cases/32_refusal_lifecycle.sh` performs four refusals and
+carries the assertion that will hold when the event exists.
+
+## Demonstrations are projections, not descriptions
+
+A command&#39;s page carries an interactive demonstration. The risk in that is obvious: a page
+that describes behaviour becomes a second implementation, and the second one is never the
+one that ships.
+
+So the demonstration is not written. `test/fixtures/commands/&lt;command&gt;.json` holds a set of
+scenarios — a situation, the command run, the expected exit code, the lines the output must
+contain, and an explanation. `test/cases/34_command_fixtures.sh` executes every one of them
+against the real binary in a fresh repository, and the site generator inlines the same file
+into the page. What the page shows is what a test asserted.
+
+Two consequences worth stating:
+
+- **No shell lives in the fixture.** Preparation is a real script under
+  `test/fixtures/commands/setup/`, composed by sourcing, which the page displays verbatim
+  and the case sources. Nothing executes a string that came from data, which keeps the rule
+  against `eval` intact and makes the demonstration honest at the same time.
+- **The generator refuses rather than degrades.** A public command with no fixture, no
+  demonstration id, no behavioural case or no negative case stops the build. There is no
+  &quot;tests coming soon&quot; state for a command the project claims to support.
+
+Every refusal is raised before a byte of output is written. An `exit` inside a
+`{ ... } | jq . &gt; file` group kills only the group, while the redirect has already truncated
+the target — so a refusal written there reports the wrong exit code and leaves a ruined
+file behind. The validation runs first; the emitting pipeline cannot fail on policy.
+
+The same fixtures serve a second surface. A responsibility&#39;s page shows the command that
+acts on it refusing and accepting, drawn from that command&#39;s fixture — so the demonstration
+on `/supervises/finish/` and the one on `/commands/finish/` are the same scenarios, executed
+by the same case, and cannot disagree.
+
+The arrangement earns its keep. Writing the fixtures found a defect nothing else had:
+`rev-parse HEAD` in a repository with no commits prints the literal string `HEAD` on stdout
+and *then* fails, so the `|| printf &#39;NONE&#39;` fallback appended to it and produced an identity
+field with an embedded newline — a permanently corrupt line in an append-only ledger, for
+anyone who ran `init` and `update` before their first commit.
+
+## A link check must walk both directions
+
+A rule that walks from a page to the things it links can only find links that are *wrong*.
+It cannot find links that are *missing*, because a missing link is invisible from that side
+by construction — there is nothing on the page to check.
+
+The defect that made this concrete: six claims in `docs/CLAIMS.yaml` declared
+`responsibility: plan`, the `/supervises/plan/` page linked none of them, and every check
+looked outward from the page. Walking from the claim&#39;s side — every claim that names a
+responsibility must appear on that responsibility&#39;s page — finds it immediately.
+
+So a relation is checked in both directions or it is not checked:
+
+- every id a page names must exist, and
+- every record that names the page must be linked from it.
+
+The second is the one nobody writes, and it is the one that catches the defect.
+
+There are two such rules today, `why` and `supervises`, each knowing one join. That is
+tolerable. A third is the point at which the relation itself should become data — the two
+collections, the field holding the ids, and the route shape — and one rule should walk it.
+Writing a third hand-rolled version would be the same mistake as the map this section&#39;s
+defect came from.
+
+## A mutation must prove it mutated
+
+A test that breaks something and then checks for the failure is only as good as the break.
+`sed` is silent when its pattern matches nothing: it exits 0 having changed nothing, and the
+case goes on to assert that a no-op produced no failure, which is trivially true. The case
+stays green and proves nothing, and it does so from the moment the code it was mutating
+changed shape.
+
+So every probe asserts it took effect before asserting what it caused:
+
+```sh
+sed &#39;s/&lt;pattern&gt;/&lt;replacement&gt;/&#39; &quot;$SRC&quot; &gt; &quot;$PROBE&quot;
+grep -q &#39;&lt;the replacement&gt;&#39; &quot;$PROBE&quot; || { echo &quot;    the probe did not take&quot;; exit 1; }
+```
+
+Two refinements, both learned the hard way in this repository:
+
+- **An absence needs the inverted assertion.** `sed &#39;/x/d&#39;` leaves no replacement to find,
+  so the guard is that the thing is gone rather than that something new is there.
+- **Match by shape, not by contents.** A probe that names today&#39;s command list stops
+  mutating the day someone adds a command. That is the same defect as a validator that
+  silently stops running, and `35_future_command` had it within an hour of being written —
+  its guard is what caught it.
+
+A mutation that silently stops mutating and a rule that silently stops being enforced are
+the same failure, and this repository exists because of the second one.
+
+## Self-governance
+
+Majordomus supervises this repository with the same registries it ships. There is no
+self-specific inventory and no test-only code path: the doctrines that run here are the
+rules under `.ai/repo/rules/`, and the wiring `doctor` reconciles is the wiring
+declared in `.ai/repo/policy.yaml`.
+
+The property this is meant to produce, stated as a target: adding a command, doctrine,
+provider, event type, projection or claim requires defining the entity, implementing the
+behaviour, and adding the tests — and every other surface follows without a maintainer
+remembering a secondary registration step. Where that is not yet true, the ledger says
+so.
+
+## How to add one of each
+
+Short by design. If a list below grows, the architecture has regressed.
+
+- **A doctrine** — write the rule under `.ai/repo/rules/` with its
+  `x-majordomus.validator`, and write the `mj_validate_&lt;validator&gt;` function it names.
+  `doctor` reconciles the two and fails if either is missing.
+- **A claim** — add the entry to `docs/CLAIMS.yaml` and write `docs/claims/&lt;id&gt;.md`. The
+  site generator refuses to build without the detail page, and a guaranteed claim with no
+  test path is an error.
+- **A document** — write `docs/&lt;NAME&gt;.md` and add its row to one of the two tables in
+  `docs/README.md`. The route, the page and the index entry follow.
+- **A profile** — add `.ai/repo/profiles/&lt;name&gt;.yaml`. It is discovered by glob and
+  validated by `doctor`.
+- **A command** — declare it where the program that implements it declares its commands: a
+  clap arm and its example for the executable, an entry in `share/commands.yaml` and a
+  dispatch arm for the shell tool, a recipe for a workflow. Annotate it in
+  `command_graph/semantics.rs` only if it is not read-only and non-interactive. The workflow
+  bridge, the shell completion of both surfaces, the machine surfaces the policy admits, the
+  Cockpit and the reference follow. `docs/COMMANDS.md` is the whole of it.
+
+Adding an event type, a provider or a projection is not yet this short. Those are the
+ledger&#39;s remaining priority 1 and 2 rows. Adding a *command* became this short when the
+command graph replaced the per-surface lists: see `docs/COMMANDS.md` and the rule
+`project.commands-are-projections`.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

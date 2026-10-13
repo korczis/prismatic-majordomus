@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "e506c041a44ca9e5853500e10452c648b19ca858",
+  "commit": "3442ce68c56cb360117df24da8268006aa9814c7",
   "source_version": "0.23.0",
-  "registry_fingerprint": "1434297a1bb253235ebbbb6013af2a663d6724a3f03cda05e015ccfd428893a2"
+  "registry_fingerprint": "c22c3daf082041628440703c1b9296ae17a1fbc3a679f0b5e6bc456bdfb27504"
  },
  "counts": {
-  "pages": 2162,
-  "capabilities": 2319,
+  "pages": 2165,
+  "capabilities": 2323,
   "cli_commands": 107,
   "http_routes": 191,
   "mcp_tools": 187,
-  "mcp_resources": 2178,
+  "mcp_resources": 2182,
   "modules": 90
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 102
+   "count": 103
   },
   {
    "kind": "application",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 341
+   "count": 342
   },
   {
    "kind": "knowledge",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 464
+   "count": 466
   },
   {
    "kind": "use-case",
@@ -1209,6 +1209,15 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0146",
    "source": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0147/",
+   "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+   "description": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0147",
+   "source": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
    "section": "Decisions"
   },
   {
@@ -3090,6 +3099,12 @@
    "route": "/docs/cli/web/report/benchmarks/",
    "title": "majordomus web report benchmarks",
    "description": "The benchmark run: a results document, or the accepted baseline",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/web/report/cockpit-snapshot/",
+   "title": "majordomus web report cockpit-snapshot",
+   "description": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
    "section": "Documentation"
   },
   {
@@ -7905,6 +7920,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2495/",
+   "title": "I2495 — The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it",
+   "description": "Publish the Cockpit on the public site as a snapshot read at the published commit, with the exporter that already reads the UI, so that /cockpit/ is a verified surface of the product and a capability the UI cites is a page a reader can open.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
@@ -11252,7 +11273,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.23.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.23.0, built from commit e506c041a44ca9e5853500e10452c648b19ca858: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.23.0, built from commit 3442ce68c56cb360117df24da8268006aa9814c7: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.23.0 — Rust API reference"
   },
   {

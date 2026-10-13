@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/EXECUTIONS.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/EXECUTIONS.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/EXECUTIONS.md</h1><p class="mj-page-subtitle">Executions — watching a capability call happen</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/EXECUTIONS.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/EXECUTIONS.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/EXECUTIONS.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FEXECUTIONS.md">document.docs/EXECUTIONS.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Executions — watching a capability call happen
+
+How the Rust executable under [`apps/majordomus-cli/`](../apps/majordomus-cli/) runs a
+capability as work that can be watched: the model, the lifecycle, the typed event protocol,
+the live channel, what each interface offers, and what it deliberately does not do.
+Behaviour as implemented and tested; where this document and the executable disagree, the
+document is wrong and changes in the same commit. The decision is
+[ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md);
+the rules are [`project.execution-events-are-typed`](../.ai/repo/rules/project/execution-events-are-typed.v1.md)
+and [`project.executions-carry-no-secret`](../.ai/repo/rules/project/executions-carry-no-secret.v1.md);
+the registry it runs on is [`CAPABILITIES.md`](CAPABILITIES.md).
+
+```text
+ONE CANONICAL DECLARATION   capability! { … handler: verify }.cancellable()
+        ↓
+CAPABILITY REGISTRY         the same registry MCP, HTTP, OpenAPI, the CLI and the Cockpit read
+        ↓
+EXECUTION ENGINE            validate · create · queue · run on a worker · catch · complete
+        ↓
+EXECUTION STORE             the snapshot, the retained events, the subscribers — all bounded
+        ↓
+DERIVED PROJECTIONS         the live channel (WebSocket) · executions.get · executions.events
+                            · the Cockpit&#39;s Executions pages · `majordomus run` · MCP tools
+```
+
+There is no action registry, no action definition and no second implementation of anything.
+An execution is a capability call this process gave an identity to.
+
+## The model
+
+| | |
+|---|---|
+| **Execution** | one call of one capability, with an id, a lifecycle, an input as it was stored, an output or an error, its steps, its progress, its diagnostics, who asked for it and which repository it ran against |
+| **Execution event** | one typed fact about an execution, in an envelope with a protocol version and a dense sequence number |
+| **Execution policy** | what running a capability means: its effect and whether two may overlap, classified from the kind; and whether cancelling it achieves anything, which only its handler can say |
+| **Progress** | the handle every context carries; silent outside an execution, so a handler is written once for every caller |
+
+### The lifecycle
+
+```mermaid
+stateDiagram-v2
+  queued --&gt; running
+  queued --&gt; cancelled
+  running --&gt; succeeded
+  running --&gt; failed
+  running --&gt; cancelling
+  cancelling --&gt; cancelled
+  cancelling --&gt; succeeded: it finished before it noticed
+  cancelling --&gt; failed
+```
+
+`ExecutionState::may_move_to` is the whole contract and the store refuses anything else, so
+a client that reads a final state never sees it move again. There is no `starting`: an
+in-process engine claims an execution and enters its handler in the same instant, and a
+state nothing can reach is a state every client would have to handle and never see.
+
+### What is not here
+
+An execution does not outlive the process that accepted it. There is no durable queue, no
+retry, no schedule and no execution that survives a restart. Every limit is typed on
+`execution::store::Limits` — how many executions are remembered, how many events each, how
+long a log line may be, how many run at once, how far a subscriber may fall behind — and
+each has a defined behaviour at the bound rather than an unwritten one. Nothing above the
+store names a `Mutex`, so a durable store is a substitution rather than a rewrite.
+
+## Running one
+
+Any executable capability of the registry can be started as an execution. There is no
+second list of what may be run: `capabilities.list` already answers it, and the descriptor&#39;s
+own `execution` policy says what running it means.
+
+```bash
+majordomus run health.report                       # start it here and follow it to the end
+majordomus run objects.verify --input &#39;{&quot;limit&quot;:50}&#39; --format json
+majordomus executions list                          # what the server serving this repository ran
+majordomus executions show   &lt;id&gt;
+majordomus executions events &lt;id&gt; --after 42
+majordomus executions cancel &lt;id&gt;
+majordomus executions protocol                      # the live channel&#39;s contract
+```
+
+```http
+POST /api/v1/executions/start        { &quot;capability&quot;: &quot;objects.verify&quot;, &quot;input&quot;: { … } }
+GET  /api/v1/executions              ?state=running&amp;capability=objects.verify&amp;limit=50
+GET  /api/v1/executions/get          ?id=x-…
+GET  /api/v1/executions/events       ?id=x-…&amp;after=42&amp;limit=500
+POST /api/v1/executions/cancel       { &quot;id&quot;: &quot;x-…&quot; }
+GET  /api/v1/executions/protocol
+GET  /api/v1/executions/demonstrate  ?steps=3&amp;delay_ms=200
+GET  /api/v1/objects/verify          ?kind=rule&amp;limit=50
+```
+
+Over MCP the same capabilities are the tools `majordomus_execution_start`,
+`majordomus_executions`, `majordomus_execution`, `majordomus_execution_events`,
+`majordomus_execution_cancel` and `majordomus_execution_protocol`, with
+`majordomus://executions` and `majordomus://executions/protocol` as resources. An agent
+therefore discovers, starts, follows and reads an execution without parsing anything a
+person was meant to look at.
+
+`start` answers at once with the execution and the links to follow it; nothing waits for the
+handler. The state in that first answer is `queued`, which is what it is: this server
+answers `200` with the truth rather than `202` with a promise.
+
+## The event protocol
+
+One envelope, a closed set of payloads, a version. `type` and `data` are the only two
+members that vary, so a client switches on one string.
+
+```json
+{
+  &quot;schema_version&quot;: &quot;1&quot;,
+  &quot;event_id&quot;: &quot;x-20260908T010203Z-0a1b2c3d#17&quot;,
+  &quot;execution_id&quot;: &quot;x-20260908T010203Z-0a1b2c3d&quot;,
+  &quot;sequence&quot;: 17,
+  &quot;timestamp&quot;: &quot;2026-09-08T01:02:07Z&quot;,
+  &quot;type&quot;: &quot;execution.progress&quot;,
+  &quot;data&quot;: { &quot;current&quot;: 17, &quot;total&quot;: 42, &quot;message&quot;: &quot;137 file(s) read&quot; }
+}
+```
+
+| type | when |
+|---|---|
+| `execution.created` | it exists; carries the capability and the input as it was stored |
+| `execution.queued` | it is waiting for a worker, and how many are ahead of it |
+| `execution.started` | the handler was entered |
+| `execution.progress` | how far along, with a total when the handler knows one |
+| `execution.step.started`, `execution.step.completed` | a named phase was entered, and how it went |
+| `execution.log` | a line of output, from the handler or from a process it ran |
+| `execution.diagnostic` | a structured finding, distinct from the outcome |
+| `execution.cancelling`, `execution.cancelled` | it was asked to stop; it stopped |
+| `execution.completed` | it finished, with what the handler returned |
+| `execution.failed` | it finished, with a typed error and a correlation id |
+
+The output travels on `execution.completed` rather than on an event of its own, so no client
+can read &quot;succeeded&quot; and find no result. `sequence` is dense and starts at 1 within an
+execution: a client that has seen `n` knows it missed something when the next it reads is
+not `n + 1`, and asks for the gap by cursor rather than reloading the world.
+
+The schema is derived from the Rust enum by `schemars`, exactly as every capability&#39;s input
+and output schemas are, and is served — with the whole contract — by
+`executions.protocol`. Nothing is written down twice.
+
+**A client must ignore a `type` it does not know.** That is what lets a variant be added
+without a version change; `schema_version` moves only for a change a version-1 client could
+not ignore safely.
+
+## The live channel
+
+```text
+GET /events                                  every execution of this process, live
+GET /events?execution=&lt;id&gt;                   one execution: its retained history, then live
+GET /events?execution=&lt;id&gt;&amp;after=&lt;sequence&gt;   the same, from a cursor — what a reconnect sends
+```
+
+A native WebSocket (RFC 6455), upgraded on the same socket the rest of the surface is served
+on: one process, one port, one startup path, no second daemon and no Socket.IO. The
+subscription is the request target, so there is nothing to send and nothing to acknowledge.
+
+The server writes one JSON document per text frame: either an execution event, or one of
+four control messages — `stream.ready` (the first frame: what was subscribed to, how much
+was replayed, whether the history before it had already been dropped, the heartbeat
+interval), `stream.heartbeat` (the channel is quiet and alive), `stream.lagged` (this client
+fell behind and events were dropped rather than buffered; read the snapshot and the history
+again from the last sequence seen) and `stream.closing`.
+
+**Order and gaps.** A connection subscribes first and replays second, and skips in the live
+stream anything the replay already wrote. The replay is read in pages of 1000 until it is
+caught up, so a cursor further behind than one page still receives every retained event
+after it. There is therefore no gap between the history and the stream, and nothing is
+written twice. The Cockpit&#39;s client (`share/cockpit/socket.js`) checks both on its side:
+an event at or below the last sequence it saw is dropped, and on a channel that follows one
+execution an event beyond the next one makes it reconnect with `after=&lt;last seen&gt;`, so the
+server replays what was missed; the same gap twice is read from the history over HTTP
+instead.
+
+**Heartbeat and disconnection.** The server pings a quiet connection every twenty seconds
+and never reads: `tiny_http` hands over one `Read + Write` value on upgrade that cannot be
+split, so a reader thread would hold the lock the writer needs. A client that goes away is
+noticed when the next write fails, which the heartbeat guarantees happens; what a client
+sends is ignored. A close is therefore observed within one heartbeat rather than instantly.
+A ping is a control frame a browser never shows to a page, so the same interval also writes
+a `stream.heartbeat` text frame; the Cockpit&#39;s client retires a channel that has said
+nothing for two and a half heartbeats and reconnects from its cursor, rather than showing a
+half-open connection as live.
+
+**A value too large for a frame.** One frame is at most 256 KiB. An event whose frame would
+be larger — a completed execution&#39;s `output`, a created one&#39;s `input` — is written with that
+value replaced by a reference, `{&quot;withheld&quot;: &quot;too_large&quot;, &quot;bytes&quot;: n, &quot;limit&quot;: 262144,
+&quot;self&quot;: &quot;/api/v1/executions/get?id=…&quot;}`, and the channel stays open; the snapshot it names
+carries the whole value.
+
+**Backpressure.** A subscriber that falls behind its queue is never waited for: events are
+dropped for that client alone, it is told `stream.lagged`, and the execution is not slowed
+by anyone watching it. A subscriber whose reader has gone is forgotten at the next event.
+
+**Refusals.** A plain `GET /events` answers `426` and says where the same events are
+readable over HTTP. A request from another origin is refused `403` before the handshake — a
+page elsewhere can open a WebSocket to a loopback server, and the same-origin policy does
+not stop it. So is an upgrade from this machine addressed to a host name that is neither an
+address nor `localhost`: that is a page whose domain was made to resolve here (DNS
+rebinding), refused before the upgrade as every other route refuses it. An `execution`
+parameter that is not an execution id is `400`, refused by shape before anything is looked
+up.
+
+## In the Cockpit
+
+`/cockpit/executions` lists what this process has run, with the counts beside it;
+`/cockpit/executions/&lt;id&gt;` is one execution, at a stable URL a person can reload, share
+locally or open several of in tabs.
+
+Both pages are complete HTML before any script runs — the state, the steps, the progress,
+the diagnostics, the log, the output and the input are what the server rendered — and the
+scripts add that they stop being a photograph. `socket.js` is the only place in the browser
+that opens a socket: it reconnects with exponential backoff, a cap and jitter, resubscribes
+from the sequence the page was rendered at, and shows the connection as a word and a shape
+rather than as a colour alone. Every URL it uses was rendered into the markup by the server;
+no path is written down in the browser.
+
+On a capability&#39;s own page, **Run as an execution** sits beside the direct runner. Both use
+the same generated form, and the button asks for confirmation when — and only when — the
+descriptor&#39;s effect says something changes. What a page does with an event it does not
+recognise is show it, not drop it.
+
+A log line reaches the page through `textContent`, never `innerHTML`, and the server has
+already removed control characters and terminal escape sequences from it. The log scrolls
+inside its own box and is bounded in the browser as well as on the server, so a long path
+in a line wraps rather than widening the page.
+
+## Adding a capability that can be watched
+
+Nothing extra. Write the `capability!` block as [`CAPABILITIES.md`](CAPABILITIES.md)
+describes, and it can be started as an execution the moment it exists. Two optional things
+make it a better one:
+
+1. **Report.** `ctx.progress` carries `step`, `step_done`, `progress`, `log`, `stream` and
+   `diagnostic`. All are free to call outside an execution, so a handler reports
+   unconditionally and is written once for every caller.
+2. **Declare it cancellable** — `.cancellable()` after the `capability!` block — when the
+   handler checks `ctx.progress.cancelled()` and stops. The Cockpit then offers a Cancel
+   button that does something, `executions.cancel` says so in its answer, and a handler that
+   ignores its flag never produces a control that lies.
+
+```rust
+fn verify(ctx: &amp;Context, input: VerifyInput) -&gt; Result&lt;Report, CapabilityError&gt; {
+    let p = &amp;ctx.progress;
+    p.step(&quot;read&quot;, &quot;Reading the layer&quot;);
+    for (n, file) in files.iter().enumerate() {
+        if p.cancelled() {
+            return Err(p.cancellation());
+        }
+        p.progress(n as u64 + 1, Some(total), format!(&quot;read {}&quot;, file.path));
+    }
+    p.step_done(&quot;read&quot;, true, None);
+    Ok(report)
+}
+```
+
+**A cached capability run as an execution runs.** The cache makes one answer
+indistinguishable from another, which is right for an answer and wrong for a record of
+work: an execution answered from a cache would report no steps and claim to have succeeded
+at something that did not happen. `Context::execute_observed` is the path the engine takes,
+and it steps over the cache in both directions.
+
+## Safety
+
+**Only registered capabilities run.** The plane takes a capability id and an input; there is
+no endpoint that takes a command, and the input a client may send is two fields whose schema
+is in the OpenAPI document. A capability that one day runs a process would be a
+`capability!` block with an allow-list of its own, reviewed like any other.
+
+**Repository isolation.** A process serves the repository it read at start-up, and every
+execution is stamped with it. Nothing can run a capability against another checkout, and
+nothing a client sends names a directory.
+
+**Secrets.** A value the input schema marks sensitive — `format: &quot;password&quot;`, `writeOnly`,
+or `x-majordomus-sensitive` — is replaced once, in the engine, before the input is stored,
+so no snapshot, event, history, page, listing or generated document can carry it. A field&#39;s
+name never decides this: `password_policy` may be a document, and a name-matching redactor
+destroys it while missing the next field spelled differently.
+
+**Failures.** A panicking handler is caught: the execution fails with `internal`, the
+correlation id and a suggestion, and the panic itself goes to this process&#39;s log where the
+operator can read it. No backtrace and no path inside this crate reaches a client.
+
+**Origin.** The live channel and every state-changing route refuse a request from another
+origin. The Cockpit&#39;s content-security policy allows connections to this origin only.
+
+## Limits, and what happens at each
+
+| limit | default | at the bound |
+|---|---|---|
+| executions remembered | 200 | the oldest **finished** one is forgotten; a running one never is |
+| events retained per execution | 2000 | the oldest are dropped, and the snapshot and every history page say `truncated` |
+| log line | 2000 characters | cut, with a marker |
+| executions running at once | 4 | further ones wait `queued`, and `execution.queued` says how many are ahead |
+| a subscriber&#39;s queue | 512 | events are dropped for that client, which is told `stream.lagged` |
+| live channels | 64 | a further connection is refused `503` with the reason |
+| one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
+| a serial capability (a command) | one at a time | a second execution of it waits for the first |
+
+The defaults are for a development server a person is watching, and `executions.protocol`
+answers the ones this process is running with.
+
+## When something fails
+
+| message | meaning | remedy |
+|---|---|---|
+| `no capability &#39;x&#39;; the executable ones are listed by capabilities.list` | the id is not in the registry | check `majordomus capabilities list` |
+| `not executable: &#39;x&#39; is a resource: it is read, never executed` | a declarative object was named | read it with `objects.get` |
+| `invalid input: /steps: &quot;many&quot; is not of type &quot;integer&quot;` | the input does not satisfy the capability&#39;s own schema | the schema is in the OpenAPI document and on the capability&#39;s Cockpit page |
+| `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the process that accepted it; `executions.list` says what is remembered |
+| `426 … /events is a WebSocket` | it was opened with a plain `GET` | open it with a WebSocket client, or read `executions.events` |
+| `403 … a WebSocket from origin &#39;…&#39; is refused` | a page on another origin tried to follow this server | open the Cockpit from this server&#39;s own address |
+| `stream.lagged` | this client could not keep up | read the snapshot and the history again from the last sequence seen |
+| an execution that reports no steps | the capability does not report any | that is a fact about the capability, not about the plane; `executions.demonstrate` shows what one that does looks like |
+
+## Stability
+
+| | status |
+|---|---|
+| the state machine, its transitions and the refusal of an invalid one | behaviourally verified (`execution::model`, `execution::store`) |
+| the store&#39;s bounds and the behaviour at each: eviction, truncation, lag, a gone subscriber | behaviourally verified (`execution::store`) |
+| redaction from the schema, through references, arrays and maps | behaviourally verified (`execution::redact`) |
+| the handshake, the framing and SHA-1 against the published vectors | behaviourally verified (`http::ws`) |
+| start, follow, reload, reconnect with a cursor, cancel, fail — over a real socket with a real WebSocket client | behaviourally verified (`tests/executions.rs`) |
+| an existing capability observable with no second implementation | behaviourally verified (`tests/executions.rs`) |
+| an execution never answered from the cache | behaviourally verified (`tests/executions.rs`) |
+| the whole path from outside the executable | behaviourally verified (`test/cases/100_execution_plane.sh`) |
+| durability, retry, scheduling, an execution outliving its process | not implemented, and `Limits` is where a durable store would be substituted |
+| a capability backed by a process, with its output as `stdout`/`stderr` log events | not implemented; the event model carries the streams for it |
+| reading the client&#39;s frames, and therefore an immediate close | not implemented; the reason is in `http::ws` |
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

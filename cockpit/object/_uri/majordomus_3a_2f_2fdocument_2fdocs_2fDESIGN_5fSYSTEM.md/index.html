@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/DESIGN_SYSTEM.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/DESIGN_SYSTEM.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/DESIGN_SYSTEM.md</h1><p class="mj-page-subtitle">The design system — one declaration, every surface</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/DESIGN_SYSTEM.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DESIGN_SYSTEM.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DESIGN_SYSTEM.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FDESIGN_SYSTEM.md">document.docs/DESIGN_SYSTEM.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># The design system — one declaration, every surface
+
+How the site published to GitHub Pages, the Cockpit, the pages the executable renders
+itself and the Swagger shell come to look like one tool: where the visual identity is
+decided, how it reaches each surface, how it is extended, how drift is caught, and what to
+do when a page looks wrong. Behaviour as implemented and tested; where implementation and
+this document disagree, the document is wrong and changes in the same commit as the fix.
+The rule is `project.design-tokens-declared-once@2`; the decisions are
+[ADR 0031](../.ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md)
+and
+[ADR 0036](../.ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md).
+
+## Why
+
+Four surfaces put HTML in front of a person, and each had grown a design of its own. The
+site was Flowbite&#39;s default theme over Tailwind&#39;s palette; the Cockpit a second Tailwind
+build with its own palette, a dark theme at a different hue (which, it turned out, never
+applied), its own favicon, its own theme key and six bracketed pixel sizes; the report pages
+seven hexadecimal literals; the Swagger shell whatever a third party shipped. Status was
+three palettes, and which word meant which status was written in a stylesheet&#39;s selector
+lists *and* in four template macros. Nothing could say what `--mj-text-faint` was for.
+
+None of it was a wrong value. It was a design with no canonical home, so every surface
+decided it again, and no check could tell obedience from invention.
+
+## The source of truth
+
+`share/design/tokens.yaml`. One file, in the layer&#39;s own YAML subset, holding:
+
+| section | what it decides |
+|---|---|
+| `identity` | the name and the marks under `share/design/brand/` |
+| `font` | the system stack and the monospace stack |
+| `palette` | the raw colours — Tailwind&#39;s, quoted; internal, never read by a consumer |
+| `roles` | the semantic surface: `bg`, `raised`, `sunken`, `line`, `fg`, `body`, `muted`, `faint`, `accent`, `accent-strong`, `accent-soft`, `accent-line`, `accent-fill`, `on-accent`, each a palette entry per theme |
+| `status.roles` | five meanings — `ok`, `warn`, `bad`, `info`, `neutral` — each with text, ground and border per theme |
+| `status.states` | the vocabulary: every state word any surface renders, filed under one meaning |
+| `tones` | hues for identity and never meaning — blue, violet, green, orange, rose, cyan — each with ink, ground, border and fill per theme |
+| `type` | the named scale (`meta`, `label`, `small`, `dense`) and letter-spacings |
+| `layout`, `radius`, `motion` | the shared measures, corner radii and durations |
+| `theme` | the class that means dark and the `localStorage` key of the reader&#39;s choice |
+| `viewports` | the widths every browser audit measures at |
+| `alias.flowbite` | the site&#39;s vocabulary, each Flowbite name a synonym of a role or a status colour |
+
+The crate reads it as a typed model (`apps/majordomus-cli/src/design/`): declaration order
+kept, every reference resolved, every inconsistency refused before anything is written, and
+a SHA-256 fingerprint over the canonical form. The first twelve digits of that fingerprint
+are what every stylesheet carries as `--mj-design`.
+
+## The pipeline
+
+```mermaid
+flowchart TD
+  yaml[&quot;share/design/tokens.yaml&quot;]
+  subgraph sheets[&quot;share/design/&quot;]
+    theme[&quot;theme.css&lt;br&gt;Tailwind @theme + Flowbite&#39;s names&lt;br&gt;as var(--mj-*)&quot;]
+    surface[&quot;surface.css&lt;br&gt;every role and status colour,&lt;br&gt;light and dark&quot;]
+    status[&quot;status.css&lt;br&gt;one selector group per state word&quot;]
+    base[&quot;base.css&lt;br&gt;(hand-written) focus ring, reduced motion&quot;]
+    primitives[&quot;primitives.css&lt;br&gt;(hand-written) badge, table, card,&lt;br&gt;code, form …&quot;]
+  end
+  tailwind[&quot;site/tailwind.css&quot;]
+  appcss[&quot;site/static/app.css&quot;]
+  pages[&quot;GitHub Pages&quot;]
+  cksrc[&quot;share/cockpit/src/cockpit.css&quot;]
+  ckcss[&quot;share/cockpit/cockpit.css&quot;]
+  cockpit[&quot;Cockpit&quot;]
+  webtokens[&quot;apps/majordomus-cli/src/web/tokens.css&lt;br&gt;the same tokens, no Tailwind&quot;]
+  webout[&quot;reports, home page, Swagger shell&quot;]
+  decl[&quot;apps/majordomus-cli/src/design/tokens.yaml&lt;br&gt;the declaration, compiled in&quot;]
+  declout[&quot;design.* capabilities,&lt;br&gt;Cockpit shell and Design page&quot;]
+  logo[&quot;apps/majordomus-cli/src/cockpit/logo-mark.svg&lt;br&gt;the mark, compiled in&quot;]
+  topbar[&quot;Cockpit top bar&quot;]
+  brand[&quot;share/cockpit/favicon.svg, site/static/favicon.svg,&lt;br&gt;site/static/images/*.svg&lt;br&gt;every copy of the brand&quot;]
+  registry[&quot;site/data/registry/design.json&lt;br&gt;vocabulary, theme contract, widths&quot;]
+  registryout[&quot;templates, site-probe, ui audit&quot;]
+  inventory[&quot;docs/generated/design.json, design.yaml, design.md&lt;br&gt;the inventory&quot;]
+  yaml --&gt;|&quot;majordomus generate design (crate::design::render)&quot;| sheets
+  sheets --&gt; tailwind
+  tailwind --&gt; appcss
+  appcss --&gt; pages
+  sheets --&gt; cksrc
+  cksrc --&gt; ckcss
+  ckcss --&gt; cockpit
+  webtokens --&gt; webout
+  decl --&gt; declout
+  logo --&gt; topbar
+  registry --&gt; registryout
+```
+
+Two hand-written files sit beside the generated ones and are imported by both Tailwind entry
+points: `base.css` (the accessible defaults) and `primitives.css` (the `.mj-*` components
+both surfaces render). They name tokens and choose nothing.
+
+Both Tailwind builds import the generated sheets in the same order, after Flowbite&#39;s theme.
+The site keeps Flowbite&#39;s vocabulary in its templates — `text-heading`, `border-default`,
+`bg-brand` — and the generated theme declares each of those names as `var(--mj-&lt;role&gt;)`,
+unlayered and after Flowbite&#39;s own `.dark` block, so the name is a synonym and the value is
+the declaration&#39;s in both themes. The Cockpit reads `--mj-*` directly. A report page and
+the Swagger shell compile the same tokens in and fetch nothing.
+
+Status works through one indirection. The generated status sheet emits, for each meaning,
+one selector group over the meaning and every word filed under it —
+`.mj-badge--succeeded, .mj-alert--succeeded, .mj-status--succeeded, …` — setting
+`--mj-status-fg`, `--mj-status-bg` and `--mj-status-line`; the shared badge, alert and
+status primitives read those three with a neutral fallback. So a surface writes
+`mj-badge--&lt;word&gt;` and nothing else, and the colour is whatever the word is filed under.
+
+Nothing is run by hand. `scripts/derive` (and `just derive`) runs `majordomus generate`,
+which includes the design target; `scripts/cockpit-assets` and `scripts/site-build` compile
+the two Tailwind bundles from the generated sheets; the pre-commit hook and the CI plan
+refuse a tree whose projections are stale.
+
+## Extending it
+
+Every extension is one edit to `share/design/tokens.yaml`, then `majordomus generate design`
+(or `just derive`), then the two asset builds. Nothing else is edited.
+
+- **A semantic colour.** Add a role under `roles` with `about`, `light` and `dark` naming
+  palette entries (add the entries under `palette` if the colour is new — Tailwind&#39;s value,
+  quoted). It is `--mj-&lt;name&gt;` on every surface, a swatch class for the inspector, a row on
+  the Cockpit&#39;s Design page and in the inventory, and answered by `explain`.
+- **A status semantic.** Add a meaning under `status.roles` with `fg`, `bg` and `line` per
+  theme, and file its words under `status.states`. Every `mj-badge--&lt;word&gt;` is styled.
+- **A tone.** Add it under `tones` with `fg`, `bg`, `line` and `fill` per theme. A tone is a
+  hue for identity — a step of a sequence, one surface&#39;s card — and never a verdict, so it
+  is not a status. `.mj-tone--&lt;name&gt;` sets the four `--mj-tone-*` properties every kit
+  component reads, the contrast measurement pairs the tone with itself only, and
+  `site/data/registry/design.json` lists it for the templates.
+- **A state word.** Add it to the list under its meaning. That is the whole change:
+  `test/cases/109_design_system.sh` does exactly this to prove nothing else moves.
+- **A type step.** Add it under `type.scale` with `size` and `leading`; `text-&lt;name&gt;` exists
+  in both Tailwind builds and `--text-&lt;name&gt;` on every page.
+- **A spacing or layout value.** Add it under `layout`; it is `--mj-&lt;name&gt;`.
+- **A component primitive.** Write it once in `share/design/primitives.css` over tokens and
+  scale steps; both surfaces have it. The Cockpit&#39;s own stylesheet keeps only what the
+  Cockpit alone has.
+- **A mark.** Replace the file under `share/design/brand/`; every copy is regenerated.
+- **A Flowbite name the site uses that should follow a role.** Add it under
+  `alias.flowbite`. A name absent there keeps Flowbite&#39;s value, which is a statement that
+  it is not a shared decision.
+
+The process never includes editing the site&#39;s templates and the Cockpit&#39;s stylesheet for the
+same reason. If it does, the architecture has a hole; file it.
+
+## The kit
+
+The components the site&#39;s product and documentation pages are composed of: a hero and a
+doctrine quote, panels and stages, a file tree, points, interface rows, link tiles, a band of
+claims, a terminal with structured output, a command with its copy button, a tab strip in
+three looks, the rows of an HTTP API, a dashboard window with its counts, chart, feed,
+actions and health list, a trail, a search field, a table of contents, a step flow, and three
+diagrams — a stack of layers, a fan that joins rows to a hub, and a cycle of four.
+[/kit/](https://majordomus.dev/kit/) renders every one of them from this repository&#39;s data.
+
+| file | what it holds |
+|---|---|
+| `share/design/kit.css` | how each component looks, as `.mj-*` classes over the roles, the status indirection and the tone indirection; measured by the contrast check like the primitives |
+| `site/templates/kit/*.html` | what each component is, as a Tera component: `base` (icon, glyph, step, button, pill, state, copy), `content` (hero, quote, section, panel, stages, tree, points, routes, tiles, links, strip, figure, claims, table), `code` (terminal, term_line, term_out, term_box, cmd, cmd_list, tabs, tab_panel, method, request, endpoint, listing), `dashboard` (window, sidenav, kpis, chart, legend, feed, actions, health), `docs` (trail, search, toc, flow), `diagrams` (stack, fan, cycle) |
+| `site/data/kit/icons.toml` | the outline glyphs a component names by key; an unknown key fails the build |
+| `site/kit.js` | the three behaviours markup cannot carry: copy, switch tabs, mark the section being read |
+| `site/kit.tailwind.css`, `site/templates/partials/kit-assets.html` | the kit&#39;s own sheet and script, which a page opts into |
+
+Conventions a component keeps, so that a page composes them without reading their source:
+
+- **An item is a map, and a key means one thing everywhere.** `title` and `text` are read,
+  `icon` is a key of the icon set, `tone` a tone, `href` where it goes, `state` a state word.
+- **No value is written in a component.** A count, a command, a transcript or a release is
+  handed to it by the page, and the page reads it from a generated dataset. A mockup&#39;s
+  numbers are not data.
+- **State is an attribute.** A selected tab is `aria-selected`, the current link
+  `aria-current`, an open group `details[open]`. The sheet styles the attribute, so no bound
+  class can lose to a static utility (see *Alpine `:class` loses to static utilities*).
+- **Nothing needs the script to be read.** A copy button and a tab strip are rendered
+  `hidden` and revealed by `site/kit.js`; every tab panel is rendered, under the heading its
+  tab would carry; a disclosure is a native `&lt;details&gt;`; a fan&#39;s curves are computed by the
+  template from how many rows each side has.
+- **The kit is a page&#39;s choice.** A page composed of it includes
+  `{% block kit %}{% include &quot;partials/kit-assets.html&quot; %}{% endblock kit %}`; every other
+  page loads none of it, which keeps the homepage within its byte budget.
+
+**Screens.** A screen is a whole page composed of nothing but the kit, rendering one of the
+owner&#39;s page designs (architecture, integrations, documentation, CLI, Cockpit, features, how it
+works, landing) from this repository&#39;s data at `/kit/&lt;screen&gt;/`. A screen template
+(`site/templates/screens/&lt;name&gt;.html`) extends `site/templates/screen.html`, which loads the
+datasets a screen may read under one set of names — `design`, `registry`, `kinds`, `oas`, `cl`,
+`term`, `cli`, `commands`, `tones`, `base` — and its page is `site/content-src/kit/&lt;name&gt;.md`.
+The designs carried values nobody measured (a version never released, counts of objects that do
+not exist, latencies, an issue number, a port); a screen shows none of them, and
+`test/cases/791_a_screen_is_composed_of_the_kit_and_of_real_data.sh` refuses one that does, one
+that chooses a colour, a style or a class of its own, and one outside the frame.
+
+To add a component: write its classes in `share/design/kit.css`, its markup in the file of
+`site/templates/kit/` it belongs to, and an example on `site/templates/kit-page.html` from
+real data; a control it carries needs a spec under `scripts/lib/interaction-specs/`.
+`test/cases/790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it.sh` refuses a
+component the page does not render, a class no template emits or no sheet defines, an icon
+the set does not hold, and a kit loaded by every page; `scripts/interaction-probe` drives
+every copy button, tab and search field in a browser. Zola 0.23&#39;s Tera 2 types a
+component&#39;s argument by its default, takes a literal argument only in braces
+(`count={4}`), allows one `for` per comprehension and arrays two levels deep; the kit is
+written within those limits.
+
+## Validation
+
+| what | where | when |
+|---|---|---|
+| the declaration is consistent | `crate::design::DesignSystem::validate`, run by `generate` | before anything is written |
+| every projection is current | `majordomus generate --check` (`rust-integration` / `generation-converges`) | every plan that touches the crate, the share or the generated tree |
+| no source carries a design decision of its own | `scripts/ci/design-check` (`design` gate, structure job) | every plan that touches a stylesheet, template, script or the crate&#39;s web code |
+| the compiled Cockpit stylesheet matches its source, and the palette matches the installed Tailwind | `scripts/cockpit-assets --check` (`cockpit-assets` gate) | the site job |
+| every badge word on the site is filed, and every page carries the fingerprint | `scripts/site-check` (`site-build` gate) | the site job |
+| the stylesheet, the page and the dataset agree, at every declared width | `scripts/site-probe` (`site-probe` gate) | the site job |
+| the stylesheet, the page and the executable agree; every badge word is filed; no overflow at every declared width | `scripts/cockpit-probe` (`cockpit-probe` gate) | the cockpit job |
+| every page is keyboard-operable and passes contrast at every width | `scripts/ui audit` (`ui-audit` gate) | the site job |
+| every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/120_design_contrast.sh` | every plan that touches the declaration or a primitive |
+| the model, the renderer and the zero-registration property | the crate&#39;s tests; `test/cases/107_design_tokens.sh`; `test/cases/109_design_system.sh` | the rust and suite jobs |
+
+The gate&#39;s questions are the failure modes that were found: a colour literal, a raw palette
+utility (`text-green-700`), a bracketed size (`text-[11px]`), a second declaration of a
+canonical property, a read of a `--mj-` token nothing emits, a copy of the brand that
+differs from the canonical file or lives elsewhere, and a theme key or class named by hand.
+Each exemption in the gate is a reason, stated where the gate is written.
+
+The last question is not about where a decision was made but about whether the decision is
+readable. Which foreground is rendered on which ground is derived — the declaration files
+each status&#39;s text with its own ground, and the primitives say the rest: a rule setting a
+colour and a background states a pair, a rule setting only a colour states a foreground that
+lands on every ground a container sets — so a role added tomorrow is measured tomorrow and
+no list has to be kept. The threshold is WCAG 2.1 AA, 4.5:1 for text, the same constant
+`scripts/lib/ui-contrast.mjs` holds for the generated highlighting palettes; a border is
+measured against 3:1 and reported rather than enforced, because the primitive that draws it
+always shows the word beside it.
+
+## Introspection
+
+| surface | how |
+|---|---|
+| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`; resource `majordomus://design` |
+| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
+| OpenAPI, Swagger | the same four operations, from the registry |
+| Cockpit | `/cockpit/design`: every role with both themes&#39; swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
+| reference | `docs/generated/design.md`, and the JSON and YAML beside it |
+
+`explain` takes a role, a status, a state word, a type step, a palette entry, or the custom
+property any of them becomes:
+
+```console
+majordomus_design_explain {&quot;token&quot;: &quot;--mj-ok&quot;}
+→ kind: status, about: healthy, done, passing …,
+  parts: fg --mj-ok emerald-900 / emerald-300, bg --mj-ok-bg …, line --mj-ok-line …,
+  states: ok pass passed succeeded completed done …,
+  aliases: --color-fg-success-strong --color-success-soft --color-success-subtle,
+  projections: share/design/theme.css share/design/surface.css …
+```
+
+## Troubleshooting
+
+- **A page looks wrong on one surface.** Read `--mj-design` from the page
+  (`getComputedStyle(document.documentElement).getPropertyValue(&#39;--mj-design&#39;)`) and
+  compare with `GET /api/v1/design` (`design`) or `site/data/registry/design.json`. The
+  Cockpit does this itself and shows an alert on mismatch. A different fingerprint means a
+  stylesheet compiled before the declaration moved: run `majordomus generate design`, then
+  `scripts/cockpit-assets` or `scripts/site-build`, and restart the server.
+- **A colour is missing.** An undeclared custom property is the empty string, never an
+  error. `scripts/ci/design-check` names every `--mj-` read nothing emits; run it.
+- **A badge is grey that should not be.** Its word is filed under no status. `explain` it;
+  if it answers nothing, file the word under `status.states`. `scripts/site-check` and
+  `scripts/cockpit-probe` refuse an unfiled word.
+- **The Cockpit is unstyled.** `share/cockpit/cockpit.css` is missing or stale:
+  `scripts/cockpit-assets`. The shell says so in a banner.
+- **Dark mode does not switch.** The class the page toggles is `theme.class` from the
+  declaration, written onto `&lt;html&gt;` (site) or `&lt;body&gt;` (Cockpit) as `data-theme-class`;
+  the scripts read it there. A page without the attribute has an invalid compiled
+  declaration: `GET /api/v1/design` says why.
+- **A visual regression probe fails.** The finding names the route, the width and the
+  assertion. An overflow is a layout defect on that page; a `design` finding is a stale
+  bundle or a page not carrying `data-design`; a `font` finding means a stack other than the
+  declared one — usually a third-party stylesheet loaded after ours.
+- **`generate` refuses the declaration.** The message names the key path and the reason
+  (`roles.sunken.light: &#39;gray-51&#39; is not a palette entry`). Nothing was written.
+
+## What is deliberately not shared
+
+The two surfaces share a language, not a layout. The site is Flowbite components in
+templates at reading density; the Cockpit is semantic classes over the same tokens at
+operational density. The Swagger UI&#39;s own component tree keeps its third-party stylesheet
+inside a frame that is ours. Flowbite names the site uses that are not shared decisions
+(`neutral-tertiary`, `brand-strong`, the non-strong `fg-*` variants) keep Flowbite&#39;s values
+until somebody files them under a role.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

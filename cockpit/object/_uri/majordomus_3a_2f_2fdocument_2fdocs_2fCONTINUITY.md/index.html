@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/CONTINUITY.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/CONTINUITY.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/CONTINUITY.md</h1><p class="mj-page-subtitle">Continuity — how work survives the session that was doing it</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/CONTINUITY.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CONTINUITY.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CONTINUITY.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FCONTINUITY.md/index.html">document.docs/CONTINUITY.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Continuity — how work survives the session that was doing it
+
+A conversation with an AI worker is not a place to keep anything. It ends, it is
+compacted, it is replaced by a different worker with a different context window, and
+none of that is under your control. The work, meanwhile, has to continue.
+
+Majordomus&#39;s answer is that operational state lives in the repository, in files that
+outlive every conversation, and that the next worker is given a briefing assembled from
+those files rather than a transcript to re-read.
+
+```
+Conversation is ephemeral.
+Operational state is durable.
+Context is selected.
+History is reconstructable.
+Handovers are explicit.
+Completion is independently verified.
+```
+
+## The problem, stated precisely
+
+A worker stops. Something must survive, or the next worker begins by reconstructing what
+the last one knew — from commit messages, from a diff, from a human&#39;s memory of a
+conversation they were not part of. That reconstruction is slow, and worse, it is
+confidently wrong often enough to matter.
+
+The obvious fix is to save the conversation. That fix is wrong for three reasons.
+
+A transcript is not state. It is a record of how someone arrived at a conclusion,
+including every wrong turn, in an order optimised for nothing. What the next worker needs
+is the conclusion, the current facts, and the next action.
+
+A transcript is unbounded. It grows with the length of the session rather than with the
+size of the work, and the tenth session&#39;s context is filled with the first session&#39;s
+false starts.
+
+A transcript goes stale silently. It records what was true when it was written and says
+nothing when the repository moves past it. A worker that trusts a stale narrative makes
+decisions against a repository that no longer exists.
+
+So Majordomus stores none of it. What it stores is small, typed, and each piece has one
+home.
+
+## The durable records, and the ones that are not task-shaped
+
+| Record | Answers | Mutability | Where |
+|---|---|---|---|
+| **task** | what is being worked on, under what constraints, within which paths | mutable; one active per checkout | `state/current.yaml` |
+| **checkpoint** | what was true a few minutes ago, and what comes next | append-only | `state/checkpoints/` |
+| **handover** | the deliberate package for whoever continues | append-only | `state/handovers/` |
+| **decision** | what was decided, why, and what was rejected | append-only | `state/decisions.md` |
+| **open question** | what is unresolved, and what it blocks | mutable index; the ledger keeps the history | `state/open-questions.md` |
+| **history event** | what happened, when, for which task, at which commit | append-only | `state/ledger.jsonl` |
+
+Prompt assets in `.ai/repo/prompts/` are a seventh thing, but they are not records of
+work — they are reusable framings, versioned with the repository.
+
+## The kinds that are not task-shaped: the session, and what it learned
+
+The records above are all task-shaped. Each one hangs off the work, which is right, and it
+leaves one question with nowhere to live: *what did one worker do between sitting down and
+stopping?*
+
+That question is not the same as any of those. A task can outlive a worker; a worker can
+touch three tasks in an afternoon. Nothing in those records that two decisions an hour
+apart, filed under different tasks, were made by the same person in the same sitting — and
+that is exactly the causal thread a later reader is trying to pick up.
+
+| Record | Answers | Mutability | Where |
+|---|---|---|---|
+| **session** | what one execution episode did, between which commits, producing which records | one open per provider session, then immutable | `local/state/sessions-open/&lt;provider session&gt;.yaml`, pointed at by `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
+| **working context** | what the worker was told when the episode opened, and what it noted while working | appended to, never rewritten | `local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md` |
+| **knowledge record** | what the repository now knows because of the episode: each decision recorded, question resolved and task finished, as one assertion with provenance | a candidate is rewritten by the deriver until a person promotes or rejects it; verified is then immutable except by supersession | `repo/knowledge/candidates/&lt;id&gt;.md`, then `repo/knowledge/curated/&lt;id&gt;.md` |
+
+The two are not the same record and answer opposite questions. The closed session says what
+the episode produced, derived from git and the ledger, and it is shared. The working context
+says what the episode was given, frozen from the builder at the open, and it is local: it
+names this machine, and re-resolving it later would produce a different document, so no
+surface can reproduce it and none publishes it (ADR 0015).
+
+A session opens, may cross several tasks, and closes. `task != session` in both
+directions: a task spanning two sessions is named by both, and a session spanning two
+tasks names both.
+
+### A session is an envelope, not a narrative
+
+The closed record is identity, a temporal boundary, and references. It names the tasks,
+issues, milestones, checkpoints, handovers, decisions, questions and evidence of its
+episode, and it copies the body of none of them. An authored summary is allowed and is
+not authority; the records it points at are.
+
+The temptation is to write the episode down instead — one document with the decisions
+quoted, the checkpoint bodies inlined, the git log pasted, the reasoning narrated. That
+document is a transcript with better formatting, and it fails the same three ways any
+transcript does: it is a record of how somebody arrived somewhere rather than where they
+are, it grows with the length of the session rather than the size of the work, and it goes
+stale silently while the repository moves past it.
+
+So the session file holds pointers, and the pointers are checked. A reference to a
+checkpoint that does not exist is a reported defect, not a broken link nobody notices.
+
+### The envelope is derived, not accumulated
+
+Nothing writes into an open session. `checkpoint`, `decision`, `question` and `plan` are
+unchanged and know nothing about sessions. At close, the reference lists are computed from
+the ledger.
+
+The ledger is already append-only, already written only by Majordomus, already ordered by
+the order the commands ran, and already validated. It knows every fact the envelope needs.
+Having each command additionally append to a session file would put a write on the hot path
+of commands that today append one line, and would create a second mutable account of
+events the ledger already holds — which is the second source of truth this whole design
+refuses. The cost is that the ledger is now load-bearing for two purposes, and that is
+stated rather than hidden.
+
+What it selects, and why it is not a time range, is worth stating because the obvious
+implementation is wrong. Every ledger line now carries the session that wrote it, next to
+the commit and branch it already carried. A first version selected every line between the
+session&#39;s two timestamps instead, and the first time it ran for real it claimed another
+worker&#39;s tasks, checkpoints and handovers: the ledger is one file per repository, two
+workers were writing to it, and no timestamp can separate them. Which episode wrote an
+event is something the machine knows when it writes it, so it is recorded then.
+
+A line with no session belongs to no episode. Sessions are optional, and work done outside
+one is attributed to nobody rather than to whoever had a session open nearby.
+
+### Sessions are read with the same rules as everything else
+
+Resolution is the two-tier rule: same repository, same worktree, same branch; then same
+repository, same branch; then nothing. A session from another branch is never offered.
+
+Divergence uses the same four labels — `exact`, `advanced`, `diverged`,
+`different_context` — computed at read time from the commit the session closed at. A
+session whose branch was rewritten underneath it is labelled `diverged` wherever it is
+printed, and is never quietly presented as current knowledge.
+
+Ordering comes from the recorded timestamp, with ledger line order breaking ties inside
+one second. Nothing reads filesystem modification time: it does not survive a clone, and
+it is not the time the record asserts.
+
+### What a session is not
+
+It is not a scope. A task claims paths; an episode does not, and giving one paths would
+create a second, weaker claim for the coordination check to disagree with.
+
+It is not a unit of acceptance. `finish` evaluates a task against its contract. Closing a
+session asserts only that the episode ended.
+
+It is not required. A worker that never opens a session loses the episode boundary and
+nothing else; every other record is written exactly as before.
+
+## Checkpoint and handover are different objects
+
+They are easy to conflate and expensive to conflate.
+
+A **checkpoint** is a progress note of an episode. It is written often, it is short by
+policy (`checkpoint.max_body_lines`), and its job is to be quotable whole into the next
+briefing. &quot;Reproduced the fault with the fixture; the cause is in normalisation, not
+comparison; next, write the regression test.&quot;
+
+A **handover** is a deliberate continuation package written when a worker stops. It has
+required sections, it is refused if any of them is empty, and it is the thing another
+worker resumes from. It is written rarely.
+
+**Neither of them belongs to a task.** Both name the task they were written under when
+there is one, and both are written when there is not. A task is a unit of intended work
+that somebody opens and closes; an episode is a provider&#39;s conversation boundary that
+begins when a client attaches and ends when it detaches. Making the records depend on the
+first means that the ordinary act of finishing a task disables continuity for every episode
+after it — which is not a hypothetical. Between 2026-09-05 and 2026-09-11 this repository
+wrote neither record, because a task had been marked `handed_over` and three separate
+guards each asked, correctly against their own contract, whether a task was `active`. ADR
+0052 removed the premise they shared.
+
+A checkpoint that grows into a report is refused rather than truncated, with the
+suggestion to write a handover instead. The cap is the mechanism that keeps the two
+objects distinct.
+
+A **knowledge record** is neither. A checkpoint says what the work looked like and a
+handover says what to do next; a knowledge record says what is now true about the
+repository because of the episode — the decision it recorded, the question it resolved, the
+reason a task was blocked — as one assertion with a class, a status and provenance that
+resolves. It is derived at the same moments the checkpoint is, from the ledger and git and
+never from the conversation or from either of the other two records, and it lands in the
+tracked tree as a candidate that a person promotes or rejects. It is the one record of an
+episode that survives a clone before anybody has written a word by hand, and it is the one
+that is never authored by the deriver: `verified` is a person&#39;s act. [`KNOWLEDGE.md`](KNOWLEDGE.md)
+has the derivation and the commands.
+
+## Identity comes from reality
+
+`repository_id`, `worktree`, `branch`, `head`, `working_tree` and `changed_files` on every
+record are computed from git at write time. A body that contains any of them is refused.
+
+This is not fussiness. A worker asked to summarise its own state will produce a plausible
+summary, and a plausible summary that includes a commit hash the worker did not verify is
+worse than no summary, because it looks checkable. The fields a machine can determine are
+determined by the machine; the fields only a person or a worker can supply are supplied by
+them and marked as such.
+
+## Records are read with a divergence label
+
+Nothing is trusted because it exists. On read, the recorded `head` is compared with the
+current `HEAD` through `git merge-base`, and the record is labelled:
+
+| Label | Meaning | What to do |
+|---|---|---|
+| `exact` | written at this commit | trust it |
+| `advanced` | git has moved forward since | trust it, expect some of it to be done |
+| `diverged` | the recorded commit is not an ancestor | history was rewritten; trust git, not the record |
+| `different_context` | another branch | this record is not about your work |
+
+`context` prints the label. `check` and `watch` report it as a finding. A record is
+evidence, never authority.
+
+## Resolution is deterministic, and absence is a valid answer
+
+`handover --resolve`, `checkpoint --show` and `context` all use the same rule:
+
+1. Same repository, same worktree, same branch.
+2. Same repository, same branch, when the branch is not detached.
+3. Nothing.
+
+There is no third tier. A record from an unrelated worktree or branch is never offered,
+because a globally newer record silently becoming your context is worse than having no
+context at all — you cannot tell that it is wrong until you have acted on it.
+
+Records written inside the same second would otherwise resolve in an order decided by a
+random filename suffix, so the ledger, which is append-only and written in command order,
+breaks the tie.
+
+When nothing matches, the answer is &quot;no relevant handover&quot;, not the closest thing
+available. **Absence is better than incorrect memory.**
+
+## Context is selected, not accumulated
+
+`majordomus context` assembles a briefing in authority order — git, then the task and its
+profile, then blockers, then authored records, then event history — and prints it. Nothing
+is persisted; it is recomputed each time from the records and git.
+
+What goes in is decided by the profile&#39;s `context` block. A `routine` task does not need
+the decision history; a `deep-work` task wants the repository&#39;s decisions rather than only
+its own. Those toggles were configuration that nothing read until the builder existed;
+now they are the thing that decides.
+
+When the assembled text exceeds `context.builder_budget_lines`, sections are dropped in a
+fixed order: history first, then touched files, then decisions, then the bodies of the
+checkpoint and the handover, which degrade to a pointer rather than disappearing. Git, the
+task, the profile and open blockers are never dropped.
+
+**Every exclusion is named, with its reason**, under `EXCLUDED`. An under-filled context is
+debugged by reading that list, not by guessing what the tool decided to leave out. The
+reported line count is the count of the document actually printed, including its own
+header and trailer.
+
+## History is for reconstruction, not for reading back a conversation
+
+`state/ledger.jsonl` is append-only and written only by Majordomus. One line per event:
+started, checkpoint, decision recorded, question opened, question resolved, handed over,
+finished, projections updated, ledger rotated. Each carries a timestamp, the task, and the
+commit it happened at.
+
+`majordomus history` reads it back with filters. It answers what happened, when, for which
+task, at what git state, what verification ran and what outcome was accepted. It does not
+answer what anyone said, because that is not recorded.
+
+Retention is deliberate: the ledger has a line cap, and `history --rotate` moves the
+oldest lines into a dated archive file. It never deletes, and it refuses to overwrite an
+existing archive.
+
+## Blockers are state, not prose
+
+An unresolved question in a handover paragraph is a note. An entry in
+`state/open-questions.md` **refuses `finish --outcome completed`** — any entry, not only one
+the active task opened. A question is a person owing an answer, and the work it blocks
+outlives the task that asked; a gate that forgot at the task boundary would be a gate a
+handover walks past. The store is checkout-local, under the ignored `.ai/local/state/`,
+so the questions a gate can see are the ones asked in this working copy; a question is
+carried to another checkout by the handover that names it, never by git.
+
+Only *completed* is refused. `blocked`, `partial`, `no_match` and `failed` are honest
+statements that the work did not finish, and refusing them would buy a green gate by forcing
+a mislabelled outcome.
+
+That gate is why the file has a machine-written line format, and why `check`, `doctor` and
+`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
+that can be bypassed by mistyping one.
+
+## Nothing here calls a model
+
+Majordomus stores, validates, resolves, projects and verifies. It does not summarise, it
+does not decide what a checkpoint should say, and it makes no network call. If you want a
+model to write your checkpoint, have the worker write it and pipe it in. The tool is
+deterministic infrastructure and stays that way.
+
+## Who runs the lifecycle
+
+The start event also converges on the shared server. With `session.ensure_server_on_start`
+(on by default) it runs `majordomus serve ensure`: a server is started as a process of its
+own when none answers this checkout, never built, and the briefing carries one line naming
+where it stands — `Shared server: ready http://127.0.0.1:8741 pid 123`, or `not ensured:
+the executable is not built (run \`just build\`)`. Discovery, loading and now the server are
+three things a worker no longer has to remember; `docs/MCP.md` has the lifecycle.
+
+Nothing above requires a worker to remember any of it.
+
+Where a provider announces the boundaries of a sitting, its own hooks run the lifecycle.
+The start event opens the episode, freezes the context the builder resolved at that moment,
+and writes a briefing to standard output — which the provider adds to the context it is
+about to build. That is the one moment at which a continuation record reaches a worker
+without the worker asking for it, and it is the difference between a record that is written
+automatically and one that is also read.
+
+```mermaid
+flowchart TD
+  ss[&quot;provider fires SessionStart&quot;]
+  opens[&quot;session opens (or the open one is kept)&quot;]
+  frozen[&quot;the working context is frozen&quot;]
+  brief[&quot;the briefing goes to stdout: the episode, the resolved&lt;br&gt;handover with its divergence label AND its freshness,&lt;br&gt;the blockers, and — only when the record is still&lt;br&gt;current — the one section to act on&quot;]
+  work[&quot;work happens&quot;]
+  pc[&quot;provider fires PreCompact&quot;]
+  cp1[&quot;a derived checkpoint, because the conversation&lt;br&gt;is about to stop holding it&quot;]
+  se[&quot;provider fires SessionEnd&quot;]
+  cp2[&quot;a derived checkpoint, for the same reason: the close&lt;br&gt;is the other moment at which what the episode knows&lt;br&gt;stops being reachable&quot;]
+  kn1[&quot;derived knowledge candidates, from the ledger and git:&lt;br&gt;what the episode decided, resolved and finished&quot;]
+  kn2[&quot;derived knowledge candidates, on the close path,&lt;br&gt;before the envelope is sealed&quot;]
+  ho[&quot;a derived handover&quot;]
+  env[&quot;the episode closes into its envelope of references&quot;]
+
+  ss --&gt; opens
+  ss --&gt; frozen
+  ss --&gt; brief
+  ss --&gt; work
+  work --&gt; pc
+  pc --&gt; cp1
+  pc --&gt; kn1
+  pc --&gt; se
+  se --&gt; cp2
+  se --&gt; kn2
+  se --&gt; ho
+  se --&gt; env
+```
+
+Every one of those arrows fires whether or not a task is open and whatever outcome the last
+task reached, and each event writes a `provider.event.received` line to the ledger *before*
+any of them is decided. A hook must return success to its provider — blocking somebody&#39;s
+work is the worse failure — but returning success is not the same as claiming the work
+happened, and without the receipt an event that never fired and an event that fired and did
+nothing are the same observation afterwards.
+
+## Divergence is not freshness
+
+Every record carries two independent judgements and they answer different questions.
+
+**Divergence** — `exact`, `advanced`, `diverged`, `different_context` — says where the
+record&#39;s commit sits relative to this checkout&#39;s HEAD. **Freshness** — `fresh`, `aging`,
+`stale`, `unknown`, `invalid` — says how old it is, against `session.freshness` in the
+policy, which is the only place either threshold is written.
+
+A record is `advanced` on the day it is written and still `advanced` a month later:
+`advanced` means its commit is an ancestor of HEAD, which sounds like agreement and says
+nothing whatever about time. A record that is both `advanced` and `stale` is the exact
+shape of the 2026-09-05 outage, and it is the reason the two are reported side by side.
+
+A stale record is history. The briefing still shows it — knowing what the last worker was
+doing is worth having — but it is labelled as historical, its age and the reason are
+stated, and its `Next Action` is deliberately **not** quoted as the thing to do now. An
+instruction that was correct six days ago, handed over without qualification, is worse than
+no instruction: the worker cannot tell it is wrong until after acting on it.
+
+The episode belongs to the provider session that opened it, and not to the checkout. Two
+windows of the same provider open on one worktree are two workers: each start event opens
+or keeps *its own* episode, each end event closes its own and no other, and each worker&#39;s
+ledger lines are stamped with its own episode id. An open episode is
+`local/state/sessions-open/&lt;provider session&gt;.yaml`; `local/state/session-current.yaml`
+points at the episode of this checkout, and a worker that can name its provider session
+resolves its own instead of following the pointer. Before this, `--if-open keep` returned
+the already-open episode whatever the event said: seven concurrent sessions here on
+2026-09-09 produced one record between them, stamped with whichever id happened to be first,
+and closed by whichever window was shut first.
+
+The briefing is bounded by `session.briefing_budget_lines` and carries references, labels,
+one section and the ids of the knowledge candidates awaiting review on the branch — never a
+conversation. Each of the three behaviours is a switch in the
+policy, and `session.briefing_on_start: false` restores the older silence.
+
+This is the one route by which anything under `local/` reaches a model&#39;s context without
+being asked for. It is narrow on purpose, and the other half of that rule is unconditional:
+nothing under `local/` is ever published by a generator or served on a public surface.
+`.ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md` records why.
+
+A worker with no such provider loses none of the model and all of the automation: every
+command below is the same, and running them is again a matter of remembering.
+
+## Reading it back from somewhere other than a terminal
+
+`continuity.state` in the Rust executable reads this same local half and reports it over
+MCP (`majordomus_continuity`), over HTTP (`GET /api/v1/continuity`) and in the Cockpit&#39;s
+Continuity page: the open episode, the active task, the handover and checkpoint that
+resolve here with their divergence labels, and the blockers. It uses the same two tiers and
+the same four labels, and it never writes — the lifecycle has one writer, and a second
+account of events the ledger already holds is what this design refuses.
+
+It is served and never published. Those records name this machine, so no generated document
+and no site page carries one, and a test proves it.
+
+### One episode, and then the rest of them
+
+`continuity.state` answers about **one** episode: the one `state/session-current.yaml`
+resolves to. That is the right answer for a briefing — a worker wants its own episode, not a
+census — and it is the wrong answer for anybody asking whether the subsystem is working,
+because the pointer is a symlink that the most recent start event re-aims. On 2026-09-11
+this repository held five open episodes in one checkout and no surface the tool has could
+name more than one of them. An episode nobody can see is an episode that never closes.
+
+So there is a second reading, `lifecycle.*`, which reads the **store** rather than the
+pointer and answers the operator&#39;s questions instead of the worker&#39;s:
+
+| Capability | Answers | Where the answer comes from |
+|---|---|---|
+| `lifecycle.episodes` | every open episode, its provider session, where it stands (`current`, `open`, `foreign`, `stranded`), the tasks it touched, and what the ledger last saw it do | `state/sessions-open/*.yaml`, `state/session-current.yaml`, `state/ledger.jsonl` |
+| `lifecycle.recovery` | episodes that can no longer close themselves, temporary files a killed close left in the tracked section, whether the pointer has been migrated, and whether every episode the ledger saw start is accounted for | the same store, plus the sessions section the manifest names |
+| `lifecycle.runtime` | the commit this process is answering about, against the commit the repository is on right now | the served index&#39;s git state, and `git` read on the call |
+| `lifecycle.providers` | which lifecycle events each provider&#39;s adapter declares, whether it can archive prompts, and which of this repository&#39;s enforcement entries are wired to its hook | `share/providers.yaml` and the policy&#39;s `enforcement` |
+| `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty | the object index, kind `session` |
+
+Each is exposed over MCP and over `GET /api/v1/lifecycle/&lt;name&gt;`, and the Cockpit&#39;s
+Continuity page is their projection. None of them writes: the lifecycle has one writer, and
+a second account of events the ledger already holds is what this design refuses.
+
+Two things are deliberately **not** among them.
+
+**No clock and no thresholds.** Nothing in `lifecycle.*` decides that a record is old. Age
+is `session.freshness` in the policy and `continuity.state`&#39;s to judge; a second engine for
+it here would be the second source of truth that makes the numbers disagree. (`session.freshness`
+and the `fresh | aging | stale | unknown | invalid` labels are ADR 0052&#39;s and arrive with it;
+until they do, a record carries its divergence label and its recorded timestamp, and a reader
+does the arithmetic. The whole point of ADR 0052 is that a reader should not have to.)
+
+**No guess about attachment.** Whether the provider that opened an episode is still attached
+to its conversation is not a fact of this repository. The episode file records no process,
+the peer board records no episode, and a client that exits without firing its end event
+leaves a file identical to one a live worker is using. What `lifecycle.episodes` reports is
+what it can observe — where the file is, whose worktree it names, whether the pointer
+follows it, and when the ledger last saw it write — and `stranded` is reserved for the one
+case the repository can actually establish: the worktree the episode opened in is gone from
+disk, so nothing can compose its record.
+
+### The whole path, once
+
+Everything above is one path, and it is worth seeing whole. Every box is a thing that
+exists; the labels on the arrows are what has to be true for the next box to be reached.
+
+```mermaid
+flowchart TD
+  cmd[&quot;a person runs a command&lt;br&gt;or opens an editor&quot;]
+  conv[&quot;a provider starts a conversation&lt;br&gt;(Claude Code: SessionStart)&quot;]
+  entry[&quot;ENTRY&lt;br&gt;bin/majordomus, .envrc, or the hook shim&quot;]
+  runtime[&quot;RUNTIME ENSURED&lt;br&gt;serve ensure: one shared server per checkout,&lt;br&gt;started if none answers, never built&quot;]
+  client[&quot;CLIENT ATTACHED&lt;br&gt;MCP over stdio or HTTP; the peer board is what&lt;br&gt;the other workers can see&quot;]
+  episode[&quot;EPISODE OPENED&lt;br&gt;keyed by the provider session, not by the checkout:&lt;br&gt;state/sessions-open/&amp;lt;provider session&amp;gt;.yaml and the pointer&lt;br&gt;aimed at it. --if-open keep returns this provider&lt;br&gt;session&#39;s episode and no other.&quot;]
+  fresh[&quot;FRESHNESS VALIDATED&lt;br&gt;the resolved handover and checkpoint carry two independent&lt;br&gt;labels: divergence (where their commit sits) and freshness&lt;br&gt;(how old they are). A stale record is shown as history;&lt;br&gt;its Next Action is not quoted as the thing to do now.&lt;br&gt;[ADR 0052]&quot;]
+  context[&quot;CONTEXT PROJECTED&lt;br&gt;the briefing, within session.briefing_budget_lines, frozen&lt;br&gt;into local/session-contexts/ as the working context —&lt;br&gt;what this episode was told, never rewritten&quot;]
+  events[&quot;WORK AND EVENTS&lt;br&gt;every command appends one ledger line, stamped with the&lt;br&gt;episode that wrote it. A line with no episode belongs to&lt;br&gt;none: work outside a session is attributed to nobody&lt;br&gt;rather than to whoever was open nearby.&quot;]
+  checkpoints[&quot;CHECKPOINTS&lt;br&gt;written by hand, and derived on PreCompact — the moment&lt;br&gt;the conversation stops being a place anything is kept.&lt;br&gt;An artefact of the episode: no task required.&quot;]
+  knowledge[&quot;KNOWLEDGE DERIVED&lt;br&gt;on PreCompact and on the close path: the episode&#39;s decisions,&lt;br&gt;resolved questions and finished tasks become candidate&lt;br&gt;records from the ledger and git, never from the conversation.&lt;br&gt;Idempotent; the ledger says it ran. [ADR 0091]&quot;]
+  closing[&quot;CLOSE AND HANDOVER&lt;br&gt;SessionEnd closes the episode and, when work is still open,&lt;br&gt;writes the continuation record. The envelope&#39;s reference&lt;br&gt;lists are computed from the ledger at close, never&lt;br&gt;accumulated during the episode.&quot;]
+  record[&quot;.ai/repo/sessions/&amp;lt;stamp&amp;gt;--&amp;lt;episode&amp;gt;--&amp;lt;branch&amp;gt;--&amp;lt;head&amp;gt;--&amp;lt;digest&amp;gt;.md&lt;br&gt;and .ai/repo/knowledge/candidates/&amp;lt;episode&amp;gt;-&amp;lt;digest&amp;gt;.md&lt;br&gt;TRACKED. What survives a clone: everything under .ai/local/&lt;br&gt;names this machine and travels nowhere.&quot;]
+  resume[&quot;A FUTURE RESUME&lt;br&gt;locally, the next episode&#39;s briefing resolves the records of&lt;br&gt;this worktree and branch; elsewhere, a clone receives the&lt;br&gt;closed records and reads them as history, because a record&lt;br&gt;is evidence and never authority.&quot;]
+  watching[&quot;and, beside the path, watching it:&lt;br&gt;lifecycle.episodes · lifecycle.recovery · lifecycle.runtime&lt;br&gt;lifecycle.providers · lifecycle.closed · continuity.state&lt;br&gt;projected together on the Cockpit&#39;s /cockpit/continuity&quot;]
+
+  cmd &amp; conv --&gt; entry
+  entry --&gt; runtime --&gt; client --&gt; episode --&gt; fresh --&gt; context
+  context --&gt; events --&gt; checkpoints --&gt; knowledge --&gt; closing --&gt; record --&gt; resume
+```
+
+Two boxes in that path are marked. **Knowledge derived** is the newest: until ADR 0091 an
+episode&#39;s decisions, resolved questions and finished tasks were evidence on one machine, under
+a retention cap, and nothing wrote them where a clone could read them. **Freshness validated**
+is the one this repository most recently did without: it is a step, not a property of the record.
+Without it a handover that was `advanced` — a true statement about git topology, and
+identically true on the day it was written and a month later — was quoted into every new
+episode for six days after the work it described was finished. The decision, the thresholds
+and the labels are ADR 0052&#39;s, &quot;The
+session lifecycle is the episode&#39;s, not the task&#39;s&quot;; every other box in the path is behaviour this tree already has. And the **tracked** box is where the local
+half stops: a clone receives the closed records and nothing else, which is why no generated
+document and no site page may carry a briefing, a working context or an open episode.
+
+## Where the lifecycle puts each piece
+
+```mermaid
+flowchart TD
+  st[&quot;majordomus start #quot;&amp;lt;task&amp;gt;#quot; --scope &amp;lt;paths&amp;gt; [--profile &amp;lt;name&amp;gt;]&lt;br&gt;names any prior record for this branch&quot;]
+  ctx[&quot;majordomus context&lt;br&gt;the briefing, within budget&quot;]
+  work[&quot;work happens (Majordomus is not involved)&quot;]
+  cp[&quot;majordomus checkpoint&lt;br&gt;progress, often, short&quot;]
+  dec[&quot;majordomus decision add&lt;br&gt;what was decided and why&quot;]
+  qq[&quot;majordomus question add&lt;br&gt;what is unresolved, and it now blocks&quot;]
+  ck[&quot;majordomus check&lt;br&gt;scope, state, blockers, store integrity&quot;]
+  ho[&quot;majordomus handover&quot;]
+  nxt[&quot;the next session runs context&quot;]
+  fin[&quot;majordomus finish --outcome &amp;lt;...&amp;gt; --verify-command #quot;&amp;lt;cmd&amp;gt;#quot;&quot;]
+  hist[&quot;majordomus history&lt;br&gt;the lifecycle, reconstructable&quot;]
+  kd[&quot;majordomus knowledge derive&lt;br&gt;at the close and on compaction, or by hand:&lt;br&gt;the decisions, answers and outcomes as candidate records&quot;]
+  kp[&quot;majordomus knowledge promote &amp;lt;id&amp;gt; &amp;lt; evidence&lt;br&gt;a person makes a candidate verified&quot;]
+
+  st --&gt; ctx --&gt; work
+  work --&gt; cp
+  work --&gt; dec
+  work --&gt; qq
+  work --&gt; ck
+  ck --&gt;|&quot;not finished&quot;| ho --&gt; nxt
+  ck --&gt; fin --&gt; hist
+  dec --&gt; kd
+  fin --&gt; kd
+  kd --&gt; kp
+```
+
+## Across machines
+
+Everything above lives in one checkout&#39;s `.ai/local/state/`, which is never committed and
+names the machine it is on. Stopping on a laptop and continuing on a desktop therefore needs
+one more step: the handover is **published** — projected into a portable, signed record — and
+the other machine **resumes** it after a plan has said it can. The design is
+[ADR 0105](../.ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md);
+the rule is `project.session-continuity-is-portable`.
+
+```mermaid
+flowchart TD
+  ho[&quot;machine A: majordomus handover&quot;]
+  pub[&quot;machine A: majordomus-cli continuity publish&lt;br&gt;refused if it carries a secret or a machine path&quot;]
+  ref[&quot;refs/majordomus/continuity&lt;br&gt;records/&amp;lt;id&amp;gt;.json, signed by A&#39;s device key&quot;]
+  syncA[&quot;machine A: continuity sync&lt;br&gt;fetch, union, push (never forced)&quot;]
+  remote[&quot;git remote&quot;]
+  syncB[&quot;machine B: continuity sync&quot;]
+  plan[&quot;machine B: continuity plan&lt;br&gt;trust, lineage, source compatibility&quot;]
+  resume[&quot;machine B: continuity resume&lt;br&gt;handover + decisions written into B&#39;s state&quot;]
+  ctx[&quot;machine B: handover --resolve, context, the session briefing&quot;]
+
+  ho --&gt; pub --&gt; ref --&gt; syncA --&gt; remote --&gt; syncB --&gt; plan --&gt; resume --&gt; ctx
+```
+
+### From a MacBook to a Mac mini
+
+&lt;!-- majordomus:unrun it is one sequence across two machines that share a remote, which no single checkout can be; case 821 runs the same commands in that order between two clones of one bare remote --&gt;
+```sh
+# MacBook, once: name the device (the key is the mesh&#39;s node key, created on first use)
+majordomus-cli continuity device --label macbook-pro
+
+# MacBook, when stopping
+majordomus handover &lt; note.md            # # Objective / # Current State / # Next Action
+majordomus-cli continuity publish --issue &#39;#184&#39;
+git push                                  # the source: continuity never moves it
+majordomus-cli continuity sync            # the record: fetch, merge, push refs/majordomus/continuity
+
+# Mac mini
+git pull
+majordomus-cli continuity sync            # fetches what other devices published
+majordomus-cli continuity status          # this device, the store, what is resumable
+majordomus-cli continuity plan            # writes nothing; says what a resume would do
+majordomus-cli continuity resume          # only on a ready plan
+majordomus handover --resolve             # the MacBook&#39;s handover, as this checkout&#39;s record
+```
+
+On entry, the preflight&#39;s `session.continuity` check (and the banner&#39;s last line) says a
+resumable handover is waiting — read from `.ai/local/state/continuity.json`, which the last
+`sync` wrote, never from a remote.
+
+### What moves, and what does not
+
+| State | Moves | How |
+|---|---|---|
+| source, committed | yes | git, by the person: `git push` / `git pull` |
+| source, uncommitted | **no** | the record lists the changed paths and a fingerprint; the plan says `source_incomplete` |
+| handover (objective, state, next action) | yes | the record&#39;s `handover`, the mesh&#39;s `HandoverBody` |
+| intent: the task&#39;s title, scope, profile | yes | the record&#39;s `task`; the plan recommends the `majordomus start` to run |
+| issue, milestone | yes | carried along the line until a publication names others |
+| decisions the task recorded | yes | appended to the receiving decision log once each, marked `Carried:` |
+| lineage and provenance | yes | `parent`, `line`, device, episode, commit, `published_at`, producer version |
+| worktree path, repository id the shell compares | no | recomputed by the receiving checkout |
+| the episode, the working context | no | opened and compiled on the receiving machine |
+| PIDs, sockets, ports, the lease, build output | no | the record has no field for them |
+| credentials, secret environment values, home paths | no | a publication carrying one is refused |
+
+### Lineage, and what a conflict is
+
+A record names the record it continues — the last one this checkout published or resumed on
+the same branch — and the first record&#39;s id is its line. Two records are:
+
+| Relation | Meaning | What happens |
+|---|---|---|
+| `equal` | the same record | a second resume rewrites nothing |
+| `newer` / `older` | one descends from the other | the newer is what is offered |
+| `diverged` | same line, neither descends from the other: the same work continued twice | a plan that would pick one is a `conflict`; a person names one with `--record` |
+| `independent` | different lines: separate work | ordinary; never a conflict |
+
+The clock decides nothing: `published_at` is shown and used for an age. `sync` reports each
+line as `equal`, `remote_newer`, `local_newer`, `diverged`, `local_only` or `remote_only`.
+
+### The plan
+
+`continuity plan` (the same value over MCP as `majordomus_continuity_plan` and over HTTP as
+`GET /api/v1/continuity/plan`) answers `ready`, `ready_with_warnings`,
+`requires_source_update`, `conflict`, `choose_record`, `nothing_to_resume` or `refused`, with:
+
+- **trust** — the signer&#39;s key against the mesh declaration&#39;s `trust.allow`; an untrusted
+  signer is `refused`, and with no declaration at all the plan warns `origin_undeclared`;
+- **lineage** — `line_diverged`, `would_diverge` (this checkout continued the same work
+  elsewhere), `already_resumed`;
+- **source** — `exact`, `local_ahead` (a warning), `local_behind`, `head_missing`,
+  `branch_differs` (each `requires_source_update`, with the git command to run), `diverged`
+  (a conflict: reconcile with git first);
+- **the origin&#39;s tree** — `source_incomplete` when it was dirty, unless this checkout holds
+  the very same uncommitted change (the fingerprints agree);
+- **activity** — `origin_may_be_active` when the record came from a still-open episode less
+  than an hour ago. Advisory: nothing locks, and a crashed laptop locks nothing.
+
+The commands a plan lists are recommendations. Nothing a record says is executed.
+
+### Offline
+
+`publish` writes a local ref and never touches the network, so it works on a plane. `sync`
+against an unreachable remote exits 10, changes nothing, and records `unreachable` in
+`continuity.json`; `status` reports the store `pending` (or `never_synced`) until a sync
+reaches the remote. Nothing is lost on the way.
+
+### Security
+
+- A record is signed by the device&#39;s mesh key and identified by its content digest; an
+  altered record no longer matches its id or its signature and is refused on every read.
+- A record from another repository — a fork shares a name, not a root history — is refused,
+  and a sync with such a remote leaves none of its records in this store&#39;s tree.
+- A record of a later schema is kept and reported (`schema_too_new`, `upgrade_required`),
+  so an older executable never drops a newer one&#39;s records.
+- The continuity ref is pushed to whatever remote is synced: in a public repository its
+  records are public, like the tracked session envelopes. Sync with a private remote
+  (`--remote`) where that is not acceptable.
+
+### Troubleshooting
+
+| Symptom | Ask | Usually |
+|---|---|---|
+| nothing resumable on the other machine | `continuity status` | not synced on one side; `store.sync` says `pending` or `never_synced` |
+| `head_missing` | `continuity plan` | the source was not pushed, or not fetched |
+| `origin_untrusted` | `continuity device` on the origin | its `public_key` is not in `trust.allow` |
+| `conflict` with `line_diverged` | `continuity records` | the same work was continued on two machines; resume one with `--record` |
+| a publication refused | the refusal&#39;s field | a token or a home path in the handover body or the task title |
+| `continuity.dangling_parent` | `continuity sync` | a record continues one this store has not fetched yet |
+
+## What this does not do
+
+It does not know who wrote which commit. A task records the commit it started at, and
+`check` treats every file changed since as the task&#39;s work. When another session commits
+to the same branch in the same checkout, that session&#39;s files are reported outside your
+scope. The report is correct about the files and wrong about the author, and Majordomus
+has no way to tell the difference. Close the task with a handover and start a new one at
+the current commit.
+
+**A question blocks its whole branch, not the task that asked.** That is deliberate, and it
+is wrong in one case: a question about work that was abandoned, left unanswered, refuses
+completion of every later task on that branch until somebody writes an answer. The direction
+was chosen because it fails loudly — `question list` names it and `question resolve` clears
+it in one command — where the alternatives fail silently. See `M001` in
+`.ai/repo/project/` for the alternatives that were rejected and the case each gets wrong.
+
+It does not measure tokens, context savings, or cost. The budget is lines, because lines
+are what it can count. See [`ECONOMICS.md`](ECONOMICS.md).
+
+It does not rank search results, embed anything, or maintain an index. `search` is a
+literal grep across the record kinds in authority order. The corpus is a handful of files;
+an index would be a second source of truth that has to be kept in step with the first.
+
+It does not resolve across worktrees or branches, and it never will silently. A handover
+from another machine reaches this checkout only through `continuity resume`, after a plan.
+
+## Related
+
+[`CONCEPTS.md`](CONCEPTS.md) for the vocabulary · [`CLI.md`](CLI.md) for every command ·
+[`SCHEMAS.md`](SCHEMAS.md) for the file formats · [`KNOWLEDGE.md`](KNOWLEDGE.md) for what an
+episode learned and how it is derived · [`DESIGN.md`](DESIGN.md) for why the models are
+shaped this way.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

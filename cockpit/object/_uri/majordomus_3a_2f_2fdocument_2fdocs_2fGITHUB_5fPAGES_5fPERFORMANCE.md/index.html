@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/GITHUB_PAGES_PERFORMANCE.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/GITHUB_PAGES_PERFORMANCE.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/GITHUB_PAGES_PERFORMANCE.md</h1><p class="mj-page-subtitle">GitHub Pages performance</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/GITHUB_PAGES_PERFORMANCE.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/GITHUB_PAGES_PERFORMANCE.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FGITHUB_PAGES_PERFORMANCE.md">document.docs/GITHUB_PAGES_PERFORMANCE.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># GitHub Pages performance
+
+How a push to master becomes public, what it is allowed to cost, how that is measured, and
+what stops the next change from quietly taking the speed back.
+
+[`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) says what the site *is* — the
+canonical sources, the generators, the checks. This document is about the *path*: latency,
+budgets and the evidence behind both. [`CI.md`](CI.md) is the validation pipeline beside it.
+[`PAGES_STATUS.md`](PAGES_STATUS.md) carries the current numbers, generated; nothing here is
+a measured value, on purpose.
+
+## The objective
+
+The number that matters is not how long a workflow runs. It is
+
+```text
+T_public = when the public site serves this commit  −  when the push was accepted
+```
+
+The target is `T_public &lt; 60 s` whenever GitHub&#39;s own scheduling is not the limiting factor,
+and the distinction in that sentence is load-bearing. Two halves:
+
+```text
+controlled   checkout, tool setup, build, check, the push to gh-pages
+external     the Actions queue, runner allocation, GitHub&#39;s own &quot;pages build and deployment&quot;
+```
+
+Only the first is this repository&#39;s to spend. Both are measured; only the first is budgeted
+and only the first can fail a run. A deployment whose controlled path was 30 s and whose
+runner waited 4 minutes in a queue is not a regression here, and the job summary says so in
+those words rather than reporting one number that hides which half moved.
+
+## The shape
+
+```mermaid
+flowchart LR
+  push[&quot;push to master&lt;br&gt;(on paths that can&lt;br&gt;change the site)&quot;]
+  push --&gt; validate[&quot;validate.yml&lt;br&gt;decides whether a&lt;br&gt;change may merge&quot;]
+  validate --&gt; plan[&quot;plan&quot;]
+  plan --&gt; structure[&quot;structure&quot;]
+  plan --&gt; suite[&quot;suite&quot;]
+  plan --&gt; rust[&quot;rust&quot;]
+  plan --&gt; coverage[&quot;coverage&quot;]
+  plan --&gt; bench[&quot;bench&quot;]
+  plan --&gt; site[&quot;site&lt;br&gt;(build, check,&lt;br&gt;browser probe)&quot;]
+  plan --&gt; macos[&quot;macos&quot;]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci[&quot;ci&lt;br&gt;the status a branch&lt;br&gt;rule requires&quot;]
+  push --&gt; pages[&quot;pages.yml&lt;br&gt;decides what the&lt;br&gt;public site shows&quot;]
+  pages --&gt; rustdocjob[&quot;rustdoc job&lt;br&gt;the crate&#39;s reference&quot;]
+  rustdocjob --&gt;|&quot;needs, the tree&quot;| job[&quot;deploy job&quot;]
+  job --&gt; checkout[&quot;checkout&quot;] --&gt; setup[&quot;setup&quot;] --&gt; build[&quot;build&quot;] --&gt; check[&quot;check&quot;] --&gt; ghpages[&quot;push gh-pages&quot;] --&gt; measure[&quot;measure publication&quot;]
+```
+
+The two run beside each other on the same commit. Publication used to be a job *inside*
+`validate.yml` that needed `plan`, `structure`, `suite`, `rust` and `site` — the set that
+decides whether a change may merge, most of which cannot change a published byte. The site
+therefore went public tens of minutes after the push that changed it.
+
+What is on the publication path is everything that can make the published bytes wrong:
+
+- the committed derived data is current for this tree,
+- the crate&#39;s rustdoc reference is produced from this commit — it is part of the published
+  bytes and is never committed ([`RUSTDOC.md`](RUSTDOC.md)),
+- the site builds from both, with the reference composed at `/rustdoc`,
+- every static check over the output passes (`scripts/site-check`: metadata and landmarks on
+  every route, no unrendered template delimiter, every internal link resolving, no remote
+  asset, no credential, every tile a page, the graphs connected, the served provenance this
+  commit&#39;s, every composed surface present and built from this commit).
+
+What is not, and why it is safe: the behavioural suite, the crate&#39;s gates other than the
+documentation step that produces the reference, coverage, the macOS suite, the benchmark check
+and the browser probe. Each of those guards *the repository* rather than *the bytes*, each
+still runs on the same commit in `validate.yml`, and each still gates merging through the `ci`
+status. Moving a gate off the publication path is only sound while it is still somewhere;
+`test/cases/97_pages_fast_path.sh` fails if one of them appears in `pages.yml` or disappears
+from `validate.yml`.
+
+The browser probe is the interesting case. It can find a real defect in the published bytes —
+a route that overflows at 320 px — and it costs minutes. It stays in `validate.yml`, where it
+gates merging, because a route that overflows is a defect to fix rather than a deployment to
+block: holding every publication for it would cost every commit the full probe to protect
+against the rare one that regresses, and the commit that regresses is not published any
+faster by having waited.
+
+## What made it slow, and the shape of each fix
+
+Every value named below is measured, and none of them is written here. The current ones are
+in the tracked baseline of the machine that measured them,
+[`.ai/repo/benchmarks/pages/`](../.ai/repo/benchmarks/pages/), written by
+`scripts/pages benchmark --write-baseline`; the before-and-after of each change is in the
+commit that made it, which is where `project.performance-evidence` puts them. Where the time
+goes inside one generation is `MJ_TIMING=1 scripts/generate-site-data`, ranked by phase.
+
+### The generator ran three times for one commit
+
+`site-build` called `generate-site-data`; `site-check`&#39;s first assertion was
+`generate-site-data --check`; and the `site` job ran `generate-site-data --check` before both
+of them. Three full generations of the same data for one commit, each of them dominated by
+`majordomus usecase run`, which executes all 31 use-case scenarios in a disposable repository
+each — a test suite, sitting inside a data generator, on the deployment critical path.
+
+The fix is not to make generation faster; it is to stop asking the same question three times.
+`site-build --no-data` renders committed data; `site-check --no-sync` skips the sync
+assertion; the `site` job keeps exactly one generation, the `--check` pass, which is the only
+one of the three that actually *proves* anything (it stages a fresh generation from the
+canonical sources and diffs it against what is committed).
+
+The publication path needs the same answer and cannot afford even one generation, so it asks
+a cheaper question with the same meaning:
+
+```bash
+scripts/generate-site-data --fingerprint
+```
+
+This is the generator&#39;s own `source_hash` — the hash of its own 467-entry canonical input
+list, in the line format `source.json` has always been computed from — evaluated in one
+hashing process instead of 467, which is the difference between a fifth of a second and the
+better part of a minute. `mj_inputs_hash` is now the single implementation of it, so
+`--fingerprint` and `source.json` cannot disagree. `scripts/pages current` compares the two:
+equal means the committed projection is current for this tree and rendering it *is* rendering
+the canonical sources.
+
+A tree whose committed derived data is stale is **refused**, not regenerated. The derived data
+is a projection; a projection that disagrees with its sources is a defect to fix at the
+source, and a publication path that quietly papers over it would be publishing something no
+gate had seen.
+
+### The derived content is committed for the same reason
+
+`site/data/generated` is only half of what the generator produces. The other half is the
+derived *content* — `site/content/{docs,guarantees,commands,doctrines,plan,use-cases,
+applications,skills,registry,profiles,supervises,why,features}/` and the projections of
+`site/content-src/*.md` — and Zola renders that, not the JSON. So it is committed too. A
+fresh clone has no other way to obtain it: `site-build --no-data` does not run the generator,
+which is the whole of why the build fits its budget, and generating the content instead would
+cost about twice the twenty seconds `build` is allowed. Left ignored, the fast path could not
+build a clone at all; the first link into a section that does not exist fails the whole render.
+
+What keeps a committed projection honest is not ignoring it but the same gate the data lives
+under. `scripts/generate-site-data --check` diffs every derived page against a fresh staging
+generation and names every orphan, so an edited or stale page is refused exactly as stale data
+is, and `scripts/site-check` asserts the sections are committed and unignored rather than the
+reverse. Nothing under `site/content/` is anybody&#39;s to edit by hand: the file it is projected
+from is the original, and `--check` says so the moment the projection moves.
+
+### `site-check` spawned seven thousand processes
+
+Five loops over the 416 built pages, each spawning grep, sed and awk per page: about eighteen
+processes per route. `scripts/lib/site-pages.awk` carries all of those assertions in one
+process. It is a transcription, not a redesign — output is byte-identical on this site, and
+fifteen deliberately mutated pages (one per assertion, plus a control) produce the same
+findings from the old implementation and the new.
+
+### The result
+
+```bash
+scripts/pages benchmark -n 5                       # the distribution, as JSON
+scripts/pages benchmark -n 5 --write-baseline      # and into this platform&#39;s baseline
+cat .ai/repo/benchmarks/pages/baseline.*.json
+```
+
+An order of magnitude off the controlled build-and-check path, and almost all of what is
+left is `site-check`. That is the next thing worth attacking, and it is named as such under
+*Remaining bottlenecks* rather than left implicit.
+
+## The model
+
+Everything the path is allowed to cost, and everything it triggers on, is declared once in
+[`.ai/repo/ci/pages.yaml`](../.ai/repo/ci/pages.yaml). Neither the workflow nor the script
+carries a budget, a path list or a gate name of its own.
+
+```bash
+scripts/pages budget          # the controlled budgets
+scripts/pages budget --json   # the same, for a reader that is not a person
+scripts/pages paths           # what a push must touch for the site to be able to change
+```
+
+### Trigger invalidation
+
+The trigger paths are **derived**, never written twice. The model names the gate that builds
+the site (`site-build`); the classes of [`gates.yaml`](../.ai/repo/ci/gates.yaml) that name
+that gate are the classes whose paths can change the site; their pathspecs plus the model&#39;s
+own `extra` are the workflow&#39;s `paths:` block.
+
+A class that escalates the whole plan (`gates: full`) is deliberately *not* one of them. That
+escalation says how much validation a change to the pipeline deserves; it says nothing about
+what the published bytes are derived from. Changing `scripts/ci-plan` or the `justfile` makes
+every gate run and cannot move a pixel, so it starts no deployment. Zero work is faster than
+optimised useless work.
+
+`test/cases/97_pages_fast_path.sh` diffs the workflow&#39;s block against `scripts/pages paths`
+and fails on any difference, so the two cannot drift. When you change a class in `gates.yaml`,
+regenerate the block:
+
+```bash
+scripts/pages paths | sed &#39;s/^/      - /&#39;     # paste into the paths: block of pages.yml
+```
+
+### Budgets
+
+Budgets are controlled latency only, in seconds, warm, on a GitHub-hosted Linux runner. They
+are set from measurement — the timing rows every deployment writes — and a change to one is
+expected to cite the run that justified it (`project.performance-evidence`). A cold run pays
+for caches it cannot restore and has its own, looser bound. The end-to-end target is reported
+against every deployment and **not** enforced, because the larger half of it is GitHub&#39;s.
+
+Two structural rules, both of which the first set of budgets broke and
+`test/cases/97_pages_fast_path.sh` now asserts:
+
+- **Every row the run measures has a budget.** The timings file gets six rows —
+  `checkout-setup` from the workflow, `fingerprint` and `build` from `scripts/pages build`,
+  `check` and `local-check` from `scripts/pages check`, `publish` from the workflow. The
+  original model named `checkout` and `setup` separately and named nothing for `fingerprint`
+  or `local-check`, so three of the six rows of every job summary printed an empty budget
+  cell while still being summed into the total.
+- **`controlled` is reachable by adding up its own rows.** It was 75 while the phases summed
+  to 105, which made the aggregate stricter than the parts it is made of: a run could be
+  inside every single phase budget and still breach, with nothing to point at.
+
+#### The re-derivation of 2026-09-12
+
+The budgets written when this path was built were never changed after it, and by 2026-09-12
+they were failing every deployment. They came from
+`.ai/repo/benchmarks/pages/baseline.macos-arm64.json` — a local macOS arm64 laptop, five
+samples, `check` median 9799 ms — over a site of **417 routes**. The site `check` walks is now
+**1021 routes**, 2.45x that baseline, and that directory&#39;s own README says a baseline of one
+machine says nothing about another.
+
+The replacement is measured on the machine it judges: twenty-five runs of `pages.yml` that
+reached the publish step, 2026-09-10T22:56Z to 2026-09-12T06:38Z, read from
+`gh api repos/korczis/prismatic-majordomus/actions/runs/&lt;id&gt;/jobs`.
+
+&lt;!-- Columns are left-aligned deliberately. A right-aligned markdown column renders as a
+     `style=&quot;text-align: right&quot;` attribute, which the site&#39;s custom CSS policy forbids and
+     `scripts/site-check` refuses on the publication path — it would fail the deploy. --&gt;
+
+| row | min | median | p90 | max | budget |
+|---|---|---|---|---|---|
+| `checkout-setup` | 7 | 10 | 12 | 15 | 18 |
+| `fingerprint` | 0 | 0 | 0 | 1 | 3 |
+| `build` | 4 | 4 | 5 | 6 | 8 |
+| `check` | 30 | 38 | 46 | 47 | 60 |
+| `local-check` | 0 | 0 | 0 | 1 | 3 |
+| `publish` | 13 | 20 | 24 | 24 | 28 |
+| `rustdoc` | — | — | — | — | 90 |
+| **controlled** | **60** | **75** | **84** | **86** | **210** |
+
+The `rustdoc` row is the job that produces the crate&#39;s reference (ADR 86), checkout to upload,
+and the download of its artifact in the deploy job. No run of it is in the window above, so its
+budget is provisional: `scripts/rust-check --doc` measured 12, 6 and 6 s warm and 34 s cold on
+an Apple M5 Pro on 2026-09-24, and 90 allows that step about three times over on a four-vCPU
+runner plus about 60 s of toolchain, cache, checkout and artifact transfer.
+`.ai/repo/ci/pages.yaml` says so beside the number, and the first twenty runs&#39; timing rows
+replace it. The controlled budget is still the sum of its rows: 120 before the reference, 210
+with it.
+
+**Nothing had regressed.** Over those same runs `checkout-setup` held at 7–15 s and `build` at
+4–6 s, so both cache domains below restore; and `check` cost 41 ms per route at 896 routes on
+2026-09-10 (37 s) against 45 ms per route at 1022 routes on 2026-09-12 (46 s). Its growth is
+the corpus it walks, not a defect in how it walks it. What had gone stale was the budget.
+
+The cold bound moved with it. No cold run appears in that window, so it keeps the allowance the
+old pair expressed — 180 against a warm 75, i.e. 105 s for an uncached `npm ci` and Zola
+download — over the new warm budget: 120 + 105 = 225. The rustdoc job adds its own cold cost,
+as provisional as its warm row — every dependency&#39;s metadata built before the crate is
+documented, about 100 s more on a runner and 150 with the toolchain download — so the cold
+bound is now 210 + 105 + 150 = 465.
+
+## Caches
+
+Each domain is invalidated by its own inputs and nothing else, so a documentation change does
+not evict a toolchain and a lockfile change does not evict the site.
+
+| cache | key | what a hit saves |
+|---|---|---|
+| `node_modules` | runner, Node major, `package-lock.json` | the whole `npm ci`, not merely its downloads |
+| npm&#39;s own cache | `actions/setup-node` | the downloads, when the first misses |
+| Zola | `taiki-e/install-action` | the release download |
+
+
+There is deliberately **no cache of generated site data or of rendered output**. The committed
+projection already plays that role, it is a tracked file rather than a cache, and it is proved
+current in 169 ms — a cache in front of that would be a second source of truth bought for
+nothing (`project.cache-is-invisible`, `project.derived-once`).
+
+To invalidate a cache on purpose, change its key input: bump the Node major or the lockfile,
+or the Zola version in `.github/actions/setup-site/action.yml`. Deleting every cache must
+produce the same published bytes; that is not an aspiration but an assertion —
+`test/cases/97_pages_fast_path.sh` compares a build that skipped the generation with one that
+did not, byte for byte, and `test/cases/51_derived_artifacts_committed.sh` regenerates every
+derived artifact from its canonical sources and refuses a difference.
+
+## How publication is measured
+
+Workflow success is not publication. Every build writes `site/static/build.json`, served at
+`/build.json`, naming the commit it was built from — a fact of the build, never a committed
+file. After the push to `gh-pages`, the job polls that URL with the cache defeated until it
+names this commit:
+
+```bash
+scripts/pages verify --commit &quot;$(git rev-parse HEAD)&quot;
+```
+
+That wait is GitHub&#39;s own &quot;pages build and deployment&quot;, which serves the branch. It is
+reported as external latency; it fails nothing, because GitHub being slow to serve is not this
+repository failing.
+
+What the site serves once it serves this commit is a different question, and it is enforced.
+`/build.json` names only the commit the site was built from, so a deployment that had lost the
+crate&#39;s reference, or carried one from an older build, would pass the wait above.
+`scripts/pages verify-rustdoc --commit &quot;$(git rev-parse HEAD)&quot;` reads the public reference
+itself — the composed surface recorded in `/build.json` and its own `/rustdoc/surface.json`,
+the landing page, the library&#39;s index with its stylesheets and scripts, a module page, the
+search index and the crate&#39;s `COMMIT` constant page — and the deploy fails when any of them is
+absent or names another commit ([`RUSTDOC.md`](RUSTDOC.md)).
+
+The job summary of every deployment therefore carries the phases against their budgets, the
+controlled total against its budget, the queue and the Pages build beside them, and one
+verdict line:
+
+```text
+Pages SLO: PASS — controlled path &lt;n&gt; s / &lt;budget&gt; s, push to public &lt;n&gt; s / &lt;target&gt; s
+```
+
+and, when the controlled path is inside its budget and the total is not, the summary says so
+in those words rather than reporting a failure: the remainder is the Actions queue and
+GitHub&#39;s own Pages build, which this repository does not spend, and that is an external limit
+rather than a regression here.
+
+### What makes the run red
+
+A deploy run is red when, and only when, the **deployment** failed. That was not true until
+2026-09-12. `scripts/pages report` exits 10 on a budget breach, and the workflow ran it as an
+ordinary step *after* the push to `gh-pages` — so a measurement of work already finished became
+the verdict on that work.
+
+Between 2026-09-11T22:36Z and 2026-09-12T06:38Z, **eleven** runs of this workflow reported
+`failure` from that step (`90a875cf2`, `8ce9d3157`, `e98bfd44a`, `48a546ebb`, `0136bd9eb`,
+`b144b2110`, `bbd5a9791`, `94a018ded`, `497d56d40`, `180687c8f`, `4a4ad6aac`). Every one of
+them had pushed `gh-pages` successfully, and the newest was verified end to end: the live site
+served `4a4ad6aac`. In the same window exactly one run genuinely failed to publish —
+`d5e27a500`, whose `build` step failed, whose `publish` step was skipped, and whose report step
+therefore **passed**, because there was almost nothing to add up.
+
+So the run that had not published was the one where the budget check was green, and it carried
+the same `failure` conclusion as the eleven that had. At the level anybody reads first — the
+tick on the commit, `gh run list`, the notification — the two were identical; only an
+annotation inside the run told them apart. And the report&#39;s Markdown goes to
+`$GITHUB_STEP_SUMMARY` rather than to the log, so opening the log gave `Process completed with
+exit code 10` with no number above it.
+
+```mermaid
+flowchart TD
+    P{&quot;did the push to gh-pages happen?&quot;}
+    P -- no --&gt; R[&quot;run is RED&lt;br/&gt;::error Not published&lt;br/&gt;pages-live refuses on the next validation&quot;]
+    P -- yes --&gt; G{&quot;did GitHub&#39;s own build of gh-pages error?&quot;}
+    G -- yes --&gt; R2[&quot;run is RED&lt;br/&gt;::error GitHub&#39;s Pages build errored&quot;]
+    G -- &quot;no, or not yet known&quot; --&gt; N[&quot;::notice Published&lt;br/&gt;run is GREEN&quot;]
+    N --&gt; B{&quot;controlled path within budget?&quot;}
+    B -- yes --&gt; OK[&quot;Pages SLO: PASS in the job summary&quot;]
+    B -- no --&gt; W[&quot;run stays GREEN&lt;br/&gt;::warning naming the total and the phase that spent it&lt;br/&gt;OVER BUDGET in the summary, pages-slo in the log&quot;]
+```
+
+The budget is not softened anywhere else. `scripts/pages report` still exits 10 on a breach for
+a person and for any gate that calls it; `--advisory` is passed by exactly one caller — the
+post-publish step that measures a deployment which has already happened — and
+`test/cases/97_pages_fast_path.sh` asserts that it stays exactly one. A breach still produces,
+on every run:
+
+- a `::warning` annotation on the run, carrying the total, the budget and the phase over its own;
+- the full phase table and a bold **OVER BUDGET** verdict in the job summary;
+- a `pages-slo verdict=… controlled=… budget=… over=…` line in the **log**, which is where the
+  eleven red runs above were read from and where nothing used to be printed at all;
+- `verdict`, `controlled`, `budget` and `over` as outputs of the step, for a reader that is not
+  a person.
+
+This is the same division the publication probe above already makes, and for the same reason: a
+gate on a deployment that has already happened is a gate that gets waived. What refuses a
+publication that never happened is the `pages-live` gate of `.ai/repo/ci/gates.yaml`, on the
+next validation of master.
+
+## Locally
+
+The same commands CI runs. There is no GitHub-only build semantics.
+
+```bash
+scripts/pages current            # is the committed derived data current for this tree?
+scripts/rust-check --doc         # the crate&#39;s reference, which the build composes at /rustdoc
+scripts/pages build              # render it
+scripts/pages check              # every static check over the output
+scripts/pages benchmark -n 5     # the controlled path, as JSON
+scripts/site-deploy              # the full gate and the push, the way a person deploys
+```
+
+`scripts/pages build` refuses a tree whose derived data is stale and tells you the two hashes.
+
+`scripts/pages current` also records its verdict, with the tree it checked, at
+`.ai/local/state/generation/check.json`. The pre-commit hook runs it, so after a commit that
+tree is HEAD&#39;s, and the preflight&#39;s `verification.docs` check reads the record
+(`docs/PREFLIGHT.md`). An unstaged edit is recorded with no tree, because the files that were
+checked are not the tree the index names.
+The cure is always the same: `scripts/generate-site-data` (or `just derive`) and commit the
+result.
+
+## Deploying by hand is still the fastest path
+
+The site is served from the `gh-pages` branch, and whoever pushes that branch deploys
+(`docs/claims/site-deploy-one-path.md`). A person at a terminal therefore has no Actions
+queue in front of them at all:
+
+```bash
+scripts/site-deploy              # gate, build, check, push
+```
+
+This is why publication was **not** moved to the native Pages artifact flow
+(`actions/configure-pages` → `upload-pages-artifact` → `deploy-pages`), which would shave the
+seconds GitHub spends building the branch: pointing GitHub Pages at &quot;GitHub Actions&quot; as its
+source would make a workflow run the *only* way to publish, and would put the Actions queue in
+front of the one path that today has none. The branch source costs GitHub&#39;s own &quot;pages build
+and deployment&quot; and keeps the hand deploy. What that costs is measurable rather than
+memorable:
+
+```bash
+gh run list --workflow &quot;pages-build-deployment&quot; --limit 20 \
+  --json createdAt,updatedAt --jq &#39;.[] | (.updatedAt | fromdate) - (.createdAt | fromdate)&#39;
+```
+
+If the queue ever stops being the dominant term and that becomes the binding constraint, the
+trade is worth revisiting — with the measurement, not with the preference.
+
+## Remaining bottlenecks, by expected benefit
+
+1. **`site-check`, 46 s of an 86 s controlled path on a runner** (9.7 s of 10.3 s locally, on
+   a laptop, over a site less than half the size). It is the only phase that grows with the
+   corpus: 41 ms per route at 896 routes, 45 ms per route at 1022. Its remaining cost is the
+   per-record loops that shell out to `jq` once per claim, command, capability, use case and
+   plan record. The same treatment that took the per-page loops from 25 s to under a second
+   applies: one `jq` program per family instead of one process per record. Until that lands,
+   the site adding routes is the thing that moves `controlled`, and the budget above is what
+   will say so.
+2. **The Actions queue.** On this repository, with several worktrees pushing at once, runs
+   have waited minutes for a runner (`gh run list --json createdAt,startedAt`). Nothing in
+   these files shortens that. The escalation, if the controlled path is already comfortably
+   inside its budget and the queue is what keeps `T_public` over a minute, is a warm
+   self-hosted runner labelled for this job only — evaluated on measurements, with its own
+   security, isolation and maintenance cost stated, and not before.
+3. **GitHub&#39;s own Pages build of `gh-pages`.** Removable only by giving up the hand deploy
+   path, as above.
+4. **`npm ci` on a cold cache.** Bounded by the `node_modules` cache; the cold path is what
+   the cold budget covers.
+
+## Changing any of this
+
+- A new canonical input of the site generator goes into the `INPUTS` list of
+  `scripts/generate-site-data` and nowhere else; the fingerprint, the freshness check and the
+  trigger follow from it.
+- A new path that can change the site goes into a class of `gates.yaml` that names the
+  `site-build` gate; then regenerate the workflow&#39;s `paths:` block as above.
+- A new budget, or a changed one, goes into `.ai/repo/ci/pages.yaml` and cites the runs that
+  justified it, in the file, with their numbers — the block there is the worked example. A
+  budget derived on a laptop does not bound a runner, and one derived over a site of half the
+  size does not bound this one. `controlled` must stay at least the sum of its phases, and
+  every row the run measures must have a key.
+- A new timing row — a `row` or `timed` call in `scripts/pages`, or a `printf &#39;pages\t…&#39;` in
+  the workflow — needs a budget key of the same name in the same commit, or it is summed into
+  the total while showing an empty budget cell. `test/cases/97_pages_fast_path.sh` refuses
+  that.
+- Nothing measured after the push to `gh-pages` may become the run&#39;s verdict. The run is red
+  for a failed deployment and for nothing else; a latency finding is a `::warning`, a summary
+  and a machine-readable line. A public reference at `/rustdoc/` that is absent, broken or
+  built from another commit is a failed deployment rather than a measurement, which is why
+  `scripts/pages verify-rustdoc` is a hard step (ADR 86) while `scripts/pages verify`, whose
+  wait is GitHub&#39;s, stays a report.
+- A new check over the published bytes goes into `scripts/site-check`, which the publication
+  path runs. A new check over the repository goes into the gate model, which it does not.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

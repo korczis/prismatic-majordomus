@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/GITHUB_PAGES_ARCHITECTURE.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/GITHUB_PAGES_ARCHITECTURE.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/GITHUB_PAGES_ARCHITECTURE.md</h1><p class="mj-page-subtitle">GitHub Pages architecture</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/GITHUB_PAGES_ARCHITECTURE.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/GITHUB_PAGES_ARCHITECTURE.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FGITHUB_PAGES_ARCHITECTURE.md">document.docs/GITHUB_PAGES_ARCHITECTURE.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># GitHub Pages architecture
+
+The website at `https://majordomus.dev/` is a projection of this
+repository. It is built the way Majordomus asks projects to build their own instruction
+files: one canonical source, generated outputs, and a check that fails when the two drift.
+
+## Purpose
+
+Let a visitor understand in about two minutes what Majordomus is, what it guarantees, what
+is only advisory, what is not built, and how to start, without any sentence on the site
+being maintained separately from the repository that backs it.
+
+## Canonical sources
+
+| layer | owns | lives in | edited by hand |
+|---|---|---|---|
+| product truth | policy schema, profiles, the worker instructions, the shell CLI | `share/skeleton/**`, `bin/majordomus`, `lib/**`, `share/commands.yaml` | yes |
+| the Rust executable | every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line with the examples of every command | `capability!` and `module!` declarations under `apps/majordomus-cli/src/capability/builtin/`, `apps/majordomus-cli/src/cli.rs` (clap for the structure, `cli::EXAMPLES` for the examples) | yes |
+| the executable&#39;s narrative | what the crate is, owns and refuses; discovery, transports, side effects, architecture | `apps/majordomus-cli/README.md`, `docs/CAPABILITIES.md`, `docs/MCP.md` | yes |
+| benchmark evidence | the regression policy and the accepted baselines | `.ai/repo/benchmarks/rust/policy.yaml`, `.ai/repo/benchmarks/rust/baseline.&lt;platform&gt;.json` | policy yes; a baseline by `majordomus bench baseline update` |
+| registry projections | the OpenAPI document, the registry manifest, the capability, module and benchmark references, the command line, and the manifest of the whole generated set — each document in every encoding it is committed in | `docs/generated/**` (`artifacts.md` is the generated index of it) | never — `majordomus generate` |
+| registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
+| public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
+| claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
+| marketing copy | the hero&#39;s positioning sentences, section leads, button labels; no capability claims, no numbers, 80-line budget | `site/data/marketing.toml` | yes |
+| navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
+| claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/&lt;id&gt;.md` | yes |
+| product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/&lt;id&gt;.md` | yes |
+| case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
+| skills | the repository&#39;s skills, one directory each; the site reads the catalogue `lib/skills.sh` derives from the source class `skill` | `.ai/repo/skills/&lt;id&gt;/SKILL.md` | yes |
+| rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
+| derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
+| the layer&#39;s directory contracts | every directory of `.ai/`, the contract it carries or the one that exempts it, and the counts | `site/data/generated/context.json` (from `majordomus context list --json`) | never |
+| derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
+| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
+| derived routes and links for the executable | one route per module and per capability, the executable&#39;s pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
+| the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
+| build provenance | the commit and its cleanliness, the site&#39;s input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| the crate&#39;s reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](RUSTDOC.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
+| presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
+| styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
+| behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
+| output | the static site | `site/public/**` | never |
+
+## What the publishing clone must be able to answer
+
+The site links to the repository on its forge, and `scripts/ci/link-check` decides those
+links **against git rather than over the network**: `commit/&lt;sha&gt;` and `compare/a...b` are
+resolved in the history, `releases/tag/&lt;t&gt;` and `tree/&lt;tag&gt;` in the tags. A clone that was
+not given those cannot decide such a link. It must then refuse rather than guess — and
+`scripts/site-check` counts a refusal as a failure, so the publication stops.
+
+That is not a hypothetical cost. Between **2026-09-14 18:34 and 2026-09-15 00:0x** the
+deploy checked out at depth 1, which truncates the history *and* fetches no tags. Six links
+to `v0.3.1`, `v0.5.0` and `v0.6.0` — tags that exist and carry published releases — were
+reported as non-existent, 2302 commit links were undecidable, `publish` was skipped on every
+run, and the live site stayed at `8cf457000` for seven hours while master moved three merges
+ahead. Every gate was green throughout, because nothing asked whether the site was current.
+
+So the requirement is **declared, not written into the workflow**:
+
+```yaml
+# .ai/repo/ci/pages.yaml
+deploy:
+  checkout:
+    history: full      # renders as fetch-depth: 0
+    tags: required     # actions/checkout fetches none at a shallow depth
+```
+
+| what | where |
+|------|-------|
+| the requirement | `deploy.checkout` in `.ai/repo/ci/pages.yaml` |
+| the depth it implies | `scripts/pages checkout` — prints `0` |
+| the clone a run was given | `scripts/pages checkout --verify` — exit 10 when it cannot decide a ref |
+| the workflow held to the model | `test/cases/97_pages_fast_path.sh` |
+
+The workflow is an adapter over that, the same way its `paths:` block is an adapter over
+`scripts/pages paths`. **Changing what the publisher needs from its clone is an edit to the
+model and nowhere else**: the depth, the verification and the test all read it. A test that
+asserted `fetch-depth: 0` literally would hold one patch in place; the case compares the two
+and fails when they disagree, whichever of them moved.
+
+`--verify` runs in the deploy job immediately after checkout, so a runner that does not
+honour the declaration fails there, naming the depth — rather than three steps later inside
+link-check, where a checkout problem presents as a link defect.
+
+## When a publication fails: the scheduled retry
+
+A push-triggered run that fails leaves the site where it was, and nothing asks again. On
+2026-09-14 the site stood seven hours while every run failed. So `.github/workflows/pages.yml`
+also runs on a clock, `trigger.schedule` in `.ai/repo/ci/pages.yaml`, every thirty minutes —
+the window `scripts/ci/pages-check` judges by (`OWED_AFTER`, 1800 s); a schedule slower than the
+window cannot notice what the window calls owed. `test/cases/97_pages_fast_path.sh` holds the
+workflow&#39;s cron to the model&#39;s.
+
+A scheduled run asks before it works, in a small job of its own (`owed`):
+
+| state | remedy | run ends |
+|-------|--------|----------|
+| the site is current | none; nothing else runs | green |
+| gh-pages does not carry the trunk&#39;s site | the `rustdoc` and `deploy` jobs run as on a push | red |
+| gh-pages is right, GitHub&#39;s own build errored | `scripts/pages rebuild` | red |
+
+Red is deliberate: the run repaired a fault the push-triggered run should not have left, and
+healing without reporting would hide a fault that recurs every thirty minutes. The
+`intervention` job says what was owed and what was done.
+
+A rebuild is a different action from a redeploy. Deploying an identical tree changes nothing
+when GitHub&#39;s builder is what failed, and a request for a build **preempts a build in flight**:
+asking while GitHub is building kills that build. `scripts/pages rebuild` therefore asks only
+when the build of the commit errored *and* nothing is building, reads that state through
+`scripts/pages built --porcelain` (the one reader of it), exits 12 without asking when the state
+cannot be read or a build is in flight, and reads the state again after asking.
+&quot;gh-pages is right&quot; is measured, not assumed: the `owed` job chooses the rebuild only when the
+top-level `commit` of gh-pages&#39; `build.json` is the trunk commit the run checked out. An errored
+build of an older tree — a push deploy that failed before publishing, over a build that had
+errored too — is deployed, because rebuilding it would republish the stale site on every run.
+`test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh` holds each of those, the last by
+running the workflow&#39;s own remedy step against both trees.
+
+## Projection pipeline
+
+Two generators, one graph. The Rust executable projects its own registry; the site
+generator projects the canonical files and consumes the executable&#39;s projections through
+one machine-readable boundary, `docs/generated/registry.json` (and `openapi.json`); Zola
+renders templates over what both wrote. `scripts/derive` runs the stages in order,
+`scripts/derive-check` proves the committed result, and no stage reads its own output.
+
+```mermaid
+flowchart TB
+    subgraph canonical
+        R[capability! and module! declarations, src/cli.rs with cli::EXAMPLES]
+        K[share/kinds.yaml, schemas, providers, policy]
+        D[README, docs/*.md, docs/claims, CLAIMS.yaml, RESPONSIBILITIES.yaml]
+        C[share/commands.yaml, use-cases.yaml, applications.yaml]
+        P[.ai/repo/project, rules, benchmarks]
+    end
+    subgraph stageA[stage A · majordomus generate, code only]
+        GA[docs/generated: openapi, registry, capabilities, cli, modules/*.md — json+yaml+md as each document is committed · share/allow/*.txt · AGENTS.md, CLAUDE.md]
+    end
+    subgraph stageB[stage B · scripts/generate-site-data]
+        GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
+    end
+    subgraph stageC[stage C · majordomus generate, over the index]
+        GC[site/data/registry/registry.json · docs/generated/benchmarks.* · docs/generated/artifacts.*]
+    end
+    subgraph build[scripts/site-build]
+        Z[zola + Tailwind → site/public · build.json]
+    end
+    R --&gt; GA
+    K --&gt; GA
+    D --&gt; GB
+    C --&gt; GB
+    P --&gt; GB
+    GA --&gt;|registry.json, openapi.json, cli.json| GB
+    R --&gt; GC
+    P --&gt; GC
+    GB --&gt;|the derived documents are objects of the index| GC
+    GB --&gt; Z
+    GC --&gt; Z
+```
+
+| stage | generator | reads | writes | checked by |
+|---|---|---|---|---|
+| A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi,registry,cli}.{json,yaml}`, `docs/generated/{capabilities,cli}.md`, `docs/generated/modules/*.md`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
+| B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A&#39;s `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | `scripts/generate-site-data --check` (by input hash) |
+| C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.{md,json,yaml}`, `docs/generated/artifacts.{json,yaml,md}` | `majordomus generate --check` |
+| build | `scripts/site-build` | stages B and C, the templates, the assets, and the artifact of every published static surface `docs/generated/web.json` names | `site/public/**` (with each such surface composed at its mount), `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
+
+The boundary between the executable and the site is data, in both directions of reading:
+the site generator reads the registry manifest for the ids it turns into routes and never
+parses Rust; the templates read the registry dataset for every fact about a capability and
+never restate one; the executable knows nothing of Zola. The manifest is a projection used
+as an interface between stages, not a second truth: a capability exists in one place, and
+`generate --check` refuses a manifest that no longer says what the declarations say.
+
+Why stage C exists: the dataset lists every object of the layer with its size, and the
+derived documents stage B writes are objects of the layer, so the dataset is derived after
+them. Stage C&#39;s outputs are read by nothing but the site build, so the graph has no cycle
+and a second `scripts/derive` on a clean tree changes nothing — `git status` stays empty,
+which `test/cases/51_derived_artifacts_committed.sh` and the release criterion require.
+
+`scripts/generate-site-data` reads every canonical input, normalises it once, and writes:
+
+| file | from | what |
+|---|---|---|
+| `project.json` | `bin/majordomus`, `README.md`, `LICENSE` | name, version, tagline, licence, commands, exit codes |
+| `profiles.json` | `share/skeleton/profiles/*.yaml` | every profile, every field |
+| `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
+| `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
+| `commands.json` | `share/commands.yaml`, `docs/CLI.md`, the test cases | every shell command with its semantics, narrative and evidence |
+| `catalogue.json` | `.ai/repo/use-cases/`, `.ai/repo/applications/` | the use cases and applications, cross-referenced |
+| `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
+| `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
+| `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` and `api-tag.html` render, with the one page every operation and schema is published on (`scripts/lib/openapi-site.jq`) |
+| `artifacts.json` | `docs/generated/artifacts.json` | the generator&#39;s own manifest — declarations only, carrying `schema: 1` like every other file of that directory with the manifest&#39;s own schema id under `manifest_schema`, moved under `site/data/` so `registry-artifacts.html` can load it; nothing is added and no file is named in the template. Sizes and hashes are dropped: two of the manifest&#39;s subjects are written by stage C, so a copy carrying them could never converge with stage B |
+| `executable.json` | `docs/generated/registry.json`, `capabilities.json` | one route per module and per capability, the executable&#39;s pages, API anchors, sources on GitHub, the claims attached to each surface by the path of their implementation (`scripts/lib/executable-site.jq`) |
+| `lifecycle.json` | `lib/finish.sh`, `share/skeleton/ai/repo/workflows/task-lifecycle.md`, `share/standard/majordomus/` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged `principle`) |
+| `diagrams.json` | the files above | Mermaid source projected from data |
+| `readme.json` | `README.md` | the sections the homepage renders, by heading; a renamed heading fails the build |
+| `docs.json` | `docs/README.md` | the documentation index |
+| `source.json` | the inputs | version, input hash, generator version, input list; no commit (see build provenance) |
+
+`site/content/docs/*.md` is written from `docs/*.md` with a generated front matter, links
+rewritten to site routes, and the whole body wrapped in a Tera `raw` block so that Tera never
+templates canonical Markdown. The tag itself cannot be written out here: a literal closing
+`raw` tag in a canonical document would end the wrapper the projection puts around it.
+`site/content/registry/executable.md` is `apps/majordomus-cli/README.md` through the same
+projection.
+
+## Derived files, classified
+
+| class | what | examples | rule |
+|---|---|---|---|
+| canonical | authored, the only place a fact lives | the Rust declarations, `share/*.yaml`, `docs/*.md`, `docs/CLAIMS.yaml`, `.ai/repo/**`, templates, `nav.toml`, `marketing.toml` | edited by hand |
+| derived, committed | a projection reviewers see on GitHub and CI compares with its sources | `docs/generated/**`, `share/allow/**`, `AGENTS.md`, `CLAUDE.md`, `site/data/generated/**`, `site/data/registry/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | regenerated with `scripts/derive`, committed with the change that moved it; `scripts/derive-check` refuses drift |
+| derived, build only | rebuilt on every build, never committed | `site/content/{docs,registry,commands,...}/`, `site/static/{app.css,js/,openapi.json,build.json}`, `site/data/build.json`, `site/public/**`, `target/web/rustdoc/` | gitignored; `scripts/site-check` proves the build&#39;s own guards (`13e`, `13a`) and that every composed surface is this build&#39;s (`13m`) |
+| local, ephemeral | this checkout&#39;s state | `.ai/local/**`, `apps/majordomus-cli/target/` | never a source of anything the site shows |
+
+### The generator is an input, and it is not in the table
+
+Every row above classifies a *file*. The classification is incomplete in one way that has
+already cost this repository a near-miss: the derived files are a projection of the canonical
+sources **as read by one executable**, and that executable is not a file in the tree. Two
+builds of the same declared version can project different registries.
+
+So an executable borrowed from another worktree — through `MAJORDOMUS_BIN`, which is how a
+session avoids a ten-minute rebuild — is a third input, and an unsuitable one fails in the
+worst available direction: it reports the *tree* stale, printing a remedy that regenerates,
+and regenerating rewrites each document from a model the tree no longer holds. On 2026-09-10
+that removed about 9,700 lines from `docs/generated/changelog.json` and exited zero.
+
+Before deriving with an executable you did not just build:
+
+```sh
+env -u MAJORDOMUS_SHARE &quot;$MAJORDOMUS_BIN&quot; generate --check   # must say: in sync
+```
+
+and after any derivation, before committing:
+
+```sh
+git diff --stat -- docs/generated site/data                  # mass deletion is corruption
+```
+
+`project.a-tool-that-cannot-match-the-tree-refuses` is the rule; the guard that enforces it
+lives in the executable, so it holds for every caller rather than for one script.
+
+## Where do I edit this?
+
+| I want to change | edit | never edit |
+|---|---|---|
+| a Rust capability&#39;s title, description, schema, stability, tags, benchmark or cache policy | its `capability!` declaration under `apps/majordomus-cli/src/capability/builtin/` | `docs/generated/**`, `site/data/registry/registry.json`, any `/registry/` page |
+| how a capability is exposed (MCP tool, resource, HTTP route, CLI path) | the `exposure` of the same declaration | `docs/generated/openapi.json`, `/docs/api/`, `/registry/mcp/` |
+| a module&#39;s title, description or stability | its `module!` declaration | `docs/generated/modules/*.md`, `/registry/modules/` |
+| the native command line: a command, an argument, a default, a value set | the clap declaration in `apps/majordomus-cli/src/cli.rs` | `docs/generated/cli.md`, `docs/generated/cli.json`, `site/data/generated/cli.json`, `/registry/cli/`, `/docs/cli/**` |
+| an example of a native command, or adding a command that has none | `cli::EXAMPLES` in the same file, beside the declaration | an example written into a template, a page or `cli.md`: the pages render the argument vectors the crate&#39;s tests execute |
+| the benchmark regression thresholds | `.ai/repo/benchmarks/rust/policy.yaml` | the policy table on `/registry/benchmarks/` |
+| an accepted baseline | `majordomus bench baseline update` on the platform it measures | the baseline JSON by hand |
+| what the executable is, owns, refuses; discovery; transports; side effects | `apps/majordomus-cli/README.md` | `/registry/executable/` |
+| a shell command&#39;s category, stage, reads, writes, syntax, exit codes | `share/commands.yaml` (semantics) and `docs/CLI.md` (narrative) | `commands.json`, `/commands/&lt;name&gt;/` |
+| a use case or an application | `.ai/repo/use-cases/`, `.ai/repo/applications/` | `catalogue.json`, its route |
+| a claim | `docs/CLAIMS.yaml` and `docs/claims/&lt;id&gt;.md` | `capabilities.json`, `docs/SITE_CLAIMS.md`, `/guarantees/` |
+| a doctrine | the rule file under `.ai/repo/rules/` or the vendored package | `doctrines.json`, `/doctrines/` |
+| a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md`, `/plan/` |
+| a profile, the policy&#39;s schema | `share/skeleton/**` | `profiles.json`, `policy.json` |
+| a kind or a schema | `share/kinds.yaml`, `share/schemas/`, or `.ai/repo/knowledge/` for this repository | `share/allow/*.txt`, the kinds table |
+| the provider bootstraps | `.ai/repo/policy.yaml`, the provider templates | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` |
+| how a page looks | `site/templates/**`, `site/tailwind.css` | `site/data/generated/**` to make a template&#39;s life easier |
+| which pages the executable&#39;s section has, or how claims attach to its surfaces | `scripts/generate-site-data`, `scripts/lib/executable-site.jq` | a route list in a template or in `nav.toml` |
+| the editorial navigation | `site/data/nav.toml` — intents and their fixed pages | an entry per module or capability: those routes are enumerated by the generator, and `site-check` refuses one typed here |
+| the homepage&#39;s words | `site/data/marketing.toml` | a number, a claim word |
+
+After any edit in the left column: `just derive`, review the diff of the derived files,
+`just derive-check`, commit both together.
+
+## Markdown rendering
+
+Canonical Markdown must stay readable on GitHub, so the site uses only syntax GitHub renders
+natively. `scripts/lib/project-markdown.awk` projects three GitHub-native constructs into site
+components, on the derived copy only:
+
+| in the canonical file | on the site |
+|---|---|
+| ` ```mermaid ` fence | `&lt;pre class=&quot;mermaid&quot;&gt;`, rendered client-side; the source stays visible without JavaScript |
+| `&gt; [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` | Flowbite alert |
+| a pipe table | wrapped in `overflow-x-auto` so wide tables scroll inside their container |
+
+Everything else is Zola&#39;s Markdown renderer inside a Flowbite Typography container
+(`format dark:format-invert`): headings with anchors, lists, task lists, footnotes,
+blockquotes, and class-based syntax highlighting (`[markdown.highlighting] style = &quot;class&quot;`,
+themes `ayu-light` and `ayu-dark`). Zola writes the two theme stylesheets into `site/public/`;
+`scripts/site-build` scopes the dark one under `.dark` so class-based dark mode selects it.
+`site/content-src/render-test.md` exercises every construct and is linked from nowhere.
+
+## Mermaid
+
+Client-side, from the pinned npm package, vendored to `static/js/mermaid.min.js` at build.
+Chosen over build-time SVG because the Mermaid CLI needs a headless browser in CI and the
+site must stay reproducible from bash, Node and Zola alone. `site/diagrams.js` initialises
+with `securityLevel: &#39;strict&#39;`, a restrained palette for light and dark, and re-renders on
+the theme toggle. Four diagrams are projected from data, never drawn by hand: the task
+lifecycle from the outcome vocabulary, the policy-to-instruction-file graph from the policy&#39;s
+projections, the site pipeline from the generator&#39;s input list, and the core model from the
+README. A failed diagram leaves its source visible and never breaks the page.
+
+## Zola structure
+
+```
+site/
+  config.toml          base_url, class-based highlighting, heading anchors, footnotes
+  content/             _index and one stub per page; docs/ and render-test.md are generated
+  content-src/         hand-written pages that get the same projection as docs
+  templates/
+    base.html          head, theme-before-paint, navbar, footer, Flowbite init, Alpine
+    components.html    Tera 2 components: badge, code, card, section_head, diagram
+    index.html         homepage: the business hero, then the sections, all from generated data
+    page.html          standalone page with breadcrumb and Typography body
+    docs-section.html  /docs/ index from the section&#39;s pages
+    docs-page.html     document with sidebar navigation
+    profiles.html policy.html guarantees.html getting-started.html architecture.html
+    404.html
+    partials/          navbar, footer, theme-toggle, breadcrumb, profile-cards, mermaid
+  data/marketing.toml  the only hand-written prose
+  data/generated/      written by generate-site-data, committed, checked
+  tailwind.css theme.js diagrams.js
+  static/              images copied from assets/; app.css and js/ written at build
+  public/              output
+```
+
+Zola 0.23 runs Tera 2: components replace macros, `import` no longer exists, array indexing
+is `x[1]`, undefined variables are errors, `filter` and `slice` are gone in favour of list
+comprehensions and Python-style slicing.
+
+## Tailwind, Flowbite, Alpine
+
+`site/tailwind.css` follows the Flowbite quickstart for Tailwind v4: `@import &quot;tailwindcss&quot;`,
+`@import &quot;flowbite/src/themes/default&quot;`, `@plugin &quot;flowbite/plugin&quot;`,
+`@plugin &quot;flowbite-typography&quot;`, `@source` for `node_modules/flowbite` and the templates, and
+`@custom-variant dark (&amp;:where(.dark, .dark *))` from the dark-mode guide. Flowbite v4&#39;s
+semantic tokens (`bg-neutral-primary-soft`, `text-heading`, `border-default`, `rounded-base`)
+are used throughout. The theme names Inter first; it is not loaded, so the stack falls to the
+system font on purpose.
+
+Flowbite&#39;s JavaScript is not loaded. The only two things the site used it for, the navbar&#39;s
+mobile collapse (`data-collapse-toggle`) and its dropdowns (`data-dropdown-toggle`), are
+`site/nav.js`, about 2 KB, which `base.html` loads deferred and site-check requires exactly
+once per page. Removing the 134 KB bundle took the homepage from 338555 to 207140 bytes of
+scripts and stylesheets. Flowbite&#39;s styles stay; they are CSS, compiled into `app.css`.
+
+The homepage is a projection of `site/data/registry/product.json`, which the executable
+writes from the features of the layer, the capability registry and the web topology. Every
+chapter, mark, count, provider, kind and rule on it is read from that dataset; the template
+names none of them, and `scripts/site-check` fails a template, a generator or a navigation
+file that names a feature route or a provider&#39;s own file. The hero&#39;s second column is the
+answer `majordomus product matrix` prints, rendered as a table rather than padded text so
+the columns align at every width and a screen reader reads a table rather than a picture of
+one. The words around it — the title, the mantra, the section leads and the button labels —
+are `marketing.toml`&#39;s, which carries no number and no capability claim and is held to a
+sixty-line budget.
+
+The one thing a person decides is which features are chapters and in what order, and that
+decision lives in the feature files themselves (`featured` and `weight`), not here: a
+feature becomes a chapter by declaring itself one. `docs/PRODUCT.md` is the contract, ADR 23
+is the decision, and `project.product-surface-derived` is the rule.
+
+Routes that moved are declared once, in `nav.toml` under `[[redirects]]`, beside the routes
+that did not. The generator turns each into a Zola alias on the page it points at, so the
+old address answers with a redirect; a redirect whose target the generator did not produce
+fails the build rather than publishing a link into nothing. An alias page is a redirect and
+not a page, so `scripts/lib/site-pages.awk` exempts it from the contract a page is held to.
+
+Alpine.js is vendored and used for two things: the copy button on code snippets (`x-data`,
+`x-on:click`, `x-text`) and the raw-policy disclosure on `/policy/`. Both degrade: the code
+and the policy are in the HTML; only the control disappears without JavaScript.
+
+Custom CSS: one rule, `[x-cloak]{display:none!important}`, inline in `base.html`, required by
+Alpine&#39;s documentation. Inline `style=&quot;&quot;` attributes are forbidden and `scripts/site-check`
+fails on one.
+
+## Flowbite guidance consulted
+
+The Flowbite LLM entry point (`flowbite.com/docs/getting-started/llm/`) points at `llms.txt`,
+which is an index. The pages read and followed, on 2026-09-04: getting-started/quickstart
+(Tailwind v4 directives), getting-started/javascript (`initFlowbite`), customize/dark-mode
+(`@custom-variant`, toggle markup and script, reproduced in `theme.js`), components/navbar,
+components/card, components/badge, components/footer, components/typography. The repository&#39;s
+installed `flowbite` is 4.0.2, matching the documented token vocabulary.
+
+## Routes
+
+Every tile on the homepage is a link to a page with its own title, description, canonical URL
+and Open Graph metadata. The route classes and their sources:
+
+| route | source | template |
+|---|---|---|
+| `/` | `site/data/registry/product.json` and `product-graph.json` (chapters, interfaces, matrix, providers, kinds, doctrine), `marketing.toml` (the words), `readme.json` (the finish contract), `distribution.json` (the install command), the `why` section | `index.html` |
+| `/why/`, `/why/&lt;slug&gt;/` | `site/content-src/why/*.md` | `why-section.html`, `why.html` |
+| `/features/`, `/features/&lt;id&gt;/`, `/features/matrix/` | `site/data/registry/product.json` and `product-graph.json`, with each page&#39;s prose read from the feature&#39;s own file | `features-section.html`, `feature.html`, `features-matrix.html` |
+| `/getting-started/` | `project.json`, `policy.json`, `lifecycle.json` | `getting-started.html` |
+| `/supervises/`, `/supervises/&lt;slug&gt;/` | `readme.json` (What it does rows, cross-linked to commands and claims by keyword) | `supervises-section.html`, `responsibility.html` |
+| `/commands/`, `/commands/&lt;name&gt;/` | `commands.json` (each command&#39;s section of `docs/CLI.md`) | `commands-section.html`, `command.html` |
+| `/profiles/`, `/profiles/&lt;slug&gt;/` | `profiles.json` | `profiles.html`, `profile.html` |
+| `/policy/` | `policy.json` including the raw file | `policy.html` |
+| `/guarantees/`, `/guarantees/&lt;status&gt;/`, `/guarantees/&lt;id&gt;/` | `capabilities.json`, `docs/claims/&lt;id&gt;.md` | `guarantees.html`, `status.html`, `claim.html` |
+| `/limitations/`, `/roadmap/` | `readme.json` sections by heading | `readme-section.html` |
+| `/architecture/` | `site/content-src/architecture.md`, `source.json`, `diagrams.json` | `architecture.html` |
+| `/docs/`, `/docs/&lt;doc&gt;/` | `docs/*.md` listed in `docs/README.md` | `docs-section.html`, `docs-page.html` |
+| `/docs/api/`, `/docs/api/&lt;tag&gt;/`, `/docs/api/shared/`, `/openapi.json` | `openapi.json` (from `docs/generated/openapi.json`) | `api.html` (the index), `api-tag.html` (a page per tag, and shared types) |
+| `/docs/cli/`, `/docs/cli/&lt;command path&gt;/` | `cli.json` (from `docs/generated/cli.json`, itself the clap declaration and `cli::EXAMPLES`) | `docs-cli.html`, `docs-cli-group.html`, `docs-cli-command.html` |
+| `/doctrines/`, `/doctrines/&lt;slug&gt;/` | `doctrines.json` | `doctrines-section.html`, `doctrine.html` |
+| `/use-cases/`, `/use-cases/&lt;id&gt;/`, `/applications/`, `/applications/&lt;id&gt;/` | `catalogue.json` | `use-cases-section.html`, `use-case.html`, `applications-section.html`, `application.html` |
+| `/plan/`, `/plan/dag/`, `/plan/&lt;id&gt;/` | `plan.json` | `plan-section.html`, `dag.html`, `milestone.html`, `issue.html` |
+| `/evidence/`, `/map/` | `claims-graph.json`, `architecture.json` | `evidence.html`, `map.html` |
+| `/registry/` | `site/data/registry/registry.json`, `executable.json` | `registry.html` |
+| `/registry/executable/` | `apps/majordomus-cli/README.md`, `executable.json` (claims) | `registry-executable.html` |
+| `/registry/modules/`, `/registry/modules/&lt;id&gt;/` | the dataset&#39;s modules, `executable.json` | `registry-modules.html`, `registry-module.html` |
+| `/registry/capabilities/`, `/registry/capabilities/&lt;slug&gt;/` | the dataset&#39;s descriptors, benchmarks and coverage, `executable.json` (module, API anchor, source, claims, tests) | `registry-capabilities.html`, `registry-capability.html` |
+| `/registry/cli/` | the dataset&#39;s `cli` (the clap declaration) | `registry-cli.html` |
+| `/registry/mcp/` | the dataset&#39;s `mcp` (tools, resources, protocol) | `registry-mcp.html` |
+| `/registry/benchmarks/` | the dataset&#39;s `benchmarks` (targets, coverage, policy, baselines) | `registry-benchmarks.html` |
+| `/registry/artifacts/` | `artifacts.json` (the generator&#39;s own manifest) | `registry-artifacts.html` |
+| `/rustdoc/`, and every page rustdoc writes beneath it | `target/web/rustdoc/`, written by `scripts/rust-check --doc` and composed by `scripts/site-build` from `docs/generated/web.json` | — (rustdoc&#39;s own pages; `index.html` is the producer&#39;s landing page) |
+| `/build.json` | `scripts/site-build` | — (served raw) |
+| `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
+
+A capability&#39;s route slug is its id with `.` and `_` replaced by `-` (`objects.search` →
+`/registry/capabilities/objects-search/`, `repository.scope_classify` →
+`/registry/capabilities/repository-scope-classify/`): Zola slugifies every path that way,
+so the dataset names the route Zola actually serves. The API reference&#39;s operation anchors
+are HTML ids Zola never touches, so they replace only the `.` (`#op-objects-search`,
+`#op-repository-scope_classify`); `executable.json` carries both spellings (`slug`,
+`api_anchor`), so the two link each other without a table.
+
+A native command&#39;s route is its path under `/docs/cli/`, one segment per word, with a
+trailing slash: `[&quot;majordomus&quot;, &quot;bench&quot;, &quot;baseline&quot;, &quot;update&quot;]` is
+`/docs/cli/bench/baseline/update/`. The rule is one function in the executable
+(`cli::route`), the route it produced is carried in `docs/generated/cli.json`, and every
+consumer downstream — the site generator, the templates, `site-check`, `site-probe` — reads
+that field rather than deriving one of its own. A command that has commands under it is a
+Zola section so that its children have routes beneath it, and a command that has none is a
+page; which it is comes from the data, so a command that grows a subcommand changes shape by
+itself. `site-check` compares the declared routes and the built ones as sets, both ways: a
+command with no page fails, and a page whose command the executable no longer has fails as an
+orphan.
+
+`/docs/cli/` belongs to the *native* command line, the Rust executable&#39;s. `docs/CLI.md`
+specifies the **shell** tool `bin/majordomus` — a different program, whose structured
+reference is `/commands/` — and renders at `/docs/cli-specification/`. The rule that turns a
+document into a route is one function in the site generator (`doc_slug`), and the route it
+produced is recorded in `docs.json`, so the link rewriting, the pages and `site-check` read
+it instead of each computing a slug. Do not describe `share/commands.yaml` or `docs/CLI.md`
+as sources for the Rust executable: they are the shell tool&#39;s, and the two command surfaces
+are documented apart on purpose.
+
+Navigation is `site/data/nav.toml`: a handful of intents (Why, Get started, Concepts, Plan,
+Trust, Executable, Reference), rendered as Flowbite dropdowns on desktop and as labelled flat
+lists inside the collapsed menu on phones. It holds editorial intent — which fixed pages an
+intent leads to — and never an enumeration: the modules and capabilities are listed by the
+generator, and `scripts/site-check` refuses a module or capability route typed into it.
+`scripts/site-check` verifies every navigation and homepage link resolves, every tile class
+has its page, for the executable&#39;s section that every module and capability of the dataset
+has its page and no page exists without its entry, and for the command line that the routes
+under `/docs/cli/` are exactly the commands the executable declares, that each page renders
+its own usage, arguments and example anchors and links up and down, and that no command
+route is typed by hand into a template, the generator or the navigation. `scripts/site-probe`
+then fetches every declared command route from a running server and reads the deepest command
+page back.
+
+## Responsive strategy
+
+Mobile-first: base classes describe the phone layout, `sm:`/`md:`/`lg:`/`xl:` add columns.
+Every `&lt;pre&gt;` and `&lt;table&gt;` sits in a scroll container, either an explicit `overflow-x-auto`
+wrapper or a Typography container carrying `[&amp;_pre]:overflow-x-auto` and
+`[&amp;_table]:overflow-x-auto`. Grid items that hold code carry `min-w-0`. Validation is
+measured, not eyeballed: `scripts/site-probe` builds a copy under the deployment prefix, serves
+it locally, loads every route in headless Chrome inside iframes of 320, 390 and 1280 px and
+asserts `document.scrollWidth == clientWidth`, then exercises the mobile menu, a navigation
+dropdown and the theme toggle and counts rendered Mermaid diagrams. It runs in the Pages
+workflow and skips with a notice where no Chrome exists. `test/cases/09_site_mobile_first.sh`
+lints the built HTML for the structural causes of overflow without a browser.
+
+## Accessibility
+
+One `h1` per page, `&lt;main&gt;`, `&lt;nav aria-label&gt;`, a skip link, `aria-current` on active
+navigation, `aria-expanded`/`aria-controls` on the menu toggle, `aria-label` on icon-only
+controls, `role=&quot;note&quot;` on callouts, visible focus rings (`focus:ring-*`, never removed),
+Flowbite&#39;s contrast tokens in both themes. Everything except the copy button and the
+disclosure works without JavaScript.
+
+## GitHub Pages deployment
+
+The site is published by `.github/workflows/pages.yml`, which triggers directly on a push to
+master whose paths can change the site and runs beside `validate.yml` rather than after it.
+Its deploy job proves the committed `site/data/generated` is current for the tree by comparing
+the tree&#39;s canonical input hash with the one `source.json` carries
+(`scripts/generate-site-data --fingerprint`), renders it (`scripts/pages build`), runs every
+static check over the output (`scripts/pages check`), and pushes `gh-pages`. A tree whose
+committed derived data is stale is refused rather than regenerated.
+
+The crate&#39;s rustdoc reference is part of those bytes and is not committed, so a `rustdoc` job
+of its own, which the deploy job needs, produces it from the same commit through the composite
+action `.github/actions/rustdoc` — the one the validation workflow uses too — and hands it over
+as an artifact of the run. The deploy job fetches that tree before it renders,
+`scripts/site-build` composes it at `/rustdoc` from `docs/generated/web.json`, and
+`scripts/site-check` refuses a composed surface that is missing or was built from another
+commit (section 13m). Once the site serves the deployed commit, `scripts/pages verify-rustdoc`
+checks the public reference against it, and that step is a hard one: a deployment whose public
+reference is absent, broken or stale fails the run. [`RUSTDOC.md`](RUSTDOC.md) has the whole
+path and ADR 86 the decision.
+
+Everything that decides whether a change may *merge* — the behavioural suite, the crate&#39;s
+gates, coverage, the macOS suite, the benchmark check and the browser probe — runs on the same
+commit in `validate.yml` and gates the `ci` status. The publication path carries what can make
+the published bytes wrong and nothing else; the reasoning, the budgets and the measurements
+are [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md), and [`CI.md`](CI.md) has the
+validation shape. The `rust` job runs `majordomus generate --check` and the `site` job
+`scripts/generate-site-data --check`; locally `scripts/derive-check` (`just derive-check`)
+runs both, and `scripts/derive` (`just derive`) regenerates every derived artifact in
+dependency order.
+
+GitHub Pages serves the `gh-pages` branch (source: branch, path `/`), and whoever pushes
+that branch deploys. One script does it, `scripts/site-deploy`: it refuses a dirty tree and a
+commit `origin/master` does not contain, runs the gate (`generate-site-data --check`,
+`majordomus generate --check`, `site-build`, `site-check`, `--probe` on request), copies
+`site/public` into a worktree of `gh-pages` with `.nojekyll`, commits it with the source
+commit in the message, and pushes. GitHub&#39;s own &quot;pages build and deployment&quot; then serves it
+in under a minute; the footer of every page names the commit it was built from, so the
+deploy is verifiable with `curl`. Unchanged output is not pushed twice, and a `--dry-run`
+shows the commit it would push. `test/cases/96_site_deploy.sh` runs the whole path against a
+local bare remote: every refusal, the first deploy, the no-op redeploy, and the check that
+`site/public` was built from HEAD.
+
+The job of `.github/workflows/pages.yml` is the gated form of the same command: it builds and
+checks the commit and then runs `scripts/site-deploy --skip-build`. A person runs
+`scripts/site-deploy` (or `just site-deploy`) when the operator wants the site live without
+waiting for the Actions queue, and that path — no queue in front of it at all — is why the
+branch source is kept instead of the native Pages artifact flow, which would make a workflow
+run the only way to publish. The procedure is `.ai/repo/skills/deploy-site/SKILL.md`. Pointing
+Pages at the branch is a one-time `scripts/site-deploy --configure-pages`.
+
+### The documentation a deploy publishes
+
+The build writes `/docs/index.json` last, with `scripts/lib/docs-index.mjs`. It reads the
+pages the build just produced, the composed surfaces&#39; among them (the crate&#39;s reference at
+`/rustdoc`), so it lists no route of its own. Each page has its route, its
+title and its description; an entity page is also joined to its object, and the index
+carries the `/build.json` identity of the build. The build fails when a route that
+`site/data/publication.toml` publishes, or an entity page, was not built. After the site
+serves the pushed commit, the workflow runs `scripts/pages verify-docs --commit &lt;sha&gt;`. The
+public index must name that commit, and each of the following must answer 200: the
+documentation root, every route the catalogue publishes a kind at, one page of every entity
+kind, `/openapi.json` and `/build.json`. Run the same command by hand against any deployed
+commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
+against a served fixture.
+
+### The UI a deploy publishes
+
+The site carries `majordomus ui` at `/ui/` as a snapshot read at the published commit (ADR
+0141, `docs/MAJORDOMUS_UI.md`). The workflow&#39;s `ui-snapshot` job builds the executable from
+that commit and runs `majordomus web report ui-snapshot`; it runs beside the `rustdoc` job,
+and the deploy job waits for both. After `scripts/pages check` and before the push, the deploy
+job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
+that is absent, one read at another commit, and a mount the site itself already built.
+
+The Cockpit is published the same way at `/cockpit/` (ADR 0147). The same job runs
+`majordomus web report cockpit-snapshot` after the UI&#39;s, because the Cockpit&#39;s snapshot reads
+first what the UI&#39;s links to and then leads those links to its own pages; both directories
+are uploaded once that step is over. The deploy job places every snapshot the model declares
+at the mount the topology gives it, and after the push
+`scripts/pages verify-ui --surface cockpit` asks the public site for it.
+
+The snapshot is a generated surface, known only where its producer ran, so it is not in the
+committed topology and `scripts/site-build` does not compose it: a local build of the site has
+no `/ui/` unless that step is repeated by hand. The site&#39;s checks do not judge its pages.
+
+That a publication holds it is declared once, in `.ai/repo/ci/pages.yaml` under
+`deploy.snapshots`: the served surface it is a snapshot of, where the producer writes it, the
+producer, and the attribute its pages state their commit with. The mount is the topology&#39;s
+mount of that surface, and `scripts/pages snapshots` prints the resolved rows. Three readers
+hold a publication to that entry (`project.the-published-ui-is-the-trunks`):
+
+- `scripts/site-deploy` refuses a site whose tree has no snapshot at the mount, one read at
+  another commit than `HEAD`, or one that declares another mount, and says how to place it.
+  A deploy from a terminal therefore cannot publish the site without `/ui/`.
+  `--release-metadata` changes two files of what is already served and is not asked.
+- `scripts/pages verify-ui` asks the public site, once it serves the deployed commit:
+  `/ui/surface.json` names that commit, the landing page&#39;s banner states it, `/ui/snapshot.json`
+  records it and says what ended the reading, and every page the record lists answers 200. It
+  prints how many pages it asked for, how many `--max-pages` left unasked, how many the
+  snapshot itself left out and what stopped it. Exit 10 is a UI that is missing, another
+  commit&#39;s or not whole; 12 is a site that never answered. The deploy&#39;s `the UI it publishes`
+  step runs it and is not `continue-on-error`.
+- The `pages-live` gate asks the same probe of the published commit (section 2c of
+  `scripts/ci/pages-check`), so the live `/ui/` is held to the trunk within the window the
+  site is.
+
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
+
+### The release the site offers
+
+Which release is the latest is one fact with three public surfaces: the homepage (the navbar
+badge, the hero and the trust strip&#39;s `data-release`), `/releases/latest.json`, which the
+installer resolves, and the newest GitHub release. A release reaches them in that order — GitHub,
+then `latest.json` from the release&#39;s publish job (`scripts/site-deploy --release-metadata`,
+ADR 0131), then the pages from the build of master that job asks for — and the record that
+archives it lands later still, through its own pull request.
+
+So the pages do not read the record. `scripts/site-build` derives the release the site offers as
+the newer of the record&#39;s projection (`site/data/registry/distribution.json`) and the
+`releases/latest.json` that `origin/gh-pages` serves, read from git and named in `build.json`
+(`release.source`, `release.published_from`); `base.html` sets `offered` from it and every page
+reads `offered`. When the published release is the newer, the build serves its two documents, so
+the metadata beside the pages names what they offer. `scripts/site-build --release` prints the
+derivation alone.
+
+It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
+`/build.json` and `/releases/latest.json` disagree, or whose two committed projections of the latest release do;
+the deploy&#39;s `the release it offers` step runs `scripts/pages release-live` once the site serves
+the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
+the schedule and at `finish`. A disagreement younger than `deploy.release_window`
+(`.ai/repo/ci/pages.yaml`) after GitHub&#39;s release is a publication in flight; older, or a site
+offering a version GitHub has not published, is a failure. The rule is
+`project.the-site-offers-the-release-it-published`.
+
+### When a deploy does not happen
+
+Publication is two steps owned by two parties, and either can be missing while everything
+visible stays green. This repository pushes `gh-pages`; GitHub&#39;s own &quot;pages build and
+deployment&quot; turns that branch into the served site, and it has its own status, which can be
+`errored` for a branch that was pushed perfectly — it was, on 2026-09-10 at 17:35, and the
+site served the previous commit for 27 minutes with nothing red anywhere.
+
+The workflow&#39;s own conclusion does not answer the question either. `pages.yml` serialises its
+runs and never cancels the one in flight (`cancel-in-progress: false`; cancelling it starved
+publication on 2026-09-12, when every superseding run was itself superseded), but GitHub drops
+an older *pending* run for a newer one, and a cancelled run is not a failure: on 2026-09-09/10,
+while a push still cancelled the run in flight, fourteen of seventeen cancelled runs had already
+pushed `gh-pages` before they died, and no reader could tell them from the three that had not.
+So the run says which it was — an annotation and a line in its summary — and cancellation
+itself cannot strand the site, because a pending run is only ever dropped for a newer run of
+the same workflow, and the run in flight always finishes: the chain ends in a run that
+publishes or in one that goes red.
+
+What *is* left stale is a run that never published and whose successor then failed to
+build. Nothing in the deploy can report that, because by then there is no deploy.
+The reader is the `pages-live` gate (`scripts/ci/pages-check`), which runs on every full
+validation and asks four things: the published commit is on master, master has not moved past
+it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue observed on
+2026-09-10), the live site serves what `gh-pages` published, and GitHub&#39;s own build of that
+branch did not error. A section of its own asks a fifth: the reference at `/rustdoc/` is
+whole and was built from the commit the site serves, by the same `scripts/pages verify-rustdoc`
+the deploy runs. Another asks the same of the UI&#39;s snapshot at `/ui/`, by
+`scripts/pages verify-ui`. The trigger paths it uses to decide whether a publication is *owed* are
+`scripts/pages paths` — the same list that is the workflow&#39;s own `paths:` — so a commit that
+cannot change the site does not owe a deploy.
+
+The site answers at its own domain, and one file keeps it there. `site/static/CNAME` names the
+host; the build copies it into `site/public` like any other static file and `scripts/site-deploy`
+publishes it with the rest. GitHub Pages reads that file on every deploy and unsets the custom
+domain the moment a published tree stops carrying it — which would take the advertised install
+command down with the site, so `scripts/site-check` refuses a build whose `CNAME` and `base_url`
+disagree. Those are the two places the host is written, and there is no third: `base_url` is what
+every generated link and every check resolves against, `CNAME` is what GitHub reads. The project
+address the site was published at before, under `korczis.github.io`, redirects here.
+
+## Sync guarantee
+
+`scripts/derive-check` is the one read-only gate; it composes the generators&#39; own checks
+and names every stale artifact before it exits:
+
+- `majordomus generate --check` derives every projection of the registry, the schemas, the
+  policy and the index again and compares byte for byte: `docs/generated/**`,
+  `share/allow/**`, the provider bootstraps, `site/data/registry/registry.json`.
+- `scripts/generate-site-data --check` regenerates into a temporary directory and diffs every
+  generated file, `docs/SITE_CLAIMS.md` and `docs/PLAN_STATUS.md` against the committed ones;
+  `source.json` is compared by its input hash, which covers every canonical file the
+  generator reads, `docs/generated/registry.json` and `docs/generated/openapi.json` among
+  them, so a change to the executable&#39;s code moves the site&#39;s hash.
+
+The chain is tested edge by edge. `apps/majordomus-cli/tests/projections.rs` proves that a
+descriptor changed in code moves the OpenAPI document, the reference, the manifest and the
+site dataset, and only the sections that project it (an exposure removed moves the routes
+and the coverage, not the tools; a description moves the descriptor everywhere), and that
+the dataset&#39;s tools are the MCP surface&#39;s and its routes the document&#39;s.
+`test/cases/95_executable_reference.sh` proves that a capability added to the manifest gains
+its route, its index entries and its links from the site generator alone, that one removed
+loses them with no orphan left, and that a manifest naming an unknown module, a missing
+source file or another schema is refused. `scripts/site-check` proves the rendered side:
+every module and capability of the dataset has its page, no page exists without its entry,
+the CLI, MCP and benchmark pages render every command, tool, target and baseline, every
+capability page links its module and its operation, and no template, generator or
+navigation file names a capability by hand. `test/cases/11_site_derivation.sh` changes the
+version, a profile, a principle, a policy value, a claim and a document heading in a
+scratch copy and asserts each change appears in the derived data; `test/cases/10_site_data.sh`
+proves a missing path or an untested guaranteed claim fails the generator;
+`test/cases/51_derived_artifacts_committed.sh` proves the committed derived files match
+their sources and that none embeds the commit it lands in.
+
+The commit a page was built from is not a derived file&#39;s business: `scripts/site-build`
+writes `site/data/build.json` (for the footer and the architecture page) and
+`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
+dirty, the site&#39;s input hash, the registry and index fingerprints, and under `surfaces` each
+composed surface with the commit its producer declared; `scripts/site-check` proves the served
+file names HEAD and the data the site was built from, and that every composed surface was built
+from that same commit, so a deployment can be verified from outside against the commit that was
+meant to deploy.
+
+## Local development
+
+```
+npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
+brew install zola           # or the release binary; CI pins 0.23.4
+just derive                 # every committed derived artifact, in order (scripts/derive)
+just derive-check           # is every committed derived artifact current? writes nothing
+just test                   # the gates CI would run for this working tree (scripts/ci/run-plan)
+scripts/site-serve          # generate, build, serve the built pages at http://127.0.0.1:1111/
+scripts/rust-check --doc    # the crate&#39;s reference, target/web/rustdoc — site-build composes it and refuses without it
+scripts/site-build          # production build into site/public/
+scripts/site-check          # the static checks CI runs
+scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)
+SITE_PROBE_JOBS=4 scripts/site-probe   # as CI runs it: four routes at a time
+```
+
+The one workflow after a change to anything canonical — a Rust declaration, a document, a
+claim, a command&#39;s semantics — is: `just derive`, review the diff of the derived files (it
+is the change, seen from every projection), `just derive-check`, commit both. Forgetting
+the first step is caught by the third, and by CI.
+
+## Adding new canonical data
+
+Add the field to the file that owns it, read it in `scripts/generate-site-data`, render it in
+a template, and extend `test/cases/11_site_derivation.sh` with the change-and-assert pair.
+Commit the regenerated `site/data/generated/`. Do not add a field to the JSON by hand.
+
+## Adding new site components
+
+Define a Tera 2 component in `site/templates/components.html`, using Flowbite markup from the
+component&#39;s documentation page, with mobile classes first. Call it as `{{ &lt;name attr=&quot;…&quot; /&gt; }}`.
+If it needs a class Tailwind cannot see in the templates, it does not belong here.
+
+## What must never be edited manually
+
+`docs/generated/**`, `share/allow/**`, `site/data/registry/**`, `site/data/generated/**`,
+`site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry}/**`,
+`site/content/render-test.md`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
+`site/static/app.css`, `site/static/js/**`, `site/static/images/**`, `site/static/openapi.json`,
+`site/static/build.json`, `site/data/build.json`, `site/public/**`, `CLAUDE.md`, `AGENTS.md`.
+Change the canonical file; `just derive`; rebuild.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

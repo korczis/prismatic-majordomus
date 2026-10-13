@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/DISTRIBUTION.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/DISTRIBUTION.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/DISTRIBUTION.md</h1><p class="mj-page-subtitle">Distribution</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/DISTRIBUTION.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DISTRIBUTION.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DISTRIBUTION.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FDISTRIBUTION.md">document.docs/DISTRIBUTION.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Distribution
+
+How Majordomus is packaged, published and installed, and why the answer is one file.
+
+The user-facing half is [`INSTALL.md`](INSTALL.md), which is generated. This document is
+for whoever changes how the tool is shipped: what the canonical model is, what derives from
+it, what the trust path is, how a release happens, and how to add a platform.
+
+## The rule
+
+&gt; Distribution has one canonical machine-readable model. Supported targets, release
+&gt; artifacts, installer resolution, documentation, release automation and the exposed
+&gt; UI/API metadata derive from that model or are mechanically validated against it.
+
+The model is [`share/distribution.yaml`](../share/distribution.yaml), contract
+`majordomus-distribution/v1`, schema
+[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](../share/schemas/majordomus/distribution/distribution.v1.schema.json). It
+declares the binary, the repository releases are published from, the installer&#39;s canonical
+URL and defaults, how an archive is named, and every target the project has an opinion
+about — supported, experimental, or unavailable with the reason.
+
+It is in `share/` rather than under `.ai/` for the reason `share/commands.yaml` is: it is a
+statement about how the tool behaves, not context for a worker, and it travels with an
+installed copy so that an installed executable can answer the same questions a checkout can.
+
+## What derives from it
+
+```text
+share/distribution.yaml
+  |
+  |-- majordomus generate --target distribution
+  |     |-- docs/generated/distribution-matrix.json   the release build matrix
+  |     |-- site/static/install.sh                    the installer, with its platform table
+  |     |-- docs/INSTALL.md                           the guide, with its platform table
+  |     |-- site/data/registry/distribution.json      what the website renders
+  |     `-- site/static/releases/*.json               from .ai/repo/releases/*.yaml
+  |
+  |-- the `distribution` capability module            CLI, HTTP, OpenAPI, MCP, cockpit
+  `-- scripts/release-*                               packaging, verification, recording
+```
+
+Nothing in that list states a platform, a file name or a URL of its own. The scripts ask
+`majordomus distribution artifact` for a name rather than composing one; the release
+workflow reads the generated matrix rather than listing runners; the installer&#39;s platform
+table is a generated region inside a hand-written script; the documentation&#39;s platform
+table is generated into a hand-written guide.
+
+`majordomus generate --check` — reached by `just derive-check`, by the `site` job and by
+the release pipeline&#39;s first phase — refuses a tree in which any of them disagrees.
+
+## Adding a platform
+
+One edit, then one command:
+
+```bash
+$EDITOR share/distribution.yaml     # add a target: id, os, arch, libc, rust_target, status, build
+just derive                         # regenerate every projection
+bash test/run.sh 84_distribution_model
+```
+
+The installer offers it, the release builds it on the runner the model named, the guide
+lists it, the website lists it, the matrix carries it, and the completeness invariant now
+requires an artifact for it in every future release. Nothing else is edited.
+
+A genuinely new *concept* — another operating system, another archive format, another libc
+— is the one case that also changes Rust: the vocabularies are enums in
+`apps/majordomus-cli/src/distribution/mod.rs` so that an impossible target cannot be
+written down. Adding a value there is a deliberate widening of the model, not a
+synchronisation chore.
+
+## One version, and one projection of it
+
+A release has one version, and it is authored in one place: the `[package] version` of the
+crate manifest. The shell tool cannot read that file where it is installed — an installed tree
+has no `Cargo.toml` — so it reads a projection of it that ships beside it:
+
+```text
+apps/majordomus-cli/Cargo.toml   the version — authored here, and only here
+share/version.txt                its projection, generated by `majordomus generate`;
+                                 `majordomus version` prints its `version=` line
+```
+
+Every archive carries `share/` whole, so the checkout, the installed tree and the staging
+directory the installer checks read the version the same way. `generate --check` refuses a
+projection that has fallen behind the manifest; `scripts/release-version --check` proves the
+tool prints the authority, in CI and again as the first thing a release does — together with
+the tag, which must be `v` followed by that version. A mistyped tag costs thirty seconds
+rather than a published release. ADR 0085 is the decision, and
+`project.release-is-a-projection` the rule.
+
+## The trust path
+
+```text
+share/distribution.yaml            the model: platforms, names, the installer&#39;s URL
+        |
+        v
+release build (one runner per target, the model names which)
+        |
+        v
+release-verify                     the archive is what the model says it is
+        |
+        v
+release-record                     digests and sizes read off the files that exist
+        |
+        v
+.ai/repo/releases/&lt;tag&gt;.yaml       the repository&#39;s evidence of what was published
+        |
+        v
+majordomus generate                site/static/releases/&lt;tag&gt;.json and latest.json
+        |
+        v
+GitHub Pages                       the metadata the installer reads, over HTTPS
+        |
+        v
+install.sh                         verifies the digest before unpacking anything
+        |
+        v
+~/.local/share/majordomus/versions/&lt;version&gt;/, then the launcher, by rename
+```
+
+Each arrow is checked by the step after it. The installer never reads GitHub&#39;s API or HTML;
+it reads two JSON documents that this repository generates, so a change in GitHub&#39;s pages
+cannot break an installation.
+
+## What is protected, and what is trusted
+
+Protected:
+
+- **transport** — HTTPS only, redirects restricted to HTTPS; a non-HTTPS metadata base is
+  refused unless two explicit environment variables say otherwise, which exists so the
+  installer&#39;s own tests can serve fixtures;
+- **integrity** — every artifact carries a SHA-256 and a size in the metadata, both checked
+  before extraction; a mismatch discards the download and stops, with no &quot;warn and
+  continue&quot;;
+- **provenance of the URL** — the artifact URL must be this project&#39;s own release download
+  prefix, derived from the model, and is checked before anything is fetched from it;
+- **the shape of every value** — every field read out of the metadata is matched against a
+  literal character class before use, so nothing read over the network can reach a command
+  line, a path or the shell as anything but data;
+- **extraction** — absolute paths, `..` traversal, symbolic and hard links, devices and any
+  entry outside the archive&#39;s own directory are refused by name, and nothing is unpacked;
+- **the executable itself** — the unpacked tool is run once, from a temporary location, and
+  must report the version that was resolved; this is what catches a release built from the
+  wrong tree;
+- **the existing installation** — the new tree is unpacked beside the old one and the
+  launcher is replaced by a rename, so any failure before that leaves the previous
+  installation exactly as it was;
+- **privilege** — `sudo` appears nowhere; an unwritable destination is named, not elevated.
+
+Trusted: GitHub Pages serving the metadata, GitHub Releases serving the artifacts, and the
+pipeline that produced both. Checksums bind an artifact to its metadata; they do not, by
+themselves, prove who wrote the metadata.
+
+**Provenance, where it can be checked.** The release workflow attests every archive it
+publishes (GitHub artifact attestations, signed with the workflow run&#39;s identity), so an
+archive can be traced to this repository&#39;s release workflow at its tag. An attestation is
+found by the archive&#39;s digest, which means GitHub answers a release published before
+attestations began and an archive that is not the one the workflow built in the same way:
+no attestation for that digest. What each path verifies:
+
+| path | checksum (SHA-256 and size) | provenance (attestation) |
+|---|---|---|
+| `curl … \| sh`, the GitHub CLI installed and signed in | always, fatal on mismatch | asked; a refusal is reported and the install continues on the checksum |
+| the same, with `MAJORDOMUS_REQUIRE_PROVENANCE=1` | always, fatal on mismatch | required; anything short of a verified attestation installs nothing |
+| `curl … \| sh` without the GitHub CLI, or signed out | always, fatal on mismatch | not checked, and the closing report says so |
+| a plain-HTTP fixture origin (the installer&#39;s own tests) | always, fatal on mismatch | not checked: no attestation describes a fixture |
+| by hand: `gh attestation verify &lt;archive&gt; --repo korczis/prismatic-majordomus` | `SHA256SUMS` beside the release | yes |
+
+The installer&#39;s closing report names which it verified under `Verified:` — `provenance (…)
+and checksum`, or `checksum only — provenance not verified: &lt;why&gt;`. Provenance is not fatal
+by default because a refusal cannot be told apart from an older release; it becomes fatal on
+request. Not claimed: a signature over the metadata itself, or any check of a release older
+than its attestations.
+
+## Releasing
+
+```bash
+# 1. raise the version in the one place it is authored — the measured minimum unless told
+#    otherwise — and derive everything that follows from it
+bin/majordomus-cli release bump
+scripts/derive                       # builds, then projects share/version.txt and every stamp
+scripts/release-version --check --tag v0.3.0
+
+# 2. commit, open the pull request, and merge it once `ci` is green
+```
+
+&lt;!-- majordomus:unrun it asks GitHub for the commit&#39;s newest `ci` check-run, which needs the network and a token; case 362 runs it against a stubbed answer --&gt;
+```bash
+# 3. the commit to be tagged passed ci — the same question the pipeline asks first
+scripts/ci/release-verdict --commit HEAD
+```
+
+```bash
+# 4. tag the merge on the default branch, and push the tag
+git tag v0.3.0 &amp;&amp; git push origin v0.3.0
+
+# 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
+#    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
+#    with curl -fsSL https://majordomus.dev/releases/latest.json
+# 6. merge the record&#39;s pull request once its ci is green; Pages then deploys master with
+#    the record, and scripts/pages verify --commit &lt;merge sha&gt; confirms it
+```
+
+The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
+adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
+matrix:
+
+```text
+plan     the tag equals the version the crate manifest declares and the shell tool prints
+         it; the tagged commit&#39;s `ci` check concluded success (scripts/ci/release-verdict:
+         failure refuses with 10, a run still in progress after the wait or a verdict that
+         cannot be read with 12); the model and every recorded release hold their
+         invariants; the matrix is emitted
+build    one archive per supported target, on the runner the model names, verified where
+         it was built (fail-fast: a release missing a platform is not a release)
+publish  digests, the GitHub release, the record written from what was uploaded and staged,
+         every projection derived from it and judged by scripts/derive-check, then both
+         proposed to the default branch as one pull request, release/record-&lt;tag&gt;
+smoke    scripts/ci/install-check --expect &lt;tag&gt;: the published installer, from its published
+         URL, installs the release that was just published, and the installed tool
+         initialises and serves a repository that is not this one, on every runner whose
+         target it was built for; no step of it swallows a failure
+```
+
+Only `publish` has `contents: write`, and with it the `id-token` and `attestations` writes
+that attest its archives. Nothing else in the run can write anything; `plan` reads
+check-runs (`checks: read`) and nothing more.
+
+A release follows the verdict. v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from commits
+whose `ci` check-run concluded failure, because the pipeline asked only whether the tag agreed
+with the version. The newest `ci` check-run of the tagged commit is now the first thing `plan`
+reads after the version, and nothing is built from a commit it did not see pass.
+`test/cases/362_a_release_follows_the_ci_verdict.sh` holds the script to success, failure,
+a run in progress, a missing check and an unreadable answer, and the workflow to asking it.
+
+A runner label the model names must be a standard, currently offered GitHub-hosted label.
+This is not a style rule. A retired label does not fail: the job is accepted and queues for
+a runner that will never arrive, so the run neither publishes nor goes red — it simply never
+ends, and `fail-fast` cancels it when a sibling fails, which makes it look like collateral
+damage rather than the cause. `macos-13` sat that way through two release attempts. The list
+is GitHub&#39;s, at `actions/runner-images`; a `-large` or `-xlarge` suffix means a billed larger
+runner rather than a standard one.
+
+A run that fails in `build` publishes nothing, which is the intended behaviour and also the
+one that is easy to walk away from: the tag still exists, pointing at the commit the build
+failed on, and no release is behind it. Fixing the cause on the default branch does not fix
+the tag. Finish the release — a new version, bumped and tagged, is the ordinary way; moving
+a tag that has no release behind it is the other, and only before anyone can have pinned it.
+Until one of those happens the advertised install command is broken for everyone, and
+`installer-live` below is what says so.
+
+### When a release fails partway
+
+A release changes things the world can see, and it can fail after some of them have changed.
+Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
+stage. What &quot;safe&quot; means is declared in [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml)
+under `rerun:` and implemented in the publish job:
+
+* **the assets on an existing release are the release.** If the tag already has a GitHub
+  release, the rerun downloads its published assets and discards its own rebuild. The record
+  is evidence of what a user downloads, and rebuilds are not bit-identical (see
+  *Reproducibility* below), so recording this run&#39;s bytes would state digests nothing serves.
+* **the metadata commit is idempotent.** A rerun that finds the record and its projections
+  already committed pushes nothing and succeeds.
+* **smoke is never skipped.** Both paths end in the same public installation test, so a
+  rerun proves the same external contract a first run does.
+
+Stage by stage:
+
+| Failed at | Visible outside? | Rerun | Cleanup |
+|---|---|---|---|
+| `plan` | no | yes | none — no artifact was built |
+| `build` | no | yes | none — nothing was uploaded |
+| `publish`, before the release exists | no | yes | none |
+| `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
+| `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
+| `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close &lt;n&gt;` then `gh pr reopen &lt;n&gt;`), then rerun `smoke` | none |
+| `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
+
+#### Why the release asks for the verdict of its record
+
+The record is proposed as a pull request, and that pull request is opened with
+`GITHUB_TOKEN`. GitHub starts no workflow from an event that token caused: the run its
+`pull_request` event records concludes failure with no job in it, the required `ci` check
+never reports, and the proposal cannot merge. After `v0.15.0` and after `v0.16.0` it sat so,
+with an empty check rollup, until somebody closed and reopened it, and `smoke` failed by
+design for as long as that took.
+
+A dispatch is the one event that token may cause. So after proposing the record the
+pipeline dispatches `validate` on the record&#39;s branch with the input `plan=change`, and
+`validate` plans that run as the pull request&#39;s own run would have been planned: the gates
+of the head commit&#39;s change, without the on-demand runners a dispatch otherwise asks for.
+The check-runs attach to the branch&#39;s head commit, which is what the pull request and its
+required check read. A dispatch that cannot be started is a warning naming the remedy and
+does not fail the job, because the release is published either way and `smoke` must still
+run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
+workflows to this.
+
+That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
+the record&#39;s head and the merge was still refused; the record landed only after a person
+closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
+red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
+closes and reopens a `release/record-&lt;tag&gt;` pull request that the workflow&#39;s token opened
+and that has no check of its own, once per head, and the run its reopening starts is the one
+the merge waits for ([INTEGRATION.md](INTEGRATION.md), &quot;The record pull request it reopens&quot;;
+`test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
+the remedy is the same two commands by hand: `gh pr close &lt;n&gt;` and `gh pr reopen &lt;n&gt;`.
+
+#### The site serves a release before its record lands
+
+What the installer reads is `releases/latest.json` and `releases/&lt;tag&gt;.json`, both projections
+of the release record. The record reaches master through a pull request whose `ci` ran for
+106 minutes for v0.19.1, and on 2026-10-10 v0.20.0 was published on GitHub at 16:38Z and
+served by the site at 17:42Z, after the record was merged by hand. So the publish job, once
+the record and its projections are derived and judged, runs `scripts/site-deploy
+--release-metadata &lt;tag&gt;`: those two files go onto what `gh-pages` serves, and nothing else
+does. `build.json` keeps naming the master commit the site was built from, so the
+`pages-live` gate still reads master (ADR 0131).
+
+Until the record lands, master&#39;s own deploys carry the previous release&#39;s `latest.json`. An
+ordinary deploy therefore keeps the `latest.json` that `gh-pages` serves, and the tag file it
+names, when it names a newer version than the build; it says so in its output and in the
+`gh-pages` commit. `--release-metadata` refuses a tag the metadata does not name, a
+`latest.json` that differs from the tag&#39;s file, and a release older than the one served: a
+site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
+all of it.
+
+The pages follow the metadata, not the record. Until 2026-10-12 they did not: `latest.json`
+named v0.21.0 from 10:23Z while the homepage beside the install command offered v0.20.0,
+because every page read the release record and the record was still a pull request. The
+release a page offers is now derived once, by `scripts/site-build`, as the newer of the
+newest record and the `releases/latest.json` that `gh-pages` serves (read from the git ref,
+named in `/build.json` as `release.published_from`), and every page reads that one value. So
+the build the publish job asks for below is the one that moves the homepage, minutes after the
+archives rather than hours. `scripts/pages release-live` holds the homepage, `latest.json`
+and GitHub&#39;s newest release to one version past `deploy.release_window`, after every deploy
+and in the `pages-live` gate (`project.the-site-offers-the-release-it-published`,
+`test/cases/1087_the_site_offers_the_release_it_published.sh`).
+
+#### Why the release asks Pages to publish
+
+The publish job ends by running `gh workflow run pages.yml`, and that step is not a
+belt-and-braces addition: without it the release is structurally unable to reach a user.
+
+GitHub does not start a workflow from a push made with `GITHUB_TOKEN`. It is a deliberate
+loop-breaker and it cannot be disabled for a token. The commit the publish job makes — the
+only thing that carries `site/static/releases/latest.json` — therefore starts no `pages`
+run, so the site keeps serving a build from before the release existed, and the smoke phase
+waits fifteen minutes for a file nothing is going to write.
+
+Release `v0.3.1` spent its entire smoke phase in exactly that state: six green builds, a
+published GitHub Release, a committed record, and `latest.json` returning 404 to anyone who
+ran the advertised command. Every observable pointed at the packer, and the packer was fine;
+the last link of the chain simply did not exist. The dispatch is that link. It runs with
+`if: always()`, because a rerun after a failed deploy is precisely the case with nothing to
+commit and everything to publish.
+
+`workflow_dispatch` is the entry point a person uses, so this starts the one deploy path
+rather than adding a second one (see the `site-deploy-one-path` guarantee).
+
+The one case a rerun cannot repair is a release that exists and publishes no archive — the
+assets cannot be reconstructed from a tag. The run stops and names the command that clears
+the way:
+
+```bash
+gh release delete v0.3.0 --yes    # then rerun the workflow
+```
+
+Nothing here needs the tag to be moved. A tag that points at the wrong commit is a different
+problem, and the answer to it is a new version, not a moved tag.
+
+### Testing it without publishing
+
+```bash
+scripts/release-fixture --out /tmp/rel --base-url http://127.0.0.1:8099
+(cd /tmp/rel &amp;&amp; python3 -m http.server 8099 --bind 127.0.0.1) &amp;
+MAJORDOMUS_RELEASE_BASE_URL=http://127.0.0.1:8099 MAJORDOMUS_INSECURE_BASE_URL=1 \
+  sh site/static/install.sh --dry-run
+```
+
+That is what `test/cases/85_installer.sh` does, and it is the whole stack: a real archive
+built from the tree you are in, real metadata rendered by the renderer the site publishes,
+a real HTTP download, a real digest check, a real atomic install.
+
+### Proving the advertised command still works
+
+A release pipeline proves the advertised command works *once*, in its smoke phase, at the
+moment of publication. That is not the same promise as the one the front page makes, which
+is in the present tense, and the difference has been real: a build that failed on one
+platform publishes nothing, the tag stays where it is, the fix lands on the default branch
+and is never tagged again — and the URL every document points at keeps serving an installer
+that resolves no release. Every gate over the tree stayed green throughout, because none of
+them can see the published site.
+
+`scripts/ci/install-check` is the gate that can. It reads the addresses from
+`site/data/registry/distribution.json` — states none of its own — and then, from the
+published site:
+
+```text
+1  the metadata the installer resolves is served, and names a release
+2  the installer is served, and this machine&#39;s /bin/sh parses it
+3  the advertised line, run as it is written, pipe included, into a home of its own
+4  the installed tool reports the version the metadata resolved
+5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
+   launcher out passes every check that only reads the archive&#39;s file list, and fails here
+6  the installed tool initialises a repository that has none
+7  and serves it: the installed MCP launcher, started there without --standalone, answers
+   initialize and tools/list over stdio and elects itself that repository&#39;s shared server,
+   which reports itself ready and names that repository — its identity is the digest of
+   the repository&#39;s root, so a server that answered for this checkout instead is refused
+```
+
+The release smoke runs the same gate on the tag it published (`--expect &lt;tag&gt;` refuses
+metadata that names any other release), so the promise is measured by one gate at
+publication, every night and on request. Case 1024
+(`test/cases/1024_an_installed_release_serves_a_foreign_repository.sh`) proves that it fails
+on an archive whose MCP launcher cannot start.
+
+Nothing outside its temporary tree is written: the install goes to a `HOME` of the run&#39;s
+own, so the prefix, the launchers and the PATH hint all land inside it.
+
+CI runs it as `--wait 300`. Publishing a release and deploying the site are two workflows and
+the second is not instant, so a push landing between them would be told the promise is broken
+when it is merely a few minutes old. Run by hand the wait is zero, because a person asking
+whether the command works wants the answer now. A site that cannot serve the metadata inside
+the window is broken either way, and the finding stands.
+
+It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml),
+job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
+tree can make it true or false — only a deployment can. It is also one of the model&#39;s
+on-demand gates, because half of its matrix is a macOS runner and this repository waits
+hours for one: the nightly schedule, a dispatch and a pull request labelled `ci:full` plan
+it, a routine push does not. So a broken advertised command turns the nightly run red,
+within a day of the deployment that broke it, which is the only condition under which anyone
+was going to find out. To ask the question now — after a release, say — dispatch the
+workflow, or run `scripts/ci/install-check` here.
+
+Against a local fixture rather than the published site:
+
+```bash
+scripts/release-fixture --out /tmp/rel --base-url http://127.0.0.1:8099
+(cd /tmp/rel &amp;&amp; python3 -m http.server 8099 --bind 127.0.0.1) &amp;
+scripts/ci/install-check --base http://127.0.0.1:8099
+```
+
+### Recovering from a bad release
+
+A published release is immutable: its artifacts and its versioned metadata stay exactly as
+they were, because someone may have pinned them. Withdrawing one is an edit to its record:
+
+```yaml
+# .ai/repo/releases/v0.3.0.yaml
+yanked: true
+```
+
+then `just derive` and commit. `latest.json` is derived on every generation as the highest
+version among the stable, unwithdrawn records, so the stable pointer moves back on its own
+and `--version v0.3.0` still resolves for anyone who wants exactly that. Nothing is deleted
+and no URL stops working. The site follows the same derivation: the record&#39;s reading of the
+release it offers is `latest` in `site/data/registry/distribution.json`, never the highest
+record file name, so a withdrawn or prerelease record is not what the pages present, and
+`scripts/site-check` refuses a build whose badges differ from the one release it offers.
+
+## Reproducibility
+
+The inputs to an artifact are recorded rather than claimed: the tag, the target triple, the
+commit and the build time go into `RELEASE.json` inside every archive, and the commit is
+compiled into the executable by `build.rs`. The archive itself is packed with entries in
+sorted order.
+
+Every archive carries each path exactly once, and carries nothing but regular files and
+directories: no hard link, no symlink, no device node. `scripts/release-package` checks that
+of the archive it has just written and deletes it rather than return a violating one, and
+`scripts/release-verify` checks it again of the archive it is handed. Both exist because
+release `v0.2.0` was never published: the packer passed a complete file list to a `tar` that
+also recursed into it, every path was archived twice, GNU tar wrote the second copy of each
+as a hard link, and the verifier — correctly — refused all 931 of them. There is deliberately
+no fallback in the packer: an archive packed differently from the one that was asked for is
+not the archive anything verified. `test/cases/87b_release_archive_shape.sh` reproduces that
+packer with a `tar` shim and proves the guard stops it.
+
+Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
+(`SOURCE_DATE_EPOCH`, a pinned toolchain version, no absolute paths in debug info), and the
+toolchain here is `stable` rather than a pin. What is guaranteed is that two people
+building the same tag get functionally identical archives, and that the archive says which
+commit and target it came from.
+
+## Self-update
+
+There is no `majordomus self update`, and when there is one it will not be a second update
+protocol. Everything it needs already exists and is typed:
+
+```rust
+Model::load(share)          // this installation&#39;s own model, shipped in share/
+Model::release_url(tag)     // where the metadata for a tag or `latest` lives
+Releases::latest_stable()   // which release an unpinned update resolves to
+Release::artifact(target)   // the artifact, its digest and its size
+crate::TARGET               // the triple this build was made for, compiled in
+```
+
+An installed copy carries `share/distribution.yaml`, so `majordomus distribution show` and
+`majordomus distribution build` answer from an installation exactly as they answer from a
+checkout — which is the property a self-update would be built on. The remaining work is the
+download, the verification and the swap, and the installer already does all three; the
+open design question is whether to reimplement them in Rust or to have the command re-run
+the published installer with `--version`, which would keep one implementation of the risky
+part rather than two.
+
+`test/cases/85_installer.sh` covers that risky part today, and whichever way the command is
+built it will resolve releases through the same records and the same stable pointer as the
+installer does.
+
+## Package managers
+
+The release model is the primary contract and it is package-manager neutral: an archive per
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
+a Nix derivation or a container image would each read that index rather than replacing it,
+and none of them is implemented. Nothing in the model prevents one.
+
+Windows is representable — the schema carries `zip`, a `binary_suffix` and a `windows`
+operating system — and is declared `unavailable` with its reason: the command a person runs
+is `bash`, and until that half has a Windows answer, publishing a Windows archive would
+ship an executable nothing can drive.
+
+## Where things are
+
+| What | Where |
+|---|---|
+| the model | `share/distribution.yaml` |
+| its contract | `share/schemas/majordomus/distribution/distribution.v1.schema.json` |
+| a release record&#39;s contract | `share/schemas/majordomus/release/release.v1.schema.json` |
+| the records | `.ai/repo/releases/`, one per published release |
+| the semantics | `apps/majordomus-cli/src/distribution/` |
+| the capability module | `apps/majordomus-cli/src/capability/builtin/distribution.rs` |
+| the installer&#39;s behaviour | `share/install/install.sh.in` |
+| the guide&#39;s prose | `share/install/INSTALL.md.in` |
+| packaging and verification | `scripts/release-{version,package,verify,record,fixture}` |
+| the pipeline&#39;s model | `.ai/repo/ci/release.yaml` |
+| the pipeline | `.github/workflows/release.yml` |
+| the behavioural cases | `test/cases/84_distribution_model.sh`, `85_installer.sh`, `86_installer_platform.sh`, `87_release_pipeline.sh` |
+| the rule | `.ai/repo/rules/project/distribution-canonical.v1.md` |
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

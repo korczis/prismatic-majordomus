@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/DESIGN.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/DESIGN.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/DESIGN.md</h1><p class="mj-page-subtitle">Prismatic Majordomus</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/DESIGN.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DESIGN.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DESIGN.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FDESIGN.md/index.html">document.docs/DESIGN.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Prismatic Majordomus
+
+A lightweight supervisory control layer for AI-assisted work.
+
+This document is the v0.1 product specification. It was written after studying a
+large body of accumulated engineering practice around AI coding workers: instruction
+files, session-continuity protocols, policy corpora, enforcement hooks, parallel-work
+tooling, audit ledgers, retrospectives, and several abandoned attempts at exactly this
+kind of tool. The source material is private and is not reproduced here. What is
+reproduced is the shape of what failed, the magnitude of the failures, and the small
+number of mechanisms that demonstrably held.
+
+This document describes the design; `CLI.md` and `SCHEMAS.md` describe what v0.1
+actually does, and `test/cases/` proves it.
+
+---
+
+## Problem
+
+Teams put capable AI workers to work and then operate them with none of the controls
+they would insist on for a human team. The failures are operational, not linguistic,
+and they recur regardless of which model or vendor is involved:
+
+- **Instructions rot silently.** In one workspace of roughly twenty repositories, the
+  instruction file for one AI tool and the instruction file for another tool in the same
+  repository shared between 0 % and 9 % of their content. They were not duplicates. They
+  were disjoint rule sets. Which rules applied depended on which worker was hired.
+- **Always-loaded context has no ceiling.** One repository&#39;s always-loaded operating
+  contract oscillated between 0 and about 1,100 lines across roughly 200 hand edits
+  before a hard budget with a failing check pinned it under 50.
+- **Enforcement is declared, not wired.** Across the material studied, at least
+  seventeen independent instances were found of a check that was documented as
+  blocking, existed on disk, was executable, and was invoked by nothing. In one case
+  34 of 39 pre-commit scripts were orphaned while the policy files naming them read
+  &quot;BLOCKING&quot;. In another, a catalogue of 546 agents had exactly one entry actually
+  registered with the runtime. In a third, a well-engineered guard hook lost its
+  registration when unrelated tooling rewrote a settings file; the hook, its tests, and
+  the documentation citing it all remained in place.
+- **Isolation without coordination defers the collision.** With one git worktree per
+  worker fully in force, forty worktrees still produced about 3,200 concurrently
+  modified files and 67 clusters of duplicated patches. Only 9 of 80 worktrees ever
+  merged. The scope-claim step that would have prevented this was optional, was matched
+  by exact string equality, and was enforced by hooks that never ran.
+- **Transcripts become the database.** Session notes grew to 10 GB in one repository.
+  Recovery of working state after a session ended required a hand-written fifteen to
+  thirty minute runbook. Notes had filename dates that disagreed with their content
+  dates, and nothing checked either against git.
+- **Nothing measures AI spend on AI-assisted development.** The same team that built a
+  competent cost profiler for its product&#39;s own model calls had zero telemetry on what
+  its coding workers consumed. Every &quot;35 % better&quot; and &quot;50 % faster&quot; figure in its
+  routing documentation had no benchmark behind it.
+- **Supervisory tooling is abandoned within days.** Four separate attempts at a
+  control layer were found in one workspace. Each was abandoned not because the idea was
+  wrong but because nothing detected when it stopped working, and nothing made the next
+  session cheaper than ignoring it.
+
+These are control problems. Better prompts do not fix them.
+
+## Product Thesis
+
+**AI workers should not manage themselves.**
+
+Majordomus is the layer that decides what a worker is told, what it may touch, when it
+is done, and whether its claim of being done can be believed. It does not perform the
+work and it does not invoke a model. It supervises.
+
+The single most important property, taken directly from the evidence: **a declaration
+of enforcement that is not mechanically reconciled against what actually runs is worse
+than no declaration.** It produces a policy document, a compliance report, and a false
+sense of coverage, and then it decays. Majordomus therefore treats &quot;is this check
+actually wired?&quot; as its primary deterministic guarantee, applied to itself first.
+
+## Optional Complexity
+
+Simple things trivial, complex things possible, weird things hackable, in that order. The
+core is the small set of concepts [`CONCEPTS.md`](CONCEPTS.md) names, and it stays closed;
+extension adds instances, validators, templates and integrations around those concepts, at
+the edges, and never a concept. Mechanisms stay stable and meaning may be data-driven,
+without becoming a framework for defining frameworks. The rule, with the review questions
+an architectural change must answer and the anti-patterns it refuses, is
+`.ai/repo/rules/project/optional-complexity.v1.md`; this document does not restate it.
+
+## Users
+
+- An individual engineer running one or more AI coding tools against a repository,
+  who wants the same rules applied regardless of which tool is open.
+- A small team where several people and several AI workers touch one codebase, who
+  need to know who is working on what and whether two workers are about to collide.
+- An engineering lead who wants to know whether AI work satisfied its contract before
+  accepting it, without reading a transcript.
+
+Majordomus is not for organisations that need a hosted control plane, SSO, or
+cross-repository governance. Those are expansion paths, not v0.1.
+
+## Non-Goals
+
+Majordomus v0.1 does not:
+
+- invoke, proxy, or wrap any model
+- measure actual token spend or cost
+- route requests dynamically
+- run autonomous agents or orchestrate them
+- monitor anything in the background
+- provide a server, database, web UI, daemon, queue, or hosted service
+- compact, summarise, or store conversation transcripts
+- define agents, personas, roles, tiers, or a registry of named AI workers
+
+The last item is deliberate. The material studied showed that a supervisory layer which
+adds nouns becomes the thing it was meant to supervise.
+
+## Core Mental Model
+
+```mermaid
+flowchart TD
+  human[&quot;Human / Organisation&quot;] --&gt; mj[&quot;MAJORDOMUS&lt;br&gt;policy · state · verification&quot;]
+  mj --&gt; wa[&quot;Worker A&lt;br&gt;(Claude Code)&quot;]
+  mj --&gt; wb[&quot;Worker B&lt;br&gt;(Codex)&quot;]
+  mj --&gt; wc[&quot;Worker C&lt;br&gt;(Gemini, Cursor, local ...)&quot;]
+  wa &amp; wb &amp; wc --&gt;|&quot;an orchestrator (bb) runs any of them;&lt;br&gt;the agent stays the worker&quot;| out[&quot;Verified, accepted outcomes&quot;]
+```
+
+Majordomus sits between the person and the workers. It holds one canonical policy,
+projects it into whatever instruction format each worker reads, keeps durable state
+outside every conversation, and refuses to call work finished until the finish
+contract is satisfied.
+
+Two supporting principles run through every part of the design:
+
+1. **Git is the authority; everything else is an aid.** Identity fields on any record
+   are computed from git, never authored. A worker will hallucinate a branch name.
+   `git rev-parse` will not.
+2. **Numbers in prose are computed or forbidden.** A count written into an
+   always-loaded file is stale within days. Majordomus writes the command that
+   produces the number, never the number.
+
+## Responsibilities
+
+### Policy
+
+Maintain one canonical, versioned operating policy for AI work in the repository.
+Detect when the policy and its projections have diverged. Detect when the policy
+declares an enforcement that does not resolve to something that runs.
+
+### Context
+
+Define the minimum sufficient context for a task as a small set of named toggles,
+not as a corpus. Keep always-loaded material under a hard budget with a failing check.
+Ensure anything not explicitly scoped is counted as always-loaded, because that is
+what it is.
+
+### State
+
+Keep durable task state in a small number of typed files outside any conversation.
+Every record carries the git state it was written at, so that staleness is computed
+at read time rather than trusted at write time.
+
+### Watch
+
+Deterministically inspect state, policy, and projections for drift. Report only what
+can be proven. Every finding carries the command that reproduces it.
+
+### Coordination
+
+Represent who is working on what. Normalise scope claims so that overlap detection is
+about paths, not strings. Compare claims against what was actually touched, because
+every collision in the evidence was invisible to a declaration-only check.
+
+### Budget
+
+Separate reasoning effort, output verbosity, context strategy, and model capability
+as independent axes. Bundle them under named profiles. Record effort as a delta from
+the default, never as an absolute. Treat presentation (terse machine output, engineering
+detail, executive summary) as a final layer chosen by the profile, not as a property of
+the work itself. Do not claim to measure spend until spend is measured.
+
+### Verification
+
+Define what &quot;done&quot; means before work starts, as a checklist the finish command
+evaluates. Distinguish evidence a worker produced from evidence Majordomus computed.
+
+### Handover
+
+Transfer durable state, not transcripts. Write handovers append-only, atomically,
+without staging them. Resolve them on the next session by scope, never by recency
+alone.
+
+### Maintenance
+
+Regenerate provider projections deterministically from canonical policy.
+Stamp what was generated so that a hand edit or a stale projection is
+detectable in one command.
+
+### Termination
+
+Know when a worker should stop: when the finish contract is met, when the task is
+blocked on a human, or when the session has exceeded its declared scope.
+
+## Canonical Policy Model
+
+One file. Small. Human-readable. Provider-neutral.
+
+```yaml
+# .ai/repo/policy.yaml
+version: 1
+
+context:
+  always_loaded_budget_lines: 150
+  strategy: minimum-sufficient
+  transcript_is_state: false
+
+profiles:
+  default: implementation
+
+verification:
+  required_for_changes: true
+  finish_requires:
+    - tests_run
+    - state_updated
+    - no_open_blockers
+
+handover:
+  required_sections: [objective, current_state, next_action]
+
+enforcement:
+  - name: finish-contract
+    kind: command
+    path: bin/majordomus
+    args: [finish, --check]
+    wired_by: git-hook:pre-push
+  - name: instruction-budget
+    kind: command
+    path: bin/majordomus
+    args: [doctor]
+    wired_by: git-hook:pre-commit
+
+projections:
+  - provider: claude-code
+    target: CLAUDE.md
+  - provider: codex
+    target: AGENTS.md
+  - provider: gemini
+    target: GEMINI.md
+```
+
+Design rules for this schema:
+
+- **Every field is both written and read.** The evidence contained schemas with four
+  permanently null fields ported from an earlier system. A field nothing reads is
+  removed.
+- **The `enforcement` block names artifacts by path and names what wires them.** This
+  is the representation the source material got right and never checked. Majordomus
+  checks it: each entry must exist, be executable, and be reachable from the named
+  dispatcher, or `doctor` fails.
+- **Unknown keys are errors.** A typo must fail loudly. Two agents in the source
+  material re-entered a linted catalogue carrying four invented keys; nothing stopped
+  them.
+- **No provider capability lives in the canonical layer.** Model names, tool grants,
+  and vendor flags belong in projections.
+
+## Task Model and Episode Model
+
+These are two models, and this document called them one until 2026-09-11. The confusion is
+not academic: making the second depend on the first is what let an ordinary finished task
+silently disable continuity for every conversation after it, for six days, while every
+diagnostic reported health; ADR 0052, &quot;The session lifecycle is the episode&#39;s, not the
+task&#39;s&quot;, records the audit and the decision.
+
+A **task** is a unit of intended work that a person opens and closes.
+
+```mermaid
+flowchart TD
+  st[&quot;majordomus start &amp;lt;task&amp;gt;&quot;] --&gt; sc[&quot;scope declared (paths)&quot;]
+  sc --&gt; claim[&quot;claim normalised, overlap reported&quot;]
+  sc --&gt; pf[&quot;profile selected&quot;]
+  pf --&gt; fixed[&quot;effort / verbosity / context /&lt;br&gt;verification fixed&quot;]
+  pf --&gt; worker[&quot;worker executes&lt;br&gt;(Majordomus is not involved)&quot;]
+  worker --&gt; ck[&quot;majordomus check&quot;]
+  ck --&gt; report[&quot;state consistent? scope respected? blockers?&quot;]
+  ck --&gt;|&quot;incomplete&quot;| cont[&quot;continue, or majordomus handover&quot;]
+  ck --&gt; fin[&quot;majordomus finish&quot;]
+  fin --&gt; contract[&quot;finish contract evaluated;&lt;br&gt;refuses if unmet&quot;]
+```
+
+A task is bounded by `start` and either `finish` or `handover`. There is no &quot;still open
+from Tuesday&quot; state that Majordomus recognises as healthy; `watch` reports any task record
+whose last update predates its declared checkpoint interval.
+
+An **episode** is a provider&#39;s conversation boundary. It begins when a client attaches and
+ends when it detaches, whether or not anybody declared a task and whether or not the last
+task anybody declared was finished a week ago.
+
+```mermaid
+flowchart TD
+  ss[&quot;provider fires SessionStart&quot;]
+  kept[&quot;session start --if-open keep&lt;br&gt;(keyed by the provider session,&lt;br&gt;not the checkout)&lt;br&gt;briefing to stdout&quot;]
+  work[&quot;work happens, every command stamping its own&lt;br&gt;episode id onto its ledger line&quot;]
+  pc[&quot;provider fires PreCompact&quot;]
+  cp[&quot;checkpoint --derive&lt;br&gt;(a checkpoint is an artefact of the episode;&lt;br&gt;no task is required)&quot;]
+  se[&quot;provider fires SessionEnd&quot;]
+  ho[&quot;handover, then session close&lt;br&gt;(the envelope&#39;s references computed from the ledger)&quot;]
+
+  ss --&gt; kept
+  ss --&gt; work
+  work --&gt; pc
+  pc --&gt; cp
+  pc --&gt; se
+  se --&gt; ho
+```
+
+`task != session` in both directions: a task spanning two sittings is named by both
+episodes, and an episode that touches three tasks names all three. Task outcome may change
+what a continuation record *says*; it may never decide whether one is *written*.
+
+Majordomus does hook the worker&#39;s runtime, where the provider offers hooks to run.
+`majordomus capture install` writes the shims and names the configuration entries it will
+not rewrite for you; which events a provider&#39;s adapter drives is declared in
+`share/providers.yaml` and reported by `lifecycle.providers`. A provider with no adapter
+loses the automation and none of the model — every command below is unchanged, and running
+them is again a matter of remembering.
+
+[`CONTINUITY.md`](CONTINUITY.md) carries the whole path, from entry through the episode to
+the tracked record and a future resume, and the reading that lets a person watch it.
+
+## Context Model
+
+Three tiers, each with a declared trigger:
+
+| Tier | What | Loaded when | Budget |
+|---|---|---|---|
+| Always | the projected instruction file | every session | hard line budget, failing check |
+| Scoped | rules bound to path globs | a matching file is in play | short; must declare `paths` |
+| On demand | procedures with a routing description | the description matches the task | none, but must be reachable |
+
+Two rules from the evidence that are non-obvious and load-bearing:
+
+- **An artifact with no declared trigger is always-loaded context** and is counted
+  against the budget. The source linter&#39;s sharpest single line was exactly this.
+- **A routing description must discriminate.** &quot;Reviews supervision trees, process
+  ownership and restart semantics&quot; routes. &quot;An elite agent for high-quality missions&quot;
+  does not, and it costs tokens on every decision about whether to load it.
+
+Context composition for a task is a vector of named boolean toggles chosen by the
+profile, not a corpus assembled by hand. Majordomus reports what it excluded and why,
+because an under-filled context is debugged from the exclusion list.
+
+## Durable State Model
+
+```
+.ai/
+  README.md               # the protocol, readable without the tool
+  manifest.yaml           # the section registry and the format version, ai-repository/v1
+  repo/                   # tracked: the canonical context every checkout shares
+    policy.yaml
+    profiles/
+      routine.yaml
+      implementation.yaml
+      debugging.yaml
+      deep-work.yaml
+    rules/
+      vendor/majordomus/  # the pinned baseline, byte for byte the package the tool ships
+      project/            # rules this repository wrote
+    prompts/  workflows/  skills/  knowledge/  adrs/  project/
+  local/                  # ignored: this checkout&#39;s own, never normative, never shared
+    state/
+      current.yaml        # the one active task, or absent
+      decisions.md        # append-only, dated
+      open-questions.md   # things blocked on a human
+      handovers/          # append-only, one file per handover
+      checkpoints/        # append-only, one file per checkpoint
+      sessions/           # closed session envelopes
+      ledger.jsonl        # append-only events, retention-capped
+    cache/  prompts/  session-contexts/
+```
+
+Rules:
+
+- **Two halves, one boundary.** `repo/` is the whole shared contract; a fresh clone
+  contains it and nothing else. `local/` is operational state: it never travels through
+  git, is never loaded into a model&#39;s context implicitly, and outranks nothing. `doctor`
+  proves the boundary: the manifest resolves, every section it names exists, `local/`
+  is ignored and nothing under it is tracked.
+- **Identity is computed.** `repository_id`, `branch`, `head`, `working_tree`, and
+  `changed_files` on any record come from git at write time. The projected instructions
+  forbid the worker from authoring them.
+- **State is read with a divergence label.** On read, Majordomus compares the recorded
+  `head` with the current `HEAD` via merge-base and labels the record `exact`,
+  `advanced`, `diverged`, or `different_context`. Stale state is detected and named,
+  never silently trusted.
+- **No status enum in v0.1 unless it is validated.** The source material contained four
+  mutually inconsistent, unenforced status vocabularies. Where a lifecycle state is
+  recorded, its values are closed and checked.
+- **Append-only stores have a retention cap.** One repository accumulated 10 GB of
+  metrics snapshots that nothing ever read. `ledger.jsonl` and `handovers/` declare a
+  cap and `doctor` reports when it is exceeded.
+- **Every directory of the layer has a producer.** `local/session-contexts/` was created
+  by `init` and filled by nothing for as long as the layout existed, which reads as a
+  feature that does not work. It now holds one document per episode, written when
+  `session start` freezes the context the builder resolved and appended to when the episode
+  closes. A directory the skeleton creates and no command writes into is a defect of the
+  same kind as a claim with no test.
+- **Records are never staged or committed by Majordomus.** The writer creates one new
+  file atomically under `local/` and prints its path. A record reaches another checkout
+  only by being carried there — a handover names it, git does not move it.
+- **Transcripts are never stored.** A handover has required sections (`objective`,
+  `current_state`, `next_action`) and is refused at write time if any is empty.
+
+## Parallel Work Model
+
+Scope: **one isolated working tree per concurrent autonomous writer.** With one agent,
+or with agents that run strictly sequentially, plain branches are correct and the
+coordination machinery is overhead. The README says this rather than overselling.
+
+Mechanism:
+
+- `start` takes a scope: a list of paths. Claims are normalised at claim time: trailing
+  slashes stripped, containment tested in both directions. One matching function is
+  used by every consumer.
+- The claim is not optional. If a step can be skipped it will be; the evidence showed
+  10 of 18 active worktrees with empty claims. The claim is part of `start`.
+- Overlap is reported on **touched files**, computed from `git status` and
+  `git log &lt;base&gt;..HEAD --name-only` in each worktree, not on declarations alone.
+- A tiny JSON sidecar records `id`, `path`, `branch`, `base_commit`, `created_at`,
+  `owner`, `status`, `claimed_paths`. Eight fields. Nothing that was null in every live
+  record of the source system.
+- `git worktree list` is the truth. The sidecar is rebuildable from git in one command.
+- Majordomus emits the merge commands. It does not own the merge. The source
+  implementation silently discarded unpushed commits on the target branch.
+- `owner` is a free-form string. A closed enum was already violated in the live
+  registry that defined it.
+
+## Verification Model
+
+&quot;Done&quot; is a contract evaluated by `finish`, not a word a worker types.
+
+```
+done =
+    scope respected            (touched files within claimed paths)
+  + verification command ran   (exit 0, recorded with timestamp and command)
+  + state updated              (current.yaml reflects completion)
+  + no open blockers           (open-questions.md has no unresolved entry for this task)
+  + handover or completion note present with required sections
+```
+
+Every completion note and every ledger record carries a **typed outcome** from a closed,
+validated vocabulary:
+
+```
+completed   objective satisfied and the finish contract met
+partial     some of the objective delivered; remainder named in next_action
+blocked     cannot proceed without a human decision; recorded in open-questions
+no_match    the work was done and the thing sought does not exist
+failed      the work could not be done; the reason is recorded
+```
+
+`no_match` and `failed` look alike in a transcript (&quot;we found nothing&quot; versus &quot;we could
+not search&quot;). Operationally they are different facts, and a supervisor that cannot tell
+them apart cannot decide whether to retry, escalate, or accept. Prose never substitutes
+for the typed field.
+
+Distinctions the evidence made necessary:
+
+- **Guaranteed versus observed.** A check is either deterministic and blocking, or it
+  is a report with a reproduce command. A rule&#39;s class, `blocking` or `advisory`, is
+  read at dispatch time and routes the finding; there is no third class, no severity
+  ladder and no override, because every graded tier in the source material decayed into
+  decoration within months. An advisory rule is one the tool reports and does not stop
+  on, and it says so; it never describes itself as enforcement.
+- **A trailer proves authorship of a string, never that a gate ran.** Majordomus never
+  treats a commit-message marker as evidence. Evidence is a record in `ledger.jsonl`
+  written by the gate itself.
+- **Exit codes are a contract.** `0` pass; distinct non-zero codes for contract unmet,
+  missing artifact, internal error, and refused override. A hook that receives any
+  non-zero code and continues is a contract violation, and `doctor` scans hook scripts
+  for `|| true` and `|| exit 0` around Majordomus invocations.
+- **Fail closed on ambiguity.** If it is unclear whether a check passed, it failed.
+- **Existing dirt is ratcheted, new dirt is blocked.** For any countable metric,
+  a baseline file holds one integer. Increase fails; decrease or flat passes; a missing
+  baseline warns and passes, because failing with no baseline trains a team to bypass.
+  Single-instance catastrophic classes (secrets, remote code execution) are never
+  ratcheted; they are hard-zero.
+
+## Provider Projection Model
+
+```mermaid
+flowchart TD
+  policy[&quot;.ai/repo/policy.yaml&quot;] --&gt;|&quot;majordomus update&quot;| claude[&quot;CLAUDE.md&quot;]
+  policy --&gt;|&quot;majordomus update&quot;| agents[&quot;AGENTS.md&quot;]
+  policy --&gt;|&quot;majordomus update&quot;| gemini[&quot;GEMINI.md&quot;]
+  policy --&gt;|&quot;majordomus update&quot;| extra[&quot;(+ .cursor/rules, generic)&quot;]
+```
+
+- Projections are generated, not hand-edited. Each carries a header stating that it
+  is generated and naming the command that regenerates it.
+- every projection carries a stamp: the policy hash it was rendered from and the hash
+  of its own content, in its first line or its region&#39;s begin marker; `doctor` fails on
+  a projection whose content differs from its stamp and `watch` reports a projection
+  whose stamped policy hash is not the policy on disk (stale).
+- A projection is a thin bootstrap, not a rulebook. It tells the worker where the
+  repository&#39;s context lives — `README.md`, then `.ai/README.md` and its discovery
+  protocol — names the default profile and the task-lifecycle workflow, and carries no
+  rule of its own. The rules are read from `.ai/repo/rules/` by every worker alike, so a
+  rule that exists for one provider and not another cannot happen; `doctor` fails a
+  projection that carries a rule corpus of its own (a profile table, rule bullets, a
+  rules, lifecycle or finish-contract heading), one whose generated content names a rule
+  id the effective rule set does not provide (a warning instead when an older template
+  wrote it and `majordomus update` would remove it), and a `README.md` that does not name
+  `AGENTS.md`.
+- Adapters translate that bootstrap into a provider&#39;s format and nothing more. The
+  templates ship with the tool; a repository that needs a different adapter overrides
+  one under `.ai/repo/providers/`, in the same thin shape. The generic adapter produces
+  a plain Markdown file for providers with no known convention.
+
+## CLI Model
+
+Per-command behaviour, the exit-code contract, and target output are specified in
+[`CLI.md`](CLI.md); file formats in [`SCHEMAS.md`](SCHEMAS.md). This section states the
+shape.
+
+One executable, `majordomus`, portable POSIX shell in v0.1, with a small set of
+semantically distinct subcommands:
+
+| Command | Answers | Writes |
+|---|---|---|
+| `init` | create the `.ai/` layer in this repository | yes, refuses to overwrite; `--extend` adds what is missing |
+| `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/`, previewed, with a verified backup | git moves, the backup, the index |
+| `rules` | the effective rule set, resolved: the vendored baseline plus the repository&#39;s own | only `vendor update` |
+| `doctor` | is Majordomus itself healthy and actually wired here? | no |
+| `start &lt;task&gt;` | begin a scoped task with a profile | `state/current.yaml`, claim |
+| `check` | is the current task consistent with policy, scope, and state? `--explain` prints the effective merged policy and profile | no |
+| `watch` | what has drifted: state, policy, projections, retention? | no |
+| `update` | regenerate projections from policy | projections |
+| `handover` | write an append-only continuation record | one new file |
+| `finish` | evaluate the finish contract; refuse if unmet | `state/current.yaml`, ledger |
+
+Rules:
+
+- Every command has documented behaviour, safe defaults, an actionable failure
+  message, and behavioural tests in a disposable repository.
+- `doctor`, `check`, and `watch` are read-only and side-effect free.
+- No command performs recursive deletion, silent overwrite, network access,
+  or evaluation of generated text.
+- `doctor` runs against the Majordomus installation itself before anything else.
+  The 500-line anti-sprawl linter in the source material decayed in nineteen days
+  because nothing ran it against its own surface.
+
+## Watch / Doctor Model
+
+**`doctor`** answers &quot;is the supervisory layer real here?&quot; Deterministic checks, all
+blocking:
+
+1. `policy.yaml` parses; no unknown keys; version supported.
+2. Every `enforcement` entry: path exists, is executable, and is reachable from the
+   named `wired_by` dispatcher (the git hook file exists, is executable, and invokes
+   the path). Declared-but-not-wired is the default end state; this check is the
+   product.
+3. Every `projections` target exists, carries a stamp, and matches it.
+4. Always-loaded projection is within `always_loaded_budget_lines`.
+5. Every repository-relative path referenced from a projection resolves.
+6. No hardcoded counts in the always-loaded projection.
+7. Retention caps on `ledger.jsonl` and `handovers/` not exceeded.
+8. Environment probes recorded: shell version, availability of `git`, `jq`, `yq` or
+   equivalents; the report says which optional checks were skipped for lack of a tool.
+
+**`watch`** answers &quot;what has drifted in the work?&quot; Deterministic, reported with
+reproduce commands, non-blocking by design because they concern work in progress:
+
+| Drift | Detected how |
+|---|---|
+| Policy drift | a projection&#39;s stamp names a policy hash that is not the policy on disk |
+| Projection drift | a projection&#39;s content differs from the hash its stamp names |
+| State drift | `current.yaml` status contradicts ledger, or `head` label is `diverged` |
+| Scope drift | touched files outside claimed paths |
+| Handover drift | most recent handover lacks a required section, or is older than `current.yaml` |
+| Verification drift | `current.yaml` marked complete with no ledger record from `finish` |
+| Staleness | `current.yaml` older than the profile&#39;s checkpoint interval |
+| Retention | append-only stores over cap |
+
+Every finding is emitted as `&lt;category&gt; &lt;path-or-id&gt; &lt;reproduce-command&gt;`. A finding
+without a reproduce command is a bug in Majordomus.
+
+## Security and Privacy
+
+- Local-first. No network calls. No telemetry. No credential collection.
+- No `eval`, no execution of text that came from a worker or a model.
+- Every write is to a path under `.ai/` or to a declared projection target.
+  Path arguments are canonicalised and refused if they escape the repository root.
+- Overwrite requires an explicit flag; the default is refusal with a message naming the
+  existing file.
+- Handover files are created with mode `0600`.
+- Authorisation inputs to any override are derived by Majordomus or corroborated
+  against a real git object. Ambient environment variables never lift a rule. The source
+  material&#39;s override validator was defeated by exactly that class of input and its
+  postmortem is the basis for this rule.
+- Bootstrap into an existing repository uses a self-disabling hatch: it is honoured only
+  while the ledger does not yet exist, records the event, and is dead thereafter.
+
+## Clean Extraction Boundary
+
+Prismatic Majordomus carries the Prismatic name. It carries nothing else from the
+Prismatic Platform.
+
+Excluded absolutely: domain intelligence, investigation workflows, OSINT adapters,
+inference machinery, semantic and domain graph machinery, agent societies, internal
+component names, internal paths, hostnames, customer or case material, audit contents,
+secrets, and the pillar and doctrine vocabulary of the source environment.
+
+One line in that list used to read &quot;graph semantics&quot; without qualification, and it was
+too blunt to apply. It forbade two different things at once: a system that infers what
+artefacts mean, and a table of the references those artefacts already state. The first
+stays out. The second is what `knowledge` is. The boundary is therefore stated as a test
+a reader can apply to a proposal:
+
+&gt; Majordomus does not import Prismatic Platform domain, inference, intelligence or
+&gt; semantic graph machinery. It may maintain a generic deterministic reference and
+&gt; provenance graph derived from its own repository&#39;s artifacts, in which every edge
+&gt; names the file it was observed in and no edge is inferred from prose.
+
+The test is provenance. An edge that can name the line that states it is a reference; an
+edge that exists because something looked related is a semantic claim, and semantic
+claims are outside the boundary regardless of how they are computed. Similarity,
+embedding, clustering and automatic taxonomy are excluded by the same sentence, because
+none of them can name a line.
+
+Direction of dependency is one-way. Prismatic Platform may adopt Majordomus. Majordomus
+never imports from, links to, or requires Prismatic Platform. There is no shared code.
+
+What did cross the boundary, by abstraction and re-derivation only:
+
+- the observation that enforcement declarations are never reconciled
+- git-derived identity and read-time divergence labelling for state records
+- append-only, atomic, never-staged handovers with required sections
+- the always-loaded budget with a failing check and pointer integrity
+- separation of model, effort, verbosity, and context as independent axes
+- claim normalisation and touched-file overlap reporting
+- the count-ratchet with the missing-baseline rule and the hard-zero exception
+- the exit-code contract and the ban on &quot;warn and continue&quot;
+- the self-disabling bootstrap hatch
+- the rule that numbers in prose are computed or forbidden
+
+A second pass over the same material, made when the session and knowledge layers were
+designed, added these:
+
+- identity derived from a stable source fact, and content hashes used only to detect
+  change — never the reverse
+- provenance as a required property of every edge, so that a relation nobody can trace
+  to a line cannot be constructed at all
+- classification from structure and declared metadata, never from prose, with `unknown`
+  as a first-class answer rather than a plausible default
+- gating only on defects the run itself caused, and reporting everything else, because a
+  permanently red report is one nobody reads
+- distinguishing an absent artefact, which is a legitimate first run, from a corrupt one,
+  which must fail loudly rather than be treated as absent
+- an ordered, de-duplicated generated artefact, so that what a rebuild changed is visible
+  in a diff
+- projecting a high-volume, low-durability record kind as one index rather than one node
+  each
+
+The full second-pass ledger, including what was refused and why, is
+[`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) section 11.
+
+## MVP
+
+v0.1 ships exactly:
+
+- `policy.yaml` with the schema above and a validator that rejects unknown keys
+- four profiles: `routine`, `implementation`, `debugging`, `deep-work`, each setting
+  effort, verbosity, context toggles, verification requirements, and the output
+  contract (which fields a completion note must carry) independently
+- state templates: current task, decisions, open questions, handover, completion note
+- the subcommands `majordomus --help` lists, in portable shell, with behavioural tests
+- `doctor` dispatching every doctrine the effective rule set declares, including enforcement wiring reconciliation and the vendored package&#39;s integrity
+- `watch` with the drift table above
+- `update` producing the projection the policy declares for each provider the
+  distribution ships (`docs/generated/providers.md`), each stamped with its provenance
+- a README that lists, in equal prominence, what v0.1 guarantees, what it only
+  observes, and what it refuses to do
+
+Success criterion: a developer who has never seen the project reads the README, runs
+`init`, `start`, `check`, `handover`, and `finish` in a scratch repository, and
+understands where state lives and what &quot;done&quot; means, in about ten minutes.
+
+## Deferred Features
+
+Deferred, with the reason:
+
+- **Runtime hooks into worker tools** (pre-tool and post-tool clamping of read size,
+  output size, subagent count). The mechanism is proven and valuable, but it is
+  provider-specific and the one implementation studied was rolled back within days
+  because its limits were global constants rather than task-derived. v0.2, as opt-in
+  adapters with profile-derived limits.
+- **Token and cost measurement.** Nothing in v0.1 can measure it honestly. Any
+  `estimated_` field is labelled as such and excluded from enforcement.
+- **Routing recommendations.** Require measurement first.
+- **Dependency edges between tasks.** No real use case in the evidence justified a
+  graph. Deferred until one does.
+- **Multi-repository or organisational policy.** Out of scope for a local-first tool.
+- **Any daemon, scheduler, or background monitor.** An MCP surface was deferred here
+  with them and later added as something else: a read-only stdio process the client
+  spawns and that dies with it, in `apps/majordomus-cli/`, decided in
+  `.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md` and described in `MCP.md`.
+
+## Commercial Expansion Paths
+
+Stated for orientation, not commitment:
+
+| Tier | Adds |
+|---|---|
+| Community | everything in this document, open source |
+| Pro | runtime adapters with profile-derived limits; richer projection set |
+| Team | shared policy across repositories; overlap reporting across workers and machines |
+| Enterprise | audit export, approval workflows, budget enforcement once spend is measured |
+| Advisory | workflow audit of an existing AI-assisted engineering practice, before and after |
+
+The durable asset is not the policy files. It is the eventual loop from policy, through
+observed executions and outcomes, back to policy refinement. v0.1 builds the policy and
+state half of that loop honestly and leaves the measurement half explicitly unbuilt.
+
+---
+
+## Intentionally Absent
+
+Published so that readers can see what was refused rather than assume it was forgotten:
+
+- no agents, personas, roles, tiers, or registries of named workers
+- no minimum fan-out or minimum agent count
+- no advisory tier that describes itself as enforcement
+- no counts written into any file a worker loads
+- no unbounded append-only store
+- no status vocabulary that is not validated
+- no rename accepted as a fix
+- no finding without a reproduce command
+- no self-report trusted without an independent check
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

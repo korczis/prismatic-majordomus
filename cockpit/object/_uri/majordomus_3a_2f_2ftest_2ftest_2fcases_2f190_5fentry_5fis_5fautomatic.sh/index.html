@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/190_entry_is_automatic.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/190_entry_is_automatic.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/190_entry_is_automatic.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/190_entry_is_automatic.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/190_entry_is_automatic.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/190_entry_is_automatic.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F190_entry_is_automatic.sh">test.test/cases/190_entry_is_automatic.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-exclusive: measures the wall time of entering a repository against a policy budget; a busy pool would add the noise it measures
+# majordomus-covers: none
+#
+# Entering the repository brings its runtime up (ADR 0043), and does it without becoming
+# something a person waits for.
+#
+# The doctrine this proves was changed deliberately. Until ADR 0043 the rule read &quot;entry by
+# a shell reports and does not serve&quot;, and what that cost was the whole requirement: a person
+# who opened a terminal here got a banner and no runtime — no Cockpit, no API, no peer board,
+# so no way for the other workers on the same machine to see that they were not alone — and
+# the remedy was a command to remember, which is the thing the design is against.
+#
+# What a script can decide about that is here. That it converges on *one* runtime when
+# several processes enter at once is test/cases/191, which runs real concurrent processes;
+# that the entry file and the gate still agree is test/cases/118; that the agent&#39;s door
+# converges is test/cases/108.
+#
+#   0. --no-runtime enters without starting anything, and still exports the environment
+#   1. a cold entry brings a runtime up and RETURNS, rather than waiting for it to bind —
+#      which is why its budget is barely larger than a warm entry&#39;s: a fork and an exec
+#   2. a warm entry starts nothing, and repeated entries change no file at all: no restart,
+#      no episode, no ledger line, no rewritten state
+#   3. both stay inside the budget the policy declares, which is a key like any other
+#   4. the switch and MAJORDOMUS_RUNTIME=off each stop it, and say nothing when they do
+#   5. a stale executable is named and ensures nothing: a server started from stale code
+#      answers with a tree that is no longer there
+#   6. a server this entry starts inherits none of the caller&#39;s file descriptors, so a
+#      caller that waits on a pipe of its own is not held for the server&#39;s whole life
+. &quot;$ROOT/test/lib.sh&quot;
+RB=&quot;$(rust_bin)&quot; || rust_bin_exit $?
+&quot;$MJ&quot; init &gt;/dev/null; &quot;$MJ&quot; update &gt;/dev/null
+mkdir -p lib &amp;&amp; echo a &gt; lib/a &amp;&amp; git add . &amp;&amp; git commit -qm base
+MAJORDOMUS_SHARE=&quot;$ROOT/share&quot;; export MAJORDOMUS_SHARE
+trap &#39;&quot;$RB&quot; serve stop --repo &quot;$T&quot; &gt;/dev/null 2&gt;&amp;1 || true&#39; EXIT
+lease=.ai/local/state/mcp/server.json
+
+# The budgets are read from the policy, never defaulted here: a case that carried its own
+# number would be a second declaration of the budget, and the two would drift.
+budget_of() { sed -n &quot;s/^    $1: *\([0-9][0-9]*\).*/\1/p&quot; .ai/repo/policy.yaml | head -n 1; }
+WARM_BUDGET=&quot;$(budget_of enter_ms)&quot;
+COLD_BUDGET=&quot;$(budget_of enter_cold_ms)&quot;
+[ -n &quot;$WARM_BUDGET&quot; ] || { echo &quot;    the policy declares no benchmark.budget.enter_ms&quot;; exit 1; }
+[ -n &quot;$COLD_BUDGET&quot; ] || { echo &quot;    the policy declares no benchmark.budget.enter_cold_ms&quot;; exit 1; }
+
+# Milliseconds, without bash 5&#39;s EPOCHREALTIME (macOS ships bash 3.2) and without a
+# subprocess per reading that would be most of what is measured on a short run.
+now_ms() { python3 -c &#39;import time; print(int(time.time()*1000))&#39;; }
+enter() { &quot;$RB&quot; env enter --repo &quot;$T&quot; --shell direnv --no-banner --no-bridge &quot;$@&quot;; }
+# With one variable in the environment of the executable itself. `VAR=x enter` would not do
+# it: a variable assignment prefixed to a *function* call is a shell variable for the
+# duration of the function and is not exported to what the function runs, so the executable
+# would never see it and every assertion below would pass for the wrong reason.
+enter_env() { local v=&quot;$1&quot;; shift; env &quot;$v&quot; &quot;$RB&quot; env enter --repo &quot;$T&quot; --shell direnv --no-banner --no-bridge &quot;$@&quot;; }
+
+# A cold entry returns *before* the lease exists. That is the claim, not an accident: the
+# server it started writes its own lease as it elects, a moment after the entry has handed
+# the shell its environment and gone. So every assertion about a lease appearing waits for
+# it, bounded, and every assertion about one NOT appearing waits long enough that a spawn
+# would have shown (project.every-wait-is-bounded — a wait without a predicate and a bound
+# is a hang with a nice name).
+await_lease() {
+  local i=0
+  while [ &quot;$i&quot; -lt 100 ]; do [ -f &quot;$lease&quot; ] &amp;&amp; return 0; i=$((i+1)); sleep 0.1; done
+  return 1
+}
+no_lease_appears() {   # what, after a settle long enough for a spawn to have written one
+  sleep 2
+  [ ! -f &quot;$lease&quot; ] &amp;&amp; return 0
+  echo &quot;    $1&quot;; cat &quot;$lease&quot;; return 1
+}
+
+# --- 0. one entry with the runtime off, which does two things at once
+#
+# It proves that --no-runtime is the refusal it claims to be — nothing is started and the
+# environment is exported anyway — and it warms the fast resolver&#39;s cache, so that the cold
+# entry measured next is measuring what ADR 0043 added and not what was always there.
+#
+# The first resolution of a checkout nobody has entered yet costs about a second and a half
+# on a loaded machine, all of it in `environment::resolve` writing its cache for the first
+# time. That cost is the same before this decision and after; the runtime half contributes
+# nothing to it. A budget over it would be a budget over the resolver wearing entry&#39;s name,
+# which is why the policy says so and why this line is here rather than a larger number in
+# the policy.
+[ ! -f &quot;$lease&quot; ] || { echo &quot;    a fresh repository has a lease before anything entered it&quot;; exit 1; }
+out=&quot;$(enter --no-runtime 2&gt;&quot;$T/norun.err&quot;)&quot; || { echo &quot;    entry --no-runtime failed&quot;; cat &quot;$T/norun.err&quot;; exit 1; }
+no_lease_appears &quot;--no-runtime started a server&quot; || exit 1
+printf &#39;%s\n&#39; &quot;$out&quot; | grep -qE &#39;^export MAJORDOMUS_ROOT=&#39; || { echo &quot;    --no-runtime cost the environment too&quot;; exit 1; }
+
+# --- 1. cold: nothing is serving, and entering starts one without waiting for it
+t0=&quot;$(now_ms)&quot;; out=&quot;$(enter 2&gt;&quot;$T/cold.err&quot;)&quot;; code=$?; cold=$(( $(now_ms) - t0 ))
+[ &quot;$code&quot; = 0 ] || { echo &quot;    a cold entry exited $code; entering a directory must not fail&quot;; cat &quot;$T/cold.err&quot;; exit 1; }
+await_lease || { echo &quot;    a cold entry left no lease; nothing was started&quot;; cat &quot;$T/cold.err&quot;; exit 1; }
+grep -q &#39;a server is starting&#39; &quot;$T/cold.err&quot; || { echo &quot;    a cold entry said nothing about the runtime it started:&quot;; cat &quot;$T/cold.err&quot;; exit 1; }
+# It returned before the server was ready — and, usually, before the server had even written
+# its lease. That is the claim, and what holds it is the elapsed time against the cold budget,
+# which is barely larger than a warm entry&#39;s: a wait for a bind could not fit inside it.
+printf &#39;%s\n&#39; &quot;$out&quot; | grep -qE &#39;^export MAJORDOMUS_ROOT=&#39; || { echo &quot;    a cold entry exported no environment:&quot;; printf &#39;%s\n&#39; &quot;$out&quot;; exit 1; }
+echo &quot;    cold entry: ${cold} ms of ${COLD_BUDGET} ms&quot;
+[ &quot;$cold&quot; -le &quot;$COLD_BUDGET&quot; ] || { echo &quot;    a cold entry took ${cold} ms, over the budget of ${COLD_BUDGET} ms (policy benchmark.budget.enter_cold_ms)&quot;; exit 1; }
+
+# wait for the server the cold entry started, so that what follows measures a warm entry.
+# Bounded, with a predicate, and a recovery path that says what it saw: an unbounded wait
+# here would be a hang with a nice name (project.every-wait-is-bounded).
+ready=0
+for _ in $(seq 1 100); do
+  &quot;$RB&quot; serve status --repo &quot;$T&quot; --checkouts this 2&gt;/dev/null | grep -q &#39;^standing   ready&#39; &amp;&amp; { ready=1; break; }
+  sleep 0.2
+done
+[ &quot;$ready&quot; = 1 ] || { echo &quot;    the server a cold entry started never became ready:&quot;; &quot;$RB&quot; serve status --repo &quot;$T&quot; --checkouts this 2&gt;&amp;1; cat .ai/local/state/mcp/server.log 2&gt;/dev/null; exit 1; }
+url=&quot;$(&quot;$RB&quot; serve status --repo &quot;$T&quot; --checkouts this 2&gt;/dev/null | sed -n &#39;s/^this  *\(http:[^ ]*\).*/\1/p&#39;)&quot;
+[ -n &quot;$url&quot; ] || { echo &quot;    a ready server published no address&quot;; exit 1; }
+
+# --- 2. warm: nothing is started, nothing is rewritten, and the address is exported
+#
+# The whole local state is fingerprinted before and after. &quot;It did not restart the server&quot;
+# is easy to assert and easy to satisfy accidentally; &quot;it changed no file&quot; is the claim that
+# actually covers a fake episode, a ledger line, a rewritten cache and a touched lease at
+# once, and it is the one a person repeating `cd .. &amp;&amp; cd repo` would notice breaking.
+# LC_ALL=C, so that the order does not depend on the machine (project.canonical-order):
+# this is compared against itself across five entries, and a locale that collates differently
+# between two readings would report a change nobody made.
+fingerprint() { find .ai/local -type f -exec ls -ld {} \; 2&gt;/dev/null | LC_ALL=C sort; }
+before=&quot;$(fingerprint)&quot;
+pid_before=&quot;$(sed -n &#39;s/.*&quot;pid&quot;:\([0-9]*\).*/\1/p&#39; &quot;$lease&quot;)&quot;
+
+warm_total=0
+for i in 1 2 3 4 5; do
+  t0=&quot;$(now_ms)&quot;; out=&quot;$(enter 2&gt;&quot;$T/warm.err&quot;)&quot; || { echo &quot;    a warm entry failed:&quot;; cat &quot;$T/warm.err&quot;; exit 1; }
+  warm=$(( $(now_ms) - t0 )); warm_total=$(( warm_total + warm ))
+  [ -s &quot;$T/warm.err&quot; ] &amp;&amp; { echo &quot;    a warm entry said something; entering a healthy repository is silent:&quot;; cat &quot;$T/warm.err&quot;; exit 1; }
+done
+warm=$(( warm_total / 5 ))
+echo &quot;    warm entry: ${warm} ms of ${WARM_BUDGET} ms (mean of 5)&quot;
+[ &quot;$warm&quot; -le &quot;$WARM_BUDGET&quot; ] || { echo &quot;    a warm entry took ${warm} ms, over the budget of ${WARM_BUDGET} ms (policy benchmark.budget.enter_ms)&quot;; exit 1; }
+
+printf &#39;%s\n&#39; &quot;$out&quot; | grep -q &quot;export MAJORDOMUS_URL=&#39;$url&#39;&quot; || { echo &quot;    a warm entry did not export the address of the server it found:&quot;; printf &#39;%s\n&#39; &quot;$out&quot;; exit 1; }
+pid_after=&quot;$(sed -n &#39;s/.*&quot;pid&quot;:\([0-9]*\).*/\1/p&#39; &quot;$lease&quot;)&quot;
+[ &quot;$pid_before&quot; = &quot;$pid_after&quot; ] || { echo &quot;    five warm entries restarted the server ($pid_before -&gt; $pid_after)&quot;; exit 1; }
+after=&quot;$(fingerprint)&quot;
+[ &quot;$before&quot; = &quot;$after&quot; ] || { echo &quot;    five warm entries changed the local state:&quot;; diff &lt;(printf &#39;%s\n&#39; &quot;$before&quot;) &lt;(printf &#39;%s\n&#39; &quot;$after&quot;) | sed &#39;s/^/    /&#39;; exit 1; }
+
+# --- 3. the switch stops it, and says nothing when it does
+&quot;$RB&quot; serve stop --repo &quot;$T&quot; &gt;/dev/null 2&gt;&amp;1
+sed &#39;s/^  ensure_server_on_start: true /  ensure_server_on_start: false /&#39; .ai/repo/policy.yaml &gt; &quot;$T/pol&quot; &amp;&amp; cp &quot;$T/pol&quot; .ai/repo/policy.yaml
+out=&quot;$(enter 2&gt;&quot;$T/off.err&quot;)&quot; || { echo &quot;    entry failed with the switch off&quot;; cat &quot;$T/off.err&quot;; exit 1; }
+no_lease_appears &quot;a server was started with session.ensure_server_on_start false&quot; || exit 1
+[ -s &quot;$T/off.err&quot; ] &amp;&amp; { echo &quot;    entry with the switch off said something:&quot;; cat &quot;$T/off.err&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$out&quot; | grep -qE &#39;^export MAJORDOMUS_ROOT=&#39; || { echo &quot;    the switch being off cost the environment too&quot;; exit 1; }
+reset_policy; &quot;$MJ&quot; update &gt;/dev/null
+
+# --- 4. MAJORDOMUS_RUNTIME=off is the same refusal for one person&#39;s shell; only that value
+[ ! -f &quot;$lease&quot; ] || { echo &quot;    a lease survived the policy reset&quot;; exit 1; }
+enter_env MAJORDOMUS_RUNTIME=off &gt;/dev/null 2&gt;&quot;$T/envoff.err&quot; || { echo &quot;    entry failed with MAJORDOMUS_RUNTIME=off&quot;; cat &quot;$T/envoff.err&quot;; exit 1; }
+no_lease_appears &quot;MAJORDOMUS_RUNTIME=off started a server anyway&quot; || exit 1
+# A typo must not silently turn the runtime off: anything that is not exactly `off` is auto.
+enter_env MAJORDOMUS_RUNTIME=of &gt;/dev/null 2&gt;&quot;$T/typo.err&quot; || { echo &quot;    entry failed with a misspelt MAJORDOMUS_RUNTIME&quot;; cat &quot;$T/typo.err&quot;; exit 1; }
+await_lease || { echo &quot;    MAJORDOMUS_RUNTIME=of was read as off; a typo in a shell profile must not stop a repository coming up&quot;; exit 1; }
+&quot;$RB&quot; serve stop --repo &quot;$T&quot; &gt;/dev/null 2&gt;&amp;1 || true
+rm -f &quot;$lease&quot;
+
+# --- 6. a stale executable is named and ensures nothing
+#
+# Through the adapter, because that is where the staleness is decided, for both entry paths
+# at once (lib/rust_bin.sh&#39;s mj_rust_stale). A copy of the checkout&#39;s own adapter, a copy of
+# a real executable, and a source file newer than it.
+STALE=&quot;$T/stale&quot;; mkdir -p &quot;$STALE/bin&quot; &quot;$STALE/lib&quot; &quot;$STALE/apps/majordomus-cli/src&quot; &quot;$STALE/target/debug&quot;
+cp &quot;$ROOT/bin/majordomus-env&quot; &quot;$STALE/bin/&quot;; cp &quot;$ROOT/lib/rust_bin.sh&quot; &quot;$STALE/lib/&quot;
+cp &quot;$RB&quot; &quot;$STALE/target/debug/majordomus&quot;
+printf &#39;fn main() {}\n&#39; &gt; &quot;$STALE/apps/majordomus-cli/src/main.rs&quot;
+printf &#39;[package]\nname = &quot;x&quot;\n&#39; &gt; &quot;$STALE/apps/majordomus-cli/Cargo.toml&quot;
+touch &quot;$STALE/apps/majordomus-cli/src/main.rs&quot;    # newer than the executable copied above
+( cd &quot;$STALE&quot; &amp;&amp; MAJORDOMUS_BIN=&quot;&quot; CARGO_TARGET_DIR=&quot;$STALE/target&quot; \
+    bin/majordomus-env enter --repo &quot;$T&quot; --shell direnv --no-banner --no-bridge \
+    &gt;&quot;$T/stale.out&quot; 2&gt;&quot;$T/stale.err&quot; )
+code=$?
+[ &quot;$code&quot; = 0 ] || { echo &quot;    a stale executable failed the entry ($code); entering a directory must not fail&quot;; cat &quot;$T/stale.err&quot;; exit 1; }
+grep -q &#39;older than the sources&#39; &quot;$T/stale.err&quot; || { echo &quot;    a stale executable was not named:&quot;; cat &quot;$T/stale.err&quot;; exit 1; }
+no_lease_appears &quot;a runtime was ensured from an executable older than its sources&quot; || exit 1
+grep -qE &#39;^export MAJORDOMUS_ROOT=&#39; &quot;$T/stale.out&quot; || { echo &quot;    a stale executable cost the environment too&quot;; exit 1; }
+
+# --- 7. the descriptors a caller holds are not inherited by the server it caused
+#
+# The row that cost 481 seconds. `Command` replaces standard input, output and error and
+# nothing else, so every other descriptor the caller had open is inherited by the child and
+# held for its whole idle life. direnv is where that stops being theoretical: it hands the
+# file it evaluates an extra descriptor of its own, and it does not return until that pipe
+# closes. On 2026-09-11 the first real `cd` into a checkout hung for eight minutes and only
+# returned when the server was killed by hand; `lsof` showed the server holding the other
+# end of direnv&#39;s pipe.
+#
+# Nothing here could see it before, because a case that captures output in a command
+# substitution passes the command no descriptor above two — which is the very thing direnv
+# does. So this row opens one deliberately, the way direnv does, and requires the pipe to be
+# closed once the entry has returned and this shell has let go of its own end.
+stop_server() { &quot;$RB&quot; serve stop --repo &quot;$T&quot; &gt;/dev/null 2&gt;&amp;1 || true; rm -f &quot;$lease&quot;; }
+stop_server
+FIFO=&quot;$T/inherited.fifo&quot;
+mkfifo &quot;$FIFO&quot; || { echo &quot;    could not make a fifo; skipping the descriptor row&quot;; FIFO=&quot;&quot;; }
+if [ -n &quot;$FIFO&quot; ]; then
+  rm -f &quot;$T/eof&quot;
+  # a reader that touches a file when — and only when — every writer has let go
+  ( cat &quot;$FIFO&quot; &gt;/dev/null 2&gt;&amp;1; : &gt; &quot;$T/eof&quot; ) &amp;
+  reader=$!
+  # fd 9 open on the pipe, exactly as direnv opens its own, and inherited by what runs next
+  exec 9&gt; &quot;$FIFO&quot;
+  enter &gt;/dev/null 2&gt;&quot;$T/fd.err&quot; || { echo &quot;    entry failed with a descriptor open&quot;; cat &quot;$T/fd.err&quot;; exit 1; }
+  await_lease || { echo &quot;    the descriptor row started no server, so it proves nothing&quot;; exit 1; }
+  exec 9&gt;&amp;-      # this shell&#39;s end; the only end left open now would be the server&#39;s
+  # bounded, with a predicate and something to say when it does not happen
+  i=0; while [ ! -f &quot;$T/eof&quot; ] &amp;&amp; [ &quot;$i&quot; -lt 100 ]; do i=$((i+1)); sleep 0.1; done
+  if [ ! -f &quot;$T/eof&quot; ]; then
+    echo &quot;    a server this entry started inherited a descriptor the caller was waiting on:&quot;
+    echo &quot;    under direnv this is a shell that does not come back until the server&#39;s idle life ends&quot;
+    ps -ax -o pid=,command= 2&gt;/dev/null | grep -F -- &quot;serve --repo $T&quot; | grep -v grep | sed &#39;s/^/    | /&#39;
+    kill &quot;$reader&quot; 2&gt;/dev/null || true
+    stop_server
+    exit 1
+  fi
+  kill &quot;$reader&quot; 2&gt;/dev/null || true
+  echo &quot;    a descriptor the caller held: closed as soon as entry returned, not held for the server&#39;s life&quot;
+  stop_server
+fi
+
+echo &quot;    entering brings the runtime up without waiting for it, repeated entries change nothing, both stay in budget, a stale executable is named rather than served from, and nothing the caller holds is inherited&quot;
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

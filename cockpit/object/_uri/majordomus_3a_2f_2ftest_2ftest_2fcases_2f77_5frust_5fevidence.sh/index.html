@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/77_rust_evidence.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/77_rust_evidence.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/77_rust_evidence.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/77_rust_evidence.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/77_rust_evidence.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/77_rust_evidence.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F77_rust_evidence.sh">test.test/cases/77_rust_evidence.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: none
+# claims: rust-evidence-gates, rust-hot-path-benchmarks, rust-coverage-floor
+# The Rust executable carries its evidence with it (rule project.rust-cli-evidence). The
+# rule promises gates, not intentions: an undocumented public item does not build, the
+# suites include the doc examples, coverage has a committed floor, the hot paths carry
+# benchmarks, and one script runs what CI runs. A gate that lives only in a workflow file
+# is one edit away from disappearing without a trace, so this case reads the wiring
+# itself: the crate&#39;s attributes, scripts/rust-check, the threshold file, the CI jobs and
+# the justfile must agree on every gate, in the same order. Then, with a toolchain
+# present, it runs the two gates that are cheap enough here and that no other case runs,
+# the doc examples and the benchmark build, and asks the built executable whether every
+# executable capability declares its benchmark policy. The full suite, the lints and the
+# coverage measurement are CI&#39;s rust and coverage jobs and `just rust-check`; this case
+# proves they are wired, not that they pass on this machine.
+#
+# The structural half never skips. The behavioural half skips itself when there is
+# neither cargo nor a MAJORDOMUS_BIN to drive, as the other Rust cases do.
+. &quot;$ROOT/test/lib.sh&quot;
+CRATE=&quot;$ROOT/apps/majordomus-cli&quot;
+RC=&quot;$ROOT/scripts/rust-check&quot;
+TH=&quot;$ROOT/scripts/rust-coverage-threshold&quot;
+WF=&quot;$ROOT/.github/workflows/validate.yml&quot;
+JF=&quot;$(just_declaration)&quot;   # the root file plus the modules it imports
+RULE=&quot;$ROOT/.ai/repo/rules/project/rust-cli-evidence.v1.md&quot;
+CLAIMS=&quot;$ROOT/docs/CLAIMS.yaml&quot;
+
+# --- an undocumented public item is a lint, and lints are errors: both crate roots say so
+expect_grep &#39;^#!\[warn\(missing_docs\)\]&#39; &quot;$CRATE/src/lib.rs&quot;
+expect_grep &#39;^#!\[warn\(missing_docs\)\]&#39; &quot;$CRATE/src/main.rs&quot;
+
+# --- one script, every gate, in CI&#39;s order; each label is followed by the real command
+[ -x &quot;$RC&quot; ] || { echo &quot;    scripts/rust-check is missing or not executable&quot;; exit 1; }
+want=&#39;cargo fmt --check
+cargo clippy -D warnings
+cargo test
+cargo doc -D warnings
+rustdoc surface
+cargo bench --no-run
+cargo build
+capabilities validate
+generate --check
+bench coverage --check
+web validate
+quality report
+scripts/rust-coverage (crate $threshold%, session domain $domain%)
+artifact $ARTIFACT&#39;
+got=&quot;$(grep -oE &#39;^[[:space:]]*step &quot;[^&quot;]+&quot;&#39; &quot;$RC&quot; | sed -E &#39;s/^[[:space:]]*step &quot;//; s/&quot;$//&#39; | grep -v &#39;^rust-check:&#39;)&quot;
+[ &quot;$got&quot; = &quot;$want&quot; ] || { printf &#39;    scripts/rust-check does not run the gates in CI&#39;&quot;&#39;&quot;&#39;s order\n    want:\n%s\n    got:\n%s\n&#39; &quot;$want&quot; &quot;$got&quot;; exit 1; }
+expect_grep &#39;cargo fmt --check$&#39; &quot;$RC&quot;
+expect_grep &#39;cargo clippy --all-targets --all-features -- -D warnings&#39; &quot;$RC&quot;
+expect_grep &#39;cargo test --no-fail-fast&#39; &quot;$RC&quot;
+# the baseline comparison belongs to the platform that has a baseline: on the Linux gate it
+# compared nothing, could not fail, and ran the job out of time before the gates after it
+expect_no_grep &#39;step &quot;bench --profile&#39; &quot;$RC&quot;
+expect_grep &quot;RUSTDOCFLAGS=&#39;-D warnings&#39; cargo doc --no-deps&quot; &quot;$RC&quot;
+# The rustdoc step is also the producer of the published reference (ADR 0086): `--doc` and
+# the full modes run the one invocation above and hand its output off as the rustdoc surface.
+# A second `cargo doc` line — a publication variant with other flags — would publish pages
+# the gate never proved, so there is exactly one.
+[ &quot;$(grep -cE &#39;^[^#]*cargo doc &#39; &quot;$RC&quot;)&quot; = 1 ] \
+  || { echo &quot;    scripts/rust-check invokes cargo doc more than once; what is published must be what the gate proved&quot;; exit 1; }
+expect_grep &#39;cargo bench --no-run&#39; &quot;$RC&quot;
+expect_grep &#39;cargo run --quiet -- capabilities validate&#39; &quot;$RC&quot;
+expect_grep &#39;cargo run --quiet -- generate --check&#39; &quot;$RC&quot;
+expect_grep &#39;cargo run --quiet -- bench coverage --check&#39; &quot;$RC&quot;
+expect_grep &#39;cargo run --quiet -- quality report&#39; &quot;$RC&quot;
+expect_grep &#39;scripts/rust-coverage-threshold&#39; &quot;$RC&quot;
+expect_grep &#39;scripts/rust-coverage&#39; &quot;$RC&quot;
+expect_grep &#39;session-coverage-threshold&#39; &quot;$RC&quot;
+
+# --- the coverage floor is one integer, committed, and not under the bound it ratchets from.
+#     The bound is written once, as FLOOR_BOUND in scripts/ci/rust-command-check, the gate of
+#     rule project.rust-command-tested-in-file; this case reads it there rather than restating
+#     it, so lowering the bar is an edit to that gate, visible in review. The crate measured
+#     83.10-83.34% lines on every recorded coverage job and no run ever met the 90 it replaced.
+th=&quot;$(cat &quot;$TH&quot;)&quot;
+case &quot;$th&quot; in &#39;&#39;|*[!0-9]*) echo &quot;    scripts/rust-coverage-threshold is not one integer: &#39;$th&#39;&quot;; exit 1 ;; esac
+bound=&quot;$(sed -n &#39;s/^FLOOR_BOUND=\([0-9][0-9]*\)$/\1/p&#39; &quot;$ROOT/scripts/ci/rust-command-check&quot;)&quot;
+case &quot;$bound&quot; in &#39;&#39;|*[!0-9]*) echo &quot;    scripts/ci/rust-command-check declares no integer FLOOR_BOUND: &#39;$bound&#39;&quot;; exit 1 ;; esac
+{ [ &quot;$th&quot; -ge &quot;$bound&quot; ] &amp;&amp; [ &quot;$th&quot; -le 100 ]; } \
+  || { echo &quot;    the coverage floor is $th; it may rise from $bound and never fall under it&quot;; exit 1; }
+
+# --- CI runs the same script: the rust job calls scripts/rust-check itself, --ci for every
+#     gate when the crate can be affected (the benchmark check against the platform&#39;s
+#     baseline included) or --integration for the registry checks alone, and asks it for the
+#     executable as an artifact; the coverage job reads the same threshold file the script
+#     reads; the bench job runs the benchmark check where the committed baseline is
+rust_job=&quot;$(awk &#39;/^  rust:/{f=1} /^  coverage:/{f=0} f&#39; &quot;$WF&quot;)&quot;
+[ -n &quot;$rust_job&quot; ] || { echo &quot;    validate.yml has no rust job&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -qE &#39;^ +run: (MJ_CI_TIMINGS=[^ ]+ )?scripts/rust-check &quot;\$MODE&quot; --artifact &#39; \
+  || { echo &quot;    the rust job does not run scripts/rust-check with the plan&#39;s mode and an artifact&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -q &quot;rust_check == &#39;true&#39; &amp;&amp; &#39;--ci&#39; || &#39;--integration&#39;&quot; \
+  || { echo &quot;    the rust job does not choose --ci or --integration from the plan&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -q &#39;components: rustfmt, clippy&#39; || { echo &quot;    the rust job installs no rustfmt and clippy&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -q &#39;upload-artifact&#39; || { echo &quot;    the rust job publishes no executable artifact&quot;; exit 1; }
+grep -qE &quot;^  (step \&quot;cargo doc -D warnings\&quot;;|.*)RUSTDOCFLAGS=&#39;-D warnings&#39; cargo doc&quot; &quot;$RC&quot; || { echo &quot;    scripts/rust-check builds the docs without -D warnings&quot;; exit 1; }
+cov_job=&quot;$(awk &#39;/^  coverage:/{f=1} /^  bench:/{f=0} f&#39; &quot;$WF&quot;)&quot;
+[ -n &quot;$cov_job&quot; ] || { echo &quot;    validate.yml has no coverage job&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$cov_job&quot; | grep -qF &#39;scripts/rust-coverage&#39; \
+  || { echo &quot;    the coverage job does not run scripts/rust-coverage&quot;; exit 1; }
+# The measurement subtracts test code from both sides of the fraction, which is the whole
+# reason it is a script of this repository&#39;s rather than a cargo-llvm-cov invocation: a
+# `#[cfg(test)] mod tests` lives in the same file as the code it tests, and no filename regex
+# can reach it. A job that went back to calling cargo-llvm-cov directly would be measuring
+# the crate plus its tests again, and the threshold would move whenever a test was written.
+printf &#39;%s\n&#39; &quot;$cov_job&quot; | grep -qF &#39;cargo llvm-cov --all-targets --summary-only&#39; \
+  &amp;&amp; { echo &quot;    the coverage job measures the crate together with its own test code again&quot;; exit 1; }
+# and the second threshold is a file of its own with a domain beside it, so that the domain
+# cannot be narrowed to raise the number without the narrowing being a visible edit
+SD=&quot;$ROOT/scripts/session-coverage-threshold&quot;
+expect_file &quot;$SD&quot;
+expect_file &quot;$ROOT/scripts/session-coverage-domain&quot;
+sd=&quot;$(tr -d &#39; \n&#39; &lt; &quot;$SD&quot;)&quot;
+case &quot;$sd&quot; in &#39;&#39;|*[!0-9]*) echo &quot;    scripts/session-coverage-threshold is not one integer: &#39;$sd&#39;&quot;; exit 1 ;; esac
+# The same ratchet for the session/continuity domain. It was held to 100 and measured 95.73%
+# lines, 100% functions and 96.68% regions with test code excluded; the coverage job never said
+# so because it stopped earlier. The floor is now the measured value, and may only rise.
+{ [ &quot;$sd&quot; -ge 95 ] &amp;&amp; [ &quot;$sd&quot; -le 100 ]; } || { echo &quot;    the session domain floor is $sd; it may rise from 95 and never fall under it&quot;; exit 1; }
+grep -q &#39;continuity.rs&#39; &quot;$ROOT/scripts/session-coverage-domain&quot; \
+  || { echo &quot;    the session/continuity domain does not name continuity.rs&quot;; exit 1; }
+while IFS= read -r d; do
+  case &quot;$d&quot; in &#39;&#39;|\#*) continue ;; esac
+  [ -f &quot;$ROOT/$d&quot; ] || { echo &quot;    the session/continuity domain names $d, which is not a file; a threshold over a file nothing compiles is a threshold over nothing&quot;; exit 1; }
+done &lt; &quot;$ROOT/scripts/session-coverage-domain&quot;
+bench_job=&quot;$(awk &#39;/^  bench:/{f=1} /^  site:/{f=0} f&#39; &quot;$WF&quot;)&quot;
+printf &#39;%s\n&#39; &quot;$bench_job&quot; | grep -qF &#39;cargo run --quiet -- bench --profile ci --check --no-write&#39; \
+  || { echo &quot;    the bench job does not run the benchmark check against the baseline&quot;; exit 1; }
+# the jobs run on pull requests and on master, not on a schedule or by hand only
+awk &#39;/^on:/{f=1} /^jobs:/{f=0} f&#39; &quot;$WF&quot; | grep -qE &#39;^  (push|pull_request):&#39; || { echo &quot;    validate.yml does not run on push&quot;; exit 1; }
+
+# --- a person is routed to the same gates
+#
+# The recipes are declared across the justfile and the files it imports, so which file a
+# recipe is written in is not a fact this case may assert: `just --dump` is the whole set
+# after the imports are spliced, and it carries the dependencies and the body. Grepping one
+# file would be a justfile parser, and a second one at that.
+[ -f &quot;$JF&quot; ] || { echo &quot;    the justfile is missing&quot;; exit 1; }
+# `|| true`, because the case runs under `bash -eu`: without it a `just` that is not
+# installed exits 127, the assignment inherits it, and the case dies before the guard on the
+# next line can say anything at all. That is how this case spent its CI life failing in one
+# second with no output — the runner had no `just` — while the sentence explaining what was
+# wrong sat one line below, unreachable.
+dump=&quot;$(cd &quot;$ROOT&quot; &amp;&amp; just --dump --dump-format json 2&gt;/dev/null || true)&quot;
+[ -n &quot;$dump&quot; ] || { echo &quot;    just --dump produced nothing: just is not installed, or the justfile does not parse&quot;; exit 1; }
+
+recipe_exists() {
+  printf &#39;%s&#39; &quot;$dump&quot; | jq -e --arg r &quot;$1&quot; &#39;.recipes | has($r)&#39; &gt;/dev/null 2&gt;&amp;1 \
+    || { echo &quot;    just $1 is not a recipe&quot;; exit 1; }
+}
+recipe_body() {
+  printf &#39;%s&#39; &quot;$dump&quot; | jq -r --arg r &quot;$1&quot; &#39;[.recipes[$r].body // [] | .. | strings] | join(&quot; &quot;)&#39;
+}
+
+# `just test` is the plan CI runs, through the dispatcher CI&#39;s jobs run, and nothing besides:
+# a dependency recipe would be a suite the plan did not select, run anyway — the second
+# declaration of the plan that once let `just test` omit six structure gates CI runs. The
+# Rust gate is reached because the model selects it, which is asserted from the model.
+recipe_body test | grep -q &#39;scripts/ci/run-plan&#39; \
+  || { echo &quot;    just test does not run scripts/ci/run-plan, the dispatcher CI runs&quot;; exit 1; }
+[ &quot;$(printf &#39;%s&#39; &quot;$dump&quot; | jq -r &#39;.recipes.test.dependencies | length&#39;)&quot; = 0 ] \
+  || { echo &quot;    just test has dependency recipes; the plan is the only list of what it runs&quot;; exit 1; }
+grep -q &#39;scripts/ci/run-plan&#39; &quot;$ROOT/.github/workflows/validate.yml&quot; \
+  || { echo &quot;    validate.yml does not dispatch through scripts/ci/run-plan&quot;; exit 1; }
+grep -qE &#39;^ +runs: scripts/rust-check( |$)&#39; &quot;$ROOT/.ai/repo/ci/gates.yaml&quot; \
+  || { echo &quot;    the CI model declares no gate running scripts/rust-check&quot;; exit 1; }
+recipe_exists rust-check
+recipe_body rust-check | grep -q &#39;scripts/rust-check&#39; \
+  || { echo &quot;    just rust-check does not run scripts/rust-check&quot;; exit 1; }
+recipe_exists coverage
+recipe_body coverage | grep -q &#39;scripts/rust-coverage&#39; \
+  || { echo &quot;    just coverage does not run scripts/rust-coverage&quot;; exit 1; }
+recipe_exists test-rust
+recipe_exists bench
+
+# --- the floors hold, measured with test code out of the denominator. scripts/rust-coverage
+#     is run, unmodified and copied into a fixture, over synthetic `cargo llvm-cov --json`
+#     exports (--from), so what is proved is the script&#39;s arithmetic and verdict, not this
+#     machine&#39;s coverage. The fixture carries this repository&#39;s two floors. Every product line
+#     is its own region entry followed by a count-less segment, so a line is covered exactly
+#     when its own count is non-zero; a src file closes with an inline #[cfg(test)] module and
+#     a file under tests/ rides along, both fully executed, as test code always is.
+if command -v python3 &gt;/dev/null 2&gt;&amp;1; then
+  CV=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj77cov.XXXXXX&quot;)&quot;; CV=&quot;$(cd &quot;$CV&quot; &amp;&amp; pwd)&quot;
+  mkdir -p &quot;$CV/scripts&quot; &quot;$CV/apps/majordomus-cli/src/capability/builtin&quot; &quot;$CV/apps/majordomus-cli/tests&quot;
+  cp &quot;$ROOT/scripts/rust-coverage&quot; &quot;$CV/scripts/&quot;
+  cp &quot;$TH&quot; &quot;$SD&quot; &quot;$CV/scripts/&quot;
+  printf &#39;# the domain\napps/majordomus-cli/src/capability/builtin/continuity.rs\n&#39; &gt; &quot;$CV/scripts/session-coverage-domain&quot;
+  LIB=apps/majordomus-cli/src/lib.rs DOM=apps/majordomus-cli/src/capability/builtin/continuity.rs IT=apps/majordomus-cli/tests/it.rs
+  # 100 product lines, then a 50-line inline test module
+  { for i in $(seq 1 100); do printf &#39;pub fn f%s() {}\n&#39; &quot;$i&quot;; done
+    printf &#39;#[cfg(test)]\nmod tests {\n&#39;
+    for i in $(seq 1 47); do printf &#39;    fn t%s() {}\n&#39; &quot;$i&quot;; done
+    printf &#39;}\n&#39;; } &gt; &quot;$CV/$LIB&quot;
+  for i in $(seq 1 100); do printf &#39;pub fn g%s() {}\n&#39; &quot;$i&quot;; done &gt; &quot;$CV/$DOM&quot;
+  for i in $(seq 1 100); do printf &#39;fn it%s() {}\n&#39; &quot;$i&quot;; done &gt; &quot;$CV/$IT&quot;
+  # export LIB_COVERED DOM_COVERED [DOMAIN_FILE_PRESENT] &gt; file
+  cov_export() {
+    python3 - &quot;$CV&quot; &quot;$LIB&quot; &quot;$DOM&quot; &quot;$IT&quot; &quot;$1&quot; &quot;$2&quot; &quot;${3:-1}&quot; &lt;&lt;&#39;PY&#39;
+import json, sys
+root, lib, dom, it, lib_cov, dom_cov, dom_present = sys.argv[1:]
+def segs(n, covered, first=1):
+    out = []
+    for i in range(n):
+        line = first + i
+        out.append([line, 1, 1 if i &lt; covered else 0, True, True, False])
+        out.append([line, 5, 0, False, False, False])
+    return out
+files = [
+    {&quot;filename&quot;: root + &quot;/&quot; + lib, &quot;segments&quot;: segs(100, int(lib_cov)) + segs(50, 50, first=101)},
+    {&quot;filename&quot;: root + &quot;/&quot; + it, &quot;segments&quot;: segs(100, 100)},
+]
+if dom_present == &quot;1&quot;:
+    files.append({&quot;filename&quot;: root + &quot;/&quot; + dom, &quot;segments&quot;: segs(100, int(dom_cov))})
+json.dump({&quot;data&quot;: [{&quot;files&quot;: files, &quot;functions&quot;: []}]}, sys.stdout)
+PY
+  }
+  cov_run() { bash &quot;$CV/scripts/rust-coverage&quot; --from &quot;$1&quot;; }
+  # the crate is both src files, 200 product lines; the domain is continuity.rs alone
+  lib_at=$((2 * th - sd)); lib_below=$((2 * th - 1 - 100)); dbelow=$((sd - 1))
+  { [ &quot;$lib_at&quot; -ge 0 ] &amp;&amp; [ &quot;$lib_at&quot; -le 100 ] &amp;&amp; [ &quot;$lib_below&quot; -ge 0 ]; } \
+    || { echo &quot;    the synthetic export cannot place the crate at the floors $th/$sd&quot;; exit 1; }
+  # at both floors: green
+  cov_export &quot;$lib_at&quot; &quot;$sd&quot; &gt; &quot;$CV/at.json&quot;
+  expect_exit 0 cov_run &quot;$CV/at.json&quot;
+  # half a point under the crate floor: refused with the measured figure and the floor&#39;s file,
+  # although the same run with its test code counted stands above the floor
+  cov_export &quot;$lib_below&quot; 100 &gt; &quot;$CV/crate-below.json&quot;
+  expect_exit 10 cov_run &quot;$CV/crate-below.json&quot;
+  excl=&quot;$(python3 -c &quot;print(&#39;%.2f&#39; % (100.0 * ($lib_below + 100) / 200))&quot;)&quot;
+  incl=&quot;$(python3 -c &quot;print(&#39;%.2f&#39; % (100.0 * ($lib_below + 100 + 150) / 350))&quot;)&quot;
+  expect_grep &quot;the crate is at ${excl}% lines, below the threshold of ${th}\.00% \(scripts/rust-coverage-threshold\)&quot;
+  expect_grep &quot;the crate, test code excluded +${excl}%&quot;
+  expect_grep &quot;the crate, test code included \(the old gate&#39;s subject\) +${incl}%&quot;
+  python3 -c &quot;import sys; sys.exit(0 if float(&#39;$incl&#39;) &gt;= $th else 1)&quot; \
+    || { echo &quot;    the synthetic export does not separate the two measurements ($incl% with tests)&quot;; exit 1; }
+  # one line under the domain floor, the crate above its own: refused by the domain&#39;s floor
+  cov_export 100 &quot;$dbelow&quot; &gt; &quot;$CV/domain-below.json&quot;
+  expect_exit 10 cov_run &quot;$CV/domain-below.json&quot;
+  expect_grep &quot;the session/continuity domain is at ${dbelow}\.00% lines, below the threshold of ${sd}\.00% \(scripts/session-coverage-threshold\)&quot;
+  expect_no_grep &#39;the crate is at&#39;
+  # a domain naming a file the export does not carry is refused, not measured as 100% of nothing
+  cov_export 100 100 0 &gt; &quot;$CV/domain-absent.json&quot;
+  expect_exit 10 cov_run &quot;$CV/domain-absent.json&quot;
+  expect_grep &#39;NOT IN THE EXPORT&#39;
+  # --report measures and holds nothing
+  expect_exit 0 bash &quot;$CV/scripts/rust-coverage&quot; --report --from &quot;$CV/crate-below.json&quot;
+  rm -rf &quot;$CV&quot;
+else
+  echo &quot;    skip: python3 not installed (the coverage arithmetic is scripts/rust-coverage&#39;s python)&quot;
+fi
+# and the gate runs on every change that can reach the crate and on every master push: the rust
+# and share classes of the gate model select it, and a push is planned in full, which selects it
+awk &#39;/^  - id: rust$/{f=1} f&amp;&amp;/^    gates:/{print; exit}&#39; &quot;$ROOT/.ai/repo/ci/gates.yaml&quot; | grep -qE &#39;[[, ]rust-coverage[],]&#39; \
+  || { echo &quot;    the rust class of .ai/repo/ci/gates.yaml does not select rust-coverage&quot;; exit 1; }
+awk &#39;/^  - id: rust$/{f=1} f&amp;&amp;/^    paths:/{print; exit}&#39; &quot;$ROOT/.ai/repo/ci/gates.yaml&quot; | grep -qF &#39;apps/majordomus-cli/**&#39; \
+  || { echo &quot;    the rust class of .ai/repo/ci/gates.yaml does not cover apps/majordomus-cli/**&quot;; exit 1; }
+awk &#39;/^  - id: share$/{f=1} f&amp;&amp;/^    gates:/{print; exit}&#39; &quot;$ROOT/.ai/repo/ci/gates.yaml&quot; | grep -qE &#39;[[, ]rust-coverage[],]&#39; \
+  || { echo &quot;    the share class of .ai/repo/ci/gates.yaml does not select rust-coverage&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$(awk &#39;/^  plan:/{f=1} /^  [a-z-]+:$/&amp;&amp;!/^  plan:/{f=0} f&#39; &quot;$WF&quot;)&quot; | grep -qF &#39;*) scripts/ci-plan --full &quot;$EVENT on $REF&quot;&#39; \
+  || { echo &quot;    a push to master is not planned in full&quot;; exit 1; }
+&quot;$ROOT/scripts/ci-plan&quot; --full &quot;push on master&quot; 2&gt;/dev/null | jq -e &#39;[.gates[] | select(.id == &quot;rust-coverage&quot; and .selected)] | length == 1&#39; &gt;/dev/null \
+  || { echo &quot;    a full plan does not select the rust-coverage gate&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$cov_job&quot; | grep -qF &quot;needs.plan.outputs.rust_coverage == &#39;true&#39;&quot; \
+  || { echo &quot;    the coverage job does not run when the plan selects rust-coverage&quot;; exit 1; }
+
+# --- the hot paths carry benchmarks: every file under benches/ is a declared criterion
+#     target without the default harness, and every path the rule names is measured
+expect_grep &#39;^criterion = &#39; &quot;$CRATE/Cargo.toml&quot;
+for f in &quot;$CRATE&quot;/benches/*.rs; do
+  name=&quot;$(basename &quot;$f&quot; .rs)&quot;
+  grep -A2 &#39;^\[\[bench\]\]&#39; &quot;$CRATE/Cargo.toml&quot; | grep -A1 &quot;^name = \&quot;$name\&quot;&quot; | grep -q &#39;^harness = false&#39; \
+    || { echo &quot;    benches/$name.rs has no [[bench]] entry with harness = false&quot;; exit 1; }
+done
+for path in &#39;frontmatter split&#39; &#39;yaml subset&#39; &#39;glob match&#39; &#39;index build&#39; &#39;registry build&#39; &#39;openapi document&#39; &#39;resources/list&#39;; do
+  cat &quot;$CRATE&quot;/benches/*.rs | grep -qF -- &quot;$path&quot; || { echo &quot;    no benchmark measures &#39;$path&#39;&quot;; exit 1; }
+done
+
+# --- the rule is in the layer, blocking and active, names this case as its proof, and at
+#     least one claim is proved by it, so neither the rule nor the case can be orphaned
+expect_grep &#39;^id: project\.rust-cli-evidence$&#39; &quot;$RULE&quot;
+expect_grep &#39;^status: active$&#39; &quot;$RULE&quot;
+expect_grep &#39;^class: blocking$&#39; &quot;$RULE&quot;
+expect_grep &#39;77_rust_evidence&#39; &quot;$RULE&quot;
+expect_grep &#39;^    test: test/cases/77_rust_evidence\.sh$&#39; &quot;$CLAIMS&quot;
+
+# --- with a toolchain: the doc examples pass, the benchmarks build, and the executable
+#     says every executable capability has a benchmark policy
+MANIFEST=&quot;$CRATE/Cargo.toml&quot;
+S=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj77.XXXXXX&quot;)&quot;; trap &#39;rm -rf &quot;$S&quot;&#39; EXIT
+if command -v cargo &gt;/dev/null 2&gt;&amp;1; then
+  RUSTFLAGS=&#39;&#39; cargo test -q --manifest-path &quot;$MANIFEST&quot; --doc &gt;&quot;$S/doc.log&quot; 2&gt;&amp;1 \
+    || { tail -40 &quot;$S/doc.log&quot;; echo &quot;    the doc examples do not pass&quot;; exit 1; }
+  grep -qE &#39;test result: ok\. [1-9][0-9]* passed&#39; &quot;$S/doc.log&quot; || { cat &quot;$S/doc.log&quot;; echo &quot;    no doc example ran&quot;; exit 1; }
+  RUSTFLAGS=&#39;&#39; cargo bench -q --no-run --manifest-path &quot;$MANIFEST&quot; &gt;&quot;$S/bench.log&quot; 2&gt;&amp;1 \
+    || { tail -40 &quot;$S/bench.log&quot;; echo &quot;    the benchmarks do not build&quot;; exit 1; }
+else
+  echo &quot;    skip: cargo not installed (the doc examples and the benchmark build are cargo&#39;s)&quot;
+fi
+RB=&quot;$(rust_bin)&quot; || rust_bin_exit $?
+MAJORDOMUS_SHARE=&quot;$ROOT/share&quot;; export MAJORDOMUS_SHARE
+&quot;$MJ&quot; init &gt;/dev/null
+git add -A &gt;/dev/null &amp;&amp; git commit -qm install
+expect_exit 0 &quot;$RB&quot; capabilities validate
+&quot;$RB&quot; capabilities list --format json &gt;&quot;$S/caps.json&quot; 2&gt;/dev/null || { echo &quot;    capabilities list failed&quot;; exit 1; }
+jq -e &#39;[.capabilities[] | select(.kind != &quot;resource&quot;)] | length &gt; 0 and all(.benchmark.policy == &quot;required&quot; or (.benchmark.policy == &quot;required_when&quot; and ((.benchmark.precondition // &quot;&quot;) | length) &gt; 0) or (.benchmark.policy == &quot;waived&quot; and ((.benchmark.reason // &quot;&quot;) | length) &gt; 0))&#39; &quot;$S/caps.json&quot; &gt;/dev/null \
+  || { echo &quot;    an executable capability has no benchmark policy, a waiver without a reason, or a condition without a precondition&quot;; jq -c &#39;.capabilities[] | select(.kind != &quot;resource&quot;) | {id, benchmark}&#39; &quot;$S/caps.json&quot;; exit 1; }
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

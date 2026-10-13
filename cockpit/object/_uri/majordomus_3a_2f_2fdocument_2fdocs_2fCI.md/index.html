@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/CI.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/CI.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/CI.md</h1><p class="mj-page-subtitle">Continuous integration</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/CI.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CI.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CI.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FCI.md/index.html">document.docs/CI.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Continuous integration
+
+How a change is validated: one workflow that is an adapter over repository-owned tooling, a
+planner that reads one model of what can affect what, gates that run in parallel and only
+when a change can reach them, and one status a branch rule can require. Publication is not
+here — [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md) is the latency-sensitive
+path that puts a master commit on GitHub Pages, and it runs beside this workflow rather than
+after it. Every number about either lives in the measurements, never here:
+`scripts/ci-baseline` records what GitHub observed into `.ai/repo/ci/baseline.json`, and
+every run writes its own summary.
+
+## The shape
+
+```mermaid
+flowchart LR
+  plan[&quot;plan&quot;] --&gt; structure[&quot;structure&lt;br&gt;(always)&quot;]
+  plan --&gt; shards[&quot;suite-shard ×4&lt;br&gt;the suite, dealt by duration&quot;]
+  shards --&gt; suite[&quot;suite&lt;br&gt;every case exactly once,&lt;br&gt;budget, one verdict&quot;]
+  plan --&gt; rust[&quot;rust&quot;]
+  plan --&gt; coverage[&quot;coverage&quot;]
+  plan --&gt; bench[&quot;bench (macOS)&quot;]
+  plan --&gt; site[&quot;site&quot;]
+  plan --&gt; interactions[&quot;interactions&quot;]
+  plan --&gt; ui[&quot;ui&quot;]
+  plan --&gt; macos[&quot;macos&quot;]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci[&quot;ci&lt;br&gt;the verdict; the one&lt;br&gt;required status&quot;]
+```
+
+and beside it, on the same commit, never after it:
+
+```mermaid
+flowchart LR
+  pages[&quot;pages.yml&quot;] --&gt; job[&quot;one job: build&quot;] --&gt; check[&quot;check&quot;] --&gt; push[&quot;push gh-pages&quot;] --&gt; measure[&quot;measure publication&quot;]
+```
+
+`plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
+plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
+change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
+through the script a person runs. `ci` always runs and turns the plan and the jobs&#39; results
+into one verdict.
+
+A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job &lt;job&gt;` reads the plan and runs every
+gate the model assigns to that job, in the model&#39;s order, skipping the ones the plan did not
+select; a job that runs one gate in a step of its own — the rust job&#39;s `rust-check`, which
+needs a mode and an artifact argument — says so beside that step with `--skip`. The
+alternative was tried and failed silently: four gates the model assigned to `structure` were
+reported as &quot;run&quot; in every plan summary and executed by nothing, because the job&#39;s steps
+were written by hand. A gate declared in `.ai/repo/ci/gates.yaml` now runs or is named as
+skipped, and nothing in between.
+
+Two workflows, and the split between them is what each decides. `.github/workflows/validate.yml`
+decides whether a change may merge. `.github/workflows/pages.yml` decides what the public site
+shows: it triggers directly on a master push whose paths can change the site and publishes as
+soon as the bytes are proved, without waiting for gates that cannot change a published byte.
+Neither repeats the other&#39;s work.
+
+A third decides what GitHub&#39;s issues and milestones show. `.github/workflows/github.yml` runs
+on every push to master, with no path filter: it builds the executable, asks
+`scripts/github-sync --check` what GitHub does not show yet, runs `scripts/github-sync --apply`
+when something is owed and the checkout is still the tip of master, and then runs
+`scripts/ci/github-check`, the same `github-projection` gate validate runs. It holds
+`issues: write` and `contents: read`, one run at a time and never cancelled, and every step
+refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`, the rule is
+`project.the-projection-is-applied-at-landing`, and
+`test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
+runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
+how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
+
+## The model: what can affect what
+
+`.ai/repo/ci/gates.yaml` is the one place the dependency map lives. It declares the gates
+(each with the job that carries it and the command it runs) and the path classes: a
+pattern set and the gates a change under it can affect. `scripts/ci-plan` reads it and
+nothing else; the workflow carries no path list of its own. The rules the planner applies
+are written at the top of the model. In short: the always gates run in every plan; a
+changed path selects the gates of every class it matches, as a union; a class may escalate
+the whole plan; a path no class knows escalates it too, and the plan names the path; a
+gate brings what it implies and what it requires.
+
+```bash
+scripts/ci-plan --check                       # the model resolves: every gate, job and reference
+scripts/ci-plan --format text                 # what CI would run for the working tree against master
+scripts/ci-plan --base origin/master --head HEAD
+printf &#39;docs/DESIGN.md\n&#39; | scripts/ci-plan --files - --format text
+scripts/ci-plan --full &quot;why&quot; | jq .selected   # the full plan
+```
+
+Two execution classes, both evidence-driven:
+
+- **affected** — a pull request: the gates of the classes its changed paths fall in. Nothing
+  is skipped on a hope; a gate is left out only when no changed path is in a class that
+  names it, and the plan says so for every gate.
+- **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
+  manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
+  workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
+  model does not know. The pipeline&#39;s own data files under `.ai/repo/ci/` — the shard
+  durations, the case-number and GitHub-drift ratchets, the recorded baseline, the
+  directory&#39;s README — are not the pipeline: the `ci` class names each one in `except`, one
+  path at a time, and the `ci-data` class plans the gates that read it. A file that appears
+  under `.ai/repo/ci/` without being named still escalates.
+
+A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
+only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
+schedule, a dispatch and a `ci:full` pull request do and a routine push does not. Three
+gates carry it — `macos`, `rust-bench` and `installer-live` — and what they share is a macOS
+runner rather than a subject. The reason is arithmetic, and the model states it: this
+repository pushes to master about every seven minutes, the macOS suite runs for about 106
+minutes, and three macOS jobs per push is demand no shared runner pool answers. On
+2026-09-10 four master runs had every Linux job finished — five of them red — while their
+`ci` job had not started, because it needs those three and they had been queued for hours;
+master carried the defects overnight with every check apparently green, because a run that
+never reported and a run that reported green look identical in the interface. The gates were
+not weakened: they run in full every night and on request, which is more often than they
+were completing. `ci` still needs their jobs and still turns red when one of them does.
+
+A fourth cuts across all of them, and it is the one distinction that takes a gate out of CI
+planning altogether. A gate the model marks `at-finish: true` measures a **deployment**
+rather than a tree: which commit GitHub Pages is serving, whether that commit is still on
+master, whether anything has landed since. No edit to any file can make that question come
+out differently, so no path class can select it — and being in no class is not the defect
+here that it was for `version-surface`, it is the honest consequence of what the gate
+measures. `pages-live` carries it.
+
+Which leaves the question owned by nobody. A full plan does ask it, and a full plan runs on
+a push to master — *before* the publication it would judge. The moment it is worth asking is
+when a worker says the work is done, so that is who asks: `majordomus finish` runs every
+`at-finish` gate live and refuses the outcome `completed` while one of them reports the
+published site is behind the trunk. The doctrine is `majordomus.publication-currency` and
+the repository turns it on with `publication_current` in `verification.finish_requires`; a
+gate that could not reach its subject — no network, no published branch — is reported
+unverified by name, with its exit, and refuses `completed` as well: a session that could not
+measure the site is not evidence that it is stale, but it is no evidence that it is current
+either, which is what `completed` claims. `partial` and `blocked` are never refused over it.
+
+To force full validation of a pull request, add the label `ci:full`; the `labeled` event
+re-plans it. To see why a gate ran or did not, read the `plan` job&#39;s summary or the
+`ci-plan` artifact, or run the planner on the same diff locally.
+
+`test/cases/94_ci_plan.sh` proves the relationships that matter: a Rust change selects the
+Rust gates and never the site, a site change the site gates and never a Rust gate, a
+document the site and the registry checks, the distribution every implementation, the
+pipeline and an unknown path the full plan, an inert path only the always gates; and that
+the model refuses a dangling reference. `test/cases/26_ci_wiring.sh` proves the workflow
+is an adapter over the model: every gate&#39;s job exists, is gated on the plan&#39;s output for
+that gate, is needed by `ci`, and `ci` always runs.
+
+## The gates
+
+The list, with the command each one runs, is the model: `scripts/ci-plan --full x --format
+text` prints it, and `.ai/repo/ci/gates.yaml` explains each. The commands are the ones a
+person runs:
+
+```bash
+scripts/ci/run-plan --job structure --plan plan.json   # one job&#39;s gates of a written plan, as CI runs them
+scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases;
+                                      # shellcheck in batches over MJ_LINT_JOBS workers (the CPUs)
+scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
+scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
+scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
+MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
+scripts/rust-check --ci                # every Rust gate but coverage; the benchmark comparison is macOS&#39;s
+scripts/rust-check --integration       # the executable built and the registry checks only
+just coverage                          # coverage with test code out of the denominator, against
+                                      # scripts/rust-coverage-threshold and, for the session/continuity
+                                      # domain, scripts/session-coverage-threshold
+scripts/site-build &amp;&amp; scripts/site-check
+SITE_PROBE_JOBS=4 scripts/site-probe   # every route at three widths, four routes at a time
+```
+
+`just ci-plan`, `just ci-structure`, `just ci-fast` and `just ci-full` are the recipes.
+
+## The suite in parallel
+
+`test/run.sh` runs the cases through a bounded pool when `MJ_TEST_JOBS` is set: that many
+at a time, each with its own log, then the cases that declare `# majordomus-exclusive:
+&lt;reason&gt;` one at a time, and the verdicts rendered in name order at the end with a failing
+case&#39;s whole log before its line. Without `MJ_TEST_JOBS` it runs serially, streaming, as
+it always has. The semantics are the serial runner&#39;s: a failing case turns the run red, a
+filter that matches nothing is a usage error, an empty case directory is a usage error, and
+`MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
+
+## The crate&#39;s tests in lanes
+
+The `rust` job is a matrix of three lanes. `scripts/rust-check` deals `cargo test` by whole
+test binaries (`MJ_RUST_TEST_LANE`), using their measured seconds:
+
+1. the doctests and `preflight`;
+2. the lib&#39;s unit tests, the binaries, `cli_examples`, `bench` and `peer_claims`;
+3. every other test binary, so a new one lands there by itself, and every other gate: fmt,
+   clippy, the docs, the benchmark build, the registry checks, the plan&#39;s rust gates and the
+   executable artifact.
+
+`scripts/rust-check --lanes` prints the deal. With `MJ_RUST_TEST_LANE` unset, `rust-check`
+runs the whole `cargo test` as before. Each lane keeps its own `cargo-test-&lt;lane&gt;.txt`, and
+the `evidence` job joins them. Every binary&#39;s record starts at a `Running` line or a
+`Doc-tests` line, which the recorder treats as a boundary, so joining the files cannot credit
+one lane&#39;s result to another lane&#39;s binary.
+
+## The suite in shards
+
+On CI the suite runs as four shards on four runners (`suite-shard`, a matrix), each four
+cases at a time. `MJ_TEST_SHARD=i/n` makes `test/run.sh` run the i-th part. The cases are
+dealt longest-first over n × `MJ_TEST_JOBS` worker slots by the seconds
+`.ai/repo/ci/suite-durations.tsv` records, and then the exclusive cases go to the
+least-loaded shard. Slot s belongs to shard s mod n, so the heaviest cases open one per
+shard. In the first run the slots were numbered shard by shard, the four 35-minute cases
+landed on one runner and starved each other past the 3630 s timeout, and case 721 now
+refuses that deal. A case with no recorded seconds weighs 300 s. The file is committed, so
+every shard of a run deals the same hand: stale numbers only unbalance the shards, they
+never lose a case. Measured on one runner the suite took more than two hours, because
+24,879 case-seconds were dealt to four workers. Dealt to sixteen workers, the critical path
+is the longest single case, about 35 minutes.
+
+Sharding can lose a case or run one twice, and either looks like a quieter or a slower
+suite rather than a wrong one. So the `suite` job does not run cases. It joins the shards&#39;
+reports and runs `test/run.sh --verify-report`, which fails unless every case under
+`test/cases/` has exactly one row. It holds `scripts/ci/suite-budget` against the whole run,
+publishes the joined report as `ci-metrics-suite`, and fails when any shard failed. Case 721
+proves the deal and the verification. `MJ_TEST_LIST=1` prints what an invocation would run.
+
+To rebalance, record the seconds of a recent green run (the `ci-metrics-suite` artifact):
+
+```console
+$ gh run download &lt;run-id&gt; -n ci-metrics-suite -D /tmp/s
+$ awk -F&#39;\t&#39; -v OFS=&#39;\t&#39; &#39;{print $1, $3}&#39; /tmp/s/suite.tsv | LC_ALL=C sort &gt; .ai/repo/ci/suite-durations.tsv
+```
+
+The jobs that run the suite check out the whole history: a case that clones the checkout
+into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
+other reason: `generate --check` runs there, and the changelog it checks is composed from
+the release records, the decisions and `git log &lt;previous&gt;..&lt;this&gt;`. A checkout one commit
+deep has none of that history, so every release record names a commit the clone does not
+have, the composer writes the degraded document
+`project.release-is-a-projection` requires of it, and the gate reports the committed
+artifact stale for a reason no branch caused. A gate reads its inputs; the job fetches
+them. A case may read the checkout it
+lives in but must not write into it while other cases run;
+the parallel phase checks `git status` before and after and fails naming the paths when
+something changed. The cases that must write there (the two that build the site into
+`site/public`, the one that edits and regenerates a derived document) carry the exclusive
+header. A case never runs outside the fixture the runner made for it: every case writes
+into the directory it starts in, and started by hand from a checkout it would write its
+fixture there. So `test/lib.sh`, which every case sources first, refuses with `run this
+case through test/run.sh` unless `$T` and `$ROOT` are set, the case stands in `$T`, and
+`$T` is neither the checkout, nor inside it, nor another checkout of this repository. The
+Rust cases drive the executable `MAJORDOMUS_BIN` names when it is set (CI
+builds it once per job and hands it to every case), and build it once through cargo
+otherwise; the two whose assertions are cargo&#39;s own (the crate&#39;s HTTP and projection suites,
+the doc examples, the benchmark build) keep cargo.
+
+## The browser probe
+
+`scripts/site-probe` measures one route per browser process: the three widths are three
+iframes of that route side by side in one page, each measured by the same script as
+before (viewport against scroll width, the elements and text runs past the right edge, the
+diagrams rendered against the diagrams declared). `SITE_PROBE_JOBS` bounds how many routes
+are measured at a time; the findings are rendered in route order whatever the order the
+processes finished in, and a finding still names the route, the width, the assertion and
+what was measured. The homepage behaviour checks (the mobile menu, the dropdown, the theme
+toggle) are unchanged. `--quick` remains the local sample.
+
+## Caches and artifacts
+
+Caches hold reusable dependency and build state; artifacts carry a job&#39;s outputs to a
+later job or a later phase. Jobs run on isolated runners, so nothing relies on a shared
+filesystem.
+
+| cache | holds | key | invalidation | scope |
+|---|---|---|---|---|
+| npm (`actions/setup-node`) | the npm cache for `npm ci` | OS, `package-lock.json` hash | the lock file changes | restored from master when a branch has none |
+| Rust (`Swatinem/rust-cache`, `.github/actions/setup-rust`) | the cargo registry, the git checkouts of dependencies, `target/` | job, OS, toolchain, `Cargo.lock` | the lock file or the toolchain changes; a red job saves nothing | per job, restored from master when a branch has none |
+
+Nothing else is cached: Zola is one download, shellcheck one package, Chrome is on the
+runner image. What a cache holds is never a source of truth: every gate reads the checkout.
+
+| artifact | from | for | retention |
+|---|---|---|---|
+| `ci-plan` | `plan` | the verdict, a person asking why | short |
+| `majordomus-cli-&lt;target&gt;` | `rust` | any later job or phase that needs the executable without building it: the debug binary and `majordomus-cli.json` (commit, target triple, rustc, `Cargo.lock` digest, profile) | short |
+| `ci-metrics-&lt;job&gt;`, `ci-performance-metrics` | every job, `ci` | the timing rows of a run, gathered | longer |
+
+## The Rust executable as a build output
+
+`scripts/rust-check --artifact DIR` copies the debug executable into `DIR` with its
+metadata beside it, and the `rust` job publishes that directory as
+`majordomus-cli-&lt;target&gt;`. A consumer downloads it and sets `MAJORDOMUS_BIN`: the launcher
+`bin/majordomus-mcp`, the suite and every Rust case honour that variable and never build
+when it is set. Within one run the suite does not wait for the `rust` job: measured, the
+suite job&#39;s own build from a warm cache costs seconds while waiting for the `rust` job
+would serialise minutes, so the two run side by side and the artifact serves the phases
+that come after a run (a release, a scenario runner over the real binary). Release builds
+belong to a release workflow; every gate here uses the debug profile, which is what the
+cases and the crate&#39;s own suites drive.
+
+## Pages
+
+Publication has its own workflow and its own document,
+[`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md). What matters here is the
+boundary: this workflow&#39;s `site` job builds, checks and probes the site as a gate on merging,
+and publishes nothing; `pages.yml` builds and checks the same commit again — cheaply, without
+the probe and without a generation — and publishes. The duplication is deliberate and small:
+the publication path cannot depend on a job it does not wait for, and what it repeats costs
+seconds.
+
+Concurrency: a pull request&#39;s runs here are superseded by its next commit; every other run of
+this workflow is its own group and neither waits for nor cancels another, so a run held up by
+a scarce runner does not hold up the next commit&#39;s evidence. Deployments are serialised —
+`pages.yml` runs one deployment at a time and never cancels the one in flight; GitHub keeps only
+the newest pending run of the group, so a burst of merges costs at most one extra deploy of an
+intermediate commit, and an older tree can never land after a newer one. Cancelling the run in
+flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
+site stood 34 commits behind master for three hours.
+
+### The three ways a deploy fails, and who reports each
+
+A deploy that does not put the intended commit in front of a reader has failed, and until
+2026-09-11 the three ways that happens were reported with three different volumes.
+
+**The build refuses.** `scripts/pages build` establishes the committed derived data is current
+by fingerprint before rendering it, and refuses a stale tree. The run goes red and the
+`publication state` step writes `::error title=Not published` on it. This is the loud one, and
+it is also by far the most frequent: both failures of 2026-09-11 (runs 34549001300 and
+34550274563, the merges of #202 and #203) were this, and both merge parents were already stale
+before the merge — the pull request&#39;s own `site` gate had been red and the merge happened
+anyway, because `master` has no required status check.
+
+**The run is cancelled.** Nothing in the group cancels a deployment in flight, but a run can
+still end `cancelled` — a pending run dropped for a newer one, or a job killed by its own bound —
+and a cancelled run is not a failure; `gh run list` says `cancelled` whether gh-pages was pushed
+or not. A pending run is only ever dropped for a newer run of a newer commit, so the chain
+always ends in a run that publishes or one that goes red — a cancelled run cannot be made red
+from inside, so what acts on it is `pages-live` on the next validation of master.
+
+**GitHub&#39;s own build errors.** This was the silent one. Publishing is two steps and the second
+is GitHub&#39;s: `pages build and deployment` turns the pushed branch into the served bytes, and it
+can error on a branch that was pushed perfectly. On 2026-09-10 at 17:35:10Z it errored on
+gh-pages commit `dfd9c989c` with *Page build failed.*; the push had succeeded, the branch was
+right, the workflow reported success, and the site served the previous commit for 27 minutes
+with nothing red anywhere. The publication probe above it is `continue-on-error` on purpose —
+it waits on a queue, a build and a CDN that this repository does not own, and a gate on
+somebody else&#39;s latency is a gate that gets waived — but *slow* and *failed* are different
+facts and the second one has an API. `scripts/pages built` reads it, in one place, for both
+callers: `pages.yml` fails the run on an errored build at the moment it happens, and
+`scripts/ci/pages-check` asks the same question afterwards through the same command. Only
+`errored` is a failure (exit 10). A build that has not finished, one of another commit, or one
+that could not be read at all is a note and exit 12, not determined: never a failure, and never
+the pass it used to be, when the gate printed the whole guarantee over the half it had not seen.
+
+## Where a gate cannot reach
+
+A gate that never fires is worse than one that fails, because the verdict still reads
+complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
+about, and each of them cost a real outage or a real afternoon.
+
+**The staleness catch cannot run on the path most merges take** — the driver resolving to
+ours is a design decision working correctly, and the defect is that the only thing checking
+its result runs in a `pre-commit` hook, while no hook of any kind runs for a merge the server
+creates. `.gitattributes` sends
+derived artifacts to `scripts/merge-derived`, which resolves them to *ours* and exits clean.
+That is deliberate: a derived file carries a fingerprint of the tree it was generated from,
+so after a merge neither side&#39;s value is right and the answer comes from running the
+generator, not from a conflict marker. The design leans on `scripts/pages current` in
+`.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
+hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
+commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
+bypass; it is the action this repository tells people to take. With no branch protection
+(`gh api repos/&lt;owner&gt;/&lt;repo&gt;/branches/master/protection` answers *404 Branch not protected*)
+nothing server-side compensates, and the `site` gate that does check currency is advisory and
+reports after the merge. So the first thing in the pipeline that can actually refuse is the
+Pages build, and it refuses by failing publication rather than by failing a pull request. The
+symptom is always &quot;the site is stale&quot; and never &quot;the branch is red&quot;.
+
+The vivid form: a stale recording rides through a merge untouched, so two consecutive master
+merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
+coverage is inverse to its usage is worse than a missing one, because nobody notices it is
+absent.
+
+The condition above was observed on 2026-09-10 and then repaired, and the gap it illustrates
+is structural rather than a description of how the trunk stands today — so do not test this
+by looking at the trunk and concluding the finding expired. The commits carry their own
+evidence permanently: `git show &lt;commit&gt;:site/data/generated/source.json` beside
+`scripts/pages fingerprint` on that tree, and `git log -1 --format=%cn` for who committed the
+merge.
+
+**A check whose input goes empty can vanish instead of failing.** `scripts/site-check`
+derives `PREFIX` by stripping scheme and host from `base_url`. At an apex domain the path
+component is empty, and the block that uses it is guarded by `if [ -n &quot;$PREFIX&quot; ]` with no
+`else` — so it emits neither `ok` nor `bad`. The verdict still reads complete. Note that
+simply removing the guard is wrong: the filter it protects would then match everything its
+own first stage can emit and print a green `ok` over an empty set. What an empty prefix needs
+is a *different* predicate, not the same one ungated.
+
+The tool has vocabulary for this and the doctrine gates use it: `mj_doctrine_skip` prints the
+check, says it did not run, and gives the reason — see the blocker and scope gates in
+`lib/check.sh`. A gate with only `ok` and `bad` makes silence the path of least resistance
+every time an author meets a case they cannot decide.
+
+**Two queries worth running against any new gate.** The first is this document&#39;s; the second
+came out of the apex case above:
+
+- for every field a validator reads out of a state record, can something write it?
+- for every value a check derives, is empty distinguishable from absent?
+
+The first has a mechanical form — `grep` the readers and the writers — and it found that a
+task&#39;s `requires` had five readers and no writer at all, so `check` reported &quot;the task
+declares no obligations&quot; truthfully and forever. In each case the rule existed, the validator
+ran, and its answer was *true about the half it could see*.
+
+**One correction for whoever proposes the obvious repair.** The natural fix for stale derived
+data is to let the Pages build re-derive rather than refuse. It does not work, and the reason
+must be stated precisely or it is refutable in one command. The **input fingerprint is
+deterministic** — `scripts/pages fingerprint` three times on one tree gives one value. What is
+machine-dependent is the **generated content**: `%h` abbreviates against the local object
+store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling
+worktree root. A build that re-derived could therefore publish a third answer matching neither
+side. State it as content-dependence, never as fingerprint non-determinism.
+
+One thing the generation guard is not: the digest it compares is taken over `Cargo.toml`,
+`Cargo.lock`, `build.rs` and `src` only, with `benches/` and `tests/` deliberately outside
+it — which is why a branch that changes no Rust may legitimately use a binary built in
+another worktree.
+
+**A note about the plan.** `majordomus plan validate` refuses an issue that names no
+milestone. So an area of standing work with no milestone is not merely unfiled — the work in
+it cannot be recorded in the plan at all, which is how a repository can land a great deal of
+change against a plan that never moves. If a gate finds something worth an issue and no
+milestone fits, the milestone is the missing part; do not park the issue under the
+least-wrong parent, because status here is derived from the graph and a false parent
+propagates into the roadmap and the waves.
+
+## Platforms
+
+Linux is the blocking path for everything that does not depend on the platform: lints,
+documentation, coverage, the benchmark runner. macOS runs what does: the behavioural suite
+under the stock macOS shell (bash 3.2) and BSD userland, and the crate&#39;s own suites there
+(files, signals, the lease, the spawned processes). The benchmark check against a committed
+baseline runs on macOS, the one platform with a baseline under `.ai/repo/benchmarks/rust/`.
+`docs/HARDCODING_LEDGER.yaml` records the platform list as a deliberate decision.
+
+The macOS gates are the on-demand ones (above): the nightly schedule, a dispatch and a
+`ci:full` pull request plan them, a routine push does not, because a macOS runner is what
+this repository waits hours for and a gate queued behind one reports nothing at all. A
+change that is likely to be platform-dependent — the shell tool, the distribution, the
+crate&#39;s process and file handling — should carry the `ci:full` label rather than wait for
+the night, and that is a judgement a reviewer makes, not one the model can.
+
+## Telemetry and budgets
+
+Every job writes a summary (`scripts/ci/summary`): the plan&#39;s selection, the cache hits,
+the durations of its gates and steps (`MJ_CI_TIMINGS`, `scripts/ci/timed`), the slowest
+cases of the suite (`MJ_TEST_REPORT`), the artifact it produced. The `ci` job gathers the
+rows of every job into `ci-performance-metrics`. `scripts/ci-baseline` reads recent runs
+back through the GitHub API and writes `.ai/repo/ci/baseline.json`: per run, per job and
+per step, with the commit, the runner, the event and whether the caches hit, so a later
+regression has a table to be compared with. The budgets are those measurements; a budget
+written here would be stale the day after.
+
+## The critical path, measured on 2026-10-10
+
+`.ai/repo/ci/baseline-2026-10-10.json` holds the last 60 `validate` runs before the V4
+delivery work, written by `scripts/ci-baseline --runs 60 --workflow validate`. It is the
+evidence later changes are compared with, and nothing reads it to plan a run.
+
+| Measure | Value |
+|---|---|
+| a pull request&#39;s verdict, when green | p50 104 min, p95 148 min (10 runs) |
+| a push to master, when green | p50 95 min (5 runs) |
+| pull-request runs that ended green | 10 of 49: 20 failed, 19 were cancelled |
+| runner time spent on runs that did not end green | 15624 of 22210 job-minutes, 70 % |
+| runner time of one green pull-request run | p50 399, p95 497 job-minutes |
+
+The jobs that set the wall clock, as medians of the green runs, with their queue time at
+the 95th percentile:
+
+| Job | Run p50 | Run p95 | Queue p95 |
+|---|---|---|---|
+| suite-shard (1) | 68 min | 86 min | 48 min |
+| suite-shard (2) | 68 min | 69 min | 58 min |
+| suite-shard (4) | 55 min | 71 min | 62 min |
+| suite-shard (3) | 50 min | 65 min | 73 min |
+| ui | 48 min | 50 min | 43 min |
+| site | 35 min | 40 min | 50 min |
+| interactions | 35 min | 36 min | 103 min |
+| coverage | 30 min | 34 min | 59 min |
+| structure | 28 min | 33 min | 35 min |
+| rust (3) | 28 min | 32 min | 75 min |
+
+Inside the jobs, the longest single steps of one run (38078789620) were the browser probe of
+the site (1360 s) and `rust-check` in rust (3) (1726 s).
+
+Why the runs that failed failed, by the gate or case each failing job named:
+
+| Cause | Where it failed | Count |
+|---|---|---|
+| a published tag whose record was not on master yet | `release-check` in structure | 11 of 16 structure failures |
+| the same, seen by the suite | case 103 in the suite shards | 26 |
+| changed lines without a test | coverage | 10 |
+| version and generated projections | rust (3) | 7 |
+
+The release window is the largest single cause, and `release-check` stays strict by the
+owner&#39;s decision: the remedy is a record that reaches master within minutes of its tag
+(ADR 0131). Coverage, the version surface and generated projections are gates that answer
+in minutes on a workstation, and in CI they answered after 30 to 100 minutes.
+
+The figures are reproduced from the file:
+
+```bash
+jq &#39;[.runs[] | select(.event == &quot;pull_request&quot;)] | group_by(.conclusion) | map({(.[0].conclusion): length}) | add&#39; .ai/repo/ci/baseline-2026-10-10.json
+jq &#39;[.runs[] | select(.conclusion != &quot;success&quot;) | .jobs[].seconds // 0] | add / 60 | floor&#39; .ai/repo/ci/baseline-2026-10-10.json
+```
+
+## Reproducing CI locally
+
+```bash
+scripts/ci-plan --format text                       # what would run for this working tree
+just ci-structure                                   # the always gates
+just ci-fast                                        # the gates the plan selects for this tree
+just ci-full                                        # every gate
+scripts/rust-check --ci                             # the Rust gate as CI runs it
+just coverage
+scripts/site-build &amp;&amp; scripts/site-check &amp;&amp; SITE_PROBE_JOBS=4 scripts/site-probe
+MJ_TEST_JOBS=4 bash test/run.sh                     # the suite in parallel
+bash test/run.sh                                    # serially
+scripts/ci-baseline --runs 10                       # record what GitHub observed
+```
+
+`scripts/ci/verdict --plan plan.json --needs needs.json` renders the same verdict CI
+renders, from a plan and a `needs` context; `test/cases/94_ci_plan.sh` drives it with
+fixtures.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

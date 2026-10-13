@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/DOCTRINE.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/DOCTRINE.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/DOCTRINE.md</h1><p class="mj-page-subtitle">Doctrine</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/DOCTRINE.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DOCTRINE.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/DOCTRINE.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/document.docs%2FDOCTRINE.md">document.docs/DOCTRINE.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Doctrine
+
+A rule is not enforced because it is written down.
+
+A rule is enforced when it is declared, implemented, wired, executed, failure-propagating,
+tested, CI-blocking, and linked to a claim. Anything less is documentation. This layer
+exists to know the difference, and to say so in one command.
+
+## The chain
+
+```
+principle          why the rule exists at all
+  ↓
+doctrine           what must be true          share/standard/majordomus/
+  ↓
+validator          whether it is true          mj_validate_&lt;name&gt; in lib/
+  ↓
+enforcement point  when the validator runs     the commands in enforced_by
+  ↓
+propagation        what a violation costs      the command&#39;s exit code
+  ↓
+test               proof of the behaviour      test/cases/
+  ↓
+CI                 proof it blocks integration .github/workflows/validate.yml
+  ↓
+claim              what may be promised        docs/CLAIMS.yaml
+```
+
+`majordomus doctor` walks that chain for every doctrine and reports the first link that
+breaks. It reads the source, not the registry&#39;s own description of itself, so a registry
+that lies about what it enforces fails here rather than in production.
+
+## The registry
+
+The registry is derived, never written: it is every rule of the repository&#39;s effective
+set whose `x-majordomus` block names a validator, in resolved dependency order. The
+effective set is the package the tool ships (`share/standard/majordomus/`), vendored into
+the repository under `.ai/repo/rules/vendor/majordomus/`, plus the repository&#39;s own rules
+under `.ai/repo/rules/project/`. A repository does not invent Majordomus doctrines,
+because a doctrine is a statement about how the tool behaves and every user of the tool
+is entitled to the same behaviour; it may add rules of its own, and it may enforce them
+with a validator of its own, in the same format.
+
+Each doctrine, read from its rule object, carries:
+
+| field | meaning |
+|---|---|
+| `id` | the rule id, `majordomus.&lt;name&gt;` for the baseline; used by `--rule`, by the site, and by refusal messages |
+| `title`, `description`, `statement` | what it means, in a sentence each |
+| `class` | `blocking` or `advisory` — see below |
+| `depends_on` | the rules it rests on, the principle it serves among them |
+| `x-majordomus.validator` | the suffix of the `mj_validate_&lt;validator&gt;` function that decides it |
+| `x-majordomus.category` | the finding category a violation is reported under |
+| `x-majordomus.enforced_by` | the commands that dispatch it |
+| `x-majordomus.exit_code` | the exit code a violation produces (from the existing contract; no doctrine invents one) |
+| `x-majordomus.policy_key` | for finish doctrines, the name a repository uses in `verification.finish_requires` |
+| `x-majordomus.claims` | the claim ids in `docs/CLAIMS.yaml` this doctrine backs |
+| `x-majordomus.tests` | the cases that prove it |
+## Rule objects
+
+The rules are portable **rule objects**: one Markdown file per rule, YAML front matter on
+the machine side, prose on the human side, under the repository&#39;s rules section. They are
+readable without the tool, and the tool reads nothing else.
+
+```text
+.ai/repo/rules/
+├── README.md                  the format, for whoever writes a project rule
+├── vendor/majordomus/         the pinned Majordomus baseline; do not edit, upgrade explicitly
+│   ├── manifest.yaml          every rule file, its identity and its content hash
+│   └── rules/*.md
+└── project/*.md               rules this repository wrote
+```
+
+### Front matter
+
+Identity is `id` and `version`, never the file name. The generic fields are the ones any
+reader of the format understands; the `x-majordomus` block is the tool&#39;s binding and is
+present only on a rule the tool enforces.
+
+```yaml
+---
+id: majordomus.scope-integrity      # namespaced by origin; project rules use another prefix
+version: 1                          # an exact integer
+kind: rule
+title: Scope integrity
+description: One sentence.
+statement: The normative sentence a worker follows.
+status: active                      # active | deprecated
+class: blocking                     # blocking | advisory — the same two classes, no third
+depends_on: [majordomus.state-consistency@1]   # exact id@version references, or []
+tags: [scope, verification]
+x-majordomus:
+  validator: scope                  # mj_validate_&lt;validator&gt;
+  category: scope                   # the finding category
+  enforced_by: [check, finish, watch]
+  policy_key: scope_respected       # finish doctrines only
+  exit_code: 10
+  claims: [scope-enforcement]       # ids in docs/CLAIMS.yaml
+  tests: [test/cases/04_start_check.sh]
+---
+```
+
+The allowed keys are listed in `share/allow/rule.txt`; a key outside that list is an
+error, not a silent extra. A generic reader may ignore `x-majordomus` and still understand
+the rule. A rule without the block is normative for whoever reads it and enforced by
+nobody, and `majordomus rules list` says `not machine-enforced` for it rather than
+implying otherwise. The class still says what a violation means.
+
+A rule that is `class: blocking` *and* has no block is therefore a promise this tool cannot
+keep by itself, and most of this repository&#39;s blocking rules are in that position — measure
+it with `majordomus doctrine status`, which prints the registry&#39;s size beside the effective
+set&#39;s and names the count on its own line. The count is large, it predates the report, and
+the numbers must be read carefully: most of those rules *are* enforced, by a gate under
+`scripts/ci/` or by a case under `test/cases/` named in their `# Verification` section. What
+the doctrine registry cannot see is not the same as what nothing enforces, and a surface
+that reports one while the reader hears the other is the defect
+`project.a-verdict-states-its-subject` exists to stop.
+
+`scripts/ci/rule-proof-check` is what decides the difference, and it is the only reader of
+that population: a blocking rule must name, in its `x-majordomus` block, a validator the
+dispatcher calls, a test that proves it, or a `reviewed_because:` saying why nothing
+executable can express it. The rules that name none are ratcheted in
+`.ai/repo/rule-proof-baseline.txt` so the set can shrink and cannot grow. It is answered by
+wiring the enforcement, never by changing the rule&#39;s class — moving a promise is not keeping
+it.
+
+The other end of the same idea is a claim, not a rule, and it has its own gate:
+`scripts/ci/claim-proof-check` refuses a claim marked `status: guaranteed` in
+`docs/CLAIMS.yaml` whose named test does not contain the claim&#39;s id, so the link reads from
+both ends rather than only from the claim&#39;s. The two gates are separate readers of separate
+populations and each says so on every run. They were one script, and the rule half of it
+accepted any `x-majordomus` block as proof — including a `reviewed_because:`, which declares
+that a *person* enforces the rule. It announced those exemptions as promises that had gained
+a proof. A second inventory of a property another gate owns does not stay a harmless
+duplicate; it drifts, and then the two verdicts disagree about the thing this repository
+exists to assert.
+
+### Resolution
+
+`majordomus rules list` resolves the effective set as a dependency graph, deterministically:
+the vendored package in its manifest order, then project rules in file-name order, ordered
+so that every dependency precedes the rule that depends on it. Each of these stops the
+resolution with exit 10 and the reason, and nothing is applied partially:
+
+- a dependency no rule provides, or one provided only by a deprecated rule,
+- a dependency cycle,
+- one `id@version` claimed by two files,
+- a project rule whose id is in the `majordomus.` namespace,
+- front matter that is absent, does not parse, lacks a required field, or carries an
+  unknown key,
+- an `x-majordomus` block with no validator, no enforcing command, or no test.
+
+### Vendoring
+
+The baseline under `vendor/majordomus/` is a copy of the package the executable ships in
+`share/standard/majordomus/`, written by `init` and afterwards only by
+`majordomus rules vendor update`. The shipped package&#39;s own manifest is written by its
+maintainer with `scripts/rules-package write` and checked by `scripts/rules-package check`
+in the test suite; no command that runs in a managed repository writes into the
+distribution. The repository&#39;s copy is authoritative for that
+repository: a newer executable reports a newer baseline through `rules vendor status` and
+`rules vendor diff`, and never applies it. The manifest names every rule file with its
+hash, so a hand edit under `vendor/` is detected by `rules vendor status` and refused by
+`rules vendor update` until `--force`. The update is atomic and never touches
+`rules/project/`.
+
+### Composition: additive, no override
+
+The effective set is every active vendored rule plus every active project rule. A project
+rule may add a constraint. There is no override mechanism: nothing disables or weakens a
+vendored rule, and a project rule may not reuse a vendored identity or its namespace. A
+repository that needs a vendored rule gone changes the baseline explicitly, in the open,
+with `rules vendor update`, or does not use the tool.
+
+### What is authoritative
+
+The rule objects, and nothing else. The dispatcher in `lib/doctrine.sh` loads the
+repository&#39;s effective set through `lib/rules.sh` and treats every rule with an
+`x-majordomus` block as a doctrine; `doctor`, `doctrine list`, `check --rule` and the site
+read the same set. A set that does not resolve — a missing dependency, a cycle, two files
+claiming one identity, a malformed file — stops the command that needed it with exit 10
+and the reason, and nothing is enforced partially. The wiring chain — declared, validator
+exists, the commands it names dispatch it, a blocking failure propagates, every test it
+names exists, CI runs the suite — is recreated against the objects, and the reverse check
+(every `mj_validate_*` function is declared by an effective rule) is kept. A hand-edited
+vendored file is a `doctor` failure through `majordomus.rule-package-integrity`.
+## Two classes, and no third
+
+- **blocking** — a violation stops the command with a non-zero exit.
+- **advisory** — a violation is reported and the command still succeeds.
+
+The class is not a label on a diagram. `mj_doctrine_fail` reads it and routes the finding
+accordingly, so changing `advisory` to `blocking` in the registry changes whether
+`majordomus check` exits 0 — and `test/cases/17_doctrine_enforcement.sh` flips exactly
+that value and asserts the exit code moves. Which doctrines are advisory today is derived, not written here: `majordomus doctrine list`
+prints the class of each. Everything that is not advisory blocks.
+
+`watch` asks the same doctrines a different question — not *is this wrong* but *has this
+moved* — so under `watch` a violation is reported as `DRIFT` and the exit code is 11,
+advisory doctrines included: watch never blocks work, so the class has nothing to decide
+there. The rule, the validator and the message are the same.
+
+Not every doctrine is watchable, and the registry says which by omitting `watch` from
+`enforced_by`. An unresolved question is the clearest case: it is a recorded state, written
+down on purpose, and the opposite of drift. A questions file that no longer *parses* is
+drift, and that is a different doctrine.
+
+## Three enforcement modes
+
+A rule says how it is enforced in its own `x-majordomus` block, and the shape of that block
+*is* the mode — there is no word to declare and no word to get wrong:
+
+| mode | the block names | who runs it | what the repository can show |
+|---|---|---|---|
+| **dispatched** | `validator`, with `category`, `exit_code`, `enforced_by` and at least one test | `mj_doctrine_dispatch`, at the commands `enforced_by` names | the validator ran, and the cases prove it decides correctly |
+| **gated** | `tests`, and no validator | a CI gate, or the behavioural suite | the cases exist and a gate runs them |
+| **reviewed** | `reviewed_because`, and neither of the above | a person | nothing executable — and the reason why not |
+
+The third exists because some rules genuinely have no machine expression. *The provenance
+of what was written* is one; *whether a mechanism earns its cost* is another. Before it,
+those sat in a debt list called `rule-proof-baseline.txt` alongside rules that merely had
+not been got round to, and the two were indistinguishable — which is the worse failure,
+because the list could only be read as &quot;work still to do&quot; and half of it never would be.
+
+`reviewed_because` is the whole declaration. There is no boolean beside it, deliberately: a
+flag can be set, and a reason cannot be set without writing one. An exemption is therefore
+always a sentence somebody had to defend, and a reviewer reads the sentence rather than
+counting entries in a list.
+
+Two properties keep it from becoming a way out:
+
+- **an executable proof always wins.** A rule that names a test is gated whether or not the
+  reason is still in its front matter, so a rule acquiring a case stops being
+  review-enforced without anyone remembering to delete anything.
+- **it is counted apart, everywhere.** `rule-proof-check` reports every one as `NOTE` on
+  every run and prints the count beside the measured total; the typed report counts them in
+  `review_only`, never in `passing` and never in `named_proof`. This number going up is
+  governance getting weaker, and no summary folds it into a total that would hide that.
+
+## The proof graph
+
+`majordomus doctrine` answers *does the repository satisfy this rule right now*. That is a
+question about the tree. There is a second question — *is this rule in a state where it
+could be satisfied at all* — which is about the rule, and until the proof graph nothing
+asked it. `crate::rules` is the one typed reading that does, and `majordomus-cli rules`
+projects it to every surface.
+
+For each rule it joins the declaration to the tree and to the ledger of recorded runs
+([`EVIDENCE.md`](EVIDENCE.md)), and reports one state:
+
+| state | what it means |
+|---|---|
+| `proven` | every named artifact is in the tree, and every named case has a passing run that nothing has changed since |
+| `inputs unchanged` | the same, except at least one run is only un-invalidated — nothing it names has changed, which is the absence of a known invalidation rather than proof against this commit |
+| `stale` | a passing run exists, and a file it is about has changed since |
+| `gated` | an executable check refuses violations and a CI gate runs it; this repository records no verdict for a gate, so what can be shown is the mechanism and not the result |
+| `failing` | the most recent recorded run did not pass |
+| `not run` | a runner owns the case and no run of it was ever recorded |
+| `reviewed` | the rule declares, with its reason, that nothing executable can express it |
+| `unrunnable` | the rule names a path no runner drives, so nothing can ever record it |
+| `dangling` | the rule names a path that is not in the tree — it reads as proven, and is not |
+| `unproven` | the rule names neither a validator nor a test nor a reason |
+
+A rule&#39;s state is the **weakest of its parts**, with one precedence: a failing test makes
+the rule `failing` whatever its other tests say, because the ranking puts `failing` above
+`not run` and a failure must never hide behind an absence. Otherwise the rule is the weakest
+of the parts that can carry proof, and a path no runner and no gate drives counts only when
+it is all the rule has. One dangling case makes the rule dangling however many of its other
+cases pass. The two states nothing else in this repository can
+express are the last two, and they are the reason the graph exists. `dangling` is the
+one-way relation this repository keeps rediscovering — a proof verified by name, with the
+converse unowned, so a case renamed in January leaves a rule reading as enforced in June.
+`unproven` is the half no other check knows to look for: nothing else knows that a blocking
+rule is *supposed* to name anything at all.
+
+A **finding** is a rule whose declared class the state does not support. `dangling` is a
+finding at every class, because it reads as proof and is not. For a blocking rule,
+`unproven`, `failing` and `unrunnable` are findings too: each makes the claim &quot;a gate
+refuses work that violates this&quot; false. `gated`, `reviewed` and `not run` are not findings —
+they are weaker states, said out loud and counted, which is a different thing from a defect.
+
+Because they are not findings, &quot;no findings&quot; is not &quot;proven&quot;, and the report never lets one
+be read as the other. `satisfied` is exactly &quot;there are no findings&quot;. The report&#39;s
+`verdict`, printed first in text and carried at the top of the JSON, is what the corpus can
+be said to prove: `failing` when there is any finding; `proven` only when every blocking
+rule is `proven`; `unproven` otherwise — a blocking rule never run, gated, reviewed or
+stale, a blocking rule whose inputs are merely unchanged, or no blocking rule at all. A corpus with no recorded run behind
+any blocking rule is `satisfied` and `unproven`, which is the truth about it.
+
+Both directions are readable. `rules show` answers what proves a rule; `rules proves`
+answers what a test proves, and names the rules that would be left with nothing at all if
+it were deleted. That is the question that could not be asked while the relation ran one
+way only, and it is the one to ask before renaming a case.
+
+## The dispatcher
+
+No command names a validator. Each one calls `mj_doctrine_dispatch &lt;command&gt;`, which walks
+the registry and runs every doctrine whose `enforced_by` contains that command. A doctrine
+added to the registry is enforced from that moment without any command changing.
+
+Three things are configuration errors rather than rule results, and each says so in its own
+words:
+
+- a doctrine whose validator function does not exist,
+- a doctrine whose class is neither `blocking` nor `advisory`,
+- a validator that exits non-zero (a validator reports violations through
+  `mj_doctrine_fail`, so a non-zero return means the validator itself broke).
+
+All three fail closed. None of them is ever reported as a clean run.
+
+## What `doctor` verifies
+
+For every doctrine:
+
+1. the validator function is defined somewhere in `lib/`;
+2. every command in `enforced_by` exists and calls `mj_doctrine_dispatch`;
+3. a blocking doctrine&#39;s commands can turn a failing finding into a non-zero exit;
+4. the test file it names exists;
+5. every claim it names is in `docs/CLAIMS.yaml`.
+
+And in the other direction: every `mj_validate_*` function in `lib/` is declared by some
+doctrine. An orphan validator is enforcement running under no rule, which is how a check
+quietly stops being governed, so it fails.
+
+And for the pipeline: `validate.yml` runs `test/run.sh`, does not swallow its exit code,
+and `test/run.sh` globs `test/cases/` rather than listing cases by name — a runner that
+lists cases is a runner a new case can be missing from.
+
+`test/cases/18_doctrine_wiring.sh` breaks each of those nine links in a throwaway copy of
+the tool and fails unless `doctor` goes red. A verifier that survives broken wiring proves
+nothing.
+
+## Finish is a doctrine bundle
+
+`majordomus finish` does not carry its own list of contract lines. The contract is the set
+of doctrines whose `enforced_by` names `finish`, and a repository&#39;s
+`verification.finish_requires` selects which of them it applies — by `policy_key`, so the
+two lists cannot drift apart silently. A requirement in the policy that no doctrine defines
+is reported and refuses; it is not silently ignored.
+
+A refusal names the doctrines responsible:
+
+```
+finish: refused, 1 unmet
+blocking doctrines:
+- majordomus.blocker-resolution
+```
+
+One line of the contract is not about the repository at all. `publication_current` asks
+whether what the public is being served is still a projection of the trunk — a question no
+gate in the CI model can be selected for, because no change to any file can answer it. The
+doctrine `majordomus.publication-currency` runs the gates the CI model marks `at-finish`,
+live, at the moment of the claim, and refuses `completed` while one of them says the
+publication is owed. It is run and never recorded: evidence whose subject can change while
+the tree stands still has no hash to expire against.
+
+The knowledge doctrines span both programs. `majordomus.knowledge-observed` and
+`majordomus.knowledge-integrity` are decided by validators in `lib/knowledge.sh`, beside the
+shell writer that derives the records, and the Rust reader&#39;s `knowledge_base.status` makes the
+freshness half of the same stopped-writer judgement from the same ledger and the same policy
+numbers; the wiring half — that the lifecycle source calls the deriver — is the shell
+validator&#39;s alone, because only the shell tool can read its own source. `KNOWLEDGE.md` has
+the three rules and what each one finds.
+
+## Reading it from the command line
+
+```bash
+majordomus doctrine status        # derived counts: declared, blocking, advisory, unwired
+majordomus doctrine list          # id, class, validator, the commands that enforce it
+majordomus doctrine show &lt;id&gt;     # the full record, including claims and test
+majordomus check --rule &lt;id&gt;      # run one doctrine
+majordomus doctor                 # verify the whole chain
+```
+
+Counts are derived on every invocation. None is written down anywhere, here included.
+
+## What was rejected
+
+The design input for this layer was a large platform&#39;s enforcement system. Most of it does
+not belong in a portable shell tool, and the parts left out are as deliberate as the parts
+kept.
+
+- **A severity ladder.** Blocking or advisory. A rule that is neither is a note in a
+  document, not a doctrine.
+- **Baselines and ratchets.** A ratchet lets legacy violations remain while blocking new
+  ones. It is the right answer for a repository with accumulated debt and the wrong answer
+  for a tool that has none: a baseline file is a place for a number to be quietly raised.
+  Majordomus enforces absolutely. If a repository adopting it cannot satisfy a doctrine,
+  the honest move is to say so, not to encode the gap as a permitted ceiling.
+- **An override mechanism.** No `MAJORDOMUS_BYPASS`, no exemption trailer, no amnesty
+  ledger. An override that exists gets used, and then the audit trail of overrides becomes
+  the work. `finish` already has typed outcomes — `partial`, `blocked`, `failed`,
+  `no_match` — which say *what actually happened* instead of pretending the contract was
+  met.
+- **An audit ledger of enforcement events.** The existing `state/ledger.jsonl` already
+  records the finish contract line by line, under a retention cap. A second ledger of
+  violations would grow without answering a question the first cannot.
+- **A policy expression language.** `enforced_by` is a list of command names compared
+  exactly. Anything that needs a grammar to express is a validator, not a rule.
+- **Per-doctrine exit codes.** Findings map onto the existing contract — 10 contract unmet,
+  11 drift, 12 missing artifact, 13 internal, 15 refused. A doctrine does not get to invent
+  a number.
+- **Hooks everywhere.** Enforcement runs through lifecycle commands. A repository chooses
+  to wire those commands into git hooks and `doctor` verifies the wiring it declared; the
+  tool does not install hooks behind a repository&#39;s back.
+
+## The failure this exists to prevent
+
+```
+rule documented
++ script exists
++ test exists
++ nothing invokes it
+= fake enforcement
+```
+
+Every one of those four is present in the failure state, which is why counting them is not
+a check. `doctor` traces the invocation instead.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

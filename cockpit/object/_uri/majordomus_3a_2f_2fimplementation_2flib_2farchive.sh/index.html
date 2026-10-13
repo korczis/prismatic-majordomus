@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>lib/archive.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">lib/archive.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">lib/archive.sh</h1><p class="mj-page-subtitle">An object of kind implementation</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://implementation/lib/archive.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">implementation</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">lib/archive.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">lib/archive.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/implementation.lib%2Farchive.sh">implementation.lib/archive.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code>#!/usr/bin/env bash
+# sourced by several commands; guard against re-sourcing
+[ -n &quot;${MJ_LIB_archive:-}&quot; ] &amp;&amp; return 0 || MJ_LIB_archive=1
+# archive — a snapshot of this repository that can leave the machine.
+#
+# A tree has to travel: to a language model that will read all of it at once, to a
+# reviewer who cannot clone, to an auditor who must run the gates somewhere other than
+# the checkout. Every one of those was being done by hand, differently each time, and
+# the hand-made version got two things wrong that are not obvious until much later.
+#
+# The first is what to leave out. A repository this size does not fit in a model&#39;s
+# context, and the half that does not fit is the half that is generated: the projections
+# under docs/generated/, site/data/ and site/content/docs/ are functions of canonical
+# files that are already in the archive, so carrying them spends the reader&#39;s attention
+# on the same statements twice. What is derived is not decided here — .gitattributes
+# already marks every one of those paths `merge=derived`, for a different reason, and
+# that declaration is read rather than restated. A second list would be the defect that
+# `.ai/repo/rules/project/commands-are-projections.v1.md` exists to refuse.
+#
+# The second is fidelity. `zip -X` drops the extra fields that carry the Unix mode, so
+# the unpacked tree has no executable anywhere, and every script in it fails to run for a
+# reason that belongs to the archive rather than to the repository. That is the worst
+# kind of failure: it is indistinguishable, at the far end, from the repository being
+# broken. So the mode of every entry is read from the git index — the authority, not the
+# working tree — written into the manifest, and a restore script ships beside it that
+# puts the modes back and builds a local git index, because the checks that matter here
+# read `git ls-files` and answer nothing without one.
+#
+# What is archived is the git index and only the git index. Nothing untracked travels:
+# not the build output, not the caches, and not `.ai/local/`, which is this checkout&#39;s
+# own state and is never shared. That is one rule rather than a list of exclusions, and
+# it is the rule that makes the command safe to point at a repository nobody has read.
+#
+# The profiles are share/archive.yaml; a repository may add or replace one in
+# .ai/repo/archive.yaml without redefining what an archive is.
+
+# This file is sourced by a dispatcher that sets `-e`, so every pipeline here runs with
+# the failure of anything but its last stage discarded. That matters more than usual for a
+# command whose whole job is fidelity: a `tar` that could not read a file, piped into a
+# `tar` that unpacked what it did get, would report success and produce a short archive.
+# `set -o pipefail` is set for this command&#39;s run rather than trusted to the caller. Each
+# pipeline below that may legitimately fail — a `head` closing a pipe early, an `xargs`
+# over an empty list — says so with `|| true` rather than relying on the option&#39;s absence.
+set -o pipefail
+
+MJ_ARCHIVE_SHIPPED=&quot;$MJ_BIN_DIR/../share/archive.yaml&quot;
+
+# The repository&#39;s name, which is not this directory&#39;s name: a linked worktree is named
+# after its branch, and an archive of it must still say which repository it is. The remote
+# decides when there is one; the checkout&#39;s own directory is the fallback.
+mj_archive_repo_name() {
+  local url base
+  url=&quot;$(mj_git config --get remote.origin.url 2&gt;/dev/null || true)&quot;
+  if [ -n &quot;$url&quot; ]; then
+    base=&quot;${url##*/}&quot;; base=&quot;${base%.git}&quot;
+    [ -n &quot;$base&quot; ] &amp;&amp; { printf &#39;%s&#39; &quot;$base&quot;; return 0; }
+  fi
+  printf &#39;%s&#39; &quot;$(basename &quot;$MJ_ROOT&quot;)&quot;
+}
+
+mj_archive_usage() {
+  cat &lt;&lt;H
+usage: majordomus archive [&lt;profile&gt;] [--out &lt;path&gt;] [--format zip|tar.gz]
+                          [--dry-run] [--force] [--json]
+       majordomus archive --list [--json]
+
+  a snapshot of the tracked tree, for reading or checking somewhere else
+
+  &lt;profile&gt;   which snapshot (default: the registry&#39;s own default)
+  --out       write here instead of tmp/archives/&lt;repo&gt;-&lt;profile&gt;-&lt;date&gt;.&lt;ext&gt;
+  --format    override the profile&#39;s container
+  --dry-run   report what would be archived and write nothing
+  --force     overwrite an existing output file
+  --list      the profiles, with what each one is for
+
+  the file set is the git index; nothing untracked is ever archived. Every entry&#39;s mode
+  is recorded from the index and restored by _ARCHIVE/restore.sh inside the archive.
+
+  exit codes: 0 ok · 2 usage · 12 no such profile, or a tool is missing
+              13 internal error · 15 refused (the output exists; --force to replace it)
+H
+}
+
+mj_cmd_archive() {
+  local profile=&quot;&quot; out=&quot;&quot; format=&quot;&quot; dry=0 force=0 list=0
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --out) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--out needs a path&quot;; out=&quot;$2&quot;; shift 2 ;;
+    --out=*) out=&quot;${1#--out=}&quot;; shift ;;
+    --format) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--format needs zip or tar.gz&quot;; format=&quot;$2&quot;; shift 2 ;;
+    --format=*) format=&quot;${1#--format=}&quot;; shift ;;
+    --dry-run) dry=1; shift ;;
+    --force) force=1; shift ;;
+    --list) list=1; shift ;;
+    --json) shift ;;
+    --help|-h) mj_archive_usage; return 0 ;;
+    -*) mj_die &quot;$MJ_EX_USAGE&quot; &quot;archive: unknown option $1&quot; ;;
+    *) [ -z &quot;$profile&quot; ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;archive: one profile only&quot;
+       case &quot;$1&quot; in *[!A-Za-z0-9._-]*|&quot;&quot;|.*) mj_die &quot;$MJ_EX_USAGE&quot; &quot;archive: &#39;$1&#39; is not a profile name&quot; ;; esac
+       profile=&quot;$1&quot;; shift ;;
+  esac; done
+
+  mj_require_installed
+  mj_archive_load
+  [ &quot;$list&quot; = 1 ] &amp;&amp; { mj_archive_list; return 0; }
+  [ -n &quot;$profile&quot; ] || profile=&quot;$(mj_yget &quot;$MJ_ARCHIVE_FLAT&quot; default)&quot;
+  [ -n &quot;$profile&quot; ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;$(mj_rel &quot;$MJ_ARCHIVE_SHIPPED&quot;) declares no default profile&quot;
+  mj_archive_run &quot;$profile&quot; &quot;$out&quot; &quot;$format&quot; &quot;$dry&quot; &quot;$force&quot;
+}
+
+# ---------------------------------------------------------------- the declarations
+# The shipped profiles, then the repository&#39;s own overlay. A profile the repository
+# declares under the same id replaces the shipped one whole: a half-overridden profile
+# would be a third thing neither file describes.
+mj_archive_load() {
+  [ -f &quot;$MJ_ARCHIVE_SHIPPED&quot; ] \
+    || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;no archive registry at $MJ_ARCHIVE_SHIPPED&quot;
+  MJ_ARCHIVE_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.arc.XXXXXX&quot;)&quot;
+  mj_yaml_flatten &quot;$MJ_ARCHIVE_SHIPPED&quot; &gt; &quot;$MJ_ARCHIVE_FLAT&quot; 2&gt;/dev/null \
+    || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;$(mj_rel &quot;$MJ_ARCHIVE_SHIPPED&quot;) does not parse&quot;
+  MJ_ARCHIVE_LOCAL_FLAT=&quot;&quot;
+  local overlay=&quot;$MJ_AI_REPO_DIR/archive.yaml&quot;
+  if [ -f &quot;$overlay&quot; ]; then
+    MJ_ARCHIVE_LOCAL_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.arcl.XXXXXX&quot;)&quot;
+    mj_yaml_flatten &quot;$overlay&quot; &gt; &quot;$MJ_ARCHIVE_LOCAL_FLAT&quot; 2&gt;/dev/null \
+      || mj_die &quot;$MJ_EX_CONTRACT&quot; &quot;$(mj_rel &quot;$overlay&quot;) does not parse&quot;
+  fi
+}
+
+mj_archive_cleanup() { rm -f &quot;${MJ_ARCHIVE_FLAT:-}&quot; &quot;${MJ_ARCHIVE_LOCAL_FLAT:-}&quot;; }
+
+# the flat file and index of a profile, as &quot;&lt;flat&gt; &lt;index&gt;&quot;; empty when no such profile
+mj_archive_find() { # id
+  local f i
+  for f in &quot;$MJ_ARCHIVE_LOCAL_FLAT&quot; &quot;$MJ_ARCHIVE_FLAT&quot;; do
+    [ -n &quot;$f&quot; ] || continue
+    i=0
+    while :; do
+      case &quot;$(mj_yget &quot;$f&quot; &quot;profiles.$i.id&quot;)&quot; in
+        &quot;&quot;) break ;;
+        &quot;$1&quot;) printf &#39;%s %s\n&#39; &quot;$f&quot; &quot;$i&quot;; return 0 ;;
+      esac
+      i=$((i + 1))
+    done
+  done
+  return 1
+}
+
+mj_archive_ids() { # every profile id, the overlay&#39;s first, each one once
+  local f i id seen=&quot;&quot;
+  for f in &quot;$MJ_ARCHIVE_LOCAL_FLAT&quot; &quot;$MJ_ARCHIVE_FLAT&quot;; do
+    [ -n &quot;$f&quot; ] || continue
+    i=0
+    while id=&quot;$(mj_yget &quot;$f&quot; &quot;profiles.$i.id&quot;)&quot;; [ -n &quot;$id&quot; ]; do
+      case &quot; $seen &quot; in *&quot; $id &quot;*) ;; *) seen=&quot;$seen $id&quot;; printf &#39;%s\n&#39; &quot;$id&quot; ;; esac
+      i=$((i + 1))
+    done
+  done
+}
+
+mj_archive_list() {
+  local id spec flat idx n=0 def
+  def=&quot;$(mj_yget &quot;$MJ_ARCHIVE_FLAT&quot; default)&quot;
+  [ &quot;$MJ_JSON&quot; = 1 ] &amp;&amp; printf &#39;{&quot;schema&quot;:1,&quot;default&quot;:&quot;%s&quot;,&quot;profiles&quot;:[&#39; &quot;$(mj_json_esc &quot;$def&quot;)&quot;
+  for id in $(mj_archive_ids); do
+    spec=&quot;$(mj_archive_find &quot;$id&quot;)&quot; || continue
+    flat=&quot;${spec%% *}&quot;; idx=&quot;${spec##* }&quot;
+    if [ &quot;$MJ_JSON&quot; = 1 ]; then
+      [ &quot;$n&quot; = 0 ] || printf &#39;,&#39;
+      printf &#39;{&quot;id&quot;:&quot;%s&quot;,&quot;title&quot;:&quot;%s&quot;,&quot;summary&quot;:&quot;%s&quot;,&quot;format&quot;:&quot;%s&quot;,&quot;source&quot;:&quot;%s&quot;}&#39; \
+        &quot;$(mj_json_esc &quot;$id&quot;)&quot; \
+        &quot;$(mj_json_esc &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.title&quot;)&quot;)&quot; \
+        &quot;$(mj_json_esc &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.summary&quot;)&quot;)&quot; \
+        &quot;$(mj_json_esc &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.format&quot;)&quot;)&quot; \
+        &quot;$(mj_json_esc &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.source&quot;)&quot;)&quot;
+    else
+      printf &#39;%-12s %s%s\n             %s\n&#39; &quot;$id&quot; \
+        &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.title&quot;)&quot; \
+        &quot;$([ &quot;$id&quot; = &quot;$def&quot; ] &amp;&amp; printf &#39;  (default)&#39;)&quot; \
+        &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.summary&quot;)&quot;
+    fi
+    n=$((n + 1))
+  done
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then printf &#39;],&quot;count&quot;:%s}\n&#39; &quot;$n&quot;
+  else printf &#39;archive: %s profile(s)\n&#39; &quot;$n&quot;; fi
+  mj_archive_cleanup
+}
+
+# ---------------------------------------------------------------- selection
+# The index, then three subtractions and one re-inclusion, in that order. Every decision
+# is recorded against the path so that --dry-run can say why a file is not there: a
+# selection that can only be believed is not evidence.
+mj_archive_select() { # flat idx outfile -&gt; &quot;&lt;mode&gt;\t&lt;path&gt;&quot; lines; sets MJ_ARCHIVE_DROPPED
+  local flat=&quot;$1&quot; idx=&quot;$2&quot; out=&quot;$3&quot;
+  local derived binary artifacts tmpd
+
+  derived=&quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.derived&quot;)&quot;
+  binary=&quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.binary&quot;)&quot;
+  artifacts=&quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.artifacts&quot;)&quot;
+
+  # Named here rather than copied into the exported name at the end of the function: the
+  # scan that proves no recursive delete leaves a temporary directory trusts a name only
+  # when every assignment to it comes from `mktemp` (test/cases/08).
+  MJ_ARCHIVE_TMPD=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj.arcsel.XXXXXX&quot;)&quot;
+  tmpd=&quot;$MJ_ARCHIVE_TMPD&quot;
+  mj_git ls-files -s &gt; &quot;$tmpd/index&quot; || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;git ls-files failed&quot;
+  # &quot;&lt;mode&gt; &lt;sha&gt; &lt;stage&gt;\t&lt;path&gt;&quot; -&gt; &quot;&lt;mode&gt;\t&lt;path&gt;&quot;, gitlinks (160000) dropped: a
+  # submodule&#39;s content is not in this index and cannot be archived from it
+  awk -F&quot;\t&quot; &#39;{ split($1, a, &quot; &quot;); if (a[1] != &quot;160000&quot;) printf &quot;%s\t%s\n&quot;, a[1], $2 }&#39; \
+    &quot;$tmpd/index&quot; &gt; &quot;$tmpd/all&quot;
+  MJ_ARCHIVE_TRACKED=&quot;$(mj_lines &quot;$tmpd/all&quot;)&quot;
+  [ &quot;$MJ_ARCHIVE_TRACKED&quot; -gt 0 ] \
+    || mj_die &quot;$MJ_EX_CONTRACT&quot; &quot;the git index lists no file; there is nothing to archive&quot;
+
+  # derived: .gitattributes is the declaration, read through git itself
+  : &gt; &quot;$tmpd/derived&quot;
+  if [ &quot;$derived&quot; = drop ]; then
+    cut -f2 &quot;$tmpd/all&quot; | mj_git check-attr --stdin merge 2&gt;/dev/null \
+      | sed -n &#39;s/: merge: derived$//p&#39; &gt; &quot;$tmpd/derived&quot; || true
+  fi
+
+  # binary: by extension, from the registry&#39;s one list, and by content as git itself
+  # judges the index&#39;s blob (`i/-text`: a NUL byte or a lone CR), so a binary with a text
+  # name or none is not archived as text
+  : &gt; &quot;$tmpd/binext&quot;
+  : &gt; &quot;$tmpd/bincontent&quot;
+  if [ &quot;$binary&quot; = drop ]; then
+    mj_ylist &quot;$MJ_ARCHIVE_FLAT&quot; binary_extensions &gt; &quot;$tmpd/binext&quot;
+    mj_git ls-files --eol 2&gt;/dev/null | awk -F&quot;\t&quot; &#39;$1 ~ /^i\/-text / { print $2 }&#39; &gt; &quot;$tmpd/bincontent&quot; || true
+  fi
+
+  # artifacts: build output, caches, worktree containers and links, from the registry&#39;s one
+  # list; never re-admitted by an include, as `majordomus pack` refuses it too
+  : &gt; &quot;$tmpd/artifact&quot;
+  [ &quot;$artifacts&quot; = drop ] &amp;&amp; mj_ylist &quot;$MJ_ARCHIVE_FLAT&quot; artifact_paths &gt; &quot;$tmpd/artifact&quot;
+
+  mj_ylist &quot;$flat&quot; &quot;profiles.$idx.exclude&quot; &gt; &quot;$tmpd/exclude&quot;
+  mj_ylist &quot;$flat&quot; &quot;profiles.$idx.include&quot; &gt; &quot;$tmpd/include&quot;
+
+  MJ_ARCHIVE_DROPPED=&quot;$tmpd/dropped&quot;
+  # One pass for every decision. The shape this replaced ran two greps per tracked file
+  # and took forty seconds on this repository, which is long enough that a person stops
+  # running it — and a check nobody runs is not a check.
+  awk -F&quot;\t&quot; -v D=&quot;$tmpd/derived&quot; -v B=&quot;$tmpd/binext&quot; \
+             -v E=&quot;$tmpd/exclude&quot; -v I=&quot;$tmpd/include&quot; \
+             -v A=&quot;$tmpd/artifact&quot; -v ART=&quot;$artifacts&quot; -v BC=&quot;$tmpd/bincontent&quot; \
+             -v KEEP=&quot;$out&quot; -v DROP=&quot;$tmpd/dropped&quot; &#39;
+    # a shell glob as an anchored regular expression: * and ? only, everything else
+    # literal. * matches / as well, so &quot;apps/**&quot; and &quot;apps/*&quot; select the same subtree.
+    function globre(p,   r, i, c) {
+      r = &quot;&quot;
+      for (i = 1; i &lt;= length(p); i++) {
+        c = substr(p, i, 1)
+        if (c == &quot;*&quot;) r = r &quot;.*&quot;
+        else if (c == &quot;?&quot;) r = r &quot;.&quot;
+        else if (index(&quot;.^$+()[]{}|\\/-&quot;, c)) r = r &quot;\\&quot; c
+        else r = r c
+      }
+      return &quot;^&quot; r &quot;$&quot;
+    }
+    FILENAME == D { der[$0] = 1; next }
+    FILENAME == B { bex[$0] = 1; nbex++; next }
+    FILENAME == E { exc[++ne] = globre($0); next }
+    FILENAME == I { inc[++ni] = globre($0); next }
+    FILENAME == A { art[++na] = globre($0); next }
+    FILENAME == BC { bcon[$0] = 1; next }
+    {
+      mode = $1; path = $2; drop = &quot;&quot;; hard = &quot;&quot;
+      if (ART == &quot;drop&quot; &amp;&amp; mode == &quot;120000&quot;) hard = &quot;link&quot;
+      if (hard == &quot;&quot;) for (i = 1; i &lt;= na; i++) if (path ~ art[i]) { hard = &quot;artifact&quot;; break }
+      if (hard != &quot;&quot;) { printf &quot;%s\t%s\n&quot;, hard, path &gt;&gt; DROP; next }
+      if (path in der) drop = &quot;derived&quot;
+      if (drop == &quot;&quot; &amp;&amp; nbex &amp;&amp; match(path, /\.[^.\/]+$/)) {
+        if (substr(path, RSTART + 1) in bex) drop = &quot;binary&quot;
+      }
+      if (drop == &quot;&quot; &amp;&amp; (path in bcon)) drop = &quot;binary&quot;
+      if (drop == &quot;&quot;) {
+        for (i = 1; i &lt;= ne; i++) if (path ~ exc[i]) { drop = &quot;excluded&quot;; break }
+      }
+      if (drop != &quot;&quot;) {
+        for (i = 1; i &lt;= ni; i++) if (path ~ inc[i]) { drop = &quot;&quot;; break }
+      }
+      if (drop != &quot;&quot;) printf &quot;%s\t%s\n&quot;, drop, path &gt;&gt; DROP
+      else printf &quot;%s\t%s\n&quot;, mode, path &gt;&gt; KEEP
+    }&#39; &quot;$tmpd/derived&quot; &quot;$tmpd/binext&quot; &quot;$tmpd/exclude&quot; &quot;$tmpd/include&quot; &quot;$tmpd/artifact&quot; &quot;$tmpd/bincontent&quot; &quot;$tmpd/all&quot;
+  # awk creates neither output file when it writes no line to it
+  [ -f &quot;$out&quot; ] || : &gt; &quot;$out&quot;
+  [ -f &quot;$MJ_ARCHIVE_DROPPED&quot; ] || : &gt; &quot;$MJ_ARCHIVE_DROPPED&quot;
+}
+
+# ---------------------------------------------------------------- the run
+mj_archive_run() { # profile out format dry force
+  local profile=&quot;$1&quot; out=&quot;$2&quot; format=&quot;$3&quot; dry=&quot;$4&quot; force=&quot;$5&quot;
+  local spec flat idx ext stage sel n bytes missing=0 rc=0
+
+  spec=&quot;$(mj_archive_find &quot;$profile&quot;)&quot; || {
+    mj_archive_cleanup
+    mj_die &quot;$MJ_EX_MISSING&quot; &quot;archive: no profile &#39;$profile&#39; (run: majordomus archive --list)&quot;; }
+  flat=&quot;${spec%% *}&quot;; idx=&quot;${spec##* }&quot;
+
+  [ -n &quot;$format&quot; ] || format=&quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.format&quot;)&quot;
+  case &quot;$format&quot; in
+    zip) ext=zip ;;
+    tar.gz) ext=tar.gz ;;
+    *) mj_archive_cleanup; mj_die &quot;$MJ_EX_USAGE&quot; &quot;archive: format &#39;$format&#39; is not zip or tar.gz&quot; ;;
+  esac
+
+  sel=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.arcs.XXXXXX&quot;)&quot;
+  mj_archive_select &quot;$flat&quot; &quot;$idx&quot; &quot;$sel&quot;
+  n=&quot;$(mj_lines &quot;$sel&quot;)&quot;
+  [ &quot;$n&quot; -gt 0 ] || {
+    rm -f &quot;$sel&quot;; mj_archive_cleanup
+    mj_die &quot;$MJ_EX_CONTRACT&quot; &quot;profile &#39;$profile&#39; selects none of $MJ_ARCHIVE_TRACKED tracked file(s)&quot;; }
+  # `|| true`: a path in the index that the working tree no longer has makes `wc` exit
+  # non-zero, and the size of the content is a thing to report, never a thing to fail on.
+  # The missing paths are counted and reported separately, where they mean something.
+  bytes=&quot;$( { cut -f2 &quot;$sel&quot; | (cd &quot;$MJ_ROOT&quot; &amp;&amp; tr &#39;\n&#39; &#39;\0&#39; | xargs -0 wc -c 2&gt;/dev/null) || true; } \
+    | awk &#39;$2 != &quot;total&quot; { s += $1 } END { printf &quot;%d&quot;, s + 0 }&#39;)&quot;
+
+  if [ &quot;$dry&quot; = 1 ]; then
+    mj_archive_report &quot;$profile&quot; &quot;$flat&quot; &quot;$idx&quot; &quot;$n&quot; &quot;$bytes&quot; &quot;&quot; &quot;$ext&quot;
+    rm -f &quot;$sel&quot;; rm -rf &quot;$MJ_ARCHIVE_TMPD&quot;; mj_archive_cleanup
+    return 0
+  fi
+
+  if [ -z &quot;$out&quot; ]; then
+    out=&quot;$MJ_ROOT/tmp/archives/$(mj_archive_repo_name)-$profile-$(date -u +%Y%m%d).$ext&quot;
+  fi
+  case &quot;$out&quot; in /*) ;; *) out=&quot;$PWD/$out&quot; ;; esac
+  if [ -e &quot;$out&quot; ] &amp;&amp; [ &quot;$force&quot; != 1 ]; then
+    rm -f &quot;$sel&quot;; rm -rf &quot;$MJ_ARCHIVE_TMPD&quot;; mj_archive_cleanup
+    mj_die &quot;$MJ_EX_REFUSED&quot; &quot;archive: $out exists (--force to replace it)&quot;
+  fi
+  mkdir -p &quot;$(dirname &quot;$out&quot;)&quot; || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;cannot create $(dirname &quot;$out&quot;)&quot;
+
+  stage=&quot;$MJ_ARCHIVE_TMPD/stage/$(mj_archive_repo_name)&quot;
+  mkdir -p &quot;$stage&quot;
+  # copied through tar so that one process reads the list; a path the index names and the
+  # working tree does not have is counted and reported, never silently absent
+  local mode path
+  : &gt; &quot;$MJ_ARCHIVE_TMPD/copy&quot;
+  while IFS=&quot;$MJ_TAB&quot; read -r mode path; do
+    if [ -f &quot;$MJ_ROOT/$path&quot; ]; then printf &#39;%s\n&#39; &quot;$path&quot; &gt;&gt; &quot;$MJ_ARCHIVE_TMPD/copy&quot;
+    else missing=$((missing + 1)); fi
+  done &lt; &quot;$sel&quot;
+  ( cd &quot;$MJ_ROOT&quot; &amp;&amp; tar cf - -T &quot;$MJ_ARCHIVE_TMPD/copy&quot; ) | ( cd &quot;$stage&quot; &amp;&amp; tar xf - ) \
+    || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;could not copy the selected files&quot;
+  # the index is the authority on the mode, not the working tree. Two batched calls, not
+  # one process per file: this runs over every tracked path.
+  awk -F&quot;\t&quot; &#39;$1 == &quot;100755&quot; { print $2 }&#39; &quot;$sel&quot; &gt; &quot;$MJ_ARCHIVE_TMPD/x&quot;
+  awk -F&quot;\t&quot; &#39;$1 != &quot;100755&quot; { print $2 }&#39; &quot;$sel&quot; &gt; &quot;$MJ_ARCHIVE_TMPD/r&quot;
+  ( cd &quot;$stage&quot; &amp;&amp; tr &#39;\n&#39; &#39;\0&#39; &lt; &quot;$MJ_ARCHIVE_TMPD/x&quot; | xargs -0 chmod 755 2&gt;/dev/null ) || true
+  ( cd &quot;$stage&quot; &amp;&amp; tr &#39;\n&#39; &#39;\0&#39; &lt; &quot;$MJ_ARCHIVE_TMPD/r&quot; | xargs -0 chmod 644 2&gt;/dev/null ) || true
+
+  mj_archive_furnish &quot;$stage&quot; &quot;$profile&quot; &quot;$flat&quot; &quot;$idx&quot; &quot;$sel&quot; &quot;$n&quot; &quot;$missing&quot;
+  mj_archive_pack &quot;$stage&quot; &quot;$out&quot; &quot;$ext&quot; || rc=$?
+  [ &quot;$rc&quot; = 0 ] || { rm -f &quot;$sel&quot;; rm -rf &quot;$MJ_ARCHIVE_TMPD&quot;; mj_archive_cleanup; return &quot;$rc&quot;; }
+  mj_archive_verify &quot;$out&quot; &quot;$ext&quot; &quot;$stage&quot; || rc=$?
+
+  mj_archive_report &quot;$profile&quot; &quot;$flat&quot; &quot;$idx&quot; &quot;$n&quot; &quot;$bytes&quot; &quot;$out&quot; &quot;$ext&quot;
+  [ &quot;$missing&quot; = 0 ] || mj_warn archive &quot;$profile&quot; \
+    &quot;$missing tracked path(s) are in the index and not in the working tree; they are not in the archive&quot; \
+    &quot;git status --porcelain&quot;
+  rm -f &quot;$sel&quot;; rm -rf &quot;$MJ_ARCHIVE_TMPD&quot;; mj_archive_cleanup
+  return &quot;$rc&quot;
+}
+
+# ---------------------------------------------------------------- what travels with it
+# Three files the reader at the far end needs and cannot reconstruct: where the tree came
+# from, what is in it with what mode, and how to make it runnable again.
+mj_archive_furnish() { # stage profile flat idx sel n missing
+  local stage=&quot;$1&quot; profile=&quot;$2&quot; flat=&quot;$3&quot; idx=&quot;$4&quot; sel=&quot;$5&quot; n=&quot;$6&quot; missing=&quot;$7&quot;
+  local a=&quot;$stage/_ARCHIVE&quot; i line
+  mkdir -p &quot;$a&quot;
+
+  { printf &#39;repository: %s\n&#39; &quot;$(basename &quot;$MJ_ROOT&quot;)&quot;
+    printf &#39;commit:     %s\n&#39; &quot;$(mj_git rev-parse HEAD 2&gt;/dev/null || echo unknown)&quot;
+    printf &#39;branch:     %s\n&#39; &quot;$(mj_git_branch)&quot;
+    printf &#39;tree:       %s\n&#39; &quot;$(mj_git_dirty)&quot;
+    printf &#39;remote:     %s\n&#39; &quot;$(mj_url_public &quot;$(mj_git remote get-url origin 2&gt;/dev/null || echo none)&quot;)&quot;
+    printf &#39;profile:    %s\n&#39; &quot;$profile&quot;
+    printf &#39;taken:      %s\n&#39; &quot;$(mj_now)&quot;
+    printf &#39;tool:       majordomus %s\n&#39; &quot;$MJ_VERSION&quot;
+    printf &#39;\n&#39;
+    printf &#39;tracked in the repository: %s\n&#39; &quot;$MJ_ARCHIVE_TRACKED&quot;
+    printf &#39;in this archive:           %s\n&#39; &quot;$n&quot;
+    printf &#39;left out:                  %s\n&#39; &quot;$(mj_lines &quot;$MJ_ARCHIVE_DROPPED&quot;)&quot;
+    printf &#39;named but not on disk:     %s\n&#39; &quot;$missing&quot;
+    printf &#39;\n=== the last 80 commits ===\n&#39;
+    mj_git log --oneline -n 80 2&gt;/dev/null || true
+    printf &#39;\n=== tags, newest first ===\n&#39;
+    mj_git tag --sort=-creatordate 2&gt;/dev/null | head -40 || true
+  } &gt; &quot;$a/GIT.txt&quot;
+
+  { printf &#39;# %s — %s\n\n&#39; &quot;$(mj_archive_repo_name)&quot; &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.title&quot;)&quot;
+    printf &#39;%s\n\n&#39; &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.summary&quot;)&quot;
+    i=0
+    while line=&quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.orientation.$i&quot;)&quot;; [ -n &quot;$line&quot; ]; do
+      printf &#39;%s\n\n&#39; &quot;$line&quot;; i=$((i + 1))
+    done
+    printf &#39;## What is here\n\n&#39;
+    printf &#39;| | |\n|---|---|\n&#39;
+    printf &#39;| Profile | `%s` — %s |\n&#39; &quot;$profile&quot; &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.note&quot;)&quot;
+    printf &#39;| Commit | `%s` on `%s` |\n&#39; &quot;$(mj_git rev-parse HEAD 2&gt;/dev/null || echo unknown)&quot; &quot;$(mj_git_branch)&quot;
+    printf &#39;| Files | %s of %s tracked |\n&#39; &quot;$n&quot; &quot;$MJ_ARCHIVE_TRACKED&quot;
+    printf &#39;| Generated projections | %s |\n&#39; \
+      &quot;$( [ &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.derived&quot;)&quot; = drop ] &amp;&amp; printf &#39;left out — they are functions of files that are here&#39; || printf &#39;kept&#39; )&quot;
+    printf &#39;| Binary files | %s |\n&#39; \
+      &quot;$( [ &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.binary&quot;)&quot; = drop ] &amp;&amp; printf &#39;left out&#39; || printf &#39;kept&#39; )&quot;
+    printf &#39;\n`_ARCHIVE/GIT.txt` is where this came from, `_ARCHIVE/MANIFEST.txt` every file with its mode and size&#39;
+    [ &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.restore&quot;)&quot; = true ] \
+      &amp;&amp; printf &#39;, and `_ARCHIVE/restore.sh` puts the modes back and creates a local git index&#39;
+    printf &#39;.\n\n&#39;
+    printf &#39;## What was left out, and why\n\n&#39;
+    if [ -s &quot;$MJ_ARCHIVE_DROPPED&quot; ]; then
+      printf &#39;| Reason | Files |\n|---|---|\n&#39;
+      cut -f1 &quot;$MJ_ARCHIVE_DROPPED&quot; | LC_ALL=C sort | uniq -c \
+        | awk &#39;{ printf &quot;| %s | %s |\n&quot;, $2, $1 }&#39;
+      printf &#39;\n`derived` means the path is marked `merge=derived` in `.gitattributes`&#39;
+      printf &#39; — a projection of a canonical file that is in this archive.\n\n&#39;
+    else
+      printf &#39;Nothing tracked was left out.\n\n&#39;
+    fi
+    printf &#39;Untracked files are never archived, so the build output, the caches and&#39;
+    printf &#39; `.ai/local/` — this checkout\047s own state — are absent by construction rather than by exclusion.\n&#39;
+  } &gt; &quot;$a/README.md&quot;
+
+  if [ &quot;$(mj_yget &quot;$flat&quot; &quot;profiles.$idx.restore&quot;)&quot; = true ]; then
+    mj_archive_restore_script &gt; &quot;$a/restore.sh&quot;
+    chmod 755 &quot;$a/restore.sh&quot;
+  fi
+
+  # Last, so that it lists every other file this function wrote — the script that reads
+  # it included, whose mode is the one that matters most. It cannot list itself.
+  #
+  # One find, one wc, one awk: a `wc -c` per file would be another two thousand
+  # processes for a file nobody reads twice.
+  local t=&quot;$MJ_ARCHIVE_TMPD&quot;
+  ( cd &quot;$stage&quot; &amp;&amp; find . -type f | sed &#39;s|^\./||&#39; | LC_ALL=C sort ) &gt; &quot;$t/mf.files&quot;
+  ( cd &quot;$stage&quot; &amp;&amp; find . -type f -perm -u+x | sed &#39;s|^\./||&#39; | LC_ALL=C sort ) &gt; &quot;$t/mf.exec&quot;
+  ( cd &quot;$stage&quot; &amp;&amp; tr &#39;\n&#39; &#39;\0&#39; &lt; &quot;$t/mf.files&quot; | xargs -0 wc -c ) &gt; &quot;$t/mf.sizes&quot;
+  awk -v X=&quot;$t/mf.exec&quot; -v S=&quot;$t/mf.sizes&quot; &#39;
+    FILENAME == X { x[$0] = 1; next }
+    { size = $1; sub(/^[ \t]*[0-9]+[ \t]+/, &quot;&quot;); if ($0 == &quot;total&quot;) next
+      printf &quot;%s %9d  %s\n&quot;, ($0 in x ? &quot;100755&quot; : &quot;100644&quot;), size, $0 }&#39; \
+    &quot;$t/mf.exec&quot; &quot;$t/mf.sizes&quot; | LC_ALL=C sort -k3 &gt; &quot;$a/MANIFEST.txt&quot;
+}
+
+# POSIX sh: it runs wherever the archive is opened, which is not this machine
+mj_archive_restore_script() {
+  cat &lt;&lt;&#39;RESTORE&#39;
+#!/bin/sh
+# restore.sh — make this unpacked archive behave like a checkout again.
+#
+# Two things are lost between `zip` and the far end. The file modes go when the reader
+# discards the extra fields that carry them, and every script in the tree stops being
+# executable. The git index was never there at all, and the repository&#39;s own checks read
+# it — `git ls-files` is how this project enumerates itself, so without an index they do
+# not fail, they examine nothing and report that nothing is wrong.
+#
+# This restores both, from _ARCHIVE/MANIFEST.txt, which recorded the mode of every entry
+# as the original git index held it. Run it once, from the directory it sits in:
+#
+#     sh _ARCHIVE/restore.sh
+#
+# It creates one commit with no history and no remote. Anything that reads more than the
+# working tree will therefore say so rather than being quietly wrong.
+set -eu
+
+here=&quot;$(cd &quot;$(dirname &quot;$0&quot;)&quot; &amp;&amp; pwd)&quot;
+root=&quot;$(cd &quot;$here/..&quot; &amp;&amp; pwd)&quot;
+man=&quot;$here/MANIFEST.txt&quot;
+
+[ -f &quot;$man&quot; ] || { echo &quot;restore: no MANIFEST.txt beside this script&quot; &gt;&amp;2; exit 1; }
+cd &quot;$root&quot;
+
+modes=0
+missing=0
+while read -r mode size path; do
+  [ -n &quot;${path:-}&quot; ] || continue
+  if [ ! -f &quot;$path&quot; ]; then missing=$((missing + 1)); continue; fi
+  case &quot;$mode&quot; in
+    100755) chmod 755 &quot;$path&quot; ;;
+    *)      chmod 644 &quot;$path&quot; ;;
+  esac
+  modes=$((modes + 1))
+done &lt; &quot;$man&quot;
+
+echo &quot;restore: modes applied to $modes file(s) from $(basename &quot;$man&quot;)&quot;
+[ &quot;$missing&quot; = 0 ] || echo &quot;restore: $missing file(s) in the manifest are not in this tree&quot;
+
+if ! command -v git &gt;/dev/null 2&gt;&amp;1; then
+  echo &quot;restore: git is not on PATH; the modes are restored, the index is not&quot; &gt;&amp;2
+  exit 0
+fi
+if [ -d .git ]; then
+  echo &quot;restore: .git already exists here; leaving it alone&quot;
+  exit 0
+fi
+
+git init -q .
+git add -A
+git -c user.email=restore@localhost -c user.name=restore \
+    commit -q -m &quot;the archived tree, restored&quot; --no-verify
+n=&quot;$(git ls-files | wc -l | tr -d &#39; &#39;)&quot;
+echo &quot;restore: a git index of $n file(s), one commit, no history and no remote&quot;
+echo &quot;restore: the original commit and branch are in _ARCHIVE/GIT.txt&quot;
+RESTORE
+}
+
+# ---------------------------------------------------------------- container and proof
+mj_archive_pack() { # stage out ext
+  local stage=&quot;$1&quot; out=&quot;$2&quot; ext=&quot;$3&quot; parent base
+  parent=&quot;$(dirname &quot;$stage&quot;)&quot;; base=&quot;$(basename &quot;$stage&quot;)&quot;
+  case &quot;$ext&quot; in
+    zip)
+      mj_has zip || { mj_fail archive container &quot;zip is not on PATH&quot; &quot;majordomus archive --format tar.gz&quot;; return &quot;$MJ_EX_MISSING&quot;; }
+      # deliberately not -X: the extra fields it strips are the Unix modes, and an
+      # archive whose scripts are not executable fails for reasons of its own
+      ( cd &quot;$parent&quot; &amp;&amp; zip -q -r -y &quot;$out&quot; &quot;$base&quot; ) \
+        || { mj_fail archive container &quot;zip failed writing $out&quot; &quot;cd $parent &amp;&amp; zip -r out.zip $base&quot;; return &quot;$MJ_EX_INTERNAL&quot;; } ;;
+    tar.gz)
+      ( cd &quot;$parent&quot; &amp;&amp; tar czf &quot;$out&quot; &quot;$base&quot; ) \
+        || { mj_fail archive container &quot;tar failed writing $out&quot; &quot;cd $parent &amp;&amp; tar czf out.tar.gz $base&quot;; return &quot;$MJ_EX_INTERNAL&quot;; } ;;
+  esac
+  return 0
+}
+
+# An archive is not written until it has been read back. The count on disk and the count
+# in the container must agree, and the mode of a known executable must have survived the
+# round trip — that is the failure this whole file exists to answer, so it is proved here
+# rather than assumed.
+mj_archive_verify() { # out ext stage
+  local out=&quot;$1&quot; ext=&quot;$2&quot; stage=&quot;$3&quot; want got probe mode
+  want=&quot;$(cd &quot;$stage&quot; &amp;&amp; find . -type f | wc -l | tr -d &#39; &#39;)&quot;
+  case &quot;$ext&quot; in
+    zip)
+      got=&quot;$(unzip -Z1 &quot;$out&quot; 2&gt;/dev/null | grep -cv &#39;/$&#39; || true)&quot;
+      probe=&quot;$(unzip -Z &quot;$out&quot; 2&gt;/dev/null | awk &#39;$1 ~ /^-rwx/ { n++ } END { printf &quot;%d&quot;, n + 0 }&#39;)&quot; ;;
+    tar.gz)
+      got=&quot;$(tar tzf &quot;$out&quot; 2&gt;/dev/null | grep -cv &#39;/$&#39; || true)&quot;
+      probe=&quot;$(tar tzvf &quot;$out&quot; 2&gt;/dev/null | awk &#39;$1 ~ /^-rwx/ { n++ } END { printf &quot;%d&quot;, n + 0 }&#39;)&quot; ;;
+  esac
+  [ -n &quot;$got&quot; ] &amp;&amp; [ &quot;$got&quot; -gt 0 ] || {
+    mj_fail archive &quot;$(basename &quot;$out&quot;)&quot; &quot;the container reads back as empty; $want file(s) were staged&quot; \
+      &quot;unzip -l $out&quot;; return &quot;$MJ_EX_INTERNAL&quot;; }
+  [ &quot;$got&quot; = &quot;$want&quot; ] || {
+    mj_fail archive &quot;$(basename &quot;$out&quot;)&quot; &quot;$want file(s) staged, $got in the container&quot; \
+      &quot;unzip -l $out&quot;; return &quot;$MJ_EX_INTERNAL&quot;; }
+  mode=&quot;$(cd &quot;$stage&quot; &amp;&amp; find . -type f -perm -u+x | wc -l | tr -d &#39; &#39;)&quot;
+  if [ &quot;$mode&quot; -gt 0 ] &amp;&amp; [ &quot;$probe&quot; = 0 ]; then
+    mj_fail archive &quot;$(basename &quot;$out&quot;)&quot; \
+      &quot;$mode executable file(s) went in and none came back out: the container discarded the modes&quot; \
+      &quot;unzip -Z $out | head&quot;
+    return &quot;$MJ_EX_INTERNAL&quot;
+  fi
+  mj_ok archive &quot;$(basename &quot;$out&quot;)&quot; &quot;$got entr(ies) read back, $probe of them executable&quot;
+  return 0
+}
+
+# ---------------------------------------------------------------- saying what happened
+mj_archive_report() { # profile flat idx n bytes out ext
+  local profile=&quot;$1&quot; flat=&quot;$2&quot; idx=&quot;$3&quot; n=&quot;$4&quot; bytes=&quot;$5&quot; out=&quot;$6&quot; ext=&quot;$7&quot;
+  local dropped size=0
+  dropped=&quot;$(mj_lines &quot;$MJ_ARCHIVE_DROPPED&quot;)&quot;
+  [ -n &quot;$out&quot; ] &amp;&amp; [ -f &quot;$out&quot; ] &amp;&amp; size=&quot;$(wc -c &lt; &quot;$out&quot; | tr -d &#39; &#39;)&quot;
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;schema&quot;:1,&quot;profile&quot;:&quot;%s&quot;,&quot;format&quot;:&quot;%s&quot;,&quot;tracked&quot;:%s,&quot;archived&quot;:%s,&quot;left_out&quot;:%s,&quot;content_bytes&quot;:%s,&quot;path&quot;:&quot;%s&quot;,&quot;bytes&quot;:%s,&quot;reasons&quot;:{&#39; \
+      &quot;$(mj_json_esc &quot;$profile&quot;)&quot; &quot;$(mj_json_esc &quot;$ext&quot;)&quot; &quot;$MJ_ARCHIVE_TRACKED&quot; &quot;$n&quot; &quot;$dropped&quot; &quot;$bytes&quot; \
+      &quot;$(mj_json_esc &quot;$([ -n &quot;$out&quot; ] &amp;&amp; mj_rel &quot;$out&quot;)&quot;)&quot; &quot;$size&quot;
+    cut -f1 &quot;$MJ_ARCHIVE_DROPPED&quot; | LC_ALL=C sort | uniq -c \
+      | awk &#39;{ printf &quot;%s\&quot;%s\&quot;:%s&quot;, (NR &gt; 1 ? &quot;,&quot; : &quot;&quot;), $2, $1 }&#39;
+    printf &#39;}}\n&#39;
+    return 0
+  fi
+  printf &#39;archive: profile %s — %s of %s tracked file(s), %s KB of content\n&#39; \
+    &quot;$profile&quot; &quot;$n&quot; &quot;$MJ_ARCHIVE_TRACKED&quot; &quot;$((bytes / 1024))&quot;
+  if [ &quot;$dropped&quot; -gt 0 ]; then
+    cut -f1 &quot;$MJ_ARCHIVE_DROPPED&quot; | LC_ALL=C sort | uniq -c \
+      | awk &#39;{ printf &quot;         left out: %s (%s)\n&quot;, $1, $2 }&#39;
+  fi
+  if [ -n &quot;$out&quot; ]; then
+    printf &#39;         wrote %s (%s KB)\n&#39; &quot;$(mj_rel &quot;$out&quot;)&quot; &quot;$((size / 1024))&quot;
+  else
+    printf &#39;         nothing written (--dry-run)\n&#39;
+  fi
+}
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

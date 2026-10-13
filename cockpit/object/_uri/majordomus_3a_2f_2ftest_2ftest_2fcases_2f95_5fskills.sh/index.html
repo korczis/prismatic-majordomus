@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/95_skills.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/95_skills.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/95_skills.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/95_skills.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/95_skills.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/95_skills.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F95_skills.sh">test.test/cases/95_skills.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: skills
+# majordomus-negative: skills doctor watch
+# claims: skill-catalogue, skill-check, skill-site-projection
+# Skills are data, not registrations. A skill is one directory under the layer&#39;s skills
+# section holding SKILL.md; the source class `skill` in the knowledge sources is the whole
+# registration, shared by the shell tool, the Rust executable and the site generator. This
+# case adds a skill and watches it appear in the catalogue, the command, doctor, the Rust
+# index (MCP resource, majordomus_list, majordomus_get) and the site&#39;s data and pages; then
+# breaks one and watches every surface refuse it the same way; then renames and removes it
+# and watches every derived trace go with it. The Rust and site halves skip themselves
+# when their toolchain is absent, as the other cases do.
+. &quot;$ROOT/test/lib.sh&quot;
+S=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj95.XXXXXX&quot;)&quot;; trap &#39;rm -rf &quot;$S&quot;&#39; EXIT
+&quot;$MJ&quot; init &gt;/dev/null; &quot;$MJ&quot; update &gt;/dev/null
+mkdir -p lib &amp;&amp; echo a &gt; lib/a &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git commit -qm base
+# the two enforcements the policy declares, wired, so that doctor&#39;s verdict is about skills
+mkdir -p .githooks
+printf &#39;#!/bin/sh\n%s doctor || exit $?\n&#39; &quot;$MJ&quot; &gt; .githooks/pre-commit
+printf &#39;#!/bin/sh\n%s finish --check || exit $?\n&#39; &quot;$MJ&quot; &gt; .githooks/pre-push
+chmod +x .githooks/pre-commit .githooks/pre-push; git config core.hooksPath .githooks
+
+skill() { # id [status] [related-csv] — a valid skill with one example, written and tracked
+  local id=&quot;$1&quot; st=&quot;${2:-active}&quot; rel=&quot;${3:-}&quot;
+  mkdir -p &quot;.ai/repo/skills/$id/examples&quot;
+  {
+    printf -- &#39;---\nschema: skill/v1\nid: %s\nversion: 1\ntitle: Skill %s\ndescription: The %s procedure.\nstatus: %s\ntags: [fixture]\n&#39; &quot;$id&quot; &quot;$id&quot; &quot;$id&quot; &quot;$st&quot;
+    [ -z &quot;$rel&quot; ] || printf &#39;related: [%s]\n&#39; &quot;$rel&quot;
+    printf &#39;inputs:\n  - a checkout\noutputs:\n  - a report\n---\n# Purpose\n\nWhy %s exists.\n\n# Procedure\n\n1. Do the %s thing.\n\n# Output\n\nWhat %s leaves behind.\n&#39; &quot;$id&quot; &quot;$id&quot; &quot;$id&quot;
+  } &gt; &quot;.ai/repo/skills/$id/SKILL.md&quot;
+  printf &#39;# Example for %s\n\n```text\nApply the %s skill.\n```\n&#39; &quot;$id&quot; &quot;$id&quot; &gt; &quot;.ai/repo/skills/$id/examples/basic.md&quot;
+  # an active skill is a capability only when a test names it and a surface invokes it
+  # (project.skills-are-proven-capabilities); 391_skills_are_proven_capabilities is where that
+  # proof is measured, so every fixture skill here carries both and doctor stays about the file
+  mkdir -p test/cases .ai/repo/workflows
+  printf &#39;# majordomus-skill: %s\ntrue\n&#39; &quot;$id&quot; &gt; &quot;test/cases/00_uses_$id.sh&quot;
+  printf &#39;# Uses %s\n\nFollow majordomus://skill/%s.\n&#39; &quot;$id&quot; &quot;$id&quot; &gt; &quot;.ai/repo/workflows/uses-$id.md&quot;
+  git add &quot;.ai/repo/skills/$id&quot; &quot;test/cases/00_uses_$id.sh&quot; &quot;.ai/repo/workflows/uses-$id.md&quot; &gt;/dev/null
+}
+unskill() { # dir [id the bindings were written for] — the skill and its test and invocation, gone
+  git rm -rqf &quot;.ai/repo/skills/$1&quot; &quot;test/cases/00_uses_${2:-$1}.sh&quot; &quot;.ai/repo/workflows/uses-${2:-$1}.md&quot; &gt;/dev/null
+}
+
+# ---------------------------------------------------------------- usage and the empty case
+expect_exit 2 &quot;$MJ&quot; skills
+expect_grep &#39;usage: majordomus skills list&#39;
+expect_exit 2 &quot;$MJ&quot; skills nonsense
+expect_exit 2 &quot;$MJ&quot; skills show
+expect_grep &#39;a skill id is required&#39;
+expect_exit 2 &quot;$MJ&quot; skills show ../../etc/passwd
+expect_grep &#39;is not a skill id&#39;
+expect_exit 0 &quot;$MJ&quot; skills list
+expect_grep &#39;no skills under \.ai/repo/skills/&#39;
+# nothing examined is not a pass: the empty catalogue is a WARN with the counts at zero
+expect_exit 0 &quot;$MJ&quot; skills check
+expect_grep &#39;^WARN skill &#39;
+expect_no_grep &#39;^OK   skill &#39;
+expect_grep &#39;skills: 0 discovered, 0 valid&#39;
+
+# ---------------------------------------------------------------- one file makes a skill
+skill review
+# untracked is not a source: discovery reads the index, never the working tree
+git rm -rq --cached .ai/repo/skills/review &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; skills list
+expect_no_grep &#39;review&#39;
+git add .ai/repo/skills/review &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; skills list
+expect_grep &#39;^review +active +v1 +The review procedure\.$&#39;
+expect_exit 0 &quot;$MJ&quot; skills check
+expect_grep &#39;^OK   skill +1 skill\(s\)&#39;
+expect_grep &#39;^OK   skill +1 reference\(s\)&#39;
+expect_grep &#39;skills: 1 discovered, 1 valid; examples: 1; references: 1 checked; failures: 0&#39;
+expect_exit 0 &quot;$MJ&quot; skills show review
+expect_grep &#39;^\.ai/repo/skills/review/SKILL\.md$&#39;
+expect_grep &#39;^# Procedure$&#39;
+expect_exit 12 &quot;$MJ&quot; skills show nosuch
+expect_grep &quot;no skill &#39;nosuch&#39;&quot;
+expect_grep &#39;skills list&#39;
+if command -v jq &gt;/dev/null; then
+  &quot;$MJ&quot; skills list --json &gt; &quot;$S/list.json&quot;
+  jq -e &#39;.count == 1 and .skills[0].id == &quot;review&quot; and .skills[0].uri == &quot;majordomus://skill/review&quot; and .skills[0].path == &quot;.ai/repo/skills/review/SKILL.md&quot; and .skills[0].valid == true and (.skills[0].examples | length) == 1 and (.skills[0].inputs | length) == 1 and (.skills[0].sha256 | length) == 64&#39; &quot;$S/list.json&quot; &gt;/dev/null \
+    || { echo &quot;    skills list --json does not describe the skill from its file&quot;; cat &quot;$S/list.json&quot;; exit 1; }
+  &quot;$MJ&quot; skills show review --json &gt; &quot;$S/show.json&quot;
+  jq -e &#39;.id == &quot;review&quot; and (.body | contains(&quot;# Procedure&quot;))&#39; &quot;$S/show.json&quot; &gt;/dev/null || { echo &quot;    skills show --json carries no body&quot;; exit 1; }
+  &quot;$MJ&quot; skills check --json &gt; &quot;$S/check.json&quot;
+  jq -se &#39;.[-1].summary == {skills: 1, valid: 1, examples: 1, references: 1, failures: 0}&#39; &quot;$S/check.json&quot; &gt;/dev/null || { echo &quot;    skills check --json summary is wrong:&quot;; cat &quot;$S/check.json&quot;; exit 1; }
+fi
+# doctor runs the same examination through the doctrine, wired and dispatched
+expect_exit 0 &quot;$MJ&quot; doctor
+expect_grep &#39;^OK   skill +1 skill\(s\), 1 example\(s\)&#39;
+expect_exit 0 &quot;$MJ&quot; doctrine show majordomus.skill-integrity
+expect_grep &#39;^validator +mj_validate_skills$&#39;
+expect_grep &#39;^wired +yes&#39;
+
+# ---------------------------------------------------------------- deterministic, and ordered by path not by creation
+skill zeta; skill alpha &quot;draft&quot; &quot;review&quot;
+&quot;$MJ&quot; skills list &gt; &quot;$S/l1.txt&quot;; &quot;$MJ&quot; skills list &gt; &quot;$S/l2.txt&quot;
+cmp -s &quot;$S/l1.txt&quot; &quot;$S/l2.txt&quot; || { echo &quot;    two listings of one tree differ&quot;; exit 1; }
+[ &quot;$(awk &#39;{print $1}&#39; &quot;$S/l1.txt&quot; | paste -sd, -)&quot; = &quot;alpha,review,zeta&quot; ] || { echo &quot;    listing is not in path order: $(awk &#39;{print $1}&#39; &quot;$S/l1.txt&quot; | paste -sd, -)&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; skills check
+expect_grep &#39;skills: 3 discovered, 3 valid; examples: 3; references: 4 checked&#39;
+
+# ---------------------------------------------------------------- every way a skill can be wrong, each named
+mkdir -p .ai/repo/skills/broken
+printf -- &#39;---\nschema: skill/v1\nid: other\nversion: 0\ntitle: X\ndescription: y\nstatus: shiny\nrelated: [nosuch]\nowner: me\n---\n# Purpose\n\ntext\n\n# Output\n&#39; &gt; .ai/repo/skills/broken/SKILL.md
+git add .ai/repo/skills/broken &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; skills check
+expect_grep &#39;^FAIL skill +\.ai/repo/skills/broken/SKILL\.md — .*unknown front-matter key\(s\): owner&#39;
+expect_grep &#39;id &quot;other&quot; does not match the directory name &quot;broken&quot;&#39;
+expect_grep &#39;version must be an integer of at least 1&#39;
+expect_grep &#39;status must be one of draft, active, deprecated&#39;
+expect_grep &#39;body lacks a non-empty section for: Procedure Output&#39;
+expect_grep &quot;related skill &#39;nosuch&#39; does not exist&quot;
+expect_grep &#39;skills: 4 discovered, 3 valid&#39;
+expect_grep &#39;failures: 2&#39;
+# the listing still shows it, marked by its reason, rather than hiding it
+expect_exit 0 &quot;$MJ&quot; skills list
+expect_grep &#39;^other +shiny &#39;
+expect_exit 10 &quot;$MJ&quot; doctor
+expect_grep &#39;^FAIL skill +\.ai/repo/skills/broken/SKILL\.md&#39;
+expect_exit 11 &quot;$MJ&quot; watch
+expect_grep &#39;^DRIFT skill +\.ai/repo/skills/broken/SKILL\.md&#39;
+# no front matter at all, and a duplicate id, are each their own finding
+printf &#39;# Purpose\n\nno front matter\n&#39; &gt; .ai/repo/skills/broken/SKILL.md
+expect_exit 10 &quot;$MJ&quot; skills check
+expect_grep &#39;broken/SKILL\.md — no front matter&#39;
+git rm -rqf .ai/repo/skills/broken &gt;/dev/null
+skill twin; sed -i.bak &#39;s/^id: twin$/id: review/&#39; .ai/repo/skills/twin/SKILL.md &amp;&amp; rm -f .ai/repo/skills/twin/SKILL.md.bak &amp;&amp; git add .ai/repo/skills/twin &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; skills check
+expect_grep &quot;duplicate skill id &#39;review&#39;&quot;
+unskill twin
+# two skills that describe themselves the same way: a worker selects on the description, so
+# neither can be reached. Case, spacing and a trailing full stop are not a difference.
+skill sibling
+sed -i.bak &#39;s/^description: .*$/description:   THE  REVIEW   PROCEDURE./&#39; .ai/repo/skills/sibling/SKILL.md &amp;&amp; rm -f .ai/repo/skills/sibling/SKILL.md.bak &amp;&amp; git add .ai/repo/skills/sibling &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; skills check
+expect_grep &quot;description does not tell this skill apart from &#39;review&#39;&quot;
+expect_exit 10 &quot;$MJ&quot; doctor
+expect_grep &#39;sibling/SKILL\.md — description does not tell this skill apart&#39;
+expect_exit 11 &quot;$MJ&quot; watch
+expect_grep &#39;^DRIFT skill +\.ai/repo/skills/sibling/SKILL\.md&#39;
+# a description that says something else is not a duplicate, however similar it looks
+sed -i.bak &#39;s/^description: .*$/description: The review procedure, but for something else entirely./&#39; .ai/repo/skills/sibling/SKILL.md &amp;&amp; rm -f .ai/repo/skills/sibling/SKILL.md.bak &amp;&amp; git add .ai/repo/skills/sibling &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; skills check
+unskill sibling
+# an example under a directory with no skill, and one without a heading
+mkdir -p .ai/repo/skills/orphan/examples &amp;&amp; printf &#39;no heading here\n&#39; &gt; .ai/repo/skills/orphan/examples/x.md &amp;&amp; git add .ai/repo/skills/orphan &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; skills check
+expect_grep &#39;orphan/examples/x\.md — example under a directory that holds no valid SKILL\.md&#39;
+expect_grep &#39;orphan/examples/x\.md — example has no level-one heading&#39;
+git rm -rqf .ai/repo/skills/orphan &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; skills check
+
+# ---------------------------------------------------------------- the Rust executable reads the same declaration
+RB=&quot;$(rust_bin)&quot; || rc=$?
+if [ -n &quot;${RB:-}&quot; ]; then
+  MAJORDOMUS_SHARE=&quot;$ROOT/share&quot;; export MAJORDOMUS_SHARE
+  git commit -qm skills &gt;/dev/null
+  # the allow-list the shell validator reads is the schema&#39;s projection
+  expect_exit 0 &quot;$RB&quot; generate allow --check
+  expect_exit 0 &quot;$RB&quot; mcp --inspect
+  expect_grep &#39;^resource    majordomus://skill/review$&#39;
+  expect_grep &#39;^resource    majordomus://skill/alpha$&#39;
+  expect_grep &#39;^resource    majordomus://document/\.ai/repo/skills/review/examples/basic\.md$&#39;
+  &quot;$RB&quot; capabilities list --kind resource --format json 2&gt;/dev/null &gt; &quot;$S/caps.json&quot;
+  jq -e &#39;[.capabilities[].id] | index(&quot;skill.review&quot;) != null and index(&quot;skill.zeta&quot;) != null&#39; &quot;$S/caps.json&quot; &gt;/dev/null \
+    || { echo &quot;    the Rust registry does not carry the skills as resources&quot;; exit 1; }
+  # a real session: list by kind, read the file, get it through the tool
+  req() { printf &#39;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:%s,&quot;method&quot;:&quot;%s&quot;%s}\n&#39; &quot;$1&quot; &quot;$2&quot; &quot;${3:+,\&quot;params\&quot;:$3}&quot;; }
+  {
+    req 1 initialize &#39;{&quot;protocolVersion&quot;:&quot;2025-06-18&quot;,&quot;capabilities&quot;:{},&quot;clientInfo&quot;:{&quot;name&quot;:&quot;case95&quot;,&quot;version&quot;:&quot;0&quot;}}&#39;
+    printf &#39;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;notifications/initialized&quot;}\n&#39;
+    req 2 tools/call &#39;{&quot;name&quot;:&quot;majordomus_list&quot;,&quot;arguments&quot;:{&quot;kind&quot;:&quot;skill&quot;}}&#39;
+    req 3 resources/read &#39;{&quot;uri&quot;:&quot;majordomus://skill/review&quot;}&#39;
+    req 4 tools/call &#39;{&quot;name&quot;:&quot;majordomus_get&quot;,&quot;arguments&quot;:{&quot;uri&quot;:&quot;majordomus://skill/alpha&quot;}}&#39;
+  } &gt; &quot;$S/session.in&quot;
+  &quot;$RB&quot; mcp --standalone &lt; &quot;$S/session.in&quot; &gt; &quot;$S/session.out&quot; 2&gt;&quot;$S/session.err&quot; || { echo &quot;    the MCP session failed&quot;; cat &quot;$S/session.err&quot;; exit 1; }
+  sed -n 2p &quot;$S/session.out&quot; | jq -e &#39;.result.structuredContent | .count == 3 and ([.objects[].identity] | sort_by(.)) == [&quot;alpha&quot;,&quot;review&quot;,&quot;zeta&quot;]&#39; &gt;/dev/null \
+    || { echo &quot;    majordomus_list kind=skill does not list the three skills&quot;; sed -n 2p &quot;$S/session.out&quot;; exit 1; }
+  sed -n 3p &quot;$S/session.out&quot; | jq -e &#39;.result.contents[0].text | contains(&quot;# Procedure&quot;) and contains(&quot;id: review&quot;)&#39; &gt;/dev/null \
+    || { echo &quot;    resources/read of the skill does not return the file&quot;; sed -n 3p &quot;$S/session.out&quot;; exit 1; }
+  sed -n 4p &quot;$S/session.out&quot; | jq -e &#39;.result.structuredContent | .metadata.related == [&quot;review&quot;] and .metadata.status == &quot;draft&quot; and .provenance.path == &quot;.ai/repo/skills/alpha/SKILL.md&quot; and (.content | contains(&quot;# Procedure&quot;))&#39; &gt;/dev/null \
+    || { echo &quot;    majordomus_get does not carry the metadata and provenance of the skill&quot;; sed -n 4p &quot;$S/session.out&quot;; exit 1; }
+  # the executable refuses what the shell refuses: an unknown key is a diagnostic naming the file
+  mkdir -p .ai/repo/skills/bad &amp;&amp; printf -- &#39;---\nschema: skill/v1\nid: bad\nversion: 1\ntitle: B\ndescription: b\nstatus: active\nowner: me\n---\n# Purpose\n\nx\n\n# Procedure\n\nx\n\n# Output\n\nx\n&#39; &gt; .ai/repo/skills/bad/SKILL.md
+  git add .ai/repo/skills/bad &gt;/dev/null
+  expect_exit 10 &quot;$RB&quot; mcp --inspect
+  expect_grep &#39;^FAIL unknown_key +\.ai/repo/skills/bad/SKILL\.md&#39;
+  expect_exit 10 &quot;$MJ&quot; skills check
+  expect_grep &#39;bad/SKILL\.md — unknown front-matter key\(s\): owner&#39;
+  git rm -rqf .ai/repo/skills/bad &gt;/dev/null
+else
+  [ &quot;${rc:-0}&quot; = 3 ] &amp;&amp; echo &quot;    (no cargo and no MAJORDOMUS_BIN: the Rust half is skipped)&quot; || exit 1
+fi
+
+# ---------------------------------------------------------------- rename and removal leave nothing behind
+git mv .ai/repo/skills/zeta .ai/repo/skills/omega
+sed -i.bak &#39;s/^id: zeta$/id: omega/&#39; .ai/repo/skills/omega/SKILL.md &amp;&amp; rm -f .ai/repo/skills/omega/SKILL.md.bak &amp;&amp; git add .ai/repo/skills/omega &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; skills list
+expect_grep &#39;^omega &#39;
+expect_no_grep &#39;^zeta &#39;
+unskill omega zeta
+expect_exit 0 &quot;$MJ&quot; skills check
+expect_grep &#39;skills: 2 discovered, 2 valid&#39;
+expect_exit 12 &quot;$MJ&quot; skills show omega
+
+# ---------------------------------------------------------------- the site is a projection of the same catalogue
+command -v jq &gt;/dev/null || skip &quot;(jq absent: the site half is skipped)&quot;
+F=&quot;$S/site&quot;; fixture_repo &quot;$F&quot; AGENTS.md docs
+rm -rf &quot;$F/.ai/repo/skills&quot;; mkdir -p &quot;$F/.ai/repo/skills&quot;
+cp -R &quot;$ROOT/.ai/repo/skills/README.md&quot; &quot;$F/.ai/repo/skills/&quot; 2&gt;/dev/null || true
+cp -R .ai/repo/skills/review .ai/repo/skills/alpha &quot;$F/.ai/repo/skills/&quot;
+# figures.toml too: the pages of content-src cite their counts through it, and the build
+# refuses a citation it cannot resolve
+mkdir -p &quot;$F/site/data&quot; &quot;$F/test&quot;; cp &quot;$ROOT/site/data/marketing.toml&quot; &quot;$ROOT/site/data/nav.toml&quot; &quot;$ROOT/site/data/figures.toml&quot; &quot;$F/site/data/&quot;; cp -R &quot;$ROOT/site/content-src&quot; &quot;$ROOT/site/templates&quot; &quot;$ROOT/site/static&quot; &quot;$F/site/&quot;; cp -R &quot;$ROOT/test/cases&quot; &quot;$F/test/&quot;
+# site/static/app.css is a Tailwind build product and is ignored, so whether it exists in
+# the tree depends on whether anyone has run a full build here. base.html links it with
+# cachebust=true, which makes zola read it, so the fixture build below passed on a machine
+# that had built the site and failed on a clean checkout — the fixture inheriting ambient
+# state, not a fact about skills. The fixture provides its own.
+[ -f &quot;$F/site/static/app.css&quot; ] || printf &#39;/* fixture: no Tailwind build here. */\n&#39; &gt; &quot;$F/site/static/app.css&quot;
+# and the kit&#39;s sheet, which every page composed of the kit links (partials/kit-assets.html)
+[ -f &quot;$F/site/static/kit.css&quot; ] || printf &#39;/* fixture: no Tailwind build here. */\n&#39; &gt; &quot;$F/site/static/kit.css&quot;
+git -C &quot;$F&quot; init -q; git -C &quot;$F&quot; config user.email fixture@example.invalid; git -C &quot;$F&quot; config user.name fixture
+git -C &quot;$F&quot; add -A &gt;/dev/null; git -C &quot;$F&quot; commit -qm fixture
+# The derivation steps run with --no-scenarios, the flag the generator keeps for the cases
+# that test derivation: skills.json and the skill pages are read from the catalogue whether
+# or not the use-case scenarios execute, `--check` compares like with like, and executing
+# them was ~70% of each generation (652 of 924 s, measured 2026-10-12) with nothing here
+# reading what they produced. The last generation, the one zola builds from, runs them in
+# full, so the built site is the site the generator publishes.
+expect_exit 0 &quot;$F/scripts/generate-site-data&quot; --no-scenarios
+SJ=&quot;$F/site/data/generated/skills.json&quot;
+jq -e &#39;.count == 2 and ([.skills[].id]) == [&quot;alpha&quot;,&quot;review&quot;] and .skills[1].route == &quot;/skills/review/&quot; and .skills[1].examples[0].title == &quot;Example for review&quot; and (.skills[1].examples[0].body | contains(&quot;Apply the review skill&quot;)) and .by_tag.fixture == [&quot;alpha&quot;,&quot;review&quot;]&#39; &quot;$SJ&quot; &gt;/dev/null \
+  || { echo &quot;    skills.json is not the catalogue: &quot;; jq -c . &quot;$SJ&quot;; exit 1; }
+[ -f &quot;$F/site/content/skills/_index.md&quot; ] &amp;&amp; [ -f &quot;$F/site/content/skills/review.md&quot; ] &amp;&amp; [ -f &quot;$F/site/content/skills/alpha.md&quot; ] || { echo &quot;    the skill pages were not generated&quot;; exit 1; }
+grep -q &#39;^## Procedure$&#39; &quot;$F/site/content/skills/review.md&quot; || { echo &quot;    the skill page does not carry the skill&#39;s body (its sections one level down)&quot;; exit 1; }
+grep -q &#39;^source = &quot;.ai/repo/skills/review/SKILL.md&quot;$&#39; &quot;$F/site/content/skills/review.md&quot; || { echo &quot;    the skill page does not name its source&quot;; exit 1; }
+# in sync, then stale the moment a skill changes, then in sync again once regenerated
+expect_exit 0 &quot;$F/scripts/generate-site-data&quot; --check --no-scenarios
+sed -i.bak &#39;s/^description: The review procedure\.$/description: The review procedure, revised./&#39; &quot;$F/.ai/repo/skills/review/SKILL.md&quot;; rm -f &quot;$F/.ai/repo/skills/review/SKILL.md.bak&quot;
+expect_exit 10 &quot;$F/scripts/generate-site-data&quot; --check --no-scenarios
+expect_exit 0 &quot;$F/scripts/generate-site-data&quot; --no-scenarios
+jq -e &#39;.skills[1].description == &quot;The review procedure, revised.&quot;&#39; &quot;$SJ&quot; &gt;/dev/null || { echo &quot;    the regenerated catalogue does not carry the edit&quot;; exit 1; }
+# a hand edit to the projection is drift
+cp &quot;$SJ&quot; &quot;$S/skills.json.good&quot;; jq &#39;.count = 9&#39; &quot;$SJ&quot; &gt; &quot;$SJ.tmp&quot; &amp;&amp; mv &quot;$SJ.tmp&quot; &quot;$SJ&quot;
+expect_exit 10 &quot;$F/scripts/generate-site-data&quot; --check --no-scenarios
+cp &quot;$S/skills.json.good&quot; &quot;$SJ&quot;
+# a broken skill fails the build before a byte is published
+awk &#39;{ print } /^schema: skill\/v1$/ { print &quot;stray: yes&quot; }&#39; &quot;$F/.ai/repo/skills/alpha/SKILL.md&quot; &gt; &quot;$S/alpha.md&quot; &amp;&amp; mv &quot;$S/alpha.md&quot; &quot;$F/.ai/repo/skills/alpha/SKILL.md&quot;
+expect_exit 10 &quot;$F/scripts/generate-site-data&quot; --no-scenarios
+expect_grep &#39;unknown front-matter key\(s\): stray&#39;
+git -C &quot;$F&quot; checkout -q -- .ai/repo/skills/alpha/SKILL.md
+# removal: the page and the entry go with the file
+git -C &quot;$F&quot; rm -rq .ai/repo/skills/alpha &gt;/dev/null
+expect_exit 0 &quot;$F/scripts/generate-site-data&quot;
+jq -e &#39;.count == 1 and .skills[0].id == &quot;review&quot;&#39; &quot;$SJ&quot; &gt;/dev/null || { echo &quot;    the removed skill is still in the catalogue&quot;; exit 1; }
+[ ! -e &quot;$F/site/content/skills/alpha.md&quot; ] || { echo &quot;    the removed skill still has a page&quot;; exit 1; }
+if command -v zola &gt;/dev/null; then
+  # zola&#39;s own diagnosis, not a sentence that says only that it failed
+  ( cd &quot;$F/site&quot; &amp;&amp; run_quiet &quot;$S/zola.err&quot; zola build --force -o &quot;$S/public&quot; &gt;/dev/null ) \
+    || { echo &quot;    zola could not build the fixture site&quot;; exit 1; }
+  [ -f &quot;$S/public/skills/index.html&quot; ] &amp;&amp; [ -f &quot;$S/public/skills/review/index.html&quot; ] || { echo &quot;    the built site lacks the skills index or the skill page&quot;; exit 1; }
+  [ ! -e &quot;$S/public/skills/alpha&quot; ] || { echo &quot;    the built site still carries the removed skill&quot;; exit 1; }
+  grep -q &#39;majordomus://skill/review&#39; &quot;$S/public/skills/review/index.html&quot; || { echo &quot;    the skill page does not name its URI&quot;; exit 1; }
+  grep -q &#39;Example for review&#39; &quot;$S/public/skills/review/index.html&quot; || { echo &quot;    the skill page does not render its example&quot;; exit 1; }
+  grep -q &#39;skills/review/&#39; &quot;$S/public/skills/index.html&quot; || { echo &quot;    the skills index does not link the skill&quot;; exit 1; }
+else
+  echo &quot;    (zola absent: the built pages are not checked)&quot;
+fi
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

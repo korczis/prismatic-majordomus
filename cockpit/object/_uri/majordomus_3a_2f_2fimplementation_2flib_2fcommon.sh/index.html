@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>lib/common.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">lib/common.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">lib/common.sh</h1><p class="mj-page-subtitle">An object of kind implementation</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://implementation/lib/common.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">implementation</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">lib/common.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">lib/common.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/implementation.lib%2Fcommon.sh">implementation.lib/common.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code>#!/usr/bin/env bash
+# shellcheck disable=SC2034  # the MJ_RES_* resolution outputs are read by the commands that
+# source this file: handover, checkpoint, context, prompt, start, doctor and watch.
+# common.sh — shared helpers for majordomus. Sourced, never executed.
+# Targets bash 3.2 and BSD userland: no associative arrays, no mapfile, no GNU-only flags.
+
+MJ_EX_OK=0; MJ_EX_USAGE=2; MJ_EX_CONTRACT=10; MJ_EX_DRIFT=11
+MJ_EX_MISSING=12; MJ_EX_INTERNAL=13; MJ_EX_REFUSED=15
+export MJ_EX_OK MJ_EX_USAGE MJ_EX_CONTRACT MJ_EX_DRIFT MJ_EX_MISSING MJ_EX_INTERNAL MJ_EX_REFUSED
+
+# shellcheck source=sha256.sh
+. &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)/sha256.sh&quot;
+
+MJ_REPO=&quot;&quot;; MJ_JSON=0; MJ_ARGS=()
+MJ_FINDINGS=0; MJ_FAILS=0
+
+# ---------------------------------------------------------------- output
+mj_err()  { printf &#39;majordomus: %s\n&#39; &quot;$*&quot; &gt;&amp;2; }
+mj_die()  { local code=&quot;$1&quot;; shift; mj_err &quot;$*&quot;; exit &quot;$code&quot;; }
+
+# mj_finding LEVEL category subject message [reproduce]
+mj_finding() {
+  local level=&quot;$1&quot; cat=&quot;$2&quot; subj=&quot;$3&quot; msg=&quot;$4&quot; rep=&quot;${5:-}&quot;
+  MJ_FINDINGS=$((MJ_FINDINGS + 1))
+  case &quot;$level&quot; in FAIL|DRIFT) MJ_FAILS=$((MJ_FAILS + 1)) ;; esac
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;level&quot;:&quot;%s&quot;,&quot;category&quot;:&quot;%s&quot;,&quot;subject&quot;:&quot;%s&quot;,&quot;message&quot;:&quot;%s&quot;,&quot;reproduce&quot;:&quot;%s&quot;}\n&#39; \
+      &quot;$level&quot; &quot;$(mj_json_esc &quot;$cat&quot;)&quot; &quot;$(mj_json_esc &quot;$subj&quot;)&quot; &quot;$(mj_json_esc &quot;$msg&quot;)&quot; &quot;$(mj_json_esc &quot;$rep&quot;)&quot;
+  else
+    if [ -n &quot;$rep&quot; ]; then
+      printf &#39;%-4s %-11s %s — %s  [reproduce: %s]\n&#39; &quot;$level&quot; &quot;$cat&quot; &quot;$subj&quot; &quot;$msg&quot; &quot;$rep&quot;
+    else
+      printf &#39;%-4s %-11s %s — %s\n&#39; &quot;$level&quot; &quot;$cat&quot; &quot;$subj&quot; &quot;$msg&quot;
+    fi
+  fi
+}
+mj_ok()    { mj_finding OK    &quot;$@&quot;; }
+mj_fail()  { mj_finding FAIL  &quot;$@&quot;; }
+mj_warn()  { mj_finding WARN  &quot;$@&quot;; }
+mj_info()  { mj_finding INFO  &quot;$@&quot;; }
+mj_drift() { mj_finding DRIFT &quot;$@&quot;; }
+
+# The fingerprint of a set of files: one line &quot;&lt;path&gt; &lt;hash&gt;&quot; per path in the order given,
+# then the hash of that stream. One hashing process for the whole list rather than one per
+# file — the difference between a fifth of a second and eight, and the question is asked on
+# every deployment and on every obligation checked. Paths are used as given, so the caller
+# decides what they are relative to. The line format is the one source_hash has always been
+# computed from, so a value produced here is comparable with every source.json ever written.
+mj_inputs_hash() {
+  printf &#39;%s\0&#39; &quot;$@&quot; | mj_sha256_many | awk -F&#39;\t&#39; &#39;{ printf &quot;%s %s\n&quot;, $2, $1 }&#39; \
+    | mj_sha256_hex
+}
+
+# The git tree object id of the working tree exactly as it stands: HEAD&#39;s tree with every
+# modification, addition and deletion applied. Computed in a temporary index, so the real
+# index keeps its staged content and its stat cache; ignored paths stay out, which is what
+# .ai/local/ is. The temporary index is seeded from HEAD, never copied from the real one: a
+# copy carries its assume-unchanged and skip-worktree flags and its stat cache, and `add -A`
+# trusts those, so an edit to a flagged file would be neither recorded nor noticed moving.
+# Seeding from HEAD rehashes every file (about a second on this repository) and sees them all.
+# Empty when git cannot answer, so a caller degrades to knowing nothing rather than to
+# believing something.
+#
+# Not mj_inputs_hash: that fingerprints a list of paths the caller already knows, and the
+# question here is what the whole tree was, including a file no list would have named
+# because it did not exist yet. A tree id is also git&#39;s own answer to that question,
+# comparable with every other tree id without this tool being present to explain it.
+mj_worktree_tree_id() {
+  local idx out
+  idx=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj-index.XXXXXX&quot;)&quot; || return 0
+  rm -f &quot;$idx&quot;
+  out=&quot;$( cd &quot;$MJ_ROOT&quot; || exit 1
+    export GIT_INDEX_FILE=&quot;$idx&quot;
+    if git rev-parse --verify -q HEAD &gt;/dev/null 2&gt;&amp;1; then git read-tree HEAD 2&gt;/dev/null || exit 1; fi
+    git add -A 2&gt;/dev/null || exit 1
+    git write-tree 2&gt;/dev/null )&quot;
+  rm -f &quot;$idx&quot;
+  printf &#39;%s&#39; &quot;$out&quot;
+}
+
+mj_json_esc() { printf &#39;%s&#39; &quot;$1&quot; | sed -e &#39;s/\\/\\\\/g&#39; -e &#39;s/&quot;/\\&quot;/g&#39; | tr -d &#39;\n&#39;; }
+
+# ---------------------------------------------------------------- options
+mj_parse_global_opts() {
+  MJ_ARGS=()
+  while [ $# -gt 0 ]; do
+    case &quot;$1&quot; in
+      --repo) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--repo needs a path&quot;; MJ_REPO=&quot;$2&quot;; shift 2 ;;
+      --repo=*) MJ_REPO=&quot;${1#--repo=}&quot;; shift ;;
+      --json) MJ_JSON=1; shift ;;
+      *) MJ_ARGS+=(&quot;$1&quot;); shift ;;
+    esac
+  done
+  export MJ_JSON
+}
+
+# ---------------------------------------------------------------- repo &amp; git
+mj_repo_root() {
+  local root
+  if [ -n &quot;$MJ_REPO&quot; ]; then
+    root=&quot;$(cd &quot;$MJ_REPO&quot; 2&gt;/dev/null &amp;&amp; git rev-parse --show-toplevel 2&gt;/dev/null)&quot; || return 1
+  else
+    root=&quot;$(git rev-parse --show-toplevel 2&gt;/dev/null)&quot; || return 1
+  fi
+  printf &#39;%s&#39; &quot;$root&quot;
+}
+mj_require_repo() {
+  MJ_ROOT=&quot;$(mj_repo_root)&quot; || mj_die &quot;$MJ_EX_USAGE&quot; &quot;not inside a git repository (use --repo &lt;path&gt;)&quot;
+  export MJ_ROOT
+  # hooks inherited from a parent process must never redirect our git calls
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+  mj_require_share_is_ours
+  mj_resolve_layout
+}
+mj_require_installed() {
+  mj_require_repo
+  case &quot;$MJ_LAYOUT&quot; in
+    ai) [ -f &quot;$MJ_POLICY_FILE&quot; ] || mj_die &quot;$MJ_EX_MISSING&quot; &quot;no $(mj_rel &quot;$MJ_POLICY_FILE&quot;) in $MJ_ROOT; the manifest names it (run: majordomus init)&quot; ;;
+    legacy) mj_die &quot;$MJ_EX_MISSING&quot; &quot;project data lives under .majordomus/ (the pre-.ai layout); run: majordomus migrate&quot; ;;
+    *) mj_die &quot;$MJ_EX_MISSING&quot; &quot;no .ai/manifest.yaml in $MJ_ROOT (run: majordomus init)&quot; ;;
+  esac
+}
+
+# ---------------------------------------------------------------- paths
+# Two roots, never one variable. MJ_HOME is the tool distribution — bin, lib, share — and
+# is read-only: it may be a PATH install, a checkout under ~/tools, a package, or an
+# optional .majordomus/ submodule inside the managed repository, and every form behaves
+# the same because nothing below writes into it. MJ_ROOT is the managed repository, whose
+# AI layer lives under .ai/: repo/ is tracked canonical context, local/ is checkout-local
+# and ignored. Every path the commands read or write is resolved here and nowhere else.
+# a script that sources this file for its helpers alone (the test suite, the site generator)
+# need not have set MJ_BIN_DIR; the distribution is the directory this file lives under.
+# Never taken from the environment: a majordomus started by another majordomus (a verify
+# command, a hook) must read its own distribution, not the one that started it.
+if [ -n &quot;${MJ_BIN_DIR:-}&quot; ]; then MJ_HOME=&quot;$(cd &quot;$MJ_BIN_DIR/..&quot; &amp;&amp; pwd)&quot;
+else MJ_HOME=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)/..&quot; &amp;&amp; pwd)&quot;; fi
+# The distribution&#39;s data: kinds, schemas, allow-lists, the skeleton, the standard rule
+# package. MAJORDOMUS_SHARE names it, the same variable the Rust executable reads, so one
+# distribution serves both halves of the tool and a test can point them at a fixture
+# together. Unset, it is the share directory beside this executable, which is what an
+# ordinary run wants and what makes the tool work from any checkout.
+MJ_SHARE_DIR=&quot;${MAJORDOMUS_SHARE:-$MJ_HOME/share}&quot;
+MJ_SKELETON_DIR=&quot;$MJ_SHARE_DIR/skeleton&quot;
+MJ_ALLOW_DIR=&quot;$MJ_SHARE_DIR/allow&quot;
+MJ_STD_RULES_DIR=&quot;$MJ_SHARE_DIR/standard/majordomus&quot;
+MJ_PROVIDERS_DEFAULT_DIR=&quot;$MJ_SHARE_DIR/providers&quot;
+export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
+
+# MAJORDOMUS_SHARE is inherited, and a shell that entered another checkout exports that
+# checkout&#39;s share/. Carried into a linked worktree it makes this distribution&#39;s code read
+# another distribution&#39;s schemas, allow-lists and skeleton, and the difference between the
+# two is then reported as drift in the repository: a pre-commit hook refusing a commit over
+# generated artifacts that are not stale is what that looks like from the outside, and it
+# has cost whole sessions.
+# Only what is decidable is refused: the named share lies in a working tree of *this*
+# repository that is not this working tree, and since every worktree carries its own
+# share/, nothing about that can be intended. A share under no working tree at all is an
+# installed distribution — a package, a PATH install, a test fixture — which is what the
+# variable is for; a share in some other repository&#39;s working tree is the same case, a tool
+# checkout serving a repository elsewhere. Neither is distinguishable from a legitimate
+# installation, so neither is refused. Two worktrees of one repository are told apart from
+# two repositories by the git common directory, which every worktree of one repository
+# shares and no two repositories do.
+# Cheap where it always runs: the variable unset, or naming a directory under this
+# repository, costs one string comparison and no process.
+mj_require_share_is_ours() {
+  [ -n &quot;${MAJORDOMUS_SHARE:-}&quot; ] || return 0
+  local share root wt mine theirs
+  share=&quot;$(cd &quot;$MJ_SHARE_DIR&quot; 2&gt;/dev/null &amp;&amp; pwd -P)&quot; || return 0   # absent: the reader that needs it says so
+  root=&quot;$(cd &quot;$MJ_ROOT&quot; 2&gt;/dev/null &amp;&amp; pwd -P)&quot; || return 0
+  case &quot;$share&quot; in &quot;$root&quot;|&quot;$root&quot;/*) return 0 ;; esac
+  wt=&quot;$(git -C &quot;$share&quot; rev-parse --show-toplevel 2&gt;/dev/null)&quot; || return 0
+  [ -n &quot;$wt&quot; ] || return 0
+  mine=&quot;$(mj_git_repo_id)&quot;; theirs=&quot;$(mj_git_repo_id &quot;$wt&quot;)&quot;
+  [ -n &quot;$mine&quot; ] &amp;&amp; [ &quot;$mine&quot; = &quot;$theirs&quot; ] || return 0
+  mj_die &quot;$MJ_EX_REFUSED&quot; &quot;MAJORDOMUS_SHARE names $MJ_SHARE_DIR, the distribution of $wt — another worktree of this repository, not this one ($root). Its schemas and allow-lists are not this checkout&#39;s, and what they disagree about is reported as drift here. Run with: env -u MAJORDOMUS_SHARE (or re-enter this directory, so that direnv exports the share beside the tool it also puts on the path)&quot;
+}
+
+MJ_LAYOUT=&quot;&quot;; MJ_AI_DIR=&quot;&quot;; MJ_AI_MANIFEST=&quot;&quot;; MJ_AI_REPO_DIR=&quot;&quot;; MJ_AI_LOCAL_DIR=&quot;&quot;
+MJ_STATE_DIR=&quot;&quot;; MJ_POLICY_FILE=&quot;&quot;; MJ_SCOPE_FILE=&quot;&quot;; MJ_PROFILES_DIR=&quot;&quot;; MJ_PROMPTS_DIR=&quot;&quot;; MJ_PROJECT_DIR=&quot;&quot;
+MJ_RULES_DIR=&quot;&quot;; MJ_KNOWLEDGE_DIR=&quot;&quot;; MJ_ADRS_DIR=&quot;&quot;; MJ_SKILLS_DIR=&quot;&quot;; MJ_WORKFLOWS_DIR=&quot;&quot;
+MJ_SESSIONS_DIR=&quot;&quot;; MJ_DEPLOYMENTS_DIR=&quot;&quot;
+MJ_PROVIDERS_DIR=&quot;&quot;; MJ_TEMPLATES_DIR=&quot;&quot;; MJ_CACHE_DIR=&quot;&quot;
+
+# a repository path, relative to the repository root, for messages and records
+mj_rel() { printf &#39;%s&#39; &quot;${1#&quot;$MJ_ROOT/&quot;}&quot;; }
+# is repository-relative path $1 inside the AI layer (the tool&#39;s own files)?
+mj_is_ai_path() { local ai=&quot;${MJ_AI_DIR#&quot;$MJ_ROOT/&quot;}&quot;; case &quot;$1&quot; in &quot;$ai&quot;|&quot;$ai&quot;/*) return 0 ;; esac; return 1; }
+
+# Resolve the repository layout. Never fails: a repository with no AI layer resolves to
+# the paths init would create, so init and doctor can name them.
+#   ai      .ai/manifest.yaml exists; every section path is read from it
+#   legacy  project data under .majordomus/ and no manifest: the pre-.ai layout. Nothing
+#           reads it; the value only makes every command refuse and name `migrate`
+mj_resolve_layout() {
+  MJ_AI_DIR=&quot;$MJ_ROOT/.ai&quot;; MJ_AI_MANIFEST=&quot;$MJ_AI_DIR/manifest.yaml&quot;
+  if [ -f &quot;$MJ_AI_MANIFEST&quot; ]; then
+    MJ_LAYOUT=ai
+    mj_load_manifest || mj_die &quot;$MJ_EX_CONTRACT&quot; &quot;$(mj_rel &quot;$MJ_AI_MANIFEST&quot;) is not a manifest this version reads: $MJ_MANIFEST_ERROR&quot;
+    MJ_AI_REPO_DIR=&quot;$MJ_AI_DIR/$(mj_man repo.path)&quot;
+    MJ_AI_LOCAL_DIR=&quot;$MJ_AI_DIR/$(mj_man local.path)&quot;
+    MJ_POLICY_FILE=&quot;$MJ_AI_DIR/$(mj_man sections.policy)&quot;
+    # the scope section is optional: a layer written before it existed names none, and the
+    # Rust executable then reads the distribution&#39;s default; the variable stays empty
+    MJ_SCOPE_FILE=&quot;&quot;; [ -n &quot;$(mj_man sections.scope)&quot; ] &amp;&amp; MJ_SCOPE_FILE=&quot;$MJ_AI_DIR/$(mj_man sections.scope)&quot;
+    MJ_PROFILES_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.profiles)&quot;
+    MJ_RULES_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.rules)&quot;
+    MJ_PROMPTS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.prompts)&quot;
+    MJ_SKILLS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.skills)&quot;
+    MJ_WORKFLOWS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.workflows)&quot;
+    MJ_KNOWLEDGE_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.knowledge)&quot;
+    MJ_ADRS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.adrs)&quot;
+    # the sessions section is optional: a layer written before it existed names none, and a
+    # closed episode then stays in the checkout-local half where it always was
+    MJ_SESSIONS_DIR=&quot;&quot;; [ -n &quot;$(mj_man sections.sessions)&quot; ] &amp;&amp; MJ_SESSIONS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.sessions)&quot;
+    # the deployments section is optional in the same way: a repository that deploys
+    # nothing declares none, and the variable stays empty
+    MJ_DEPLOYMENTS_DIR=&quot;&quot;; [ -n &quot;$(mj_man sections.deployments)&quot; ] &amp;&amp; MJ_DEPLOYMENTS_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.deployments)&quot;
+    MJ_PROJECT_DIR=&quot;$MJ_AI_DIR/$(mj_man sections.project)&quot;
+    MJ_PROVIDERS_DIR=&quot;$MJ_AI_REPO_DIR/providers&quot;
+    MJ_TEMPLATES_DIR=&quot;$MJ_AI_REPO_DIR/templates&quot;
+    MJ_STATE_DIR=&quot;$MJ_AI_LOCAL_DIR/state&quot;
+    MJ_CACHE_DIR=&quot;$MJ_AI_LOCAL_DIR/cache&quot;
+  else
+    # Project data under .majordomus/ is the pre-.ai layout, which nothing reads any more:
+    # the name is detected so that mj_require_installed can refuse with the migration
+    # named and `migrate` can find its source, and the paths are the .ai ones either way.
+    # A .majordomus/ holding a tool distribution (bin/majordomus) is an installation,
+    # never project data.
+    MJ_LAYOUT=&quot;&quot;
+    [ -d &quot;$MJ_ROOT/.majordomus&quot; ] &amp;&amp; [ ! -f &quot;$MJ_ROOT/.majordomus/bin/majordomus&quot; ] &amp;&amp; MJ_LAYOUT=legacy
+    MJ_AI_REPO_DIR=&quot;$MJ_AI_DIR/repo&quot;; MJ_AI_LOCAL_DIR=&quot;$MJ_AI_DIR/local&quot;
+    MJ_POLICY_FILE=&quot;$MJ_AI_REPO_DIR/policy.yaml&quot;; MJ_SCOPE_FILE=&quot;$MJ_AI_REPO_DIR/scope.yaml&quot;; MJ_PROFILES_DIR=&quot;$MJ_AI_REPO_DIR/profiles&quot;
+    MJ_RULES_DIR=&quot;$MJ_AI_REPO_DIR/rules&quot;; MJ_PROMPTS_DIR=&quot;$MJ_AI_REPO_DIR/prompts&quot;
+    MJ_SKILLS_DIR=&quot;$MJ_AI_REPO_DIR/skills&quot;; MJ_WORKFLOWS_DIR=&quot;$MJ_AI_REPO_DIR/workflows&quot;
+    MJ_KNOWLEDGE_DIR=&quot;$MJ_AI_REPO_DIR/knowledge&quot;; MJ_ADRS_DIR=&quot;$MJ_AI_REPO_DIR/adrs&quot;
+    MJ_PROJECT_DIR=&quot;$MJ_AI_REPO_DIR/project&quot;; MJ_PROVIDERS_DIR=&quot;$MJ_AI_REPO_DIR/providers&quot;
+    MJ_DEPLOYMENTS_DIR=&quot;&quot;
+    MJ_TEMPLATES_DIR=&quot;$MJ_AI_REPO_DIR/templates&quot;; MJ_STATE_DIR=&quot;$MJ_AI_LOCAL_DIR/state&quot;
+    MJ_CACHE_DIR=&quot;$MJ_AI_LOCAL_DIR/cache&quot;
+  fi
+  export MJ_LAYOUT MJ_AI_DIR MJ_AI_MANIFEST MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR
+  export MJ_POLICY_FILE MJ_SCOPE_FILE MJ_PROFILES_DIR MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR
+  export MJ_ADRS_DIR MJ_SKILLS_DIR MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_CACHE_DIR
+  return 0
+}
+
+# The manifest is the section registry of the AI layer: which format it is, where the
+# tracked and local halves are, and where each section lives. Nothing walks .ai/ to find
+# out. A manifest newer than this executable, or one with a key nothing reads, is refused
+# with the reason rather than read partially.
+MJ_MAN_FLAT=&quot;&quot;; MJ_MANIFEST_ERROR=&quot;&quot;
+MJ_MANIFEST_SCHEMA=&quot;ai-repository/v1&quot;
+mj_load_manifest() {
+  local k
+  MJ_MANIFEST_ERROR=&quot;&quot;
+  [ -n &quot;$MJ_MAN_FLAT&quot; ] &amp;&amp; [ -f &quot;$MJ_MAN_FLAT&quot; ] &amp;&amp; return 0
+  MJ_MAN_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.man.XXXXXX&quot;)&quot;
+  if ! mj_yaml_flatten &quot;$MJ_AI_MANIFEST&quot; &gt; &quot;$MJ_MAN_FLAT&quot; 2&gt;/dev/null; then
+    MJ_MANIFEST_ERROR=&quot;does not parse&quot;; return 1
+  fi
+  if [ &quot;$(mj_yget &quot;$MJ_MAN_FLAT&quot; schema)&quot; != &quot;$MJ_MANIFEST_SCHEMA&quot; ]; then
+    MJ_MANIFEST_ERROR=&quot;schema &#39;$(mj_yget &quot;$MJ_MAN_FLAT&quot; schema)&#39; is not $MJ_MANIFEST_SCHEMA (this executable reads $MJ_MANIFEST_SCHEMA)&quot;; return 1
+  fi
+  k=&quot;$(mj_yaml_unknown_keys &quot;$MJ_MAN_FLAT&quot; &quot;$MJ_ALLOW_DIR/manifest.txt&quot; || true)&quot;
+  [ -z &quot;$k&quot; ] || { MJ_MANIFEST_ERROR=&quot;unknown key(s): $(printf &#39;%s&#39; &quot;$k&quot; | tr &#39;\n&#39; &#39; &#39;)&quot;; return 1; }
+  for k in repo.path local.path sections.policy sections.profiles sections.rules sections.prompts \
+           sections.skills sections.workflows sections.knowledge sections.adrs sections.project; do
+    [ -n &quot;$(mj_yget &quot;$MJ_MAN_FLAT&quot; &quot;$k&quot;)&quot; ] || { MJ_MANIFEST_ERROR=&quot;missing key $k&quot;; return 1; }
+  done
+  return 0
+}
+mj_man() { [ -n &quot;${MJ_MAN_FLAT:-}&quot; ] || return 0; mj_yget &quot;$MJ_MAN_FLAT&quot; &quot;$1&quot;; }
+
+# The provider template for a projection: the repository&#39;s own override under its AI
+# layer when it has one, otherwise the adapter the distribution ships.
+mj_provider_template() {
+  if [ -f &quot;$MJ_PROVIDERS_DIR/$1.tmpl&quot; ]; then printf &#39;%s&#39; &quot;$MJ_PROVIDERS_DIR/$1.tmpl&quot;
+  elif [ -f &quot;$MJ_PROVIDERS_DEFAULT_DIR/$1.tmpl&quot; ]; then printf &#39;%s&#39; &quot;$MJ_PROVIDERS_DEFAULT_DIR/$1.tmpl&quot;
+  else return 1; fi
+}
+
+# The layout as data — one line per path variable, name then repository-relative path — for
+# whatever needs to name the files the commands touch without repeating this file.
+mj_layout_table() {
+  local v
+  for v in MJ_AI_DIR MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR MJ_POLICY_FILE MJ_SCOPE_FILE MJ_PROFILES_DIR \
+           MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR MJ_ADRS_DIR MJ_SKILLS_DIR \
+           MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_CACHE_DIR; do
+    p=&quot;${!v}&quot;
+    [ -n &quot;$p&quot; ] || continue
+    printf &#39;%s\t%s\n&#39; &quot;$v&quot; &quot;$(mj_rel &quot;$p&quot;)&quot;
+  done
+}
+
+# --no-pager, always: git pages whenever its stdout is a terminal, and `log`, `diff` and
+# `show` all reach this wrapper. Most call sites capture the output and so never noticed,
+# but the one that does not blocks on a keypress -- which a person eventually sends and an
+# agent never does. The pager is a presentation choice this tool does not make.
+mj_git() { mj_count git; git --no-pager -C &quot;$MJ_ROOT&quot; &quot;$@&quot;; }
+# The repository a checkout belongs to, as an absolute path: the git common directory,
+# which every worktree of one repository shares and no two repositories do. $1 names the
+# checkout to ask; the default is MJ_ROOT, and the value records write is that one.
+mj_git_repo_id() { local r=&quot;${1:-$MJ_ROOT}&quot;; mj_count git; git -C &quot;$r&quot; rev-parse --git-common-dir 2&gt;/dev/null | { read -r d; case &quot;$d&quot; in /*) printf &#39;%s&#39; &quot;$d&quot; ;; *) printf &#39;%s/%s&#39; &quot;$r&quot; &quot;$d&quot; ;; esac; }; }
+# ---------------------------------------------------------------- personal
+# A personal layer (ADR 0145): the same layer a plain init makes, kept as one person&#39;s own
+# in a repository other people share. Nothing shared is changed — no tracked file, no
+# .gitignore line — because the layer is covered in this repository&#39;s own exclude file,
+# $GIT_COMMON_DIR/info/exclude, which git never commits, pushes or clones.
+#
+# There is no setting for it. A layer is personal when that file covers it in the block
+# below: the cover is the mechanism and the record at once, read each time it is asked.
+# Whether the cover still holds is a second question, answered by mj_personal_verify: a
+# file of the layer that got tracked anyway is reported, not read as a change of mind.
+# Proposing the layer to the team is `init --extend --shared`, which removes the block.
+#
+# The common directory, not .git: in a linked worktree .git is a file, and the exclude file
+# every worktree of the repository obeys is the common one.
+MJ_PERSONAL_BEGIN=&#39;# &gt;&gt;&gt; majordomus personal &gt;&gt;&gt;&#39;
+MJ_PERSONAL_END=&#39;# &lt;&lt;&lt; majordomus personal &lt;&lt;&lt;&#39;
+mj_personal_exclude_file() { printf &#39;%s/info/exclude&#39; &quot;$(mj_git_repo_id)&quot;; }
+# The patterns the block holds now, one a line; nothing when there is no block.
+mj_personal_covered() {
+  awk -v b=&quot;$MJ_PERSONAL_BEGIN&quot; -v e=&quot;$MJ_PERSONAL_END&quot; \
+    &#39;$0==b{inb=1;next} $0==e{inb=0;next} inb&#39; &quot;$(mj_personal_exclude_file)&quot; 2&gt;/dev/null
+}
+mj_personal_active() {
+  [ -n &quot;${MJ_AI_DIR:-}&quot; ] &amp;&amp; [ -f &quot;$MJ_AI_DIR/manifest.yaml&quot; ] || return 1
+  mj_personal_covered | grep -qxF -- &quot;/$(mj_rel &quot;$MJ_AI_DIR&quot;)/&quot;
+}
+# Cover repository-relative paths: each anchored pattern once, inside the block, and every
+# other line of the file left exactly as it was. A directory is given with its slash.
+mj_personal_cover() {
+  local f tmp p have
+  f=&quot;$(mj_personal_exclude_file)&quot;
+  mkdir -p &quot;$(dirname &quot;$f&quot;)&quot; || return 1
+  [ -f &quot;$f&quot; ] || : &gt; &quot;$f&quot;
+  have=&quot;$(mj_personal_covered)&quot;
+  for p in &quot;$@&quot;; do
+    p=&quot;/${p#/}&quot;
+    printf &#39;%s\n&#39; &quot;$have&quot; | grep -qxF -- &quot;$p&quot; || have=&quot;${have:+$have
+}$p&quot;
+  done
+  # beside the file, so that the rename which publishes it never crosses a filesystem
+  tmp=&quot;$f.mj-tmp.$$&quot;
+  awk -v b=&quot;$MJ_PERSONAL_BEGIN&quot; -v e=&quot;$MJ_PERSONAL_END&quot; \
+    &#39;$0==b{inb=1;next} $0==e{inb=0;next} !inb&#39; &quot;$f&quot; &gt; &quot;$tmp&quot; || { rm -f &quot;$tmp&quot;; return 1; }
+  { [ -s &quot;$tmp&quot; ] &amp;&amp; [ -n &quot;$(tail -c1 &quot;$tmp&quot;)&quot; ] &amp;&amp; printf &#39;\n&#39;
+    printf &#39;%s\n%s\n%s\n&#39; &quot;$MJ_PERSONAL_BEGIN&quot; &quot;$have&quot; &quot;$MJ_PERSONAL_END&quot;; } &gt;&gt; &quot;$tmp&quot;
+  mv &quot;$tmp&quot; &quot;$f&quot;
+}
+# A writer outside the layer asks before it writes: under a personal layer a path is covered
+# first, and a path git already tracks is refused, because that file is the project&#39;s and a
+# change to it would be a change to what everyone shares. Elsewhere this is a no-op, so
+# every writer calls it unconditionally.
+mj_personal_guard() {
+  local p
+  mj_personal_active || return 0
+  mj_personal_refuse_tracked &quot;$@&quot;
+  for p in &quot;$@&quot;; do mj_personal_cover &quot;$p&quot; &quot;$p.mj-tmp&quot; || return 1; done
+}
+# Is this path the project&#39;s? Under a personal layer, whatever git tracks is.
+mj_personal_is_the_projects() {
+  mj_personal_active &amp;&amp; mj_git ls-files --error-unmatch -- &quot;$1&quot; &gt;/dev/null 2&gt;&amp;1
+}
+# The refusal alone, with nothing written: what a writer asks while it is still planning,
+# so that a dry run says the same thing a real one would and no advice to force is ever
+# printed for a file that is somebody else&#39;s.
+mj_personal_refuse_tracked() {
+  local p
+  for p in &quot;$@&quot;; do
+    mj_personal_is_the_projects &quot;$p&quot; || continue
+    mj_die &quot;$MJ_EX_REFUSED&quot; &quot;$p is tracked, so it is the project&#39;s, and this layer is personal: writing it would change what everyone shares. Leave it as it is and point that projection at a file of your own in $(mj_rel &quot;$MJ_POLICY_FILE&quot;) (CLAUDE.local.md is the one Claude Code reads beside the project&#39;s), or share the layer with the team (majordomus init --extend --shared)&quot;
+  done
+}
+# What `init --shared` runs: the cover is lifted from everything except the files that are
+# one person&#39;s by their own name — `*.local` and `*.local.*`, the convention CLAUDE.local.md
+# and .envrc.local follow. Those stay covered, because handing the layer to the team is not
+# handing it a personal projection. Prints the lifted paths, then a line `kept &lt;path&gt;` each.
+# With the layer&#39;s own pattern gone the layer is no longer personal, whatever stays covered.
+mj_personal_uncover() {
+  local f tmp have keep lift p
+  f=&quot;$(mj_personal_exclude_file)&quot;
+  [ -f &quot;$f&quot; ] || return 0
+  have=&quot;$(mj_personal_covered)&quot;; keep=&#39;&#39;; lift=&#39;&#39;
+  while IFS= read -r p; do
+    [ -n &quot;$p&quot; ] || continue
+    case &quot;${p%.mj-tmp}&quot; in
+      *.local|*.local.*) keep=&quot;${keep:+$keep
+}$p&quot; ;;
+      *) lift=&quot;${lift:+$lift
+}$p&quot; ;;
+    esac
+  done &lt;&lt;EOF
+$have
+EOF
+  tmp=&quot;$f.mj-tmp.$$&quot;
+  awk -v b=&quot;$MJ_PERSONAL_BEGIN&quot; -v e=&quot;$MJ_PERSONAL_END&quot; \
+    &#39;$0==b{inb=1;next} $0==e{inb=0;next} !inb&#39; &quot;$f&quot; &gt; &quot;$tmp&quot; || { rm -f &quot;$tmp&quot;; return 1; }
+  if [ -n &quot;$keep&quot; ]; then
+    { [ -s &quot;$tmp&quot; ] &amp;&amp; [ -n &quot;$(tail -c1 &quot;$tmp&quot;)&quot; ] &amp;&amp; printf &#39;\n&#39;
+      printf &#39;%s\n%s\n%s\n&#39; &quot;$MJ_PERSONAL_BEGIN&quot; &quot;$keep&quot; &quot;$MJ_PERSONAL_END&quot;; } &gt;&gt; &quot;$tmp&quot;
+  fi
+  mv &quot;$tmp&quot; &quot;$f&quot; || return 1
+  [ -z &quot;$lift&quot; ] || printf &#39;%s\n&#39; &quot;$lift&quot;
+  [ -z &quot;$keep&quot; ] || printf &#39;%s\n&#39; &quot;$keep&quot; | sed -e &#39;/\.mj-tmp$/d&#39; -e &#39;s/^/kept /&#39;
+}
+# Does the cover hold? One finding a fact, through the callbacks the caller names (doctor&#39;s
+# and init&#39;s differ only in how a finding is printed). Returns 1 when something shared shows it.
+mj_personal_verify() {
+  # The reporter is named by a word, not by its two functions: `doctrine` reports through the
+  # doctrine&#39;s ok and fail (so a class decides what a violation costs), anything else through
+  # the plain ones. A caller passing the functions themselves put the name of a reporting
+  # helper on a line that reports nothing, which scripts/ci/finding-reproduce-check reads as
+  # a finding with no command to reproduce it.
+  local reporter=&quot;&quot; ok_fn fail_fn rel bad=0 p seen
+  [ &quot;${1:-}&quot; = doctrine ] &amp;&amp; reporter=doctrine_
+  ok_fn=&quot;mj_${reporter}ok&quot;; fail_fn=&quot;mj_${reporter}fail&quot;
+  rel=&quot;$(mj_rel &quot;$MJ_AI_DIR&quot;)&quot;
+  if [ -n &quot;$(mj_git ls-files -- &quot;$rel&quot; 2&gt;/dev/null | head -n 1)&quot; ]; then
+    &quot;$fail_fn&quot; personal &quot;$rel/&quot; &quot;carries tracked files; a personal layer is tracked nowhere (share it with: majordomus init --extend --shared)&quot; &quot;git ls-files $rel&quot;; bad=1
+  fi
+  if ! mj_git check-ignore -q &quot;$rel/manifest.yaml&quot; 2&gt;/dev/null; then
+    &quot;$fail_fn&quot; personal &quot;$rel/&quot; &quot;is not covered; the next &#39;git add -A&#39; would stage it&quot; &quot;majordomus init --extend --personal&quot;; bad=1
+  fi
+  seen=&#39;&#39;
+  while IFS= read -r p; do
+    [ -n &quot;$p&quot; ] || continue
+    p=&quot;${p#/}&quot;
+    [ -z &quot;$(mj_git status --porcelain --untracked-files=all -- &quot;$p&quot; 2&gt;/dev/null | head -n 1)&quot; ] || seen=&quot;$seen $p&quot;
+  done &lt;&lt;EOF
+$(mj_personal_covered)
+EOF
+  if [ -n &quot;$seen&quot; ]; then
+    &quot;$fail_fn&quot; personal &quot;$(mj_rel &quot;$(mj_personal_exclude_file)&quot;)&quot; &quot;git status still shows:$seen&quot; &quot;git status --porcelain --untracked-files=all&quot;; bad=1
+  fi
+  [ &quot;$bad&quot; = 0 ] &amp;&amp; &quot;$ok_fn&quot; personal &quot;$rel/&quot; &quot;tracked nowhere, ignored through $(mj_personal_exclude_file), and absent from git status ($(mj_personal_covered | grep -c .) path(s) covered)&quot;
+  return &quot;$bad&quot;
+}
+mj_git_branch()  { mj_git symbolic-ref --short HEAD 2&gt;/dev/null || printf &#39;DETACHED&#39;; }
+# --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
+# literal string &quot;HEAD&quot; on stdout and *then* fails. The fallback would append to that,
+# producing an identity field with an embedded newline and a permanently corrupt ledger line.
+# Is a name a defined shell function? A dispatcher keyed by data — a doctrine&#39;s validator,
+# an obligation&#39;s establisher — asks this before calling, so that a declaration with
+# nothing behind it is a reported defect and not a &quot;command not found&quot; on stderr and a
+# wrong answer downstream. It lives here rather than beside either dispatcher: it is a
+# shell predicate, every lib is entitled to it, and evidence.sh reaching for doctrine.sh&#39;s
+# copy is how the obligations of a live scenario came to report &quot;no evidence recorded&quot; for
+# a fact git could have settled.
+mj_is_function() { type &quot;$1&quot; 2&gt;/dev/null | head -n1 | grep -q &#39;function&#39;; }
+mj_git_head()    { local h; h=&quot;$(mj_git rev-parse --verify HEAD 2&gt;/dev/null)&quot; || h=&quot;&quot;; [ -n &quot;$h&quot; ] || h=NONE; printf &#39;%s&#39; &quot;$h&quot;; }
+mj_git_dirty()   { [ -z &quot;$(mj_git status --porcelain=v1 2&gt;/dev/null)&quot; ] &amp;&amp; printf &#39;clean&#39; || printf &#39;dirty&#39;; }
+mj_branch_key()  { mj_git_branch | sed &#39;s/[^A-Za-z0-9._-]/-/g&#39;; }
+
+# divergence label of a recorded head vs current HEAD:
+#   exact | advanced | diverged | different_context | unknown
+mj_git_label() {
+  local rec_head=&quot;$1&quot; rec_branch=&quot;$2&quot; cur_head cur_branch
+  cur_head=&quot;$(mj_git_head)&quot;; cur_branch=&quot;$(mj_git_branch)&quot;
+  if [ &quot;$rec_branch&quot; != &quot;$cur_branch&quot; ]; then printf &#39;different_context&#39;; return; fi
+  if [ &quot;$rec_head&quot; = &quot;$cur_head&quot; ]; then printf &#39;exact&#39;; return; fi
+  if mj_git merge-base --is-ancestor &quot;$rec_head&quot; &quot;$cur_head&quot; 2&gt;/dev/null; then printf &#39;advanced&#39;; return; fi
+  printf &#39;diverged&#39;
+}
+
+# files touched since a base commit: uncommitted, plus what this line&#39;s own commits
+# changed. A merge from the trunk is not the task&#39;s work — its second parent carries
+# everybody else&#39;s files — so the walk follows the first parent and leaves the merge
+# commits out. Diffing base..HEAD instead told a task that had merged master that it
+# touched every file master did, and the scope doctrine refused the push for exactly the
+# merge the trunk asks for. The cost is that a conflict resolved inside a merge commit is
+# not counted; the working tree and the commits around it are.
+#
+# A fast-forward or a rebase onto the trunk brings other people&#39;s work in without a merge
+# commit: `git pull --ff-only` after `start`, or `git pull --rebase` on a branch, puts the
+# trunk&#39;s commits on this line&#39;s first parent, and the walk above counted every file they
+# changed as the task&#39;s. The push was refused &quot;outside claimed scope&quot; for work the trunk
+# had already integrated, and the only way out was to close the task and start another.
+# So a commit is left out when both of these hold: the trunk&#39;s remote-tracking branch
+# already contains it, and this checkout did not make it. &quot;Made here&quot; is git&#39;s own record,
+# the HEAD reflog&#39;s commit, cherry-pick, revert, am and rebase-pick entries; a commit that
+# arrived by a fast-forward, or that a rebase used as its base, has no such entry. A commit
+# the task made and pushed to the trunk is therefore still the task&#39;s. Without a trunk
+# (no remote, or no refs/remotes/&lt;remote&gt;/HEAD) nothing is left out, as before.
+#
+# One path per line, the path as git stores it, so a caller reads lines and never words:
+# a file named &quot;Futuristic PR Drain Developer Dashboard.png&quot; is one path. Both git
+# commands are read with -z, because without it `status --porcelain` wraps a path that
+# holds a space in quotes and `log --name-only` octal-escapes one outside ASCII, and either
+# way the name no longer matches the scope it is inside (2026-10-11, a pre-push refused
+# four images as twenty out-of-scope &quot;paths&quot;).
+mj_git_touched() {
+  local base=&quot;$1&quot; trunk all foreign own keep
+  { mj_git_dirty_paths
+    if [ -n &quot;$base&quot; ] &amp;&amp; [ &quot;$base&quot; != &quot;NONE&quot; ]; then
+      trunk=&quot;$(mj_git_trunk_ref)&quot;
+      foreign=&quot;&quot;
+      if [ -n &quot;$trunk&quot; ]; then
+        all=&quot;$(mj_git rev-list --first-parent --no-merges &quot;$base..HEAD&quot; 2&gt;/dev/null | LC_ALL=C sort)&quot;
+        keep=&quot;$(mj_git rev-list --first-parent --no-merges &quot;$base..HEAD&quot; --not &quot;$trunk&quot; 2&gt;/dev/null | LC_ALL=C sort)&quot;
+        # on the trunk already, and not made in this checkout
+        foreign=&quot;$(LC_ALL=C comm -23 &lt;(printf &#39;%s\n&#39; &quot;$all&quot; | sed &#39;/^$/d&#39;) &lt;(printf &#39;%s\n&#39; &quot;$keep&quot; | sed &#39;/^$/d&#39;))&quot;
+        if [ -n &quot;$foreign&quot; ]; then
+          own=&quot;$(mj_git_made_here)&quot;
+          foreign=&quot;$(LC_ALL=C comm -23 &lt;(printf &#39;%s\n&#39; &quot;$foreign&quot;) &lt;(printf &#39;%s\n&#39; &quot;$own&quot; | sed &#39;/^$/d&#39;))&quot;
+        fi
+      fi
+      if [ -z &quot;$foreign&quot; ]; then
+        mj_git log -z --first-parent --no-merges --name-only --format= &quot;$base..HEAD&quot; 2&gt;/dev/null \
+          | tr &#39;\0&#39; &#39;\n&#39;
+      else
+        LC_ALL=C comm -23 &lt;(printf &#39;%s\n&#39; &quot;$all&quot; | sed &#39;/^$/d&#39;) &lt;(printf &#39;%s\n&#39; &quot;$foreign&quot;) \
+          | sed &#39;/^$/d&#39; | mj_git log -z --no-walk --stdin --name-only --format= 2&gt;/dev/null \
+          | tr &#39;\0&#39; &#39;\n&#39;
+      fi
+    fi
+  } | LC_ALL=C sort -u | sed &#39;/^$/d&#39;
+}
+
+# The paths the working tree and the index change, one per line, as git stores them.
+# Read with -z for the reason above; a rename or a copy is followed by its source path,
+# which is not a changed path of its own, so the entry after one is skipped. The path kept
+# is the new one, as `sed &#39;s/^.* -&gt; //&#39;` kept it before.
+mj_git_dirty_paths() {
+  local e skip=0
+  mj_git status --porcelain=v1 -z 2&gt;/dev/null | while IFS= read -r -d &#39;&#39; e; do
+    if [ &quot;$skip&quot; = 1 ]; then skip=0; continue; fi
+    case &quot;${e:0:2}&quot; in *R* | *C*) skip=1 ;; esac
+    printf &#39;%s\n&#39; &quot;${e:3}&quot;
+  done
+}
+
+# The trunk&#39;s remote-tracking branch, as a full ref, or nothing. The default branch is
+# git&#39;s own record of it — refs/remotes/&lt;remote&gt;/HEAD, written by clone and by
+# `git remote set-head` — on the remote this branch tracks, else the first remote.
+mj_git_trunk_ref() {
+  local remote def
+  remote=&quot;$(mj_git rev-parse --abbrev-ref --symbolic-full-name &#39;@{upstream}&#39; 2&gt;/dev/null || true)&quot;
+  remote=&quot;${remote%%/*}&quot;
+  [ -n &quot;$remote&quot; ] || remote=&quot;$(mj_git remote 2&gt;/dev/null | head -n 1)&quot;
+  [ -n &quot;$remote&quot; ] || return 0
+  def=&quot;$(mj_git symbolic-ref -q &quot;refs/remotes/$remote/HEAD&quot; 2&gt;/dev/null || true)&quot;
+  [ -n &quot;$def&quot; ] &amp;&amp; mj_git rev-parse -q --verify &quot;$def^{commit}&quot; &gt;/dev/null 2&gt;&amp;1 &amp;&amp; printf &#39;%s&#39; &quot;$def&quot;
+  return 0
+}
+
+# Every commit this checkout made, sorted: the HEAD reflog&#39;s entries that created one.
+# A linked worktree has a HEAD reflog of its own, so this is this checkout&#39;s, not the
+# repository&#39;s. `pull --rebase (pick)` and `rebase -i (pick)` carry the action in
+# parentheses; a fast-forward (`pull: Fast-forward`, `merge x: Fast-forward`), a reset
+# and a rebase&#39;s start and finish move HEAD to a commit somebody else made.
+mj_git_made_here() {
+  mj_git reflog show --format=&#39;%H %gs&#39; HEAD 2&gt;/dev/null \
+    | awk &#39;{ h = $1; $1 = &quot;&quot;; s = substr($0, 2)
+             if (s ~ /^(commit|cherry-pick|revert|am)([ :(]|$)/ || s ~ /\((pick|reword|edit|squash|fixup)\):/) print h }&#39; \
+    | LC_ALL=C sort -u
+}
+
+# ---------------------------------------------------------------- misc
+# one tab, computed once: a loop that writes IFS=&quot;$MJ_TAB&quot; per iteration forks a
+# subshell per line, which is where a listing of a few hundred rows lost a second
+MJ_TAB=&quot;$(printf &#39;\t&#39;)&quot;
+# The clock, in one place, so that a test can move it. Ageing is a first-class dimension of
+# this subsystem (ADR 0052) and the thresholds it is judged against are measured in days;
+# a suite that proved them by waiting would take a week to run once. MAJORDOMUS_NOW, when
+# set to an ISO-8601 UTC instant, is that instant for every reader here. It is deliberately
+# not a policy key: policy is a repository decision and this is a test instrument.
+mj_now() {
+  if [ -n &quot;${MAJORDOMUS_NOW:-}&quot; ]; then printf &#39;%s&#39; &quot;$MAJORDOMUS_NOW&quot;; return; fi
+  date -u +%Y-%m-%dT%H:%M:%SZ
+}
+
+# ---------------------------------------------------------------- timing
+# Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
+# declares is written as one line to a file created here, in the shell that reports at
+# exit, never inside a command substitution. The clock is EPOCHREALTIME where bash has
+# it (bash 5), otherwise whole seconds, and the report says which. Off, the cost of a phase
+# or a count is one test. There is no third clock: the one that used to stand between them
+# was perl, and nothing in this repository runs Perl.
+MJ_TIMING_FILE=&quot;&quot;; MJ_TIMING_T0=&quot;&quot;
+if [ -n &quot;${EPOCHREALTIME:-}&quot; ]; then MJ_TIMING_CLOCK=epochrealtime
+else MJ_TIMING_CLOCK=seconds; fi
+mj_ms() {
+  case &quot;$MJ_TIMING_CLOCK&quot; in
+    epochrealtime) local t=&quot;${EPOCHREALTIME/./}&quot;; printf &#39;%s&#39; &quot;${t%???}&quot; ;;
+    *) printf &#39;%s000&#39; &quot;$(date +%s)&quot; ;;
+  esac
+}
+mj_timing_on() { [ -n &quot;${MJ_TIMING:-}&quot; ]; }
+if mj_timing_on &amp;&amp; [ -z &quot;${MJ_TIMING_FILE:-}&quot; ]; then
+  MJ_TIMING_FILE=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.timing.XXXXXX&quot;)&quot;; export MJ_TIMING_FILE
+  MJ_TIMING_T0=&quot;$(mj_ms)&quot;
+fi
+# t0=&quot;$(mj_phase_begin &lt;name&gt;)&quot; ... mj_phase_end &lt;name&gt; &quot;$t0&quot;
+mj_phase_begin() { mj_timing_on || return 0; mj_ms; }
+mj_phase_end() {
+  mj_timing_on || return 0
+  [ -n &quot;${2:-}&quot; ] || return 0
+  printf &#39;phase\t%s\t%s\n&#39; &quot;$1&quot; &quot;$(( $(mj_ms) - $2 ))&quot; &gt;&gt; &quot;$MJ_TIMING_FILE&quot;
+}
+# mj_count &lt;name&gt;: one unit of a kind of work worth counting (a parse, a git call)
+mj_count() { mj_timing_on || return 0; printf &#39;count\t%s\t1\n&#39; &quot;$1&quot; &gt;&gt; &quot;$MJ_TIMING_FILE&quot;; }
+# The report: phases ranked by time, counters summed, on stderr so the command&#39;s own
+# output is untouched, in the same shape whatever the command was. Under --json it is the
+# same data as one line of JSON (docs/SCHEMAS.md, &quot;The timing report&quot;), so a check can
+# compare one run&#39;s breakdown with another&#39;s; the text form is for a person reading it.
+# Both forms are read from the one aggregation below, in the one order, so neither can
+# carry a phase or a counter the other lacks.
+mj_timing_report() {
+  mj_timing_on || return 0
+  [ -n &quot;$MJ_TIMING_FILE&quot; ] &amp;&amp; [ -f &quot;$MJ_TIMING_FILE&quot; ] || return 0
+  local tab total rows
+  tab=&quot;$(printf &#39;\t&#39;)&quot;
+  total=&quot;$(( $(mj_ms) - MJ_TIMING_T0 ))&quot;
+  # kind &lt;TAB&gt; amount &lt;TAB&gt; calls &lt;TAB&gt; name: phases by time, then counters by count
+  rows=&quot;$(
+    awk -F&#39;\t&#39; &#39;$1==&quot;phase&quot; { t[$2]+=$3; n[$2]++ } END { for (k in t) printf &quot;phase\t%d\t%d\t%s\n&quot;, t[k], n[k], k }&#39; &quot;$MJ_TIMING_FILE&quot; \
+      | LC_ALL=C sort -t &quot;$tab&quot; -k2,2nr -k4,4
+    awk -F&#39;\t&#39; &#39;$1==&quot;count&quot; { c[$2]+=$3 } END { for (k in c) printf &quot;count\t%d\t0\t%s\n&quot;, c[k], k }&#39; &quot;$MJ_TIMING_FILE&quot; \
+      | LC_ALL=C sort -t &quot;$tab&quot; -k2,2nr -k4,4
+  )&quot;
+  if [ &quot;${MJ_JSON:-0}&quot; = 1 ]; then
+    printf &#39;%s\n&#39; &quot;$rows&quot; | awk -F&#39;\t&#39; -v clock=&quot;$MJ_TIMING_CLOCK&quot; -v total=&quot;$total&quot; &#39;
+      function q(s) { gsub(/\\/, &quot;\\\\&quot;, s); gsub(/&quot;/, &quot;\\\&quot;&quot;, s); gsub(/\t/, &quot;\\t&quot;, s); return &quot;\&quot;&quot; s &quot;\&quot;&quot; }
+      $1 == &quot;phase&quot; { p = p (p == &quot;&quot; ? &quot;&quot; : &quot;,&quot;) &quot;{\&quot;name\&quot;:&quot; q($4) &quot;,\&quot;ms\&quot;:&quot; $2 &quot;,\&quot;calls\&quot;:&quot; $3 &quot;}&quot; }
+      $1 == &quot;count&quot; { c = c (c == &quot;&quot; ? &quot;&quot; : &quot;,&quot;) &quot;{\&quot;name\&quot;:&quot; q($4) &quot;,\&quot;count\&quot;:&quot; $2 &quot;}&quot; }
+      END { printf &quot;{\&quot;timing\&quot;:{\&quot;clock\&quot;:%s,\&quot;total_ms\&quot;:%d,\&quot;phases\&quot;:[%s],\&quot;counters\&quot;:[%s]}}\n&quot;, q(clock), total, p, c }&#39; &gt;&amp;2
+  else
+    {
+      printf &#39;TIMING clock=%s total=%s ms\n&#39; &quot;$MJ_TIMING_CLOCK&quot; &quot;$total&quot;
+      printf &#39;%s\n&#39; &quot;$rows&quot; | awk -F&#39;\t&#39; &#39;
+        $1 == &quot;phase&quot; { printf &quot;phase  %8d ms  %4d x  %s\n&quot;, $2, $3, $4 }
+        $1 == &quot;count&quot; { printf &quot;count  %8d     %s\n&quot;, $2, $4 }&#39;
+    } &gt;&amp;2
+  fi
+  rm -f &quot;$MJ_TIMING_FILE&quot;
+}
+# The same instant as mj_now, in the form a record&#39;s filename uses. It reads the same
+# override for the same reason: a record dated six days ago in its front matter and today in
+# its name is a fixture no resolver would agree with itself about.
+mj_now_compact() {
+  if [ -n &quot;${MAJORDOMUS_NOW:-}&quot; ]; then printf &#39;%s&#39; &quot;$MAJORDOMUS_NOW&quot; | tr -d &#39;:-&#39;; return; fi
+  date -u +%Y%m%dT%H%M%SZ
+}
+mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d &#39; \n&#39;; }
+mj_sha256() {
+  mj_sha256_tool 2&gt;/dev/null || mj_die &quot;$MJ_EX_MISSING&quot; &quot;$MJ_SHA256_MISSING&quot;
+  mj_sha256_hex &quot;$1&quot;
+}
+# NR counts a final line that carries no newline; wc -l does not, and a projection
+# written without a trailing newline would be measured one line under its budget.
+mj_lines() { awk &#39;END{ print NR + 0 }&#39; &quot;$1&quot;; }
+mj_has()   { command -v &quot;$1&quot; &gt;/dev/null 2&gt;&amp;1; }
+
+# policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
+# error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+mj_policy_cat() {
+  local pf
+  cat &quot;$MJ_POLICY_FILE&quot;
+  for pf in &quot;$MJ_PROFILES_DIR&quot;/*.yaml; do
+    if [ -f &quot;$pf&quot; ]; then cat &quot;$pf&quot;; fi
+  done
+  return 0
+}
+
+# normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
+# Normalise a repository-relative path into the variable named by $1 — no subprocess. The
+# context scan asks this question once per document per tracked file, tens of thousands of
+# times in a repository this size, and a `sed` per question was most of the two minutes
+# `majordomus context` took: the answer is parameter expansion, and the value goes into a
+# variable rather than through a pipe, so a hot caller pays neither a fork nor an exec.
+# Returns 1 when the path is empty, absolute, or escapes the repository.
+mj_norm_path_into() {
+  local p=&quot;$2&quot;
+  p=&quot;${p#./}&quot;
+  while [[ &quot;$p&quot; == *//* ]]; do p=&quot;${p//\/\//\/}&quot;; done
+  p=&quot;${p%/}&quot;
+  case &quot;$p&quot; in &quot;&quot;|/*|../*|*/../*|*/..|..) return 1 ;; esac
+  printf -v &quot;$1&quot; &#39;%s&#39; &quot;$p&quot;
+}
+# The same, printed: for a caller that reads it with $(...). One fork for the substitution,
+# none inside it.
+mj_norm_path() {
+  local out
+  mj_norm_path_into out &quot;$1&quot; || return 1
+  printf &#39;%s&#39; &quot;$out&quot;
+}
+# does path a contain path b (or equal)? Both sides are normalised first: state files can be
+# hand-edited, so a trailing slash or ./ in a scope entry must not silently exclude everything.
+mj_path_contains() {
+  local a b
+  mj_norm_path_into a &quot;$1&quot; || a=&quot;$1&quot;
+  mj_norm_path_into b &quot;$2&quot; || b=&quot;$2&quot;
+  case &quot;$b&quot; in &quot;$a&quot;|&quot;$a&quot;/*) return 0 ;; esac; return 1
+}
+
+# &quot;15m&quot; / &quot;2h&quot; / &quot;90s&quot; -&gt; seconds
+mj_duration_secs() {
+  local v=&quot;$1&quot; n u
+  n=&quot;${v%[smh]}&quot;; u=&quot;${v#&quot;$n&quot;}&quot;
+  case &quot;$n&quot; in &#39;&#39;|*[!0-9]*) return 1 ;; esac
+  case &quot;$u&quot; in s|&#39;&#39;) printf &#39;%s&#39; &quot;$n&quot; ;; m) printf &#39;%s&#39; $((n*60)) ;; h) printf &#39;%s&#39; $((n*3600)) ;; *) return 1 ;; esac
+}
+# ISO timestamp -&gt; epoch seconds (BSD and GNU date)
+mj_epoch() {
+  local ts=&quot;$1&quot;
+  if date -u -j -f &#39;%Y-%m-%dT%H:%M:%SZ&#39; &quot;$ts&quot; +%s 2&gt;/dev/null; then return; fi
+  date -u -d &quot;$ts&quot; +%s 2&gt;/dev/null
+}
+
+# ---------------------------------------------------------------- YAML subset
+# Flattens a restricted YAML subset into &quot;dotted.path=value&quot; lines.
+# Supported: `key: value`, nested maps by 2-space indent, block lists (`- item`),
+# lists of maps (`- key: value` + indented keys), inline lists `[a, b]`, quotes,
+# comments. Tabs, anchors, multi-line scalars and flow maps are rejected.
+# mj_yaml_flatten &lt;file&gt;            one file, flat lines on stdout, ERROR on stderr and exit 3
+# mj_yaml_flatten_many &lt;outdir&gt; [--front] &lt;file&gt;...
+#   many files in one awk process: &lt;outdir&gt;/&lt;basename without extension&gt; holds each
+#   file&#39;s flat lines; a file that does not parse is named in &lt;outdir&gt;/.errors with its
+#   message and its output is left empty. --front reads only the YAML front matter of
+#   Markdown files. One process for a hundred records is what a loader pays instead of
+#   a hundred, which is the difference between a plan that validates in a second and
+#   one that validates in five.
+MJ_FLATTEN_AWK=&#39;
+  function trim(s){ sub(/^[ \t]+/,&quot;&quot;,s); sub(/[ \t]+$/,&quot;&quot;,s); return s }
+  # inside single quotes YAML has one escape, a doubled quote for one quote
+  function unq(v){
+    if (v ~ /^\047.*\047$/) { v=substr(v,2,length(v)-2); gsub(/\047\047/,&quot;\047&quot;,v); return v }
+    if (v ~ /^&quot;.*&quot;$/) return substr(v,2,length(v)-2)
+    sub(/[ \t]+#.*$/,&quot;&quot;,v); return trim(v)
+  }
+  function join(a,b){ return (a==&quot;&quot; ? b : a &quot;.&quot; b) }
+  function put(l){ if (outdir == &quot;&quot;) print l; else print l &gt; out }
+  function fail(m){
+    if (outdir == &quot;&quot;) { print &quot;ERROR:&quot; m &gt; &quot;/dev/stderr&quot;; exit 3 }
+    print name &quot;\t&quot; m &gt;&gt; (outdir &quot;/.errors&quot;); failed = 1; skipped[name] = 1
+  }
+  function emit_val(p,v,  n,i,parts){
+    if (v ~ /^\[.*\]$/) {
+      v=substr(v,2,length(v)-2); v=trim(v)
+      if (v==&quot;&quot;) { put(p &quot;=[]&quot;); return }
+      n=split(v,parts,/[ \t]*,[ \t]*/)
+      for(i=1;i&lt;=n;i++) put(p &quot;.&quot; (i-1) &quot;=&quot; unq(parts[i]))
+      return
+    }
+    put(p &quot;=&quot; unq(v))
+  }
+  function clear_from(i,  k){ for(k in ctx) if(k+0&gt;i) delete ctx[k]; for(k in pend) if(k+0&gt;=i) delete pend[k] }
+  BEGIN{ ctx[0]=&quot;&quot; }
+  outdir != &quot;&quot; &amp;&amp; FNR == 1 {
+    if (out != &quot;&quot;) close(out)
+    if (numbered) name = ++nfile
+    else { name = FILENAME; sub(/.*\//, &quot;&quot;, name); sub(/\.[A-Za-z0-9]+$/, &quot;&quot;, name) }
+    out = outdir &quot;/&quot; name; printf &quot;&quot; &gt; out
+    delete ctx; delete pend; delete cnt; ctx[0] = &quot;&quot;; failed = 0; infront = 0; front_done = 0
+    if (front) { if ($0 != &quot;---&quot;) { fail(&quot;no front matter&quot;); nextfile } infront = 1; next }
+  }
+  outdir != &quot;&quot; &amp;&amp; failed { nextfile }
+  outdir != &quot;&quot; &amp;&amp; front &amp;&amp; infront &amp;&amp; FNR &gt; 1 &amp;&amp; $0 == &quot;---&quot; { infront = 0; front_done = 1; nextfile }
+  {
+    line=$0
+    if (line ~ /\t/) { fail(&quot;tab character on line &quot; FNR); if (outdir != &quot;&quot;) nextfile; }
+    if (line ~ /^[ \t]*(#|$)/) next
+    if (line ~ /^---[ \t]*$/) next
+    match(line,/^ */); ind=RLENGTH; s=substr(line,ind+1)
+    if (ind % 2 != 0) { fail(&quot;odd indentation on line &quot; FNR); if (outdir != &quot;&quot;) nextfile; }
+    if (s ~ /^- /) {
+      if (!(ind in pend)) { fail(&quot;list item without a parent key on line &quot; FNR); if (outdir != &quot;&quot;) nextfile; }
+      parent=pend[ind]; idx=cnt[parent]+0; cnt[parent]=idx+1
+      item=trim(substr(s,3)); ip=parent &quot;.&quot; idx
+      if (item ~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) {
+        k=item; sub(/:.*$/,&quot;&quot;,k); v=item; sub(/^[^:]*:[ \t]*/,&quot;&quot;,v)
+        for(kk in ctx) if(kk+0&gt;ind+2) delete ctx[kk]
+        ctx[ind+2]=ip
+        if (v==&quot;&quot;) { pend[ind+2]=join(ip,k); pend[ind+4]=join(ip,k); ctx[ind+4]=join(ip,k) }
+        else emit_val(join(ip,k),v)
+      } else emit_val(ip,item)
+      next
+    }
+    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { fail(&quot;cannot parse line &quot; FNR &quot;: &quot; s); if (outdir != &quot;&quot;) nextfile; }
+    if (!(ind in ctx)) { fail(&quot;unexpected indentation on line &quot; FNR); if (outdir != &quot;&quot;) nextfile; }
+    k=s; sub(/:.*$/,&quot;&quot;,k); v=s; sub(/^[^:]*:[ \t]*/,&quot;&quot;,v)
+    clear_from(ind)
+    p=join(ctx[ind],k)
+    if (v==&quot;&quot;) { pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
+    else emit_val(p,v)
+  }&#39;
+mj_yaml_flatten() {
+  mj_count yaml_flatten
+  awk -v outdir=&quot;&quot; -v front=0 &quot;$MJ_FLATTEN_AWK&quot; &quot;$1&quot;
+}
+# --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
+# may share a basename; the caller keeps the number-to-path map.
+mj_yaml_flatten_many() {
+  local outdir=&quot;$1&quot; front=0 numbered=0; shift
+  while :; do case &quot;${1:-}&quot; in --front) front=1; shift ;; --numbered) numbered=1; shift ;; *) break ;; esac; done
+  [ $# -gt 0 ] || return 0
+  mj_count yaml_flatten_many
+  rm -f &quot;$outdir/.errors&quot;
+  awk -v outdir=&quot;$outdir&quot; -v front=&quot;$front&quot; -v numbered=&quot;$numbered&quot; &quot;$MJ_FLATTEN_AWK&quot; &quot;$@&quot;
+}
+# mj_sha256_many: NUL-separated paths on stdin, one &quot;hash&lt;TAB&gt;path&quot; line per file, one
+# hashing process for all of them. Hashing one file per process costs more than reading
+# it, and the knowledge compiler hashes every source it discovers.
+mj_sha256_many() {
+  mj_count sha256_many
+  mj_sha256_tool 2&gt;/dev/null || mj_die &quot;$MJ_EX_MISSING&quot; &quot;$MJ_SHA256_MISSING&quot;
+  mj_sha256_xargs -0 | awk &#39;{ h = $1; sub(/^[^ ]+  /, &quot;&quot;); printf &quot;%s\t%s\n&quot;, h, $0 }&#39;
+}
+# value of a flattened key (first match); empty if absent
+# One process each. These run thousands of times per command — the rule loader alone asks
+# for well over a thousand keys — and the sed|sed|head form they replaced cost four forks
+# per lookup, which was most of a command&#39;s wall time.
+# ---------------------------------------------------------------- flat file -&gt; variables
+# mj_yload &lt;flat&gt; &lt;prefix&gt;: every key=value of a flattened file becomes one shell variable
+# &lt;prefix&gt;__&lt;key&gt;, with each &quot;.&quot; of the key written &quot;__&quot; and each &quot;-&quot; written &quot;___&quot;, so a
+# reader that needs many keys of one file pays one awk and one loop of builtins instead of
+# one awk per key. Keys outside [A-Za-z0-9_.-] are skipped: they fail every allow-list
+# anyway and could not be variable names. Nothing read from a file is ever evaluated: awk
+# emits name&lt;TAB&gt;value, the name is checked once more here, and printf -v assigns it.
+mj_yassign() { # name&lt;TAB&gt;value lines on stdin -&gt; variables, in this shell
+  local line n
+  while IFS= read -r line; do
+    n=&quot;${line%%&quot;$MJ_TAB&quot;*}&quot;
+    case &quot;$n&quot; in &#39;&#39;|*[!A-Za-z0-9_]*) continue ;; esac
+    printf -v &quot;$n&quot; &#39;%s&#39; &quot;${line#*&quot;$MJ_TAB&quot;}&quot;
+  done
+}
+mj_yload() {
+  mj_yassign &lt; &lt;(awk -F= -v p=&quot;$2&quot; &#39;{
+      k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+      gsub(/-/, &quot;___&quot;, k); gsub(/\./, &quot;__&quot;, k)
+      v = $0; sub(/^[^=]*=/, &quot;&quot;, v)
+      printf &quot;%s__%s\t%s\n&quot;, p, k, v }&#39; &quot;$1&quot;)
+}
+# mj_yload_dir &lt;dir&gt; &lt;prefix&gt;: every file of a flat directory at once, one awk and one
+# loop; the variables are &lt;prefix&gt;_&lt;file name&gt;__&lt;key&gt;, the file name sanitised like a key
+mj_yload_dir() {
+  mj_yassign &lt; &lt;(awk -F= -v p=&quot;$2&quot; &#39;FNR == 1 { pre = FILENAME; sub(/.*\//, &quot;&quot;, pre); gsub(/-/, &quot;___&quot;, pre); gsub(/\./, &quot;__&quot;, pre); pre = p &quot;_&quot; pre }
+      { k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+        gsub(/-/, &quot;___&quot;, k); gsub(/\./, &quot;__&quot;, k)
+        v = $0; sub(/^[^=]*=/, &quot;&quot;, v)
+        printf &quot;%s__%s\t%s\n&quot;, pre, k, v }&#39; &quot;$1&quot;/*)
+}
+# mj_yv &lt;prefix&gt; &lt;key&gt;: the value loaded for a key, empty when absent
+# printed as a line, like the flat file&#39;s own line, so a caller that collects several
+# values in a command substitution gets one per line; an absent key prints nothing
+mj_yv() { local k=&quot;${2//-/___}&quot; n; k=&quot;${k//./__}&quot;; n=&quot;$1__$k&quot;; [ -n &quot;${!n:-}&quot; ] &amp;&amp; printf &#39;%s\n&#39; &quot;${!n}&quot;; return 0; }
+# mj_yvlist &lt;prefix&gt; &lt;key&gt;: the values under key.0, key.1 ... with no process per item
+mj_yvlist() { local i=0 k n; k=&quot;${2//-/___}&quot;; k=&quot;${k//./__}&quot;; while n=&quot;$1__${k}__$i&quot;; [ -n &quot;${!n:-}&quot; ]; do printf &#39;%s\n&#39; &quot;${!n}&quot;; i=$((i+1)); done; }
+
+mj_yget()  { awk -v k=&quot;$2&quot; &#39;index($0, k &quot;=&quot;) == 1 { print substr($0, length(k) + 2); exit }&#39; &quot;$1&quot;; }
+# list values under a key prefix: key.0, key.1 ...
+mj_ylist() { awk -v k=&quot;$2&quot; &#39;index($0, k &quot;.&quot;) == 1 { r = substr($0, length(k) + 2); if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, &quot;&quot;, r); print r } }&#39; &quot;$1&quot;; }
+# keys not matching any regex in an allowlist file -&gt; printed; returns 1 if any
+mj_yaml_unknown_keys() {
+  # one grep per file, not one per key: the keys are cut out in one pass and the ones no
+  # allow-list pattern matches are the unknown ones. On a plan of a hundred records the
+  # per-key shape ran thousands of grep processes and was most of plan validate.
+  # the allow-list carries a generated-file banner as `#` comments; every reader of one
+  # strips them, so a comment can never be read as a pattern
+  local flat=&quot;$1&quot; allow=&quot;$2&quot; out
+  out=&quot;$(cut -d= -f1 &quot;$flat&quot; | grep -vE -f &lt;(grep -v &#39;^#&#39; &quot;$allow&quot;) || true)&quot;
+  [ -n &quot;$out&quot; ] || return 0
+  printf &#39;%s\n&#39; &quot;$out&quot;
+  return 1
+}
+
+# ---------------------------------------------------------------- regions and stamps
+# A generated target describes itself. In file mode its first line is a stamp naming the
+# policy hash it was rendered from and the hash of the content below it; in region mode the
+# begin marker carries the same two hashes for the region body. Nothing else records what
+# was generated: a fresh clone carries the evidence inside the target, so a hand edit is
+# detected wherever the file is, and there is no provenance file to keep in step with it.
+#
+# A region projection owns only the text between two markers in a file it does not
+# otherwise control, so Majordomus can be adopted by a repository that already has a
+# hand-written CLAUDE.md. The marker is not part of the owned content, so re-hashing the
+# policy alone is never a hand edit.
+MJ_REGION_BEGIN_RE=&#39;^&lt;!-- majordomus:begin( [0-9a-f]+)?( [0-9a-f]+)? --&gt;$&#39;
+MJ_REGION_END_RE=&#39;^&lt;!-- majordomus:end --&gt;$&#39;
+MJ_REGION_END=&#39;&lt;!-- majordomus:end --&gt;&#39;
+MJ_STAMP_RE=&#39;^&lt;!-- generated by `majordomus update` from .* \(policy [0-9a-f]+, content [0-9a-f]+\) .* --&gt;$&#39;
+
+# the first line of a file-mode target: mj_stamp_line POLICY_SHA CONTENT_SHA
+mj_stamp_line() {
+  printf -- &#39;&lt;!-- generated by `majordomus update` from %s (policy %s, content %s) — do not edit; edit the policy and regenerate --&gt;\n&#39; \
+    &quot;$(mj_rel &quot;$MJ_POLICY_FILE&quot;)&quot; &quot;${1:0:12}&quot; &quot;${2:0:16}&quot;
+}
+# the stamp a target carries, as &quot;policy content&quot; on stdout; exit 1 when it carries none
+# mj_stamp_read FILE MODE
+mj_stamp_read() {
+  local line
+  if [ &quot;$2&quot; = region ]; then
+    line=&quot;$(grep -E &quot;$MJ_REGION_BEGIN_RE&quot; &quot;$1&quot; 2&gt;/dev/null | head -n 1)&quot;
+    set -- $line; [ $# -ge 5 ] || return 1
+    printf &#39;%s %s&#39; &quot;$3&quot; &quot;$4&quot;
+  else
+    line=&quot;$(head -n 1 &quot;$1&quot; 2&gt;/dev/null)&quot;
+    printf &#39;%s&#39; &quot;$line&quot; | grep -qE &quot;$MJ_STAMP_RE&quot; || return 1
+    printf &#39;%s&#39; &quot;$line&quot; | sed -E &#39;s/^.*\(policy ([0-9a-f]+), content ([0-9a-f]+)\).*$/\1 \2/&#39;
+  fi
+}
+# the content a stamp covers: everything below the stamp line, or the region body
+# mj_owned_content FILE MODE -&gt; stdout; exit codes as mj_region_extract for region mode
+mj_owned_content() {
+  if [ &quot;$2&quot; = region ]; then mj_region_extract &quot;$1&quot;
+  elif mj_stamp_read &quot;$1&quot; file &gt;/dev/null; then tail -n +2 &quot;$1&quot;
+  else cat &quot;$1&quot;; fi
+}
+
+# prints the region body of file $1
+# exit 0 found · 1 no begin marker · 2 malformed (unclosed, out of order, or repeated)
+mj_region_extract() {
+  awk -v b=&quot;$MJ_REGION_BEGIN_RE&quot; -v e=&quot;$MJ_REGION_END_RE&quot; &#39;
+    $0 ~ b { if (seen) { bad = 2; exit } seen = 1; inside = 1; next }
+    $0 ~ e { if (!inside) { bad = 2; exit } inside = 0; closed = 1; next }
+    inside { print }
+    END { if (bad) exit bad; if (!seen) exit 1; if (!closed) exit 2 }&#39; &quot;$1&quot;
+}
+
+# does file $1 carry a begin marker at all?
+mj_region_present() { grep -qE &quot;$MJ_REGION_BEGIN_RE&quot; &quot;$1&quot; 2&gt;/dev/null; }
+
+# host file $1 (may be absent), region body file $2, marker payload $3 (&quot;policy content&quot;
+# hashes) -&gt; whole new file on stdout. An existing region is replaced in place; otherwise
+# the region is appended.
+mj_region_splice() {
+  local host=&quot;$1&quot; body=&quot;$2&quot; sha=&quot;$3&quot;
+  if [ -f &quot;$host&quot; ] &amp;&amp; mj_region_present &quot;$host&quot;; then
+    awk -v b=&quot;$MJ_REGION_BEGIN_RE&quot; -v e=&quot;$MJ_REGION_END_RE&quot; -v body=&quot;$body&quot; -v sha=&quot;$sha&quot; &#39;
+      $0 ~ b { print &quot;&lt;!-- majordomus:begin &quot; sha &quot; --&gt;&quot;
+               while ((getline l &lt; body) &gt; 0) print l
+               close(body)
+               print &quot;&lt;!-- majordomus:end --&gt;&quot;
+               skip = 1; next }
+      $0 ~ e { skip = 0; next }
+      !skip  { print }&#39; &quot;$host&quot;
+  else
+    if [ -f &quot;$host&quot; ]; then cat &quot;$host&quot;; printf &#39;\n&#39;; fi
+    printf -- &#39;&lt;!-- majordomus:begin %s --&gt;\n&#39; &quot;$sha&quot;
+    cat &quot;$body&quot;
+    printf &#39;%s\n&#39; &quot;$MJ_REGION_END&quot;
+  fi
+}
+
+# mj_projection_status TARGET MODE PROVIDER
+mj_projection_status() {
+  local tgt=&quot;$1&quot; mode=&quot;$2&quot; prov=&quot;$3&quot; owned rc stamp
+  mj_provider_template &quot;$prov&quot; &gt;/dev/null || { printf &#39;no_template&#39;; return 0; }
+  [ -f &quot;$MJ_ROOT/$tgt&quot; ] || { printf &#39;absent&#39;; return 0; }
+  owned=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.own.XXXXXX&quot;)&quot;
+  rc=0; mj_owned_content &quot;$MJ_ROOT/$tgt&quot; &quot;$mode&quot; &gt; &quot;$owned&quot; 2&gt;/dev/null || rc=$?
+  case &quot;$rc&quot; in
+    0) ;;
+    1) rm -f &quot;$owned&quot;; printf &#39;region_absent&#39;; return 0 ;;
+    *) rm -f &quot;$owned&quot;; printf &#39;malformed&#39;; return 0 ;;
+  esac
+  if ! stamp=&quot;$(mj_stamp_read &quot;$MJ_ROOT/$tgt&quot; &quot;$mode&quot;)&quot;; then rm -f &quot;$owned&quot;; printf &#39;unstamped&#39;; return 0; fi
+  if [ &quot;$(mj_sha256 &quot;$owned&quot; | cut -c1-16)&quot; = &quot;$(printf &#39;%s&#39; &quot;${stamp#* }&quot; | cut -c1-16)&quot; ]; then printf &#39;ok %s&#39; &quot;${stamp%% *}&quot;; else printf &#39;hand_edited %s&#39; &quot;${stamp%% *}&quot;; fi
+  rm -f &quot;$owned&quot;
+  return 0
+}
+# projection mode of index $1: &quot;file&quot; (whole file) or &quot;region&quot; (between markers)
+mj_projection_mode() {
+  local m; m=&quot;$(mj_pol &quot;projections.$1.mode&quot;)&quot;
+  case &quot;$m&quot; in &quot;&quot;|file) printf &#39;file&#39; ;; region) printf &#39;region&#39; ;; *) printf &#39;%s&#39; &quot;$m&quot; ;; esac
+}
+
+# ---------------------------------------------------------------- event vocabulary
+# The ledger is append-only and canonical, so a line written into it is permanent. An event
+# name that no reader recognises is therefore a durable record that is silently ignored,
+# which is indistinguishable from the event never having happened. The vocabulary is closed
+# for the same reason an unknown policy key is an error.
+MJ_EV_FLAT=&quot;&quot;
+mj_events_load() {
+  [ -n &quot;$MJ_EV_FLAT&quot; ] &amp;&amp; [ -f &quot;$MJ_EV_FLAT&quot; ] &amp;&amp; return 0
+  local reg=&quot;$MJ_BIN_DIR/../share/events.yaml&quot;
+  [ -f &quot;$reg&quot; ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;event registry missing: $reg&quot;
+  MJ_EV_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ev.XXXXXX&quot;)&quot;
+  mj_yaml_flatten &quot;$reg&quot; &gt; &quot;$MJ_EV_FLAT&quot; 2&gt;/dev/null \
+    || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;event registry does not parse: $reg&quot;
+  [ &quot;$(mj_yget &quot;$MJ_EV_FLAT&quot; version)&quot; = 1 ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;event registry version must be 1&quot;
+}
+# These read the loaded registry. mj_events_load must run in the calling shell first: a load
+# inside a command substitution would set MJ_EV_FLAT in the subshell only, re-flattening the
+# file on every call and leaking a temporary file each time.
+mj_event_ids() { sed -n &#39;s/^events\.[0-9]*\.id=//p&#39; &quot;$MJ_EV_FLAT&quot;; }
+mj_event_known() { mj_event_ids | grep -Fxq &quot;$1&quot;; }
+# the index of one event, so its other fields can be read: one pass, not one awk per index
+mj_event_index() {
+  awk -F= -v want=&quot;$1&quot; &#39;/^events\.[0-9]+\.id=/ { v = $0; sub(/^[^=]*=/, &quot;&quot;, v); if (v == want) { split($1, k, &quot;.&quot;); print k[2]; found = 1; exit } }
+    END { exit found ? 0 : 1 }&#39; &quot;$MJ_EV_FLAT&quot;
+}
+mj_event_requires() {
+  local i; i=&quot;$(mj_event_index &quot;$1&quot;)&quot; || return 0
+  mj_ylist &quot;$MJ_EV_FLAT&quot; &quot;events.$i.requires&quot;
+}
+
+# ---------------------------------------------------------------- ledger
+# The keys this function writes itself. A payload may not carry one of them: JSON permits a
+# duplicated key and says nothing about which wins, so a line with two `&quot;event&quot;` keys means
+# different things to different readers — and this repository had exactly that. The receipt
+# every lifecycle hook writes passed a payload field literally named `event` (the provider&#39;s
+# own event name), producing
+#
+#   {&quot;ts&quot;:...,&quot;event&quot;:&quot;provider.event.received&quot;,...,&quot;provider&quot;:&quot;claude-code&quot;,&quot;event&quot;:&quot;start&quot;}
+#
+# which `history --validate` read as the event `start`, a name share/events.yaml does not
+# declare, and refused with exit 10. Written by d5d541850; it never reached CI because no
+# runner&#39;s ledger holds a provider receipt.
+#
+# Declared here rather than checked at each call site, because the whole point is that no
+# caller can get it wrong. Every entry is matched with its opening quote, so a longer key
+# ending in a reserved name (`provider_session`, `session_path`, `ahead`) is not a
+# collision; mj_json_esc turns a quote inside a value into `\&quot;`, so a reserved name appearing
+# inside a string is not one either.
+MJ_LEDGER_ENVELOPE_KEYS=&#39;ts event head branch by session&#39;
+
+# mj_ledger_append event &#39;extra json fields without braces&#39;
+# The event must be one share/events.yaml declares, must carry the payload keys that entry
+# requires, and must not carry a key from the envelope. All three are internal errors rather
+# than findings: a command that writes an event the vocabulary does not define, or that
+# overwrites the envelope it is being wrapped in, is a bug in Majordomus and not a fact
+# about the repository being supervised.
+mj_ledger_append() {
+  local ev=&quot;$1&quot; extra=&quot;${2:-}&quot; line sid k
+  mj_events_load
+  mj_event_known &quot;$ev&quot; || mj_die &quot;$MJ_EX_INTERNAL&quot; \
+    &quot;unregistered event &#39;$ev&#39;; declare it in share/events.yaml or use one of: $(mj_event_ids | tr &#39;\n&#39; &#39; &#39;)&quot;
+  for k in $MJ_LEDGER_ENVELOPE_KEYS; do
+    case &quot;$extra&quot; in *&quot;\&quot;$k\&quot;:&quot;*)
+        mj_die &quot;$MJ_EX_INTERNAL&quot; \
+          &quot;event &#39;$ev&#39; carries the payload field &#39;$k&#39;, which is a ledger envelope key; every line would carry it twice and readers would disagree about which one it means — rename the field (the provider receipt&#39;s own &#39;$k&#39; became &#39;provider_$k&#39;)&quot; ;;
+    esac
+  done
+  for k in $(mj_event_requires &quot;$ev&quot;); do
+    case &quot;$extra&quot; in *&quot;\&quot;$k\&quot;:&quot;*) ;;
+      *) mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;event &#39;$ev&#39; is missing the required field &#39;$k&#39;&quot; ;;
+    esac
+  done
+  line=&quot;{\&quot;ts\&quot;:\&quot;$(mj_now)\&quot;,\&quot;event\&quot;:\&quot;$ev\&quot;,\&quot;head\&quot;:\&quot;$(mj_git_head)\&quot;,\&quot;branch\&quot;:\&quot;$(mj_json_esc &quot;$(mj_git_branch)&quot;)\&quot;,\&quot;by\&quot;:\&quot;majordomus/$MJ_VERSION\&quot;&quot;
+  sid=&quot;$(mj_open_session_id)&quot;
+  [ -n &quot;$sid&quot; ] &amp;&amp; line=&quot;$line,\&quot;session\&quot;:\&quot;$sid\&quot;&quot;
+  [ -n &quot;$extra&quot; ] &amp;&amp; line=&quot;$line,$extra&quot;
+  # the local half is never tracked, so a second worktree of the same repository starts
+  # without it; the first write creates it
+  mkdir -p &quot;$MJ_STATE_DIR&quot;
+  printf &#39;%s}\n&#39; &quot;$line&quot; &gt;&gt; &quot;$MJ_STATE_DIR/ledger.jsonl&quot;
+}
+
+# ---------------------------------------------------------------- the open episode
+# One execution episode per provider session, not one per checkout.
+#
+# The episode used to be a singleton: one state/session-current.yaml, and a second provider
+# session opening one in the same checkout was folded into the first. Its ledger lines were
+# stamped with the other episode&#39;s id, and either window&#39;s end event closed the episode for
+# both. Measured on 2026-09-09 in this repository: seven concurrent sessions, one record
+# between them.
+#
+# So an open episode is a file of its own, named by the provider session that opened it,
+# under state/sessions-open/. An episode nobody named is keyed `hand`, and there is at most
+# one of those: a provider that sends no session identity is indistinguishable from a person
+# at a terminal, and inventing a distinction there would multiply episodes nobody can close.
+#
+# state/session-current.yaml stays, as a symlink into that store — the pointer to the
+# episode of this checkout. It is the path `continuity.state`, `doctor`, the schema and the
+# prose already name, and every reader of it (a sed, a YAML flattener, a whole-document
+# reader in Rust) follows a symlink without knowing it did. A symlink and not a copy,
+# because two accounts of one open episode is exactly the drift this record exists to
+# avoid.
+#
+# Which episode is this process&#39;s, in order:
+#
+#   1. MJ_SESSION_KEY — the provider session named on the command line, which a provider
+#      hook always passes. Strict: that episode or none. This is what keeps an end event
+#      from closing an episode another provider session opened.
+#   2. the provider session this process is running inside, when the provider exports one
+#      (MAJORDOMUS_PROVIDER_SESSION, or the variable the lifecycle adapter declares) AND an
+#      episode with that key is open here. It falls through when there is none, because a
+#      worker sitting in a checkout whose episode was opened by hand still has that one.
+#   3. the pointer.
+#
+# Two episodes open in one checkout and a process that can name neither is the one case
+# nothing here can resolve: the pointer names the one opened last, and that is a guess the
+# status output says out loud rather than a fact.
+mj_session_open_dir() { printf &#39;%s&#39; &quot;$MJ_STATE_DIR/sessions-open&quot;; }
+mj_session_pointer()  { printf &#39;%s&#39; &quot;$MJ_STATE_DIR/session-current.yaml&quot;; }
+
+# A provider session reduced to one path segment. The value is the provider&#39;s own string,
+# so nothing here lets one name a file outside the store; an empty or unnameable one is the
+# hand-opened episode.
+mj_session_key() {
+  local v
+  v=&quot;$(printf &#39;%s&#39; &quot;${1:-}&quot; | tr -c &#39;A-Za-z0-9._-&#39; &#39;-&#39; | tr -s &#39;-&#39; | cut -c1-64 | sed -e &#39;s/^-*//&#39; -e &#39;s/-*$//&#39;)&quot;
+  if [ -n &quot;$v&quot; ]; then printf &#39;%s&#39; &quot;$v&quot;; else printf &#39;hand&#39;; fi
+}
+mj_session_key_file() { printf &#39;%s/%s.yaml&#39; &quot;$(mj_session_open_dir)&quot; &quot;$(mj_session_key &quot;${1:-}&quot;)&quot;; }
+
+# The provider session this process is running inside, when one is observable. The variable
+# names are the lifecycle adapters&#39; own column, so the provider table stays the single
+# declaration of what a provider is; capture.sh is sourced here rather than at the top
+# because this is on the ledger&#39;s write path and the prompt path needs none of it.
+mj_provider_session_env() {
+  if [ -n &quot;${MAJORDOMUS_PROVIDER_SESSION:-}&quot; ]; then printf &#39;%s&#39; &quot;$MAJORDOMUS_PROVIDER_SESSION&quot;; return 0; fi
+  if [ -n &quot;${MJ_LIB_DIR:-}&quot; ] &amp;&amp; [ -f &quot;$MJ_LIB_DIR/capture.sh&quot; ]; then
+    # shellcheck source=capture.sh
+    [ -n &quot;${MJ_LIB_capture:-}&quot; ] || . &quot;$MJ_LIB_DIR/capture.sh&quot;
+    local n v
+    for n in $(mj_lifecycle_session_vars); do
+      # the name comes from the adapter table, never from anything a payload carries.
+      # Indirect expansion, not eval: eval would run whatever the name expanded to, and
+      # SECURITY.md forbids it outright (test/cases/08_no_forbidden_constructs.sh).
+      v=&quot;${!n:-}&quot;
+      if [ -n &quot;$v&quot; ]; then printf &#39;%s&#39; &quot;$v&quot;; return 0; fi
+    done
+  fi
+  return 0
+}
+
+# The file holding this process&#39;s open episode, whether or not it exists.
+mj_session_here_file() {
+  local k f
+  if [ -n &quot;${MJ_SESSION_KEY:-}&quot; ]; then mj_session_key_file &quot;$MJ_SESSION_KEY&quot;; return 0; fi
+  k=&quot;$(mj_provider_session_env)&quot;
+  if [ -n &quot;$k&quot; ]; then
+    f=&quot;$(mj_session_key_file &quot;$k&quot;)&quot;
+    if [ -f &quot;$f&quot; ]; then printf &#39;%s&#39; &quot;$f&quot;; return 0; fi
+  fi
+  mj_session_pointer
+  return 0
+}
+
+# The open session in THIS worktree, or nothing. Read with two seds rather than the YAML
+# parser: this runs on every ledger append, and the two fields it needs are top-level
+# scalars written by one command.
+#
+# Which episode wrote an event is a fact the machine knows, so it is stamped like `head`
+# and `branch` are, rather than reconstructed later from a time range. A time range cannot
+# tell two workers apart — the ledger is one file per repository, and a session that
+# selected by time alone claimed another session&#39;s checkpoints the first time this was run
+# for real. A line with no session belongs to no episode, which is the honest answer for
+# work done outside one: sessions are optional, and nothing is attributed by proximity.
+mj_open_session_id() {
+  local f w
+  f=&quot;$(mj_session_here_file)&quot;
+  [ -f &quot;$f&quot; ] || return 0
+  w=&quot;$(sed -n &#39;s/^worktree: //p&#39; &quot;$f&quot; | head -n 1)&quot;
+  [ -n &quot;$w&quot; ] &amp;&amp; [ &quot;$w&quot; != &quot;$MJ_ROOT&quot; ] &amp;&amp; return 0
+  sed -n &#39;s/^session_id: //p&#39; &quot;$f&quot; | head -n 1
+}
+
+# ---------------------------------------------------------------- current task
+mj_load_current() {
+  MJ_CUR=&quot;$MJ_STATE_DIR/current.yaml&quot;
+  [ -f &quot;$MJ_CUR&quot; ] || return 1
+  MJ_CUR_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.cur.XXXXXX&quot;)&quot;
+  mj_yaml_flatten &quot;$MJ_CUR&quot; &gt; &quot;$MJ_CUR_FLAT&quot; || return 2
+  mj_allow_warn current &quot;$MJ_CUR_FLAT&quot; &quot;$MJ_ALLOW_DIR/current.txt&quot; &quot;$(mj_rel &quot;$MJ_CUR&quot;)&quot;
+  return 0
+}
+
+# Hold a flattened local-state file to its schema, by way of the allow-list `generate allow`
+# derives from it. The local half of the layer is not indexed, so no kind applies a schema
+# there; this is where those schemas are applied instead, and it is what keeps a schema from
+# being a file that describes nothing. A warning rather than a failure, deliberately: these
+# records are this checkout&#39;s own, an unknown key means the record is stale or foreign, and
+# neither is a reason to refuse the command a person is running.
+mj_allow_warn() {
+  local kind=&quot;$1&quot; flat=&quot;$2&quot; allow=&quot;$3&quot; rel=&quot;$4&quot; k
+  [ -f &quot;$allow&quot; ] || return 0
+  k=&quot;$(mj_yaml_unknown_keys &quot;$flat&quot; &quot;$allow&quot; || true)&quot;
+  [ -z &quot;$k&quot; ] || mj_warn &quot;$kind&quot; &quot;$rel&quot; &quot;unknown key(s) the $kind schema does not declare: $(printf &#39;%s&#39; &quot;$k&quot; | tr &#39;\n&#39; &#39; &#39;)&quot; &quot;majordomus doctor&quot;
+  return 0
+}
+mj_cur() { [ -n &quot;${MJ_CUR_FLAT:-}&quot; ] || return 0; mj_yget &quot;$MJ_CUR_FLAT&quot; &quot;$1&quot;; }
+
+mj_load_policy() {
+  MJ_POL_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.pol.XXXXXX&quot;)&quot;
+  mj_yaml_flatten &quot;$MJ_POLICY_FILE&quot; &gt; &quot;$MJ_POL_FLAT&quot; || return 1
+}
+mj_pol() { [ -n &quot;${MJ_POL_FLAT:-}&quot; ] || return 0; mj_yget &quot;$MJ_POL_FLAT&quot; &quot;$1&quot;; }
+# A policy value the code depends on. There is no default here on purpose: a fallback
+# written beside the reader is a second source of truth for the same number, and a reader
+# that silently substitutes its own value enforces something the configuration does not
+# say. A missing key is a policy error, and doctor names the key.
+# A required policy value. Almost every caller uses this inside a command substitution,
+# where mj_die can only exit the subshell — the parent then carries on with an empty
+# string, which is how an installation with an older policy produced
+# &quot;[: : integer expected&quot; and a finding that read &quot;17 lines over budget &quot; with no number.
+# A helper that is meant to fail closed and fails open in its usual position is worse
+# than no helper, so this returns non-zero and the caller decides: a command dies, a
+# validator reports. Callers must check, and mj_validate_policy_keys enforces that they do.
+mj_pol_req() {
+  local v; v=&quot;$(mj_pol &quot;$1&quot;)&quot;
+  if [ -z &quot;$v&quot; ]; then
+    printf &#39;majordomus: policy is missing required key %s (%s)\n&#39; &quot;$1&quot; &quot;$(mj_rel &quot;$MJ_POLICY_FILE&quot;)&quot; &gt;&amp;2
+    return &quot;$MJ_EX_CONTRACT&quot;
+  fi
+  printf &#39;%s&#39; &quot;$v&quot;
+}
+mj_load_profile() {
+  local name=&quot;$1&quot;
+  # cleared first: a failed load must not leave the previous profile readable as this one
+  rm -f &quot;${MJ_PRO_FLAT:-}&quot; 2&gt;/dev/null || true; MJ_PRO_FLAT=&quot;&quot;
+  [ -f &quot;$MJ_PROFILES_DIR/$name.yaml&quot; ] || return 1
+  MJ_PRO_FLAT=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.pro.XXXXXX&quot;)&quot;
+  mj_yaml_flatten &quot;$MJ_PROFILES_DIR/$name.yaml&quot; &gt; &quot;$MJ_PRO_FLAT&quot; || return 2
+}
+mj_pro() { [ -n &quot;${MJ_PRO_FLAT:-}&quot; ] || return 0; mj_yget &quot;$MJ_PRO_FLAT&quot; &quot;$1&quot;; }
+
+# ---------------------------------------------------------------- temporary files
+# Every temporary file a command makes lives under one directory of the process&#39;s own, and
+# the exit trap removes that directory. Before this, the trap removed the four files it knew
+# by name while some hundred and fifty `mktemp` call sites made others: the manifest and
+# event flattenings, the session and context-document workspaces, the project model&#39;s
+# directory of two hundred and sixty files, and everything made inside a command
+# substitution, whose subshell has no exit trap to run. One session start left 25 entries
+# and 1335 files in TMPDIR; a provider hook runs the tool on every prompt, so the pile grew
+# for as long as the machine stayed up, and on 2026-10-07 macOS spent 7 min 38 s of a login
+# deleting it, because it empties TMPDIR at boot before anything else may start.
+#
+# The call sites are not rewritten. They ask for &quot;${TMPDIR:-/tmp}/&lt;name&gt;&quot;, and the function
+# below answers that request under the root instead; a template anywhere else — beside a
+# record about to be published, inside a workspace already under the root, in any directory
+# below TMPDIR rather than in it — is passed through untouched, because that location is the
+# point of it. TMPDIR itself is not moved:
+# a verify command, an editor or a server this process starts inherits the environment and
+# may outlive the directory.
+#
+# The root is made once, before a command runs, and not on first use: a first use inside a
+# command substitution would name a root only that subshell knows. The entry point makes it
+# after its dispatch; a script that sources this library gets it as it sources it (below).
+# Sourcing the library again keeps the root this process already has.
+case &quot;${MJ_TMP_ROOT:-}&quot; in */mj.&quot;$$&quot;.*) ;; *) MJ_TMP_ROOT=&quot;&quot; ;; esac
+mj_tmp_root_init() {
+  local base=&quot;${TMPDIR:-/tmp}&quot;
+  MJ_TMP_ROOT=&quot;$(command mktemp -d &quot;${base%/}/mj.$$.XXXXXX&quot;)&quot;
+  # A root whose process is gone is removed by the next process to start. The exit trap
+  # cannot be the only remover: a shell that dies of PIPE runs none, and
+  # `majordomus doctor | grep -q OK` — a reader that closes the pipe once it has its
+  # answer — is how half the cases ask a question, so each such command left its root
+  # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
+  # &quot;write error: Broken pipe&quot; line on stderr that was never there. So the root carries its
+  # process id, and here every root of this user&#39;s whose process no longer exists goes. A
+  # process id that has been reused keeps a dead root until that process ends too.
+  #
+  # Gone means the system said &quot;no such process&quot; and nothing else. `kill -0` also fails when
+  # this process may not signal that one, and a session inside a sandbox may signal nobody:
+  # read as &quot;gone&quot;, that refusal removed the roots of every living command of this user&#39;s,
+  # and on 2026-10-12 three derives died mid-run with their temporary files deleted under
+  # them. Any other answer — permission, or a wording this cannot read — keeps the root:
+  # a root kept too long costs disk, and a root removed too soon costs somebody&#39;s work.
+  local stale pid why
+  for stale in &quot;${base%/}&quot;/mj.[0-9]*.??????; do
+    [ -d &quot;$stale&quot; ] &amp;&amp; [ -O &quot;$stale&quot; ] || continue
+    pid=&quot;${stale##*/mj.}&quot;; pid=&quot;${pid%.*}&quot;
+    case &quot;$pid&quot; in &#39;&#39;|*[!0-9]*) continue ;; esac
+    why=&quot;$(LC_ALL=C; export LC_ALL; kill -0 &quot;$pid&quot; 2&gt;&amp;1)&quot; &amp;&amp; continue
+    case &quot;$why&quot; in *[Nn]&#39;o such process&#39;*) rm -rf &quot;$stale&quot; 2&gt;/dev/null || true ;; esac
+  done
+}
+mktemp() {
+  [ -n &quot;$MJ_TMP_ROOT&quot; ] || { command mktemp &quot;$@&quot;; return; }
+  local base=&quot;${TMPDIR:-/tmp}&quot; a rest; local -a args=()
+  base=&quot;${base%/}&quot;
+  for a in &quot;$@&quot;; do
+    # only a name directly in TMPDIR is moved. A path that merely lies below it is somewhere
+    # in particular: a workspace under the root, or a repository that itself lives in /tmp,
+    # as every fixture does on a machine where TMPDIR is unset, and there a template beside
+    # a record was sent to a directory that did not exist.
+    case &quot;$a&quot; in
+      &quot;$base&quot;/*)
+        rest=&quot;${a#&quot;$base&quot;/}&quot;; rest=&quot;${rest#/}&quot;
+        case &quot;$rest&quot; in */*) ;; *) a=&quot;$MJ_TMP_ROOT/$rest&quot; ;; esac ;;
+    esac
+    args+=(&quot;$a&quot;)
+  done
+  command mktemp &quot;${args[@]+&quot;${args[@]}&quot;}&quot;
+}
+
+mj_cleanup() {
+  mj_timing_report
+  rm -f &quot;${MJ_CUR_FLAT:-}&quot; &quot;${MJ_POL_FLAT:-}&quot; &quot;${MJ_PRO_FLAT:-}&quot; &quot;${MJ_REC_TMP:-}&quot; 2&gt;/dev/null
+  # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
+  # Only the shell that made the root removes it. A subshell that sources the library again
+  # sets this trap for itself and keeps the root it inherited (above), so its exit would
+  # otherwise remove the root its parent is still writing into.
+  [ -n &quot;${MJ_TMP_ROOT:-}&quot; ] &amp;&amp; [ &quot;${BASH_SUBSHELL:-0}&quot; = 0 ] &amp;&amp; rm -rf &quot;$MJ_TMP_ROOT&quot; 2&gt;/dev/null
+  # A lock this process is holding goes with it. Releasing here and not only at the end of
+  # the critical section is what makes the lock crash-safe for every exit a command has:
+  # mj_die, a failed `set -e` command, an interrupt from the test runner&#39;s bound.
+  [ -n &quot;${MJ_HELD_LOCK:-}&quot; ] &amp;&amp; rmdir &quot;${MJ_HELD_LOCK}&quot; 2&gt;/dev/null
+  return 0
+}
+trap mj_cleanup EXIT
+
+# A script that sources this library makes its root here. Before this only the entry point
+# asked for one, and every script that sources the library — the derive&#39;s generators, the
+# site build and its checks, the cases — made its files directly in TMPDIR and left them:
+# the project model&#39;s directory, the manifest&#39;s and the knowledge sources&#39; flattenings, one
+# of each per run. On 2026-10-11 TMPDIR held 65,530 entries, the most one directory holds
+# on that volume, and every `mktemp -d` on the machine failed as if its parent were gone.
+# The entry point still makes its root only after its dispatch, because a command it hands
+# to the other program is an exec, which runs no exit trap; it sets MJ_TMP_ROOT_DEFER
+# before sourcing the library to say so. A script that replaces the exit trap leaves its
+# root to the next process that starts, as a KILL does. A root that cannot be made leaves
+# `mktemp` as it was rather than stopping the script that sourced the library. A subshell
+# makes none: it shares its parent&#39;s root, and a root of its own would be named after the
+# parent&#39;s process and outlive the subshell.
+if [ -z &quot;${MJ_TMP_ROOT_DEFER:-}&quot; ] &amp;&amp; [ -z &quot;$MJ_TMP_ROOT&quot; ] &amp;&amp; [ &quot;${BASH_SUBSHELL:-0}&quot; = 0 ]; then
+  mj_tmp_root_init 2&gt;/dev/null || true
+  [ -d &quot;${MJ_TMP_ROOT:-}&quot; ] || MJ_TMP_ROOT=&quot;&quot;
+fi
+
+# ---------------------------------------------------------------- mutual exclusion
+# One named lock, taken by creating a directory, which is the one filesystem operation
+# POSIX guarantees is atomic and which works on every filesystem this tool runs on. The
+# shape is `adr propose`&#39;s, generalised here because a second command needed it: a
+# check-then-write over a shared store is not exactly-once unless the check and the write
+# are inside the same critical section, and `session close` proved that by publishing two
+# canonical records for one episode when two of a provider&#39;s end events arrived together.
+#
+# It never blocks for ever and it never refuses. A lock older than MJ_LOCK_STALE seconds
+# belonged to a process that died holding it, and waiting on a dead process is a worse
+# failure than proceeding without the guarantee — so the wait is bounded, a stale lock is
+# broken, and the caller is told which happened through the return value rather than being
+# stopped. The guard inside the section stays correct without the lock; it is only narrower.
+#
+#   mj_lock_take PATH   -&gt; 0 took it · 1 proceeded without it (bounded wait expired)
+#   mj_lock_release     -&gt; releases whatever this process holds
+MJ_HELD_LOCK=&quot;&quot;
+MJ_LOCK_WAIT=&quot;${MJ_LOCK_WAIT:-100}&quot;      # tenths of a second
+MJ_LOCK_STALE=&quot;${MJ_LOCK_STALE:-60}&quot;     # seconds before a held lock is called abandoned
+mj_lock_take() {
+  local lock=&quot;$1&quot; waited=0 age
+  mkdir -p &quot;$(dirname &quot;$lock&quot;)&quot; 2&gt;/dev/null || true
+  while ! mkdir &quot;$lock&quot; 2&gt;/dev/null; do
+    age=&quot;$(mj_file_age_secs &quot;$lock&quot;)&quot;
+    if [ -n &quot;$age&quot; ] &amp;&amp; [ &quot;$age&quot; -gt &quot;$MJ_LOCK_STALE&quot; ]; then
+      rmdir &quot;$lock&quot; 2&gt;/dev/null || true
+      continue
+    fi
+    waited=$((waited + 1))
+    if [ &quot;$waited&quot; -ge &quot;$MJ_LOCK_WAIT&quot; ]; then
+      mj_err &quot;warning: $(mj_rel &quot;$lock&quot;) has been held for $((waited / 10))s; continuing without it&quot;
+      return 1
+    fi
+    sleep 0.1 2&gt;/dev/null || sleep 1
+  done
+  MJ_HELD_LOCK=&quot;$lock&quot;
+  return 0
+}
+mj_lock_release() {
+  [ -n &quot;${MJ_HELD_LOCK:-}&quot; ] || return 0
+  rmdir &quot;$MJ_HELD_LOCK&quot; 2&gt;/dev/null || true
+  MJ_HELD_LOCK=&quot;&quot;
+  return 0
+}
+# Seconds since a path was last modified, or nothing when it cannot be read. GNU stat first,
+# then BSD; the two disagree about every flag they share.
+mj_file_age_secs() {
+  local t
+  t=&quot;$(stat -c %Y &quot;$1&quot; 2&gt;/dev/null || stat -f %m &quot;$1&quot; 2&gt;/dev/null)&quot; || return 0
+  [ -n &quot;$t&quot; ] || return 0
+  printf &#39;%s&#39; &quot;$(( $(date +%s) - t ))&quot;
+}
+
+# ---------------------------------------------------------------- records
+# A record is a Markdown file with computed YAML front matter and an authored body.
+# Handovers and checkpoints share this shape; only the directory and the caller&#39;s
+# extra front-matter lines differ.
+
+# front matter of a record (between the first --- and the next ---), empty if malformed
+# mj_change_set MODE [BASE] -&gt; &quot;&lt;status&gt; &lt;TAB&gt; &lt;path&gt; &lt;TAB&gt; &lt;new path or empty&gt;&quot; per change,
+# sorted by path: `staged` reads the index, `base` reads &lt;ref&gt;..worktree, anything else the
+# working tree against HEAD. Untracked files count as additions, because a file git does not
+# know about yet is still a change somebody is about to commit. One reader, so that every
+# command that asks &quot;what changed&quot; gets the same answer.
+mj_change_set() {
+  local mode=&quot;$1&quot; base=&quot;${2:-}&quot; tab
+  tab=&quot;$(printf &#39;\t&#39;)&quot;
+  case &quot;$mode&quot; in
+    staged) mj_git diff --name-status -M --cached 2&gt;/dev/null ;;
+    base)   mj_git diff --name-status -M &quot;$base&quot; 2&gt;/dev/null
+            mj_git ls-files --others --exclude-standard 2&gt;/dev/null | sed &#39;s/^/A\t/&#39; ;;
+    *)      mj_git diff --name-status -M HEAD 2&gt;/dev/null
+            mj_git ls-files --others --exclude-standard 2&gt;/dev/null | sed &#39;s/^/A\t/&#39; ;;
+  esac | awk -F&#39;\t&#39; &#39;{ s = substr($1, 1, 1); if (s == &quot;R&quot; || s == &quot;C&quot;) print s &quot;\t&quot; $2 &quot;\t&quot; $3; else print s &quot;\t&quot; $2 &quot;\t&quot; }&#39; \
+       | LC_ALL=C sort -t &quot;$tab&quot; -k2,2
+}
+
+# A stable identity for this working copy that names no path: the first sixteen hex digits
+# of the sha256 of its absolute path. Two checkouts of one repository differ; the same
+# checkout is the same across runs; and the path itself is not disclosed by a shared record.
+# The repository, named without naming a disk: the remote&#39;s URL when there is one, and a
+# hash of the common git directory when there is not. A shared record carries this; the
+# local records keep mj_git_repo_id, which is a path and is theirs to hold.
+#
+# The URL is written without its credentials. A remote configured as
+# https://x-access-token:&lt;token&gt;@host/o/r.git — which is how a CI clone and many a laptop
+# are configured — used to be copied whole into every shared record, and a shared record
+# is tracked and pushed: the token left the machine in a file nobody thought of as holding
+# one. The identity is the repository&#39;s, and a credential is not part of which repository
+# it is.
+mj_repository_id() {
+  local remote; remote=&quot;$(mj_git config --get remote.origin.url 2&gt;/dev/null)&quot;
+  if [ -n &quot;$remote&quot; ]; then mj_url_public &quot;$remote&quot;; else printf &#39;local:%s&#39; &quot;$(mj_worktree_id)&quot;; fi
+}
+
+# A URL as it may be written down: over HTTP the whole userinfo goes, because a token is as
+# often the user name as the password; over any other scheme only a password does, because
+# `ssh://git@host/...` names a login that is no secret and is part of how the remote is
+# reached. The scp form (`git@host:o/r.git`) has no scheme and carries no password.
+#   mj_url_public &lt;url&gt;
+mj_url_public() {
+  local u=&quot;$1&quot; scheme rest authority userinfo
+  case &quot;$u&quot; in
+    *://*)
+      scheme=&quot;${u%%://*}&quot;; rest=&quot;${u#*://}&quot;; authority=&quot;${rest%%/*}&quot;
+      case &quot;$authority&quot; in
+        *@*)
+          userinfo=&quot;${authority%@*}&quot;
+          case &quot;$scheme&quot; in
+            http|https) rest=&quot;${authority##*@}${rest#&quot;$authority&quot;}&quot; ;;
+            *) rest=&quot;${userinfo%%:*}@${authority##*@}${rest#&quot;$authority&quot;}&quot; ;;
+          esac ;;
+      esac
+      printf &#39;%s://%s&#39; &quot;$scheme&quot; &quot;$rest&quot; ;;
+    *) printf &#39;%s&#39; &quot;$u&quot; ;;
+  esac
+}
+
+mj_worktree_id() {
+  if mj_sha256_tool 2&gt;/dev/null; then printf &#39;%s&#39; &quot;$MJ_ROOT&quot; | mj_sha256_hex | cut -c1-16
+  else printf &#39;%s&#39; &quot;$MJ_ROOT&quot; | cksum | tr -d &#39; &#39; | cut -c1-16; fi
+}
+
+# Is this Markdown file a context document rather than an instance of the kind that lives
+# beside it? A section&#39;s README sits in the same directory as its files and declares the
+# context contract; a kind&#39;s discovery walks the directory and must not read it as one of
+# its own. Coverage made these READMEs universal (ADR 0011), so the test is shared.
+mj_is_context_doc() {
+  [ -f &quot;$1&quot; ] || return 1
+  [ &quot;$(awk &#39;NR == 1 &amp;&amp; $0 != &quot;---&quot; { exit } NR &gt; 1 &amp;&amp; $0 == &quot;---&quot; { exit }
+            NR &gt; 1 &amp;&amp; $0 == &quot;kind: context&quot; { print &quot;yes&quot;; exit }&#39; &quot;$1&quot; 2&gt;/dev/null)&quot; = yes ]
+}
+
+mj_record_front() { awk &#39;NR==1&amp;&amp;$0!=&quot;---&quot;{exit 2} NR&gt;1&amp;&amp;$0==&quot;---&quot;{exit} NR&gt;1&#39; &quot;$1&quot;; }
+# body of a record: everything after the second ---
+mj_record_body()  { awk &#39;c&gt;=2{print} /^---$/{c++}&#39; &quot;$1&quot;; }
+
+# refuse a body that carries fields Majordomus computes: prose must not forge identity
+mj_reject_identity() {
+  grep -qE &#39;^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files|bound_issue|bound_intent|bound_exemption|plan_revision|evidence_standing):&#39; &quot;$1&quot;
+}
+
+# collect staging files an earlier writer was killed before it could unlink. A SIGKILL runs
+# no trap, and the file it leaves sits in a tracked directory looking like repository content.
+# An hour of grace, so that a sibling publishing right now is never robbed of the file it is
+# about to link: the window between mktemp and ln is microseconds.
+mj_sweep_record_temps() {
+  find &quot;$1&quot; -maxdepth 1 -type f -name &#39;.tmp.??????&#39; -mmin +60 -exec rm -f {} + 2&gt;/dev/null || true
+}
+
+# publish content as a new file in a directory, atomically, mode 0600, never overwriting.
+# mj_publish_record DIR NAME_PREFIX CONTENT_FILE -&gt; prints the final path
+#
+# The staging file is created inside DIR because the hard link that publishes it cannot cross
+# a filesystem, and DIR is tracked — so an abort between mktemp and the unlink below dirties a
+# record section. Three things stop that: MJ_REC_TMP puts the file on the EXIT trap&#39;s list, the
+# sweep above collects what a kill left on an earlier run, and .gitignore makes either
+# uncommittable in the meantime. A leftover must never be able to reach a commit.
+mj_publish_record() {
+  local dir=&quot;$1&quot; prefix=&quot;$2&quot; src=&quot;$3&quot; final n=0 head
+  mkdir -p &quot;$dir&quot;
+  mj_sweep_record_temps &quot;$dir&quot;
+  MJ_REC_TMP=&quot;$(mktemp &quot;$dir/.tmp.XXXXXX&quot;)&quot;; chmod 600 &quot;$MJ_REC_TMP&quot;; cat &quot;$src&quot; &gt; &quot;$MJ_REC_TMP&quot;
+  head=&quot;$(mj_git_head)&quot;
+  while :; do
+    final=&quot;$dir/$(mj_now_compact)--${prefix:+$prefix--}$(mj_branch_key)--${head:0:7}--$(mj_rand16).md&quot;
+    ln &quot;$MJ_REC_TMP&quot; &quot;$final&quot; 2&gt;/dev/null &amp;&amp; break
+    n=$((n + 1)); [ &quot;$n&quot; -lt 10 ] || { rm -f &quot;$MJ_REC_TMP&quot;; MJ_REC_TMP=&quot;&quot;; return 1; }
+  done
+  rm -f &quot;$MJ_REC_TMP&quot;; MJ_REC_TMP=&quot;&quot;
+  printf &#39;%s\n&#39; &quot;$final&quot;
+}
+
+# write the computed front matter of a record to stdout. $1 = task id or &quot;none&quot;, $2 = profile,
+# $3 = owner, remaining args are extra &quot;key: value&quot; lines appended verbatim.
+mj_record_front_matter() {
+  local task_id=&quot;${1:-none}&quot; profile=&quot;${2:-none}&quot; owner=&quot;${3:-}&quot;; shift 3 2&gt;/dev/null || true
+  printf -- &#39;---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: &quot;%s&quot;\n&#39; \
+    &quot;$(mj_now)&quot; &quot;$task_id&quot; &quot;$profile&quot; &quot;$(printf &#39;%s&#39; &quot;$owner&quot; | sed &#39;s/&quot;/\\&quot;/g&#39;)&quot;
+  printf &#39;repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n&#39; \
+    &quot;$(mj_git_repo_id)&quot; &quot;$MJ_ROOT&quot; &quot;$(mj_git_branch)&quot; &quot;$(mj_git_head)&quot; &quot;$(mj_git_dirty)&quot;
+  # The work, not the exhaust. This was `git status --porcelain` verbatim, which is the
+  # dirty tree and not the episode&#39;s work product: running the tool dirties the tree, and a
+  # checkpoint written after a `scripts/derive` named every generated file as something the
+  # worker had done. lib/changed.sh classifies against the five declarations that already
+  # say what is derived; it is sourced here rather than at the top because this is on the
+  # record-writing path and nothing else in common.sh needs it.
+  [ -n &quot;${MJ_LIB_changed:-}&quot; ] || . &quot;$MJ_LIB_DIR/changed.sh&quot;
+  mj_changed_files_block
+  local extra; for extra in &quot;$@&quot;; do printf &#39;%s\n&#39; &quot;$extra&quot;; done
+  printf -- &#39;---\n\n&#39;
+}
+
+# ---------------------------------------------------------------- resolution
+# Resolve the most relevant record in a directory for this worktree and branch.
+# Tier 0: same repository, same worktree, same branch. Tier 1: same repository, same
+# non-detached branch. Never repository-wide: an unrelated worktree&#39;s record must not
+# become current context. Newest wins within a tier.
+# mj_resolve_latest DIR [TASK_ID]  -&gt;  0 and sets MJ_RES_*, or 1 when nothing matches.
+# Malformed records are skipped with a warning on stderr, never silently.
+MJ_RES_PATH=&quot;&quot;; MJ_RES_TIER=&quot;&quot;; MJ_RES_MATCH=&quot;&quot;; MJ_RES_HEAD=&quot;&quot;; MJ_RES_BRANCH=&quot;&quot;
+MJ_RES_DIRTY=&quot;&quot;; MJ_RES_CREATED=&quot;&quot;; MJ_RES_TASK=&quot;&quot;; MJ_RES_SKIPPED=0
+mj_resolve_latest() {
+  local dir=&quot;$1&quot; want_task=&quot;${2:-}&quot; f fm flat tier key best=&quot;&quot; best_key=&quot;&quot; rversion
+  local my_id my_branch; my_id=&quot;$(mj_git_repo_id)&quot;; my_branch=&quot;$(mj_git_branch)&quot;
+  MJ_RES_PATH=&quot;&quot;; MJ_RES_SKIPPED=0
+  [ -d &quot;$dir&quot; ] || return 1
+  for f in &quot;$dir&quot;/*.md; do
+    [ -f &quot;$f&quot; ] || continue
+    mj_is_context_doc &quot;$f&quot; &amp;&amp; continue        # a section&#39;s own contract is not a record
+    fm=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.fm.XXXXXX&quot;)&quot;
+    mj_record_front &quot;$f&quot; &gt; &quot;$fm&quot; || { rm -f &quot;$fm&quot;; mj_err &quot;warning: skipped $f: no front matter&quot;; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; }
+    flat=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.fl.XXXXXX&quot;)&quot;
+    if ! mj_yaml_flatten &quot;$fm&quot; &gt; &quot;$flat&quot; 2&gt;/dev/null; then
+      rm -f &quot;$fm&quot; &quot;$flat&quot;; mj_err &quot;warning: skipped $f: malformed front matter&quot;; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    # A record carries a version, a head and a time. `schema_version: 1` is what the local
+    # records have always said; a shared session record says `schema: &lt;kind&gt;/v1` instead,
+    # and both are versions this resolver reads (ADR 0014).
+    #
+    # The version has to be one this executable reads, not merely present. The test used to
+    # be &quot;`schema:` is non-empty&quot;, which accepts `session/v2` — a record written by a newer
+    # Majordomus — and offers it to the next worker as the thing to resume from, under a
+    # contract that no longer describes its fields. A record from the future is not a record
+    # this version can read, and being handed one silently is worse than being handed none:
+    # the worker cannot tell it is wrong until it has acted on it.
+    rversion=&quot;$(mj_yget &quot;$flat&quot; schema)&quot;
+    if [ -n &quot;$rversion&quot; ] &amp;&amp; [ &quot;${rversion##*/}&quot; != v1 ]; then
+      rm -f &quot;$fm&quot; &quot;$flat&quot;
+      mj_err &quot;warning: skipped $f: schema &#39;$rversion&#39;, and this executable reads v1 (run: majordomus doctor)&quot;
+      MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if { [ &quot;$(mj_yget &quot;$flat&quot; schema_version)&quot; != 1 ] &amp;&amp; [ -z &quot;$rversion&quot; ]; } \
+       || [ -z &quot;$(mj_yget &quot;$flat&quot; head)&quot; ] || [ -z &quot;$(mj_yget &quot;$flat&quot; created_at)&quot; ]; then
+      rm -f &quot;$fm&quot; &quot;$flat&quot;; mj_err &quot;warning: skipped $f: missing required fields&quot;; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if [ -n &quot;$want_task&quot; ] &amp;&amp; [ &quot;$(mj_yget &quot;$flat&quot; task_id)&quot; != &quot;$want_task&quot; ]; then rm -f &quot;$fm&quot; &quot;$flat&quot;; continue; fi
+    tier=&quot;&quot;
+    # A shared record names the repository by its remote, a local one by its git directory;
+    # the same repository answers to either (ADR 0014).
+    if [ &quot;$(mj_yget &quot;$flat&quot; repository_id)&quot; = &quot;$my_id&quot; ] \
+       || [ &quot;$(mj_url_public &quot;$(mj_yget &quot;$flat&quot; repository_id)&quot;)&quot; = &quot;$(mj_repository_id)&quot; ]; then
+      # Tier 0 is &quot;this worktree&quot;. A local record names it by path; a shared one names it by
+      # `worktree_id`, because an absolute path is a fact about a disk and a shared record
+      # carries none (ADR 0014). Either identifies the same working copy.
+      if { [ &quot;$(mj_yget &quot;$flat&quot; worktree)&quot; = &quot;$MJ_ROOT&quot; ] \
+           || { [ -n &quot;$(mj_yget &quot;$flat&quot; worktree_id)&quot; ] &amp;&amp; [ &quot;$(mj_yget &quot;$flat&quot; worktree_id)&quot; = &quot;$(mj_worktree_id)&quot; ]; }; } \
+         &amp;&amp; [ &quot;$(mj_yget &quot;$flat&quot; branch)&quot; = &quot;$my_branch&quot; ]; then tier=0
+      elif [ &quot;$my_branch&quot; != DETACHED ] &amp;&amp; [ &quot;$(mj_yget &quot;$flat&quot; branch)&quot; = &quot;$my_branch&quot; ]; then tier=1; fi
+    fi
+    if [ -n &quot;$tier&quot; ]; then
+      key=&quot;$tier|$(mj_yget &quot;$flat&quot; created_at)|$(mj_record_rank &quot;$f&quot;)&quot;
+      if [ -z &quot;$best&quot; ] || [ &quot;${key%%|*}&quot; -lt &quot;${best_key%%|*}&quot; ] || { [ &quot;${key%%|*}&quot; = &quot;${best_key%%|*}&quot; ] &amp;&amp; [ &quot;${key#*|}&quot; \&gt; &quot;${best_key#*|}&quot; ]; }; then
+        best=&quot;$f&quot;; best_key=&quot;$key&quot;
+        MJ_RES_HEAD=&quot;$(mj_yget &quot;$flat&quot; head)&quot;; MJ_RES_BRANCH=&quot;$(mj_yget &quot;$flat&quot; branch)&quot;
+        MJ_RES_DIRTY=&quot;$(mj_yget &quot;$flat&quot; working_tree)&quot;; MJ_RES_CREATED=&quot;$(mj_yget &quot;$flat&quot; created_at)&quot;
+        MJ_RES_TASK=&quot;$(mj_yget &quot;$flat&quot; task_id)&quot;
+      fi
+    fi
+    rm -f &quot;$fm&quot; &quot;$flat&quot;
+  done
+  [ -n &quot;$best&quot; ] || return 1
+  MJ_RES_PATH=&quot;$best&quot;; MJ_RES_TIER=&quot;${best_key%%|*}&quot;
+  [ &quot;$MJ_RES_TIER&quot; = 0 ] &amp;&amp; MJ_RES_MATCH=same_worktree_same_branch || MJ_RES_MATCH=same_branch
+  return 0
+}
+
+# Position of a record in the ledger, zero-padded, or 000000 when nothing recorded it.
+# created_at has second resolution, so two records written inside one second would
+# otherwise resolve in an order decided by a random filename suffix. The ledger is
+# append-only and written in the order the commands ran, which makes it a monotonic
+# tiebreak for &quot;which of these did this machine write last&quot;.
+#
+# That, and nothing more: .ai/local/state/ledger.jsonl is gitignored, machine-local and
+# rotated under a retention cap, so this number is not a fact about the repository and
+# **must never order anything that gets published**. mj_session_keys used it, and the
+# committed order of six session records sharing a created_at second was therefore decided
+# by a line number no clone could reproduce; it now breaks that tie on the record&#39;s own name
+# instead. The one caller left is mj_resolve_latest, which answers &quot;the record most
+# relevant to this worktree right now&quot; — a question about this machine, whose answer is
+# never committed.
+mj_record_rank() {
+  local base n
+  base=&quot;$(basename &quot;$1&quot;)&quot;
+  n=&quot;$(grep -n -F -- &quot;$base&quot; &quot;$MJ_STATE_DIR/ledger.jsonl&quot; 2&gt;/dev/null | tail -n 1 | cut -d: -f1)&quot;
+  printf &#39;%06d&#39; &quot;${n:-0}&quot;
+}
+
+# age of an ISO timestamp in whole minutes; empty when unparseable
+mj_age_minutes() {
+  local e; e=&quot;$(mj_epoch &quot;$1&quot;)&quot;; [ -n &quot;$e&quot; ] || return 1
+  printf &#39;%s&#39; $(( ( $(mj_epoch &quot;$(mj_now)&quot;) - e ) / 60 ))
+}
+# &quot;18&quot; -&gt; &quot;18m&quot;; &quot;1500&quot; -&gt; &quot;25h&quot;. A span, not a moment: a threshold is a length of time
+# and rendering it with mj_age_human produced &quot;past the 2d ago this repository calls stale&quot;.
+mj_duration_human() {
+  local m=&quot;$1&quot;
+  if [ -z &quot;$m&quot; ]; then printf &#39;unknown&#39;
+  elif [ &quot;$m&quot; -lt 90 ]; then printf &#39;%sm&#39; &quot;$m&quot;
+  elif [ &quot;$m&quot; -lt 2880 ]; then printf &#39;%sh&#39; $((m/60))
+  else printf &#39;%sd&#39; $((m/1440)); fi
+}
+
+# &quot;18&quot; -&gt; &quot;18m ago&quot;; &quot;1500&quot; -&gt; &quot;25h ago&quot;
+mj_age_human() {
+  local m=&quot;$1&quot;
+  if [ -z &quot;$m&quot; ]; then printf &#39;unknown&#39;
+  elif [ &quot;$m&quot; -lt 90 ]; then printf &#39;%sm ago&#39; &quot;$m&quot;
+  elif [ &quot;$m&quot; -lt 2880 ]; then printf &#39;%sh ago&#39; $((m/60))
+  else printf &#39;%sd ago&#39; $((m/1440)); fi
+}
+
+# ---------------------------------------------------------------- freshness
+# How far a record may still be trusted as *current*, which is a different question from
+# how far its commit is from HEAD. mj_git_label answers the second: exact, advanced,
+# diverged, different_context — a statement about topology. A record whose commit is an
+# ancestor of HEAD is `advanced` on the day it is written and `advanced` six days later,
+# and on 2026-09-05 that word carried a finished instruction into every episode for a week
+# (ADR 0052). This answers the first, in five words:
+#
+#   fresh     inside session.freshness.fresh_minutes — current, act on it
+#   aging     between the two thresholds — current, but say how old
+#   stale     at or beyond session.freshness.stale_minutes — history, never current
+#   unknown   no timestamp to judge; absence reported as absence, not as freshness
+#   invalid   a timestamp that does not parse, or one in the future
+#
+# Sets MJ_FRESH_STATE, MJ_FRESH_MINUTES and MJ_FRESH_REASON, and prints the state. The
+# three variables are the answer and the printed word is a convenience: a caller that wants
+# the reason must call this as a statement, because `f=&quot;$(mj_freshness ...)&quot;` runs it in a
+# subshell and the variables die with it. Under `set -u` that mistake is not a wrong string
+# but an unbound variable that kills the briefing mid-sentence, so they are initialised at
+# load time below and the callers here are statements.
+# Requires
+# a loaded policy: the thresholds live in .ai/repo/policy.yaml and nothing here carries a
+# default, for the reason mj_pol_req states — a fallback beside the reader is a second
+# source of truth for the same number.
+MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=&quot;&quot;; MJ_FRESH_REASON=&quot;&quot;
+mj_freshness() {
+  local ts=&quot;$1&quot; fresh stale mins
+  MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=&quot;&quot;; MJ_FRESH_REASON=&quot;&quot;
+
+  if [ -z &quot;$ts&quot; ]; then
+    MJ_FRESH_REASON=&quot;no timestamp&quot;; printf &#39;unknown&#39;; return 0
+  fi
+  if ! mins=&quot;$(mj_age_minutes &quot;$ts&quot;)&quot;; then
+    MJ_FRESH_STATE=invalid; MJ_FRESH_REASON=&quot;timestamp does not parse: $ts&quot;
+    printf &#39;invalid&#39;; return 0
+  fi
+  MJ_FRESH_MINUTES=&quot;$mins&quot;
+  if [ &quot;$mins&quot; -lt 0 ]; then
+    MJ_FRESH_STATE=invalid
+    MJ_FRESH_REASON=&quot;timestamp is $(( -mins )) minute(s) in the future&quot;
+    printf &#39;invalid&#39;; return 0
+  fi
+
+  fresh=&quot;$(mj_pol session.freshness.fresh_minutes)&quot;
+  stale=&quot;$(mj_pol session.freshness.stale_minutes)&quot;
+  case &quot;$fresh&quot; in &#39;&#39;|*[!0-9]*) MJ_FRESH_REASON=&quot;policy is missing session.freshness.fresh_minutes&quot;; printf &#39;unknown&#39;; return 0 ;; esac
+  case &quot;$stale&quot; in &#39;&#39;|*[!0-9]*) MJ_FRESH_REASON=&quot;policy is missing session.freshness.stale_minutes&quot;; printf &#39;unknown&#39;; return 0 ;; esac
+
+  if [ &quot;$mins&quot; -ge &quot;$stale&quot; ]; then
+    MJ_FRESH_STATE=stale
+    MJ_FRESH_REASON=&quot;$(mj_age_human &quot;$mins&quot;), past the $(mj_duration_human &quot;$stale&quot;) this repository calls stale&quot;
+  elif [ &quot;$mins&quot; -ge &quot;$fresh&quot; ]; then
+    MJ_FRESH_STATE=aging
+    MJ_FRESH_REASON=&quot;$(mj_age_human &quot;$mins&quot;), past the $(mj_duration_human &quot;$fresh&quot;) this repository calls fresh&quot;
+  else
+    MJ_FRESH_STATE=fresh
+    MJ_FRESH_REASON=&quot;$(mj_age_human &quot;$mins&quot;)&quot;
+  fi
+  printf &#39;%s&#39; &quot;$MJ_FRESH_STATE&quot;
+}
+
+# True when a record must not be presented as the current instruction. `stale` and
+# `invalid` are the two states a reader acts on differently; `unknown` is not one of them,
+# because a record with no timestamp is not thereby old.
+mj_freshness_is_history() {
+  case &quot;$1&quot; in stale|invalid) return 0 ;; esac
+  return 1
+}
+
+# One awk function, prepended to any program that reads a ledger line, so that every reader
+# of a key agrees on which occurrence of it is the answer: the FIRST, which is the one in the
+# envelope that `mj_ledger_append` wrote.
+#
+# The idiom it replaces is `sub(/^.*&quot;event&quot;:&quot;/, &quot;&quot;, e)`. awk&#39;s `.*` is greedy, so that
+# strips up to the LAST occurrence and returns the payload&#39;s value instead of the
+# envelope&#39;s. It was in three readers, and on the provider receipts — which carried
+# `&quot;event&quot;` twice until this was fixed — `history --validate` used it to read the event name
+# as `start`, refusing a line the registry does in fact declare. A reader that takes the
+# last of a duplicated key stays wrong about a line written by an older version, so the
+# writer&#39;s guard is not a reason to keep it.
+#
+# Prepended rather than copied: three copies of one extraction is how two of them came to
+# disagree with mj_history_render, which had it right all along.
+MJ_LEDGER_FIELD_AWK=&#39;
+  function mjfield(line, key,   r) {
+    if (match(line, &quot;\&quot;&quot; key &quot;\&quot;:\&quot;&quot;)) { r = substr(line, RSTART + RLENGTH); sub(/&quot;.*/, &quot;&quot;, r); return r }
+    if (match(line, &quot;\&quot;&quot; key &quot;\&quot;:&quot;))   { r = substr(line, RSTART + RLENGTH); sub(/[,}].*/, &quot;&quot;, r); return r }
+    return &quot;&quot;
+  }
+&#39;
+
+# Value of a flat JSON key on one ledger line: mj_json_field LINE KEY. Already the first
+# occurrence — it is `match`, not a greedy `sub` — and left alone because it distinguishes an
+# absent key (nothing printed) from one whose value is the empty string (an empty line),
+# which mjfield&#39;s single return value cannot.
+mj_json_field() {
+  printf &#39;%s&#39; &quot;$1&quot; | awk -v k=&quot;$2&quot; &#39;
+    { s=$0
+      if (match(s, &quot;\&quot;&quot; k &quot;\&quot;:\&quot;&quot;)) { r=substr(s, RSTART+length(k)+4); sub(/&quot;.*/,&quot;&quot;,r); print r; exit }
+      if (match(s, &quot;\&quot;&quot; k &quot;\&quot;:&quot;)) { r=substr(s, RSTART+length(k)+3); sub(/[,}].*/,&quot;&quot;,r); print r; exit } }&#39;
+}
+
+# line numbers of ledger lines that are not well-formed events (need ts and event)
+mj_ledger_bad_lines() {
+  [ -f &quot;$1&quot; ] || return 0
+  awk &#39;{ if ($0 !~ /^\{/ || $0 !~ /&quot;ts&quot;:&quot;/ || $0 !~ /&quot;event&quot;:&quot;/ || $0 !~ /\}$/) printf &quot;%s &quot;, NR }&#39; &quot;$1&quot;
+}
+
+# Does a string contain a newline? Written as a function because the obvious inline form,
+# case &quot;$v&quot; in *&quot;$(printf &#39;\n&#39;)&quot;*), can never match: command substitution strips the
+# trailing newline, leaving an empty pattern that matches everything.
+mj_is_multiline() { case &quot;$1&quot; in *&quot;$(printf &#39;x\ny&#39;)&quot;*) return 0 ;; esac
+  [ &quot;$(printf &#39;%s&#39; &quot;$1&quot; | wc -l | tr -d &#39; &#39;)&quot; != 0 ]; }
+
+# ---------------------------------------------------------------- composed web surfaces
+# mj_web_composed &lt;repository-root&gt; [mounts|rows|trees]
+#
+# The published static surfaces other than the application: what scripts/site-build copies
+# into the site at their mounts (ADR 0086), read from the committed web topology,
+# docs/generated/web.json — every surface of kind static-directory that the published site
+# carries (availability both or published-only) and that is not the app itself. The site&#39;s
+# own page contracts judge the site&#39;s own pages; a composed surface&#39;s pages are judged by
+# that surface&#39;s own check (`majordomus quality rustdoc` for the crate&#39;s reference). So the
+# build that composes them and every check that must tell the site&#39;s pages from theirs ask
+# this one selection, and nothing names a surface or a mount by hand.
+#
+#   mounts   one mount per line, as the topology writes it (no trailing slash)
+#   rows     id, mount, artifact and producer of each, tab-separated
+#   trees    every repository-relative directory that holds a composed surface&#39;s pages: its
+#            own artifact, and its mount under the artifact of every other static surface,
+#            which is where site-build composes it — the published build and the served one
+#
+# Empty output is an answer (nothing is composed). A topology that cannot be read is not: it
+# fails with 12 and says so, because a scope that silently came back empty would put every
+# composed page back under the site&#39;s contracts, and one that silently came back wrong would
+# exempt pages nobody chose to exempt.
+mj_web_composed() {
+  local mj_wc_web=&quot;$1/docs/generated/web.json&quot; mj_wc_mode=&quot;${2:-mounts}&quot;
+  case &quot;$mj_wc_mode&quot; in mounts|rows|trees) ;; *) mj_err &quot;mj_web_composed: mounts, rows or trees, not &#39;$mj_wc_mode&#39;&quot;; return 2 ;; esac
+  [ -f &quot;$mj_wc_web&quot; ] || { mj_err &quot;$mj_wc_web is missing; the composed surfaces cannot be told from the site&#39;s own pages (regenerate: majordomus generate)&quot;; return 12; }
+  command -v jq &gt;/dev/null 2&gt;&amp;1 || { mj_err &quot;jq is required to read $mj_wc_web&quot;; return 12; }
+  jq -r --arg mode &quot;$mj_wc_mode&quot; &#39;
+    [.surfaces[] | select(.kind == &quot;static-directory&quot;
+                          and (.availability == &quot;both&quot; or .availability == &quot;published-only&quot;)
+                          and .id != &quot;app&quot;)] as $c
+    | if $mode == &quot;mounts&quot; then $c[].mount
+      elif $mode == &quot;rows&quot; then $c[] | [.id, .mount, (.artifact // &quot;&quot;), (.producer // &quot;&quot;)] | @tsv
+      else ($c[] | .artifact // empty),
+           ([$c[].id] as $ids
+            | .surfaces[]
+            | select(.kind == &quot;static-directory&quot; and (.artifact // &quot;&quot;) != &quot;&quot; and ((.id | IN($ids[])) | not))
+            | .artifact as $host | $c[] | $host + .mount)
+      end&#39; &quot;$mj_wc_web&quot; || { mj_err &quot;$mj_wc_web does not parse as a web topology&quot;; return 12; }
+}
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

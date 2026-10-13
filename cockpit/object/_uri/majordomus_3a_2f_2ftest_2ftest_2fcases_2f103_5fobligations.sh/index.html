@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/103_obligations.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/103_obligations.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/103_obligations.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/103_obligations.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/103_obligations.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/103_obligations.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F103_obligations.sh">test.test/cases/103_obligations.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: evidence
+# majordomus-negative: evidence check finish
+# A task owes what its `requires` declares, and evidence discharges an obligation only
+# while it still describes the tree it was taken over. This case starts a task that owes
+# something, watches `finish --outcome completed` refuse it while nothing is recorded,
+# records evidence and watches the same command accept it, then changes a file the
+# obligation names and watches the evidence go stale rather than stay true. It also proves
+# the honest cases: a token nobody declared is refused, narrative is refused, and an
+# outcome that is not completed is never refused for owing something.
+# claims: obligation-establishment
+. &quot;$ROOT/test/lib.sh&quot;
+S=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj103.XXXXXX&quot;)&quot;; trap &#39;rm -rf &quot;$S&quot;&#39; EXIT
+&quot;$MJ&quot; init &gt;/dev/null; &quot;$MJ&quot; update &gt;/dev/null
+printf &#39;# Objective\n\nx\n\n# Current State\n\nx\n\n# Next Action\n\nx\n&#39; &gt; &quot;$S/partial.md&quot;
+mkdir -p lib &amp;&amp; echo a &gt; lib/a &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git commit -qm base
+
+# the task record carries `requires` beside `scope`, and `start --requires` writes it. This
+# helper is the *other* way in: it replaces the list on a task that is already active, which
+# no command does, so the sections below can hand one task a different set of things to owe
+# without restarting it and losing the evidence recorded against it.
+owes() {
+  python3 - &quot;$@&quot; &lt;&lt;&#39;PY&#39;
+import io, re, sys
+p = &#39;.ai/local/state/current.yaml&#39;
+s = io.open(p, encoding=&#39;utf-8&#39;).read()
+s = re.sub(r&#39;(?m)^requires:\n(?:  - .*\n)*&#39;, &#39;&#39;, s)
+block = &#39;requires:\n&#39; + &#39;&#39;.join(&#39;  - %s\n&#39; % t for t in sys.argv[1:])
+s = s.replace(&#39;outcome:&#39;, block + &#39;outcome:&#39;, 1)
+io.open(p, &#39;w&#39;, encoding=&#39;utf-8&#39;).write(s)
+PY
+}
+
+# ---------------------------------------------------------------- no task owes nothing
+expect_exit 2 &quot;$MJ&quot; evidence
+expect_grep &#39;usage: majordomus evidence&#39;
+expect_exit 12 &quot;$MJ&quot; evidence --covers tests --command &#39;bash test/run.sh&#39;
+expect_grep &#39;no active task&#39;
+
+# ---------------------------------------------------------------- start declares them
+# `requires` has a producer: a token the vocabulary does not declare is refused here, at the
+# beginning, rather than at the moment a worker tries to discharge it and is told the task
+# never asked for it.
+expect_exit 2 &quot;$MJ&quot; start &quot;obligations&quot; --scope lib/ --requires nonsense
+expect_grep &quot;&#39;nonsense&#39; is not an obligation&quot;
+expect_exit 0 &quot;$MJ&quot; start &quot;obligations&quot; --scope lib/ --requires tests
+expect_grep &#39;requires=tests&#39;
+grep -q &#39;^requires:&#39; .ai/local/state/current.yaml || { echo &quot;    start --requires wrote no requires block&quot;; exit 1; }
+# a token the vocabulary does not know
+expect_exit 2 &quot;$MJ&quot; evidence --covers nonsense --command x
+expect_grep &quot;no obligation &#39;nonsense&#39;&quot;
+# a token the vocabulary knows but this task never promised
+expect_exit 15 &quot;$MJ&quot; evidence --covers docs --command x
+expect_grep &quot;the active task does not require &#39;docs&#39;&quot;
+# narrative is not evidence
+expect_exit 2 &quot;$MJ&quot; evidence --covers tests
+expect_grep &#39;narrative is not evidence&#39;
+
+# ---------------------------------------------------------------- owed and unproved
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;FAIL obligation +tests — owed, and no evidence was recorded&#39;
+# an honest outcome is never refused for owing something
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;obligation +tests — owed, and no evidence was recorded \(not refused&#39;
+
+# ---------------------------------------------------------------- recorded, then accepted
+expect_exit 0 &quot;$MJ&quot; evidence --covers tests --type test --command &#39;bash test/run.sh&#39;
+expect_grep &#39;evidence: tests recorded&#39;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  tests — discharged over inputs&#39;
+
+# ---------------------------------------------------------------- the point: staleness
+echo &#39;changed&#39; &gt;&gt; lib/a
+git add -A &gt;/dev/null &amp;&amp; git commit -qm change
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;it no longer describes what it proved&#39;
+# recording it again over the new tree discharges it
+expect_exit 0 &quot;$MJ&quot; evidence --covers tests --type test --command &#39;bash test/run.sh&#39;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  tests — discharged over inputs&#39;
+
+# ---------------------------------------------------------------- the vocabulary is data
+expect_exit 0 &quot;$MJ&quot; doctrine show majordomus.obligation-closure
+expect_grep &#39;validator.*obligations&#39;
+
+# ------------------------------------------------- the pathspecs reach every depth
+# `docs` is taken over `.ai/repo/**/README.md`, and the hash is only worth anything if that
+# selects every README at every depth. It did not: the specs were word-split unquoted, so
+# bash globbed them before git ever saw them, and without `globstar` a `**` matches exactly
+# one directory level. The nested READMEs were outside the hash, and a change to one of them
+# left the evidence looking fresh — this feature&#39;s own failure mode, inside the feature.
+# A nested README is what proves it, because a top-level one passes either way.
+owes docs
+nested=&quot;$(git ls-files -- &#39;.ai/repo/**/README.md&#39; | awk -F/ &#39;NF &gt;= 5&#39; | head -1)&quot;
+[ -n &quot;$nested&quot; ] || { echo &quot;    no README nested two levels under .ai/repo; the case cannot prove the depth&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; evidence --covers docs --command &#39;scripts/ci/reference-check&#39;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  docs — discharged over inputs&#39;
+echo &#39;a line the obligation is supposed to notice&#39; &gt;&gt; &quot;$nested&quot;
+git add -A &gt;/dev/null &amp;&amp; git commit -qm nested
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;docs — the evidence was taken over inputs .* it no longer describes what it proved&#39;
+
+
+# ================================================================ the outer obligations
+# Six tokens name a fact outside the working tree. Five of them are facts something already
+# holds — git, and the publication probe `scripts/pages verify` — and the point of the rest
+# of this case is that the tool establishes those itself: it discharges them without a
+# ledger line, and it refuses a ledger line that says otherwise. The vocabulary of staleness
+# stays the four values `mj_git_label` already uses; nothing here invents a fifth.
+
+# the data and the code that establishes it are paired in both directions, which is the
+# failure this section would otherwise hide: a token declared establishable with nothing to
+# establish it passes silently, and one declared unestablishable with no reason is a gap
+# nobody wrote down
+python3 - &quot;$ROOT&quot; &lt;&lt;&#39;PY&#39;
+import io, re, sys
+root = sys.argv[1]
+voc = io.open(root + &#39;/share/obligations.yaml&#39;, encoding=&#39;utf-8&#39;).read()
+lib = io.open(root + &#39;/lib/evidence.sh&#39;, encoding=&#39;utf-8&#39;).read()
+bad = []
+for block in re.split(r&#39;(?m)^  - id: &#39;, voc)[1:]:
+    tok = block.split(&#39;\n&#39;, 1)[0].strip()
+    by = re.search(r&#39;(?m)^    established_by: (.*)$&#39;, block)
+    if not by:
+        bad.append(&#39;%s declares no established_by&#39; % tok); continue
+    if by.group(1).strip() == &#39;none&#39;:
+        if not re.search(r&#39;(?m)^    unestablished: \S&#39;, block):
+            bad.append(&#39;%s is established by nothing and says no reason why&#39; % tok)
+    elif (&#39;mj_obl_est_%s()&#39; % tok) not in lib:
+        bad.append(&#39;%s says %r establishes it and no mj_obl_est_%s exists&#39; % (tok, by.group(1), tok))
+if bad:
+    print(&#39;    &#39; + &#39;\n    &#39;.join(bad)); sys.exit(1)
+PY
+
+owes commit push target pages
+# the pages section puts a probe shim under scripts/, which the scope validator would
+# otherwise report as work outside the claimed scope — a true finding about a different rule
+python3 - &lt;&lt;&#39;PY&#39;
+import io, re
+p = &#39;.ai/local/state/current.yaml&#39;
+s = io.open(p, encoding=&#39;utf-8&#39;).read()
+io.open(p, &#39;w&#39;, encoding=&#39;utf-8&#39;).write(re.sub(r&#39;(?m)^scope:\n(?:  - .*\n)*&#39;, &#39;scope:\n  - lib\n  - scripts\n&#39;, s, count=1))
+PY
+
+# ---------------------------------------------------------------- commit
+# work in the tree is not work in the history, and git is asked rather than the worker
+echo &#39;outer&#39; &gt;&gt; lib/a
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;FAIL obligation +commit — 1 file\(s\) the task touched are still in the working tree&#39;
+git add -A &gt;/dev/null &amp;&amp; git commit -qm outer
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  commit — exact: the tree is clean&#39;
+
+# ---------------------------------------------------------------- push, with no remote
+# Nothing here can settle it, so the recorded line is consulted exactly as it always was,
+# and judged against the commit it was taken at.
+expect_grep &#39;push — owed, and no evidence was recorded \(the checkout has no remote&#39;
+expect_exit 0 &quot;$MJ&quot; evidence --covers push --command &#39;git push&#39;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  push — discharged at this commit&#39;
+
+# ---------------------------------------------------------------- push, with a remote
+# The same recorded line, now against a checkout where the question can be answered: the
+# answer wins. This is the whole point — a worker cannot hand-record a fact git holds.
+git init -q --bare &quot;$S/remote.git&quot;
+git remote add origin &quot;$S/remote.git&quot;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;push — no remote-tracking ref reaches&#39;
+B=&quot;$(git branch --show-current)&quot;
+git push -q -u origin &quot;$B&quot;
+git remote set-head origin &quot;$B&quot; &gt;/dev/null
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &quot;OK   obligation  push — exact: origin/$B contains&quot;
+expect_grep &quot;OK   obligation  target — exact: origin/$B reaches&quot;
+
+# ---------------------------------------------------------------- one commit further on
+# Pushed and integrated are statements about a commit, not about a branch. A commit made
+# after the push is neither, and both tokens say so in their own words.
+echo &#39;further&#39; &gt;&gt; lib/a &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git commit -qm further
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;push — no remote-tracking ref reaches&#39;
+expect_grep &quot;target — origin/$B does not reach&quot;
+git push -q origin &quot;$B&quot;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &quot;OK   obligation  target — exact: origin/$B reaches&quot;
+
+# ---------------------------------------------------------------- pages
+# The probe is `scripts/pages verify`, which has answered this question since it was
+# written and had one caller — the Pages workflow. The sandbox reaches the real script and
+# substitutes only the URL, so what runs here is the shipped probe against a real server.
+mkdir -p &quot;$S/public&quot; scripts
+if start_http &quot;$S/public&quot;; then
+  printf &#39;#!/bin/sh\nexec &quot;%s/scripts/pages&quot; &quot;$@&quot; --url &quot;%s&quot;\n&#39; &quot;$ROOT&quot; &quot;$HTTP_BASE&quot; &gt; scripts/pages
+  chmod +x scripts/pages
+  printf &#39;{&quot;commit&quot;:&quot;%s&quot;}\n&#39; &quot;$(git rev-parse HEAD)&quot; &gt; &quot;$S/public/build.json&quot;
+  expect_exit 0 &quot;$MJ&quot; check
+  expect_grep &#39;OK   obligation  pages — exact: the published site serves&#39;
+
+  # A caller names the commit however it has it, and the shortest way to have it is to read
+  # it off a gh-pages subject. The probe answers about the same commit either way; it used
+  # to poll the whole timeout and then report that beaee8654 is not beaee8654.
+  expect_exit 0 scripts/pages verify --commit &quot;$(git rev-parse --short HEAD)&quot; --timeout 0
+  # and a prefix too short to name a commit is a usage error rather than a pass that matches
+  # every commit there has ever been
+  expect_exit 2 scripts/pages verify --commit b --timeout 0
+
+  # --smoke asks the same public bytes whether the pages a visitor is sent to answer and carry
+  # what they are for: every deploy.smoke route of the model, each miss named, not only the
+  # first. The served tree has no such page yet, so the routes are refused ...
+  expect_exit 10 scripts/pages verify --commit &quot;$(git rev-parse HEAD)&quot; --timeout 0 --smoke
+  expect_grep &#39;smoke .*/challenge/ (did not answer|does not carry)&#39;
+  # ... and once each route carries every marker the model names for it, the probe passes
+  sed -n &#39;s/^    - route: \(.*\)$/\1/p&#39; &quot;$ROOT/.ai/repo/ci/pages.yaml&quot; | LC_ALL=C sort -u | while read -r r; do
+    mkdir -p &quot;$S/public$r&quot;
+    sed -n &quot;/^    - route: ${r//\//\\/}\$/{n;s/^      marker: //p;}&quot; &quot;$ROOT/.ai/repo/ci/pages.yaml&quot; &gt; &quot;$S/public${r}index.html&quot;
+  done
+  expect_exit 0 scripts/pages verify --commit &quot;$(git rev-parse HEAD)&quot; --timeout 0 --smoke
+  expect_grep &#39;smoke [0-9]+ route check\(s\) answered&#39;
+
+  # the site serves an older commit: unpublished, and said in those words
+  printf &#39;{&quot;commit&quot;:&quot;deadbeefdeadbeefdeadbeefdeadbeefdeadbeef&quot;}\n&#39; &gt; &quot;$S/public/build.json&quot;
+  expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+  expect_grep &#39;pages — after 0 s .* still serves deadbeef&#39;
+
+  # and a hand-recorded line does not rescue what the probe refutes
+  expect_exit 0 &quot;$MJ&quot; evidence --covers pages --command &#39;scripts/pages verify&#39;
+  expect_exit 0 &quot;$MJ&quot; check
+  expect_grep &#39;pages — after 0 s .* still serves deadbeef&#39;
+
+  # unreachable is not the same fact as unpublished. The probe exits 12 rather than 10,
+  # nothing is established, and the recorded line stands — a laptop with no network must
+  # not be able to fail a task it cannot measure.
+  stop_http
+  expect_exit 0 env MJ_PAGES_PROBE_SECONDS=2 &quot;$MJ&quot; check
+  expect_grep &#39;OK   obligation  pages — discharged at this commit&#39;
+  rm -f scripts/pages
+else
+  echo &quot;    (no python3 or node: the pages probe was not exercised)&quot;
+fi
+
+# ---------------------------------------------------------------- deploy and verify
+# Left to a person on purpose, and the vocabulary says why rather than leaving a reader to
+# infer it. A deployment is a fact about a machine this repository never contacts.
+owes deploy verify
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;FAIL obligation +deploy — owed, and no evidence was recorded&#39;
+expect_no_grep &#39;deploy — .*could not be established&#39;
+expect_exit 0 &quot;$MJ&quot; evidence --covers deploy --type manual --command &#39;majordomus deployment&#39;
+expect_exit 0 &quot;$MJ&quot; evidence --covers verify --type manual --artifact &#39;https://example.invalid/ready&#39;
+expect_exit 0 &quot;$MJ&quot; check
+expect_grep &#39;OK   obligation  deploy — discharged at this commit&#39;
+expect_grep &#39;OK   obligation  verify — discharged at this commit&#39;
+# and the hand-held record still goes stale the moment the branch moves past it
+echo &#39;after&#39; &gt;&gt; lib/a &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git commit -qm after
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;done&quot;
+expect_grep &#39;deploy — the evidence names .*, and the branch has moved since&#39;
+
+# ================================================ an honest outcome is not stranded
+# `start` refuses while a task is active and `finish` is the only way to close one, so a
+# scope that turns out too narrow used to leave a worker with no move at all: scope-integrity
+# refused every outcome, including the ones that say the work did not finish. A completed
+# finish is still refused; a non-completed one names the files as warnings and closes the
+# record. Its own task, because it ends by closing it.
+expect_exit 0 &quot;$MJ&quot; finish --outcome partial --note &quot;$S/partial.md&quot;
+expect_exit 0 &quot;$MJ&quot; start &quot;a scope that turns out too narrow&quot; --scope lib/
+mkdir -p elsewhere &amp;&amp; echo out &gt; elsewhere/f &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git commit -qm outside
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --note &quot;$S/partial.md&quot;
+expect_grep &#39;FAIL scope +elsewhere/f — outside claimed scope&#39;
+expect_exit 0 &quot;$MJ&quot; finish --outcome partial --note &quot;$S/partial.md&quot;
+expect_grep &#39;WARN scope +elsewhere/f — outside claimed scope&#39;
+expect_grep &#39;outcome is partial, not completed, so scope does not refuse it&#39;
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

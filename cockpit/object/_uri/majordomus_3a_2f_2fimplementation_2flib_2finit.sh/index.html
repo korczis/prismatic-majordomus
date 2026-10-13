@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>lib/init.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">lib/init.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">lib/init.sh</h1><p class="mj-page-subtitle">An object of kind implementation</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://implementation/lib/init.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">implementation</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">lib/init.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">lib/init.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/implementation.lib%2Finit.sh">implementation.lib/init.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code>#!/usr/bin/env bash
+# init — create the repository&#39;s AI layer, .ai/, from the tool&#39;s skeleton.
+#
+# It seeds the tracked context (the protocol, the manifest, the policy, the profiles, the
+# reusable prompts, the vendored Majordomus rule baseline, the knowledge declarations, the
+# workflows) and the ignore boundary for the checkout-local half — or, with --personal, the
+# same layer kept as one person&#39;s own: covered in git&#39;s own exclude file, with a check that
+# nothing the repository shares was changed; --shared later hands such a layer to the team
+# (ADR 0145). It installs nothing: the
+# tool stays wherever it was run from, no shell file is touched, and .majordomus/ is never
+# created, because that path is only ever an optional installation of the tool itself.
+# Everything it writes under .ai/repo/ belongs to the repository from that moment; a newer
+# tool does not rewrite it.
+# shellcheck source=rules.sh
+. &quot;$MJ_LIB_DIR/rules.sh&quot;
+
+mj_cmd_init() {
+  local extend=0 personal=0 shared=0 a
+  for a in &quot;$@&quot;; do case &quot;$a&quot; in
+    --extend) extend=1 ;;
+    --personal) personal=1 ;;
+    --shared) shared=1; extend=1 ;;
+    --help|-h) cat &lt;&lt;H
+usage: majordomus init [--extend] [--personal | --shared]
+  creates .ai/ in this repository from the tool&#39;s skeleton: the protocol and manifest,
+  the tracked context under .ai/repo/ (policy, profiles, prompts, the vendored rule
+  baseline, knowledge declarations, workflows, skills, adrs) and the ignore boundary
+  for .ai/local/, where this checkout&#39;s own state lives
+  --extend   add what is missing to an existing .ai/ and overwrite nothing
+  --personal a layer of your own in a repository other people share: nothing shared is
+             changed. No line is added to .gitignore; .ai/ is covered in git&#39;s own
+             exclude file (info/exclude of the git directory, which git never commits,
+             pushes or clones), and init fails (10) unless &#39;git status&#39; reads the same
+             after it as before. Later writers (update, capture install) cover what they
+             write the same way and leave a file the project tracks alone. An --extend of
+             a personal layer stays personal without the flag
+  --shared   hand a personal layer to the team: remove the cover, add the two .gitignore
+             lines a plain init adds, and print what is now the repository&#39;s to commit.
+             Nothing is committed for you
+  refuses (15) when .ai/ already exists without --extend, and when project data still
+  lives under .majordomus/ (run: majordomus migrate)
+  installs nothing: not the tool, not a hook, not a shell file; doctor names the hooks
+H
+      return 0 ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;init: unknown option $a&quot; ;;
+  esac; done
+  mj_require_repo
+  local skel=&quot;$MJ_SKELETON_DIR&quot;
+  [ -d &quot;$skel/ai&quot; ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;skeleton missing at $skel/ai&quot;
+  [ -f &quot;$MJ_STD_RULES_DIR/manifest.yaml&quot; ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;the distribution ships no standard rule package at $MJ_STD_RULES_DIR&quot;
+  case &quot;$MJ_LAYOUT&quot; in
+    legacy) mj_die &quot;$MJ_EX_REFUSED&quot; &quot;project data lives under .majordomus/ (the pre-.ai layout); run: majordomus migrate&quot; ;;
+    ai) [ &quot;$extend&quot; = 1 ] || mj_die &quot;$MJ_EX_REFUSED&quot; &quot;.ai/ already exists in $MJ_ROOT (use --extend to add what is missing; nothing is overwritten)&quot; ;;
+    *) [ ! -e &quot;$MJ_AI_DIR&quot; ] || [ &quot;$extend&quot; = 1 ] || mj_die &quot;$MJ_EX_REFUSED&quot; &quot;$(mj_rel &quot;$MJ_AI_DIR&quot;)/ exists but carries no manifest; move it aside, or use --extend to seed the missing files&quot; ;;
+  esac
+  [ &quot;$personal&quot; = 1 ] &amp;&amp; [ &quot;$shared&quot; = 1 ] &amp;&amp; mj_die &quot;$MJ_EX_USAGE&quot; &quot;init: --personal and --shared are two answers to one question&quot;
+  if [ &quot;$shared&quot; = 1 ]; then
+    # only a personal layer can be shared: a layer the repository already tracks is shared
+    mj_personal_active || mj_die &quot;$MJ_EX_REFUSED&quot; &quot;this layer is not personal, so there is nothing to share ($(mj_rel &quot;$MJ_AI_DIR&quot;)/ is not covered in $(mj_personal_exclude_file))&quot;
+    MJ_INIT_UNCOVERED=&quot;$(mj_personal_uncover)&quot; || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;cannot rewrite $(mj_personal_exclude_file)&quot;
+  elif mj_personal_active; then
+    # what this layer already is: an --extend of a personal layer must not start writing
+    # .gitignore because the flag was not repeated
+    personal=1
+  fi
+  local ai_rel before=&#39;&#39;; ai_rel=&quot;$(mj_rel &quot;$MJ_AI_DIR&quot;)&quot;
+  if [ &quot;$personal&quot; = 1 ]; then
+    # a layer the repository tracks is already shared: its history holds it, and covering
+    # it now would hide nothing and confuse everything
+    [ -z &quot;$(mj_git ls-files -- &quot;$ai_rel&quot; 2&gt;/dev/null | head -n 1)&quot; ] \
+      || mj_die &quot;$MJ_EX_REFUSED&quot; &quot;$ai_rel/ is tracked in $MJ_ROOT, so it is already shared; a personal layer is one git has never been given (git ls-files $ai_rel)&quot;
+    # what the repository shows before anything is written: the measure the result is held to
+    before=&quot;$(mj_git status --porcelain --untracked-files=all 2&gt;/dev/null)&quot;
+    mj_personal_cover &quot;$ai_rel/&quot; || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;cannot write $(mj_personal_exclude_file)&quot;
+  fi
+
+  MJ_INIT_CREATED=&quot;&quot;
+  # the protocol and the registry, then every tracked section
+  mj_init_file &quot;$skel/ai/README.md&quot; &quot;$MJ_AI_DIR/README.md&quot;
+  mj_init_file &quot;$skel/ai/manifest.yaml&quot; &quot;$MJ_AI_MANIFEST&quot;
+  mj_init_file &quot;$skel/ai/repo/README.md&quot; &quot;$MJ_AI_REPO_DIR/README.md&quot;
+  mj_init_file &quot;$skel/policy.yaml&quot; &quot;$MJ_POLICY_FILE&quot;
+  # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
+  # the section seeds the file and says the manifest must name it
+  if [ -n &quot;$MJ_SCOPE_FILE&quot; ]; then mj_init_file &quot;$skel/ai/repo/scope.yaml&quot; &quot;$MJ_SCOPE_FILE&quot;
+  else
+    mj_init_file &quot;$skel/ai/repo/scope.yaml&quot; &quot;$MJ_AI_REPO_DIR/scope.yaml&quot;
+    printf &#39;note: %s names no scope section; add `scope: repo/scope.yaml` under sections: so that the file applies\n&#39; &quot;$(mj_rel &quot;$MJ_AI_MANIFEST&quot;)&quot; &gt;&amp;2
+  fi
+  mj_init_tree &quot;$skel/profiles&quot; &quot;$MJ_PROFILES_DIR&quot; &#39;*.yaml&#39;
+  mj_init_tree &quot;$skel/prompts&quot; &quot;$MJ_PROMPTS_DIR&quot; &#39;*.md&#39;
+  # every directory the layer seeds carries its own contract: coverage is a validation
+  # class, and a directory this command creates without one would fail the first doctor
+  mj_init_file &quot;$skel/ai/repo/profiles/README.md&quot; &quot;$MJ_PROFILES_DIR/README.md&quot;
+  mj_init_file &quot;$skel/ai/repo/prompts/README.md&quot; &quot;$MJ_PROMPTS_DIR/README.md&quot;
+  mj_init_file &quot;$skel/ai/repo/rules/README.md&quot; &quot;$MJ_RULES_DIR/README.md&quot;
+  mkdir -p &quot;$MJ_RULES_DIR/project&quot;
+  mj_init_file &quot;$skel/ai/repo/rules/project/README.md&quot; &quot;$MJ_RULES_DIR/project/README.md&quot;
+  if [ ! -d &quot;$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS&quot; ]; then
+    mj_rules_vendor_install &quot;$MJ_STD_RULES_DIR&quot; &quot;$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS&quot;
+    MJ_INIT_CREATED=&quot;$MJ_INIT_CREATED $(mj_rel &quot;$MJ_RULES_DIR&quot;)/vendor/$MJ_RULES_VENDOR_NS/&quot;
+  fi
+  mj_init_tree &quot;$skel/ai/repo/knowledge&quot; &quot;$MJ_KNOWLEDGE_DIR&quot; &#39;*&#39;
+  mkdir -p &quot;$MJ_KNOWLEDGE_DIR/curated&quot; &quot;$MJ_KNOWLEDGE_DIR/candidates&quot;
+  mj_init_file &quot;$skel/ai/repo/knowledge/curated/README.md&quot; &quot;$MJ_KNOWLEDGE_DIR/curated/README.md&quot;
+  # the review queue the deriver writes into (ADR 0091), with its contract from the start:
+  # the first episode boundary adds a record, never a directory the layer has to explain
+  mj_init_file &quot;$skel/ai/repo/knowledge/candidates/README.md&quot; &quot;$MJ_KNOWLEDGE_DIR/candidates/README.md&quot;
+  mj_init_tree &quot;$skel/ai/repo/workflows&quot; &quot;$MJ_WORKFLOWS_DIR&quot; &#39;*.md&#39;
+  mj_init_tree &quot;$skel/ai/repo/skills&quot; &quot;$MJ_SKILLS_DIR&quot; &#39;*.md&#39;
+  mj_init_tree &quot;$skel/ai/repo/adrs&quot; &quot;$MJ_ADRS_DIR&quot; &#39;*.md&#39;
+  # the use cases and applications: the sections exist from the start, with the taxonomy
+  # and the context documents, so that the first use case is one file
+  mj_init_tree &quot;$skel/ai/repo/use-cases&quot; &quot;$MJ_AI_REPO_DIR/use-cases&quot; &#39;*&#39;
+  mj_init_tree &quot;$skel/ai/repo/applications&quot; &quot;$MJ_AI_REPO_DIR/applications&quot; &#39;*&#39;
+  # the why catalogue: the section and its contract exist from the start, so that the first
+  # moment is one file and nothing has to be registered for it
+  mj_init_tree &quot;$skel/ai/repo/why&quot; &quot;$MJ_AI_REPO_DIR/why&quot; &#39;*&#39;
+  # the product features: the section and its contract exist from the start, so that the
+  # first feature is one file and every surface that presents it is derived from it
+  mj_init_tree &quot;$skel/ai/repo/features&quot; &quot;$MJ_AI_REPO_DIR/features&quot; &#39;*&#39;
+  mkdir -p &quot;$MJ_PROJECT_DIR&quot;
+  # The sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton&#39;s manifest is about to name. The resolved variable is empty on that
+  # first run, because the manifest that names the section is being seeded in the same pass,
+  # so reading it alone would seed nothing here and seed it on the next --extend: a
+  # repository that reports work to do forever. The variable is still preferred when it does
+  # resolve, so a layer whose manifest names another path is honoured rather than overruled.
+  local sessions_dir=&quot;${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}&quot;
+  mkdir -p &quot;$sessions_dir&quot;
+  mj_init_file &quot;$MJ_SKELETON_DIR/ai/repo/sessions/README.md&quot; &quot;$sessions_dir/README.md&quot;
+  # The deployments section, the same way: the contract is there from the start, so a
+  # repository that later deploys something adds one file rather than a directory, a
+  # context document, a manifest entry and a source class.
+  local deployments_dir=&quot;${MJ_DEPLOYMENTS_DIR:-$MJ_AI_REPO_DIR/deployments}&quot;
+  mkdir -p &quot;$deployments_dir&quot;
+  mj_init_file &quot;$MJ_SKELETON_DIR/ai/repo/deployments/README.md&quot; &quot;$deployments_dir/README.md&quot;
+  mj_init_file &quot;$skel/ai/repo/project/README.md&quot; &quot;$MJ_PROJECT_DIR/README.md&quot;
+  # the checkout-local half: the state directories the durable commands write into, and
+  # the two hand-editable stores, seeded from the tool&#39;s templates. Never tracked.
+  mkdir -p &quot;$MJ_STATE_DIR/handovers&quot; &quot;$MJ_STATE_DIR/checkpoints&quot; &quot;$MJ_AI_LOCAL_DIR/prompts&quot; \
+           &quot;$MJ_AI_LOCAL_DIR/cache&quot; &quot;$MJ_AI_LOCAL_DIR/session-contexts&quot;
+  # The prompt archive is the one store here whose *names* are private: a record is called
+  # after the opening of the prompt it holds, so a world-readable directory discloses what
+  # was asked even while it is empty. It is created 0700 by the command that creates it,
+  # rather than by the hook that writes the first record — the hook would be repairing a
+  # mode that had already been wrong for however long the repository went without a prompt.
+  chmod 700 &quot;$MJ_AI_LOCAL_DIR/prompts&quot; 2&gt;/dev/null || true
+  [ -f &quot;$MJ_STATE_DIR/decisions.md&quot; ]      || cp &quot;$skel/templates/decisions.md&quot; &quot;$MJ_STATE_DIR/decisions.md&quot;
+  [ -f &quot;$MJ_STATE_DIR/open-questions.md&quot; ] || cp &quot;$skel/templates/open-questions.md&quot; &quot;$MJ_STATE_DIR/open-questions.md&quot;
+  if [ &quot;$personal&quot; = 1 ]; then
+    MJ_INIT_CREATED=&quot;$MJ_INIT_CREATED $(mj_personal_exclude_file):/$ai_rel/&quot;
+  else mj_init_gitignore; fi
+
+  local rel; rel=&quot;${MJ_SELF:-$(cd &quot;$MJ_BIN_DIR&quot; &amp;&amp; pwd)/majordomus}&quot;
+  if [ -n &quot;$MJ_INIT_CREATED&quot; ]; then
+    printf &#39;created%s\n&#39; &quot;$MJ_INIT_CREATED&quot; | tr &#39; &#39; &#39;\n&#39; | sed &#39;1!s/^/  /&#39;
+  else printf &#39;nothing to add; .ai/ already carries every file the skeleton seeds\n&#39;; fi
+  if [ &quot;$personal&quot; = 1 ]; then
+    # The claim is checked where it is made: an init that says &quot;personal&quot; and changed what
+    # the repository shows has not done what it said, and that is a failure, not a note.
+    local after; after=&quot;$(mj_git status --porcelain --untracked-files=all 2&gt;/dev/null)&quot;
+    if [ &quot;$before&quot; != &quot;$after&quot; ]; then
+      mj_fail personal &quot;$ai_rel/&quot; &quot;git status changed; a personal init leaves what the repository shares as it found it&quot; &quot;git status --porcelain --untracked-files=all&quot;
+      printf &#39;%s\n&#39; &quot;$after&quot; | grep -vxF -f &lt;(printf &#39;%s\n&#39; &quot;$before&quot;) | sed &#39;s/^/  now shown: /&#39; &gt;&amp;2
+      exit &quot;$MJ_EX_CONTRACT&quot;
+    fi
+    mj_personal_verify plain || exit &quot;$MJ_EX_CONTRACT&quot;
+    printf &#39;personal: this layer is yours; nothing the repository shares was changed. The cover is %s\n&#39; &quot;$(mj_personal_exclude_file)&quot;
+    printf &#39;personal: it stays on this machine. To propose it to the team: majordomus init --extend --shared\n&#39;
+  fi
+  if [ &quot;$shared&quot; = 1 ]; then
+    printf &quot;shared: the cover is removed; these paths are now the repository&#39;s to commit, when you choose to:\n&quot;
+    printf &#39;%s\n&#39; &quot;$MJ_INIT_UNCOVERED&quot; | sed -e &#39;/^kept /d&#39; -e &#39;/\.mj-tmp$/d&#39; -e &#39;s|^/||&#39; -e &#39;s/^/  git add /&#39; -e &#39;/^  git add $/d&#39;
+    printf &#39;  git add .gitignore\n&#39;
+    # a file that is one person&#39;s by its own name stays covered, and the policy still
+    # projects into it: the team&#39;s projection is theirs to name before the first commit
+    printf &#39;%s\n&#39; &quot;$MJ_INIT_UNCOVERED&quot; | sed -n &#39;s|^kept /\(.*\)$|shared: \1 stays yours and stays covered; point that projection at the file the team reads before you commit the policy|p&#39;
+    printf &quot;shared: %s stays this checkout&#39;s own, as in every layer\n&quot; &quot;$(mj_rel &quot;$MJ_AI_LOCAL_DIR&quot;)/&quot;
+  fi
+  cat &lt;&lt;OUT
+local state: $(mj_rel &quot;$MJ_STATE_DIR&quot;)/ (ignored by git; this checkout&#39;s own)
+next: majordomus update      # generate the provider instruction files named in the policy
+next: majordomus doctor      # verify nothing is declared that is not wired
+hooks are not installed by init; add these two lines yourself, doctor verifies them:
+  pre-commit: $rel doctor || exit \$?
+  pre-push:   $rel finish --check || exit \$?
+OUT
+}
+
+# copy one skeleton file into place unless it already exists
+mj_init_file() {
+  local src=&quot;$1&quot; dst=&quot;$2&quot;
+  [ -f &quot;$src&quot; ] || mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;skeleton file missing: $src&quot;
+  [ -e &quot;$dst&quot; ] &amp;&amp; return 0
+  mkdir -p &quot;$(dirname &quot;$dst&quot;)&quot;
+  cp &quot;$src&quot; &quot;$dst&quot;
+  MJ_INIT_CREATED=&quot;$MJ_INIT_CREATED $(mj_rel &quot;$dst&quot;)&quot;
+}
+# copy every matching file of a skeleton directory into place, one by one, never overwriting
+mj_init_tree() {
+  local src=&quot;$1&quot; dst=&quot;$2&quot; pat=&quot;$3&quot; f n=0
+  mkdir -p &quot;$dst&quot;
+  [ -d &quot;$src&quot; ] || return 0
+  for f in &quot;$src&quot;/$pat; do
+    [ -f &quot;$f&quot; ] || continue
+    [ -e &quot;$dst/$(basename &quot;$f&quot;)&quot; ] &amp;&amp; continue
+    cp &quot;$f&quot; &quot;$dst/$(basename &quot;$f&quot;)&quot;; n=$((n+1))
+  done
+  [ &quot;$n&quot; -gt 0 ] &amp;&amp; MJ_INIT_CREATED=&quot;$MJ_INIT_CREATED $(mj_rel &quot;$dst&quot;)/&quot;
+  return 0
+}
+# the ignore boundary: each line added once, to a file whose other content is left alone.
+#
+# Two lines, for two different reasons. The local section is this checkout&#39;s own state and is
+# never shared. The staging file of mj_publish_record is the opposite — it lives inside a
+# tracked section, because the hard link that publishes a record cannot cross a filesystem —
+# and this line is what keeps a leftover from one from ever reaching a commit.
+mj_init_gitignore() {
+  local gi=&quot;$MJ_ROOT/.gitignore&quot; line
+  for line in &quot;$(mj_rel &quot;$MJ_AI_LOCAL_DIR&quot;)/&quot; &quot;$(mj_rel &quot;$MJ_AI_REPO_DIR&quot;)/**/.tmp.*&quot;; do
+    grep -qxF &quot;$line&quot; &quot;$gi&quot; 2&gt;/dev/null &amp;&amp; continue
+    { [ -f &quot;$gi&quot; ] &amp;&amp; [ -n &quot;$(tail -c1 &quot;$gi&quot;)&quot; ] &amp;&amp; printf &#39;\n&#39;; printf &#39;%s\n&#39; &quot;$line&quot;; } &gt;&gt; &quot;$gi&quot;
+    MJ_INIT_CREATED=&quot;$MJ_INIT_CREATED .gitignore:$line&quot;
+  done
+}
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

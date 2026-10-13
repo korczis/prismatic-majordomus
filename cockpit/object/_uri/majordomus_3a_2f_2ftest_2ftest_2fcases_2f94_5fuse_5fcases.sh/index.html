@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/94_use_cases.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/94_use_cases.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/94_use_cases.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/94_use_cases.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/94_use_cases.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/94_use_cases.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F94_use_cases.sh">test.test/cases/94_use_cases.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: usecase
+# majordomus-negative: usecase
+# claims: use-case-coverage, use-case-evidence, use-case-impact
+# The executable use-case system, in a repository `init` wrote: the sections exist with the
+# taxonomy; a use case is one file, discovered, validated against everything it names, run
+# against the real tool with the evidence recorded and normalised; coverage is computed
+# from the registry and gated by the policy; a draft scaffolded for a gap runs but never
+# counts; impact traces a changed file to the use cases and cases it affects; and every
+# broken reference, failed step and stale expectation is refused with the entity named.
+. &quot;$ROOT/test/lib.sh&quot;
+&quot;$MJ&quot; init &gt;/dev/null; &quot;$MJ&quot; update &gt;/dev/null
+git add -A &gt;/dev/null &amp;&amp; git commit -qm install
+UC=.ai/repo/use-cases
+
+# --- the sections are seeded and empty; coverage is advisory in a fresh policy
+[ -f &quot;$UC/taxonomy.yaml&quot; ] || { echo &quot;    init seeded no taxonomy&quot;; exit 1; }
+[ -f .ai/repo/applications/README.md ] || { echo &quot;    init seeded no applications section&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; usecase list
+expect_grep &#39;^use cases: 0 in \.ai/repo/use-cases$&#39;
+expect_exit 0 &quot;$MJ&quot; usecase coverage
+expect_grep &#39;^command +doctor +0 +0 +0 +gap +advisory$&#39;
+expect_grep &#39;required gap\(s\)&#39;
+expect_exit 0 &quot;$MJ&quot; usecase coverage --check
+expect_exit 2 &quot;$MJ&quot; usecase bogus
+expect_grep &quot;unknown subcommand &#39;bogus&#39;&quot;
+expect_exit 12 &quot;$MJ&quot; usecase show nosuch
+expect_grep &quot;no use case &#39;nosuch&#39;&quot;
+
+# --- one use case: a file with a scenario section, nothing else to register
+cat &gt; &quot;$UC/see-the-version.md&quot; &lt;&lt;&#39;MD&#39;
+---
+id: see-the-version
+kind: use-case
+title: &#39;See which version runs&#39;
+summary: &#39;Print the version and refuse an unknown option.&#39;
+category: adoption
+status: active
+target: guaranteed
+actors: [operator]
+difficulty: basic
+commands: [version]
+doctrines: []
+claims: [exit-code-contract]
+responsibilities: []
+applications: []
+---
+
+# Situation
+
+Which tool is this?
+
+# Scenario
+
+```yaml
+setup: bare
+given:
+  - &#39;nothing installed&#39;
+steps:
+  - id: print
+    run: [&#39;version&#39;]
+    note: &#39;the version string&#39;
+    expect:
+      exit: 0
+      stdout_contains: [&#39;^majordomus [0-9]+\.[0-9]+\.[0-9]+$&#39;]
+  - id: refuse
+    run: [&#39;version&#39;, &#39;--no-such-option&#39;]
+    note: &#39;a usage error&#39;
+    expect:
+      exit: 2
+      stdout_contains: [&#39;unknown option&#39;]
+then:
+  - &#39;the version needs no repository&#39;
+```
+
+# Outcome
+
+The version, from anywhere.
+MD
+# the repository has no claims file or fixtures of its own: the claim resolves against the
+# distribution&#39;s? No — a use case names what this repository declares; give it a claims
+# file and let the distribution&#39;s fixtures (setup scripts) serve the scenario
+mkdir -p docs
+printf &#39;version: 1\nstatuses:\n  - id: guaranteed\n    meaning: Deterministic.\nclaims:\n  - id: exit-code-contract\n    claim: Exit codes mean one thing\n    source: docs/CLI.md\n    implementation: bin/majordomus\n    test: test/cases/00.sh\n    status: guaranteed\n    responsibility: none\n&#39; &gt; docs/CLAIMS.yaml
+# a guaranteed claim of one of the tool&#39;s responsibilities, and an MCP tool the executable&#39;s
+# registry projects: coverage counts both, and neither is named by any use case yet
+printf &#39;  - id: health-is-reported\n    claim: Doctor reports the health\n    source: docs/CLI.md\n    implementation: lib/doctor.sh\n    test: test/cases/00.sh\n    status: guaranteed\n    responsibility: doctor\n&#39; &gt;&gt; docs/CLAIMS.yaml
+mkdir -p docs/generated
+printf &#39;{&quot;capabilities&quot;:[{&quot;id&quot;:&quot;status.read&quot;,&quot;tool&quot;: &quot;majordomus_status&quot;}]}\n&#39; &gt; docs/generated/registry.json
+expect_exit 0 &quot;$MJ&quot; usecase coverage
+expect_grep &#39;^claim +health-is-reported +0 +0 +0 +gap +advisory$&#39;
+expect_grep &#39;^mcp_tool +majordomus_status +0 +0 +0 +gap +advisory$&#39;
+# the claim with responsibility none is not a coverage target at all
+expect_no_grep &#39;exit-code-contract&#39;
+git add -A &gt;/dev/null &amp;&amp; git commit -qm &quot;one use case&quot;
+expect_exit 0 &quot;$MJ&quot; usecase validate
+expect_grep &#39;usecase validate: 0 failure&#39;
+expect_exit 0 &quot;$MJ&quot; usecase list
+expect_grep &#39;^see-the-version +adoption +active +scenario +version&#39;
+expect_exit 0 &quot;$MJ&quot; usecase run see-the-version
+expect_grep &#39;^see-the-version +pass +2 step&#39;
+EV=.ai/local/state/../evidence/use-cases/see-the-version.json
+[ -f &quot;$EV&quot; ] || { echo &quot;    no evidence written&quot;; exit 1; }
+grep -q &#39;&quot;result&quot;:&quot;pass&quot;&#39; &quot;$EV&quot; || { echo &quot;    evidence does not record the pass&quot;; cat &quot;$EV&quot;; exit 1; }
+grep -q &#39;&quot;command&quot;:&quot;majordomus version --no-such-option&quot;&#39; &quot;$EV&quot; || { echo &quot;    evidence does not carry the command&quot;; exit 1; }
+grep -q &#39;&quot;expected_exit&quot;:2&#39; &quot;$EV&quot; || { echo &quot;    evidence does not carry the expected exit&quot;; exit 1; }
+# the evidence is normalised: no absolute path of the scenario repository, no timestamp
+grep -q &quot;$T&quot; &quot;$EV&quot; &amp;&amp; { echo &quot;    evidence leaks the scenario path&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; usecase show see-the-version
+expect_grep &#39;^--- evidence: .*\(pass\)&#39;
+# the tracked tree is untouched by a run
+[ -z &quot;$(git status --porcelain)&quot; ] || { echo &quot;    usecase run changed the tree&quot;; git status --porcelain; exit 1; }
+# coverage moved
+expect_exit 0 &quot;$MJ&quot; usecase coverage
+expect_grep &#39;^command +version +1 +1 +1 +covered&#39;
+expect_exit 0 &quot;$MJ&quot; usecase coverage --json
+expect_grep &#39;&quot;id&quot;:&quot;version&quot;,&quot;use_cases&quot;:1,&quot;executable&quot;:1,&quot;evidence&quot;:1,&quot;status&quot;:&quot;covered&quot;&#39;
+
+# --- a failing expectation fails the run, naming the step and the reason; evidence says fail
+sed -i.bak &quot;s/stdout_contains: \[&#39;unknown option&#39;\]/stdout_contains: [&#39;everything is fine&#39;]/&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+expect_exit 10 &quot;$MJ&quot; usecase run see-the-version
+expect_grep &#39;^see-the-version +FAIL +expected /everything is fine/&#39;
+grep -q &#39;&quot;result&quot;:&quot;fail&quot;&#39; &quot;$EV&quot; || { echo &quot;    evidence does not record the failure&quot;; exit 1; }
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+sed -i.bak &quot;s/^      exit: 2$/      exit: 0/&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+expect_exit 10 &quot;$MJ&quot; usecase run see-the-version
+expect_grep &#39;expected exit 0, got 2&#39;
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+
+# --- and the same failure through --json, which is the form every generator reads.
+# The count of failures is a fact about the run, not about how it is printed. This lived
+# only in the text branch once, so `--json` reported &quot;failed&quot;:0 and exited 0 however the
+# scenarios went — and scripts/generate-site-data relies on exactly that exit code to
+# refuse to publish a demonstration that does not hold. A green exit there did not stop
+# the site; it silently lowered the use case&#39;s maturity instead, which is the difference
+# between knowing something is broken and not knowing anything about it.
+sed -i.bak &quot;s/stdout_contains: \[&#39;unknown option&#39;\]/stdout_contains: [&#39;everything is fine&#39;]/&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+expect_exit 10 &quot;$MJ&quot; usecase run --json see-the-version
+&quot;$MJ&quot; usecase run --json see-the-version &gt; run.json 2&gt;/dev/null || true
+jq -e &#39;.failed == 1 and .ran == 1&#39; run.json &gt;/dev/null \
+  || { echo &quot;    the JSON run does not report its own failure&quot;; cat run.json; exit 1; }
+jq -e &#39;[.results[] | select(.result != &quot;pass&quot;)] | length == 1&#39; run.json &gt;/dev/null \
+  || { echo &quot;    the failing scenario is not in the JSON results&quot;; cat run.json; exit 1; }
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+# a passing run still exits 0 and says so, so the fix did not make --json fail always
+expect_exit 0 &quot;$MJ&quot; usecase run --json see-the-version
+&quot;$MJ&quot; usecase run --json see-the-version &gt; run.json 2&gt;/dev/null
+jq -e &#39;.failed == 0 and .ran == 1 and (.results[0].result == &quot;pass&quot;)&#39; run.json &gt;/dev/null \
+  || { echo &quot;    a passing scenario is not reported as passing in JSON&quot;; cat run.json; exit 1; }
+
+# --- every broken reference is refused with the entity and the relation named
+probe() { # description, sed expression, expected pattern
+  sed -i.bak &quot;$2&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+  expect_exit 10 &quot;$MJ&quot; usecase validate || { echo &quot;    probe &#39;$1&#39; was not refused&quot;; git checkout -q -- &quot;$UC/see-the-version.md&quot;; exit 1; }
+  expect_grep &quot;$3&quot; || { echo &quot;    probe &#39;$1&#39; failed for another reason&quot;; git checkout -q -- &quot;$UC/see-the-version.md&quot;; exit 1; }
+  git checkout -q -- &quot;$UC/see-the-version.md&quot;
+}
+probe &quot;unknown command&quot;   &quot;s/^commands: \[version\]/commands: [version, nosuchcmd]/&quot;        &quot;names command &#39;nosuchcmd&#39;, which bin\/majordomus does not dispatch&quot;
+probe &quot;unknown doctrine&quot;  &quot;s/^doctrines: \[\]/doctrines: [majordomus.nosuch]/&quot;              &quot;names doctrine &#39;majordomus.nosuch&#39;, which no rule declares&quot;
+probe &quot;unknown claim&quot;     &quot;s/^claims: \[exit-code-contract\]/claims: [nosuch-claim]/&quot;       &quot;names claim &#39;nosuch-claim&#39;&quot;
+probe &quot;unknown category&quot;  &quot;s/^category: adoption/category: nosuch/&quot;                          &quot;category &#39;nosuch&#39; is not in taxonomy.yaml&quot;
+probe &quot;unknown setup&quot;     &quot;s/^setup: bare/setup: nosuch/&quot;                                &quot;names setup &#39;nosuch&#39;&quot;
+probe &quot;step not listed&quot;   &quot;s/run: \[&#39;version&#39;, &#39;--no-such-option&#39;\]/run: [&#39;doctor&#39;]/&quot;        &quot;step &#39;refuse&#39; runs &#39;doctor&#39;, which the use case does not list under commands&quot;
+probe &quot;unknown key&quot;       &quot;s/^difficulty: basic/difficulty: basic\ncolour: red/&quot;             &quot;unknown key.s.: colour&quot;
+probe &quot;no situation&quot;      &quot;s/^# Situation/# Setting/&quot;                                        &quot;body has no &#39;# Situation&#39; heading&quot;
+probe &quot;unknown application&quot; &quot;s/^applications: \[\]/applications: [nosuch-app]/&quot;             &quot;names application &#39;nosuch-app&#39;, which does not exist&quot;
+# a guaranteed target with no scenario is refused: a guarantee needs executable evidence
+awk &#39;/^# Scenario$/{skip=1} /^# Outcome$/{skip=0} !skip&#39; &quot;$UC/see-the-version.md&quot; &gt; &quot;$UC/x.md&quot; &amp;&amp; mv &quot;$UC/x.md&quot; &quot;$UC/see-the-version.md&quot;
+expect_exit 10 &quot;$MJ&quot; usecase validate
+expect_grep &#39;targets guaranteed and has no scenario&#39;
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+# the id is the file name, and a duplicate id is refused
+cp &quot;$UC/see-the-version.md&quot; &quot;$UC/copy.md&quot;
+expect_exit 10 &quot;$MJ&quot; usecase validate
+expect_grep &quot;id &#39;see-the-version&#39; is not the file name&quot;
+expect_grep &quot;declared twice&quot;
+rm -f &quot;$UC/copy.md&quot;
+# doctor applies the same validation under the catalogue doctrine, and coverage under its own
+expect_exit 0 &quot;$MJ&quot; usecase validate
+sed -i.bak &quot;s/^category: adoption/category: nosuch/&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+&quot;$MJ&quot; doctor &gt; &quot;$T/doctor.out&quot; 2&gt;&amp;1 || true
+grep -q &quot;FAIL use-case    see-the-version — category &#39;nosuch&#39;&quot; &quot;$T/doctor.out&quot; || { echo &quot;    doctor does not apply the use-case validation&quot;; grep &#39;use-case\|catalogue&#39; &quot;$T/doctor.out&quot;; exit 1; }
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+
+# --- an application must name its use cases back, and a use case its applications
+cat &gt; .ai/repo/applications/solo.md &lt;&lt;&#39;MD&#39;
+---
+id: solo
+kind: application
+title: &#39;Solo&#39;
+summary: &#39;One person.&#39;
+status: active
+fits_when:
+  - &#39;one person&#39;
+does_not_fit_when:
+  - &#39;a team&#39;
+use_cases: [see-the-version]
+doctrines: []
+responsibilities: []
+---
+
+# Context
+
+One person and one repository.
+MD
+expect_exit 10 &quot;$MJ&quot; usecase validate
+expect_grep &quot;application names use case &#39;see-the-version&#39;, which does not name it back&quot;
+sed -i.bak &quot;s/^applications: \[\]/applications: [solo]/&quot; &quot;$UC/see-the-version.md&quot;; rm -f &quot;$UC/see-the-version.md.bak&quot;
+expect_exit 0 &quot;$MJ&quot; usecase validate
+git add -A &gt;/dev/null &amp;&amp; git commit -qm &quot;an application&quot;
+
+# --- the policy gates coverage: required turns a gap into a failure of doctor, check and finish
+sed -i.bak &#39;s/^    commands: advisory$/    commands: required/&#39; .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+&quot;$MJ&quot; update &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; usecase coverage --check
+expect_grep &#39;required gap\(s\)&#39;
+&quot;$MJ&quot; doctor &gt; &quot;$T/doctor.out&quot; 2&gt;&amp;1 || true
+grep -q &#39;FAIL use-case    command doctor — gap: 0 use case(s) name it, 0 run it; the policy requires an executable use case  \[reproduce: majordomus usecase scaffold --for command:doctor\]&#39; &quot;$T/doctor.out&quot; \
+  || { echo &quot;    doctor does not fail a required gap with the scaffold named&quot;; tail -5 &quot;$T/doctor.out&quot;; exit 1; }
+# the finish contract carries the key once the policy lists it
+sed -i.bak &#39;s/^    - note_present$/    - note_present\n    - use_cases_covered/&#39; .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+&quot;$MJ&quot; update &gt;/dev/null
+git add -A &gt;/dev/null &amp;&amp; git -c core.hooksPath=/dev/null commit -qm &quot;require coverage&quot;
+&quot;$MJ&quot; start &quot;cover it&quot; --scope lib &gt;/dev/null
+# check applies the same gate as doctor: a required gap fails it with the scaffold named
+expect_exit 10 &quot;$MJ&quot; check
+expect_grep &#39;FAIL use-case +command doctor — gap: 0 use case\(s\) name it, 0 run it; the policy requires an executable use case&#39;
+printf &#39;# Objective\no\n# Current State\nc\n# Next Action\nn\n&#39; | &quot;$MJ&quot; handover &gt;/dev/null
+expect_exit 10 &quot;$MJ&quot; finish --outcome completed --verify-command &quot;test -d .ai&quot;
+expect_grep &#39;FAIL use-case&#39;
+expect_grep &#39;refused&#39;
+
+# --- a scaffold closes nothing by itself: it is a draft that runs and does not count
+expect_exit 0 &quot;$MJ&quot; usecase scaffold --for command:doctor --dry-run
+expect_grep &#39;would write: \.ai/repo/use-cases/doctor-draft\.md&#39;
+[ ! -f &quot;$UC/doctor-draft.md&quot; ] || { echo &quot;    --dry-run wrote&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; usecase scaffold --for command:doctor
+expect_grep &#39;wrote: \.ai/repo/use-cases/doctor-draft\.md&#39;
+grep -q &#39;^status: draft$&#39; &quot;$UC/doctor-draft.md&quot; || { echo &quot;    the scaffold is not a draft&quot;; exit 1; }
+grep -q &#39;^target: advisory$&#39; &quot;$UC/doctor-draft.md&quot; || { echo &quot;    the scaffold targets a guarantee&quot;; exit 1; }
+grep -q &#39;^commands: \[doctor\]$&#39; &quot;$UC/doctor-draft.md&quot; || { echo &quot;    the scaffold does not name its command&quot;; exit 1; }
+expect_exit 0 &quot;$MJ&quot; usecase validate
+expect_exit 0 &quot;$MJ&quot; usecase run doctor-draft
+expect_grep &#39;^doctor-draft +pass&#39;
+expect_exit 10 &quot;$MJ&quot; usecase coverage --check
+expect_grep &#39;^command +doctor +0 +0 +0 +gap +required&#39;
+expect_exit 0 &quot;$MJ&quot; usecase scaffold --for command:doctor
+expect_grep &#39;^exists: &#39;
+expect_exit 0 &quot;$MJ&quot; usecase scaffold --missing --dry-run
+expect_grep &#39;would write: \.ai/repo/use-cases/init-draft\.md&#39;
+# made active, with the narrative and its claims, it counts
+sed -i.bak &#39;s/^status: draft$/status: active/; s/^title: .*/title: &#39;&quot;&#39;&quot;&#39;Check the health&#39;&quot;&#39;&quot;&#39;/; s/^summary: .*/summary: &#39;&quot;&#39;&quot;&#39;Doctor.&#39;&quot;&#39;&quot;&#39;/&#39; &quot;$UC/doctor-draft.md&quot;; rm -f &quot;$UC/doctor-draft.md.bak&quot;
+sed -i.bak &#39;s/^claims: \[.*\]$/claims: []/; s/^responsibilities: \[.*\]$/responsibilities: []/&#39; &quot;$UC/doctor-draft.md&quot;; rm -f &quot;$UC/doctor-draft.md.bak&quot;
+expect_exit 0 &quot;$MJ&quot; usecase validate
+expect_exit 0 &quot;$MJ&quot; usecase coverage
+expect_grep &#39;^command +doctor +1 +1 +1 +covered +required&#39;
+# the claim and the MCP tool are still named gaps: nothing active names them
+expect_grep &#39;^claim +health-is-reported +0 +0 +0 +gap +advisory$&#39;
+expect_grep &#39;^mcp_tool +majordomus_status +0 +0 +0 +gap +advisory$&#39;
+# naming them from the executable use case closes both, and the tally says so
+sed -i.bak &#39;s/^claims: \[\]$/claims: [health-is-reported]\nmcp_tools: [majordomus_status]/&#39; &quot;$UC/doctor-draft.md&quot;; rm -f &quot;$UC/doctor-draft.md.bak&quot;
+expect_exit 0 &quot;$MJ&quot; usecase validate
+expect_exit 0 &quot;$MJ&quot; usecase coverage
+expect_grep &#39;^claim +health-is-reported +1 +1 +1 +covered +advisory$&#39;
+expect_grep &#39;^mcp_tool +majordomus_status +1 +1 +1 +covered +advisory$&#39;
+# the policy gates the other classes too: a claim gap under claims: required fails --check
+sed -i.bak &#39;s/^claims: \[health-is-reported\]$/claims: []/&#39; &quot;$UC/doctor-draft.md&quot;; rm -f &quot;$UC/doctor-draft.md.bak&quot;
+cp .ai/repo/policy.yaml &quot;$T/policy.required&quot;
+sed -i.bak &#39;s/^    commands: required$/    commands: advisory/&#39; .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+expect_exit 0 &quot;$MJ&quot; usecase coverage --check
+expect_grep &#39;^claim +health-is-reported +0 +0 +0 +gap +advisory$&#39;
+sed -i.bak &#39;s/^    claims: advisory$/    claims: required/&#39; .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+expect_exit 10 &quot;$MJ&quot; usecase coverage --check
+expect_grep &#39;^claim +health-is-reported +0 +0 +0 +gap +required$&#39;
+expect_grep &#39;, 1 required gap\(s\)&#39;
+cp &quot;$T/policy.required&quot; .ai/repo/policy.yaml
+sed -i.bak &#39;s/^claims: \[\]$/claims: [health-is-reported]/&#39; &quot;$UC/doctor-draft.md&quot;; rm -f &quot;$UC/doctor-draft.md.bak&quot;
+
+# --- impact: a changed file names the use cases, scenarios and cases it reaches
+git add -A &gt;/dev/null &amp;&amp; git -c core.hooksPath=/dev/null commit -qm &quot;doctor use case&quot;
+printf &#39;\n# touched\n&#39; &gt;&gt; &quot;$UC/see-the-version.md&quot;
+expect_exit 0 &quot;$MJ&quot; usecase impact --base HEAD
+expect_grep &#39;^  use cases  see-the-version&#39;
+expect_grep &#39;^  scenarios  see-the-version&#39;
+expect_grep &#39;^next: majordomus usecase run see-the-version&#39;
+git checkout -q -- &quot;$UC/see-the-version.md&quot;
+expect_exit 0 &quot;$MJ&quot; usecase impact --base HEAD --json
+expect_grep &#39;&quot;use_cases&quot;:\[\]&#39;
+# an implementation file names its command, the behavioural cases that declare they cover
+# it, and through the command the use cases and scenarios that run it
+mkdir -p lib test/cases
+printf &#39;# the doctor implementation of this fixture\n&#39; &gt; lib/doctor.sh
+printf &#39;# majordomus-covers: doctor\n&#39; &gt; test/cases/01_doctor.sh
+printf &#39;# majordomus-covers: version\n&#39; &gt; test/cases/02_version.sh
+git add -A &gt;/dev/null &amp;&amp; git -c core.hooksPath=/dev/null commit -qm &quot;an implementation and its cases&quot;
+printf &#39;# touched\n&#39; &gt;&gt; lib/doctor.sh
+expect_exit 0 &quot;$MJ&quot; usecase impact --base HEAD
+expect_grep &#39;^  commands   doctor$&#39;
+expect_grep &#39;^  cases      test/cases/01_doctor\.sh$&#39;
+expect_grep &#39;^  use cases  doctor-draft$&#39;
+expect_grep &#39;^  scenarios  doctor-draft$&#39;
+expect_exit 0 &quot;$MJ&quot; usecase impact --base HEAD --json
+expect_grep &#39;&quot;commands&quot;:\[&quot;doctor&quot;\],&quot;rules&quot;:\[\],&quot;use_cases&quot;:\[&quot;doctor-draft&quot;\],&quot;scenarios&quot;:\[&quot;doctor-draft&quot;\],&quot;cases&quot;:\[&quot;test/cases/01_doctor\.sh&quot;\]&#39;
+git checkout -q -- lib/doctor.sh
+# a rule file names the rule by its identity, read from its front matter, not its path
+RULE=.ai/repo/rules/vendor/majordomus/rules/use-case-coverage.v1.md
+[ -f &quot;$RULE&quot; ] || { echo &quot;    the fixture has no vendored use-case-coverage rule&quot;; exit 1; }
+printf &#39;\n&#39; &gt;&gt; &quot;$RULE&quot;
+expect_exit 0 &quot;$MJ&quot; usecase impact --base HEAD
+expect_grep &#39;^  rules      majordomus\.use-case-coverage$&#39;
+expect_grep &#39;^  commands   none$&#39;
+# ...and the behavioural case the rule names as its proof is affected by changing the rule
+expect_grep &#39;^  cases      test/cases/94_use_cases\.sh$&#39;
+git checkout -q -- &quot;$RULE&quot;
+
+# --- the evidence the site shows is the evidence the tool recorded. The site generator runs
+#     in a scratch copy of this tool&#39;s tree (never the real site/), with the catalogue pruned
+#     to the use cases whose scenarios walk the lifecycle and refuse something, which is the
+#     least the generator accepts; it executes them itself and embeds what they recorded.
+#     The challenge site/data/challenge.toml names is kept too: the generator refuses a
+#     challenge whose use case the catalogue does not have, and README.md&#39;s first transcript
+#     must be one of its recorded steps.
+command -v jq &gt;/dev/null || { echo &quot;    jq absent; the site half is not asserted&quot;; exit 1; }
+SF=&quot;$T/site-fixture&quot;
+fixture_repo &quot;$SF&quot; AGENTS.md docs site/data/marketing.toml site/content-src
+KEEP=&#39;know-which-tool-is-running hand-work-between-sessions run-several-workers-at-once carry-a-blocker-across-a-handover catch-an-agent-that-says-it-is-done&#39;
+for f in &quot;$SF&quot;/.ai/repo/use-cases/*.md &quot;$SF&quot;/.ai/repo/applications/*.md; do
+  grep -q &#39;^kind: context$&#39; &quot;$f&quot; &amp;&amp; continue
+  case &quot; $KEEP &quot; in *&quot; $(basename &quot;$f&quot; .md) &quot;*) sed -i.bak &#39;s/^applications: \[.*\]$/applications: []/&#39; &quot;$f&quot;; rm -f &quot;$f.bak&quot; ;; *) rm -f &quot;$f&quot; ;; esac
+done
+# the identity is the fixture&#39;s own: a runner has no global git identity, and a commit that
+# borrows the developer&#39;s passes on a laptop and fails on CI
+( cd &quot;$SF&quot; &amp;&amp; git init -q &amp;&amp; git config user.email case94@example.com &amp;&amp; git config user.name case94 \
+    &amp;&amp; git add -A &gt;/dev/null &amp;&amp; git -c core.hooksPath=/dev/null commit -qm fixture ) || exit 1
+expect_exit 0 &quot;$SF/scripts/generate-site-data&quot; --out &quot;$T/site-data&quot; \
+  || { echo &quot;    the site generator refused the pruned catalogue&quot;; exit 1; }
+CAT=&quot;$T/site-data/catalogue.json&quot;
+expect_file &quot;$CAT&quot;
+for u in $KEEP; do
+  EVF=&quot;$SF/.ai/local/evidence/use-cases/$u.json&quot;
+  expect_file &quot;$EVF&quot; || { echo &quot;    the generator did not execute the scenario of $u&quot;; exit 1; }
+  jq -S --arg u &quot;$u&quot; &#39;.use_cases[] | select(.id == $u) | .evidence&#39; &quot;$CAT&quot; &gt; &quot;$T/shown.json&quot;
+  jq -S &#39;del(.steps[].timing)&#39; &quot;$EVF&quot; &gt; &quot;$T/recorded.json&quot;
+  cmp -s &quot;$T/shown.json&quot; &quot;$T/recorded.json&quot; \
+    || { echo &quot;    the site does not show the evidence the tool recorded for $u&quot;; diff &quot;$T/recorded.json&quot; &quot;$T/shown.json&quot; | head -20; exit 1; }
+done
+# and that evidence is the executed scenario, step by step: exit and output as observed
+jq -e &#39;.use_cases[] | select(.id == &quot;know-which-tool-is-running&quot;) | .evidence
+       | .result == &quot;pass&quot; and (.steps | length) == 2
+         and .steps[0].exit == 0 and (.steps[0].output | test(&quot;^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$&quot;))
+         and .steps[1].exit == 2 and .steps[1].expected_exit == 2 and (.steps[1].output | test(&quot;unknown option&quot;))
+         and all(.steps[]; .result == &quot;pass&quot; and (.assertions | length) &gt; 0)&#39; &quot;$CAT&quot; &gt;/dev/null \
+  || { echo &quot;    the site&#39;s evidence is not the executed scenario&quot;; jq &#39;.use_cases[] | select(.id == &quot;know-which-tool-is-running&quot;) | .evidence&#39; &quot;$CAT&quot;; exit 1; }
+grep -q &quot;$T&quot; &quot;$CAT&quot; &amp;&amp; { echo &quot;    the site data leaks the case directory path&quot;; exit 1; }
+# the page carries the scenario it demonstrates, and maturity is observed from it: the scenario
+# lives in the body&#39;s `# Scenario` section, and a generator that read only the front matter
+# showed every use case of this repository as `described`, with no steps, while
+# `usecase run` executed the same scenarios and passed them
+for u in $KEEP; do
+  jq -e --arg u &quot;$u&quot; &#39;.use_cases[] | select(.id == $u)
+         | (.scenario.steps | length) &gt; 0 and .maturity != &quot;described&quot;&#39; &quot;$CAT&quot; &gt;/dev/null \
+    || { echo &quot;    the site shows $u without the scenario it runs&quot;; jq --arg u &quot;$u&quot; &#39;.use_cases[] | select(.id == $u) | {maturity, scenario}&#39; &quot;$CAT&quot;; exit 1; }
+done
+
+# --- every reference the migrated catalogue of this tree makes resolves, and its scenarios run:
+#     the repository&#39;s own use cases against its own tool (dogfooding), one of them at least
+( cd &quot;$ROOT&quot; &amp;&amp; expect_exit 0 &quot;$MJ&quot; usecase validate &amp;&amp; expect_grep &#39;usecase validate: 0 failure&#39; ) || exit 1
+( cd &quot;$ROOT&quot; &amp;&amp; expect_exit 0 &quot;$MJ&quot; usecase run know-which-tool-is-running &amp;&amp; expect_grep &#39;^know-which-tool-is-running +pass&#39; ) || exit 1
+( cd &quot;$ROOT&quot; &amp;&amp; expect_exit 0 &quot;$MJ&quot; usecase coverage --check ) || exit 1
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

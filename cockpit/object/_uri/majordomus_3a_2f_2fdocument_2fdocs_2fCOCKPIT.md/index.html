@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/COCKPIT.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/COCKPIT.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/COCKPIT.md</h1><p class="mj-page-subtitle">The Cockpit — the registry, rendered for a person</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/COCKPIT.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/COCKPIT.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/COCKPIT.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FCOCKPIT.md/index.html">document.docs/COCKPIT.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># The Cockpit — the registry, rendered for a person
+
+`majordomus serve` and `majordomus mcp` bind one shared server per repository. That server
+already answers machines: MCP tools and resources, HTTP routes under `/api/v1/`, an OpenAPI
+document and a Swagger UI over it. The Cockpit is the same server answering a person, at
+`/cockpit`.
+
+It is a **projection**, in this repository&#39;s sense of the word: one more thing derived from
+the canonical capability declarations and the index, holding no model, no catalogue and no
+verdict of its own. The decision is
+[ADR 12](../.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md); the rules
+it is bound by are `project.interfaces-are-projections`,
+`project.rust-canonical-declaration`, `project.rust-benchmark-coverage` and
+`project.rust-hot-path`. Behaviour as implemented and tested; where this document and the
+executable disagree, the document is wrong and changes in the same commit.
+
+```mermaid
+flowchart TD
+  decl[&quot;ONE CANONICAL DECLARATION&lt;br&gt;capability! { id, title, description, input,&lt;br&gt;output, stability, exposure, tags, cache?, handler }&quot;]
+  reg[&quot;CAPABILITY REGISTRY&lt;br&gt;+ every declarative object of the layer&quot;]
+  proj[&quot;DERIVED PROJECTIONS&quot;]
+  decl --&gt; reg --&gt; proj
+  proj --&gt; mcp[&quot;MCP&quot;]
+  proj --&gt; http[&quot;HTTP&quot;]
+  proj --&gt; openapi[&quot;OpenAPI&quot;] --&gt; swagger[&quot;Swagger UI&quot;]
+  proj --&gt; cli[&quot;CLI&quot;]
+  proj --&gt; bench[&quot;benchmark targets&quot;]
+  proj --&gt; generated[&quot;docs/generated/*&quot;]
+  proj --&gt; registry[&quot;the website&#39;s /registry/ pages&quot;]
+  proj --&gt; cockpit[&quot;THE COCKPIT&lt;br&gt;pages, navigation, search,&lt;br&gt;palette, runner, graphs&quot;]
+```
+
+## Getting there
+
+```sh
+majordomus serve                 # or `majordomus mcp`, which binds the same shared server
+```
+
+The server logs the URL it bound. Open that URL: a browser is redirected to `/cockpit`, and
+a client that does not ask for HTML gets the JSON index it has always got. Both are on the
+same port; there is no second process and no second command.
+
+Nothing needs building for it to work. If `share/cockpit/` has no compiled stylesheet the
+pages still render, say so, and remain fully usable.
+
+## What is on it
+
+| Route | What it shows | Derived from |
+|---|---|---|
+| `/cockpit` | the four questions first (is it healthy, what changed, what is broken, what needs action), then repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `dashboard.overview`, `repository.info`, `health.report` |
+| `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
+| `/cockpit/capabilities/&lt;id&gt;` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
+| `/cockpit/commands` | every command this repository offers, from whichever program offers it, and where each one is projected | `commands.list` |
+| `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
+| `/cockpit/executions/&lt;id&gt;` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
+| `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
+| `/cockpit/objects/&lt;kind&gt;` | one kind&#39;s index, at the kind&#39;s own address | `entity.kinds`, `objects.list` |
+| `/cockpit/objects/&lt;kind&gt;/&lt;slug&gt;` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
+| `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
+| `/cockpit/directories` | the layer&#39;s directory contracts: the hierarchy, what each directory owes, and for one directory its local contract beside the chain that actually applies | `directories.list` |
+| `/cockpit/graphs` | every graph this executable derives | `graph.list` |
+| `/cockpit/graphs/&lt;id&gt;` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
+| `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
+| `/cockpit/continuity` | what this checkout&#39;s lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers, the other machines — this device, the store against its remote, and the handovers other devices published that could be resumed here — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `continuity.status`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
+| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
+| `/cockpit/intents/&lt;id&gt;` | one intent: how far reality is from it, each criterion with its evidence state, a link to the test object it names, the issues serving it and the command that reproduces it; the milestones; every task, session record and peer claim realising it with the provenance of its link, its providers and handovers; and why it stands where it stands | `intent_realization.explain` |
+| `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
+| `/cockpit/plan/milestones/&lt;id&gt;` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
+| `/cockpit/plan/issues/&lt;id&gt;` | one issue as a task: its intent, acceptance criteria and scope, its readiness and what blocks it, its branches and sessions, the external issue it synchronises with, every value with where it came from — and the moves `plan.transition` makes, each started as an execution and each with the command that makes it | `devtask.issue`, `plan.transition`, `executions.start`, `executions.get` |
+| `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
+| `/cockpit/quality` | the crate&#39;s own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
+| `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
+| `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |
+| `/cockpit/design` | the design system as this executable carries it: every role with its light and dark value, the statuses, the type scale, the layout values and the theme contract | `design.system`, `design.tokens` |
+| `/cockpit/mesh` | the discovered nodes of this process&#39;s runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
+| `/cockpit/monitor` | everything that happens around the repository as one live list, newest first: mesh sessions, claims, handovers and reviews, the executor&#39;s outcomes and GitHub&#39;s pull requests and runs, with what names the reader (`?for=`) first, the noise folded away counted, and every source&#39;s state (ADR 0133) | `monitor.stream` |
+| `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor&#39;s credential presence (never a value), and their routing | `models.list` |
+| `/cockpit/api` | every HTTP route the registry projects, and the projection&#39;s own | the registry |
+| `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
+| `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
+| `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
+| `/cockpit/peers` | every worker of this repository, from every checkout&#39;s board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
+| `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
+| `/cockpit/trains` | the trains of stacked pull requests, drawn as an interactive graph in the manner of the Neo4j Browser (master as the anchor, links coloured by disposition, `STACKED_ON` / `DEPENDS_ON` arrows, a property panel, filters, search, fit and zoom, keyboard navigation) and listed as one table per train that needs no JavaScript; polls its route once a minute (ADR 0138) | `integration.trains` |
+| `/cockpit/reasoning` | the optional advisors, and the open task&#39;s uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
+| `/cockpit/economics` | token economics, measured | `economics.summary` |
+| `/cockpit/activity` | this process&#39;s counters and phases, and a running plot of them | `perf.counters` |
+| `/cockpit/assets/&lt;file&gt;` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
+
+This table is checked against the dispatcher, not kept beside it. Every plain route
+`cockpit::STATIC_ROUTES` names has a row here, and no row names a plain route the dispatcher
+does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers` fails the
+build otherwise. Editing a row&#39;s description is free. Adding or removing a route starts in
+`STATIC_ROUTES` beside the dispatcher&#39;s `match`, and the navigation area it belongs to in
+`nav::areas()` is checked by `every_area_has_a_route_and_every_route_its_area`.
+
+Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
+a page can be sent to somebody.
+
+Neither the kind nor the entity in the last three rows is named in the router. The address
+of an object is derived from its kind and its identity — `majordomus://rule/project.x@1`
+becomes `/cockpit/objects/rule/project-x-1` — so a file added under `.ai/` gets an index
+row, a page, and its place in every other page&#39;s backlinks without an edit anywhere in the
+Cockpit. Two identities of one kind that reduce to one address would be a collision rather
+than a tie-break; `majordomus entity kinds` reports every one and `scripts/ci/entity-check`
+refuses the tree while one exists. The rule is `project.entities-are-routable`.
+
+An entity page also names the object&#39;s public documentation page — &quot;Published at
+https://majordomus.dev/adrs/adr-0056/&quot; — or the reason its kind is not published. The page
+derives no address: it renders the `documentation` field of `entity.show`, which reads
+`site/data/publication.toml` and the site&#39;s `base_url` at request time, the same declaration
+`scripts/generate-site-data` writes the site&#39;s pages from. A repository with no such
+declaration has no public page to name, and the page says so.
+
+## How a listing of the whole layer is read
+
+The two listings that hold everything — nine hundred capabilities, nine hundred objects —
+are read a page at a time and entered by their parts:
+
+- **A page is fifty rows.** `?page=` says which; a number past the end is the last page
+  and never an error. The control under the table says which rows are being shown, and
+  offers the first page, the last, the neighbours of this one, and a gap for the rest.
+- **Above the table are the listing&#39;s own parts** — the registry&#39;s modules on
+  `/cockpit/capabilities`, the listing&#39;s own kinds on `/cockpit/objects` — each with how many
+  it holds *under the filters in force*. They are the same catalogues the sidebar shows,
+  put where the listing is: a set of nine hundred rows is entered by its module or its
+  kind rather than scrolled.
+- **A link never loses a filter and never keeps a page number.** Paging carries every
+  filter with it; picking a part starts that part at its first page.
+
+A **detail** page pages nothing. A graph&#39;s nodes and edges, and the artifact manifest, are
+listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
+has only them, and a reader checking whether a path is in the manifest must be able to
+find it with the browser&#39;s own search.
+
+## The one page that is about this machine
+
+Every other page is about the repository: the same answer in any clone, and safe to publish.
+`/cockpit/continuity` is not. It reads `.ai/local/` — the open episodes, the resolved
+handover, the blockers of this checkout — and those records name this disk. That is the
+reason the Cockpit is bound to the loopback interface and the reason this page has no
+counterpart on the website (ADR 0014).
+
+## On the public site: a snapshot
+
+The published site carries the Cockpit at `/cockpit/` as a **snapshot** (ADR 0147): the
+Cockpit&#39;s own pages, read once at the published commit and written as files, by the exporter
+that publishes the UI (ADR 0141).
+
+&lt;!-- majordomus:unrun it reads the whole Cockpit of this repository in-process; the ui-snapshot job of the pages workflow runs it, and cases 2981 and 2982 run it against a fixture --&gt;
+```bash
+majordomus web report cockpit-snapshot
+```
+
+It writes into `target/web/cockpit-snapshot`. In order it reads every static route, then
+every Cockpit page the UI&#39;s snapshot wanted to link to, then, one page per family in turn,
+what those link to, until `--limit` pages or `--budget-seconds`. What differs from the
+Cockpit a process serves:
+
+| In the Cockpit | In the snapshot |
+|---|---|
+| a link to another page of the Cockpit | a relative link to that page&#39;s file |
+| a link to a page past the bound, a search, a form, a runner | the snapshot&#39;s page about the live Cockpit, carrying the path the link meant |
+| a link into the UI | that page of the UI&#39;s snapshot when it holds it, the live page when it does not |
+| the scripts: the runner, the palette, the live executions, the polling panels | none: no page carries a script, and every page is complete without one |
+| `/cockpit/continuity` | not in the snapshot, and no link reaches it: it is the one page about a machine |
+
+Every page says that it is a snapshot, with the commit, the time and the executable that
+read it. A page that is about a machine and not withheld (peers, worktrees, health) shows the
+runner that rendered it. For the Cockpit of your own checkout, run `majordomus serve`.
+
+The directory declares itself (`surface.json`) as the surface `cockpit-snapshot`, mounted at
+`/cockpit`, `published-only`. `snapshot.json` beside it lists every page written and every
+page left to the live Cockpit. `test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh`
+holds it.
+
+It is also the page that has to answer two different readers, and it says which is which.
+
+**The worker** asks *what am I resuming from?* That is `continuity.state`: one episode — the
+one `session-current.yaml` resolves to — one handover, one checkpoint, each with the
+divergence label that says how far to trust it, and the questions that refuse completion.
+(ADR 0052 adds a freshness label beside the divergence one, because `advanced` is a true
+statement about git topology and says nothing about age.)
+
+**The operator** asks *is this subsystem working?* That is the `lifecycle.*` group, and it
+exists because the worker&#39;s answer is structurally blind to the operator&#39;s question. The
+pointer is a symlink the most recent start event re-aims; on 2026-09-11 this repository held
+five open episodes in one checkout and every surface could name one. So the page carries,
+below the briefing&#39;s own cards:
+
+| Card | What it shows | Capability |
+|---|---|---|
+| Every open episode | one row per open episode: its standing (`current`, `open`, `foreign`, `stranded`), the provider that opened it, the branch, when it opened, the last ledger line stamped with it, and the tasks it touched | `lifecycle.episodes` |
+| This process against the repository | the commit the served index was built at, against the commit `git` reports on the call, and whether they agree | `lifecycle.runtime` |
+| Recovery | episodes that cannot close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer&#39;s layout, and the started-against-closed arithmetic | `lifecycle.recovery` |
+| Providers | per provider: the lifecycle events its adapter declares, whether it can archive prompts, its client configuration, and the enforcement entries this repository wires to its hook | `lifecycle.providers` |
+| Closed episodes | how many tracked records exist, how many closed on this branch, and the newest twenty, each linking to its object page | `lifecycle.closed` |
+
+Three rules this page keeps, and the reason for each.
+
+**No value is computed here.** Every number, word and badge above arrives from a capability
+answer; the page decides colours and nothing else. A Cockpit that worked out for itself
+whether an episode was stranded would be a second session model, and the first thing two
+session models do is disagree.
+
+**No prompt is ever rendered.** The prompt archive is the one part of the local half that is
+a conversation, and no card on this page reads it. What a worker typed is not operational
+state, and a surface that showed it would be a transcript with better formatting.
+
+**The page is a photograph, and does not poll.** The executions pages follow a WebSocket
+because an execution emits events; the session store does not, and a browser asking every
+five seconds whether an episode is still open would spend the whole day answering &quot;yes&quot;. A
+reload is the refresh, `Cache-Control: no-cache` makes it honest, and one section failing to
+read renders as a failed card rather than as a dead page — the section most likely to fail
+is a store nothing has written yet, and hiding the other five behind it would be the wrong
+trade.
+
+## What makes it a projection and not a dashboard
+
+**Every page asks a capability.** A page calls `Context::execute`, which is the call MCP and
+the HTTP routes make. It is counted in the same perf counters, answered from the same cache
+and bound by the same validation. `tests/cockpit.rs` asserts that serving every page moves
+none of the counters that must only move at startup.
+
+**One write, and it asks first.** Every capability a page reaches is a query or a command
+that changes this process&#39;s own memory, except `plan.transition`, which stamps one field of
+an issue&#39;s record and appends one ledger event. The issue page offers it as three buttons
+that are disabled until `plan.js` loads, ask before sending, start the move as an execution
+— so it has an identity and a page of its own — and show the status the capability derived
+from the record afterwards rather than the one the button named. Whether a move is legal is
+the capability&#39;s to decide: the page shows its refusal as it came.
+
+**No page reads the index.** The other half of the sentence above, and the one that was
+documentation only until `scripts/ci/cockpit-projection-check` (gate `cockpit-projection`,
+ADR 0012) began refusing it: a view layer that reaches into the index because it is in the
+same process reads the repository outside the executor, outside the cache, outside the
+counters and outside the validation, and the day it disagrees with the capability neither
+answer is wrong in its own terms. The gate greps the Cockpit&#39;s own files, test modules
+included, and `test/cases/389_cockpit_projection.sh` drives it against fixture trees. The
+object count and the kind catalogue come from `repository.info`, a listing from
+`objects.list`, one object from `objects.get`.
+
+**Unknown is never drawn as healthy.** ADR 0089 (`project.ui-derived-state`) widens the same
+checker. Its `--ui-integrity` gate (`ui-integrity`) refuses four things:
+
+- a direct `ctx.registry`, `ctx.product` or `ctx.why` read outside the navigation&#39;s
+  commented allow-list;
+- a health check given `HealthStatus::Ok` as a literal;
+- a `#[default]` on a healthy enum variant;
+- an absent count rendered as zero in `pages.rs`.
+
+A site that is right as written says why in a `// ui-integrity: &lt;reason&gt;` comment. The
+findings master already holds are a ratchet in `.ai/repo/ui-integrity-baseline.txt`, and
+`test/cases/547_the_ui_says_only_what_is_derived.sh` plants each violation in a fixture tree.
+
+**Nothing in it is a list.** The sidebar&#39;s catalogues are the registry&#39;s modules, the kinds
+`repository.info` reports and the graph derivation table. The capability explorer is the
+registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
+and takes the Cockpit&#39;s own pages out of the navigation the server already rendered.
+
+**The runner is generic.** A capability&#39;s form is generated from its input schema: the
+control follows the JSON type (string, integer, number, boolean, enumeration, or a JSON
+textarea for anything structured), the description is the property&#39;s own doc comment, and
+requiredness is the schema&#39;s. Submitting sends the request the capability&#39;s own binding
+expects — a query string for a `GET`, a JSON body for a `POST` — to the capability&#39;s real
+route. There is no runner endpoint, no proxy and no second validation.
+
+**The examples are the benchmark cases.** The inputs shown on a capability&#39;s page and the
+&quot;load into the runner&quot; buttons are `BenchmarkCases`, the same inputs the benchmark runs and
+the OpenAPI document shows.
+
+The behavioural claim is one test:
+`tests/cockpit.rs::a_capability_the_repository_adds_reaches_every_cockpit_surface` writes a
+rule into a disposable repository and asserts it reaches the capability listing, a page of
+its own, the object explorer, the search and the listing the palette reads — with no line
+of the Cockpit written for it.
+
+## The four questions: a dashboard that is a projection
+
+The overview opens with the Overview of the Dashboard Suite (ADR 0088): four questions — *is it
+healthy*, *what changed*, *what is broken*, *what needs action* — answered by
+`dashboard.overview`, which is an ordinary capability (`GET /api/v1/dashboard/overview`, MCP
+`majordomus_dashboard_overview`, `majordomus dashboard overview`). It has no data of its own.
+Each card is one fact read out of another capability&#39;s answer — `health.report`,
+`release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state`, and
+`peers.list` for this checkout&#39;s board — and it carries that capability, the input it was asked
+with, the RFC 6901 pointer its value was read from and the measure (`exact`, or `count` for the
+length of a list the source omits when empty), beside the source&#39;s own verdict, the page to
+drill into and the command that acts on it. A source that cannot answer makes its cards
+`unknown`, never `ok`.
+
+The page writes each card&#39;s value as `data-value` — the JSON the route answered — so the page
+and the route are compared byte for byte. `tests/dashboard.rs` is the gate: it asks every
+card&#39;s source the card&#39;s own question over the source&#39;s own route, reads the pointer, and fails
+when the card&#39;s value differs; it names no card, so the next one is held to it unedited.
+`test/cases/534_the_overview_answers_four_questions.sh` holds the same contract through the
+built executable.
+
+## Graphs
+
+Graphs are canonical in Rust (`src/graph.rs`): a `Graph` is an id, its words, a node-kind
+and an edge-kind vocabulary that say what each shape means, sorted nodes and edges, and the
+metadata a reader needs before drawing — counts, whether the result is acyclic, and whether
+the derivation stopped at its node limit.
+
+| Graph | What it shows | Derived from |
+|---|---|---|
+| `registry` | modules, the capabilities they compose, the file each was declared in, and the MCP / HTTP / CLI projections | the registry |
+| `layer` | every directory an object was discovered in, nested, with the kinds each holds | object provenance |
+| `rules` | every rule and the rules it declares it depends on | `depends_on` front matter |
+| `adrs` | every decision, what it supersedes, and the rules, claims, files and tests it put in force | ADR front matter |
+| `use-cases` | every use case and the commands, doctrines and claims it names | use-case front matter |
+
+Adding one is a function and one line in `graph::DERIVATIONS`. It then appears in
+`graph.list`, at `/api/v1/graph`, as an MCP tool answer, in the Cockpit&#39;s navigation, on a
+page of its own, and as a benchmark case — because `GraphInput::benchmark_cases` is
+`graph::ids()`.
+
+Invariants the property and unit suites hold: node ids are unique, no edge references a
+node the graph does not hold, and the same tree and executable produce the same bytes (no
+clock, no absolute path, no discovery order).
+
+A drawing library is a consumer. The translation to Cytoscape&#39;s element shape is one
+function in `share/cockpit/graph.js`; a projection to Mermaid, Graphviz or a terminal would
+rebuild no semantics.
+
+### What the drawing decides
+
+The viewer chooses a **layout from the graph&#39;s measured shape**, not one name for every
+graph. Every graph used `breadthfirst`, which puts one breadth-first level on one row; the
+composed graph is 1442 nodes and one level held nearly all of them, so `cy.fit()` zoomed out
+until that row fitted the frame and the drawing was a horizontal line about one pixel tall.
+`measure()` derives node count, edge density, breadth-first depth and — the number that
+diagnoses it — the widest level; `choose()` picks between the layouts cytoscape ships:
+
+| When | Layout | Why |
+|---|---|---|
+| 24 nodes or fewer | `circle` | everything fits on one ring at a readable size; physics over twenty nodes only wobbles |
+| 3+ levels, widest level ≤ 48, density &lt; 2 | `breadthfirst` | the only built-in layout that shows direction; the guard is the widest level, because past it breadthfirst is a line |
+| 400 nodes or fewer | `cose` | force-directed: the only built-in that puts a cluster together, so communities are visible |
+| up to 900 nodes, degrees peaked | `concentric` by degree | a sort rather than an iteration, so it is instant; hubs at the centre. Only when the degrees are peaked: on a flat distribution every node lands in one ring |
+| larger | `grid`, by kind then degree | measured: `concentric` over 1452 nodes gave a disc 19000px across, so `fit()` hit `minZoom` and a node rendered under a pixel. At 480 square pixels per node no arrangement is both structural and legible, so each node gets a cell, kinds form bands, and the structure is reached through the filter and the selection |
+
+No layout extension is vendored and none should be: `share/cockpit/vendor/` holds
+`cytoscape.min.js` alone, and the Cockpit&#39;s content-security policy names no remote origin.
+
+Everything else the drawing shows is derived the same way. A node&#39;s diameter is its degree,
+square-rooted. A node kind&#39;s colour is `--mj-series-&lt;n&gt;` from `share/design/tokens.yaml` —
+eight roles that carry no meaning, chosen for separation — and *which* of them a kind gets is
+an FNV-1a hash of the kind&#39;s own name, so a kind is the same colour in every graph and stays
+that colour when a thirty-fifth kind is declared. Eight colours and 34 kinds means kinds do
+share a colour, and that is the price of the stability: the alternative — rank the kinds and
+hand out colours in order — moves every kind&#39;s colour the day one is added. The legend names
+which kinds share, and the filter separates them.
+
+Cytoscape cannot read `oklch`, which is what the declaration&#39;s palette is. Handed one it logs
+that the property is invalid and falls back to black, and every token this file read had been
+landing that way. A token is therefore painted onto a one-pixel canvas and its channels read
+back, and the library gets `[r, g, b]`, which it accepts. No colour string is composed
+anywhere: this is arithmetic at a library boundary, and the value is still the
+declaration&#39;s. Labels are the declared `meta` step and
+appear above 80 nodes only when the reader has zoomed close enough to read them, except for
+the twelve busiest, which are always named. An edge&#39;s kind is painted on the edges of the
+selected or hovered node, never on all of them at once. The legend beside the drawing is also
+the filter: a swatch and a count per kind, and a click that takes the kind out.
+
+Nothing here is a colour, a size or a count written in JavaScript, and `scripts/ci/design-check`
+reads `share/cockpit/graph.js` like every other first-party surface — it used to exempt the
+file by path, which is what let a hue computed in a script stand for a year.
+
+### Why the tables under it still page nothing
+
+A graph page lists every node and every edge. For `composed` that is 4,729 table rows and
+about 420 kB of text in one response, and the obvious reaction is to page it. It is not
+paged, deliberately.
+
+The tables are not a convenience beside the drawing; they *are* the page. The drawing needs
+JavaScript, a 400 kB library and a canvas, and the page says so in its own prose: &quot;everything
+it shows is in the lists below, which is what a reader without JavaScript, a crawler and a
+screen reader get&quot;. Page them and that sentence stops being true — the drawing would show
+1452 nodes while the text showed a hundred, and the reader with no JavaScript would be the
+only one who could not see the whole graph. The listing pages elsewhere in the Cockpit
+(`/cockpit/objects`, `/cockpit/capabilities`) page because they are *views over* a
+collection, and a view may show a slice. A graph page is the rendering of one object.
+
+The bulk format already exists and is linked from the page: `/api/v1/graph?id=&lt;id&gt;`. A reader
+who wants the graph as data takes that; a reader who wants it as a page gets all of it. The
+cost is one 420 kB response of static text, which is smaller than the drawing library the
+same page loads to show the same data.
+
+`test/cases/190_graph_drawing.sh` runs `choose()` and `measure()` over synthetic shapes
+without a browser; `scripts/lib/cockpit-probe.mjs` asks the running renderer, through
+`frame.mjGraph.extent()`, how much of the frame the drawing occupies and fails below a tenth
+in either direction — for `registry` and again for the largest graph there is, which is the
+only one that ever had the defect. The assertion it replaces counted `canvas` elements, and
+cytoscape makes three of those over a one-pixel line.
+
+## Health
+
+`health.report` reports one check per dimension. Every check carries **who decided it** and
+**what reproduces it**, because a health report that decides things itself is a fourth
+opinion:
+
+| Check | Decided by |
+|---|---|
+| the layer as it was read | the index&#39;s own diagnostics |
+| the capability registry | the registry builder, which refuses to build on a duplicate or a malformed exposure |
+| the declared scope | the scope declaration the index was built under |
+| version control | git, asked once at startup |
+| benchmark coverage | the benchmark projection&#39;s coverage — the same one `bench coverage --check` reads |
+| committed projections | the same rendering `majordomus generate` writes, compared with what is committed |
+| the shared server | the decision `server.status` makes, from this checkout&#39;s lease and one probe of the server it names |
+| attached clients | the in-memory peer board of this process |
+
+The server check reports where this checkout&#39;s shared server stands — `absent`,
+`starting`, `ready`, `outdated` or `stale` — with its address, the version it serves and
+the reason when the answer is not `ready`. `absent` and `starting` are `ok`: a checkout
+nobody serves is not an unhealthy one, and a lease still binding resolves itself within the
+bind grace. `outdated` and `stale` are `warn` with the reason as a finding: a server
+answering from code this tree no longer has, and a lease naming an address nobody answers
+at, are both somebody&#39;s to clear and neither stops this process from serving. It is the
+fourth of this crate&#39;s four readings of &quot;ready&quot;, and the only one that belongs in a health
+report; `docs/MCP.md` names all four and what each is for.
+
+It deliberately does **not** re-render every committed projection on each call: that would
+rebuild canonical state per request. It compares the one artifact derived from code alone
+(`docs/generated/registry.json`) and names `majordomus generate --check` as the complete
+answer.
+
+It is also not `majordomus doctor`. The shell tool&#39;s doctor decides whether Majordomus is
+*wired into this repository*; these checks decide whether what this process *serves* is
+sound. Different subjects, and the Rust server dispatches no shell.
+
+## The browser layer
+
+Progressive enhancement in the strict sense. Every page is complete HTML before any script
+runs; the graph pages carry every node and edge as tables, and the optional views say where
+the same facts are as text.
+
+| File | What it adds | Needs |
+|---|---|---|
+| `cockpit.js` | the one Alpine component (theme, palette state), the shared helpers | `vendor/alpine.csp.min.js` |
+| `palette.js` | the command palette (`Ctrl`/`Cmd` + `K`), entries from the registry | — |
+| `runner.js` | the generic capability runner | — |
+| `plan.js` | the moves on an issue page: starts `plan.transition` as an execution after a confirmation, follows it on a bounded poll, shows the status it answered or the refusal as it came, and reads the page again | — |
+| `graph.js` | the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer | `vendor/cytoscape.min.js` |
+| `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
+| `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
+
+If a vendored library is absent the frame says so and the page keeps working. None of them
+is on the critical path, each is fetched only by the page that uses it, and the two visual
+ones respect `prefers-reduced-motion`, pause when the tab is hidden and dispose what they
+allocate.
+
+Why Three.js is there at all: the registry graph is layered — modules compose capabilities,
+capabilities are declared in files and project onto three interfaces — and a flat drawing
+must choose between showing the layers and showing the fan-out. One plane per layer shows
+both. Why p5 is there: the counters are already a table, and a table cannot show whether
+the executions arriving now are being answered from the cache. Both are optional views of
+data the page also prints.
+
+## Security
+
+- **Escaping by construction.** Markup is a tree of `El` values; the only way text reaches
+  the output is a method that escapes it. There is no template string, and the tests render
+  a rule whose title is a script tag.
+- **A strict content-security policy.** `default-src &#39;none&#39;; script-src &#39;self&#39; &#39;sha256-…&#39;`
+  — no `unsafe-inline`, no `unsafe-eval`, no remote origin, `frame-ancestors &#39;none&#39;`. The
+  one inline script is the pre-paint theme bootstrap, allowed by the digest of its own
+  bytes, computed from the constant itself so the two cannot drift. This is why Alpine&#39;s
+  **CSP build** is what is vendored and why every `x-` attribute names a property or a
+  method rather than an expression.
+- **Browser mutation protection.** A request that carries an `Origin` header came from a
+  page in a browser. For anything but `GET` and `HEAD`, that origin must be this server&#39;s
+  own; otherwise it is refused with 403 before a handler runs. A client that is not a
+  browser sends no `Origin` and is unaffected. Reads are already contained: this server
+  sends no CORS headers, so a cross-origin page cannot read an answer. There is no session
+  and no cookie, so there is no token to add — a token bound to nothing defends nothing.
+- **No state change through `GET`.** The Cockpit&#39;s own routes answer `GET` only; a command
+  is `POST` to its own route, and the runner marks it as one.
+- **Path handling.** An asset name is refused before the filesystem is touched if it holds
+  anything but `[A-Za-z0-9._-/]`, an empty segment, `.` or `..`; the resolved path is then
+  checked to be inside the asset directory, which closes the door a symlink would open.
+  Only a closed set of text media types is served.
+- **Loopback by default.** `serve` binds `127.0.0.1`; binding anything else logs what it
+  means.
+- **What writes is declared.** The runner can reach every capability, including the commands
+  whose declared effect is `repository_mutation`. The Run card derives its warning from that
+  effect, so a command that writes tracked files says so before it is sent, always as a
+  `POST` from the page&#39;s origin. Every other capability either reads or changes only this
+  process&#39;s own memory.
+
+## Assets
+
+`share/cockpit/` is where this tool keeps the Cockpit&#39;s files, the way `share/kinds.yaml`
+and `share/schemas/` are where it keeps its kinds. They are read from disk, once, and
+served from memory with the digest of their bytes in the URL — so a changed file is a
+changed URL, and a versioned asset is answered `immutable` for a year.
+
+Only the exact version a page emits is immutable; any other `v` (empty, a prefix, a stale
+one) and no `v` at all are answered `no-cache`. Every answer carries the digest as its
+`ETag`, and an `If-None-Match` that still holds is a `304 Not Modified` with no body. Every
+asset URL a page loads carries its digest: a script module&#39;s relative imports are rewritten,
+when it is read, to the digested URLs of what they import, so a module&#39;s digest covers its
+imports and every importer names one URL; the libraries the scripts load at run time get
+theirs from the page body&#39;s `data-vendor` (`cockpit::VENDOR`); the favicon is digested like
+the stylesheet. A warm navigation therefore fetches only the page.
+
+```sh
+scripts/cockpit-assets            # compile the stylesheet, vendor the pinned libraries
+scripts/cockpit-assets --check    # fail if the committed stylesheet differs from its source
+```
+
+| File | Committed? | Why |
+|---|---|---|
+| `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite&#39;s theme over the shared design sheets; drift-checked |
+| `src/cockpit.css` | yes | the source: what only the Cockpit has (shell, palette, runner, log, canvases), one semantic class per component, over the tokens and primitives it imports from `share/design/` |
+| `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
+| `*.js` | yes | written by hand, no build step |
+| `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
+| `vendor/{cytoscape,three.module,three.core,p5}.min.js` | no | ~2 MB, lazy, optional, every page complete without them |
+
+There are no utility classes in the Rust that renders the pages. Everything the markup
+names is defined in `src/cockpit.css` or in the shared `share/design/primitives.css` as a
+composition of Tailwind utilities over the design tokens, which keeps the design readable
+and makes the compiled stylesheet a function of those files and the pinned versions alone —
+which is what makes `--check` exact. No colour, size, status colour, theme key or mark is
+decided in the Cockpit: every one comes from `share/design/tokens.yaml` through the
+generated sheets, the same sheets the published site imports, and `scripts/ci/design-check`
+refuses a second decision. The Design page (`/cockpit/design`) renders the declaration the
+executable was built with and says whether the stylesheet it loaded agrees.
+See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+
+Node is a **build** dependency. The Rust executable serves these files from disk and has no
+idea they were built.
+
+## Performance
+
+The pages are benchmark targets, declared beside `GET /` and `GET /docs`, so
+`bench coverage --check` counts them and a baseline can regress on them:
+`system.http.cockpit_overview`, `system.http.cockpit_capabilities`,
+`system.http.cockpit_graph`.
+
+What the numbers are on any given machine is measured, never written here — the evidence
+lives under `.ai/repo/benchmarks/rust/` and `docs/generated/benchmarks.md`. What is
+guaranteed is structural: no page rebuilds canonical state, an asset is read from disk once
+per process, a graph is cached by the executor, and no library that a page does not use is
+fetched.
+
+## Adding to it
+
+**A capability.** Write the `capability!` block and run `majordomus generate`. It appears in
+the Cockpit&#39;s listing, on a page of its own with a generated form, in the search, in the
+palette, in the registry graph and as a benchmark target. Nothing in `src/cockpit/` is
+edited.
+
+**A graph.** Write the derivation and add one line to `graph::DERIVATIONS`. It appears in
+`graph.list`, at `/api/v1/graph`, in the navigation, on a page, and as a benchmark case.
+
+**A page.** That is the one thing that is a Cockpit edit, because a page is the Cockpit&#39;s
+own shape: a function in `pages.rs` returning a `Page`, and one arm in `Cockpit::route`. A
+page that needs a script names it with `.script(&quot;name.js&quot;)`, which is what keeps a graph
+library off the landing page.
+
+**A component.** One class in `share/cockpit/src/cockpit.css` and one function in `view.rs`.
+Never a utility class in the Rust.
+
+## Testing
+
+`apps/majordomus-cli/tests/cockpit.rs` runs a real server over a real socket against a
+disposable repository:
+
+- every page renders complete HTML with the shell and the security headers,
+- a capability added to the repository reaches every Cockpit surface,
+- the runner form is generated from the input schema,
+- a graph page lists every node and edge before any library loads,
+- the health page shows the verdicts the engines reach,
+- assets are immutable by their exact digest, every URL a page emits carries one, a
+  revalidation that holds is a 304, and no traversal escapes the directory,
+- a state-changing request from another origin is refused and a read is not,
+- the index answers JSON to a client and points a browser at the Cockpit,
+- repository content reaches the page as text and never as markup,
+- serving every page rebuilds nothing canonical,
+- the plan pages show the statuses the plan capabilities answered, and a move made from an
+  issue page — directly or as an execution — changes the record and then the page
+  (`tests/cockpit_plan.rs`).
+
+The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
+status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
+the navigation being the registry&#39;s rather than a list.
+
+## What it deliberately does not do
+
+Four things a control plane is expected to have, left out on purpose. Each is a decision
+rather than a gap, and each names what would have to change first.
+
+**No streaming for its own sake.** This section used to say there was no live transport at
+all, and gave the reason: a stream to make a counter update without a poll is a noun added
+to the core for a convenience, which `optional-complexity` exists to refuse. It also said
+what would change the trade — &quot;when something genuinely long-running arrives, the stream
+will be worth its own decision, and the typed event envelope belongs in that decision rather
+than ahead of it&quot;.
+
+That arrived, and that is [ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
+a capability that reads every file of the layer takes long enough to watch rather than wait
+for, so an **execution** has an identity, typed events and a live channel at `GET /events`
+([`EXECUTIONS.md`](EXECUTIONS.md)). What did *not* change is the trade the paragraph
+protected. The activity page still polls, because counters are a convenience; no capability
+became a stream, because the fourth kind was drafted and dropped; and the live channel
+carries execution events and nothing else. A page that wants a number to tick has the same
+answer it had before.
+
+**No rule-precedence resolution.** &quot;What instructions apply at this path?&quot; is a question the
+Cockpit is the right place to answer and the wrong place to *decide*. The shell tool owns
+context resolution (`majordomus context resolve`), and a second implementation in Rust would
+be a second opinion about precedence — exactly the drift every rule here is written against.
+What the Cockpit does instead is show the inputs: every rule as an object, the rule
+dependency graph, and the directory contracts as objects of kind `context`. The resolution
+itself waits for one engine both tools can call.
+
+**The health page is not `majordomus doctor`.** Doctor decides whether Majordomus is *wired
+into this repository* — the hooks, the projections, the retention, the state. `health.report`
+decides whether what this process *serves* is sound. Different subjects with different
+engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
+A reader who wants both runs both; each names the other&#39;s territory.
+
+**The write path is declared, not absent.** Most capabilities the Cockpit can reach are
+queries or commands that change this process&#39;s own memory; starting an execution and
+cancelling one are two of those. The ones that write the repository declare the effect
+`repository_mutation` in their execution policy, and that policy is what the warning on the
+Run card reads. ADR 12 requires such a capability to be its own decision, and a unit test in
+`builtin` pins the set of them, so a new one shows up in a diff.
+
+## In a browser
+
+`scripts/cockpit-probe` measures the Cockpit against a running server. Nothing in it lists
+a route: the areas are crawled out of the shell&#39;s own navigation — which the server rendered
+from the registry, the index and the graph derivations — and then one route per capability,
+per graph and per object comes from `/api/v1/capabilities`, `/api/v1/graphs` and
+`/api/v1/objects`. A capability, a kind or a graph added to the backend is probed the first
+time it exists.
+
+```sh
+just cockpit-probe                      # both sweeps
+just cockpit-probe --quick              # the status sweep in full, one of each family in the browser
+just cockpit-probe --status             # the status sweep alone; no browser needed
+COCKPIT_PROBE_URL=http://127.0.0.1:8741 scripts/cockpit-probe    # a server that is already running
+```
+
+Two sweeps, because they answer different questions at different prices:
+
+| Sweep | Over | Asserts |
+|---|---|---|
+| status | **every** derived route | 200, `text/html`, and the security headers on the shell |
+| browser | every area plus a sample of each generated family, at 390, 1024 and 1600 px | the shell, the stylesheet applied, no horizontal overflow, no console error, no failed request |
+
+The browser sweep is the part a status code cannot reach:
+
+- **Alpine** started, under a policy with no `unsafe-eval` — which is the whole reason the
+  CSP build is vendored, and the check that catches a regression to the CDN build.
+- **The command palette** opens on `Ctrl`/`Cmd`+K, fills with entries the registry supplied,
+  filters, and navigates where the chosen entry says.
+- **The theme toggle** flips the root class and the choice survives a reload.
+- **The skip link** is the first tab stop and points at `#main`.
+- **The runner** is generated from the schema (the required string, the bounded integer, the
+  disclosure of the capability&#39;s own benchmark cases), and submitting it calls the
+  capability&#39;s real route and renders the answer — asserted against the request the browser
+  actually made, not against the preview.
+- **The graph** draws over the same nodes the page lists, or says why it cannot.
+- **`frame-ancestors &#39;none&#39;`** holds: another origin cannot frame the Cockpit.
+- **JavaScript disabled**: every sampled route still carries its navigation and its content.
+
+The probe measures the server the repository&#39;s lease names, because one server per
+repository is the rule this tool lives by. When an editor holds the lease with an executable
+older than the Cockpit, the probe says so and names what to do rather than quietly starting
+a second server.
+
+What it has already caught, which is the argument for it existing: Alpine&#39;s CSP build
+treating `palette.open` as an expression it will not evaluate — leaving a full-page modal
+backdrop over every click on a page that looked correct in the markup; the CDN build
+starting itself before the component was registered; a topbar eight pixels too wide for a
+390 px viewport on every page; and a table wrapper whose negative margin made the document
+wider than the viewport.
+
+Playwright drives the Chrome that is already installed (`channel: &#39;chrome&#39;`), so nothing is
+downloaded and CI reuses the browser the site probe already installs. A missing Chrome, a
+missing Playwright or a missing Node is a SKIP of the browser sweep and not a failure — the
+status sweep still runs over every route.
+
+One consequence of reading assets once: a changed stylesheet or script needs the server
+restarted before the probe sees it. That is deliberate — an asset is read from disk once per
+process — and it is why the probe reports the digest it was served.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>lib/adr.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">lib/adr.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">lib/adr.sh</h1><p class="mj-page-subtitle">An object of kind implementation</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://implementation/lib/adr.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">implementation</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">lib/adr.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">lib/adr.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/implementation.lib%2Fadr.sh">implementation.lib/adr.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code>#!/usr/bin/env bash
+# sourced by several commands; guard against re-sourcing
+[ -n &quot;${MJ_LIB_adr:-}&quot; ] &amp;&amp; return 0 || MJ_LIB_adr=1
+# adr — the repository&#39;s architecture decisions, as data.
+#
+# An ADR is one Markdown file under the manifest&#39;s adrs section: YAML front matter (the
+# contract in share/schemas/majordomus/adr/adr.v1.schema.json) over a body carrying Context, Decision and
+# Consequences. Nothing here is a registry: which files are decisions is decided by the
+# source class `adr` in .ai/repo/knowledge/sources.yaml, the same declaration the Rust
+# executable indexes and serves as majordomus://adr/&lt;id&gt;, so the two never disagree about
+# what exists. This file reads that discovery, validates against the allow-list generated
+# from the schema, and projects.
+#
+# Two things this command will not do, and both are the point:
+#
+#   propose never writes `accepted`. A decision the tool derived from a local record is a
+#   candidate for a person to read, and a candidate that can be born accepted is a way for
+#   an inference to become repository truth by being written down.
+#
+#   an identity is allocated above the high-water mark and never reused. Two worktrees
+#   proposing at the same moment is the ordinary case here, and it is exactly how this
+#   repository ended up with two 0005s and two 0007s before anything checked, and with three
+#   branches on 0044 and two on 0043 a year of commits later. `adr next` is that survey made
+#   askable — every ref, every tag, every sibling worktree and the peer board, each saying
+#   what it claimed — and `adr check` refuses, on the branch, an identity this tree adds that
+#   another ref already carries a different decision at (ADR 0053).
+
+# shellcheck source=knowledge.sh
+. &quot;$MJ_LIB_DIR/knowledge.sh&quot;
+# shellcheck source=rules.sh
+. &quot;$MJ_LIB_DIR/rules.sh&quot;
+
+MJ_ADR_SCHEMA=&quot;adr/v1&quot;
+MJ_ADR_STATUSES=&quot;proposed accepted superseded rejected&quot;
+MJ_ADR_ORIGINS=&quot;authored extracted&quot;
+MJ_ADR_SECTIONS=&quot;Context Decision Consequences&quot;
+# The reference vocabulary, shared by the decision and knowledge records: a
+# reference is &lt;type&gt;:&lt;value&gt;, and a file: or test: reference must resolve.
+MJ_ADR_REF_TYPES=&quot;decision session commit issue file test&quot;
+# what a decision put in force, as opposed to where it came from: a rule of the effective
+# set, a claim of the matrix, a document or implementation, a behavioural case. The graph
+# turns each into an edge, so nothing writes the reverse direction down.
+MJ_ADR_REL_TYPES=&quot;rule claim file test&quot;
+
+mj_cmd_adr() {
+  local sub=&quot;${1:-}&quot;; [ $# -gt 0 ] &amp;&amp; shift
+  case &quot;$sub&quot; in
+    list) mj_adr_list &quot;$@&quot; ;;
+    show) [ $# -ge 1 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr show: an adr id is required&quot;; mj_adr_show &quot;$@&quot; ;;
+    next) mj_adr_next &quot;$@&quot; ;;
+    propose) mj_adr_propose &quot;$@&quot; ;;
+    check) mj_adr_check &quot;$@&quot; ;;
+    affected) mj_adr_affected &quot;$@&quot; ;;
+    --help|-h|&quot;&quot;) mj_adr_usage; [ &quot;$sub&quot; = &quot;&quot; ] &amp;&amp; return &quot;$MJ_EX_USAGE&quot;; return 0 ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr: unknown subcommand &#39;$sub&#39; (list|show|next|propose|check|affected)&quot; ;;
+  esac
+}
+
+mj_adr_usage() {
+  cat &lt;&lt;H
+usage: majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title
+       majordomus adr show &lt;id&gt; [--json]                     one decision: its path, then the file as written
+       majordomus adr next [--json]                          the next free identity, and every source that was surveyed
+       majordomus adr propose &quot;&lt;title&gt;&quot; [--from &lt;ref&gt;]...    write a new decision with status: proposed
+                              [--tag &lt;tag&gt;]... [--supersedes &lt;id&gt;]
+       majordomus adr check [--json]                         validate every decision and every reference it makes
+       majordomus adr affected [--base &lt;ref&gt;|--staged]        the decisions a change set touches, from what they name
+                               [--worktree] [--json]
+  a decision is $(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&lt;NNNN&gt;-&lt;slug&gt;.md: front matter (schema: $MJ_ADR_SCHEMA, id: adr-NNNN,
+  kind, title, status: $(printf &#39;%s&#39; &quot;$MJ_ADR_STATUSES&quot; | sed &#39;s/ /|/g&#39;), date; optional tags, supersedes, superseded_by, provenance)
+  over a body with the sections $(printf &#39;%s&#39; &quot;$MJ_ADR_SECTIONS&quot; | sed -e &#39;s/ /, # /g&#39; -e &#39;s/^/# /&#39;)
+  propose writes &#39;proposed&#39; and refuses to write any other status: accepting a decision is a person&#39;s act
+  an identity is allocated above the high-water mark and never recycled: &#39;next&#39; says which source set it
+  &#39;next&#39; also names the identities allocated on another ref and not landed, and what it cannot reach
+  check reads the other refs too and refuses an identity this branch adds that another ref already carries
+  a --from reference is &lt;type&gt;:&lt;value&gt;, the type one of $(printf &#39;%s&#39; &quot;$MJ_ADR_REF_TYPES&quot; | sed &#39;s/ /, /g&#39;)
+  discovery is the source class &#39;adr&#39; in $(mj_rel &quot;$MJ_KNOWLEDGE_DIR&quot;)/sources.yaml, shared with the Rust executable
+H
+}
+
+# ---------------------------------------------------------------- discovery
+# One row per decision file the source class discovers, in discovery order (the index
+# order, which is path order): repository-relative path &lt;TAB&gt; sha256.
+mj_adr_files() {
+  mj_knowledge_discover shared | awk -F&#39;\t&#39; &#39;$1 == &quot;adr&quot; { printf &quot;%s\t%s\n&quot;, $5, $4 }&#39;
+}
+
+# ---------------------------------------------------------------- one record
+# The flattened front matter of the record last loaded, and why the load failed when it
+# did. The reason is a variable rather than output because every caller needs the flat
+# file afterwards, and a command substitution would take it into a subshell and leave the
+# caller reading the previous record&#39;s fields.
+MJ_ADR_FLAT=&quot;&quot;
+MJ_ADR_ERROR=&quot;&quot;
+mj_adr_load() {
+  local f=&quot;$1&quot; fm flat
+  MJ_ADR_ERROR=&quot;&quot;
+  [ -n &quot;$MJ_ADR_FLAT&quot; ] &amp;&amp; rm -f &quot;$MJ_ADR_FLAT&quot;
+  fm=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.af.XXXXXX&quot;)&quot;; flat=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.al.XXXXXX&quot;)&quot;; MJ_ADR_FLAT=&quot;$flat&quot;
+  if ! mj_record_front &quot;$f&quot; &gt; &quot;$fm&quot; 2&gt;/dev/null; then rm -f &quot;$fm&quot;; MJ_ADR_ERROR=&quot;no front matter&quot;; return 1; fi
+  if ! mj_yaml_flatten &quot;$fm&quot; &gt; &quot;$flat&quot; 2&gt;/dev/null; then rm -f &quot;$fm&quot;; MJ_ADR_ERROR=&quot;malformed front matter&quot;; return 1; fi
+  rm -f &quot;$fm&quot;; return 0
+}
+# &quot;-&quot; is the placeholder an empty field is written as; every reader normalises it back.
+mj_adr_un() { [ &quot;$1&quot; = - ] &amp;&amp; printf &#39;&#39; || printf &#39;%s&#39; &quot;$1&quot;; }
+
+mj_adr_get()  { mj_yget &quot;$MJ_ADR_FLAT&quot; &quot;$1&quot;; }
+# Several fields of the loaded record in one read of the flat file, one value per line in the
+# order asked: each key&#39;s first occurrence, as mj_adr_get reads it. With --join &lt;key&gt; last,
+# that list&#39;s values follow on one more line, joined with commas less one trailing comma, as
+# `mj_adr_lst &lt;key&gt; | tr &#39;\n&#39; &#39;,&#39; | sed &#39;s/,$//&#39;` joined them. One process instead of one per
+# field, for every decision doctor, watch and `adr check` examine.
+mj_adr_fields() {
+  local join=&quot;&quot;
+  if [ &quot;$#&quot; -ge 2 ] &amp;&amp; [ &quot;${*: -2:1}&quot; = --join ]; then join=&quot;${*: -1}&quot;; set -- &quot;${@:1:$(($# - 2))}&quot;; fi
+  awk -v keys=&quot;$*&quot; -v join=&quot;$join&quot; &#39;BEGIN { n = split(keys, k, &quot; &quot;) }
+    { for (i = 1; i &lt;= n; i++) if (!(i in v) &amp;&amp; index($0, k[i] &quot;=&quot;) == 1) v[i] = substr($0, length(k[i]) + 2)
+      if (join != &quot;&quot; &amp;&amp; index($0, join &quot;.&quot;) == 1) { r = substr($0, length(join) + 2)
+        if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, &quot;&quot;, r); j = j r &quot;,&quot; } } }
+    END { for (i = 1; i &lt;= n; i++) print v[i]; if (join != &quot;&quot;) { sub(/,$/, &quot;&quot;, j); print j } }&#39; &quot;$MJ_ADR_FLAT&quot;
+}
+mj_adr_lst()  { mj_ylist &quot;$MJ_ADR_FLAT&quot; &quot;$1&quot;; }
+
+# mj_adr_ref_valid REF — the reference is &lt;type&gt;:&lt;value&gt; with a known type, and a file:
+# or a commit: reference resolves. Prints the reason and exits 1 when it does not.
+mj_adr_ref_valid() {
+  local ref=&quot;$1&quot; t=&quot;${1%%:*}&quot; v=&quot;${1#*:}&quot;
+  case &quot;$ref&quot; in *:*) ;; *) printf &#39;reference &quot;%s&quot; is not &lt;type&gt;:&lt;value&gt;\n&#39; &quot;$ref&quot;; return 1 ;; esac
+  case &quot; $MJ_ADR_REF_TYPES &quot; in
+    *&quot; $t &quot;*) ;;
+    *) printf &#39;reference &quot;%s&quot; has an unknown type &quot;%s&quot;\n&#39; &quot;$ref&quot; &quot;$t&quot;; return 1 ;;
+  esac
+  [ -n &quot;$v&quot; ] || { printf &#39;reference &quot;%s&quot; has an empty value\n&#39; &quot;$ref&quot;; return 1; }
+  case &quot;$t&quot; in
+    file|test) [ -e &quot;$MJ_ROOT/$v&quot; ] || { printf &#39;reference &quot;%s&quot; names a path that does not exist\n&#39; &quot;$ref&quot;; return 1; } ;;
+  esac
+  return 0
+}
+
+# mj_adr_rel_valid REF — a forward reference: the type is one this record may state, and
+# the target exists where that type says it lives. A rule is looked up in the effective set
+# and a claim in the matrix, because a decision that names something nothing declares is a
+# dangling end the reader cannot follow.
+mj_adr_rel_valid() {
+  local ref=&quot;$1&quot; t=&quot;${1%%:*}&quot; v=&quot;${1#*:}&quot;
+  case &quot;$ref&quot; in *:*) ;; *) printf &#39;related &quot;%s&quot; is not &lt;type&gt;:&lt;value&gt;\n&#39; &quot;$ref&quot;; return 1 ;; esac
+  case &quot; $MJ_ADR_REL_TYPES &quot; in
+    *&quot; $t &quot;*) ;;
+    *) printf &#39;related &quot;%s&quot; has an unknown type &quot;%s&quot; (one of %s)\n&#39; &quot;$ref&quot; &quot;$t&quot; &quot;$(printf &#39;%s&#39; &quot;$MJ_ADR_REL_TYPES&quot; | sed &#39;s/ /, /g&#39;)&quot;; return 1 ;;
+  esac
+  [ -n &quot;$v&quot; ] || { printf &#39;related &quot;%s&quot; has an empty value\n&#39; &quot;$ref&quot;; return 1; }
+  case &quot;$t&quot; in
+    file|test) [ -e &quot;$MJ_ROOT/$v&quot; ] || { printf &#39;related &quot;%s&quot; names a path that does not exist\n&#39; &quot;$ref&quot;; return 1; } ;;
+    rule)
+      if mj_rules_load; then
+        mj_rule_index &quot;$v&quot; &gt;/dev/null || { printf &#39;related &quot;%s&quot; names a rule the effective set does not have\n&#39; &quot;$ref&quot;; return 1; }
+      else printf &#39;related &quot;%s&quot; cannot be checked: the rules do not resolve (%s)\n&#39; &quot;$ref&quot; &quot;$MJ_RULES_ERROR&quot;; return 1; fi ;;
+    claim)
+      if [ -f &quot;$MJ_ROOT/docs/CLAIMS.yaml&quot; ]; then
+        grep -q &quot;^  - id: $v\$&quot; &quot;$MJ_ROOT/docs/CLAIMS.yaml&quot; || { printf &#39;related &quot;%s&quot; names a claim docs/CLAIMS.yaml does not have\n&#39; &quot;$ref&quot;; return 1; }
+      fi ;;
+  esac
+  return 0
+}
+
+# mj_adr_validate FILE BASENAME — every reason on its own line; exit 1 when any. Reads
+# only this file; cross-record checks (unique ids, reciprocal supersession) are
+# mj_adr_check&#39;s, which has the whole catalogue in hand.
+mj_adr_validate() {
+  local f=&quot;$1&quot; base=&quot;$2&quot;
+  mj_adr_load &quot;$f&quot; || { printf &#39;%s\n&#39; &quot;$MJ_ADR_ERROR&quot;; return 1; }
+  mj_adr_validate_loaded &quot;$f&quot; &quot;$base&quot;
+}
+mj_adr_validate_loaded() {
+  local f=&quot;$1&quot; base=&quot;$2&quot; rc=0 v s unk missing=&quot;&quot; origin refs n
+  local f_schema f_kind f_id f_title f_status f_date f_sb f_origin
+  unk=&quot;$(mj_yaml_unknown_keys &quot;$MJ_ADR_FLAT&quot; &quot;$MJ_ALLOW_DIR/adr.txt&quot; || true)&quot;
+  [ -n &quot;$unk&quot; ] &amp;&amp; { printf &#39;unknown front-matter key(s): %s\n&#39; &quot;$(printf &#39;%s&#39; &quot;$unk&quot; | tr &#39;\n&#39; &#39; &#39; | sed &#39;s/ $//&#39;)&quot;; rc=1; }
+  { IFS= read -r f_schema; IFS= read -r f_kind; IFS= read -r f_id; IFS= read -r f_title
+    IFS= read -r f_status; IFS= read -r f_date; IFS= read -r f_sb; IFS= read -r f_origin
+  } &lt; &lt;(mj_adr_fields schema kind id title status date superseded_by provenance.origin)
+  v=&quot;$f_schema&quot;
+  [ &quot;$v&quot; = &quot;$MJ_ADR_SCHEMA&quot; ] || { printf &#39;schema must be %s (found &quot;%s&quot;)\n&#39; &quot;$MJ_ADR_SCHEMA&quot; &quot;$v&quot;; rc=1; }
+  [ &quot;$f_kind&quot; = adr ] || { printf &#39;kind must be adr (found &quot;%s&quot;)\n&#39; &quot;$f_kind&quot;; rc=1; }
+  v=&quot;$f_id&quot;
+  if [ -z &quot;$v&quot; ]; then printf &#39;id is missing\n&#39;; rc=1
+  else
+    case &quot;$v&quot; in
+      adr-[0-9][0-9][0-9][0-9]) ;;
+      *) printf &#39;id &quot;%s&quot; is not adr-NNNN\n&#39; &quot;$v&quot;; rc=1 ;;
+    esac
+    # the identity fixes the file name, so a retitle cannot silently orphan a reference
+    case &quot;$base&quot; in
+      &quot;${v#adr-}&quot;-*.md) ;;
+      *) printf &#39;id &quot;%s&quot; does not match the file name &quot;%s&quot; (expected %s-&lt;slug&gt;.md)\n&#39; &quot;$v&quot; &quot;$base&quot; &quot;${v#adr-}&quot;; rc=1 ;;
+    esac
+  fi
+  [ -n &quot;$f_title&quot; ] || { printf &#39;title is empty\n&#39;; rc=1; }
+  s=&quot;$f_status&quot;
+  case &quot; $MJ_ADR_STATUSES &quot; in *&quot; $s &quot;*) ;; *) printf &#39;status must be one of %s (found &quot;%s&quot;)\n&#39; &quot;$(printf &#39;%s&#39; &quot;$MJ_ADR_STATUSES&quot; | sed &#39;s/ /, /g&#39;)&quot; &quot;$s&quot;; rc=1 ;; esac
+  v=&quot;$f_date&quot;
+  case &quot;$v&quot; in
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+    *) printf &#39;date must be YYYY-MM-DD (found &quot;%s&quot;)\n&#39; &quot;$v&quot;; rc=1 ;;
+  esac
+  for v in $(mj_adr_lst tags); do
+    case &quot;$v&quot; in *[!a-z0-9-]*|[!a-z]*) printf &#39;tag &quot;%s&quot; is not lower-case letters, digits and hyphens starting with a letter\n&#39; &quot;$v&quot;; rc=1 ;; esac
+  done
+  # superseded_by is present exactly when the status is superseded: a record that says it
+  # was replaced and does not say by what is a dangling end of the chain
+  v=&quot;$f_sb&quot;
+  if [ &quot;$s&quot; = superseded ] &amp;&amp; [ -z &quot;$v&quot; ]; then printf &#39;status is superseded but superseded_by is missing\n&#39;; rc=1; fi
+  if [ &quot;$s&quot; != superseded ] &amp;&amp; [ -n &quot;$v&quot; ]; then printf &#39;superseded_by is set but the status is &quot;%s&quot;, not superseded\n&#39; &quot;$s&quot;; rc=1; fi
+  # provenance: an extracted record is a candidate for a person to read, and it says what
+  # it was derived from. Nothing the tool wrote may claim to have been accepted.
+  origin=&quot;$f_origin&quot;
+  if [ -n &quot;$origin&quot; ]; then
+    case &quot; $MJ_ADR_ORIGINS &quot; in *&quot; $origin &quot;*) ;; *) printf &#39;provenance.origin must be one of %s (found &quot;%s&quot;)\n&#39; &quot;$(printf &#39;%s&#39; &quot;$MJ_ADR_ORIGINS&quot; | sed &#39;s/ /, /g&#39;)&quot; &quot;$origin&quot;; rc=1 ;; esac
+  fi
+  refs=&quot;$(mj_adr_lst provenance.derived_from)&quot;; n=0
+  for v in $refs; do n=$((n + 1)); mj_adr_ref_valid &quot;$v&quot; || rc=1; done
+  # what the decision put in force. Optional: a decision may be taken before anything
+  # implements it, and a record that names nothing is not thereby wrong.
+  for v in $(mj_adr_lst related); do mj_adr_rel_valid &quot;$v&quot; || rc=1; done
+  if [ &quot;$origin&quot; = extracted ]; then
+    [ &quot;$n&quot; -gt 0 ] || { printf &#39;provenance.origin is extracted but derived_from names nothing: an extracted record without evidence is an assertion\n&#39;; rc=1; }
+    # only `accepted` is refused, and for one reason: acceptance is the person&#39;s act, and a
+    # tool that can write it turns its own inference into repository truth. Every other
+    # status is something that happened to the proposal rather than a decision it claims —
+    # rejected, or superseded once a later record stood in for it — and a candidate the
+    # person never accepted can still be replaced by one they did.
+    if [ &quot;$s&quot; = accepted ]; then printf &#39;provenance.origin is extracted and status is &quot;%s&quot;: a record the tool derived is proposed until a person accepts it\n&#39; &quot;$s&quot;; rc=1; fi
+  fi
+  # the body is the decision: the sections a reader relies on exist and are not empty
+  # every required section in one pass over the body (what mj_record_body prints: the lines
+  # after the second ---), each judged as a pass of its own would: its heading is present and
+  # some non-blank line follows it before the next heading
+  missing=&quot;$(awk -v secs=&quot;$MJ_ADR_SECTIONS&quot; &#39;
+      BEGIN { n = split(secs, h, &quot; &quot;) }
+      c &gt;= 2 {
+        hit = 0
+        for (i = 1; i &lt;= n; i++) if ($0 == &quot;## &quot; h[i]) { cur = i; found[i] = 1; hit = 1 }
+        if (!hit) { if ($0 ~ /^## /) cur = 0; else if (cur &amp;&amp; NF) body[cur] = 1 }
+      }
+      /^---$/ { c++ }
+      END { for (i = 1; i &lt;= n; i++) if (!(found[i] &amp;&amp; body[i])) printf &quot; %s&quot;, h[i] }&#39; &quot;$f&quot;)&quot;
+  [ -n &quot;$missing&quot; ] &amp;&amp; { printf &#39;body is missing or empty in section(s):%s\n&#39; &quot;$missing&quot;; rc=1; }
+  return &quot;$rc&quot;
+}
+
+# ---------------------------------------------------------------- the catalogue
+# One pass over discovery producing one row per decision, in id order:
+#   path &lt;TAB&gt; id &lt;TAB&gt; status &lt;TAB&gt; date &lt;TAB&gt; title &lt;TAB&gt; superseded_by &lt;TAB&gt; supersedes(comma) &lt;TAB&gt; reasons(;-joined, empty when valid)
+# Every consumer below reads this; a second walker would be a second order.
+MJ_ADR_N=0
+MJ_ADR_INVALID=0
+MJ_ADR_ROWS=&quot;&quot;
+mj_adr_catalogue() {
+  local tmp out f base reasons id st date title sb sup
+  [ -n &quot;$MJ_ADR_ROWS&quot; ] &amp;&amp; [ -f &quot;$MJ_ADR_ROWS&quot; ] &amp;&amp; return 0
+  tmp=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ac.XXXXXX&quot;)&quot;
+  out=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ao.XXXXXX&quot;)&quot;; MJ_ADR_ROWS=&quot;$out&quot;
+  MJ_ADR_N=0; MJ_ADR_INVALID=0
+  # The effective rule set, resolved once here and not once per decision: the validator runs
+  # in a command substitution, so a load it made itself died with that subshell and the next
+  # decision naming a `rule:` resolved the whole set again — one resolution per such decision
+  # for one `adr check`. A load that fails leaves nothing behind, so each validator still
+  # tries it, meets the same failure and reports it against its own reference.
+  mj_rules_load &gt;/dev/null 2&gt;&amp;1 || true
+  # The loop stays in this shell so that the counts survive it, and the front matter is
+  # loaded here rather than inside the validator&#39;s command substitution: a subshell would
+  # take MJ_ADR_FLAT with it and every field below would read the previous record&#39;s.
+  while IFS=&quot;$MJ_TAB&quot; read -r f _; do
+    [ -n &quot;$f&quot; ] || continue
+    base=&quot;${f##*/}&quot;
+    MJ_ADR_N=$((MJ_ADR_N + 1))
+    if mj_adr_load &quot;$MJ_ROOT/$f&quot;; then
+      if reasons=&quot;$(mj_adr_validate_loaded &quot;$MJ_ROOT/$f&quot; &quot;$base&quot;)&quot;; then reasons=&quot;&quot;; else MJ_ADR_INVALID=$((MJ_ADR_INVALID + 1)); fi
+    else
+      reasons=&quot;$MJ_ADR_ERROR&quot;; MJ_ADR_INVALID=$((MJ_ADR_INVALID + 1))
+    fi
+    reasons=&quot;$(printf &#39;%s&#39; &quot;$reasons&quot; | tr &#39;\n&#39; &#39;;&#39; | sed &#39;s/;$//&#39;)&quot;
+    # the six fields of the row in one read of the flat file rather than one process each:
+    # each scalar is its first occurrence, as mj_adr_get reads it, and supersedes is joined
+    # with commas less one trailing comma, as `mj_adr_lst | tr | sed` joined it
+    { IFS= read -r id; IFS= read -r st; IFS= read -r date; IFS= read -r title; IFS= read -r sb
+      IFS= read -r sup; } &lt; &lt;(mj_adr_fields id status date title superseded_by --join supersedes)
+    # a tab is whitespace, so `read` collapses a run of them and one empty field would
+    # shift every field after it; &quot;-&quot; stands for empty and is read back as empty
+    printf &#39;%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n&#39; \
+      &quot;$f&quot; &quot;${id:--}&quot; &quot;${st:--}&quot; &quot;${date:--}&quot; &quot;${title:--}&quot; &quot;${sb:--}&quot; &quot;${sup:--}&quot; &quot;${reasons:--}&quot; &gt;&gt; &quot;$tmp&quot;
+  done &lt; &lt;(mj_adr_files)
+  LC_ALL=C sort -t&quot;$MJ_TAB&quot; -k2,2 &quot;$tmp&quot; &gt; &quot;$out&quot;
+  rm -f &quot;$tmp&quot;
+  return 0
+}
+
+# ---------------------------------------------------------------- affected
+# What a change set touches, read from what the decisions themselves name. A record is
+# affected when its own file changed, or when a path it names in `related` changed — the
+# forward edge doing the work in the direction a reader needs: this file has a decision
+# behind it, go and read whether it still holds.
+#
+# Every item is a review note, never a failure. Whether a decision still stands after the
+# code it governs moved is exactly the judgement a tool may not make, and a command that
+# exited non-zero here would be asserting it had.
+mj_adr_affected() {
+  local mode=worktree base=&quot;&quot; changed tmp f id title rel n=0 first=1
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --base) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--base needs a ref&quot;; mode=base; base=&quot;$2&quot;; shift 2 ;;
+    --base=*) mode=base; base=&quot;${1#--base=}&quot;; shift ;;
+    --staged) mode=staged; shift ;;
+    --worktree) mode=worktree; shift ;;
+    --json) MJ_JSON=1; shift ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr affected: unknown option $1&quot; ;;
+  esac; done
+  mj_require_installed
+  [ &quot;$mode&quot; != base ] || mj_git rev-parse --verify --quiet &quot;$base^{commit}&quot; &gt;/dev/null 2&gt;&amp;1 \
+    || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr affected: --base &#39;$base&#39; is not a commit in this repository&quot;
+  changed=&quot;$(mj_change_set &quot;$mode&quot; &quot;$base&quot; | awk -F&quot;$MJ_TAB&quot; &#39;{ print $2; if ($3 != &quot;&quot;) print $3 }&#39; | LC_ALL=C sort -u)&quot;
+  tmp=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.adraff.XXXXXX&quot;)&quot;
+  while IFS=&quot;$MJ_TAB&quot; read -r f _; do
+    [ -n &quot;$f&quot; ] || continue
+    mj_adr_load &quot;$MJ_ROOT/$f&quot; || continue
+    id=&quot;$(mj_adr_get id)&quot;; title=&quot;$(mj_adr_get title)&quot;
+    # the record itself
+    printf &#39;%s\n&#39; &quot;$changed&quot; | grep -Fxq &quot;$f&quot; &amp;&amp; printf &#39;%s\t%s\t%s\t%s\n&#39; &quot;${id:--}&quot; &quot;$f&quot; &quot;record&quot; &quot;$f&quot; &gt;&gt; &quot;$tmp&quot;
+    # and every path it says it put in force, a directory reference covering what is below it
+    for rel in $(mj_adr_lst related); do
+      case &quot;$rel&quot; in file:*|test:*) ;; *) continue ;; esac
+      rel=&quot;${rel#*:}&quot;
+      printf &#39;%s\n&#39; &quot;$changed&quot; | awk -v r=&quot;$rel&quot; &#39;$0 == r || index($0, r &quot;/&quot;) == 1 { print; found = 1 } END { exit found ? 0 : 1 }&#39; \
+        | while IFS= read -r hit; do printf &#39;%s\t%s\t%s\t%s\n&#39; &quot;${id:--}&quot; &quot;$f&quot; &quot;related&quot; &quot;$hit&quot; &gt;&gt; &quot;$tmp&quot;; done
+    done
+  done &lt; &lt;(mj_adr_files)
+  n=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;{ print $1 }&#39; &quot;$tmp&quot; 2&gt;/dev/null | LC_ALL=C sort -u | grep -c . || true)&quot;
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;schema&quot;:1,&quot;mode&quot;:&quot;%s&quot;,&quot;base&quot;:%s,&quot;affected&quot;:[&#39; &quot;$mode&quot; &quot;$([ -n &quot;$base&quot; ] &amp;&amp; printf &#39;&quot;%s&quot;&#39; &quot;$(mj_json_esc &quot;$base&quot;)&quot; || printf null)&quot;
+    while IFS=&quot;$MJ_TAB&quot; read -r id f why hit; do
+      [ -n &quot;$id&quot; ] || continue
+      [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0
+      printf &#39;{&quot;adr&quot;:&quot;%s&quot;,&quot;path&quot;:&quot;%s&quot;,&quot;reason&quot;:&quot;%s&quot;,&quot;changed&quot;:&quot;%s&quot;}&#39; &quot;$id&quot; &quot;$(mj_json_esc &quot;$f&quot;)&quot; &quot;$why&quot; &quot;$(mj_json_esc &quot;$hit&quot;)&quot;
+    done &lt; &lt;(LC_ALL=C sort -u &quot;$tmp&quot;)
+    printf &#39;],&quot;count&quot;:%s}\n&#39; &quot;$n&quot;
+  else
+    if [ ! -s &quot;$tmp&quot; ]; then printf &#39;adr affected: no decision names anything this change set touches\n&#39;
+    else
+      while IFS=&quot;$MJ_TAB&quot; read -r id f why hit; do
+        [ -n &quot;$id&quot; ] || continue
+        case &quot;$why&quot; in
+          record) printf &#39;WARN adr %-10s the record itself changed (%s)\n&#39; &quot;$id&quot; &quot;$f&quot; ;;
+          *)      printf &#39;WARN adr %-10s names %s, which this change set touches — read whether the decision still holds (%s)\n&#39; &quot;$id&quot; &quot;$hit&quot; &quot;$f&quot; ;;
+        esac
+      done &lt; &lt;(LC_ALL=C sort -u &quot;$tmp&quot;)
+      printf &#39;adr affected: %s decision(s) to read\n&#39; &quot;$n&quot;
+    fi
+  fi
+  rm -f &quot;$tmp&quot;
+  return 0
+}
+
+# ---------------------------------------------------------------- list
+mj_adr_list() {
+  local want=&quot;&quot;
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --status) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--status needs a value&quot;; want=&quot;$2&quot;; shift 2 ;;
+    --status=*) want=&quot;${1#--status=}&quot;; shift ;;
+    --json) MJ_JSON=1; shift ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr list: unknown option $1&quot; ;;
+  esac; done
+  [ -n &quot;$want&quot; ] &amp;&amp; { case &quot; $MJ_ADR_STATUSES &quot; in *&quot; $want &quot;*) ;; *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr list: --status must be one of $(printf &#39;%s&#39; &quot;$MJ_ADR_STATUSES&quot; | sed &#39;s/ /, /g&#39;)&quot; ;; esac; }
+  mj_require_installed
+  mj_adr_catalogue
+  local f id st date title sb sup reasons first=1 n=0
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;schema&quot;:1,&quot;status&quot;:&quot;%s&quot;,&quot;adrs&quot;:[&#39; &quot;${want:-all}&quot;
+    while IFS=&quot;$MJ_TAB&quot; read -r f id st date title sb sup reasons; do
+      sb=&quot;$(mj_adr_un &quot;$sb&quot;)&quot;; sup=&quot;$(mj_adr_un &quot;$sup&quot;)&quot;; reasons=&quot;$(mj_adr_un &quot;$reasons&quot;)&quot;
+      [ -n &quot;$want&quot; ] &amp;&amp; [ &quot;$st&quot; != &quot;$want&quot; ] &amp;&amp; continue
+      [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0
+      printf &#39;{&quot;id&quot;:&quot;%s&quot;,&quot;status&quot;:&quot;%s&quot;,&quot;date&quot;:&quot;%s&quot;,&quot;title&quot;:&quot;%s&quot;,&quot;path&quot;:&quot;%s&quot;,&quot;superseded_by&quot;:%s,&quot;supersedes&quot;:[&#39; \
+        &quot;$id&quot; &quot;$st&quot; &quot;$date&quot; &quot;$(mj_json_esc &quot;$title&quot;)&quot; &quot;$(mj_json_esc &quot;$f&quot;)&quot; \
+        &quot;$([ -n &quot;$sb&quot; ] &amp;&amp; printf &#39;&quot;%s&quot;&#39; &quot;$sb&quot; || printf &#39;null&#39;)&quot;
+      local sfirst=1 s
+      for s in $(printf &#39;%s&#39; &quot;$sup&quot; | tr &#39;,&#39; &#39; &#39;); do [ &quot;$sfirst&quot; = 1 ] || printf &#39;,&#39;; printf &#39;&quot;%s&quot;&#39; &quot;$s&quot;; sfirst=0; done
+      printf &#39;],&quot;valid&quot;:%s}&#39; &quot;$([ -z &quot;$reasons&quot; ] &amp;&amp; printf true || printf false)&quot;
+    done &lt; &quot;$MJ_ADR_ROWS&quot;
+    printf &#39;]}\n&#39;
+    return 0
+  fi
+  while IFS=&quot;$MJ_TAB&quot; read -r f id st date title sb sup reasons; do
+    sb=&quot;$(mj_adr_un &quot;$sb&quot;)&quot;; sup=&quot;$(mj_adr_un &quot;$sup&quot;)&quot;; reasons=&quot;$(mj_adr_un &quot;$reasons&quot;)&quot;
+    [ -n &quot;$want&quot; ] &amp;&amp; [ &quot;$st&quot; != &quot;$want&quot; ] &amp;&amp; continue
+    n=$((n + 1))
+    printf &#39;%-10s %-11s %s  %s%s\n&#39; &quot;$id&quot; &quot;$st&quot; &quot;$date&quot; &quot;$title&quot; &quot;$([ -n &quot;$sb&quot; ] &amp;&amp; printf &#39; (superseded by %s)&#39; &quot;$sb&quot;)&quot;
+  done &lt; &quot;$MJ_ADR_ROWS&quot;
+  [ &quot;$n&quot; = 0 ] &amp;&amp; printf &#39;(none)\n&#39;
+  return 0
+}
+
+# ---------------------------------------------------------------- show
+mj_adr_show() {
+  local want=&quot;&quot;
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --json) MJ_JSON=1; shift ;;
+    -*) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr show: unknown option $1&quot; ;;
+    *) want=&quot;$1&quot;; shift ;;
+  esac; done
+  mj_require_installed
+  # a bare number is the ordinary way a person refers to a decision
+  case &quot;$want&quot; in [0-9][0-9][0-9][0-9]) want=&quot;adr-$want&quot; ;; esac
+  mj_adr_catalogue
+  local f id st date title sb sup reasons found=&quot;&quot;
+  while IFS=&quot;$MJ_TAB&quot; read -r f id st date title sb sup reasons; do
+    sb=&quot;$(mj_adr_un &quot;$sb&quot;)&quot;; sup=&quot;$(mj_adr_un &quot;$sup&quot;)&quot;; reasons=&quot;$(mj_adr_un &quot;$reasons&quot;)&quot;
+    [ &quot;$id&quot; = &quot;$want&quot; ] &amp;&amp; { found=&quot;$f&quot;; break; }
+  done &lt; &quot;$MJ_ADR_ROWS&quot;
+  [ -n &quot;$found&quot; ] || { mj_err &quot;adr show: no decision with id &#39;$want&#39; (see: majordomus adr list)&quot;; return &quot;$MJ_EX_MISSING&quot;; }
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;schema&quot;:1,&quot;id&quot;:&quot;%s&quot;,&quot;status&quot;:&quot;%s&quot;,&quot;date&quot;:&quot;%s&quot;,&quot;title&quot;:&quot;%s&quot;,&quot;path&quot;:&quot;%s&quot;,&quot;valid&quot;:%s,&quot;body&quot;:&quot;%s&quot;}\n&#39; \
+      &quot;$id&quot; &quot;$st&quot; &quot;$date&quot; &quot;$(mj_json_esc &quot;$title&quot;)&quot; &quot;$(mj_json_esc &quot;$found&quot;)&quot; \
+      &quot;$([ -z &quot;$reasons&quot; ] &amp;&amp; printf true || printf false)&quot; \
+      &quot;$(mj_json_esc &quot;$(mj_record_body &quot;$MJ_ROOT/$found&quot;)&quot;)&quot;
+    return 0
+  fi
+  printf &#39;%s\n\n&#39; &quot;$found&quot;
+  cat &quot;$MJ_ROOT/$found&quot;
+  return 0
+}
+
+mj_adr_numbers_here() {
+  local n num
+  for n in &quot;$1&quot;/[0-9][0-9][0-9][0-9]-*.md; do
+    [ -e &quot;$n&quot; ] || continue
+    num=&quot;${n##*/}&quot;; printf &#39;%s\n&#39; &quot;${num%%-*}&quot;
+  done
+}
+
+# ---------------------------------------------------------------- the survey
+# Every claim on an identity this repository can see, from four places rather than one.
+#
+# One directory is not enough, and this is not theoretical: a single session here proposed
+# 0028, found it held by a peer&#39;s uncommitted work, took 0029, and found that claimed by
+# master while the branch was being written. The propose lock is exclusive over *this*
+# worktree; it says nothing about the thirty others, and nothing about a branch. On the
+# night of 2026-09-11 three branches claimed 0044 and two claimed 0043, and three separate
+# sessions each hand-rolled this same survey to find their way out, independently and
+# correctly, because nothing offered it.
+#
+#   the working tree      what a person can see, and what the first implementation read
+#   the sibling worktrees the case the refs cannot answer. Work that is authored but not
+#                         yet committed exists only on a filesystem, and with several
+#                         sessions in one repository that is exactly where the next number
+#                         is already taken.
+#   every git ref         every number ever added under the decisions directory on any
+#                         branch, tag or remote-tracking ref, merged or not. One process. A
+#                         number freed by a rename stays spent, which is the conservative
+#                         direction: allocation is monotonic and two workers never meet.
+#   the peer board        the case neither git nor a filesystem can answer: an identity a
+#                         session has decided to take and has not written anywhere yet. It is
+#                         how 0034 was reserved for feature/peer-board-survives-restart while
+#                         existing as no file on any branch and in no working tree.
+#
+# mj_adr_claims — one row per claim on an identity, in no particular order:
+#
+#   NNNN &lt;TAB&gt; &lt;source&gt; &lt;TAB&gt; &lt;where&gt;
+#
+# `source` is one of tree, worktree, ref, peer. Nothing is de-duplicated: two sources
+# claiming one identity is the interesting fact, and `adr next` reports the population each
+# source contributed, because a verdict that says &quot;0053&quot; without saying what it looked at is
+# the hand-rolled survey this command exists to replace.
+mj_adr_claims() {
+  local rel worktree num
+  rel=&quot;${MJ_ADRS_DIR#$MJ_ROOT/}&quot;
+  # this working tree: what a person can see
+  mj_adr_numbers_here &quot;$MJ_ADRS_DIR&quot; \
+    | while IFS= read -r num; do printf &#39;%s\ttree\t%s\n&#39; &quot;$num&quot; &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)&quot;; done
+  # every other worktree of this repository, as it stands on disk right now: authored and
+  # not yet committed is a real claim, and with several sessions in one repository it is
+  # exactly where the next number is already taken
+  git -C &quot;$MJ_ROOT&quot; worktree list --porcelain 2&gt;/dev/null \
+    | sed -n &#39;s/^worktree //p&#39; \
+    | while IFS= read -r worktree; do
+        [ &quot;$worktree&quot; = &quot;$MJ_REPO&quot; ] &amp;&amp; continue
+        [ -d &quot;$worktree/$rel&quot; ] || continue
+        mj_adr_numbers_here &quot;$worktree/$rel&quot; \
+          | while IFS= read -r num; do printf &#39;%s\tworktree\t%s\n&#39; &quot;$num&quot; &quot;$worktree&quot;; done
+      done
+  # every identity ever added under the decisions directory on any ref. `--all` is every
+  # branch, every tag, every remote-tracking ref and — unless --single-worktree is given —
+  # the HEAD of every linked worktree, which is one process rather than four hundred.
+  # `--no-renames` is load-bearing: rename detection is on by default, and a decision whose
+  # slug was edited then arrives as an R and not an A. The survey measured forty identities
+  # on the refs of a tree holding forty-eight until this flag was added.
+  git -C &quot;$MJ_ROOT&quot; log --all --no-renames --pretty=format: --name-only --diff-filter=A -- &quot;$rel&quot; 2&gt;/dev/null \
+    | sed -n &#39;s|.*/\([0-9][0-9][0-9][0-9]\)-.*\.md$|\1|p&#39; \
+    | while IFS= read -r num; do printf &#39;%s\tref\tgit log --all --no-renames --diff-filter=A\n&#39; &quot;$num&quot;; done
+  # the board, when a server is there to answer
+  mj_adr_board_claims
+}
+
+# The identities the attached peers have announced, from what they announced: the scope
+# paths they named and the words of the intent. Both are read, because a session announcing
+# an allocation writes it in whichever of the two it thinks of — tonight&#39;s announcements
+# carried it in both — and a survey that read only one of them would miss the reservation.
+#
+# Silent when there is no board. The network call itself is `mj_peer_board` in lib/context.sh:
+# SECURITY.md, project.no-network-no-eval and test/cases/08_no_forbidden_constructs.sh all
+# name that file as the single declared exception, so this is a second caller and not a
+# second call site.
+MJ_ADR_BOARD_READ=0
+mj_adr_board_claims() {
+  MJ_ADR_BOARD_READ=0
+  # shellcheck source=context.sh
+  . &quot;$MJ_LIB_DIR/context.sh&quot;
+  local board rows pid name text num
+  board=&quot;$(mj_peer_board)&quot; || return 0
+  MJ_ADR_BOARD_READ=1
+  rows=&quot;$(printf &#39;%s&#39; &quot;$board&quot; | jq -r &#39;
+    .peers[] as $p
+    | ( $p.claims // (if $p.announcement then [$p.announcement] else [] end) )[]?
+    | [ $p.id, (.name // &quot;-&quot;), (((.scope // []) | join(&quot; &quot;)) + &quot; &quot; + (.intent // &quot;&quot;)) ] | @tsv
+  &#39; 2&gt;/dev/null)&quot; || return 0
+  while IFS=&quot;$MJ_TAB&quot; read -r pid name text; do
+    [ -n &quot;$pid&quot; ] || continue
+    # every token, with punctuation turned into space: &quot;adr-0052&quot;, &quot;ADR 0052&quot; and
+    # &quot;.ai/repo/adrs/0052-x.md&quot; all become the word `adr` or `adrs` followed by the number
+    printf &#39;%s\n&#39; &quot;$text&quot; | tr &#39;A-Z&#39; &#39;a-z&#39; | sed &#39;s/[^a-z0-9]\{1,\}/ /g&#39; \
+      | awk &#39;{ for (i = 1; i &lt; NF; i++) if (($i == &quot;adr&quot; || $i == &quot;adrs&quot;) &amp;&amp; $(i+1) ~ /^[0-9][0-9][0-9][0-9]$/) print $(i+1) }&#39; \
+      | LC_ALL=C sort -u \
+      | while IFS= read -r num; do printf &#39;%s\tpeer\t%s (%s)\n&#39; &quot;$num&quot; &quot;$pid&quot; &quot;$name&quot;; done
+  done &lt;&lt;EOF
+$rows
+EOF
+  return 0
+}
+
+# The next identity: one above the highest anything has ever claimed.
+#
+# Monotonic, and that is the whole answer to the number that is cited and written nowhere.
+# 0034 is on no branch, in no working tree and in no tag; the sequence has a hole there and
+# the hole is not free, because master&#39;s ADR 0035 and docs/ENTRY_AUDIT.md already cite it and
+# a board reservation stands behind it. A gap means an identity was taken and withdrawn, or
+# taken and not yet written — both are spent, and no survey can distinguish them from a
+# number that was never used at all. So this never recycles: `max + 1`, every time. It costs
+# a sparse sequence, which costs nothing, and it removes the only case where two correct
+# surveys of the same evidence can disagree.
+mj_adr_next_id() {
+  printf &#39;%04d\n&#39; &quot;$(( $(mj_adr_claims | mj_adr_high_water) + 1 ))&quot;
+}
+
+# The highest identity in a stream whose first field is NNNN, as a plain decimal (0 when the
+# stream is empty). Decimal on purpose: a shell reading &quot;0008&quot; does arithmetic in octal.
+mj_adr_high_water() {
+  awk -F&quot;$MJ_TAB&quot; &#39;{ n = $1 + 0; if (n &gt; max) max = n } END { print max + 0 }&#39;
+}
+
+# ---------------------------------------------------------------- the identity lock
+# A directory, because mkdir is the create-or-fail primitive every POSIX filesystem has, with
+# an `owner` file inside naming the host and process that holds it.
+#
+# It is not `mj_lock_take`, and must not become it. That helper proceeds without the lock when
+# its wait expires, which is right for a check it can repeat and wrong for an identity: a
+# proposer that proceeds unlocked can take the number the holder is writing, and this
+# repository shipped two 0005s and two 0007s before anything checked. So an expired wait here
+# is still a refusal.
+#
+# What it takes from that helper is that a lock can outlive its holder. A proposer killed
+# between mkdir and release leaves the directory behind, and every later proposer would wait
+# out its budget and refuse until a person removed it. A lock is broken only when its owner is
+# provably dead: the owner file names this host, and `ps -p` — which answers for any user&#39;s
+# process, where `kill -0` fails on a live process it may not signal — finds no such pid.
+# Anything less certain is waited on and refused: a lock with no owner file (taken by an older
+# version, or by a proposer that died in the instant between mkdir and writing it), a lock
+# whose owner is on another host, and a lock on a system where `ps -p` cannot be shown to work.
+# A pid reused by an unrelated process reads as alive, which is the safe direction.
+#
+# Breaking is itself exclusive, under `&lt;lock&gt;.break`: without it, two waiters that both read a
+# dead owner could each remove a lock, and the second removal would take the lock a third
+# proposer had taken in between.
+#
+# Releasing is exclusive under the same `&lt;lock&gt;.break`, and this is what makes a broken lock
+# the one that was dead. A holder&#39;s process ends moments after it releases, so a waiter that
+# read the owner file while the holder still held it, and asked `ps -p` after the holder had
+# released and exited, found a dead pid in a file that no longer described the lock: by then a
+# third proposer had taken the lock and written its own owner, and the waiter removed that
+# live lock. Two proposers were then inside at once, each read the directory before the other
+# had written, and both wrote the same identity (issue #715: two 0005s and two 0006s among
+# eight proposers on a saturated CI runner, where a `ps` spawn is slow enough to open the
+# window). With release under `&lt;lock&gt;.break`, the lock cannot change hands while a breaker
+# holds it: the holder cannot release, and nobody else can take a lock that exists. So the
+# owner file a breaker reads under it is the owner of the lock it removes.
+#
+# A waiter asks first without `&lt;lock&gt;.break` and takes it only when the owner looks dead, then
+# asks again under it, so a live lock costs its waiters one `ps` per poll and never holds up
+# its own release. A release removes only a lock whose owner file still names it, so that a
+# proposer can never remove a lock another one holds. The known hole is a container that
+# shares this host&#39;s name and not its process table; there a live holder reads as dead.
+MJ_ADR_LOCK_WAIT=&quot;${MJ_ADR_LOCK_WAIT:-100}&quot;   # tenths of a second before a live lock is refused
+mj_adr_host() { uname -n 2&gt;/dev/null || printf unknown; }
+mj_adr_lock_take() {
+  local lock=&quot;$1&quot; waited=0 owner also=&quot;&quot;
+  while ! mkdir &quot;$lock&quot; 2&gt;/dev/null; do
+    mj_adr_lock_break_dead &quot;$lock&quot; &amp;&amp; continue
+    waited=$((waited + 1))
+    if [ &quot;$waited&quot; -gt &quot;$MJ_ADR_LOCK_WAIT&quot; ]; then
+      owner=&quot;$(cat &quot;$lock/owner&quot; 2&gt;/dev/null)&quot; || owner=&quot;&quot;
+      # a `&lt;lock&gt;.break` that outlived its breaker stops every break and every release, and
+      # only a person can tell it from a slow one, so the refusal names it as well
+      [ -d &quot;$lock.break&quot; ] \
+        &amp;&amp; also=&quot; and $(mj_rel &quot;$lock.break&quot;), which stops a dead holder&#39;s lock being broken,&quot;
+      mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;adr propose: the identity lock $(mj_rel &quot;$lock&quot;) has been held for too long ($([ -n &quot;$owner&quot; ] &amp;&amp; printf &#39;by %s&#39; &quot;$owner&quot; || printf &#39;by an owner it does not name&#39;)); remove it$also if no other worker is proposing&quot;
+    fi
+    sleep 0.1 2&gt;/dev/null || sleep 1
+  done
+  # written beside and moved into place, so a reader sees no owner or the whole owner
+  printf &#39;%s %s\n&#39; &quot;$(mj_adr_host)&quot; &quot;$$&quot; &gt; &quot;$lock/.owner.$$&quot;
+  mv &quot;$lock/.owner.$$&quot; &quot;$lock/owner&quot;
+}
+# 0 when the lock at $1 is held by this process, by its owner file
+mj_adr_lock_mine() {
+  local host pid
+  read -r host pid 2&gt;/dev/null &lt; &quot;$1/owner&quot; &amp;&amp; [ &quot;$host&quot; = &quot;$(mj_adr_host)&quot; ] &amp;&amp; [ &quot;$pid&quot; = &quot;$$&quot; ]
+}
+mj_adr_lock_release() {
+  local lock=&quot;$1&quot; waited=0
+  until mkdir &quot;$lock.break&quot; 2&gt;/dev/null; do
+    waited=$((waited + 1))
+    if [ &quot;$waited&quot; -gt &quot;$MJ_ADR_LOCK_WAIT&quot; ]; then
+      # Releasing without `&lt;lock&gt;.break` is the race above, so the lock stays. Its owner is
+      # this process, which is about to end, so the next waiter breaks it once the
+      # `&lt;lock&gt;.break` that held this release up is gone.
+      mj_err &quot;warning: adr propose: could not release the identity lock $(mj_rel &quot;$lock&quot;) (held up by $(mj_rel &quot;$lock.break&quot;)); the next proposer breaks it once this process has ended&quot;
+      return 0
+    fi
+    sleep 0.05 2&gt;/dev/null || sleep 1
+  done
+  if mj_adr_lock_mine &quot;$lock&quot;; then
+    rm -f &quot;$lock/owner&quot; 2&gt;/dev/null
+    rmdir &quot;$lock&quot; 2&gt;/dev/null || true
+  fi
+  rmdir &quot;$lock.break&quot; 2&gt;/dev/null || true
+}
+# 0 when the owner file names this host and a pid `ps -p` finds no process for, 1 otherwise
+mj_adr_lock_owner_dead() {
+  local host pid
+  # stderr is redirected before the input: the holder may release at any moment, and a
+  # redirection that fails is reported before any later redirection applies
+  read -r host pid 2&gt;/dev/null &lt; &quot;$1/owner&quot; \
+    &amp;&amp; [ &quot;$host&quot; = &quot;$(mj_adr_host)&quot; ] \
+    &amp;&amp; case &quot;$pid&quot; in &#39;&#39;|*[!0-9]*) false ;; *) true ;; esac \
+    &amp;&amp; ps -p &quot;$$&quot; &gt;/dev/null 2&gt;&amp;1 \
+    &amp;&amp; ! ps -p &quot;$pid&quot; &gt;/dev/null 2&gt;&amp;1
+}
+# 0 when a dead owner&#39;s lock was removed, 1 when the lock stands
+mj_adr_lock_break_dead() {
+  local lock=&quot;$1&quot; broke=1
+  # unexclusive and therefore only advisory: it decides whether to look again under the break
+  mj_adr_lock_owner_dead &quot;$lock&quot; || return 1
+  mkdir &quot;$lock.break&quot; 2&gt;/dev/null || return 1
+  # authoritative: under `&lt;lock&gt;.break` the lock can be neither released nor taken
+  if mj_adr_lock_owner_dead &quot;$lock&quot;; then
+    rm -f &quot;$lock/owner&quot; &amp;&amp; rmdir &quot;$lock&quot; 2&gt;/dev/null &amp;&amp; broke=0
+  fi
+  rmdir &quot;$lock.break&quot; 2&gt;/dev/null || true
+  return &quot;$broke&quot;
+}
+
+# The identities something claims that the base ref does not carry: allocated, and not yet
+# landed where the next worker will look.
+#
+# This is the half of the survey a high-water mark cannot express, and the reason the state
+# of this repository was misread twice in one day. On 2026-09-12 master&#39;s decisions ran to
+# 0055 and the refs to 0059, and two separate readings of that gap — one counting four
+# unlanded identities, one counting seven — were each derived from a scan that stopped at
+# the branches its author already knew about. The high-water mark is one number and hides
+# every one of them: it says 0060 is free, which is true, and says nothing about the seven
+# identities between 0042 and 0059 that are spoken for on branches nobody on master can see.
+#
+# Naming them is the whole mechanism. Which of the seven will land, which should be released
+# back, and which belongs to a session that has stopped are not questions a survey can
+# answer — an identity on an open branch and an identity on an abandoned one are the same
+# bytes — so nothing here decides anything. It reports the holders and lets the person who
+# can tell those apart see that there is something to tell apart.
+#
+# A holder is named the way its source can be acted on, which is why the ref case costs a
+# second look. The `where` a ref claim carries in the survey is the command that found it —
+# one `git log --all`, deliberately, because four hundred refs is one process — so it names
+# no branch. An outstanding identity whose holder reads `git log --all` tells the reader
+# nothing they can go and look at, so the branch is resolved here, for the outstanding
+# identities only, of which there are a handful where the survey has hundreds of claims.
+#
+# mj_adr_outstanding ROWS BASE. The base is passed in rather than resolved here because the
+# caller runs this in a command substitution and a subshell cannot hand a variable back: the
+# first version set the base in here and printed &quot;not landed on &quot; with the name missing,
+# which is the same class of defect as the rest of this file — a verdict that failed to name
+# its own subject.
+#
+# One row per outstanding identity: NNNN &lt;TAB&gt; &lt;holder&gt;[, &lt;holder&gt;...]
+mj_adr_outstanding() {
+  local rows=&quot;$1&quot; base=&quot;$2&quot; rel basenums idents num paths path commit refs holders
+  [ -n &quot;$base&quot; ] || return 1
+  rel=&quot;${MJ_ADRS_DIR#$MJ_ROOT/}&quot;
+  basenums=&quot; $(git -C &quot;$MJ_ROOT&quot; ls-tree -r --name-only &quot;$base&quot; -- &quot;$rel/&quot; 2&gt;/dev/null \
+    | sed -n &#39;s|.*/\([0-9][0-9][0-9][0-9]\)-.*\.md$|\1|p&#39; | LC_ALL=C sort -u | tr &#39;\n&#39; &#39; &#39;)&quot;
+  idents=&quot;$(awk -F&quot;$MJ_TAB&quot; -v base=&quot;$basenums&quot; &#39;
+    !index(base, &quot; &quot; $1 &quot; &quot;) &amp;&amp; !seen[$1]++ { print $1 }&#39; &quot;$rows&quot; | LC_ALL=C sort)&quot;
+  [ -n &quot;$idents&quot; ] || return 0
+
+  # every (path, commit) that ever added a decision on any ref, once — the same one-process
+  # survey `adr check` uses, so the two never disagree about what a ref carries
+  local seen; seen=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ao.XXXXXX&quot;)&quot;
+  git -C &quot;$MJ_ROOT&quot; log --all --no-renames --diff-filter=A --name-only --pretty=tformat:&#39;commit %H&#39; -- &quot;$rel&quot; 2&gt;/dev/null \
+    | awk -v tab=&quot;$MJ_TAB&quot; &#39;/^commit /{ c = $2; next } /\.md$/ { if (c != &quot;&quot;) printf &quot;%s%s%s\n&quot;, $0, tab, c }&#39; \
+    &gt; &quot;$seen&quot;
+
+  for num in $idents; do
+    holders=&quot;&quot;
+    # the sources that name something a person can open directly
+    # The tree claim names no path: the decisions directory is the only place it could be,
+    # so the informative half is that the claim is here and has not landed on the base.
+    holders=&quot;$(awk -F&quot;$MJ_TAB&quot; -v n=&quot;$num&quot; &#39;$1 == n &amp;&amp; $2 != &quot;ref&quot; &amp;&amp; !s[$2 $3]++ {
+      if ($2 == &quot;tree&quot;) print &quot;this working tree&quot;
+      else printf &quot;%s %s\n&quot;, ($2 == &quot;worktree&quot; ? &quot;worktree&quot; : &quot;board&quot;), $3 }&#39; &quot;$rows&quot;)&quot;
+    # and the refs, resolved from the commits that added the document
+    paths=&quot;$(awk -F&quot;$MJ_TAB&quot; -v p=&quot;$rel/$num-&quot; &#39;index($1, p) == 1 { print $1 }&#39; &quot;$seen&quot; | LC_ALL=C sort -u)&quot;
+    for path in $paths; do
+      # A ref that once added the document is not a ref that still carries it. The high-water
+      # survey is deliberately monotonic over history — a withdrawn identity stays spent — but
+      # &quot;who holds this now&quot; is a question about current trees, and answering it from the
+      # add-log names the branch that deleted the file as one of its holders. So each
+      # containing ref is asked whether the path is still there. This is the `ls-tree` per
+      # ref the obvious implementation does over all four hundred; here it is asked only of
+      # the refs that contain an add-commit for one of the handful of outstanding identities.
+      refs=&quot;$(awk -F&quot;$MJ_TAB&quot; -v w=&quot;$path&quot; &#39;$1 == w { print $2 }&#39; &quot;$seen&quot; \
+        | while IFS= read -r commit; do
+            git -C &quot;$MJ_ROOT&quot; for-each-ref --contains &quot;$commit&quot; \
+              --format=&#39;%(refname:short)&#39; refs/remotes/origin refs/heads refs/tags 2&gt;/dev/null
+          done | LC_ALL=C sort -u \
+        | while IFS= read -r ref; do
+            [ -n &quot;$(git -C &quot;$MJ_ROOT&quot; ls-tree --name-only &quot;$ref&quot; -- &quot;$path&quot; 2&gt;/dev/null)&quot; ] \
+              &amp;&amp; printf &#39;%s\n&#39; &quot;$ref&quot;
+          done | head -4 | tr &#39;\n&#39; &#39; &#39;)&quot;
+      [ -n &quot;$refs&quot; ] || continue
+      holders=&quot;$(printf &#39;%s\n%s&#39; &quot;$holders&quot; &quot;${refs% }&quot;)&quot;
+    done
+    # every holder the add-log suggested has since dropped the document, and no tree or board
+    # claims it either: it is spent, which the holes section already reports, and not outstanding
+    [ -n &quot;$(printf &#39;%s&#39; &quot;$holders&quot; | sed &#39;/^$/d&#39;)&quot; ] || continue
+    printf &#39;%s%s%s\n&#39; &quot;$num&quot; &quot;$MJ_TAB&quot; &quot;$(printf &#39;%s&#39; &quot;$holders&quot; | sed &#39;/^$/d&#39; | paste -sd&#39;,&#39; - | sed &#39;s/,/, /g&#39;)&quot;
+  done
+  rm -f &quot;$seen&quot;
+}
+
+# Which authored files cite an identity nothing writes. Only ever asked about the gaps, so
+# it is one `grep` over the tracked tree and not a per-identity scan; it is evidence for the
+# reader, never the mechanism — a gap is spent whether or not anything is found to cite it.
+mj_adr_citations() {
+  local num=&quot;$1&quot; n
+  n=&quot;$(printf &#39;%s&#39; &quot;$num&quot; | sed &#39;s/^0*//&#39;)&quot;; [ -n &quot;$n&quot; ] || n=0
+  git -C &quot;$MJ_ROOT&quot; grep -l -I -E &quot;(adr-$num|ADR $num|ADR $n\b)&quot; -- \
+    &#39;:(exclude).ai/local&#39; &#39;:(exclude)&#39;&quot;${MJ_ADRS_DIR#$MJ_ROOT/}/$num&quot;&#39;-*&#39; 2&gt;/dev/null \
+    | LC_ALL=C sort | head -6
+}
+
+# ---------------------------------------------------------------- next
+# The question three sessions answered by hand on one night: what is the next free identity?
+#
+# It answers with the number *and* with what it looked at, because the reason each of those
+# sessions had to write its own was that no answer here carried its denominator. A reader who
+# cannot see which sources were reachable cannot tell a survey of four sources from a survey
+# of three, and the one that is routinely missing — the board — is the only source that knows
+# about an identity a session has taken and not yet written.
+mj_adr_next() {
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --json) MJ_JSON=1; shift ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr next: unknown option $1&quot; ;;
+  esac; done
+  mj_require_installed
+  [ -d &quot;$MJ_ADRS_DIR&quot; ] || mj_die &quot;$MJ_EX_MISSING&quot; &quot;no $(mj_rel &quot;$MJ_ADRS_DIR&quot;)/ in this repository (the manifest names it)&quot;
+
+  local rows next max
+  rows=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.an.XXXXXX&quot;)&quot;
+  mj_adr_claims &gt; &quot;$rows&quot;
+  next=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;{ n = $1 + 0; if (n &gt; max) max = n } END { printf &quot;%04d\n&quot;, max + 1 }&#39; &quot;$rows&quot;)&quot;
+  max=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;{ n = $1 + 0; if (n &gt; max) max = n } END { printf &quot;%04d\n&quot;, max }&#39; &quot;$rows&quot;)&quot;
+
+  # per source: how many distinct identities it claimed, and whether it could be read at all
+  local counted; counted=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;
+    !seen[$2 FS $1]++ { n[$2]++ }
+    END { split(&quot;tree worktree ref peer&quot;, o, &quot; &quot;); for (i = 1; i &lt;= 4; i++) printf &quot;%s\t%d\n&quot;, o[i], n[o[i]] + 0 }&#39; &quot;$rows&quot;)&quot;
+  local holder; holder=&quot;$(awk -F&quot;$MJ_TAB&quot; -v m=&quot;$max&quot; &#39;($1 + 0) == (m + 0) { printf &quot;%s (%s)\n&quot;, $2, $3; exit }&#39; &quot;$rows&quot;)&quot;
+  # the holes below the high-water mark, which are spent and not free
+  local gaps; gaps=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;{ n = $1 + 0; seen[n] = 1; if (n &gt; max) max = n }
+    END { for (i = 1; i &lt; max; i++) if (!(i in seen)) printf &quot;%04d\n&quot;, i }&#39; &quot;$rows&quot;)&quot;
+  # the identities allocated somewhere the base ref does not carry: spoken for, not landed
+  local outstanding obase outstanding_read=1
+  obase=&quot;$(mj_adr_base_ref)&quot; || obase=&quot;&quot;
+  [ -n &quot;$obase&quot; ] || outstanding_read=0
+  outstanding=&quot;$(mj_adr_outstanding &quot;$rows&quot; &quot;$obase&quot;)&quot; || outstanding_read=0
+
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    local first=1 g src cnt
+    printf &#39;{&quot;schema&quot;:1,&quot;next&quot;:&quot;%s&quot;,&quot;highest_claimed&quot;:&quot;%s&quot;,&quot;sources&quot;:[&#39; &quot;$next&quot; &quot;$max&quot;
+    while IFS=&quot;$MJ_TAB&quot; read -r src cnt; do
+      [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0
+      printf &#39;{&quot;source&quot;:&quot;%s&quot;,&quot;identities&quot;:%s,&quot;reachable&quot;:%s}&#39; &quot;$src&quot; &quot;$cnt&quot; \
+        &quot;$([ &quot;$src&quot; = peer ] &amp;&amp; { [ &quot;$MJ_ADR_BOARD_READ&quot; = 1 ] &amp;&amp; printf true || printf false; } || printf true)&quot;
+    done &lt;&lt;EOF
+$counted
+EOF
+    printf &#39;],&quot;spent_gaps&quot;:[&#39;; first=1
+    for g in $gaps; do [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0; printf &#39;&quot;%s&quot;&#39; &quot;$g&quot;; done
+    printf &#39;],&quot;outstanding_base&quot;:%s,&quot;outstanding&quot;:[&#39; \
+      &quot;$([ &quot;$outstanding_read&quot; = 1 ] &amp;&amp; printf &#39;&quot;%s&quot;&#39; &quot;$obase&quot; || printf null)&quot;
+    first=1
+    local onum oholders
+    while IFS=&quot;$MJ_TAB&quot; read -r onum oholders; do
+      [ -n &quot;$onum&quot; ] || continue
+      [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0
+      printf &#39;{&quot;id&quot;:&quot;%s&quot;,&quot;held_by&quot;:&quot;%s&quot;}&#39; &quot;$onum&quot; &quot;$(mj_json_esc &quot;$oholders&quot;)&quot;
+    done &lt;&lt;EOF
+$outstanding
+EOF
+    printf &#39;]}\n&#39;
+  else
+    printf &#39;next free identity: adr-%s\n\n&#39; &quot;$next&quot;
+    printf &#39;surveyed, and what each claimed:\n&#39;
+    local src cnt label
+    while IFS=&quot;$MJ_TAB&quot; read -r src cnt; do
+      case &quot;$src&quot; in
+        tree)     label=&quot;this working tree&quot; ;;
+        worktree) label=&quot;every sibling worktree, as it stands on disk&quot; ;;
+        ref)      label=&quot;every ref: branches, tags, remotes, worktree HEADs&quot; ;;
+        peer)     label=&quot;the peer board of the shared server&quot; ;;
+      esac
+      if [ &quot;$src&quot; = peer ] &amp;&amp; [ &quot;$MJ_ADR_BOARD_READ&quot; != 1 ]; then
+        printf &#39;  %-52s not reachable — no server, or no jq/curl\n&#39; &quot;$label&quot;
+      else
+        printf &#39;  %-52s %s identit%s\n&#39; &quot;$label&quot; &quot;$cnt&quot; &quot;$([ &quot;$cnt&quot; = 1 ] &amp;&amp; printf y || printf ies)&quot;
+      fi
+    done &lt;&lt;EOF
+$counted
+EOF
+    printf &#39;\nhighest claimed: adr-%s&#39; &quot;$max&quot;
+    [ -n &quot;$holder&quot; ] &amp;&amp; printf &#39;  (%s)&#39; &quot;$holder&quot;
+    printf &#39;\n&#39;
+    # The shell tool has no peer identity of its own — it reads the board over HTTP and the
+    # board answers sessions, not commands — so it cannot subtract the reader from the list.
+    # A session that announced an allocation and then asks is therefore stepped over its own
+    # claim, which costs one number out of a sparse sequence and is the safe direction.
+    case &quot;$holder&quot; in peer*) printf &#39;that is a board claim, not a file — it may be your own announcement\n&#39; ;; esac
+    if [ -n &quot;$gaps&quot; ]; then
+      local g c
+      printf &#39;\nholes below it, spent and not free — allocation is monotonic and never recycles:\n&#39;
+      for g in $gaps; do
+        c=&quot;$(mj_adr_citations &quot;$g&quot; | tr &#39;\n&#39; &#39; &#39;)&quot;
+        if [ -n &quot;$c&quot; ]; then printf &#39;  %s  cited by: %s\n&#39; &quot;$g&quot; &quot;$c&quot;
+        else printf &#39;  %s  nothing cites it here; it was taken and withdrawn, or taken and not yet written\n&#39; &quot;$g&quot;; fi
+      done
+    fi
+    # The identities that are spoken for and have not landed. A high-water mark of 0060 is a
+    # true answer that hides these completely, and hiding them is how the same gap in this
+    # repository&#39;s own sequence was measured as four unlanded identities and as seven within
+    # one hour. Nothing is decided here: an identity on an open branch and an identity on an
+    # abandoned one are indistinguishable to any survey, and which of the two a number is
+    # can only be settled by a person.
+    if [ &quot;$outstanding_read&quot; != 1 ]; then
+      printf &#39;\noutstanding allocations were NOT surveyed: no base ref resolves here&#39;
+      printf &#39; (%s); fetch first\n&#39; &quot;${MJ_ADR_BASE:-origin/master, origin/main, master, main}&quot;
+    elif [ -n &quot;$outstanding&quot; ]; then
+      local onum oholders n_out
+      n_out=&quot;$(printf &#39;%s\n&#39; &quot;$outstanding&quot; | sed &#39;/^$/d&#39; | wc -l | tr -d &#39; &#39;)&quot;
+      printf &#39;\n%s allocated and not landed on %s — spoken for, and invisible to anyone reading %s:\n&#39; \
+        &quot;$n_out&quot; &quot;$obase&quot; &quot;$obase&quot;
+      while IFS=&quot;$MJ_TAB&quot; read -r onum oholders; do
+        [ -n &quot;$onum&quot; ] || continue
+        printf &#39;  %s  held by: %s\n&#39; &quot;$onum&quot; &quot;$oholders&quot;
+      done &lt;&lt;EOF
+$outstanding
+EOF
+      printf &#39;whether each lands, or its number should be released, is a person&#39;&quot;&#39;&quot;&#39;s call: an identity\n&#39;
+      printf &#39;on an open branch and one on an abandoned branch are the same bytes to this survey.\n&#39;
+    fi
+    # What the survey cannot reach, said once and plainly. Two of these four sources are
+    # complete and two cannot be: a ref scan sees only what was pushed, and the board is
+    # per-connection, so an announcement dies when a session reconnects and a reservation
+    # there is soft by construction. Neither gap is removable and they are complementary,
+    # so this number is a best reading and not a guarantee (project.a-verdict-states-its-subject).
+    printf &#39;\nnot surveyed, and not surveyable: an identity a session has taken but neither pushed\n&#39;
+    printf &#39;nor announced. A ref scan sees what was pushed; the board sees what was announced on a\n&#39;
+    printf &#39;live connection and forgets it on reconnect. Two sessions allocating in the same minute\n&#39;
+    printf &#39;are invisible to both.\n&#39;
+    printf &#39;\nannounce it before you write it: majordomus_announce, naming the identity as well as the paths\n&#39;
+  fi
+  rm -f &quot;$rows&quot;
+  return 0
+}
+
+# ---------------------------------------------------------------- propose
+# The identity is allocated under an exclusive lock over the decisions directory: mkdir is
+# the one create-or-fail primitive every POSIX filesystem gives us, so two worktrees
+# proposing in the same second get two identities rather than one. The file is written to a
+# temporary beside its destination and moved into place, so a reader never sees half a
+# record and an interrupted propose leaves nothing.
+
+mj_adr_slug() {
+  printf &#39;%s&#39; &quot;$1&quot; | tr &#39;A-Z&#39; &#39;a-z&#39; | sed -e &#39;s/[^a-z0-9]\{1,\}/-/g&#39; -e &#39;s/^-//&#39; -e &#39;s/-$//&#39; | cut -c1-60
+}
+
+mj_adr_propose() {
+  local title=&quot;&quot; tags=&quot;&quot; refs=&quot;&quot; supersedes=&quot;&quot;
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --from) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--from needs a &lt;type&gt;:&lt;value&gt; reference&quot;; refs=&quot;$refs $2&quot;; shift 2 ;;
+    --from=*) refs=&quot;$refs ${1#--from=}&quot;; shift ;;
+    --tag) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--tag needs a tag&quot;; tags=&quot;$tags $2&quot;; shift 2 ;;
+    --tag=*) tags=&quot;$tags ${1#--tag=}&quot;; shift ;;
+    --supersedes) [ $# -ge 2 ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;--supersedes needs an adr id&quot;; supersedes=&quot;$supersedes $2&quot;; shift 2 ;;
+    --supersedes=*) supersedes=&quot;$supersedes ${1#--supersedes=}&quot;; shift ;;
+    --status|--status=*) mj_die &quot;$MJ_EX_REFUSED&quot; &quot;adr propose: the status is not yours to choose; a proposed decision is accepted by a person editing the record&quot; ;;
+    --json) MJ_JSON=1; shift ;;
+    -*) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: unknown option $1&quot; ;;
+    *) [ -z &quot;$title&quot; ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: the title must be one argument (quote it)&quot;; title=&quot;$1&quot;; shift ;;
+  esac; done
+  [ -n &quot;$title&quot; ] || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: the title is required&quot;
+  mj_is_multiline &quot;$title&quot; &amp;&amp; mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: the title must be single-line&quot;
+  mj_require_installed
+  [ -d &quot;$MJ_ADRS_DIR&quot; ] || mj_die &quot;$MJ_EX_MISSING&quot; &quot;no $(mj_rel &quot;$MJ_ADRS_DIR&quot;)/ in this repository (the manifest names it)&quot;
+
+  local r
+  for r in $refs; do mj_adr_ref_valid &quot;$r&quot; &gt;/dev/null || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: $(mj_adr_ref_valid &quot;$r&quot;)&quot;; done
+  for r in $tags; do
+    case &quot;$r&quot; in *[!a-z0-9-]*|[!a-z]*) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: tag &#39;$r&#39; is not lower-case letters, digits and hyphens starting with a letter&quot; ;; esac
+  done
+  for r in $supersedes; do
+    case &quot;$r&quot; in adr-[0-9][0-9][0-9][0-9]) ;; *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: --supersedes &#39;$r&#39; is not adr-NNNN&quot; ;; esac
+    ls &quot;$MJ_ADRS_DIR/${r#adr-}&quot;-*.md &gt;/dev/null 2&gt;&amp;1 || mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr propose: --supersedes &#39;$r&#39; matches no decision here&quot;
+  done
+
+  local lock num slug dest tmp origin=extracted surveyed here
+  # The survey runs before the lock, and only the working tree is read again inside it.
+  #
+  # The whole survey used to run inside the lock, and it is the expensive part: sibling
+  # worktrees, every ref&#39;s history and the board, a second or more per call. Proposers
+  # serialise on the lock, so each one waited for a full survey by everyone ahead of it, and
+  # eight of them outlasted the lock&#39;s budget — measured as 3 of 24 concurrent proposers
+  # dying with exit 13 on a developer machine, and as the intermittent `FAIL 99_adr` in CI.
+  #
+  # Nothing is given up by moving it out. The lock is a directory in this worktree, so it
+  # never excluded a proposer in another worktree, on another branch, or behind the board:
+  # what those sources report could already change between reading them and writing the
+  # record, and `adr next` says so — a ref scan and the board both miss two sessions
+  # allocating in the same minute. The one thing the lock does exclude is another proposer
+  # in *this* worktree, and every such proposer writes its record into this directory before
+  # releasing the lock. Re-reading the directory inside the lock therefore sees every
+  # identity a local proposer has taken, which is the whole of the guarantee the lock gives.
+  surveyed=&quot;$(mj_adr_claims | mj_adr_high_water)&quot;
+  lock=&quot;$MJ_ADRS_DIR/.id.lock&quot;
+  mj_adr_lock_take &quot;$lock&quot;
+  # from here the identity is ours until the record exists; every exit releases the lock
+  trap &#39;mj_adr_lock_release &quot;&#39;&quot;$lock&quot;&#39;&quot;; mj_cleanup&#39; EXIT
+  here=&quot;$(mj_adr_numbers_here &quot;$MJ_ADRS_DIR&quot; | mj_adr_high_water)&quot;
+  [ &quot;$here&quot; -gt &quot;$surveyed&quot; ] &amp;&amp; surveyed=&quot;$here&quot;
+  num=&quot;$(printf &#39;%04d&#39; &quot;$((surveyed + 1))&quot;)&quot;
+  slug=&quot;$(mj_adr_slug &quot;$title&quot;)&quot;
+  [ -n &quot;$slug&quot; ] || slug=&quot;decision&quot;
+  dest=&quot;$MJ_ADRS_DIR/$num-$slug.md&quot;
+  tmp=&quot;$dest.tmp.$$&quot;
+  [ -n &quot;$refs&quot; ] || origin=authored
+
+  {
+    printf -- &#39;---\nschema: %s\nid: adr-%s\nkind: adr\ntitle: %s\nstatus: proposed\ndate: %s\n&#39; \
+      &quot;$MJ_ADR_SCHEMA&quot; &quot;$num&quot; &quot;$title&quot; &quot;$(date -u +%Y-%m-%d)&quot;
+    if [ -n &quot;$tags&quot; ]; then printf &#39;tags:\n&#39;; for r in $tags; do printf -- &#39;  - %s\n&#39; &quot;$r&quot;; done; fi
+    if [ -n &quot;$supersedes&quot; ]; then printf &#39;supersedes:\n&#39;; for r in $supersedes; do printf -- &#39;  - %s\n&#39; &quot;$r&quot;; done; fi
+    printf &#39;provenance:\n  origin: %s\n&#39; &quot;$origin&quot;
+    if [ -n &quot;$refs&quot; ]; then printf &#39;  derived_from:\n&#39;; for r in $refs; do printf -- &#39;    - %s\n&#39; &quot;$r&quot;; done; fi
+    printf -- &#39;---\n\n# %s. %s\n\n&#39; &quot;$((10#$num))&quot; &quot;$title&quot;
+    printf &#39;## Context\n\nWhat forced the decision. %s\n\n&#39; \
+      &quot;$([ -n &quot;$refs&quot; ] &amp;&amp; printf &#39;Derived from:%s.&#39; &quot;$(printf &#39;%s&#39; &quot;$refs&quot; | sed &#39;s/^/ /&#39;)&quot; || printf &#39;Written by hand; nothing was derived.&#39;)&quot;
+    printf &#39;## Decision\n\n%s\n\n&#39; &quot;$title&quot;
+    printf &#39;## Alternatives rejected\n\nWhat else was considered, and why it was not taken.\n\n&#39;
+    printf &#39;## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.\n&#39;
+  } &gt; &quot;$tmp&quot;
+  # Re-validated at the last moment it can be, still under the lock: the lock is this
+  # process&#39;s, and nothing in the directory has taken the identity since it was read. Either
+  # failing means two proposers were inside at once, which is the defect of issue #715, and a
+  # refusal is the only answer that does not write a second record at one identity.
+  if ! mj_adr_lock_mine &quot;$lock&quot; || ls &quot;$MJ_ADRS_DIR/$num&quot;-*.md &gt;/dev/null 2&gt;&amp;1; then
+    rm -f &quot;$tmp&quot;
+    mj_die &quot;$MJ_EX_INTERNAL&quot; &quot;adr propose: adr-$num was taken while this proposer held the identity lock $(mj_rel &quot;$lock&quot;), which the lock exists to prevent; nothing was written&quot;
+  fi
+  mv &quot;$tmp&quot; &quot;$dest&quot;
+  mj_adr_lock_release &quot;$lock&quot;
+  trap mj_cleanup EXIT
+
+  mj_ledger_append adr.proposed &quot;\&quot;adr\&quot;:\&quot;adr-$num\&quot;,\&quot;title\&quot;:\&quot;$(mj_json_esc &quot;$title&quot;)\&quot;&quot;
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    printf &#39;{&quot;schema&quot;:1,&quot;id&quot;:&quot;adr-%s&quot;,&quot;status&quot;:&quot;proposed&quot;,&quot;path&quot;:&quot;%s&quot;}\n&#39; &quot;$num&quot; &quot;$(mj_json_esc &quot;$(mj_rel &quot;$dest&quot;)&quot;)&quot;
+  else
+    printf &#39;proposed: adr-%s  %s\n%s\n&#39; &quot;$num&quot; &quot;$title&quot; &quot;$(mj_rel &quot;$dest&quot;)&quot;
+    printf &#39;status is &quot;proposed&quot;; accepting it is a person editing that field.\n&#39;
+  fi
+  return 0
+}
+
+# ---------------------------------------------------------------- check
+# The whole catalogue: per-record validity, then the checks only the set can answer —
+# identities are unique, a superseded record&#39;s replacement exists, and supersession is
+# reciprocal so that the chain can be walked from either end.
+mj_adr_check() {
+  while [ $# -gt 0 ]; do case &quot;$1&quot; in
+    --json) MJ_JSON=1; shift ;;
+    *) mj_die &quot;$MJ_EX_USAGE&quot; &quot;adr check: unknown option $1&quot; ;;
+  esac; done
+  mj_require_installed
+  local out; out=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ack.XXXXXX&quot;)&quot;
+  local rc=0
+  mj_adr_examine mj_adr_report_line &gt; &quot;$out&quot; || rc=$?
+  if [ &quot;$MJ_JSON&quot; = 1 ]; then
+    local first=1 line
+    printf &#39;{&quot;schema&quot;:1,&quot;examined&quot;:%s,&quot;findings&quot;:[&#39; &quot;$MJ_ADR_N&quot;
+    while IFS= read -r line; do
+      [ -n &quot;$line&quot; ] || continue
+      [ &quot;$first&quot; = 1 ] || printf &#39;,&#39;; first=0
+      printf &#39;{&quot;finding&quot;:&quot;%s&quot;}&#39; &quot;$(mj_json_esc &quot;$line&quot;)&quot;
+    done &lt; &quot;$out&quot;
+    printf &#39;],&quot;refs&quot;:{&quot;surveyed&quot;:%s&#39; &quot;$([ -n &quot;$MJ_ADR_REFS_SKIP&quot; ] &amp;&amp; printf false || printf true)&quot;
+    [ -n &quot;$MJ_ADR_REFS_SKIP&quot; ] &amp;&amp; printf &#39;,&quot;reason&quot;:&quot;%s&quot;&#39; &quot;$(mj_json_esc &quot;$MJ_ADR_REFS_SKIP&quot;)&quot;
+    printf &#39;,&quot;added_here&quot;:%s}&#39; &quot;$MJ_ADR_REFS_N&quot;
+    printf &#39;,&quot;ok&quot;:%s}\n&#39; &quot;$([ &quot;$rc&quot; = 0 ] &amp;&amp; printf true || printf false)&quot;
+  else
+    if [ &quot;$rc&quot; = 0 ]; then
+      printf &#39;examined %s decision(s) in %s/\n&#39; &quot;$MJ_ADR_N&quot; &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)&quot;
+      printf &#39;every identity unique, every status known, every reference resolves\n&#39;
+    else
+      cat &quot;$out&quot;
+      printf &#39;\n%s decision(s) examined, %s with findings\n&#39; &quot;$MJ_ADR_N&quot; &quot;$MJ_ADR_FINDINGS&quot;
+    fi
+    # Always stated, clean or not: a survey that could not reach the other refs has not
+    # cleared this branch of a collision, and a reader who cannot tell the two apart is
+    # given a confident wrong answer (project.empty-is-not-failure).
+    if [ -n &quot;$MJ_ADR_REFS_SKIP&quot; ]; then
+      printf &#39;the other refs were NOT surveyed: %s\n&#39; &quot;$MJ_ADR_REFS_SKIP&quot;
+    else
+      printf &#39;%s identit%s added here, measured against %s and every other ref\n&#39; \
+        &quot;$MJ_ADR_REFS_N&quot; &quot;$([ &quot;$MJ_ADR_REFS_N&quot; = 1 ] &amp;&amp; printf y || printf ies)&quot; &quot;$(mj_adr_base_ref)&quot;
+    fi
+  fi
+  rm -f &quot;$out&quot;
+  [ &quot;$rc&quot; = 0 ] || return &quot;$MJ_EX_CONTRACT&quot;
+  return 0
+}
+
+# mj_adr_examine REPORTER — runs every check and calls REPORTER &lt;path&gt; &lt;reason&gt; for each
+# finding. The doctrine validator and `adr check` share it, so the two never disagree.
+MJ_ADR_FINDINGS=0
+mj_adr_examine() {
+  local report=&quot;$1&quot; f id st date title sb sup reasons r rc=0
+  MJ_ADR_FINDINGS=0
+  mj_adr_catalogue
+  # per record
+  while IFS=&quot;$MJ_TAB&quot; read -r f id st date title sb sup reasons; do
+    sb=&quot;$(mj_adr_un &quot;$sb&quot;)&quot;; sup=&quot;$(mj_adr_un &quot;$sup&quot;)&quot;; reasons=&quot;$(mj_adr_un &quot;$reasons&quot;)&quot;
+    [ -n &quot;$reasons&quot; ] || continue
+    local one
+    printf &#39;%s\n&#39; &quot;$reasons&quot; | tr &#39;;&#39; &#39;\n&#39; | while IFS= read -r one; do
+      [ -n &quot;$one&quot; ] &amp;&amp; &quot;$report&quot; &quot;$f&quot; &quot;$one&quot;
+    done
+    MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1
+  done &lt; &quot;$MJ_ADR_ROWS&quot;
+  # identities are unique. This is the check that was missing when two worktrees each
+  # allocated 0005 and 0007 within hours of one another.
+  local dup
+  dup=&quot;$(awk -F&quot;$MJ_TAB&quot; &#39;$2 != &quot;&quot; { c[$2]++; p[$2] = p[$2] &quot; &quot; $1 } END { for (k in c) if (c[k] &gt; 1) printf &quot;%s\t%s\n&quot;, k, p[k] }&#39; &quot;$MJ_ADR_ROWS&quot;)&quot;
+  if [ -n &quot;$dup&quot; ]; then
+    while IFS=&quot;$MJ_TAB&quot; read -r id sup; do
+      [ -n &quot;$id&quot; ] &amp;&amp; { &quot;$report&quot; &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&quot; &quot;identity $id is claimed by more than one record:$sup&quot;; MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1; }
+    done &lt;&lt;EOF
+$dup
+EOF
+  fi
+  # the file-name numbers are unique too, so that a listing is not ambiguous before a
+  # record is even parsed
+  dup=&quot;$(ls &quot;$MJ_ADRS_DIR&quot; 2&gt;/dev/null | awk &#39;/^[0-9][0-9][0-9][0-9]-/ { n = substr($0, 1, 4); c[n]++; p[n] = p[n] &quot; &quot; $0 } END { for (k in c) if (c[k] &gt; 1) printf &quot;%s\t%s\n&quot;, k, p[k] }&#39;)&quot;
+  if [ -n &quot;$dup&quot; ]; then
+    while IFS=&quot;$MJ_TAB&quot; read -r id sup; do
+      [ -n &quot;$id&quot; ] &amp;&amp; { &quot;$report&quot; &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&quot; &quot;file-name number $id is used by more than one file:$sup&quot;; MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1; }
+    done &lt;&lt;EOF
+$dup
+EOF
+  fi
+  # relations resolve, and supersession is reciprocal
+  local ids; ids=&quot; $(awk -F&quot;$MJ_TAB&quot; &#39;{ printf &quot;%s &quot;, $2 }&#39; &quot;$MJ_ADR_ROWS&quot;)&quot;
+  while IFS=&quot;$MJ_TAB&quot; read -r f id st date title sb sup reasons; do
+    sb=&quot;$(mj_adr_un &quot;$sb&quot;)&quot;; sup=&quot;$(mj_adr_un &quot;$sup&quot;)&quot;; reasons=&quot;$(mj_adr_un &quot;$reasons&quot;)&quot;
+    if [ -n &quot;$sb&quot; ]; then
+      case &quot;$ids&quot; in *&quot; $sb &quot;*) ;; *) &quot;$report&quot; &quot;$f&quot; &quot;superseded_by names $sb, which is not a decision here&quot;; MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1 ;; esac
+    fi
+    for r in $(printf &#39;%s&#39; &quot;$sup&quot; | tr &#39;,&#39; &#39; &#39;); do
+      [ -n &quot;$r&quot; ] || continue
+      case &quot;$ids&quot; in
+        *&quot; $r &quot;*)
+          # the record it stands in for must say so, or the chain is walkable one way only
+          local back; back=&quot;$(awk -F&quot;$MJ_TAB&quot; -v w=&quot;$r&quot; &#39;$2 == w { print $6 }&#39; &quot;$MJ_ADR_ROWS&quot;)&quot;
+          [ &quot;$back&quot; = &quot;$id&quot; ] || { &quot;$report&quot; &quot;$f&quot; &quot;supersedes $r, but $r does not name $id in superseded_by (found \&quot;$back\&quot;)&quot;; MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1; }
+          ;;
+        *) &quot;$report&quot; &quot;$f&quot; &quot;supersedes $r, which is not a decision here&quot;; MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1 ;;
+      esac
+    done
+  done &lt; &quot;$MJ_ADR_ROWS&quot;
+  # and the question this tree cannot answer about itself: does another ref already hold a
+  # different decision at an identity this one adds? The doctrine and `adr check` share it
+  # for the same reason they share everything above — a second opinion about the same refs
+  # would drift from this one.
+  mj_adr_collisions &quot;$report&quot; || rc=1
+  return &quot;$rc&quot;
+}
+
+mj_adr_report_line() { printf &#39;%s: %s\n&#39; &quot;$1&quot; &quot;$2&quot;; }
+
+# ------------------------------------------------------------- across the refs
+# The half of the examination that is not about this tree.
+#
+# `mj_adr_examine` above answers &quot;are the decisions in front of me consistent with each
+# other&quot;. It cannot see the collision that actually costs this repository anything, because
+# that collision is between *two trees*: two branches, each internally perfect, each holding
+# a different decision at the same identity. `majordomus generate --strict` then excludes
+# every claimant of that identity and refuses the whole tree, and the error names the
+# identity rather than the two sessions — so it surfaces at merge time, hours away from
+# either cause. On the night of 2026-09-11 three branches held 0044 and two held 0043.
+#
+# So this asks the question at commit time instead, on the branch, where the answer is still
+# cheap to act on: for every identity this tree adds relative to the base, does another ref
+# carry a *different* document there?
+#
+# Different means a different file name. Two refs holding the same path is an edit, and an
+# edit is resolved by merging; two refs holding 0044-cooperation-is... and 0044-the-model-
+# catalogue-is... is a choice between two finished pieces of work, and one of them was
+# written for nothing. Only the second is refused.
+#
+# Cost, because this runs inside `doctor` and `doctor` runs in the pre-commit hook: one
+# `ls-tree` of the base (~10ms) and nothing else, unless this tree actually adds an
+# identity. When it does, one `git log` over the decisions directory across every ref —
+# measured at 0.22s over 436 refs and the whole history — and one `for-each-ref --contains`
+# per colliding identity, of which there are normally none.
+MJ_ADR_REFS_SKIP=&quot;&quot;
+MJ_ADR_REFS_N=0
+
+# The ref this tree&#39;s additions are measured against: what a merge will land on.
+# MJ_ADR_BASE, when set, is the base and nothing else is tried — an override that silently
+# fell back to a default would be an override that cannot be tested and cannot be trusted.
+mj_adr_base_ref() {
+  local b
+  if [ -n &quot;${MJ_ADR_BASE:-}&quot; ]; then
+    git -C &quot;$MJ_ROOT&quot; rev-parse --verify -q &quot;$MJ_ADR_BASE^{commit}&quot; &gt;/dev/null 2&gt;&amp;1 \
+      &amp;&amp; { printf &#39;%s\n&#39; &quot;$MJ_ADR_BASE&quot;; return 0; }
+    return 1
+  fi
+  for b in origin/master origin/main master main; do
+    git -C &quot;$MJ_ROOT&quot; rev-parse --verify -q &quot;$b^{commit}&quot; &gt;/dev/null 2&gt;&amp;1 &amp;&amp; { printf &#39;%s\n&#39; &quot;$b&quot;; return 0; }
+  done
+  return 1
+}
+
+# mj_adr_collisions REPORTER — calls REPORTER &lt;path&gt; &lt;reason&gt; for each colliding identity.
+# Sets MJ_ADR_REFS_SKIP when it could not look, which is never silent: a check that cannot
+# reach its subject says so rather than exiting clean (project.empty-is-not-failure).
+mj_adr_collisions() {
+  local report=&quot;$1&quot; base rel adds here num path commit refs rc=0
+  MJ_ADR_REFS_SKIP=&quot;&quot;; MJ_ADR_REFS_N=0
+  mj_has git || { MJ_ADR_REFS_SKIP=&quot;git is not on PATH&quot;; return 0; }
+  git -C &quot;$MJ_ROOT&quot; rev-parse --git-dir &gt;/dev/null 2&gt;&amp;1 \
+    || { MJ_ADR_REFS_SKIP=&quot;$(mj_rel &quot;$MJ_ROOT&quot;) is not a git repository&quot;; return 0; }
+  base=&quot;$(mj_adr_base_ref)&quot; \
+    || { MJ_ADR_REFS_SKIP=&quot;no base ref resolves here (${MJ_ADR_BASE:-origin/master, origin/main, master, main}); fetch first&quot;; return 0; }
+  rel=&quot;${MJ_ADRS_DIR#$MJ_ROOT/}&quot;
+
+  # what this tree adds relative to the base, by identity. An identity the base already
+  # carries is not this branch&#39;s to claim and not this branch&#39;s problem.
+  local basenums; basenums=&quot; $(git -C &quot;$MJ_ROOT&quot; ls-tree --name-only &quot;$base&quot; -- &quot;$rel/&quot; 2&gt;/dev/null \
+    | sed -n &#39;s|.*/\([0-9][0-9][0-9][0-9]\)-.*\.md$|\1|p&#39; | tr &#39;\n&#39; &#39; &#39;)&quot;
+  adds=&quot;&quot;
+  for here in &quot;$MJ_ADRS_DIR&quot;/[0-9][0-9][0-9][0-9]-*.md; do
+    [ -e &quot;$here&quot; ] || continue
+    num=&quot;${here##*/}&quot;; num=&quot;${num%%-*}&quot;
+    case &quot;$basenums&quot; in *&quot; $num &quot;*) continue ;; esac
+    adds=&quot;$adds $num&quot;
+  done
+  MJ_ADR_REFS_N=&quot;$(printf &#39;%s&#39; &quot;$adds&quot; | wc -w | tr -d &#39; &#39;)&quot;
+  [ -n &quot;$adds&quot; ] || return 0
+
+  # every (path, commit) that ever added a decision on any ref, once
+  local seen; seen=&quot;$(mktemp &quot;${TMPDIR:-/tmp}/mj.ax.XXXXXX&quot;)&quot;
+  git -C &quot;$MJ_ROOT&quot; log --all --no-renames --diff-filter=A --name-only --pretty=tformat:&#39;commit %H&#39; -- &quot;$rel&quot; 2&gt;/dev/null \
+    | awk -v tab=&quot;$MJ_TAB&quot; &#39;/^commit /{ c = $2; next } /\.md$/ { if (c != &quot;&quot;) printf &quot;%s%s%s\n&quot;, $0, tab, c }&#39; \
+    &gt; &quot;$seen&quot;
+
+  local paths
+  for num in $adds; do
+    here=&quot;$(ls &quot;$MJ_ADRS_DIR/$num&quot;-*.md 2&gt;/dev/null | head -1)&quot;
+    [ -n &quot;$here&quot; ] || continue
+    here=&quot;$(mj_rel &quot;$here&quot;)&quot;
+    # one finding per competing *document*, not per commit that introduced it: a decision
+    # cherry-picked onto four branches has four add-commits and is still one collision
+    paths=&quot;$(awk -F&quot;$MJ_TAB&quot; -v p=&quot;$rel/$num-&quot; -v h=&quot;$here&quot; \
+      &#39;index($1, p) == 1 &amp;&amp; $1 != h { print $1 }&#39; &quot;$seen&quot; | LC_ALL=C sort -u)&quot;
+    for path in $paths; do
+      refs=&quot;$(awk -F&quot;$MJ_TAB&quot; -v w=&quot;$path&quot; &#39;$1 == w { print $2 }&#39; &quot;$seen&quot; \
+        | while IFS= read -r commit; do
+            git -C &quot;$MJ_ROOT&quot; for-each-ref --contains &quot;$commit&quot; \
+              --format=&#39;%(refname:short)&#39; refs/heads refs/remotes/origin refs/tags 2&gt;/dev/null
+          done | LC_ALL=C sort -u | head -6 | tr &#39;\n&#39; &#39; &#39;)&quot;
+      [ -n &quot;$refs&quot; ] || refs=&quot;no current ref — an unreferenced commit still in this object store&quot;
+      &quot;$report&quot; &quot;$here&quot; &quot;identity $num is also claimed by $path, on: ${refs% }. One of the two has to be renumbered before either lands, or \`generate --strict\` will exclude both and name only the identity. \`majordomus adr next\` says which number is free.&quot;
+      MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1
+    done
+  done
+  rm -f &quot;$seen&quot;
+  return &quot;$rc&quot;
+}
+
+
+# ---------------------------------------------------------------- doctrine
+# The validator behind majordomus.adr-integrity. It runs the same examination `adr check`
+# runs; a doctrine that re-implemented the checks would be a second opinion about the same
+# files, and the two would drift.
+mj_adr_report_doctrine() { mj_doctrine_fail adr &quot;$1&quot; &quot;$2&quot; &quot;majordomus adr check&quot;; }
+
+mj_validate_adr() {
+  [ -d &quot;$MJ_ADRS_DIR&quot; ] || { mj_doctrine_skip adr &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&quot; &quot;no adrs section; nothing to validate&quot;; return 0; }
+  [ -f &quot;$MJ_ALLOW_DIR/adr.txt&quot; ] || { mj_doctrine_fail adr &quot;$(mj_rel &quot;$MJ_ALLOW_DIR&quot;)/adr.txt&quot; &quot;allow-list absent; the schema was not projected&quot; &quot;majordomus generate allow&quot;; return 0; }
+  local before=&quot;$MJ_FAILS&quot;
+  mj_adr_examine mj_adr_report_doctrine || true
+  if [ &quot;$MJ_ADR_N&quot; = 0 ]; then mj_doctrine_skip adr &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&quot; &quot;no decisions; nothing to validate&quot;
+  elif [ &quot;$MJ_FAILS&quot; = &quot;$before&quot; ]; then mj_doctrine_ok adr &quot;$MJ_ADR_N decision(s)&quot; &quot;every identity unique, every status known, every reference resolves&quot;; fi
+  # The cross-ref half reports its own reachability, so that a commit is never cleared of a
+  # collision by a survey that could not run. This is the line that makes
+  # project.work-is-claimed-before-it-is-built followable: the claim it asks for is checked
+  # here, at commit time, on the branch, rather than at the merge where `generate --strict`
+  # would name the identity and neither of the two sessions.
+  if [ -n &quot;$MJ_ADR_REFS_SKIP&quot; ]; then
+    mj_doctrine_skip adr &quot;$(mj_rel &quot;$MJ_ADRS_DIR&quot;)/&quot; &quot;the other refs were not surveyed: $MJ_ADR_REFS_SKIP&quot;
+  elif [ &quot;$MJ_ADR_REFS_N&quot; != 0 ] &amp;&amp; [ &quot;$MJ_FAILS&quot; = &quot;$before&quot; ]; then
+    mj_doctrine_ok adr &quot;$MJ_ADR_REFS_N identity(ies) added here&quot; &quot;no other ref claims them&quot;
+  fi
+  return 0
+}
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

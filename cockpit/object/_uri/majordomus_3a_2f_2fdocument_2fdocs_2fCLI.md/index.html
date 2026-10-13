@@ -1,0 +1,2257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/CLI.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/CLI.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/CLI.md</h1><p class="mj-page-subtitle">CLI specification — `majordomus`</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/CLI.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CLI.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/CLI.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FCLI.md/index.html">document.docs/CLI.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># CLI specification — `majordomus`
+
+Behaviour as implemented and tested in `test/cases/`. Where implementation and this
+document disagree, the document is wrong and changes in the same commit as the fix.
+
+One executable, `bin/majordomus`, portable shell (bash 3.2 and BSD userland are the floor). Subcommands are dispatched to
+sourced modules in `lib/`. Every subcommand accepts `--help` and `--repo &lt;path&gt;`
+(default: the git toplevel of the current directory).
+
+## Exit-code contract
+
+Exit codes are part of the interface. A caller, including a git hook, must propagate
+them. A hook that receives any non-zero code and continues is a contract violation, and
+`doctor` scans hook scripts for `|| true` and `|| exit 0` around Majordomus invocations.
+
+| Code | Name | Meaning |
+|---|---|---|
+| `0` | `OK` | the command succeeded; for checks, nothing was found |
+| `2` | `USAGE` | bad arguments, or not inside a git repository |
+| `10` | `CONTRACT_UNMET` | a deterministic contract failed: finish contract, policy validation, wiring |
+| `11` | `DRIFT_FOUND` | `watch` found at least one drift; informational, never used by a hook to block |
+| `12` | `MISSING_ARTIFACT` | a required file or tool is absent |
+| `13` | `INTERNAL_ERROR` | Majordomus itself failed; never silently treated as pass |
+| `15` | `REFUSED` | the command declined to overwrite, or an override was rejected |
+
+There is no &quot;warn and continue&quot; code. Fail closed on ambiguity: if it is unclear whether
+a check passed, it failed.
+
+## Output conventions
+
+- Human output on stdout, one finding per line, machine-greppable:
+  `&lt;LEVEL&gt; &lt;category&gt; &lt;subject&gt; — &lt;message&gt;  [reproduce: &lt;command&gt;]`
+- Levels: `OK`, `INFO`, `WARN`, `FAIL`, `DRIFT`, `REFUSE`. Only `FAIL` and `DRIFT` affect the
+  exit code. `WARN` is advice about work in progress and never blocks.
+- `--json` on any read-only command emits one JSON object per finding on stdout.
+- Nothing is written to stderr except usage errors and internal errors.
+- A finding without a reproduce command is a bug in Majordomus.
+- `MAJORDOMUS_CAPABILITY_CACHE=off` runs every capability without the executor&#39;s cache:
+  every call runs its handler and nothing is kept. The answers are the same with or without
+  it (`project.cache-is-invisible`); it exists to settle a doubt by asking without the cache.
+  A capability&#39;s own policy says what its answer is kept under: the registry fingerprint,
+  the context&#39;s reading of the repository (`generation`), or the checkout&#39;s state as well
+  (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
+  The switch also makes a page&#39;s reading of a source run its handler and wait for it.
+- `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
+  repository changed before it shows the reading it has, marked stale (50 by default; see
+  [`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#fast-and-current)). `wait` makes every read wait for
+  a current reading, which is what a test that changes a repository and then reads a page
+  needs to be exact.
+
+---
+
+## `majordomus init`
+
+Create the repository&#39;s AI layer, `.ai/`, from the tool&#39;s skeleton. It installs nothing:
+the tool stays wherever it was run from, no hook and no shell file is touched, and
+`.majordomus/` is never created.
+
+**Reads:** the skeleton under `share/skeleton/` and the standard rule package under
+`share/standard/majordomus/`.
+**Writes:** `.ai/README.md` (the protocol, readable without the tool) and
+`.ai/manifest.yaml` (the section registry, `ai-repository/v1`); under `.ai/repo/`, the
+tracked half: its `README.md`, `policy.yaml`, `profiles/`, `prompts/`, `rules/` with its
+`README.md`, the vendored baseline `rules/vendor/majordomus/` (manifest and rule files,
+byte for byte the package the tool ships) and an empty `rules/project/`,
+`knowledge/sources.yaml` beside an empty `knowledge/curated/`, `workflows/`, `skills/`,
+`adrs/`, `project/`; under `.ai/local/`, the checkout&#39;s own half: `state/` seeded with
+`decisions.md` and `open-questions.md` and the empty `state/handovers/` and
+`state/checkpoints/`, plus `cache/`, `prompts/` and `session-contexts/`; and one
+`.ai/local/` line in `.gitignore`, added once. Everything under `.ai/repo/` belongs to
+the repository from that moment; a newer tool does not rewrite it.
+
+**Refuses** (`15`) when `.ai/` already exists, unless `--extend`, which adds every file
+the skeleton ships and the repository lacks and overwrites nothing; (`15`) when `.ai/`
+exists without a manifest, naming the choice between moving it aside and `--extend`; and
+(`15`) when project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
+`majordomus migrate`.
+
+**Does not** install git hooks. It prints the two lines a hook needs and the command
+`majordomus doctor` that will verify they were added.
+
+```
+$ majordomus init
+created
+  .ai/README.md
+  .ai/manifest.yaml
+  .ai/repo/README.md
+  .ai/repo/policy.yaml
+  .ai/repo/profiles/
+  .ai/repo/prompts/
+  .ai/repo/rules/README.md
+  .ai/repo/rules/vendor/majordomus/
+  .ai/repo/knowledge/
+  .ai/repo/workflows/
+  .ai/repo/skills/
+  .ai/repo/adrs/
+  .gitignore:.ai/local/
+local state: .ai/local/state/ (ignored by git; this checkout&#39;s own)
+next: majordomus update      # generate the provider instruction files named in the policy
+next: majordomus doctor      # verify nothing is declared that is not wired
+
+$ majordomus init
+majordomus: .ai/ already exists in … (use --extend to add what is missing; nothing is overwritten)
+$ echo $?
+15
+```
+
+## `majordomus migrate`
+
+Move a repository&#39;s project data from the pre-`.ai` layout under `.majordomus/` into the
+portable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,
+`doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.
+
+**Markers:** legacy is `.ai/repo/policy.yaml`; new is `.ai/manifest.yaml`; a
+`.majordomus/bin/majordomus` is a tool installation and never project data.
+
+**Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come
+from it), the tool&#39;s templates (to tell an unchanged template from a customised one).
+**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into
+`.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to
+`.ai/local/state/` and taken out of the index; the rest of the layer seeded from the
+skeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;
+a byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/&lt;utc&gt;/state/`,
+and of the legacy `providers/` under `.../providers/`, verified and printed, before
+either is touched; a `layout.migrated` ledger line; then `update --force` renders the
+projections from the tool&#39;s thin bootstraps and `doctor` judges the result, each exit
+reported on its own line.
+
+**Behaviour:**
+- `--dry-run` prints the whole plan, one line per file with its action and destination,
+  and writes nothing. The same table drives the real run.
+- `templates/*.md` identical to the tool&#39;s own are dropped; a customised one moves to
+  `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.
+- `providers/` — the provider body and the monolithic templates that asked for it — is not
+  carried into `.ai/`. The body no longer exists anywhere and `update` renders none, so an
+  old template would leave a literal token in a generated file. The directory is copied
+  to the backup, removed from the index, and reported in one line: the bootstraps are now
+  the tool&#39;s thin adapters, a repository override goes under `.ai/repo/providers/&lt;provider&gt;.tmpl`
+  in the new format, and the body&#39;s rules belong under `.ai/repo/rules/project/` as rule
+  objects (`DOCTRINE.md` describes the format).
+- A file under `.majordomus/` this version does not know is never deleted. It is reported,
+  and `.majordomus/` is removed only when it is empty.
+- Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,
+  and names the safe manual step; refuses (`15`) when a destination under `.ai/` already
+  exists, listing each one. Nothing is written in either case.
+- A legacy policy that does not parse, or is not version 1, is refused (`10`) before
+  anything moves: fix it in place first.
+- Idempotent: on a repository already on the `.ai` layout it says so and exits `0`. With
+  neither layout present it exits `12` and names `init`.
+- The state stops being tracked: its durability is the checkout plus the backup, not the
+  branch. Commit the tracked half after reviewing `git status`.
+
+```
+$ majordomus migrate --dry-run
+migrate: .majordomus/ (pre-.ai layout) -&gt; .ai/ (ai-repository/v1)
+  move  .ai/repo/policy.yaml -&gt; .ai/repo/policy.yaml
+  move  .ai/repo/profiles/debugging.yaml -&gt; .ai/repo/profiles/debugging.yaml
+  state .ai/local/state/current.yaml -&gt; .ai/local/state/current.yaml
+  drop  .majordomus/templates/handover.md    (identical to the tool&#39;s template)
+  ...
+dry run: nothing written
+```
+
+## `majordomus recover`
+
+Bring this checkout&#39;s record stores back to what the contract describes: close episodes
+nobody ended, fold duplicate records of one episode into one, and classify the stray files
+the stores accumulate. Recurring, idempotent maintenance — unlike `migrate`, which is the
+one-time move off the pre-`.ai` layout and refuses to run twice.
+
+**Subjects:** `status` (the default, read-only), `episodes`, `records`, `orphans`, `all`.
+
+**Reads:** `.ai/local/state/sessions-open/`, `.ai/local/state/ledger.jsonl`, the closed
+record store, and the checkpoint and handover stores.
+**Writes:** a closed record per recovered episode under `.ai/repo/sessions/`, the folded
+record where duplicates existed, a `session.recovered` ledger line per action, and the
+removal of the open records and stray temps it acted on.
+
+**Behaviour:**
+- `--check` prints the plan and the evidence behind it and writes nothing. The same
+  measurement drives the real run, so the plan is the action.
+- A stray file is judged by its age before its content: a publish temp seconds old belongs
+  to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a
+  `scripts/derive` running now. Both are reported as `live` and neither is touched; one
+  whose age cannot be read is skipped and counted.
+- A stale staging directory is reported and **never removed**. This command deletes no
+  directory tree — SECURITY.md states &quot;no recursive deletion&quot; — so a `.mj-stage.XXXXXX`
+  past the threshold is named, counted as skipped, and left for a person to remove.
+- An episode is *stranded* when its last sign of life — the later of its own `started_at`
+  and the newest ledger line it stamped — is older than `session.stranded_after`.
+  `--older-than &lt;duration&gt;` overrides the policy for one run.
+- Two guards stand between a live episode and the sweep, and neither is the other&#39;s
+  backstop. The episode this process resolves to is excluded before any predicate runs; and
+  a candidate whose evidence cannot be read as a timestamp is skipped and counted, never
+  treated as the oldest in the set (`project.destructive-sweeps-fail-closed`). An episode
+  belonging to another worktree is reported and never closed here.
+- A recovered record carries what the open record and the episode&#39;s own ledger lines prove.
+  `commits` and `changed_files` are the explicit empty list and `head` and `working_tree`
+  are absent: they describe a close that never happened, and the working tree at recovery
+  time belongs to whoever is working now. `outcome` is `interrupted`, which is what it was.
+- Duplicate records fold into the oldest by `created_at`, with the union of the lists the
+  others prove, and the superseded file names recorded in the survivor&#39;s body. Records that
+  disagree about the episode&#39;s identity or times are reported and nothing is folded.
+- Nothing is deleted for being unrecognised. A publish temp past the threshold holding the
+  only copy of a record is *published*; one whose episode is already published, or which is empty, is
+  removed; one holding content this version cannot classify is left exactly where it is and
+  counted. A directory somebody put in the checkpoint store is named, measured and left.
+- Idempotent. Running a subject twice takes its actions once, and running it after a crash
+  mid-run takes the ones that did not happen: the record is written before the open file is
+  removed, so an interruption between them costs nothing.
+
+```
+$ majordomus recover episodes --check
+episodes — open episodes in .ai/local/state/sessions-open
+  s-20260910194205-72ea  key=187c9e1e-…  last seen 2026-09-10T19:42:05Z (ledger, 13h ago)
+    stranded: 13h ago, over the 12h threshold; close with outcome interrupted
+  s-20260911063532-b41b  key=c93d195f-…  last seen 2026-09-11T08:31:02Z (ledger, 0m ago)
+    live: this process is inside it; never a candidate
+
+check: 1 action(s) would be taken and nothing was written (run: majordomus recover all)
+```
+
+## `majordomus doctor`
+
+Is the supervisory layer real here? Read-only. Blocking by design: intended to run
+from a pre-commit hook and from CI.
+
+**Checks, in order:**
+
+1. `policy.yaml` parses; `version` supported; no unknown keys at any level.
+2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown
+   keys.
+3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` resolves (on
+   `PATH`, repository-relative, absolute, or as an executable path on the hook line
+   itself) and the artifact named by `wired_by` exists, is executable, invokes
+   `majordomus &lt;first arg&gt;`, and does not swallow its exit code with `|| true` or
+   `|| exit 0`. When the hook is a dispatcher, the invocation is looked for in the hook
+   file *and* in every file in its `&lt;hook&gt;.d/` directory; the finding names whichever
+   file actually carries it. A subhook that carries the invocation but is not executable
+   is reported as not wired, because the dispatcher skips it. `wired_by: manual` is
+   reported as unverified, never as wired. Declared-but-not-wired is `10`.
+4. Every `projections[].target` exists, its provider has a template, and its entry in
+   the content matches the stamp it carries. Missing or unstamped → `12`; mismatch → `10` (hand-edited).
+   For `mode: region` the hash is taken over the region alone; absent or malformed
+   markers are reported as such.
+5. The projection marked `always_loaded: true` is within
+   `context.always_loaded_budget_lines`.
+6. Every repository-relative path referenced from the always-loaded projection resolves.
+7. No hardcoded counts in the always-loaded projection (a digit sequence adjacent to
+   words like `agents`, `files`, `apps`, `commands`, `skills`, `rules`).
+
+   Checks 5 to 7 judge generated content only. For a region projection that is the
+   region and never the host document, so that every failure `doctor` reports can be
+   fixed by editing the policy.
+8. Retention caps not exceeded on `state/ledger.jsonl` and `state/handovers/`.
+9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported
+   as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.
+
+```
+$ majordomus doctor
+OK   policy      .ai/repo/policy.yaml — parsed, version 1
+OK   profiles    4 files — parsed
+FAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n &#39;majordomus finish&#39; .git/hooks/pre-push]
+OK   projection  CLAUDE.md — content matches its stamp
+FAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.md]
+OK   links       3 projections — all references resolve
+OK   retention   ledger 412 lines, cap 5000
+INFO env         bash 3.2.57, git 2.45, yq 4.44, jq 1.7
+doctor: 2 failures
+$ echo $?
+10
+```
+
+## `majordomus start &lt;task&gt;`
+
+Begin a scoped task.
+
+**Arguments:** `&lt;task&gt;` one line. `--scope &lt;path&gt;[,&lt;path&gt;...]` required. `--profile
+&lt;name&gt;` default from `policy.profiles.default`. `--owner &lt;string&gt;` free-form, default
+`$USER`. `--issue &lt;id&gt;`, `--intent &lt;id&gt;`, or `--exempt &lt;class&gt; --because &quot;&lt;reason&gt;&quot;` name
+what the task serves.
+
+**Reads:** policy, profile, git state, and `intents.binding` through the built executable
+when the binding is asked.
+**Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.
+
+**Behaviour:**
+- Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One
+  active task per checkout: hand the existing task over (`handover --close`) or finish
+  it first. No flag discards an active task.
+- Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
+  the repository. Records the normalised form.
+- Reads every other worktree from `git worktree list` and, where one has an active
+  task, reports any scope that contains or is contained by this scope. Reported, not
+  blocked: that is a coordination fact for the person, not a rule. Git is the registry;
+  there is no sidecar file.
+- Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from
+  arguments.
+- Asks what the task is bound to (ADR 0111) when given `--issue`, `--intent` or
+  `--exempt`, and on every start when the policy&#39;s `intent.binding` is `advisory` or
+  `required`. A refused answer to a question the worker put, or any refused or unreadable
+  answer under `required`, refuses (`15`) and writes nothing, naming each cause and the
+  three ways through. Under `advisory` a refusal is a warning. The record keeps what was
+  named, the standing, and two pins (`plan_revision`, `evidence_standing`); nothing of the
+  intent itself is stored. [Planning](PLANNING.md) has the standings and causes.
+
+```
+$ majordomus start &quot;fix OAuth callback&quot; --scope lib/auth --profile debugging
+started t-20260903-193012-a4f1  profile=debugging  scope=lib/auth
+INFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]
+next: worker reads AGENTS.md; checkpoint every 15m; majordomus check
+```
+
+## `majordomus check`
+
+Is the current task consistent with policy, scope, and state? Read-only.
+
+**Checks:**
+- `state/current.yaml` exists and parses; else `12`.
+- Git divergence label for the record: `exact`, `advanced`, `diverged`,
+  `different_context`. `diverged` and `different_context` are findings.
+- Touched files (`git status --porcelain` plus `git diff --name-only &lt;base&gt;..HEAD`) are
+  within the claimed scope. Any outside → finding.
+- Checkpoint age against the profile&#39;s `checkpoint_interval` (`WARN`, never `FAIL`).
+- Files under `.ai/` and the projection targets are always in scope.
+- `--checkpoint` updates `checkpoint_at` and appends `task.checkpoint` to the ledger:
+  the one documented write in an otherwise read-only command.
+- `state/open-questions.md` has no unresolved entry for this task.
+- `--explain` prints the effective merged policy and profile for this task and exits
+  `0`.
+- `--overlap` prints claim containment against other worktrees.
+
+Exit `0` with no `FAIL` findings, `10` with any, `12` with no active task. Intended for
+a worker to run before claiming completion, and for a person to run any time.
+
+```
+$ majordomus check
+OK   state      t-20260903-193012-a4f1 — exact (head 3f2a9c1)
+FAIL scope      config/secrets.example — outside claimed scope (lib/auth)  [reproduce: git status --porcelain; git diff --name-only 3f2a9c1 HEAD]
+OK   checkpoint 7m ago, interval 15m
+OK   blockers   none open
+check: 4 finding(s), 1 failing
+```
+
+## `majordomus watch`
+
+What has drifted? Read-only. Never used to block; exit `11` when findings exist so that
+scripts can tell &quot;drift&quot; from &quot;healthy&quot; without confusing it with a contract failure.
+
+| Drift | Detected how |
+|---|---|
+| policy | the policy hash a projection&#39;s stamp names is not the policy on disk |
+| projection | a projection&#39;s content differs from the hash its own stamp names |
+| state | `current.yaml` outcome contradicts ledger, or label is `diverged` |
+| scope | touched files outside claim (same check as `check`) |
+| handover | task is `handed_over` but no handover names it, or that handover lacks a required section |
+| verification | `current.yaml` has a terminal outcome with no `task.finished` ledger record for it |
+| checkpoint | `current.yaml` older than the profile&#39;s checkpoint interval |
+| retention | `ledger.jsonl` or `handovers/` over cap |
+
+```
+$ majordomus watch
+DRIFT policy      .ai/repo/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]
+DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
+DRIFT checkpoint  t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m
+watch: 3 findings
+```
+
+## `majordomus update`
+
+Regenerate provider projections from policy. Deterministic: same policy, same output,
+byte for byte.
+
+**Reads:** policy, profiles, `providers/*.tmpl`.
+**Writes:** every `projections[].target`, one `projections.updated` ledger line. Nothing
+else: each target carries its own provenance.
+
+**Behaviour:**
+- `--dry-run` prints what would change; `--diff &lt;target&gt;` shows the diff for one. For a
+  region projection the diff is of the region, not of the host document.
+- Refuses (`15`) to overwrite content whose current hash matches neither the stamp it
+  carries nor the new output, unless `--force`. A target with no stamp at all was not
+  written by `update` and is refused the same way. A hand edit is never silently lost; the refusal
+  names the file and the `--diff` command that shows it.
+- `mode: region` (see `SCHEMAS.md`) generates only the text between the
+  `majordomus:begin` and `majordomus:end` markers. The rest of the target is copied
+  through byte for byte, an absent region is appended once, and malformed markers are
+  refused (`15`). This is how a repository that already has a hand-written `CLAUDE.md`
+  adopts Majordomus without losing it.
+- Appends `projections.updated` to the ledger.
+- Every file-mode target begins with a stamp naming this command, the policy hash it
+  came from and the hash of the content below it; a region-mode target carries the same
+  two hashes in its begin marker. That stamp is the provenance `doctor` and `watch`
+  compare against, on a fresh clone as much as here.
+- The always-loaded projection is checked against the budget after generation; over
+  budget is `10` and nothing is written. For a region projection the budget measures the
+  generated region, and `doctor` reports the host document&#39;s own length as `INFO`.
+- The Rust executable renders the same targets from the same inputs, byte for byte:
+  `majordomus generate providers` writes them and `majordomus generate --check` (which CI
+  runs) exits `10` naming every target that differs from the policy or is missing. `update`
+  is the interactive writer with its refusals; `generate --check` is the gate. Test case 93
+  proves the two agree in both directions.
+
+## `majordomus handover`
+
+Write an append-only continuation record.
+
+**Record resolution** — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and `context`: same worktree and branch, else same branch, else nothing.
+
+
+**Input:** the authored body on stdin. Required sections are the policy&#39;s
+`handover.required_sections` as level-one headings, each with non-empty content;
+template placeholders in angle brackets count as empty. Optional: `# Completed`,
+`# Decisions`, `# Verification`, `# Risks`, `# Open Work`.
+
+`--derive` composes the body instead of reading stdin, from the task record, the ledger,
+git, the open questions and the newest checkpoint — each already written, already validated
+and already identity-checked. It calls no model and makes no network request, which is what
+makes it safe for a provider hook to run: a derived body can be wrong only if a record it
+reads is wrong, and every one of those has its own gate. The policy&#39;s required sections are
+emitted in the policy&#39;s order; a required section this generator cannot fill is refused by
+name rather than written empty, because an empty section passes the section gate and tells
+the next worker nothing. An authored body still says more than a derived one, and `--derive`
+exists so that the absence of somebody willing to type is no longer the same thing as the
+absence of a record.
+
+**Writes:** one new file `state/handovers/&lt;utc-ts&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;rand&gt;.md`,
+mode `0600`, created atomically (temp file, then hard link; retry with a new random
+suffix on collision). Front matter is computed from git and from `current.yaml`; a body
+that tries to set identity fields is rejected.
+
+**Never** stages, commits, or modifies any other file except the task record&#39;s
+`checkpoint_at`. Appends `task.handed_over` to the ledger. Prints the path.
+
+`--close` additionally sets the task&#39;s outcome to `handed_over`, so that a new task may
+`start` in this checkout; the old record is archived by that `start`. Without
+`--close` the task stays active for the next session to continue.
+
+The provider&#39;s `SessionEnd` event runs `--derive --close`, or `--derive --no-task` when no
+task record exists, so that an episode that ends leaves a continuation record and not only
+the envelope of what it produced. The two answer different questions: the session record
+indexes the episode, and a handover is what the next worker resumes from. It does not ask
+whether the task is active — until ADR 0052 it did, and a repository whose last task had
+been handed over stopped writing the one record a future worker resumes from, for six days,
+while every health check passed.
+
+**Refuses** (`10`) if a required section is missing or empty, or if the body contains
+an identity field. Refuses (`12`) with no active task unless `--no-task`.
+
+**Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for
+the current worktree and branch: same worktree and branch first, then same branch, never
+a repository-wide fallback. Prints its git-state label and its body. No candidate is a
+normal outcome and exits `0` with `No relevant handover.` `--path` prints the path
+alone, for scripting; `--no-task` resolves without an active task.
+
+## `majordomus context`
+
+What does whoever works next need to know? Read-only. Assembles durable state into one
+briefing and prints it. Nothing is persisted, no model is called, and the output is a
+projection: every line is recomputed from the records and git each time it runs.
+
+**Section order is authority order.** Git first, because it is the only thing that cannot
+be stale; then the task and the profile that constrains it; then blockers, which change
+what may be accepted; then authored records; then event history last, because it is the
+weakest evidence about the present.
+
+| Section | Source | Included when |
+|---|---|---|
+| `GIT` | git | always |
+| `TASK` | `state/current.yaml` | a task is active and the profile&#39;s `context.task` is not `false` |
+| `PROFILE` | `profiles/&lt;name&gt;.yaml` | the task names a profile that exists |
+| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
+| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
+| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `REASONING` | `state/reasoning/&lt;task&gt;/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |
+| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
+| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
+| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |
+| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
+| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
+| `PROMPT` | `prompts/&lt;name&gt;.md` | `--prompt &lt;name&gt;` was given |
+
+This is the only code that reads a profile&#39;s `context` block, which is what makes those
+fields state rather than documentation.
+
+**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the
+assembled text exceeds it, sections are dropped in a fixed order — history, files,
+decisions, then the bodies of the checkpoint and the handover, which degrade to a pointer
+rather than disappearing. Git, task, profile and blockers are never dropped. Every drop is
+named under `EXCLUDED` with its reason, so an under-filled context is debugged from the
+exclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over
+budget.
+
+**`--for &lt;provider&gt;`** wraps the same body with a header naming the provider and its
+always-loaded file. The body does not change: the canonical context is provider-neutral,
+and a provider that needed different facts would be a different policy, not a different
+rendering.
+
+**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and
+`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as
+the text form, because both are assembled once and rendered twice.
+
+```
+$ majordomus context
+# Majordomus context — 2026-09-03T19:41:02Z
+# a projection of durable state, not a source of truth: validate every line against git
+
+## GIT
+repository   /home/dev/app
+branch       main
+head         3f2a9c1e4b7d8a05c1119f2b6e0d7a3c8e5f1b42
+working_tree dirty
+task_record  advanced (recorded head 3f2a9c1)
+
+## TASK
+id           t-20260903193012-a4f1
+task         fix the OAuth callback
+profile      debugging
+scope        lib/auth
+
+## OPEN QUESTIONS (1 unresolved — every one refuses finish --outcome completed)
+- Does the legacy mobile callback still require the old URI form? (2026-09-03)
+
+## EXCLUDED
+- history — profile debugging sets context.recent_history_depth: 50
+
+## BUDGET
+41 of 300 lines
+```
+
+**Context documents.** The same command carries the scoped-context subcommands, all
+read-only, all accepting `--json`; see [`CONTEXT.md`](CONTEXT.md) for the model and
+[`SCHEMAS.md`](SCHEMAS.md) for the front matter.
+
+```
+majordomus context list                       every document: id, path, scope, composition, providers, status
+majordomus context resolve &lt;path&gt; [--provider P] [--audience A]
+                                              NN  &lt;id&gt;  &lt;path&gt;  scope=… composition=… providers=…   in effective order
+majordomus context explain &lt;path&gt; [...]       resolve, plus one line per document saying why it is in
+                                              (ancestor at depth N, tracks, directory) and every filtered
+                                              or superseded document with its reason
+majordomus context validate                   the whole tree; findings in the usual format; exit 10 on any FAIL
+majordomus context affected [--base &lt;ref&gt;|--staged|--worktree]
+                                              which documents and scopes a change set touches; a tracked
+                                              path that changed is a WARN naming the document, never the exit code
+majordomus context check-sync [--base &lt;ref&gt;]  validate, projections up to date, affected review items;
+                                              invalid tree FAIL exit 10, hand-edited projection DRIFT exit 11,
+                                              absent projection INFO (doctor owns missing), otherwise 0
+```
+
+The target of `resolve`, `explain` and the bare briefing is a repository-relative
+directory (a file resolves to its own); a path that does not exist yet resolves from its
+ancestors, as a file in its parent unless written with a trailing `/`, and says so; a
+symlink or `..` that escapes the repository is refused (`15`, `refused-path`). Inside the `.ai/` tree
+the result is the ancestor chain admitted by each document&#39;s scope; outside it, the root
+chain plus every document whose `tracks` matches the target. Order is depth, then
+`order`, then path. The briefing gains a `CONTEXT DOCUMENTS` section listing the
+effective chain for the active task&#39;s scope paths.
+
+The error classes, used verbatim in messages and in `--json`: `invalid-front-matter`,
+`unsupported-schema`, `unknown-key`, `duplicate-id`, `broken-reference`, `cycle`,
+`illegal-override`, `unknown-provider`, `invalid-manifest`, `stale-projection`,
+`out-of-sync`, `refused-path`.
+
+## `majordomus session`
+
+Open, inspect and close one execution episode. A session is the seventh durable record and
+the only one that is not task-shaped.
+
+A task is a unit of work: it is scoped, it has a profile, and it can outlive the worker
+doing it. A session is one worker&#39;s sitting: it claims no paths, gates no acceptance, and
+may cross several tasks — while one task may be crossed by several sessions. Neither
+contains the other, which is why they are two records rather than one field.
+
+Sessions are optional. A worker that never opens one loses the episode boundary and
+nothing else; every other record is written exactly as before.
+
+- `start [--owner &lt;who&gt;] [--worker &lt;id&gt;] [--if-open refuse|keep]` opens the episode. One
+  open session per worktree: a second `start` is refused rather than replacing the first,
+  unless `--if-open keep` says to keep what is open — which is what a provider hook passes,
+  because its start event fires again on a resume and on a compaction. `--worker` is a
+  free-form identity string, recorded only when supplied — an unrecorded worker stays
+  unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
+  is written down. `--provider` and `--provider-session` record which provider&#39;s event
+  opened the episode and that provider&#39;s own session identity; only something running
+  inside that provider&#39;s hook can supply them, which is what makes `opened_by: hook` in the
+  working context a fact rather than a claim.
+- `status` prints the open session with the divergence label of the commit it opened at,
+  or reports that there is none. Read-only. Absence is an answer, not a failure.
+- `close [--outcome closed|interrupted] [--if-none refuse|ignore]` closes the episode into
+  an immutable record under the layer&#39;s sessions section and removes the open one. An
+  authored summary may arrive on stdin and is optional; identity fields in it are refused,
+  as they are in a checkpoint. `--if-none ignore` makes &quot;nothing was open&quot; the normal case
+  rather than a failure, which is what a provider&#39;s end event passes.
+- `context [&lt;session-id&gt;]` prints the path of an episode&#39;s working context. Read-only, and
+  it prints the path rather than the document: the document is local evidence, and a command
+  that pours it into a terminal invites it into somebody&#39;s context.
+
+**The open freezes the context it was given.** `start` writes
+`.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md` — the front matter of the episode, the
+context builder&#39;s output verbatim, and a `## Notes` section for the worker — and `close`
+appends a `## Close` section naming the outcome and the record. The document is appended to
+and never rewritten, so what a worker typed into it survives. The store is local: it names
+this machine and it is a snapshot of a projection, so it is never published and never loaded
+into a context on its own, and `doctor` refuses a document that carries a conversation. See
+`capture session` for the hooks that make the boundary independent of anybody remembering
+to draw it.
+
+**The closed record is an envelope of references.** It names the tasks, issues, milestones,
+checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
+body of none of them. It also carries the commits between the opening and closing commit —
+or the single entry `diverged` when the opening commit is no longer an ancestor, because a
+list computed across a history that no longer connects is a fiction.
+
+**The lists are derived at close, not accumulated while the session is open.** No other
+command knows sessions exist: `checkpoint`, `decision`, `question` and `plan` are
+unchanged. The references are read out of the ledger, which is already append-only, already
+written only by Majordomus, and already validated.
+
+**Selection is by the session stamp on each ledger line, not by a time range.** Every line
+carries the session that wrote it, next to the commit and branch it already carried. A time
+range was implemented first and was wrong the first time it ran: the ledger is one file per
+repository, two workers were writing to it, and no timestamp separates them, so one
+episode&#39;s envelope claimed the other&#39;s tasks, checkpoints and handovers. A line with no
+session belongs to no episode — sessions are optional, and work done outside one is
+attributed to nobody rather than to whoever had a session open nearby.
+
+`--outcome` takes `closed` or `interrupted`. Both are self-reported and neither is
+verified; `interrupted` exists because &quot;this episode was cut short and its records may be
+incomplete&quot; is the one thing about an ended session that changes what somebody does next.
+
+Exit `12` with no open session, `10` when the summary carries identity fields, `15` when
+the open record belongs to another checkout.
+
+- `list [--all]` prints closed episodes, newest first, with each one&#39;s divergence label.
+- `show &lt;session-id&gt;` prints one record whole.
+- `latest [--path]` prints the newest record that resolves for this worktree and branch.
+
+All three are read-only, and all three print the record&#39;s divergence label — `exact`,
+`advanced`, `diverged`, `different_context`. No second vocabulary for staleness is invented,
+because a session written before a branch was rewritten, handed to the next worker as though
+it still described this history, is exactly what those four words exist to prevent.
+
+Resolution is the rule every other record follows: same repository, same worktree and
+branch, then same branch, then nothing. A record from an unrelated worktree is never
+offered — borrowed context cannot be recognised as wrong until it has been acted on.
+`--all` lifts the rule explicitly and shows each record&#39;s branch, because a record from
+elsewhere is worth seeing when you asked for everything and is never worth being handed
+silently.
+
+**Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
+second.** Filesystem modification time is never read: it does not survive a clone and it is
+not the time the record asserts, so touching an old record does not make it the newest.
+Filename order normally agrees with ledger order, which makes an implementation that fell
+through to the filename look correct; `test/cases/62_session_divergence.sh` makes the two
+disagree on purpose and fails when the ledger is not what decides.
+
+A malformed record is skipped with a warning on stderr and never silently, and never
+fatally: one unreadable file must not cost the whole listing.
+
+**One episode per provider session, not one per worktree.** Two windows of the same
+provider open on one checkout are two workers. Folding them into one record stamped one
+worker&#39;s ledger lines with the other&#39;s id and let either window&#39;s end event close the
+episode for both; measured in this repository on 2026-09-09, seven concurrent sessions
+produced one record between them. So an open episode is a file of its own,
+`state/sessions-open/&lt;provider session&gt;.yaml`, keyed by the provider session that opened
+it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
+again on a resume and on a compaction — and gives a different provider session an episode
+of its own. `close --provider-session &lt;id&gt;` closes that episode and no other, which is what
+a provider&#39;s end event passes. An episode nobody named is keyed `hand`, and there is at
+most one of those: a provider that sends no session identity is indistinguishable from a
+person at a terminal, and inventing a distinction there would multiply episodes nobody can
+close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
+
+`state/session-current.yaml` is a relative symlink into that store: the pointer to the
+episode of this checkout, aimed at the one opened here last and re-aimed by a close at the
+one still open when exactly one is. Which episode a given process&#39;s commands belong to is
+resolved in `mj_session_here_file` (`lib/common.sh`): the provider session named on the
+command line, else the provider session this process is running inside when an episode with
+that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or the variable the lifecycle adapter
+declares — `CLAUDE_CODE_SESSION_ID` for Claude Code), else the pointer. Two episodes open
+and a process that can name neither is the one case nothing can resolve: the pointer names
+the one opened last, and `session status` lists the others under `Also open:` rather than
+letting a guess pass for a fact.
+
+**Writes:** `state/sessions-open/&lt;provider session&gt;.yaml`, mode `0600`, written atomically,
+the pointer beside it, and one `session.started` line in the ledger. `session_id`,
+`repository_id`, `worktree`, `branch`, `start_head` and `start_working_tree` are computed
+from git and are never authored. `provider` and `provider_session` are recorded only when a
+provider hook supplied them, which is also what makes them reportable: `continuity.state`
+declared an `OpenSession.provider` for a year that no writer could produce.
+
+Nothing under `.ai/local/state/` is tracked, the open session records included: an open
+session carries nothing anyone else needs, and a record that arrived from another checkout
+would make this one inherit an episode it did not open. A record that names another
+worktree is reported and never obeyed, which keeps the defence in place for every way one
+can still arrive — a copied working directory, a synced folder.
+
+Exit `15` when your own session is already open here, `10` when the record does not parse — a
+corrupt record fails loudly rather than being read as &quot;no session&quot;, because reading it as
+absent is exactly what would let a second `start` overwrite it.
+
+```
+$ majordomus session status
+No open session in this worktree.
+next: majordomus session start
+
+$ majordomus session start --worker some-provider/some-model
+session s-20260904153733-fc51 opened at 2026-09-04T15:37:33Z (head 9c13909)
+next: majordomus plan next; majordomus context; majordomus session close when the episode ends
+
+$ majordomus session start
+majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33Z; run majordomus session close first
+
+$ majordomus session close &lt;&lt;&#39;EOF&#39;
+The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.
+EOF
+.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
+```
+
+## `majordomus evidence`
+
+Record evidence against the active task: one obligation it declared, discharged, or one
+validation gate of the CI model that has reported.
+
+```
+majordomus evidence --covers &lt;token&gt; [--type &lt;kind&gt;] (--command &lt;cmd&gt; | --artifact &lt;ref&gt;) [--result &lt;r&gt;] [--json]
+majordomus evidence --gate &lt;id&gt; --exit &lt;status&gt; [--command &lt;cmd&gt;] [--result &lt;r&gt;] [--json]
+```
+
+The two forms record different kinds of fact and are never one invocation. An obligation is
+a promise the task made; a gate is what the validation pipeline said about the tree. A line
+claiming to be both would be readable as neither, so passing `--covers` and `--gate`
+together exits `2`.
+
+A task&#39;s `scope` says where a worker may write; its `requires` says what the worker owes
+before the outcome `completed` is available. The tokens are declared in
+`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,
+target, pages, deploy, verify — each naming the command that discharges it and, where the
+fact is local, the pathspecs its evidence is taken over.
+
+Four of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the
+tool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that
+reaches it, a published site that serves it — and `check` and `finish` settle those live at
+HEAD instead of asking a worker to transcribe them. Recording one has no effect: an
+established obligation discharges by being true and refuses by being false. Where the
+checkout cannot settle it (no remote, no default branch recorded, a site that never
+answered) the token falls back to the recorded line, and the finding says which it was.
+`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:
+a deployment is a fact about a machine this repository never contacts.
+
+`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
+does not declare exits `2`; a token the active task never promised exits `15`, because
+recording evidence for something nobody asked for is how a checklist grows entries nobody
+wanted.
+
+**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,
+the command or artifact, and the hash of the tracked files the obligation names. Nothing
+else is written; the ledger is already append-only, ordered and integrity-checked, and its
+envelope already carries the head, the branch and the session.
+
+That hash is the point. Evidence discharges an obligation only while the recomputed hash of
+its inputs equals the recorded one, so a change to any file the obligation names takes the
+proof away rather than leaving it behind — the same currency question the site&#39;s own
+`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an
+integration, a publication, a deployment) has no inputs and is bound instead to the commit
+it was taken at, judged `exact | advanced | diverged | different_context` like every other
+record here.
+
+`check` and `finish` evaluate every obligation on every run through the doctrine
+`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on
+it; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,
+and refusing that would teach them to claim `completed` instead.
+
+### Recording a gate
+
+`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository&#39;s CI model, and `--exit`
+the status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does
+an `--exit` that is not a number.
+
+```
+majordomus evidence --gate rust-check --exit 0 --command &#39;scripts/rust-check --ci&#39;
+```
+
+**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash
+of the files that select it. Those files are derived from the model rather than declared:
+the union of the paths of every class that names the gate, and everything for a gate every
+plan selects, because a gate every plan selects is a gate any change can invalidate. Change
+one of them and the run stops discharging the gate — committed or not, since the change set
+a task is judged over includes its working tree.
+
+`check` and `finish` evaluate every gate the task&#39;s own change set selects, through the
+doctrine `majordomus.completion-gates`, and report each in one vocabulary:
+
+| status | meaning |
+|--------|---------|
+| `pass` | it ran over these inputs and exited `0` |
+| `fail` | it ran over these inputs and did not |
+| `stale` | it ran, and the files that select it have changed since |
+| `blocked` | something it cannot run without has not passed |
+| `queued` | the plan selects it and no run has ever reported |
+| `exempt` | nothing this change did can make it true or false |
+| `unknown` | it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no `jq` |
+
+`fail`, `stale`, `blocked` and `unknown` refuse the outcome `completed`: `completed` is a
+claim that the verdict is known, and a verdict that could not be read cannot back it. Every
+other outcome is still accepted over any of them, named &quot;not refused&quot;, and `check` reports
+without refusing. A repository that declares no CI model at all has no gate to be unknown
+about and refuses nothing. `queued` is reported by
+name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
+that said pass are different facts, and on 2026-09-10 this repository&#39;s trunk carried three
+branch-breaking defects overnight because they looked identical
+(`majordomus.never-reported-is-not-green`).
+
+The whole judgement — every gate, the plan that selected it, which obligations the change
+implies, and the twenty-two questions of the done invariant with the source that answered
+each — is one document, `gates.completion`, read the same way by the command line, the HTTP
+API, MCP and the Cockpit:
+
+```
+majordomus-cli run gates.completion --input &#39;{}&#39; --format json | jq &#39;.output.questions&#39;
+```
+
+### The closing questions
+
+Three of those questions are the ones a person asks when a session ends, and a worker is
+not their source (`project.a-closing-question-is-answered-by-measurement`). Each is read
+from the record that holds the fact, measured from where the task started:
+
+| question | asks | read from | when it is not `pass` |
+|---|---|---|---|
+| `no-new-debt` | is the recorded debt no larger than when the task started? | the entries of every `.ai/repo/*-baseline.txt` at the commit the task started at and in the working tree | `fail`, naming each baseline that grew and by how much |
+| `nothing-accumulated` | has every branch and worktree created since gone again? | git&#39;s reflogs: when each local branch and each linked worktree began | `queued`, naming what remains, with the totals now |
+| `backlog-not-grown` | has every pull request opened since been closed? | the recorded forge observation (`majordomus prs refresh`) | `queued`, numbering them; `unknown` when the forge was not observed since the task started |
+
+They are the repository&#39;s readings, not one worker&#39;s: git does not say who created a
+branch, so a branch another session created since the task started is counted. A reading
+that could not be taken is `unknown` and says why; it is never a `pass`. `majordomus check`
+names each question still owed as `id=status` on its `done` line, so the answer to &quot;is
+everything done, and did this leave the repository bigger than it found it?&quot; is one command
+and not a recollection; the evidence behind each word is in the `questions` of the document
+above.
+
+## `majordomus checkpoint`
+
+Record compact progress inside an active task. Append-only; the body arrives on stdin.
+
+A checkpoint is not a small handover. A handover is a deliberate continuation package
+written when a worker stops; a checkpoint is what was true a moment ago, short enough that
+the next worker&#39;s context can quote it whole. `checkpoint.max_body_lines` in the policy
+enforces that difference — a body over the cap is refused with the suggestion to write a
+handover instead, rather than truncated.
+
+**Writes:** `state/checkpoints/&lt;ts&gt;--&lt;branch&gt;--&lt;head&gt;--&lt;rand&gt;.md`, mode `0600`, created
+atomically with `link`, never staged. Front matter is computed exactly as for a handover; a
+body containing identity fields is refused. Also updates `checkpoint_at` on the task record
+and appends `task.checkpoint` to the ledger.
+
+An empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what
+`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the
+one that can also say what was true.
+
+- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,
+  the working tree, how many files have changed since the task started, the commits since
+  then, and the count of blockers. It stays inside the same cap, and it is what the
+  provider&#39;s compaction event runs — a compaction discards the conversation while the work
+  continues, and the moment it is announced is the only moment anything can be written about
+  a context that is about to stop being reachable.
+- `--show` prints the newest checkpoint for this worktree and branch — for the active task
+  when there is one, and otherwise the newest whatever task it names.
+- `--list` lists this worktree&#39;s checkpoints, newest first, with each one&#39;s git label.
+
+A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
+is open and whatever outcome the last one reached; the record&#39;s `task_id` is the task when
+there is one and `none` otherwise, and the ledger event omits the field entirely rather than
+writing a literal `none` that every reader of that event would collect as a task by that
+name. Only the task&#39;s own `checkpoint_at` is left alone when the task is over, because that
+field is the task&#39;s.
+
+This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
+0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
+replaced silenced this repository&#39;s progress records for six days, while episodes went on
+opening and closing and every health check passed.
+
+Exit `10` when the body carries identity fields or exceeds the cap.
+
+```
+$ majordomus checkpoint &lt;&lt;&#39;EOF&#39;
+OAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.
+Cause is in callback normalisation, not in the comparison.
+Next: regression test before touching the implementation.
+EOF
+.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+```
+
+## `majordomus history`
+
+Read the append-only ledger back. Read-only.
+
+Operational reconstruction, not a transcript. It answers what happened, when, for which
+task, at which git head, and what was accepted — and nothing about what anyone said.
+
+**Filters:** `--task &lt;id&gt;`, `--event &lt;name&gt;`, `--since &lt;n&gt;m|h|d` or an ISO timestamp,
+`--limit &lt;n&gt;` (default 20, newest), `--all`. Output is oldest line first, so a filtered run
+reads as a narrative. `--json` emits the matching ledger lines verbatim.
+
+`--validate` reports every line that is not a well-formed event and exits `10` if any is;
+`doctor`, `check` and `watch` run the same test, because a ledger the tool cannot parse is
+a ledger that cannot be used as evidence.
+
+`--rotate` moves all but the newest `ledger.retention_max_lines` lines into
+`ledger.&lt;utc&gt;.jsonl.archived` and appends a `ledger.rotated` event recording how many moved.
+It never deletes, refuses to overwrite an existing archive, and does nothing when the ledger
+is under the cap.
+
+```
+$ majordomus history --task t-20260903193012-a4f1
+2026-09-03T19:30:12Z  task.started         t-20260903193012-a4f1  3f2a9c1  profile=debugging scope=lib/auth
+2026-09-03T19:45:00Z  task.checkpoint      t-20260903193012-a4f1  3f2a9c1  20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+2026-09-03T19:52:31Z  decision.recorded    t-20260903193012-a4f1  3f2a9c1  Normalise the callback URI before comparing state
+2026-09-03T20:14:08Z  task.finished        t-20260903193012-a4f1  b71e0c9  outcome=completed verify_exit=0
+```
+
+## `majordomus decision`
+
+Record or read durable decisions. One append-only file: `state/decisions.md`.
+
+`decision add &quot;&lt;what&gt;&quot; --why &quot;&lt;why&gt;&quot;` appends an entry with the task id and git head
+computed. `--why` is required: a decision with no recorded reason cannot be reviewed later,
+only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
+
+An entry is never edited or deleted. `--supersedes &quot;&lt;text&gt;&quot;` records that a later decision
+replaced an earlier one. The text is matched against the titles of the recorded decisions
+only, must identify exactly one of them, and that title is what is recorded; text matching
+no title, or more than one, is refused, so a supersession always points at one real
+decision. `decision list` marks a replaced entry with `Superseded by: &lt;title&gt;`.
+
+`decision list [--task &lt;id&gt;] [--limit &lt;n&gt;]` prints entries newest first; `decision show
+&quot;&lt;text&gt;&quot;` prints the first entry whose title contains that text, or exits `12`.
+
+The `deep-work` profile sets `verification.decision_record_required: true`; `finish` then
+refuses `completed` unless an entry names the task.
+
+```
+$ majordomus decision add &quot;Normalise the callback URI before comparing state&quot; \
+    --why &quot;the mismatch is a trailing-slash difference, not a forged state parameter&quot; \
+    --rejected &quot;relaxing the comparison, which would accept genuinely forged states&quot; \
+    --evidence &quot;test/auth/callback_test.exs:41&quot;
+recorded: Normalise the callback URI before comparing state
+```
+
+## `majordomus question`
+
+Open, resolve and list the questions that block acceptance. One mutable index:
+`state/open-questions.md`.
+
+Unresolved questions are explicit state, not prose inside a handover, because
+`finish --outcome completed` refuses while any entry names the active task. That gate is
+the reason the file has a machine-written line format, and the reason `check`, `doctor` and
+`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
+that can be bypassed by mistyping one.
+
+- `question add &quot;&lt;question&gt;&quot;` appends `- [unresolved] &lt;task id&gt; — &lt;question&gt; (&lt;date&gt;)`.
+- `question resolve &lt;n|&quot;&lt;text&gt;&quot;&gt; --answer &quot;&lt;answer&gt;&quot;` rewrites that one line to
+  `[resolved &lt;date&gt;]` and appends the answer. `n` is the number `question list` printed.
+  `--answer` is required, and an ambiguous selector is refused rather than guessed.
+- `question list [--all] [--task &lt;id&gt;]` shows every unresolved entry, because every one of
+  them refuses a completed finish here; `--task` narrows to what one task opened and
+  `--all` adds the resolved ones. The numbering is what `question resolve &lt;n&gt;` selects.
+  Any unresolved question can be resolved, not only one the active task opened: a gate
+  nobody can clear is a gate that gets worked around.
+
+Resolving edits the index because an index of what is still open must not accumulate. The
+append-only record of every opening and resolution, with its answer, is the ledger.
+
+```
+$ majordomus question add &quot;Does the legacy mobile callback still require the old URI form?&quot;
+opened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?
+$ majordomus finish --outcome completed --verify-command &quot;mix test&quot;
+FAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]
+finish: refused, 1 unmet
+```
+
+## `majordomus prompt`
+
+List, show and render repository-local prompt assets. Read-only.
+
+An asset is `.ai/repo/prompts/&lt;name&gt;.md`: YAML front matter with `name` (matching the
+filename) and a non-empty `description`, then a body. They are small, versioned with the
+repository, and provider-neutral — a prompt library is not the goal, and nothing here
+invokes a model.
+
+**Rendering substitutes a closed set of tokens and no others.** Inline: `{{TASK}}`,
+`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,
+`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Alone on a line: `{{OPEN_QUESTIONS}}`,
+`{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.
+
+There is no templating language: no conditionals, no loops, no includes, no shell. An
+unknown token is an error, exactly as an unknown configuration key is, because a prompt
+that silently renders `{{TSAK}}` as literal text is worse than one that refuses. `doctor`
+and `watch` validate every asset for the same reason.
+
+```
+$ majordomus prompt list
+continue               resume a task from durable state instead of from someone&#39;s memory
+debug                  frame a defect so that the fix is proven, not asserted
+handover               produce a continuation record body for the current task
+review                 review the working diff against the claimed scope and the finish contract
+$ majordomus prompt render debug | head -3
+Task t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback
+
+Scope: lib/auth
+```
+
+## `majordomus skills`
+
+The repository&#39;s skills: provider-neutral procedures for one bounded kind of work each,
+under the layer&#39;s skills section. Read-only.
+
+A skill is a directory `.ai/repo/skills/&lt;id&gt;/` holding `SKILL.md` — YAML front matter
+satisfying `share/schemas/majordomus/skill/skill.v1.schema.json` over a Markdown body that is the procedure —
+and optionally `examples/*.md`. Nothing registers it. The source class `skill` in
+`.ai/repo/knowledge/sources.yaml` discovers it, and that is the same declaration the
+Rust executable indexes, so a skill exists for `skills list`, for `doctor`, for the
+website and for MCP (`majordomus://skill/&lt;id&gt;`), or for none of them. See
+[`SCHEMAS.md`](SCHEMAS.md) for the file contract.
+
+```
+majordomus skills list [--json]        every skill: id, status, version, description
+majordomus skills show &lt;id&gt; [--json]   the repository-relative path, then the file as written
+majordomus skills check [--json]       validate every skill and every reference it makes
+```
+
+- `list` prints one line per discovered skill in discovery order, invalid ones included
+  (a listing that silently shrank would hide the file that needs fixing). `--json` adds
+  the URI, tags, related ids, inputs, outputs, the path, the content hash and the tracked
+  examples.
+- `show` prints the path on the first line and the file below it; `--json` adds the
+  body as a field. An id that is not a skill exits `12` and names `skills list`.
+- `check` validates every skill against the allow-list generated from the schema (no
+  unknown key), `schema: skill/v1`, an integer `version`, a `status` from the closed
+  set, an `id` equal to the directory name, non-empty `# Purpose`, `# Procedure` and
+  `# Output` sections; refuses two skills claiming one id, two skills whose descriptions
+  do not tell them apart, a `related` id that names no skill, and an example without a
+  level-one heading. Descriptions are compared folded to lower case, with runs of
+  whitespace collapsed and trailing sentence punctuation dropped, so the difference has
+  to be in what a description says rather than in how it is typed. Every finding names the file and
+  every reason. It ends with the counts of what it examined — skills, examples,
+  references — and exits `10` on any failure. A repository with no skills is a `WARN`,
+  never a pass over nothing. An absent allow-list (`share/allow/skill.txt`, a distribution
+  that was not generated) is `13`, naming `majordomus generate allow`.
+
+`doctor` and `watch` run the same examination through the doctrine
+`majordomus.skill-integrity`; `scripts/generate-site-data` reads the same catalogue and
+refuses to build the site from a skill that does not validate.
+
+```
+$ majordomus skills check
+OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections
+OK   skill       5 reference(s) — every related id and every example resolves
+skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
+```
+
+## `majordomus capture`
+
+Record the person&#39;s raw prompts from a provider hook — as a JSON record with a Markdown
+and a YAML rendering of it — draw the episode boundary from the provider&#39;s own lifecycle
+hooks, install those hooks, and report what each provider actually does in this repository.
+
+**Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.
+It never sees the bytes the person typed, only what the provider assembled from them, and a
+record written by a model is missing exactly the prompts that mattered: the first one of a
+session, which arrives before any instruction has been read, and every one where the model
+was busy doing what it was asked. A line in `AGENTS.md` is a request, not a mechanism, and
+no behavioural test can prove a request was honoured. So capture happens below the model,
+in the provider&#39;s own hook, where running it is the proof that it works.
+
+`capture install` writes a shim per event and the matching entries in
+`.claude/settings.json`, and refuses to overwrite any of them: `majordomus-capture` for
+`UserPromptSubmit`, `majordomus-session-start` for `SessionStart` and
+`majordomus-session-end` for `SessionEnd`. When the configuration exists and does not name
+one of them — including a configuration this tool wrote before it knew about the lifecycle
+events — the command prints the entries to add, one per missing event, and exits 15 rather
+than rewriting a file it did not write. A shim finds the repository from its own location:
+the provider substitutes its project directory into the command string textually, so nothing
+in the environment names the repository, and the working directory a hook runs in is not
+contracted.
+
+`capture prompt` reads one JSON payload on stdin and writes one record. **It never exits
+2**, because in `UserPromptSubmit` that exit code rejects the person&#39;s prompt, and a broken
+archive must never cost someone their input; a payload it cannot read is written to the
+archive&#39;s own log instead — and **`doctor` fails while that log is non-empty**, because a
+capture that failed means prompts were lost. That log is the only thing that can catch the
+failure that matters: if the provider renames the field the prompt arrives in, the hook
+still runs and the self test still passes, since it sends a payload of the tool&#39;s own
+making. Read the log and delete it; it is a diagnostic, and unlike a record, nothing is lost
+by removing it. The prompt text itself is the raw span from the payload, copied through
+still escaped, so no decode and re-encode step can lose a character.
+
+**One prompt is two files under one stem**, `.ai/local/prompts/YYYYMMDDHHMMSS-&lt;slug&gt;.json`
+and `.md`, where the slug is the opening of the prompt itself:
+
+```
+.ai/local/prompts/
+  20260905113342-why-arent-prompts-saved-automatically.json
+  20260905113342-why-arent-prompts-saved-automatically.md
+  20260905114501-make-it-a-file-per-prompt.json
+  20260905114501-make-it-a-file-per-prompt.md
+```
+
+**Both formats, always, and they are not alternatives.** The `.json` is the record: the
+provider&#39;s own spans, still escaped, pretty printed one member per line — what everything
+else is derived from and what capture must not lose. A record is read by people too, and a
+single forty-kilobyte line is not something any editor or diff shows usefully; the
+indentation lies outside the string spans, so the prompt&#39;s bytes are untouched by it. The `.md` is that record rendered for a person, in one shape
+every rendering has: the fields as YAML front matter, the same fields again as a table, and
+the prompt last under `## PROMPT`, decoded and fenced.
+
+````markdown
+---
+schema: &#39;majordomus.capture/v1&#39;
+ts: &#39;2026-09-05T12:48:55Z&#39;
+provider: &#39;claude-code&#39;
+event: &#39;UserPromptSubmit&#39;
+id: &#39;bb6f8c96&#39;
+session: &#39;5b13785c-728f&#39;
+source: &#39;user&#39;
+cwd: &#39;~/src/your-repo&#39;
+repository: &#39;~/src/your-repo&#39;
+branch: &#39;feature/prompt-capture-markdown&#39;
+head: &#39;a0ccbc9e25d6ec7f6bb754f3515affb9b1cc4014&#39;
+record: &#39;20260905124855-make-it-a-file-per-prompt.json&#39;
+---
+
+# Prompt — 2026-09-05 12:48:55 UTC
+
+| | |
+|---|---|
+| **Started** | `2026-09-05T12:48:55Z` |
+| **Provider** | `claude-code` · `UserPromptSubmit` |
+| **Session** | `5b13785c-728f` |
+| **Prompt** | `bb6f8c96` |
+| **Source** | `user` |
+| **Repository** | `~/src/your-repo` |
+| **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
+| **Directory** | `~/src/your-repo` |
+| **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.proto` |
+| **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
+
+## PROMPT
+
+```
+make it a file per prompt
+```
+````
+
+The fields appear twice because the two readers are different: front matter is what a tool
+parses, the table is what a person reads, and one function writes both out of one record in
+one pass, so they cannot drift. A row is omitted rather than printed as `null`, because a
+row reading `null` tells a person less than an absent row does.
+
+**The schema identifier is the path to the file that describes it.** `&lt;namespace&gt;.&lt;name&gt;/&lt;version&gt;`
+is `share/schemas/&lt;vendor&gt;/&lt;name&gt;/&lt;name&gt;.v&lt;n&gt;.proto`, so `majordomus.capture/v1` resolves
+to `share/schemas/majordomus/capture/capture.v1.proto` with no registry in between — a reader
+holding a record holds the way to read it, and there is nothing that can fall out of step
+with the records it claims to describe. That file is protobuf used as a schema language and
+not as a wire format: nothing serialises these messages, and it is the one place the record&#39;s
+fields and the document&#39;s sections are defined, so the two projections cannot disagree.
+`majordomus update` installs it; `doctor` fails if the identifier names a file that is not
+there.
+
+**Some header fields are absent, and absent means not observed.** The hook runs before the
+model is invoked, so when a record is written the turn has not happened: `finished_at`,
+`duration_ms`, `model`, `effort` and `tokens` are not knowable from it, and a conforming
+writer leaves them out rather than writing null — an absent field says &quot;not observed&quot;, a null
+one would claim it was observed to be nothing. The renderer omits the row rather than
+printing a placeholder, so a record the hook wrote shows `Started` and no `Finished`. When
+something that can observe the turn fills them in, the rows appear with no change to the
+shape. The same holds for the `## CONTEXT` and `## OUTPUT` sections, which the schema
+declares and the renderer emits exactly when the record carries the field behind them.
+
+`## OUTPUT` is the model&#39;s half of the exchange, which a prompt record may not carry — the
+doctrine fails a record naming a response or a transcript. A conforming writer puts it in a
+separate after-the-turn record whose `meta.parent` names the prompt record, and the rendering
+joins the two.
+
+**The fence is sized to the prompt**, never fixed at three backticks. Prompts quote code,
+and a prompt that opens a fence of its own would end the block early and spill the rest of
+itself into the document; the renderer measures the longest run of backticks inside and
+opens with one longer, which is how the prompt is quoted verbatim without a byte of it
+being touched.
+
+The direction between them is what makes the pair safe to enforce: a rendering can be
+rebuilt from a record and a record can never be rebuilt from a rendering. So `doctor` fails
+on a record with no rendering and names `capture render` as the repair, and fails on a
+rendering with no record without offering one, because there is none — that half is reported
+for a person to delete. `capture render` walks the archive, writes the renderings that are
+missing, touches nothing that already has one, and never writes a record; `--force` rewrites
+them all, which is for a change to the rendering itself and not for anything a hook does.
+
+A record is immutable once written, two hooks cannot interleave inside one file, the name
+sorts chronologically, and the directory listing is already a readable history. The slug is
+a hint and never a faithful rendering — escapes and non-ASCII collapse into hyphens, and
+the prompt itself is inside the file with nothing done to it. Records stay idempotent on
+the provider&#39;s prompt identity, which is a field and not the name: a hook delivered twice
+within the day writes once.
+
+**Not every payload is a prompt, and the field it arrives in is not fixed.** The event is
+not what its name suggests: Claude Code also fires `UserPromptSubmit` for messages it
+injects into the turn — a completed background task, a system reminder — and those are not
+the person&#39;s prompts. A payload whose declared origin is not a person, or whose text opens
+with a marker the provider injects, is skipped: no record, and no log line, because a skip
+is normal operation rather than a failure. A payload that says nothing about its origin is
+captured, since losing a real prompt is the worse of the two mistakes.
+
+The payload keys are candidates rather than one assumed name — the prompt is read from
+`prompt`, then `prompt_text`, then `text`. A payload field is the provider&#39;s private shape:
+it is versioned on their schedule, renaming one is not a breaking change to them, and a
+capture built on a single assumed name loses every prompt the day it moves. When none of
+the candidates is present, nothing is written and the log names the keys that *were* there,
+so the next name is read off a real payload instead of guessed.
+
+**The archive is evidence, not knowledge.** It lives under the ignored half of the layer,
+nothing loads it into a context, no command retrieves from it, and `doctor` fails if
+anything under it is tracked by Git. The writer emits a closed set of fields, so the
+model&#39;s half of the exchange cannot arrive through it.
+
+**A record carries the episode it belongs to.** It used to carry the provider&#39;s own session
+identifier and nothing else, and turning that into the canonical episode id needed
+`state/sessions-open/&lt;provider session&gt;.yaml` — a file that closing the episode deletes. So
+the instant an episode ended, nothing could say which episode its prompts had belonged to.
+Measured in this repository on 2026-09-11: 974 records, 80 provider sessions, 713 prompts
+with no surviving path to an episode.
+
+Every record now carries `episode`, `episode_link`, `repository_id` and `worktree_id`,
+written while the mapping is still there, using the identity the rest of the tool computes.
+`episode_link` says how the episode was determined, and the distinction is the point:
+
+| value | what it means |
+|---|---|
+| `open` | the episode was open under that provider session when the prompt arrived — an observation |
+| `session-context` | linked afterwards, from the frozen working context that names the provider session |
+| `ledger` | linked afterwards, because exactly one closed episode&#39;s window could contain that provider session&#39;s prompts |
+| `orphan` | no episode was open under that provider session; none was invented |
+| `unlinked-legacy` | written before records carried an episode, and nothing survives to link it |
+
+`orphan` and `unlinked-legacy` carry no episode. Nothing attaches a prompt to the episode
+nearest it in time: a prompt attributed to the wrong episode is worse than one attributed to
+none, because the second is visibly missing and the first is quietly false.
+
+`capture reconcile` applies those three kinds of evidence, in that order, to an archive
+written before the field existed, and `--dry-run` says what it would do. It refuses the
+moment two episodes could both be the answer, so a repository whose evidence is gone keeps a
+count of unlinked records rather than an invented attribution — and `doctor` reports that
+count rather than rounding it to zero.
+
+**Credential material never reaches the disk.** People paste keys into prompts, and a
+record is the one file here whose content nobody vetted before it was written. The known
+credential shapes — provider API keys, GitHub tokens, AWS key ids, Slack and Stripe tokens,
+PEM headers, bearer tokens, and an assignment of a long opaque value to something called a
+key, a token or a password — are replaced on the way to the record, before the bytes are
+anywhere but a variable. Nothing downstream sees the original: not the record, not either
+rendering, not the file name, not the log, which prints a payload&#39;s key names and never a
+value. What was replaced is recorded in `redacted`, so &quot;nothing was found&quot; and &quot;the secret
+is gone&quot; are statements a reader can tell apart.
+
+**The archive is mode 0600, directory included.** It was 0644 for its whole life, readable
+by every account on the machine — including the file names, which are the openings of the
+prompts. `capture render`, which is the archive&#39;s repair command, sets the mode over the
+whole directory on every run.
+
+**Retention takes the body and keeps the record.** The old rule was that nothing may ever be
+removed, on the argument that a prompt is derived from nothing and no other file can
+reconstruct it. That argument is about the *record* — that it happened, when, in which
+episode, under which head — and it was being applied to the bytes of the text, which is the
+part that carries the credentials and whose risk does not decay with its value. The archive
+reached 20 MB unbounded.
+
+So the policy declares `prompts.retention_max_days` and `prompts.retention_max_bytes`, and
+`majordomus capture prune` applies them: age first, then size, oldest body first. A pruned
+record keeps every field, including the provenance of its episode link, and gains a tombstone
+saying when the body went, how long it was, and its digest. A record is still never deleted,
+`doctor` reports an archive over either bound, and nothing prunes as a side effect of the
+hook that was supposed to be keeping them.
+
+**`capture status` reports every provider the distribution declares, for both aspects, with
+two facts per row and never one word standing in for both.** The **capability** is the
+vendor&#39;s, read from `share/providers.yaml` where every cell carries the citation it was
+verified from; the **state** is this checkout&#39;s, computed from the tree.
+
+| state | what is true |
+|---|---|
+| `unsupported` | the provider has no such event at all, and the declaration says where that was verified. Nothing this tool can do changes it. |
+| `unadapted` | the provider documents the event and this distribution ships no adapter for it. A gap in the tool, named as one. |
+| `unconfigured` | an adapter exists, but this repository does not wire it |
+| `named` | the configuration declares the hook, but not the shim this tool wrote |
+| `wired` | the shim is in place and executable, but a payload through it produced no record |
+| `verified` | a synthetic payload driven through the shim produced a record and its rendering |
+
+A repository holds itself to this by declaring an `enforcement` entry with
+`wired_by: provider-hook:&lt;provider&gt;`; `doctor` then fails unless the state is `verified`,
+and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
+
+**Until ADR 0103 this paragraph said something untrue, and it is worth saying what.** It
+read: &quot;Only Claude Code has an adapter today; every other provider the distribution declares
+is reported `unsupported` rather than assumed.&quot; Neither half held. The others were not
+reported `unsupported` — they were not reported at all, because the loop was over the
+providers with a line in an internal shell table and that table had one line; the state was
+unreachable for any provider a person could name. And `unsupported` had stopped being the
+right word for two of them: by 2026-09-11 Codex CLI and Gemini CLI had both shipped
+`SessionStart`, `SessionEnd`, a pre-compaction event and a prompt hook firing before the
+model. They are `unadapted` — this distribution ships no adapter — and the citations for all
+of it are in the declaration.
+
+Claude Code still has the only hook adapter. An orchestrator such as bb has none by design:
+it hands no prompt to a command before the model, and the agent it runs keeps its own hooks,
+so a Claude Code thread under bb is captured as `claude-code` (ADR 0024). `agents` is a class
+of tools rather than a product and fires nothing at all. No other surface — the web, the
+desktop app, another machine — is observable from here.
+
+### `capture session` — the episode boundary
+
+**The same argument, applied to the other thing a worker cannot do for itself: say where its
+own sitting began and ended.** A model told to open a session opens one when it remembers
+to, which is never the episode that mattered — the one that ended in a crash, a compaction,
+or somebody closing the window. The provider fires an event at both edges whether or not a
+model is in a position to notice, so `SessionStart` opens the episode and `SessionEnd`
+closes it into the shared record under `.ai/repo/sessions/` (ADR 0015).
+
+**Both directions are idempotent, because the events are.** `SessionStart` fires again on a
+resume and on a compaction, so the start passes `--if-open keep` and the open episode is
+kept rather than replaced; `SessionEnd` fires whether or not anything was opened, so the
+close passes `--if-none ignore` and writes nothing when there is nothing to close. The
+event&#39;s reason decides the outcome: one the adapter lists as deliberate closes the episode
+as `closed`, and anything else — a crash, a name the table has not seen — closes it as
+`interrupted`, because calling a cut-short episode complete is the worse of the two
+mistakes.
+
+**The close derives what the episode learned, between the checkpoint and the handover.**
+`session close` runs `majordomus knowledge derive` after the session record is published and
+before `session.closed` is appended, whenever `session.knowledge_on_end` is not `false`, so
+every close — the adapter&#39;s, a person&#39;s, any future caller&#39;s — is followed by its
+`knowledge.derived` line; the compaction adapter calls the deriver itself under
+`session.knowledge_on_compact`, independently of `checkpoint_on_compact`. Neither asks whether
+a task is active. A derivation that fails is reported as `provider.event.failed` with the
+deriver&#39;s last line as the reason, the episode is closed regardless, and the hook exits 0; a
+switch that is off is said on stderr and derives nothing. [`KNOWLEDGE.md`](KNOWLEDGE.md) has
+what is derived from what.
+
+**Neither hook writes to standard output.** Claude Code adds a `SessionStart` hook&#39;s output
+to the model&#39;s context, and nothing under the local half of the layer may be loaded into a
+context implicitly. Diagnostics go to stderr, and `capture session` never exits 2, for the
+reason `capture prompt` never does.
+
+**The open freezes the context it was given.** `session start` writes
+`.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md`: front matter carrying
+`schema: session-context/v1`, the episode&#39;s identity, the provider and the provider&#39;s own
+session id — the same string the prompt records carry — then the context builder&#39;s output
+verbatim. `session close` appends a `## Close` section naming the outcome and the record it
+wrote. That file is the opening snapshot, evidence of what the worker was told, and
+`majordomus session context --path` prints its path. `majordomus session context` itself
+composes the live working context on every read: the episode&#39;s identity, git now against
+git at the open, and the checkpoints, decisions and questions the episode recorded, read
+from the ledger lines stamped with its own session id. Nothing caches it, so it cannot be
+stale; `--json` carries it beside the snapshot&#39;s freshness label.
+
+That store is local and stays local. It names this machine, and it is a snapshot of a
+projection — re-resolving it later gives a different document — so it is never published,
+never indexed, and never loaded into a context on its own. It is also never a transcript:
+the derived half is the builder&#39;s output, the authored half summarises the work, and a front
+matter key naming a message list, a completion or a model&#39;s reply is a blocking failure.
+
+The wiring is declared as `wired_by: provider-hook:&lt;provider&gt;:session` and `doctor` proves
+it the same way, with one thing left out: the synthetic payload is driven through the end
+shim with the mutation disabled, because closing somebody&#39;s open episode is not a price a
+diagnostic may charge. Everything else on the path runs exactly as it does in a real event.
+
+```
+$ majordomus capture install
+INFO  capture  .claude/hooks/majordomus-capture  written and made executable
+INFO  capture  .claude/hooks/majordomus-session-start  written and made executable
+INFO  capture  .claude/hooks/majordomus-session-end  written and made executable
+INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)
+$ majordomus capture status
+agents                 unsupported  none        not a product but a class of tools defined by the file they read …
+bb:session             unsupported  none        no conversation-lifecycle hook is published. Searched 2026-09-11: …
+claude-code            verified     hook        .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering
+claude-code:session    verified     hooks       .claude/hooks/majordomus-session-start, …-end, …-compact are wired, and a synthetic payload through the end shim reached the command
+codex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks …
+generic:session        verified     connection  bin/majordomus-mcp is in place and a synthetic attach reached the episode boundary …
+$ majordomus capture render
+0 rendering(s) written into .ai/local/prompts
+```
+
+
+## `majordomus search`
+
+Find durable records without reading all of them. Read-only.
+
+A literal, case-insensitive, fixed-string search across handovers, checkpoints, decisions,
+questions, prompt assets and the ledger, in that order — authority order, so the most
+reliable evidence appears first. `--kind` restricts it and is repeatable; `--task` narrows
+to one task; `--limit` caps each kind.
+
+Deliberately not an index and not an embedding. The corpus is a handful of Markdown files
+and one JSONL; a scan is faster than the staleness problem an index would introduce, and
+&quot;transparent&quot; is worth more here than &quot;clever&quot;. Exit `0` with matches, `12` with none.
+
+```
+$ majordomus search &quot;callback&quot; --kind decision --kind checkpoint
+checkpoint  .ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation, not in the comparison.
+decision    .ai/local/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI before comparing state
+search: 2 match(es)
+```
+
+## `majordomus knowledge`
+
+A compiler over what this repository already states, and the writer of what an episode
+learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
+`promote` and `reject` write knowledge records and ledger lines, and nothing else.
+
+It is not a wiki, not a database, not a memory service, and not a second place to write
+things down. Every source it reads is a file somebody already maintains, everything it
+produces is derived and regenerable, and none of it outranks the file it came from. A
+result is a pointer to canonical knowledge, never a rewritten answer.
+
+**`knowledge` is not `search`.** `search` is a literal scan over the durable operational
+records — handovers, checkpoints, decisions, questions, prompts, the ledger — with no
+index, because that corpus is a handful of files. `knowledge` covers the repository&#39;s
+canonical artifacts: the policy, the profiles, the prompts, the milestone and issue
+contracts, the claims matrix and the documents. Two corpora, two contracts, and neither
+changes the other.
+
+- `sources [--scope shared|operational|all]` lists the curated source classes and the
+  files each one discovers, with the class, the scope, the kind, a content hash and the
+  repository-relative path.
+- `nodes [--scope ...] [--kind &lt;k&gt;]` derives one node per canonical object: its identity,
+  its kind, the source it came from and that source&#39;s hash. Exits `10` when two objects
+  claim one identity.
+- `edges [--scope ...] [--type &lt;t&gt;]` derives one edge per stated relationship, with the file
+  and the field or line it was observed in.
+- `derive [--episode &lt;id&gt;] [--dry-run] [--json]` derives the knowledge the episode produced
+  into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
+  never from a conversation: a recorded decision becomes a `convention`, a resolved question a
+  `fact`, a blocked or failed task a `lesson`, a completion with a verification command a
+  `fact`. The open episode, or the one named. Deterministic: same ledger, same git, same
+  bytes, and a second run reports every record `unchanged`. `--dry-run` says what it would
+  write and touches neither the tree nor the ledger.
+- `candidates [--json]` lists every record awaiting review — id, class, date, the branch of
+  the episode it came from, title — reading the directory rather than the index, so a
+  candidate the hook just wrote and nobody has added is listed.
+- `promote &lt;id&gt; [--class &lt;c&gt;] &lt; evidence.md` moves a candidate to `curated/` as `verified`,
+  with the evidence on standard input appended under `# Evidence` and the class the person
+  chose. The deriver never writes `verified`; this is the act that does.
+- `reject &lt;id&gt; --reason &quot;&lt;why&gt;&quot; [--by &lt;id&gt;]` marks a candidate `superseded` in place with the
+  reason under `# Rejected`, naming the record that replaces it when `--by` gives one.
+- `check [--json]` validates every record under `candidates/` and `curated/`: the schema, no
+  unknown key, unique ids equal to the file name, provenance beside `verified`, every
+  reference resolving, a reason beside `superseded`, no candidate claiming `verified`, no
+  conversation. The same check `check` and `doctor` dispatch.
+
+The read side of the same store is served by the executable — `bin/majordomus-cli knowledge
+candidates`, `knowledge record &lt;id&gt;` and `knowledge status`, each a capability declared once
+and answering identically over HTTP, MCP and the command line (`CAPABILITIES.md`); `status`
+reports the last derivation, the newest close and whether the writer has stopped.
+[`KNOWLEDGE.md`](KNOWLEDGE.md) has the derivation table, the two moments and the rules.
+
+**Writes:** `derive` writes `.ai/repo/knowledge/candidates/&lt;id&gt;.md`, one per record, through a
+temporary file in the same directory renamed over the id-named file, never staged, and prints
+`written`, `unchanged` or `skipped` per record with the summary last; it appends
+`knowledge.derived` to the ledger — episode, counts, paths — even when it wrote nothing.
+`promote` writes `.ai/repo/knowledge/curated/&lt;id&gt;.md` the same way, removes the candidate,
+appends `knowledge.promoted` and prints the curated path last. `reject` rewrites the
+candidate in place and appends `knowledge.rejected`. The record id is the episode id and a
+digest of the evidence, so the same fact always lands in the same file.
+
+**Never** stages, commits, or modifies any other file. Never reads a conversation, a prompt or
+a handover; never calls a model or a network. Never writes `verified`.
+
+**Refuses** (`10`) `promote` with empty stdin, with stdin carrying a transcript marker, on a
+record whose status is not `candidate`, or with a class outside the enumeration; `reject` on a
+record whose status is not `candidate`, or when `--by` names no record; `derive` when the
+policy does not parse; `check` on any failing record. (`12`) `promote` or `reject` when no
+candidate carries the id. (`2`) `reject` without a non-empty `--reason`. (`13`) a write that
+did not complete. `derive` with no episode to derive from says so and exits `0`.
+
+```
+$ majordomus decision add &quot;Tabs are refused in the parser&quot; --why &quot;two encodings of one thing&quot;
+$ majordomus knowledge derive
+written .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 1 written, 0 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ majordomus knowledge derive
+unchanged .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 0 written, 1 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ printf &#39;Verified by reading lib/yaml.sh.\n&#39; | majordomus knowledge promote s-20260912101500-7f1a-3b9c2e4d1a05 --class constraint
+.ai/repo/knowledge/curated/s-20260912101500-7f1a-3b9c2e4d1a05.md
+```
+
+**No edge without provenance.** Every edge names where the relationship was stated, and an
+edge missing any of from, to, type or provenance is refused rather than emitted with a
+blank — a blank source reads as &quot;unknown&quot; and is indistinguishable from one nobody recorded.
+An edge nobody can trace to a line is not a fact, it is a guess wearing a fact&#39;s clothes, and
+it is a guess the person best placed to notice it is wrong will never see.
+
+**Nothing is inferred from prose.** The repository already states its relationships
+explicitly, in fields somebody maintains, and those are both free and correct. The edge
+types are a closed set; an undeclared one is an error rather than a new vocabulary word:
+
+| type | from → to | stated in |
+|---|---|---|
+| `part_of` | issue → milestone | the issue&#39;s `milestone` |
+| `depends_on` | issue → issue, milestone → milestone | the record&#39;s `depends_on` |
+| `declares` | milestone → claim | the milestone&#39;s `claims` |
+| `specified_by` | claim → document | `docs/CLAIMS.yaml`&#39;s `source` |
+| `implemented_by` | claim → implementation | its `implementation` |
+| `tested_by` | claim → test, doctrine → test | its `test` |
+| `supports` | doctrine → claim | the doctrine&#39;s `claims` |
+| `references` | document → document | an inline Markdown link |
+
+Links are the one edge source that is not curated, and they are read conservatively. Fenced
+code is dropped first, because a path inside a code sample is an example of a path and not a
+reference to one. A target with a scheme, a protocol-relative target and an absolute path are
+all skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.
+
+**Severity distinguishes what Majordomus owns from what an author wrote.** A declared
+relationship pointing at a file the repository does not contain is a `FAIL`: it is a broken
+promise. A link in a document pointing at nothing is a `WARN`: a document may deliberately
+point outside the repository and the target alone cannot tell the two apart. A relationship
+pointing at a real file that this compiler does not model as one node — a container of many
+objects, or something outside the curated set — is silent, because a report that is large by
+design is a report people stop reading.
+
+`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on
+both. There is no clean node listing over a graph that is broken.
+
+**A node&#39;s identity is never its content hash.** It is the object&#39;s own canonical id where
+it has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —
+and its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says
+whether something *changed*; it can never say what something *is*, because then every edit
+would delete a node and create a stranger, and every reference to it would point at nothing
+without anything saying so. The hash rides along on the node and is what freshness is
+measured with.
+
+The consequence is deliberate: editing a document keeps its node and moves its hash;
+renaming one is a delete and an add, and disturbs no other node.
+
+**A kind comes from structure, never from prose.** It is decided by the source class the
+file was discovered in and by fields the file itself declares. Nothing reads a body looking
+for a word that suggests a type: a document that discusses roadmaps and milestones is a
+document that discusses them. Where no rule applies the kind is `unknown` and the node is
+still emitted, with one finding naming the class — an explicit unknown is information, and a
+confident wrong answer is not.
+
+**A title is taken or left empty, never invented.** From the record&#39;s own `title` or
+`description`, or from a document&#39;s first level-one heading. A document with no heading gets
+no title rather than its filename, because a filename standing in for a title reads like a
+fact and is a guess.
+
+Two stores have no id field of their own. A decision is keyed by its title and a question by
+its text — in both cases exactly what the ledger records and what a session envelope
+references, so three places name the same thing the same way and nothing maps between them.
+Answering a question rewrites the line it lives on, and the identity survives that: the
+appended answer is stripped, and only when what remains ends in the entry&#39;s opening date, so
+a question whose own text contains a dash is left whole rather than cut at a guess.
+
+**Discovery is driven by the repository index, not by a filesystem walk.** A walk returns
+build output, vendored trees and editor droppings; it returns them in an order that
+differs between two machines; and it can return a file nobody meant to publish. Listing
+tracked files instead gives repository truth in a stable order, and an untracked file is
+never a source. Operational records are discovered from the state directory Majordomus
+itself owns under `.ai/local/`, which is never tracked — and from nowhere else. No hidden
+directory is scanned because it happens to exist.
+
+The source classes are declared twice, by two owners: the repository declares its shared
+sources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships the
+operational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The
+scope of a class is decided by which file declared it; neither file names the other:
+
+| scope | meaning |
+|---|---|
+| `shared` | repository knowledge; may be projected to a public surface |
+| `operational` | this checkout&#39;s own working records; never part of a shared projection |
+
+The scope is a property of the class, so the publication boundary is decided in one place
+rather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under
+which `*` does not cross a directory separator. That is not tidiness: without it,
+`docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file
+becomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.
+
+One overlap is settled by the file rather than by the classes. A section&#39;s `README.md` matches
+both `.ai/**/README.md`, the `context` class, and its section&#39;s own pathspec
+(`.ai/repo/features/*.md`, `.ai/repo/rules/**/*.md`, and so on). It declares `kind: context`, so
+it is a `context` node, once: a second class discovering it adds nothing. The index applies the
+same precedence in `apps/majordomus-cli/src/discovery/mod.rs`, and
+`test/cases/330_a_contract_is_the_kind_it_declares.sh` proves it for `knowledge nodes`. Where no
+file declares a kind, two classes over one path remain a refusal (case 73&#39;s `twin`).
+
+`init` declares the `context` class first, so a new repository&#39;s contracts are objects of its
+index from the start. Without it `context resolve`, which reads the files, and every capability
+that reads the index disagreed about what applies to a path;
+`test/cases/130_context_compiler.sh` fails without the class.
+
+A class marked `required` that discovers nothing is reported as a `WARN`. The cost of a
+curated list is that a path can be forgotten, and a forgotten path is indistinguishable
+from a repository that does not have that file unless something says so.
+
+Whether a file conforms to the schema of its kind is the executable&#39;s index&#39;s verdict, not the
+reader&#39;s: `knowledge nodes` asks the index which files it refused, drops them and reports each
+refusal as a `FAIL` (`test/cases/405_the_knowledge_reader_honours_the_schema.sh`). With no
+executable built, or no `jq`, it reports a `WARN` that the schema went unchecked; it never
+reads as a pass. `MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked` says not to ask, and the reader then
+reports an `INFO` that the check was not asked for. That is what a recorded use-case scenario
+sets: whether the index *could* be asked is a fact about the recording machine, and evidence
+that must read the same on every machine cannot carry it (#713,
+`test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh`).
+
+```
+$ majordomus knowledge sources --scope shared
+policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml
+profile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml
+...
+issue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml
+claims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml
+document    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md
+knowledge sources: 169 file(s) in scope shared
+```
+
+## `majordomus rules`
+
+The effective rule set: every active rule vendored under the repository&#39;s rules section
+plus every active rule the repository wrote, resolved as a dependency graph. Read-only in
+every subcommand except `vendor update`.
+
+A rule is a Markdown file with YAML front matter. Its identity is the front matter&#39;s `id`
+and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
+`x-majordomus` block that binds a rule to a validator, and what is authoritative today.
+
+```
+$ majordomus rules list
+majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
+majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule
+project.english-only                       v1  blocking  project          proven by scripts/ci/english-only-check
+project.clean-room                         v1  blocking  project          review-enforced: the rule is about the provenance of what was written, which no program in this tree can read
+```
+
+- `list [--json]` prints the effective set in resolved order: identity, class, provenance
+  (`vendor:&lt;name&gt;` or `project`), and how it is enforced. Three modes, which
+  [`DOCTRINE.md`](DOCTRINE.md) describes: `enforced by &lt;commands&gt;` for a rule the dispatcher
+  runs, `proven by &lt;paths&gt;` for one a gate or a case holds, and `review-enforced: &lt;reason&gt;`
+  for one that carries a `reviewed_because` saying why no program can express it. A rule
+  with no `x-majordomus` block at all says `no validator; see the rule` rather than hiding
+  it: the rule is normative for whoever reads it, and nothing checks it by machine.
+
+  This command answers what the rules *are*. What *proves* each one — whether the case it
+  names is still in the tree, whether a runner drives it, whether anything ever ran it, and
+  whether that run is older than what it is about — is a different question, and the
+  executable answers it: `majordomus-cli rules report`, `rules show &lt;id&gt;`,
+  `rules proves &lt;test&gt;`.
+- `show &lt;id&gt;` prints one rule, front matter and body, with the repository-relative path it
+  was read from as the first line. An id outside the effective set exits 12.
+- `vendor status` compares the vendored baseline with the package the running executable
+  ships. It prints both revisions, then the manifest integrity of the vendored copy, then
+  whether the two packages are the same.
+- `vendor diff` is the reviewable difference between the two, as a unified diff of the two
+  directories. It exits 0 whether or not they differ; `vendor status` carries the exit code.
+- `vendor update [--force]` replaces the vendored baseline with the executable&#39;s package.
+  The write is atomic: the new package is staged beside the target and swapped in. It never
+  touches `rules/project/`.
+
+**Resolution fails closed.** A missing dependency, a dependency on a deprecated rule, a
+cycle, one `id@version` claimed by two files, a project rule in the vendor namespace,
+malformed or incomplete front matter, an unknown front-matter key, or an `x-majordomus`
+block that names no validator, no enforcing command or no test — each stops `list`, `show`
+and every command that reads the set, with exit 10 and the reason. Nothing is applied
+partially. The order is deterministic: two runs agree, and every dependency is listed before
+the rule that depends on it.
+
+**The repository&#39;s vendored copy is authoritative.** A newer executable reports a newer
+baseline through `vendor status` and `vendor diff`; it never applies one. `update`,
+`doctor` and `check` leave the vendored directory alone. The baseline changes only when
+`vendor update` is asked for.
+
+**A hand edit under `vendor/` is detected.** The package manifest names every rule file
+with its hash. A file whose hash no longer matches, a listed file that is absent, or a file
+present beside the manifest that it does not list, is reported by `vendor status` and
+refused by `vendor update` until `--force`.
+
+| exit | meaning |
+|---|---|
+| 0 | the set resolves; the vendored baseline is current |
+| 2 | unknown subcommand or option; `show` without an id |
+| 10 | the set does not resolve, or the vendored copy fails its manifest |
+| 11 | `vendor status`: the executable ships a different package than the one vendored |
+| 12 | no rule with that id; nothing vendored yet; no rules section in this layout |
+| 13 | the executable ships no standard rule package: a broken install, not a repository fault |
+| 15 | `vendor update` refused over a hand-edited vendor directory (`--force` overrides) |
+
+`test/cases/67_rule_dag.sh` proves each refusal by mutation, and proves that a newer
+distribution&#39;s package is not applied until asked, that `vendor update` leaves
+`rules/project/` byte for byte what it was, and that the resolved order is the same across
+runs.
+
+## `majordomus finish`
+
+Evaluate the finish contract. Refuse if unmet.
+
+**Reads:** policy, profile, `current.yaml`, git, ledger.
+**Writes:** on success, `current.yaml` outcome set to the given value, one
+`task.finished` ledger line carrying the evaluated checklist and the verification
+result, and a copy of `--note` under `state/completed/&lt;id&gt;.md` when given.
+
+**Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.
+`--verify-command &quot;&lt;cmd&gt;&quot;` runs the project&#39;s own verification in the repository root
+and records its exit code, duration, command, and the git tree id of the working tree it
+ran over. The tree is read before and after the run: if it changed while the command was
+running — a second worker in the same checkout, a person saving a file, a command that
+rewrites tracked files — the run describes neither state and the line fails; run it again
+once the tree is settled. `--note &lt;file&gt;` supplies the
+completion note; otherwise the newest handover naming this task is used. `--check`
+evaluates scope and state without writing and exits `0` when no task is active or the
+task is already finished, so a pre-push hook never blocks a repository with nothing to
+enforce.
+
+Profile requirements are also evaluated for `completed`: `regression_test_required`
+passes when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);
+`decision_record_required` passes when `decisions.md` contains `Task: &lt;id&gt;`. The
+regression check is deliberately crude and says so in its message.
+
+**Contract for `completed`:**
+
+```
+scope respected        touched files within claimed paths
+verification ran       --verify-command exited 0, recorded
+state updated          current.yaml is at HEAD or advanced, not diverged
+no open blockers       open-questions.md has no unresolved entry for this task
+note present           newest handover or completion note has required sections
+```
+
+Every line of the contract is evaluated and printed, pass or fail, so that a refusal
+says exactly what is missing. `partial` and `blocked` require a note with `# Next
+Action`; `no_match` and `failed` require `# Reason`; all four skip the verification
+line, and `blocked` skips the blockers line. Nothing is written when any line fails.
+Finishing an already finished task is refused (`15`).
+
+```
+$ majordomus finish --outcome completed --verify-command &quot;make test&quot;
+OK   scope         12 files, all within lib/auth
+OK   verification  make test — exit 0, 41s
+OK   state         exact (head 9b1e2d4)
+FAIL blockers      open-questions.md: &quot;token refresh window — needs product decision&quot; unresolved  [reproduce: grep -n &#39;unresolved&#39; .ai/local/state/open-questions.md]
+OK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md
+finish: refused, 1 unmet
+blocking doctrines:
+- majordomus.blocker-resolution
+$ echo $?
+10
+```
+
+The contract is not a list inside `finish`. It is the set of doctrines whose
+`enforced_by` names `finish`, selected by this repository&#39;s
+`verification.finish_requires`. A requirement in the policy that no doctrine defines is
+reported and refuses, rather than being ignored. See
+[`DOCTRINE.md`](DOCTRINE.md).
+
+---
+
+## `majordomus doctrine`
+
+Report what rules are enforced here, by what, and whether they are wired. Read-only.
+
+**Reads:** the repository&#39;s effective rule set (`.ai/repo/rules/vendor/majordomus/` and
+`.ai/repo/rules/project/`, resolved as `majordomus rules list` resolves it), `lib/`,
+`docs/CLAIMS.yaml`.
+**Writes:** nothing.
+
+```
+majordomus doctrine [status]     derived counts
+majordomus doctrine list         id, class, validator, enforcing commands
+majordomus doctrine show &lt;id&gt;    the full record for one doctrine, and the rule file it lives in
+```
+
+**Behaviour:**
+- `status` prints how many doctrines are declared, how many block, how many are advisory,
+  how many name a validator that does not exist, and how many name a test file that does
+  not exist. Every number is derived on the spot; none is stored.
+- `list` prints one line per doctrine.
+- `show &lt;id&gt;` prints the record, including which claims it backs, the tests that prove it,
+  the rules it depends on, the rule file it lives in, and which file defines its
+  validator. An unknown id exits `12`. A doctrine&#39;s id is its rule id,
+  `majordomus.&lt;name&gt;` for the baseline.
+- A rule set that does not resolve exits `10` with the reason; nothing is listed
+  partially.
+- Exits `0` when no validator and no test file is missing, `10` otherwise. Whether the
+  enforcement is actually *reached* is a stronger question, and `majordomus doctor`
+  answers it.
+
+## `majordomus plan`
+
+Read the canonical project model, and move one issue through its lifecycle. A milestone is
+an executable specification of an outcome; an issue is a bounded execution contract; the
+dependency graph between the issues decides what may be executed next. See
+[`docs/PLANNING.md`](PLANNING.md) for the semantics.
+
+**Reads:** `.ai/repo/project/project.yaml`, `.ai/repo/project/milestones/*.yaml`,
+`.ai/repo/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.
+**Writes:** one lifecycle field in one issue file, and one ledger event — `start`, `verify`,
+`evidence` and `done` only. Every other subcommand writes nothing.
+
+```
+majordomus plan validate         schemas, references, the DAG, status consistency
+majordomus plan status           milestone progress and the next executable issue
+majordomus plan list             one line per issue: id, status, wave, milestone, title
+majordomus plan show &lt;id&gt;        the full record of one milestone or issue
+majordomus plan ready            issues whose dependencies are all satisfied
+majordomus plan blocked          issues waiting on a dependency, and on which one
+majordomus plan waves            topological execution waves, derived from the graph
+majordomus plan graph            the dependency DAG as Mermaid
+majordomus plan next             the one issue a worker should take now
+majordomus plan body &lt;id&gt;        the provider-neutral projection body for one record
+majordomus plan start &lt;id&gt;       record that execution began
+majordomus plan verify &lt;id&gt;      record that implementation is complete, evidence pending
+majordomus plan evidence &lt;id&gt;    attach one piece of evidence
+majordomus plan done &lt;id&gt;        record completion
+```
+
+**Options:** `--json` on the read subcommands a surface consumes; `--milestone &lt;id&gt;` to
+restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, `--command`,
+`--result` and `--artifact` on `evidence`.
+
+**Behaviour:**
+- No status is stored anywhere. `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` and
+  `CANCELLED` are derived from what an issue records about itself and from the state of its
+  dependencies, by `lib/project.awk`. Writing a `status:` field is an unknown key.
+- `validate` reports unknown keys, unknown and self dependencies, duplicate ids, cycles,
+  issues executing ahead of a dependency, and issues with no acceptance criteria. It exits
+  `10` when any finding is a failure, `0` when only warnings remain.
+- `start` refuses (`15`) an issue that is not `READY`, naming what it waits on. `verify`
+  refuses an issue that is not `ACTIVE`.
+- `evidence` refuses (`15`) a token the issue does not declare, and refuses (`2`) without a
+  `--command` or an `--artifact`: narrative is not evidence. It appends to the issue&#39;s own
+  file with the commit and the timestamp.
+- `done` refuses (`10`) while any declared evidence token is uncovered, and refuses (`15`)
+  while a dependency is not `DONE`. Every writing subcommand prints the next ready issue
+  after the graph has been recomputed.
+- Exits `12` when the record named does not exist, or when the repository has no canonical
+  project model at all — the model is opt-in, and `doctor` skips it rather than failing
+  where it is absent.
+
+The same model is projected to GitHub by `scripts/github-sync` and to the website by
+`scripts/generate-site-data`. Neither re-derives a status; both read this engine.
+
+## `majordomus intent`
+
+What must become true above the milestones, and whether a piece of work may proceed toward it.
+The executable answers; each subcommand is one capability of the `intents` module, so HTTP
+and MCP answer the same value. See [`docs/PLANNING.md`](PLANNING.md) for the semantics; the
+generated reference lists every option.
+
+**Reads:** `.ai/repo/project/intents/*.yaml`, the plan, `.ai/repo/project/gaps/*.yaml`,
+`.ai/repo/project/critiques/*.yaml`, the evidence ledger. **Writes:** nothing.
+
+```
+majordomus intent list                     every intent with its derived stage
+majordomus intent show &lt;id&gt;                one intent in full
+majordomus intent validate                 every finding over the intents, coverage included
+majordomus intent coverage                 which work carries which criterion, and why
+majordomus intent preflight --issue &lt;id&gt;   may the work on an issue proceed, held to what
+majordomus intent preflight --path &lt;p&gt;     the same for the open issues covering a path
+majordomus intent binding --issue &lt;id&gt;     what a task naming that issue is bound to, with its pins
+majordomus intent realization              which work realises which intent, and whether reality agrees
+majordomus intent explain &lt;id&gt;             why an intent stands where it stands
+```
+
+**`preflight` behaviour:** the one join a session or a transition consumes before work begins.
+- An issue is followed through the `&lt;intent&gt;#&lt;criterion&gt;` references it declares in `serves`,
+  never through its milestone alone, and each link is judged by the coverage `validate`
+  reports from.
+- The verdict is `serves` (exit `0`) when every link holds and the plan of every intent served
+  was critiqued with no blocking finding `open`; `maintenance` (exit `0`) when the work sits
+  under milestones no live intent names and serves nothing, exactly where `validate` allows
+  it; `refused` (exit `10`) otherwise.
+- Every refusal names its issue and a cause: `unknown_issue`, `no_issue_covers_paths`,
+  `issue_serves_nothing` (its milestone realises an intent and it serves none of its
+  criteria), `serves_another_intent` (a criterion of an intent that does not name its
+  milestone), `serves_unknown_criterion` (an intent or a criterion that does not exist, or a
+  malformed reference), `intent_not_critiqued`, `open_blocking_finding`.
+- With `--path`, every open issue whose scope covers a path is judged and listed with its own
+  verdict, and the answer is the worst of them: one served issue never vouches for another.
+- The answer carries the intents the work serves and no other: each with its statement, the
+  served criteria with the live state of their evidence, invariants, non-goals, governance,
+  its critique with the blocking findings still open, and its gap bounded to the served
+  criteria.
+
+## `majordomus adr`
+
+The repository&#39;s architecture decisions as objects: what was decided, why, what it cost,
+and where the record came from. Under the layer&#39;s `adrs` section.
+
+A decision is a file `.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md` — YAML front matter satisfying
+`share/schemas/majordomus/adr/adr.v1.schema.json` over a body carrying `# Context`, `# Decision` and
+`# Consequences`. Nothing registers it: the source class `adr` in
+`.ai/repo/knowledge/sources.yaml` discovers it over the tracked tree, which is the same
+declaration the Rust executable indexes. See [`SCHEMAS.md`](SCHEMAS.md) for the contract.
+
+```
+majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title
+majordomus adr show &lt;id&gt; [--json]                     the path, then the file as written
+majordomus adr next [--json]                          the next free identity, and every source surveyed
+majordomus adr propose &quot;&lt;title&gt;&quot; [--from &lt;ref&gt;]...    write a new decision, status proposed
+                       [--tag &lt;tag&gt;]... [--supersedes &lt;id&gt;]
+majordomus adr check [--json]                         validate every decision and every reference
+majordomus adr affected [--base &lt;ref&gt;|--staged|--worktree] [--json]   the decisions a change set touches
+```
+
+- `list` prints one line per discovered decision, invalid ones included; `--status`
+  filters to one of `proposed`, `accepted`, `superseded`, `rejected`.
+- `show` prints the repository-relative path on the first line and the file below it. An
+  id that is not a decision exits `12` and names `adr list`.
+- `next` answers what the next free identity is, and says what it looked at to decide. Four
+  sources, each reporting how many identities it claimed: this working tree, every sibling
+  worktree as it stands on disk (authored and not yet committed is a real claim), every ref —
+  branches, tags, remote-tracking refs and every linked worktree&#39;s `HEAD`, in one
+  `git log --all --no-renames --diff-filter=A` — and the peer board of the shared server,
+  which is the only source that knows about an identity a session has decided to take and has
+  not written anywhere. A source that could not be reached is reported as unreachable and
+  never dropped silently from the denominator.
+  Allocation is **monotonic**: one above the highest identity anything has ever claimed,
+  never into a hole. A hole means an identity was taken and withdrawn, or taken and not yet
+  written, and nothing can tell either from a number nobody ever used — `0034` of this
+  repository is on no branch, in no tag and in no working tree, and `ADR 0035` cites it. Holes
+  are therefore listed as spent, with whatever cites them named as evidence for the reader.
+  The shell tool has no peer identity of its own, so a session that announced an allocation
+  and then asks is stepped over its own claim; the output says when the high-water mark came
+  from a board claim. `propose` allocates through the same survey.
+- `propose` writes `status: proposed` and nothing else. **There is no way to write
+  `accepted`**: `--status` exits `15` naming the reason, because a tool that can write
+  `accepted` turns its own inference into repository truth and a later reader cannot tell
+  which decisions a person actually made. The identity is allocated under a lock over the
+  section directory, so two worktrees proposing at the same moment get two identities.
+  A `--from` reference is `&lt;type&gt;:&lt;value&gt;` with the type one of `decision`, `session`,
+  `commit`, `issue`, `file`, `test`; a `file:` or `test:` path that does not exist exits
+  `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an
+  extracted record with no evidence is refused as an assertion. `--supersedes` writes both
+  halves of the relation, so the chain is walkable from either end.
+- `related` is the other half of a record&#39;s references, and it is authored rather than
+  written by `propose`: `rule:&lt;id&gt;`, `claim:&lt;id&gt;`, `file:&lt;path&gt;`, `test:&lt;path&gt;` — what the
+  decision put in force, as against `provenance.derived_from`, which is where it came from.
+  Each is validated where its type says the target lives, and the extractor turns it into a
+  graph edge (`declares`, `supports`, `references`, `tested_by`), so the reverse direction —
+  which decision put this rule in force — is `knowledge edges`, not a second list somebody
+  keeps in step.
+- `check` validates every record against the allow-list generated from the schema (no
+  unknown key), `schema: adr/v1`, the closed status set, an `id` whose number equals the
+  file-name prefix, the required body sections; and across the set: duplicate identities,
+  a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
+  that resolves to nothing. It exits `10` on any failure.
+- `check` also asks the question no single tree can answer about itself: for every identity
+  this tree **adds** relative to the base (`origin/master`, `origin/main`, `master`, `main`,
+  in that order; `MJ_ADR_BASE` overrides and is then the only candidate), does another ref
+  carry a *different* document at that identity? A different file name is a competing claim
+  and is refused, naming both documents, the refs that carry the other one, and
+  `majordomus adr next`; the same file name on two refs is an edit and is resolved by
+  merging. The verdict always states its subject — how many identities were added and what
+  they were measured against — and when the base does not resolve it says the other refs were
+  **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
+  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
+  rather than at the merge where `generate --strict` would exclude every claimant and name
+  only the identity. `ADR 0053` is the reasoning.
+
+- `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
+  for the index, `--base &lt;ref&gt;` for `&lt;ref&gt;..HEAD` plus the working tree — and names every
+  decision whose own file changed, or whose `related` names a path the change touches (a
+  reference to a directory covers everything below it). Every item is a `WARN` review note
+  and the exit code stays `0`: whether a decision still holds after the code it governs
+  moved is the judgement a tool may not make. It is the reverse question the graph answers
+  — what decided this file? — asked from the change set instead of from a record.
+
+`doctor` and `watch` run the same examination through the doctrine
+`majordomus.adr-integrity`. The threshold for recording a decision at all is the rule
+`majordomus.decision-threshold`, which a reviewer decides: the tool validates records and
+reports what a change reaches, and never claims to know that a diff embodied a decision.
+
+```
+$ majordomus adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/CAPABILITIES.md
+proposed: adr-0011  The registry is the one canonical declaration
+.ai/repo/adrs/0011-the-registry-is-the-one-canonical-declaration.md
+status is &quot;proposed&quot;; accepting it is a person editing that field.
+
+$ majordomus adr check
+examined 11 decision(s) in .ai/repo/adrs/
+every identity unique, every status known, every reference resolves
+```
+
+## `majordomus usecase`
+
+The executable use cases of the repository: the Markdown objects under the manifest&#39;s
+`use-cases` section, each a task somebody performs with the tool, the commands, rules,
+claims, responsibilities and applications it names, and a scenario that proves it against
+`bin/majordomus`. `docs/USE_CASES.md` is the contract; this section is the command.
+
+```
+majordomus usecase list [--json]
+majordomus usecase show &lt;id&gt;
+majordomus usecase validate [--json]
+majordomus usecase run [&lt;id&gt;...] [--json] [--out &lt;dir&gt;] [--keep]
+majordomus usecase coverage [--json] [--check]
+majordomus usecase impact [--base &lt;ref&gt;] [--json]
+majordomus usecase scaffold [--missing] [--for command:&lt;name&gt;] [--dry-run]
+```
+
+`list` prints every use case with its category, status, whether it has a scenario and the
+commands it names; `show` prints one file and the result of its last run. `validate`
+resolves every reference (a command against the dispatch table, a doctrine against the
+registry, a claim against `docs/CLAIMS.yaml`, a responsibility against
+`docs/RESPONSIBILITIES.yaml`, an application both ways, a category against
+`taxonomy.yaml`, a setup script and a stdin body against the fixtures, an MCP tool
+against the executable&#39;s registry), refuses a key the schema does not declare, an id that
+is not the file name, a duplicate, a body without its sections, a scenario step running a
+command the use case does not list, and an active use case targeting a guarantee with no
+scenario. `doctor` applies the same validation under `majordomus.catalogue-integrity`.
+
+`run` executes each scenario in a disposable repository prepared by its setup script:
+every step is one real invocation with argv from the file, its exit code and output are
+asserted, and the evidence, normalised (paths, timestamps, ids, hashes, durations), is
+written to `.ai/local/evidence/use-cases/&lt;id&gt;.json`; `--out` copies it elsewhere,
+`--keep` leaves the repository for inspection, and the event `use_cases.ran` is
+appended to the ledger. A use case without a scenario is reported as described, not run.
+
+`coverage` tallies every public command of the registry, every guaranteed claim with a
+responsibility and every MCP tool the executable projects against the active use cases
+that name it, run it, and have passing evidence; the policy&#39;s `use_cases.coverage` says,
+per class, whether a gap is `required`, `advisory` or `off`; `--check` exits 10 on a
+required gap, as `doctor`, `check` and `finish` do under `majordomus.use-case-coverage`.
+`impact` maps the files changed since `--base` (the upstream by default) and in the work
+tree to the commands, rules, use cases, scenarios and behavioural cases they reach, and
+names the run to do next. `scaffold` writes a draft use case for a gap from what the
+registry, the command&#39;s fixture and the claims already know; a draft validates and runs
+and never counts.
+
+A live step is judged on its whole argument vector, not on its first word. A command&#39;s
+`class` in `share/commands.yaml` is the worst thing any of its argument vectors does, so
+`knowledge` is `state-mutating` as a whole although `knowledge edges`, `nodes`, `sources`,
+`candidates` and `check` write nothing, and `check` is `read-only` although `check
+--checkpoint` records a checkpoint. Where a command&#39;s subcommands or flags differ, the
+registry carries an `effects` list: a `subcommand` entry replaces the command&#39;s class for
+that subcommand, and a `flag` entry raises it for any vector the flag appears in; a flag
+never lowers a class. `usecase validate` refuses a live step whose vector is not
+`read-only` and names what decided it (`by command`, `by subcommand &#39;derive&#39;` or `by flag
+&#39;--checkpoint&#39;`), and `usecase run --live` asks the same question again before it runs a
+step, so a step that would write is reported unmet and is not run. `doctor` reconciles each
+effect with the command it is declared on: a subcommand must be a word of the command&#39;s
+syntax, a flag must be written in it, and a flag may not be declared `read-only`.
+
+Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
+gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario
+repository cannot be created.
+
+## `majordomus bench`
+
+Time every public command of the registry, cold and warm, and compare with the baseline.
+
+The targets are the public commands of `share/commands.yaml` and nothing else: a command
+added to the registry is a target from that moment, and the harness never times itself.
+Each target runs in a disposable repository. When the tool&#39;s own suite is present, the
+scenario is the first scenario of the command&#39;s fixture under `test/fixtures/commands/`,
+so what is timed is what the site demonstrates and the suite executes; otherwise it is the
+bare command in an installed repository.
+
+A read-only command is run once cold, then `benchmark.warmup` times unsampled, then
+`benchmark.samples` times warm, all in one repository. A command that mutates state gets a
+fresh repository per sample, so every sample of it is cold and it has no warm
+distribution. A sample is the wall-clock time of the child process alone; setup is never
+inside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,
+p99, maximum, mean and standard deviation; nothing is averaged away.
+
+- `bench` times every target; `bench &lt;command&gt;...` only those.
+- `--list` prints the targets with their class and scenario, `--format json` as data.
+- `--samples &lt;n&gt;`, `--warmup &lt;n&gt;` override the policy for this run only; `--mode cold|warm|both`
+  selects the distributions recorded.
+- `--format json` prints the run as one document with schema `majordomus/benchmark-result/v1`:
+  the run id, the commit and whether the tree was dirty, the platform, the profile and one
+  result per target and mode.
+- Every run is written under `.ai/local/benchmarks/` (`runs/&lt;run-id&gt;.json`, `latest.json`,
+  one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
+  by git, never a baseline.
+- `--write-baseline` writes the run under `.ai/repo/benchmarks/rust/`, as
+  `baseline.&lt;platform&gt;.json` — one baseline per platform, since a duration compared
+  across machines compares the machines — with schema
+  `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
+  refuses a dirty tree without `--force`, because a baseline records a commit.
+- `--check` compares the run with the baseline under `benchmark.regression`: for each target
+  and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a
+  `FAIL` naming the metric, both values and the threshold, and the command exits `10`. No
+  baseline exits `12`; a baseline with another schema is not comparable and exits `15`.
+
+`MJ_TIMING=1` on any command prints the phases and work counters of that run on stderr,
+which is how a slow target is taken apart.
+
+```
+$ majordomus bench --list
+command      class                      scenario
+init         generated-output-mutating  fixture fresh
+doctor       read-only                  fixture not-wired
+...
+
+$ majordomus bench doctor version
+command      mode  status       n     p50     p95     p99     max  scenario
+doctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired
+doctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired
+version      cold  ok           1      41      41      41      41  fixture prints
+version      warm  ok          10      38      45      45      45  fixture prints
+
+slowest by warm p95 (cold where warm does not apply):
+  doctor       p95 2790 ms
+  version      p95 45 ms
+
+run b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json
+```
+
+Exit `2` on a usage error, `12` when a named target is not a public command of the
+registry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit
+code it produced), `10`, `12` and `15` from `--check` as above.
+
+## `majordomus archive`
+
+Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+
+A repository leaves the machine more often than it looks: to a language model that will
+read all of it at once, to a reviewer who cannot clone, to an auditor who has to run the
+gates on a copy. Those were being done by hand, differently each time, and the hand-made
+version got two things wrong that only surface at the far end.
+
+**What travels is the git index and only the git index.** Nothing untracked is ever
+archived — not the build output, not the caches, and not `.ai/local/`, which is this
+checkout&#39;s own state and is never shared. That is one rule instead of a list of
+exclusions, and it is what makes the command safe to point at a repository nobody has
+read.
+
+**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the
+profiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that
+drops the derived paths reads `.gitattributes` — every projection in this repository is
+already marked `merge=derived` there, for a different reason — rather than keeping a
+second list of generated paths, which is the duplication
+`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.
+
+**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix
+mode, and the unpacked tree then has no executable in it: every script fails to run, and
+at the far end that is indistinguishable from the repository being broken. So the mode of
+each entry is read from the index — the authority, not the working tree — written into
+`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back
+and creates a local git index, because the checks here enumerate the repository with
+`git ls-files` and without an index they examine nothing and report that nothing is wrong.
+
+Every archive is read back before the command returns: the entry count must match what
+was staged, and if executables went in and none came out, that is a failure rather than a
+surprise for the recipient.
+
+**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,
+`.gitattributes`, and the git index.
+**Writes:** `tmp/archives/` — or wherever `--out` says.
+
+**The profiles shipped:**
+
+| Profile | For |
+|---|---|
+| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |
+| `audit` | Running the repository&#39;s own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |
+| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |
+
+```
+$ majordomus archive --dry-run
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         left out: 10 (binary)
+         left out: 443 (derived)
+         left out: 5 (excluded)
+         nothing written (--dry-run)
+
+$ majordomus archive
+OK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)
+```
+
+**Behaviour:**
+- `--list` prints the profiles with what each one is for, and marks the default.
+- `--dry-run` reports the selection and the reason every file was left out, and writes
+  nothing.
+- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.
+- An existing output file is refused with `15` unless `--force` is given, so an archive
+  someone is uploading cannot be replaced underneath them.
+- A path the index names and the working tree no longer has is counted and reported, not
+  silently absent.
+- `--json` emits one object with the counts, the reasons and the path.
+
+Exit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,
+`10` when a profile selects none of the tracked files, `15` when the output exists, `13`
+when the container could not be written or does not read back as what went in.
+
+## `majordomus version`
+
+Print the version and exit. `--version` is accepted as a synonym, and `version` works
+without an installation: it never reads `.ai/`.
+
+**Reads:** `share/version.txt` beside the tool — never the one `MAJORDOMUS_SHARE` names.
+**Writes:** nothing.
+
+**Behaviour:**
+- Prints `majordomus &lt;version&gt;` on stdout and exits `0`.
+- The version is authored in `apps/majordomus-cli/Cargo.toml`; `share/version.txt` is its
+  generated projection, shipped in every archive, and this command prints it. The public
+  site&#39;s footer reads the same answer.
+- Exits `12`, naming the file, when the distribution carries no `share/version.txt`.
+
+## Hook integration (target)
+
+`init` prints these; `doctor` verifies they are present and executable:
+
+```sh
+# .git/hooks/pre-commit  (or the file named by core.hooksPath)
+majordomus doctor || exit $?
+
+# .git/hooks/pre-push
+majordomus finish --check || exit $?
+```
+
+Either line may live in a subhook of a dispatching hook instead — `doctor` looks in
+`&lt;hook&gt;.d/` as well and names the file it found. A repository that predates Majordomus
+needs no bootstrap flag: `finish --check` passes while no task is active, so the hooks
+are inert until the first `start`.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

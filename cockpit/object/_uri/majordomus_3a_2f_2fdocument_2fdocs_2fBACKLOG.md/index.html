@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/BACKLOG.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/BACKLOG.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/BACKLOG.md</h1><p class="mj-page-subtitle">Backlog</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/BACKLOG.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/BACKLOG.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/BACKLOG.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FBACKLOG.md/index.html">document.docs/BACKLOG.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># Backlog
+
+The five quantities in this repository that grow on their own, the commands that measure
+them, and the commands that reduce them. Behaviour as implemented and tested; where this
+document and the scripts disagree, the document is wrong and changes in the same commit.
+The rule is `project.accumulation-is-measured`; the gate is `scripts/ci/backlog-check`; the
+behavioural cases are `test/cases/131_backlog_hygiene.sh` and
+`test/cases/276_disk_is_bounded.sh`.
+
+## The finding this exists because of
+
+On 2026-09-11 the operator reported one symptom — *worktrees, processes and branches keep
+piling up and nothing is being deployed* — and measurement found four separate quantities
+at once (the fifth, disk, filled the volume the next day and has its own section below):
+
+| Quantity | Measured | Of which |
+|---|---|---|
+| open pull requests | 16 | 15 merged cleanly on any developer&#39;s machine |
+| linked worktrees | 64 | 47 with uncommitted work |
+| local branches | 111 | 91 not merged into `origin/master` |
+| running `majordomus` servers | 192 | 14 abandoned, one over a day old, 13 ports, ~150MB |
+
+The deploy pipeline was not broken: `gh-pages` was one commit behind `master` and the site
+was live. Nothing was failing. Every part was working as designed, and the result was still
+a standstill — which is the point of this document.
+
+## Why pull requests do not merge on GitHub, and never will
+
+This repository commits its derived artifacts, and every one of them carries a fingerprint
+of the tree it was generated from. After a merge that tree is neither parent&#39;s, so both
+recorded fingerprints are wrong and no textual combination of them is right — the correct
+value only exists after the generator runs. `.gitattributes` therefore marks those paths
+`merge=derived` and `scripts/merge-derived` resolves them instead of conflicting.
+
+A custom merge driver is an executable named by `git config merge.&lt;name&gt;.driver`. That
+configuration is **per clone** and cannot be committed — which is why `just
+derive-merge-driver` exists. GitHub&#39;s servers are a clone that has never run it. So GitHub
+performs a plain three-way merge over files that every branch regenerates, finds conflicts
+in all of them, and reports the pull request as `CONFLICTING` / `DIRTY`.
+
+**GitHub&#39;s `CONFLICTING` is not a false positive.** The conflict is real for any clone that
+lacks the driver, and GitHub is always such a clone. The same branch, measured both ways:
+
+```sh
+git                               merge-tree --write-tree origin/master &lt;branch&gt;  # exit 0
+git -c merge.derived.driver=false merge-tree --write-tree origin/master &lt;branch&gt;  # exit 1, 15 conflicts
+```
+
+So there are two honest answers to &quot;does this merge&quot;, and which one you get depends on
+whether the driver is configured. The one that matters is the clone that will actually
+carry the result — a developer&#39;s machine — and there the answer was yes for fifteen of the
+sixteen open that day. The merge button is not slow or flaky; it is structurally
+unavailable, and it will not become available. A contributor who waits for it waits
+forever, and that wait is the whole backlog.
+
+**Ask git for the exit code, never grep its output.** `merge-tree`&#39;s conflict wording is not
+a contract; a grep that misses it counts a conflicted merge as clean, which is the most
+expensive way this measurement can be wrong. `majordomus prs` uses the exit code.
+
+## The commands
+
+| Quantity | Measure | Reduce |
+|---|---|---|
+| pull requests | `majordomus prs status` | `majordomus prs drain --refresh` |
+| worktrees, branches | `majordomus worktree` | `majordomus worktree` cleanup, by hand for dirty ones |
+| abandoned servers | `scripts/reap-orphans` | `scripts/reap-orphans --kill` |
+| build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim` |
+| the whole gate | `scripts/ci/backlog-check` | `scripts/ci/backlog-check --remote` |
+
+### `majordomus prs`
+
+Pull-request integration is a typed subsystem of the executable ([docs/INTEGRATION.md](INTEGRATION.md),
+ADR 0101). `majordomus prs refresh` observes the forge and fetches every open head;
+`status`, `plan` and `explain` classify each pull request against the current master with
+git and the derived driver — never the forge&#39;s `mergeable` — offline; `drain` merges the
+next ready one, verifies it landed, and observes again before anything else, one merge at a
+time. `drain --refresh` brings master into the first pull request that needs it when
+nothing is ready, one at a time, because merging anything else meanwhile would put it
+behind again.
+
+It replaced `scripts/land`, which merged every clean pull request onto one integration
+branch: a batch whose regressions nobody could attribute, planned from a list that the first
+merge made stale.
+
+The measurement runs on a clock: `.github/workflows/queue.yml` (model
+`.ai/repo/ci/queue.yaml`) runs `majordomus prs refresh` and `majordomus prs status` every
+thirty minutes and publishes the queue to the job summary, so its state is a measurement
+rather than something somebody remembers to ask for. It never runs `drain` or
+`cleanup --apply`, and its token cannot write: the state is automatic, the merge stays a decision.
+The read-only token cannot read the branch protection either, so the report says so (exit
+10) and calls nothing `ready`; only an unusable measurement (exit 12) fails the job.
+`test/cases/350_the_queue_measures_itself.sh` holds both halves, and fails if the workflow
+acquires an acting command or a write permission.
+
+### `scripts/reap-orphans`
+
+A `majordomus serve` or `mcp` outlives its client whenever the client dies without closing
+it: the parent is reaped, the server is re-parented to init, and it holds its port and its
+memory until the machine restarts. A server that answers is not a server anyone is talking
+to.
+
+Sessions in this repository are each other&#39;s instruments, so **a process is never matched
+by name**. `pkill -f majordomus` would end the servers that live peers are attached to. A
+process is reaped only when all four hold, each re-checked immediately before the signal:
+
+- it is a majordomus `serve` or `mcp` process, by executable path;
+- its parent is init (`ppid 1`) — the session that started it is gone;
+- it has zero `ESTABLISHED` TCP connections — no client is attached;
+- it is older than `--min-age` (default 30m).
+
+Dry-run by default; `--kill` acts. A server that acquires a client between the scan and the
+signal is skipped.
+
+**A consent also selects its subject.** With no `--servers`/`--targets`, `--kill` examines
+servers alone and `--reclaim` build output alone; with no flags at all both are reported and
+nothing is touched. This is not cosmetic. A `--reclaim` run once printed a table of live
+servers under the words *would reap*, which invites the reader to believe that the consent
+they gave for build output is about to end their server — or has. A consent named for one
+subject never tables the other&#39;s.
+
+**A sweep that stops before its summary says `INCOMPLETE`** and names which of the two
+subjects it examined and which it never reached. A column header with rows beneath it has the
+shape of an answer, and the exit status is the only thing that says otherwise — which nobody
+reads off a terminal. On 2026-09-13 a run printed a header, one server, and died of SIGPIPE
+at exit 141 for want of a reader that read its stream to the end; it was taken for a report
+(`project.a-verdict-states-its-subject`, `test/cases/318_a_partial_sweep_says_so.sh`).
+
+### Build output, and the floor under a build
+
+On 2026-09-12 this machine reached **zero bytes free** on a 926GiB volume. Every session on
+it died in the same minute — not gracefully, but with the harness unable to write its own
+task files, which reads to each session like broken tooling rather than like a full disk,
+and `df` could not be run either. `~/dev/prismatic-majordomus-wt` held 180GB, of which
+~145GB was `apps/majordomus-cli/target` in worktrees **whose branches were already merged**.
+One had landed hours before and still held 32GiB. Nothing in finishing a piece of work
+removes the build directory it produced, so nothing ever would have.
+
+The same reaper answers it, with a second subject and a second consent (`--reclaim`, never
+`--kill`). **It removes `target/` and never a worktree**: a false positive costs somebody a
+rebuild and cannot cost a byte of source. A build directory is reclaimed only when all four
+hold — merged into `origin/master`, nobody working in that worktree, `git status` empty, and
+the directory provably cargo&#39;s own and inside that worktree. The primary checkout is
+excluded by name rather than by predicate, because every other checkout borrows its
+executable.
+
+Liveness is read from the machine (`ps`, and every process&#39;s working directory) and never
+from the peer board: an announcement belongs to a *connection*, and a worker that reconnects
+keeps its work while losing its place on the board — exactly the window a reaper runs in.
+Merged-ness alone would have been a disaster, and the instance was on the machine that
+morning: a worktree holding 11.8GB with a live peer in it read as fully merged, because the
+session working in it had not committed yet and its tip was still where the merge left it.
+An mtime is never a predicate here (it is the one whose missing input becomes an extreme
+value, and it cleaned three *active* worktrees once), and the reaper refuses as a whole —
+reclaiming nothing, not everything — when liveness or `origin/master` cannot be read.
+
+The other half is a bound rather than a warning. A `df` in `doctor` helps the next person
+and cannot help the person already stuck. `mj_rust_space_check` in `lib/rust_bin.sh` refuses
+to *start* a build below **5120MB** free, and the three paths that start one — the launcher,
+`scripts/derive`, `just build` — all ask it. The floor is measured: a full `cargo build
+--locked` of the crate into an empty `target/` wrote 2.45GiB, and the floor is two of those.
+`MAJORDOMUS_MIN_FREE_MB=0` lifts it. A bound whose own input cannot be measured says so and
+lets the build run — the deliberate opposite of the sweep, because refusing every build on a
+machine whose `df` is unreadable stops all work to prevent a hypothetical.
+
+### The derived trees that were never declared
+
+`merge=derived` only helps a path that is marked. `scripts/generate-site-data` deletes and
+regenerates fourteen whole sections under `site/content/` on every run — its `rm -rf
+&quot;$CONTENT_ROOT/...&quot;` lines are the list — and on 2026-09-11 **thirteen of the fourteen were
+not declared in `.gitattributes`**. Only `registry` was.
+
+So every integration conflicted over `guarantees/`, `commands/`, `use-cases/`, `why/`,
+`plan/`, `skills/` and the rest: content no branch owns, that the generator replaces
+wholesale, and that a person then resolved by hand, per merge, forever. This was the single
+largest mechanical cause of the backlog after the forge constraint itself, and it surfaced
+here only because landing six pull requests hit it on the very first merge of `origin/master`.
+
+All fourteen are declared now, and `scripts/ci/backlog-check` reads the list **out of the
+generator** rather than keeping one by hand — a hand-kept list falls behind the first time a
+section is added, which is exactly how thirteen omissions survived unnoticed.
+
+### Why servers were abandoned in the first place
+
+`majordomus serve --idle N` stops when no peer has been attached for `N` seconds, and
+`DEFAULT_IDLE_SECONDS` (900) is the constant the shared server is started with —
+`scripts/ci/entry-converges` holds that contract for the server `serve ensure` starts,
+which is the path a person takes.
+
+It is not the path that leaked. Raw `serve`&#39;s `--idle` defaults to **0 — run until
+stopped**, and four cases in the suite backgrounded a server without it. A case that is
+interrupted before its cleanup trap fires — a killed run, a spend limit, a closed laptop —
+leaves that server holding its port until the machine restarts. That is where the abandoned
+servers came from, and it is why the same contract is now held for the suite&#39;s own spawns
+by `scripts/ci/backlog-check` rather than only for the entry path. The two halves of one
+rule, checked in one direction only, is the recurring shape here.
+
+### Worktrees and branches
+
+`majordomus worktree` derives the topology from git (`project.worktree-topology`) and marks
+which branches are eligible for cleanup. The number eligible is normally far below the
+number that look disposable: on the day above, 5 of 111. **Zero unique commits is not proof
+that a branch is safe to delete** — a merged branch can hold uncommitted and untracked
+authored work, and 47 of 64 worktrees were dirty. Classify the working tree, not only the
+history, and push before removing anything.
+
+## What the gate holds
+
+A CI runner has no worktrees, no abandoned servers and no backlog of its own, so
+`backlog-check` does not measure the quantities. It holds together the things whose absence
+let them accumulate unseen: that each quantity still has its command, that the reaper is
+safe by construction, that `.gitattributes` and its installer still agree — a declaration
+checked in one direction only is how this class of defect survives — and that no document
+sends a reader to the merge button. `--remote` adds the measurement itself, and fails when
+more than `MJ_BACKLOG_MAX` (default 10) pull requests are landable and still open.
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

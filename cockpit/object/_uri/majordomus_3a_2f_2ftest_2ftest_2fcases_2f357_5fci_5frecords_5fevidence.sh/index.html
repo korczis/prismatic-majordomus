@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>test/cases/357_ci_records_evidence.sh · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">test/cases/357_ci_records_evidence.sh</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">test/cases/357_ci_records_evidence.sh</h1><p class="mj-page-subtitle">An object of kind test</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://test/test/cases/357_ci_records_evidence.sh</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">test</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/357_ci_records_evidence.sh</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">test/cases/357_ci_records_evidence.sh</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/plain</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../live/index.html#/cockpit/capabilities/test.test%2Fcases%2F357_ci_records_evidence.sh">test.test/cases/357_ci_records_evidence.sh</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># majordomus-covers: none
+# claims: evidence-recorded-in-ci
+# Proves claim evidence-recorded-in-ci (docs/CLAIMS.yaml), whose `test:` names this case.
+#
+# CI&#39;s evidence is kept where the run happened and published with the commit it proves (ADR 68,
+# as ADR 0087 amends it). This case drives each half through the real executable and the real
+# scripts, in fixtures of its own, because the behaviours that matter are about which run,
+# which commit and which tree:
+#
+#   1  a `ci` recording inside a GitHub Actions environment names the run: id, attempt, job and
+#      the address the provider gave, exactly
+#   2  the same recording as `local`, or as `ci` outside a run, names no run, and the ledger row
+#      carries no `run` member at all
+#   3  scripts/ci/evidence-collect gathers a run: the manifest names the commit and the run,
+#      counts the outcomes of that run only, keeps a failure as a failure, names what was
+#      absent, and summarises coverage through scripts/rust-coverage. Beyond that:
+#      a  a crate report that yields no test binary is named as absent, never read as nothing
+#         to say
+#      b  the head a pull request was built from is carried beside the commit that ran, and
+#         never replaces it
+#      c  the working tree is the one the producing jobs measured where they ran, carried into
+#         each runner&#39;s rows: clean only when every recorded runner measured a clean tree,
+#         dirty when any measured a dirty one; a report whose job left no measurement is not
+#         recorded, and is named as refused and absent
+#      d  a report whose job measured another commit is refused: it is not recorded, and it is
+#         named as absent and refused; when every report is refused, nothing is gathered
+#      f  the manifest&#39;s totals, tree and absences are the run record&#39;s, joined rather than
+#         derived again: a second gather under the same run counts what it recorded, not every
+#         row the ledger holds under that run
+#      e  the report is the tracked ledger&#39;s: derived before the run&#39;s rows are recorded, on a
+#         checkout measured first, so a claim only the run proved still reads `not_run` in it
+#   4  nothing to gather is refused, not written as an empty success
+#   5  scripts/pages evidence publishes `current` only when the run is of the published commit,
+#      measured clean trees, derived its report on a clean checkout and carries it, and nothing
+#      was absent, refused or failed; `unknown` with its reasons when the run cannot confirm the
+#      report, a report the collector failed to derive or did not keep included,
+#      `stale` for a failure or an ancestor&#39;s run, with its distance; a manifest from outside
+#      the history, or none at all, as unavailable with a reason — never as current
+#   6  validate.yml is wired for all of it: cargo writes no colour codes, the reports and the
+#      gathered directory live outside the checkouts, each producing job measures the tree it
+#      ran in excluding only the outputs its run names, at the paths where that run writes
+#      them (rust-check writes in the crate&#39;s directory), and every reader of the suite&#39;s
+#      report reads the file the suite wrote
+. &quot;$ROOT/test/lib.sh&quot;
+MJB=&quot;$(rust_bin)&quot; || rust_bin_exit $?
+export MAJORDOMUS_SHARE=&quot;$ROOT/share&quot;
+
+# Reports, answers and gathered directories live outside every repository under test.
+W=&quot;$(mktemp -d &quot;${TMPDIR:-/tmp}/mj357.XXXXXX&quot;)&quot;; trap &#39;rm -rf &quot;$W&quot;&#39; EXIT
+
+actions() {      # actions &lt;command...&gt; — run inside a described GitHub Actions run
+  env GITHUB_ACTIONS=true GITHUB_SERVER_URL=https://forge.example GITHUB_REPOSITORY=owner/repo \
+    GITHUB_RUN_ID=77 GITHUB_RUN_ATTEMPT=3 GITHUB_WORKFLOW=validate GITHUB_JOB=evidence \
+    GITHUB_EVENT_NAME=push &quot;$@&quot;
+}
+row() {          # row &lt;test&gt; — that test&#39;s ledger row, compact
+  jq -c --arg t &quot;$1&quot; &#39;.executions[] | select(.test == $t)&#39; &quot;$T/.ai/repo/evidence/ledger.json&quot;
+}
+
+# A repository with a layer of its own: the recorder refuses a directory that is not one.
+( cd &quot;$T&quot; &amp;&amp; &quot;$MJ&quot; init &gt;/dev/null )
+mkdir -p &quot;$T/test/cases&quot;
+printf &#39;echo holds\n&#39; &gt; &quot;$T/test/cases/01_holds.sh&quot;
+printf &#39;echo breaks\n&#39; &gt; &quot;$T/test/cases/02_breaks.sh&quot;
+git -C &quot;$T&quot; add -A &gt;/dev/null
+git -C &quot;$T&quot; commit -qm fixture
+FIXTURE=&quot;$(git -C &quot;$T&quot; rev-parse HEAD)&quot;
+printf &#39;01_holds\tok\t1\tparallel\n02_breaks\tFAIL\t2\tparallel\n&#39; &gt; &quot;$W/suite.tsv&quot;
+
+# ---------------------------------------------------------------- 1. a ci recording names its run
+# a ci recording carries the measurement its own run made of the checkout
+run_quiet &quot;$W/s1.err&quot; &quot;$MJB&quot; evidence --repo &quot;$T&quot; stamp --producer suite --report &quot;$W/suite.tsv&quot; --out &quot;$W/suite.provenance.json&quot; &gt; /dev/null
+run_quiet &quot;$W/r1.err&quot; actions &quot;$MJB&quot; evidence --repo &quot;$T&quot; record --suite &quot;$W/suite.tsv&quot; --provenance &quot;suite=$W/suite.provenance.json&quot; --origin ci &gt; /dev/null
+r=&quot;$(row suite:01_holds)&quot;
+[ &quot;$(printf &#39;%s&#39; &quot;$r&quot; | jq -r &#39;.run.url&#39;)&quot; = &quot;https://forge.example/owner/repo/actions/runs/77/attempts/3&quot; ] \
+  || { echo &quot;    a ci recording did not name the run it happened in: $r&quot;; exit 1; }
+printf &#39;%s&#39; &quot;$r&quot; | jq -e &#39;.run.id == &quot;77&quot; and .run.attempt == 3 and .run.job == &quot;evidence&quot; and .run.workflow == &quot;validate&quot; and .origin == &quot;ci&quot;&#39; &gt;/dev/null \
+  || { echo &quot;    the run named is not the run described: $r&quot;; exit 1; }
+row suite:02_breaks | jq -e &#39;.outcome == &quot;fail&quot; and .run.id == &quot;77&quot;&#39; &gt;/dev/null \
+  || { echo &quot;    a failing case lost its outcome or its run: $(row suite:02_breaks)&quot;; exit 1; }
+
+# ---------------------------------------------------------------- 2. no run where there is none
+run_quiet &quot;$W/r2.err&quot; actions &quot;$MJB&quot; evidence --repo &quot;$T&quot; record --suite &quot;$W/suite.tsv&quot; --origin local &gt; /dev/null
+row suite:01_holds | jq -e &#39;has(&quot;run&quot;) | not&#39; &gt;/dev/null \
+  || { echo &quot;    a local recording inside a CI shell claimed that run: $(row suite:01_holds)&quot;; exit 1; }
+run_quiet &quot;$W/r3.err&quot; env -u GITHUB_ACTIONS &quot;$MJB&quot; evidence --repo &quot;$T&quot; record --suite &quot;$W/suite.tsv&quot; --provenance &quot;suite=$W/suite.provenance.json&quot; --origin ci &gt; /dev/null
+row suite:01_holds | jq -e &#39;(has(&quot;run&quot;) | not) and .origin == &quot;ci&quot;&#39; &gt;/dev/null \
+  || { echo &quot;    a ci recording outside any run invented one: $(row suite:01_holds)&quot;; exit 1; }
+
+# ---------------------------------------------------------------- 3. a run gathered
+# The collector and the coverage script resolve the repository from where they live, so they
+# are placed in the fixture: run from the checkout, they would record into this repository.
+# The fixture also gains a claims matrix of its own, one guaranteed claim that 01_holds proves,
+# and the crate test the cargo report below names.
+mkdir -p &quot;$T/scripts/ci&quot; &quot;$T/apps/majordomus-cli/src&quot; &quot;$T/apps/majordomus-cli/tests&quot; &quot;$T/docs&quot;
+cp &quot;$ROOT/scripts/ci/evidence-collect&quot; &quot;$T/scripts/ci/evidence-collect&quot;
+cp &quot;$ROOT/scripts/rust-coverage&quot; &quot;$T/scripts/rust-coverage&quot;
+cp &quot;$ROOT/test/fixtures/coverage/sample.rs&quot; &quot;$T/apps/majordomus-cli/src/sample.rs&quot;
+chmod +x &quot;$T/scripts/ci/evidence-collect&quot; &quot;$T/scripts/rust-coverage&quot;
+printf &#39;#[test]\nfn holds() {}\n&#39; &gt; &quot;$T/apps/majordomus-cli/tests/holds.rs&quot;
+printf &#39;# Holds\n\nThe fixture holds.\n&#39; &gt; &quot;$T/docs/HOLDS.md&quot;
+cat &gt; &quot;$T/docs/CLAIMS.yaml&quot; &lt;&lt;&#39;YAML&#39;
+version: 1
+claims:
+  - id: fixture-holds
+    claim: The fixture holds
+    source: docs/HOLDS.md
+    implementation: test/cases/01_holds.sh
+    test: test/cases/01_holds.sh
+    status: guaranteed
+YAML
+# The ledger committed with the collector is the one the fixture commit holds. Sections 1 and 2
+# recorded 01_holds into the working ledger; committing that would put a run&#39;s rows into the
+# authority, and the report could no longer tell the two apart.
+L=&quot;.ai/repo/evidence/ledger.json&quot;
+if git -C &quot;$T&quot; cat-file -e &quot;$FIXTURE:$L&quot; 2&gt;/dev/null; then git -C &quot;$T&quot; show &quot;$FIXTURE:$L&quot; &gt; &quot;$T/$L&quot;; else rm -f &quot;$T/$L&quot;; fi
+git -C &quot;$T&quot; add -A &gt;/dev/null
+git -C &quot;$T&quot; commit -qm &quot;the collector&quot;
+HEAD_T=&quot;$(git -C &quot;$T&quot; rev-parse HEAD)&quot;
+T=&quot;$T&quot; python3 - &quot;$ROOT/test/fixtures/coverage/export.json&quot; &quot;$W/export.json&quot; &lt;&lt;&#39;PY&#39;
+import json, os, sys
+data = json.load(open(sys.argv[1]))
+target = os.path.join(os.environ[&quot;T&quot;], &quot;apps/majordomus-cli/src/sample.rs&quot;)
+for f in data[&quot;data&quot;][0].get(&quot;files&quot;, []):
+    if f[&quot;filename&quot;] == &quot;SAMPLE_ABS&quot;:
+        f[&quot;filename&quot;] = target
+for fn in data[&quot;data&quot;][0].get(&quot;functions&quot;, []):
+    fn[&quot;filenames&quot;] = [target if n == &quot;SAMPLE_ABS&quot; else n for n in fn.get(&quot;filenames&quot;, [])]
+json.dump(data, open(sys.argv[2], &quot;w&quot;))
+PY
+
+fresh() {        # fresh — the fixture&#39;s working ledger back to its commit&#39;s, so a gather starts clean
+  if git -C &quot;$T&quot; cat-file -e &quot;HEAD:$L&quot; 2&gt;/dev/null; then git -C &quot;$T&quot; show &quot;HEAD:$L&quot; &gt; &quot;$T/$L&quot;; else rm -f &quot;$T/$L&quot;; fi
+  [ -z &quot;$(git -C &quot;$T&quot; status --porcelain --untracked-files=all)&quot; ] \
+    || { echo &quot;    the fixture is not clean before a gather:&quot;; git -C &quot;$T&quot; status --porcelain --untracked-files=all; exit 1; }
+}
+gather() {       # gather &lt;name&gt; &lt;collector options...&gt; — gathered into $W/&lt;name&gt;, its summary in $W/&lt;name&gt;.out
+  local name=&quot;$1&quot;; shift
+  fresh
+  run_quiet &quot;$W/$name.err&quot; actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN=&quot;$MJB&quot; \
+    &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/$name&quot; &quot;$@&quot; &gt; &quot;$W/$name.out&quot;
+}
+tree() {         # tree &lt;file&gt; &lt;commit&gt; &lt;working tree&gt; — a producing job&#39;s measurement of its tree
+  jq -n --arg c &quot;$2&quot; --arg wt &quot;$3&quot; &#39;{commit: $c, working_tree: $wt, excluded: []}&#39; &gt; &quot;$1&quot;
+}
+state_of() {     # state_of &lt;evidence show json&gt; — the fixture claim&#39;s state in it
+  jq -r &#39;.claims[] | select(.id == &quot;fixture-holds&quot;) | .state&#39; &quot;$1&quot;
+}
+printf &#39;     Running tests/holds.rs (target/debug/deps/holds-1a2b3c)\n\nrunning 1 test\ntest holds ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n&#39; &gt; &quot;$W/cargo-test.txt&quot;
+# the producing jobs&#39; measurements: the recorder refuses a CI report without its own
+tree &quot;$W/suite-clean.json&quot; &quot;$HEAD_T&quot; clean
+tree &quot;$W/suite-dirty.json&quot; &quot;$HEAD_T&quot; dirty
+tree &quot;$W/crate-clean.json&quot; &quot;$HEAD_T&quot; clean
+
+gather ev --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; --crate-output &quot;$W/no-such-output.txt&quot; --coverage &quot;$W/export.json&quot;
+M=&quot;$W/ev/manifest.json&quot;
+jq -e --arg c &quot;$HEAD_T&quot; &#39;.commit == $c and .run.id == &quot;77&quot;&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    the manifest does not name the commit and the run gathered&quot;; jq -c . &quot;$M&quot;; exit 1; }
+jq -e &#39;.totals.executions == 2 and .totals.outcomes.pass == 1 and .totals.outcomes.fail == 1&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    the manifest does not count this run&#39;s outcomes, failure included&quot;; jq -c .totals &quot;$M&quot;; exit 1; }
+jq -e &#39;.absent == [&quot;crate&quot;] and .refused == []&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    what the run did not produce is not named as absent, or something was refused&quot;; jq -c &#39;{absent, refused}&#39; &quot;$M&quot;; exit 1; }
+jq -e &#39;[.panels[].label] == [&quot;evidence&quot;, &quot;coverage&quot;] and (.panels | all(.exit | type == &quot;number&quot;))&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    the manifest does not describe both recorded commands&quot;; jq -c .panels &quot;$M&quot;; exit 1; }
+jq -e &#39;.crate.lines.total &gt; 0 and .crate.lines.covered &lt; .crate.lines.total and (.files | has(&quot;apps/majordomus-cli/src/sample.rs&quot;))&#39; &quot;$W/ev/coverage.json&quot; &gt;/dev/null \
+  || { echo &quot;    the coverage summary does not carry the measured sample, uncovered line included&quot;; cat &quot;$W/ev/coverage.json&quot;; exit 1; }
+[ -s &quot;$W/ev/report.txt&quot; ] &amp;&amp; [ -s &quot;$W/ev/ledger.json&quot; ] || { echo &quot;    the report or the ledger was not kept beside the manifest&quot;; exit 1; }
+# b: no head named, so the head is the commit that ran
+jq -e &#39;.head_sha == .commit and .event == &quot;push&quot;&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    with no pull request head named, the head is not the commit that ran, or the event is lost&quot;; jq -c &#39;{commit, head_sha, event}&#39; &quot;$M&quot;; exit 1; }
+# c: the suite&#39;s job measured a clean tree, and the rows carry that measurement
+rows_wt=&quot;$(row suite:01_holds | jq -r .working_tree)&quot;
+jq -e --arg w &quot;$rows_wt&quot; &#39;.working_tree == &quot;clean&quot; and .producers.suite.working_tree == &quot;clean&quot; and .rows_working_tree == $w and $w == &quot;clean&quot;&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    the suite job&#39;s clean measurement did not reach the manifest or the rows ($rows_wt)&quot;; jq -c &#39;{working_tree, rows_working_tree, producers}&#39; &quot;$M&quot;; exit 1; }
+# e: the report is the tracked ledger&#39;s. The committed ledger has no row for 01_holds, so the
+#    claim reads not_run in the gathered report, while the working ledger, which now holds the
+#    run&#39;s rows, answers otherwise
+[ &quot;$(state_of &quot;$W/ev/report.json&quot;)&quot; = not_run ] \
+  || { echo &quot;    the gathered report is not the tracked ledger&#39;s: the fixture claim reads &#39;$(state_of &quot;$W/ev/report.json&quot;)&#39;, not not_run&quot;; exit 1; }
+run_quiet &quot;$W/after.err&quot; &quot;$MJB&quot; evidence --repo &quot;$T&quot; show --format json &gt; &quot;$W/after.json&quot;
+after=&quot;$(state_of &quot;$W/after.json&quot;)&quot;
+[ -n &quot;$after&quot; ] &amp;&amp; [ &quot;$after&quot; != not_run ] \
+  || { echo &quot;    the run&#39;s rows did not reach the working ledger, so the report proves nothing about the order: &#39;$after&#39;&quot;; exit 1; }
+jq -e &#39;.report_tree == &quot;clean&quot;&#39; &quot;$M&quot; &gt;/dev/null \
+  || { echo &quot;    the report was not derived on a checkout measured clean&quot;; jq -c &#39;{report_tree}&#39; &quot;$M&quot;; exit 1; }
+
+# a: a crate report with no test binary in it is absent, not an empty success
+printf &#39;error: could not compile `majordomus-cli` (lib) due to 1 previous error\n&#39; &gt; &quot;$W/cargo-broken.txt&quot;
+gather broken --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; --crate-output &quot;$W/cargo-broken.txt&quot; --crate-tree &quot;$W/crate-clean.json&quot;
+jq -e &#39;.absent | any(.[]; . == &quot;crate&quot;)&#39; &quot;$W/broken/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    a crate report that yielded no test binary was not named as absent&quot;; jq -c &#39;{absent, totals}&#39; &quot;$W/broken/manifest.json&quot;; exit 1; }
+grep -q &#39;absent: .*crate&#39; &quot;$W/broken.out&quot; \
+  || { echo &quot;    the summary line does not name the crate as absent:&quot;; cat &quot;$W/broken.out&quot;; exit 1; }
+
+# b: a pull request&#39;s head is carried beside the commit that ran, never in its place
+PR_HEAD=&quot;0123456789abcdef0123456789abcdef01234567&quot;
+fresh
+run_quiet &quot;$W/head.err&quot; actions env MJ_RUN_HEAD_SHA=&quot;$PR_HEAD&quot; MAJORDOMUS_BIN=&quot;$MJB&quot; \
+  &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/head&quot; --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; &gt; /dev/null
+jq -e --arg h &quot;$PR_HEAD&quot; --arg c &quot;$HEAD_T&quot; &#39;.head_sha == $h and .commit == $c&#39; &quot;$W/head/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    the pull request head is not carried beside the commit that ran&quot;; jq -c &#39;{commit, head_sha}&#39; &quot;$W/head/manifest.json&quot;; exit 1; }
+
+# c: the tree is the one the producing jobs measured
+gather clean --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; --crate-output &quot;$W/cargo-test.txt&quot; --crate-tree &quot;$W/crate-clean.json&quot;
+jq -e &#39;.working_tree == &quot;clean&quot; and .producers.suite.working_tree == &quot;clean&quot; and .producers.crate.working_tree == &quot;clean&quot; and .totals.runners.crate == 1 and .refused == []&#39; &quot;$W/clean/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    two clean measurements did not give a clean tree, or the crate recorded nothing&quot;; jq -c &#39;{working_tree, producers, totals, refused}&#39; &quot;$W/clean/manifest.json&quot;; exit 1; }
+# the recorder&#39;s own checkout is clean: only the suite&#39;s measurement says dirty, and each
+# runner&#39;s rows carry its own job&#39;s measurement, so the rows are mixed and the run is dirty
+gather dirty --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-dirty.json&quot; --crate-output &quot;$W/cargo-test.txt&quot; --crate-tree &quot;$W/crate-clean.json&quot;
+jq -e &#39;.working_tree == &quot;dirty&quot; and .rows_working_tree == &quot;mixed&quot; and .report_tree == &quot;clean&quot;&#39; &quot;$W/dirty/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    a producer&#39;s dirty tree was not published as dirty over a clean recorder&quot;; jq -c &#39;{working_tree, rows_working_tree, report_tree}&#39; &quot;$W/dirty/manifest.json&quot;; exit 1; }
+# both runners reported, the crate measured clean and the suite not measured at all: the
+# recorder refuses a CI report without its measurement, so the suite is not recorded, it is
+# named as refused for having none and as absent, and one clean measurement does not stand in
+# for it anywhere in the rows
+gather unmeasured --suite &quot;$W/suite.tsv&quot; --crate-output &quot;$W/cargo-test.txt&quot; --crate-tree &quot;$W/crate-clean.json&quot;
+jq -e &#39;.producers.suite == null and .producers.crate.working_tree == &quot;clean&quot;
+       and (.refused == [{runner: &quot;suite&quot;, reason: &quot;no measurement&quot;}]) and (.absent | any(.[]; . == &quot;suite&quot;))
+       and (.totals.runners | has(&quot;suite&quot;) | not) and .totals.runners.crate == 1&#39; &quot;$W/unmeasured/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    a runner nobody measured was recorded, or not named as refused and absent&quot;; jq -c &#39;{working_tree, producers, totals, refused, absent}&#39; &quot;$W/unmeasured/manifest.json&quot;; exit 1; }
+grep -q &#39;refused: suite (no measurement)&#39; &quot;$W/unmeasured.out&quot; \
+  || { echo &quot;    the summary line does not name the unmeasured suite:&quot;; cat &quot;$W/unmeasured.out&quot;; exit 1; }
+# with nothing measured at all, nothing is recorded and nothing is gathered
+fresh
+expect_exit 12 actions env MAJORDOMUS_BIN=&quot;$MJB&quot; &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/none-measured&quot; \
+  --suite &quot;$W/suite.tsv&quot;
+expect_grep &quot;every report was refused: suite \(no measurement\)&quot;
+
+# d: a report whose job measured another commit is not recorded against this one
+tree &quot;$W/suite-foreign.json&quot; &quot;$FIXTURE&quot; clean
+gather refused --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-foreign.json&quot; --crate-output &quot;$W/cargo-test.txt&quot; --crate-tree &quot;$W/crate-clean.json&quot;
+jq -e &#39;(.absent | any(.[]; . == &quot;suite&quot;)) and (.refused | length == 1 and .[0].runner == &quot;suite&quot; and (.[0].reason | length &gt; 0))
+       and (.totals.runners | has(&quot;suite&quot;) | not) and .totals.runners.crate == 1&#39; &quot;$W/refused/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    a report measured at another commit was not refused and named&quot;; jq -c &#39;{absent, refused, totals}&#39; &quot;$W/refused/manifest.json&quot;; exit 1; }
+jq -e --arg c &quot;$HEAD_T&quot; &#39;[.executions[] | select(.runner == &quot;suite&quot; and .commit == $c)] | length == 0&#39; &quot;$T/$L&quot; &gt;/dev/null \
+  || { echo &quot;    the refused suite report was recorded against the commit that ran anyway&quot;; exit 1; }
+grep -q &#39;refused: suite&#39; &quot;$W/refused.out&quot; \
+  || { echo &quot;    the summary line does not name the refusal:&quot;; cat &quot;$W/refused.out&quot;; exit 1; }
+fresh
+expect_exit 12 actions env MAJORDOMUS_BIN=&quot;$MJB&quot; &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/all-refused&quot; \
+  --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-foreign.json&quot;
+expect_grep &quot;every report was refused: suite&quot;
+[ ! -f &quot;$T/$L&quot; ] || jq -e &#39;[.executions[] | select(.runner == &quot;suite&quot;)] | length == 0&#39; &quot;$T/$L&quot; &gt;/dev/null \
+  || { echo &quot;    a run whose every report was refused recorded one anyway&quot;; exit 1; }
+
+# e: the checkout the report is derived in is measured, and a file left in it makes it dirty
+fresh
+printf &#39;left behind\n&#39; &gt; &quot;$T/left-behind.txt&quot;
+run_quiet &quot;$W/untracked.err&quot; actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN=&quot;$MJB&quot; \
+  &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/untracked&quot; --suite &quot;$W/suite.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; &gt; /dev/null
+rm -f &quot;$T/left-behind.txt&quot;
+jq -e &#39;.report_tree == &quot;dirty&quot;&#39; &quot;$W/untracked/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    a report derived in a checkout holding an untracked file was not marked dirty&quot;; jq -c &#39;{report_tree}&#39; &quot;$W/untracked/manifest.json&quot;; exit 1; }
+
+# f: the run&#39;s totals, tree and absences are the run record&#39;s, joined rather than derived again
+jq -e -S --slurpfile r &quot;$W/clean/record.json&quot; &#39;
+    .totals == $r[0].run_record.totals and .working_tree == $r[0].run_record.working_tree
+    and ((.absent | map(select(. != &quot;coverage&quot;)) | sort)
+         == ([$r[0].run_record.absent[].producer | select(. != &quot;coverage&quot;)] | sort))&#39; \
+  &quot;$W/clean/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    the manifest does not carry the run record&#39;s totals, tree and absences&quot;; jq -c &#39;{totals, working_tree, absent}&#39; &quot;$W/clean/manifest.json&quot;; jq -c &#39;.run_record | {totals, working_tree, absent}&#39; &quot;$W/clean/record.json&quot;; exit 1; }
+# a second gather at the same commit under the same run, naming one test and no crate report:
+# its totals are what it recorded, not every row the ledger holds under that run
+printf &#39;01_holds\tok\t1\tparallel\n&#39; &gt; &quot;$W/suite-one.tsv&quot;
+run_quiet &quot;$W/again.err&quot; actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN=&quot;$MJB&quot; \
+  &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/again&quot; --suite &quot;$W/suite-one.tsv&quot; --suite-tree &quot;$W/suite-clean.json&quot; &gt; /dev/null
+rows_of_run=&quot;$(jq --arg c &quot;$HEAD_T&quot; &#39;[.executions[] | select(.commit == $c and .run.id == &quot;77&quot;)] | length&#39; &quot;$T/$L&quot;)&quot;
+[ &quot;$rows_of_run&quot; -gt 1 ] || { echo &quot;    the ledger holds $rows_of_run row(s) of the run, so the join proves nothing&quot;; exit 1; }
+jq -e --slurpfile r &quot;$W/again/record.json&quot; &#39;.totals.executions == 1 and .totals == $r[0].run_record.totals&#39; &quot;$W/again/manifest.json&quot; &gt;/dev/null \
+  || { echo &quot;    the second gather counted the ledger&#39;s rows of the run ($rows_of_run), not what it recorded&quot;; jq -c .totals &quot;$W/again/manifest.json&quot;; exit 1; }
+
+# ---------------------------------------------------------------- 4. nothing to gather
+expect_exit 12 env MAJORDOMUS_BIN=&quot;$MJB&quot; &quot;$T/scripts/ci/evidence-collect&quot; --out &quot;$W/empty&quot; --suite &quot;$W/absent.tsv&quot;
+expect_grep &quot;no report to record&quot;
+
+# ---------------------------------------------------------------- 5. published with its distance
+# Asked of this repository&#39;s own history, read-only: the commit being published, and its parent.
+HERE=&quot;$(git -C &quot;$ROOT&quot; rev-parse HEAD)&quot;
+PARENT=&quot;$(git -C &quot;$ROOT&quot; rev-parse HEAD^ 2&gt;/dev/null)&quot; || { echo &quot;    this checkout has no parent commit to publish evidence of&quot;; exit 1; }
+publish() {      # publish &lt;name&gt; &lt;evidence commit&gt; [&lt;jq filter&gt;] — a gathered directory claiming that commit
+  mkdir -p &quot;$W/$1&quot;
+  cp &quot;$W/ev/report.txt&quot; &quot;$W/ev/coverage.txt&quot; &quot;$W/ev/coverage.json&quot; &quot;$W/$1/&quot;
+  jq --arg c &quot;$2&quot; &quot;(${3:-.}) | .commit = \$c&quot; &quot;$M&quot; &gt; &quot;$W/$1/manifest.json&quot;
+  run_quiet &quot;$W/$1.err&quot; &quot;$ROOT/scripts/pages&quot; evidence --commit &quot;$HERE&quot; --from &quot;$W/$1&quot; --out &quot;$W/$1.json&quot; &gt; /dev/null
+}
+CONFIRMED=&#39;.working_tree = &quot;clean&quot; | .report_tree = &quot;clean&quot; | .absent = [] | .refused = [] | .totals.outcomes = {pass: 2}&#39;
+publish current &quot;$HERE&quot; &quot;$CONFIRMED&quot;
+jq -e &#39;.available and .current and .state == &quot;current&quot; and .unconfirmed == [] and .behind == 0 and .run.id == &quot;77&quot;&#39; &quot;$W/current.json&quot; &gt;/dev/null \
+  || { echo &quot;    a confirmed run of the published commit is not current&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/current.json&quot;; exit 1; }
+jq -e --rawfile r &quot;$W/ev/report.txt&quot; &#39;.panels[0].output == $r and ([.panels[0].links[].href] | index(&quot;https://forge.example/owner/repo/actions/runs/77/attempts/3&quot;) != null)&#39; &quot;$W/current.json&quot; &gt;/dev/null \
+  || { echo &quot;    the published panel is not the recorded report, or does not link the run&quot;; exit 1; }
+jq -e &#39;.coverage.crate.lines.total &gt; 0&#39; &quot;$W/current.json&quot; &gt;/dev/null \
+  || { echo &quot;    the published evidence dropped the coverage summary&quot;; exit 1; }
+
+# The same commit, with one thing the run cannot confirm: never current, and the reason named.
+n=0
+for spoil in &#39;.working_tree = &quot;dirty&quot;&#39; &#39;del(.working_tree)&#39; &#39;.report_tree = &quot;dirty&quot;&#39; &#39;.absent = [&quot;crate&quot;]&#39; \
+  &#39;.refused = [{runner: &quot;suite&quot;, reason: &quot;x&quot;}]&#39; &#39;.panels[0].exit = 12&#39;; do
+  n=$((n + 1))
+  publish &quot;unconfirmed$n&quot; &quot;$HERE&quot; &quot;$CONFIRMED | $spoil&quot;
+  jq -e &#39;.available and (.current | not) and .state == &quot;unknown&quot; and (.unconfirmed | length &gt; 0)&#39; &quot;$W/unconfirmed$n.json&quot; &gt;/dev/null \
+    || { echo &quot;    a run of the published commit that cannot confirm its report ($spoil) was not published as unknown with a reason&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/unconfirmed$n.json&quot;; exit 1; }
+done
+[ &quot;$n&quot; = 6 ] || { echo &quot;    the unconfirmed cases did not all run ($n)&quot;; exit 1; }
+# a report that never reached the artifact, or reached it empty, is nothing to confirm
+for how in missing empty; do
+  publish &quot;noreport-$how&quot; &quot;$HERE&quot; &quot;$CONFIRMED&quot;
+  if [ &quot;$how&quot; = missing ]; then rm -f &quot;$W/noreport-$how/report.txt&quot;; else : &gt; &quot;$W/noreport-$how/report.txt&quot;; fi
+  run_quiet &quot;$W/noreport-$how.err&quot; &quot;$ROOT/scripts/pages&quot; evidence --commit &quot;$HERE&quot; --from &quot;$W/noreport-$how&quot; --out &quot;$W/noreport-$how.json&quot; &gt; /dev/null
+  jq -e &#39;.available and (.current | not) and .state == &quot;unknown&quot; and (.unconfirmed | length &gt; 0)&#39; &quot;$W/noreport-$how.json&quot; &gt;/dev/null \
+    || { echo &quot;    a confirmed run whose report is $how was published as $(jq -r .state &quot;$W/noreport-$how.json&quot;)&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/noreport-$how.json&quot;; exit 1; }
+done
+publish failed &quot;$HERE&quot; &quot;$CONFIRMED | .totals.outcomes = {pass: 1, fail: 1}&quot;
+jq -e &#39;.available and (.current | not) and .state == &quot;stale&quot; and (.unconfirmed | length &gt; 0)&#39; &quot;$W/failed.json&quot; &gt;/dev/null \
+  || { echo &quot;    a run of the published commit that recorded a failure was not published as stale&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/failed.json&quot;; exit 1; }
+
+publish stale &quot;$PARENT&quot;
+jq -e &#39;.available and (.current | not) and .state == &quot;stale&quot; and .behind &gt;= 1&#39; &quot;$W/stale.json&quot; &gt;/dev/null \
+  || { echo &quot;    evidence of an ancestor was published as current, or without its distance&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/stale.json&quot;; exit 1; }
+# an ancestor&#39;s run is stale however well it confirms its own report
+publish stale-confirmed &quot;$PARENT&quot; &quot;$CONFIRMED&quot;
+jq -e &#39;.available and (.current | not) and .state == &quot;stale&quot; and .behind &gt;= 1&#39; &quot;$W/stale-confirmed.json&quot; &gt;/dev/null \
+  || { echo &quot;    a confirmed run of an ancestor was not published as stale&quot;; jq -c &#39;del(.panels)&#39; &quot;$W/stale-confirmed.json&quot;; exit 1; }
+
+publish foreign &quot;0000000000000000000000000000000000000001&quot;
+jq -e &#39;(.available | not) and (.reason | test(&quot;not in the history&quot;))&#39; &quot;$W/foreign.json&quot; &gt;/dev/null \
+  || { echo &quot;    evidence from outside the published history was not refused&quot;; jq -c . &quot;$W/foreign.json&quot;; exit 1; }
+
+mkdir -p &quot;$W/nothing&quot;
+run_quiet &quot;$W/nothing.err&quot; &quot;$ROOT/scripts/pages&quot; evidence --commit &quot;$HERE&quot; --from &quot;$W/nothing&quot; --out &quot;$W/nothing.json&quot; &gt; /dev/null
+jq -e &#39;(.available | not) and (.reason | length &gt; 0) and (has(&quot;current&quot;) | not)&#39; &quot;$W/nothing.json&quot; &gt;/dev/null \
+  || { echo &quot;    no evidence at all was published as something other than unavailable&quot;; jq -c . &quot;$W/nothing.json&quot;; exit 1; }
+
+# ---------------------------------------------------------------- 6. the workflow as wired
+# This repository&#39;s own validate.yml, read job by job the way 26_ci_wiring reads it.
+WF=&quot;$ROOT/.github/workflows/validate.yml&quot;
+job() {          # job &lt;name&gt; — that job&#39;s block
+  awk -v j=&quot;  $1:&quot; &#39;$0 == j {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f&#39; &quot;$WF&quot;
+}
+step_with() {    # step_with &lt;regex&gt; — from the job block on stdin, every step whose text matches
+  awk -v p=&quot;$1&quot; &#39;
+    /^      - / { if (s ~ p) printf &quot;%s&quot;, s; s = &quot;&quot; }
+    { s = s $0 &quot;\n&quot; }
+    END { if (s ~ p) printf &quot;%s&quot;, s }&#39;
+}
+# The suite runs in the suite-shard jobs (four shards, one measurement each, joined by the
+# suite job into the one ci-evidence-suite-tree the evidence job reads), so they are its
+# producer: the report is written there and the tree is measured there.
+suite_job=&quot;$(job suite-shard)&quot;; rust_job=&quot;$(job rust)&quot;; evidence_job=&quot;$(job evidence)&quot;
+join_job=&quot;$(job suite)&quot;
+printf &#39;%s\n&#39; &quot;$join_job&quot; | step_with &#39;name: ci-evidence-suite-tree\n&#39; | grep -qF &#39;${{ runner.temp }}/suite-tree.json&#39; \
+  || { echo &quot;    the suite job does not publish the shards&#39; joined tree measurement&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$suite_job&quot; | grep -qF &#39;name: ci-evidence-suite-tree-${{ matrix.shard }}&#39; \
+  || { echo &quot;    the suite shards do not each publish their own tree measurement&quot;; exit 1; }
+[ -n &quot;$suite_job&quot; ] &amp;&amp; [ -n &quot;$rust_job&quot; ] &amp;&amp; [ -n &quot;$evidence_job&quot; ] \
+  || { echo &quot;    validate.yml has no suite, rust or evidence job to read&quot;; exit 1; }
+
+# the crate&#39;s output is plain text, and it is written outside the checkout
+check=&quot;$(printf &#39;%s\n&#39; &quot;$rust_job&quot; | step_with &#39;- name: rust-check&#39;)&quot;
+printf &#39;%s\n&#39; &quot;$check&quot; | grep -qE &#39;^ +CARGO_TERM_COLOR: never$&#39; \
+  || { echo &quot;    the rust-check step does not turn cargo&#39;s colour off, so its output reaches the recorder unreadable&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$check&quot; | grep -qE &#39;^ +MJ_CARGO_TEST_OUTPUT: \$\{\{ runner\.temp \}\}/&#39; \
+  || { echo &quot;    the rust-check step writes cargo&#39;s output into the checkout it measures&quot;; exit 1; }
+
+# each producing job measures the tree it ran in, excluding exactly the outputs its run names,
+# at the paths where that run writes them, and says so in the measurement it hands over
+excludes() {     # excludes &lt;step text&gt; &lt;path...&gt; — the step&#39;s status call excludes exactly these paths
+  local step=&quot;$1&quot; p want got; shift
+  printf &#39;%s\n&#39; &quot;$step&quot; | grep -q &#39;status --porcelain --untracked-files=all&#39; || return 1
+  for p in &quot;$@&quot;; do printf &#39;%s\n&#39; &quot;$step&quot; | grep -qF &quot;&#39;:(exclude)$p&#39;&quot; || return 1; done
+  [ &quot;$(printf &#39;%s\n&#39; &quot;$step&quot; | grep -o &#39;:(exclude)&#39; | wc -l | tr -d &#39; &#39;)&quot; = &quot;$#&quot; ] || return 1
+  want=&quot;$(if [ $# -gt 0 ]; then printf &#39;%s\n&#39; &quot;$@&quot; | jq -R . | jq -sc .; else echo &#39;[]&#39;; fi)&quot;
+  got=&quot;$(printf &#39;%s\n&#39; &quot;$step&quot; | sed -n &#39;s/.*excluded: \(\[[^]]*\]\).*/\1/p&#39; | head -1)&quot;
+  [ -n &quot;$got&quot; ] &amp;&amp; jq -e --argjson w &quot;$want&quot; &#39;. == $w&#39; &lt;&lt;&lt;&quot;$got&quot; &gt;/dev/null
+}
+report=&quot;$(printf &#39;%s\n&#39; &quot;$suite_job&quot; | sed -n &#39;s/^ *MJ_TEST_REPORT: *//p&#39; | head -1)&quot;
+[ -n &quot;$report&quot; ] || { echo &quot;    the suite job names no MJ_TEST_REPORT&quot;; exit 1; }
+excludes &quot;$(printf &#39;%s\n&#39; &quot;$suite_job&quot; | step_with &#39;suite-tree\.json&#39;)&quot; &quot;$report&quot; \
+  || { echo &quot;    the suite job has no step measuring its tree with only its report ($report) excluded, and saying so&quot;; exit 1; }
+# The rust job&#39;s outputs are whatever scripts/rust-check writes inside the checkout, and only
+# that script knows where a relative name lands: the timings where the caller stood, the
+# artifact directory under the crate it changes into. So the script says it (MJ_RUST_OUTPUTS)
+# and the measuring step reads what it said. The step once carried a list of its own, with
+# the timings under the crate: nothing was there, the file at the root was counted, and
+# every lane of every run measured a dirty tree.
+tree_step=&quot;$(printf &#39;%s\n&#39; &quot;$rust_job&quot; | step_with &#39;crate-tree\.json&#39;)&quot;
+[ -n &quot;$tree_step&quot; ] || { echo &quot;    the rust job has no step measuring its tree&quot;; exit 1; }
+if printf &#39;%s\n&#39; &quot;$tree_step&quot; | grep -vE &#39;^ *#&#39; | grep -qF &quot;&#39;:(exclude)&quot;; then
+  echo &quot;    the rust job&#39;s tree step excludes paths it wrote down itself&quot;; exit 1
+fi
+outputs_at=&quot;$(printf &#39;%s\n&#39; &quot;$tree_step&quot; | sed -n &#39;s/^ *OUTPUTS: *//p&#39; | head -1)&quot;
+case &quot;$outputs_at&quot; in &#39;${{ runner.temp }}/&#39;*) ;; *)
+  echo &quot;    the rust job&#39;s tree step reads no list of outputs from outside the checkout: &#39;$outputs_at&#39;&quot;; exit 1 ;;
+esac
+runs=0
+while IFS= read -r line; do
+  runs=$((runs + 1))
+done &lt; &lt;(printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -E &#39;^ +run: .*scripts/rust-check &#39;)
+said=0
+while IFS= read -r line; do
+  [ &quot;$line&quot; = &quot;$outputs_at&quot; ] &amp;&amp; said=$((said + 1))
+done &lt; &lt;(printf &#39;%s\n&#39; &quot;$rust_job&quot; | sed -n &#39;s/^ *MJ_RUST_OUTPUTS: *//p&#39;)
+[ &quot;$runs&quot; -ge 2 ] &amp;&amp; [ &quot;$said&quot; = &quot;$runs&quot; ] \
+  || { echo &quot;    $runs step(s) run scripts/rust-check and $said of them write the list the tree step reads ($outputs_at)&quot;; exit 1; }
+
+# What the script says, asked of the script itself with the names the workflow&#39;s step gives
+# it: --lanes prints and builds nothing, and the list is written before any mode runs.
+run_line=&quot;$(printf &#39;%s\n&#39; &quot;$check&quot; | sed -n &#39;s/^ *run: *//p&#39; | head -1)&quot;
+timings=&quot;$(printf &#39;%s\n&#39; &quot;$run_line&quot; | sed -n &#39;s/.*MJ_CI_TIMINGS=\([^ ]*\).*/\1/p&#39;)&quot;
+artifact=&quot;$(printf &#39;%s\n&#39; &quot;$run_line&quot; | sed -n &#39;s/.*--artifact \([^ ]*\).*/\1/p&#39;)&quot;
+[ -n &quot;$timings&quot; ] &amp;&amp; [ -n &quot;$artifact&quot; ] \
+  || { echo &quot;    the rust-check step names no timings file or no artifact directory: $run_line&quot;; exit 1; }
+OUT=&quot;$W/rust-outputs.txt&quot;
+( cd &quot;$ROOT&quot; &amp;&amp; MJ_CI_TIMINGS=&quot;$timings&quot; MJ_RUST_OUTPUTS=&quot;$OUT&quot; scripts/rust-check --lanes --artifact &quot;$artifact&quot; &gt;/dev/null ) \
+  || { echo &quot;    scripts/rust-check could not say what it writes&quot;; exit 1; }
+[ &quot;$(wc -l &lt; &quot;$OUT&quot; | tr -d &#39; &#39;)&quot; = 2 ] \
+  || { echo &quot;    scripts/rust-check names other than its two outputs:&quot;; cat &quot;$OUT&quot;; exit 1; }
+# a name outside the checkout is not an output inside it
+( cd &quot;$ROOT&quot; &amp;&amp; MJ_CI_TIMINGS=&quot;$W/elsewhere.tsv&quot; MJ_RUST_OUTPUTS=&quot;$W/none.txt&quot; scripts/rust-check --lanes &gt;/dev/null )
+[ ! -s &quot;$W/none.txt&quot; ] || { echo &quot;    a timings file outside the checkout was named as an output inside it:&quot;; cat &quot;$W/none.txt&quot;; exit 1; }
+
+# The step itself, run: in a checkout holding exactly what the script says it writes, the
+# tree is clean and the measurement names the same paths; one file more is dirty; and with
+# the list the step used to carry, the run&#39;s own timings are the dirt.
+printf &#39;%s\n&#39; &quot;$tree_step&quot; | awk &#39;/^        run: \|$/ {f=1; next} f &amp;&amp; /^          / {sub(/^          /, &quot;&quot;); print; next} f {exit}&#39; &gt; &quot;$W/tree-step.sh&quot;
+[ -s &quot;$W/tree-step.sh&quot; ] || { echo &quot;    the tree step&#39;s script could not be read out of the workflow&quot;; exit 1; }
+CO=&quot;$W/checkout&quot;; mkdir -p &quot;$CO&quot;
+( cd &quot;$CO&quot; &amp;&amp; git init -q &amp;&amp; git config user.email t@example.invalid &amp;&amp; git config user.name t \
+  &amp;&amp; echo tracked &gt; file &amp;&amp; git add file &amp;&amp; git commit -qm one ) || { echo &quot;    no fixture checkout&quot;; exit 1; }
+measure() {      # measure &lt;outputs file&gt; — run the step there; print &quot;&lt;working_tree&gt; &lt;excluded&gt;&quot;
+  rm -f &quot;$W/rt/crate-tree.json&quot;; mkdir -p &quot;$W/rt&quot;
+  ( cd &quot;$CO&quot; &amp;&amp; RUNNER_TEMP=&quot;$W/rt&quot; OUTPUTS=&quot;$1&quot; bash -eu &quot;$W/tree-step.sh&quot; &gt;/dev/null ) || return 1
+  jq -r &#39;&quot;\(.working_tree) \(.excluded | join(&quot;,&quot;))&quot;&#39; &quot;$W/rt/crate-tree.json&quot;
+}
+while IFS= read -r p; do
+  case &quot;$p&quot; in */dist) mkdir -p &quot;$CO/$p&quot;; echo bin &gt; &quot;$CO/$p/majordomus&quot; ;; *) mkdir -p &quot;$(dirname &quot;$CO/$p&quot;)&quot;; echo row &gt; &quot;$CO/$p&quot; ;; esac
+done &lt; &quot;$OUT&quot;
+want=&quot;clean $(paste -sd, &quot;$OUT&quot;)&quot;
+got=&quot;$(measure &quot;$OUT&quot;)&quot; || { echo &quot;    the tree step failed in a fixture checkout&quot;; exit 1; }
+[ &quot;$got&quot; = &quot;$want&quot; ] || { echo &quot;    a run&#39;s own outputs were not measured as a clean tree: &#39;$got&#39;, expected &#39;$want&#39;&quot;; exit 1; }
+[ &quot;$(jq -r .commit &quot;$W/rt/crate-tree.json&quot;)&quot; = &quot;$(git -C &quot;$CO&quot; rev-parse HEAD)&quot; ] \
+  || { echo &quot;    the measurement names another commit than the checkout&#39;s&quot;; exit 1; }
+echo stray &gt; &quot;$CO/left-behind.txt&quot;
+got=&quot;$(measure &quot;$OUT&quot;)&quot;
+[ &quot;${got%% *}&quot; = dirty ] || { echo &quot;    a file the run did not name was not measured as dirt: &#39;$got&#39;&quot;; exit 1; }
+rm -f &quot;$CO/left-behind.txt&quot;
+printf &#39;apps/majordomus-cli/%s\napps/majordomus-cli/%s\n&#39; &quot;$timings&quot; &quot;$artifact&quot; &gt; &quot;$W/old-list.txt&quot;
+got=&quot;$(measure &quot;$W/old-list.txt&quot;)&quot;
+[ &quot;${got%% *}&quot; = dirty ] || { echo &quot;    the list that named the timings under the crate measures clean: this case proves nothing&quot;; exit 1; }
+# a run that left no list excludes nothing, and says so
+got=&quot;$(measure &quot;$W/absent.txt&quot;)&quot;
+[ &quot;$got&quot; = &quot;dirty &quot; ] || { echo &quot;    with no list of outputs the step did not measure everything: &#39;$got&#39;&quot;; exit 1; }
+# ... and before the plan it downloads into the checkout
+at_tree=&quot;$(printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -n &#39;crate-tree\.json&#39; | head -1 | cut -d: -f1)&quot;
+at_plan=&quot;$(printf &#39;%s\n&#39; &quot;$rust_job&quot; | grep -n &#39;name: ci-plan$&#39; | head -1 | cut -d: -f1)&quot;
+[ -n &quot;$at_tree&quot; ] &amp;&amp; [ -n &quot;$at_plan&quot; ] &amp;&amp; [ &quot;$at_tree&quot; -lt &quot;$at_plan&quot; ] \
+  || { echo &quot;    the rust job measures its tree after downloading the plan into it&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$rust_job&quot; | step_with &#39;name: ci-evidence-crate&#39; | grep -qF &#39;${{ runner.temp }}/crate-tree.json&#39; \
+  || { echo &quot;    the rust job does not upload its measurement beside the crate&#39;s output&quot;; exit 1; }
+
+# every reader of the suite&#39;s report reads the file the suite wrote
+readers=0
+for f in $(printf &#39;%s\n&#39; &quot;$suite_job&quot; | grep -oE -- &#39;--report [^ ]+&#39; | awk &#39;{print $2}&#39;); do
+  readers=$((readers + 1))
+  [ &quot;$f&quot; = &quot;$report&quot; ] || { echo &quot;    a step of the suite job reads --report $f, and the suite wrote $report&quot;; exit 1; }
+done
+[ &quot;$readers&quot; -gt 0 ] || { echo &quot;    no step of the suite job reads the suite&#39;s report&quot;; exit 1; }
+
+# the evidence job reads the measurements, and neither its downloads nor its output are in its checkout
+fetch=&quot;$(printf &#39;%s\n&#39; &quot;$evidence_job&quot; | step_with &#39;download-artifact&#39;)&quot;
+printf &#39;%s\n&#39; &quot;$fetch&quot; | grep -q &#39;ci-evidence-suite-tree&#39; \
+  || { echo &quot;    the evidence job does not download the suite&#39;s measurement&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$fetch&quot; | grep -qE &#39;^ +path: \$\{\{ runner\.temp \}\}/&#39; \
+  || { echo &quot;    the evidence job downloads the reports into its own checkout&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$evidence_job&quot; | step_with &#39;evidence-collect --out&#39; | grep -qE -- &#39;--out &quot;?(\$RUNNER_TEMP|\$\{\{ runner\.temp \}\})/&#39; \
+  || { echo &quot;    the evidence job gathers into its own checkout&quot;; exit 1; }
+printf &#39;%s\n&#39; &quot;$evidence_job&quot; | grep -qE &#39;^ +MJ_RUN_HEAD_SHA: &#39; \
+  || { echo &quot;    the evidence job does not name the head a pull request was built from&quot;; exit 1; }
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>

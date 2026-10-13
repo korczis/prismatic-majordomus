@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["PREFIX","SHELL_SCRIPTS","STATIC_ROUTES","STYLESHEET"],"fn":["base64","csp"],"mod":["assets","html"],"struct":["Cockpit"]};
+window.SIDEBAR_ITEMS = {"constant":["PREFIX","SHELL_SCRIPTS","STATIC_ROUTES","STYLESHEET","SURFACE"],"fn":["base64","csp"],"mod":["assets","html"],"struct":["Cockpit"]};

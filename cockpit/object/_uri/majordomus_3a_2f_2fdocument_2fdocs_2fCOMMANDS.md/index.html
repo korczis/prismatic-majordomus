@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>docs/COMMANDS.md · Majordomus Cockpit</title><link rel="stylesheet" href="../../../assets/cockpit.css"><link rel="icon" href="../../../assets/favicon.svg"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body data-snapshot class="mj-body" x-data="cockpit" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646" data-vendor="{&quot;alpine.csp.min.js&quot;:&quot;/cockpit/assets/vendor/alpine.csp.min.js?v=e9ff66bf60c8b55e&quot;}"><a class="mj-skip" href="#main">Skip to content</a><header class="mj-topbar"><a class="mj-brand" href="../../../index.html"><span class="mj-brand-mark" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.23.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span><span class="mj-brand-name">Majordomus</span><span class="mj-brand-suffix">Cockpit</span></a><button class="mj-palette-open" type="button" x-on:click="openPalette" aria-keyshortcuts="Control+K Meta+K"><span>Search or run</span><kbd class="mj-kbd">Ctrl K</kbd></button><nav class="mj-topbar-links" aria-label="External surfaces"><a class="mj-link" href="../../../live/index.html#/swagger">Swagger</a><a class="mj-link" href="/openapi.json">OpenAPI</a><button class="mj-theme-toggle" type="button" x-on:click="toggleTheme" aria-label="Switch between light and dark" title="Switch between light and dark">Theme</button></nav><span class="mj-version">0.23.0</span></header><div class="mj-layout"><nav class="mj-sidebar" aria-label="Cockpit sections"><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Cockpit</span><span class="mj-nav-count">25</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../api/index.html"><span class="mj-nav-label">API</span><span class="mj-nav-count">191</span></a></li><li><a class="mj-nav-link" href="../../../artifacts/index.html"><span class="mj-nav-label">Artifacts</span></a></li><li><a class="mj-nav-link" href="../../../capabilities/index.html"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">2323</span></a></li><li><a class="mj-nav-link" href="../../../commands/index.html"><span class="mj-nav-label">Commands</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/continuity"><span class="mj-nav-label">Continuity</span></a></li><li><a class="mj-nav-link" href="../../../design/index.html"><span class="mj-nav-label">Design</span></a></li><li><a class="mj-nav-link" href="../../../directories/index.html"><span class="mj-nav-label">Directories</span></a></li><li><a class="mj-nav-link" href="../../../economics/index.html"><span class="mj-nav-label">Economics</span></a></li><li><a class="mj-nav-link" href="../../../executions/index.html"><span class="mj-nav-label">Executions</span></a></li><li><a class="mj-nav-link" href="../../../graphs/index.html"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../health/index.html"><span class="mj-nav-label">Health</span></a></li><li><a class="mj-nav-link" href="../../../integration/index.html"><span class="mj-nav-label">Integration</span></a></li><li><a class="mj-nav-link" href="../../../intents/index.html"><span class="mj-nav-label">Intents</span></a></li><li><a class="mj-nav-link" href="../../../mcp/index.html"><span class="mj-nav-label">MCP</span><span class="mj-nav-count">187</span></a></li><li><a class="mj-nav-link" href="../../../mesh/index.html"><span class="mj-nav-label">Mesh</span></a></li><li><a class="mj-nav-link" href="../../../models/index.html"><span class="mj-nav-label">Models</span></a></li><li><a class="mj-nav-link" href="../../../objects/index.html"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">2127</span></a></li><li><a class="mj-nav-link" href="../../../index.html"><span class="mj-nav-label">Overview</span></a></li><li><a class="mj-nav-link" href="../../../peers/index.html"><span class="mj-nav-label">Peers</span></a></li><li><a class="mj-nav-link" href="../../../plan/index.html"><span class="mj-nav-label">Plan</span></a></li><li><a class="mj-nav-link" href="../../../quality/index.html"><span class="mj-nav-label">Quality</span></a></li><li><a class="mj-nav-link" href="../../../reasoning/index.html"><span class="mj-nav-label">Reasoning</span></a></li><li><a class="mj-nav-link" href="../../../release/index.html"><span class="mj-nav-label">Release</span></a></li><li><a class="mj-nav-link" href="../../../trains/index.html"><span class="mj-nav-label">Trains</span></a></li><li><a class="mj-nav-link" href="../../../worktrees/index.html"><span class="mj-nav-label">Worktrees</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Capability modules</span><span class="mj-nav-count">56</span></summary><ul class="mj-nav-list"><li class="mj-nav-group" role="presentation">Context and continuity</li><li><a class="mj-nav-link" href="../../../capabilities/_module/continuity/index.html"><span class="mj-nav-label">Continuity</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devcontext"><span class="mj-nav-label">Development context</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=directories"><span class="mj-nav-label">Directory contracts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=graph"><span class="mj-nav-label">Graphs</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=knowledge_base"><span class="mj-nav-label">Knowledge base</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=recover"><span class="mj-nav-label">Recovery of the record stores</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=repository"><span class="mj-nav-label">Repository</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=lifecycle"><span class="mj-nav-label">Session lifecycle</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=session_domain"><span class="mj-nav-label">The session domain</span><span class="mj-nav-count">2</span></a></li><li class="mj-nav-group" role="presentation">Coordination and ownership</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commands"><span class="mj-nav-label">Command graph</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=executions"><span class="mj-nav-label">Executions</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mesh"><span class="mj-nav-label">Mesh</span><span class="mj-nav-count">24</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=models"><span class="mj-nav-label">Models</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=objects"><span class="mj-nav-label">Objects</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=peers"><span class="mj-nav-label">Peers</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=integration"><span class="mj-nav-label">Pull-request integration</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=reasoning"><span class="mj-nav-label">Reasoning</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=environment"><span class="mj-nav-label">Repository environment</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=server"><span class="mj-nav-label">Server</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=web"><span class="mj-nav-label">Web surfaces</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=worktree"><span class="mj-nav-label">Worktree topology</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Documentation and drift</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=why"><span class="mj-nav-label">Why</span><span class="mj-nav-count">6</span></a></li><li class="mj-nav-group" role="presentation">Observability</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=design"><span class="mj-nav-label">Design system</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=economics"><span class="mj-nav-label">Token economics</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Rules and governance</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=capabilities"><span class="mj-nav-label">Capabilities</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=commit"><span class="mj-nav-label">Commit</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=delivery"><span class="mj-nav-label">Delivery</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=deploy"><span class="mj-nav-label">Deployment</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=evidence"><span class="mj-nav-label">Evidence</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=artifacts"><span class="mj-nav-label">Generated artifacts</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=health"><span class="mj-nav-label">Health</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=product"><span class="mj-nav-label">Product</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=quality"><span class="mj-nav-label">Public API quality</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=rules"><span class="mj-nav-label">Rules</span><span class="mj-nav-count">3</span></a></li><li class="mj-nav-group" role="presentation">Verification and evidence</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=gates"><span class="mj-nav-label">Completion gates</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=distribution"><span class="mj-nav-label">Distribution</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=obligations"><span class="mj-nav-label">Obligations</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=perf"><span class="mj-nav-label">Performance</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=release"><span class="mj-nav-label">Release</span><span class="mj-nav-count">4</span></a></li><li class="mj-nav-group" role="presentation">Work and its state</li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=devtask"><span class="mj-nav-label">Executable development scopes</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intents"><span class="mj-nav-label">Intent</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=intent_realization"><span class="mj-nav-label">Intent realization</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=plan"><span class="mj-nav-label">The plan and its derivations</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=trace"><span class="mj-nav-label">Traceability</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=convergence"><span class="mj-nav-label">Convergence</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=dashboard"><span class="mj-nav-label">Dashboards</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=editors"><span class="mj-nav-label">Editor and agent projections</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=entity"><span class="mj-nav-label">Entities</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=episodes"><span class="mj-nav-label">Episodes</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=mcp"><span class="mj-nav-label">MCP projection</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=served"><span class="mj-nav-label">Served deployments</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=shell"><span class="mj-nav-label">Shell automation</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=skills"><span class="mj-nav-label">Skills</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=pack"><span class="mj-nav-label">Source pack</span><span class="mj-nav-count">2</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=monitor"><span class="mj-nav-label">The monitor</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../live/index.html#/cockpit/capabilities?module=brief"><span class="mj-nav-label">The session brief</span><span class="mj-nav-count">1</span></a></li></ul></details><details class="mj-nav-section mj-nav-section--foldable"><summary class="mj-nav-heading mj-nav-summary"><span>Object kinds</span><span class="mj-nav-count">34</span></summary><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../objects/adr/index.html"><span class="mj-nav-label">adr</span><span class="mj-nav-count">103</span></a></li><li><a class="mj-nav-link" href="../../../objects/application/index.html"><span class="mj-nav-label">application</span><span class="mj-nav-count">5</span></a></li><li><a class="mj-nav-link" href="../../../objects/area/index.html"><span class="mj-nav-label">area</span><span class="mj-nav-count">9</span></a></li><li><a class="mj-nav-link" href="../../../objects/audience/index.html"><span class="mj-nav-label">audience</span><span class="mj-nav-count">8</span></a></li><li><a class="mj-nav-link" href="../../../objects/claim/index.html"><span class="mj-nav-label">claim</span><span class="mj-nav-count">245</span></a></li><li><a class="mj-nav-link" href="../../../objects/command/index.html"><span class="mj-nav-label">command</span><span class="mj-nav-count">31</span></a></li><li><a class="mj-nav-link" href="../../../objects/context/index.html"><span class="mj-nav-label">context</span><span class="mj-nav-count">37</span></a></li><li><a class="mj-nav-link" href="../../../objects/critique/index.html"><span class="mj-nav-label">critique</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/deployment/index.html"><span class="mj-nav-label">deployment</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/derive-offload/index.html"><span class="mj-nav-label">derive-offload</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/distribution-model/index.html"><span class="mj-nav-label">distribution-model</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/document/index.html"><span class="mj-nav-label">document</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/domain/index.html"><span class="mj-nav-label">domain</span><span class="mj-nav-count">6</span></a></li><li><a class="mj-nav-link" href="../../../objects/feature/index.html"><span class="mj-nav-label">feature</span><span class="mj-nav-count">28</span></a></li><li><a class="mj-nav-link" href="../../../objects/gap/index.html"><span class="mj-nav-label">gap</span><span class="mj-nav-count">3</span></a></li><li><a class="mj-nav-link" href="../../../objects/implementation/index.html"><span class="mj-nav-label">implementation</span><span class="mj-nav-count">52</span></a></li><li><a class="mj-nav-link" href="../../../objects/intent/index.html"><span class="mj-nav-label">intent</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/issue/index.html"><span class="mj-nav-label">issue</span><span class="mj-nav-count">342</span></a></li><li><a class="mj-nav-link" href="../../../objects/knowledge/index.html"><span class="mj-nav-label">knowledge</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/mesh-declaration/index.html"><span class="mj-nav-label">mesh-declaration</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/milestone/index.html"><span class="mj-nav-label">milestone</span><span class="mj-nav-count">35</span></a></li><li><a class="mj-nav-link" href="../../../objects/moment/index.html"><span class="mj-nav-label">moment</span><span class="mj-nav-count">38</span></a></li><li><a class="mj-nav-link" href="../../../objects/policy/index.html"><span class="mj-nav-label">policy</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/profile/index.html"><span class="mj-nav-label">profile</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/prompt/index.html"><span class="mj-nav-label">prompt</span><span class="mj-nav-count">4</span></a></li><li><a class="mj-nav-link" href="../../../objects/release-record/index.html"><span class="mj-nav-label">release-record</span><span class="mj-nav-count">22</span></a></li><li><a class="mj-nav-link" href="../../../objects/rule/index.html"><span class="mj-nav-label">rule</span><span class="mj-nav-count">177</span></a></li><li><a class="mj-nav-link" href="../../../objects/scope/index.html"><span class="mj-nav-label">scope</span><span class="mj-nav-count">1</span></a></li><li><a class="mj-nav-link" href="../../../objects/session/index.html"><span class="mj-nav-label">session</span><span class="mj-nav-count">89</span></a></li><li><a class="mj-nav-link" href="../../../objects/skill/index.html"><span class="mj-nav-label">skill</span><span class="mj-nav-count">7</span></a></li><li><a class="mj-nav-link" href="../../../objects/taxonomy/index.html"><span class="mj-nav-label">taxonomy</span><span class="mj-nav-count">10</span></a></li><li><a class="mj-nav-link" href="../../../objects/test/index.html"><span class="mj-nav-label">test</span><span class="mj-nav-count">466</span></a></li><li><a class="mj-nav-link" href="../../../objects/use-case/index.html"><span class="mj-nav-label">use-case</span><span class="mj-nav-count">49</span></a></li><li><a class="mj-nav-link" href="../../../objects/workspace/index.html"><span class="mj-nav-label">workspace</span><span class="mj-nav-count">1</span></a></li></ul></details><div class="mj-nav-section"><h2 class="mj-nav-heading">Graphs</h2><ul class="mj-nav-list"><li><a class="mj-nav-link" href="../../../graphs/adrs/index.html"><span class="mj-nav-label">adrs</span></a></li><li><a class="mj-nav-link" href="../../../graphs/composed/index.html"><span class="mj-nav-label">composed</span></a></li><li><a class="mj-nav-link" href="../../../graphs/layer/index.html"><span class="mj-nav-label">layer</span></a></li><li><a class="mj-nav-link" href="../../../graphs/product/index.html"><span class="mj-nav-label">product</span></a></li><li><a class="mj-nav-link" href="../../../graphs/registry/index.html"><span class="mj-nav-label">registry</span></a></li><li><a class="mj-nav-link" href="../../../graphs/rules/index.html"><span class="mj-nav-label">rules</span></a></li><li><a class="mj-nav-link" href="../../../graphs/use-cases/index.html"><span class="mj-nav-label">use-cases</span></a></li><li><a class="mj-nav-link" href="../../../graphs/why/index.html"><span class="mj-nav-label">why</span></a></li></ul></div></nav><main id="main" class="mj-main"><div class="mj-alert mj-alert--info" role="note" data-snapshot-of="3442ce68c5">A snapshot: read at commit 3442ce68c5 on 2026-10-13T12:15:14Z by majordomus 0.23.0. Nothing on this page is read again. <a class="mj-ui-link" href="../../../live/index.html">See it live</a></div><nav aria-label="Breadcrumb"><ol class="mj-crumbs"><li><a href="../../../index.html">Cockpit</a></li><li><a href="../../../objects/index.html">Objects</a></li><li><span aria-current="page">docs/COMMANDS.md</span></li></ol></nav><header class="mj-page-head"><h1 class="mj-page-title">docs/COMMANDS.md</h1><p class="mj-page-subtitle">The command graph</p></header><div class="mj-grid"><section class="mj-card"><h2 class="mj-card-title">What it is</h2><dl class="mj-facts"><dt class="mj-facts-key">URI</dt><dd class="mj-facts-value"><code class="mj-mono">majordomus://document/docs/COMMANDS.md</code></dd><dt class="mj-facts-key">Kind</dt><dd class="mj-facts-value"><code class="mj-mono">document</code></dd><dt class="mj-facts-key">Identity</dt><dd class="mj-facts-value"><code class="mj-mono">docs/COMMANDS.md</code></dd><dt class="mj-facts-key">Path</dt><dd class="mj-facts-value"><code class="mj-mono">docs/COMMANDS.md</code></dd><dt class="mj-facts-key">Provenance</dt><dd class="mj-facts-value"><span class="mj-badge mj-badge--declared"><span class="mj-badge-dot" aria-hidden="true"></span>declared</span></dd><dt class="mj-facts-key">Media type</dt><dd class="mj-facts-value"><code class="mj-mono">text/markdown</code></dd><dt class="mj-facts-key">As a capability</dt><dd class="mj-facts-value"><a class="mj-link" href="../../../capabilities/document.docs%2FCOMMANDS.md/index.html">document.docs/COMMANDS.md</a></dd></dl></section><section class="mj-card"><h2 class="mj-card-title">Front matter</h2><pre class="mj-pre" tabindex="0"><code>{}</code></pre></section><section class="mj-card"><h2 class="mj-card-title">Content</h2><pre class="mj-pre" tabindex="0"><code># The command graph
+
+Every command this repository offers, from whichever program offers it, composed once and
+projected everywhere. This document is the contract: what a command is, where the facts
+about it come from, which surface carries it and why, and what you have to do to add one.
+
+The short version of the last question is: **define it once, in the program that
+implements it. Nothing else.**
+
+## The problem it solves
+
+Three programs answer to a person in this repository:
+
+| Program | What it is | Where its commands are declared |
+|---|---|---|
+| the Rust executable | `apps/majordomus-cli` — the read-only interfaces, generation, introspection, the servers | the clap tree in `apps/majordomus-cli/src/cli.rs` |
+| the shell tool | `bin/majordomus` — the task lifecycle | `share/commands.yaml`, reconciled against the tool&#39;s dispatch table |
+| the workflow runner | `just` — what the repository declares for a person to run | the `justfile` and `.just/*.just` |
+
+Before the graph, each surface that wanted to *show* those commands kept its own list. The
+`justfile` carried a recipe per command with a description copied from the command&#39;s help.
+The website parsed a help message. A shell completion, had anyone written one, would have
+carried a fourth copy. Every one of those lists was correct on the day it was written.
+
+The graph replaces the lists with one composition and a set of projections.
+
+```text
+   clap tree            share/commands.yaml         just --dump
+   (the executable)     (the shell tool)            (the workflows)
+         │                     │                          │
+         └──────────┬──────────┴──────────┬───────────────┘
+                    ▼                     ▼
+              contributors          capability registry
+                    └──────────┬──────────┘
+                               ▼
+                        CommandGraph  ── fingerprint
+                               │
+    ┌──────────┬───────────────┼───────────────┬──────────────┐
+    ▼          ▼               ▼               ▼              ▼
+  bridge   completion      MCP · HTTP       Cockpit         docs
+```
+
+Nothing registers with the graph. Every node is *read* from a declaration that already
+existed and is already authority for what it states.
+
+## Identity
+
+A command&#39;s identity is `&lt;program&gt;.&lt;path joined by dots&gt;`:
+
+```text
+executable.worktree.status      majordomus worktree status
+tool.check                      majordomus check          (the shell tool)
+workflow.site-build             just site-build
+```
+
+The program is part of the identity because the three are genuinely different programs, two
+of which share a name on the path. The identity is never a display string: it survives a
+reworded summary, a renamed group and a moved recipe, which is what every projection keys
+on and what `commands explain` resolves.
+
+## What a command carries
+
+| Fact | Where it comes from |
+|---|---|
+| path, arguments, defaults, value sets, help | the declaration — clap, the command registry, the runner&#39;s dump |
+| effect: what running it changes | the capability behind it, or `command_graph/semantics.rs` beside the declaration |
+| interactivity: terminal, long-running | the same |
+| requirements: repository, layer, task, toolchain | the same |
+| where an argument&#39;s values come from | inferred from the declaration first; annotated only for an identifier a registry here knows |
+| aliases | clap&#39;s own `alias`, and the workflow aliases beside the command line |
+| capability, schemas, MCP tool, HTTP route | the capability registry, joined through the command&#39;s `cli` exposure |
+| every projection | derived by `command_graph/policy.rs` — never declared |
+
+### Effects
+
+```text
+read-only              reads and answers; changes nothing anywhere
+local mutation         writes what no commit carries: process memory, .ai/local/, a build directory
+repository mutation    writes tracked files: generated artifacts, the worktree, git
+network mutation       reaches the network with an effect on the far side
+destructive            removes something a person would have to reconstruct
+```
+
+The order is the order of increasing consequence, and the exposure policy reads it.
+
+### Which surface carries what
+
+| effect / interactivity | command line | workflow bridge | MCP · HTTP | Cockpit |
+|---|---|---|---|---|
+| read-only, non-interactive | yes | yes | yes, with a capability behind it | yes |
+| local mutation | yes | yes | yes, with a capability behind it | yes |
+| repository / network mutation | yes | yes | no | no |
+| destructive | yes | yes, asking first | no | no |
+| interactive | yes | yes | no | no |
+| long-running | yes | yes | no | no |
+
+Nothing configures a surface per command. `majordomus commands explain &lt;id&gt;` prints the
+reason a surface withholds a command, and the reason is written once, in the policy.
+
+## The workflow bridge
+
+`just` is an ergonomic front door, not a place where commands are declared. Every recipe of
+the bridge is one line that runs the canonical program with the caller&#39;s own arguments:
+
+```just
+# Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place
+[group(&#39;worktree&#39;)]
+worktree-status *args:
+    @&quot;{{majordomus_executable}}&quot; worktree status &quot;$@&quot;
+```
+
+Three properties are worth naming.
+
+**It cannot be a cycle.** A recipe runs a program, never another recipe, and a recipe the
+bridge itself wrote is never read back as a declaration — the manifest beside the bridge
+records exactly which names it wrote.
+
+**Arguments are forwarded, not interpolated.** The root justfile sets `positional-arguments`
+and every body forwards `&quot;$@&quot;`. A path with a space, a quoted string, `$(…)`, a backtick and
+a leading dash all arrive as the single argument they were typed as. Interpolating
+`{{args}}` would splice them into a shell command, and no amount of escaping in a generator
+makes that safe.
+
+**It is not tracked.** It lives under `.ai/local/cache/command-graph/`, which no commit
+carries, because it is a pure function of the tree it sits in. Entering the repository
+refreshes it when one of the declarations behind it has changed, and does a few `stat` calls
+when none has.
+
+### Names
+
+The recipe name is the command path joined by `-`: `majordomus worktree status` becomes
+`just worktree-status`. Two rules resolve the collisions that algorithm can produce.
+
+- **A declared workflow owns its name.** A bridge that would take it is withheld, with an
+  error naming both. `just bench` is the criterion microbenchmarks, declared in
+  `.just/test.just`, and it keeps that name.
+- **Two programs, one derived name: both are qualified.** `majordomus bench` exists in both
+  programs, so neither keeps `bench`: they are `executable-bench` and `tool-bench`, and the
+  graph says so.
+
+### The older names
+
+Every recipe name that predates the bridge still works. They are declared once, in
+`WORKFLOW_ALIASES` beside the command line, and rendered into the bridge under the
+`compatibility` group with the reason each one exists. An alias that names a command the
+graph no longer carries fails the build rather than pointing at nothing.
+
+## Completion
+
+There is one completion engine, and the shell adapters know nothing.
+
+```mermaid
+flowchart LR
+  shell[&quot;zsh / bash&quot;] --&gt;|&quot;words, cursor&quot;| adapter[&quot;generic adapter&quot;]
+  adapter --&gt; query[&quot;majordomus completion query&quot;] --&gt; engine[&quot;CompletionEngine&quot;]
+  engine --- sources[&quot;CommandGraph  +  value sources&quot;]
+```
+
+An adapter reads the words being completed, finds the cursor, asks the executable and prints
+what comes back. It carries no command, no flag and no identifier — a test asserts exactly
+that — so a command added tomorrow is completed by an adapter loaded a year ago.
+
+`just &lt;TAB&gt;` and `majordomus &lt;TAB&gt;` are the same query with a different surface: the recipe
+name is resolved back to the canonical command and the *same* argument metadata answers what
+follows. There is no second completion implementation to disagree.
+
+Install it once, for every repository:
+
+```sh
+majordomus completion install --shell zsh     # or --shell bash, --shell fish
+```
+
+That writes the integration into the shell&#39;s startup file between `# &gt;&gt;&gt; MAJORDOMUS &gt;&gt;&gt;`
+markers. Nothing outside them is read or rewritten, running it again changes nothing, and
+`--remove` takes it out and leaves the file as it was; `--dry-run` says what would change
+and writes nothing. The first write keeps a `.majordomus.bak` beside the original.
+
+It is its own command, and nothing else calls it. `majordomus init` initialises a
+*repository&#39;s* `.ai/` layer, and writing into a person&#39;s home directory as a side effect of
+that would be a second, unasked-for act. Installing a shell integration is a decision, so it
+is a command.
+
+The line it writes is the one you would have written by hand:
+
+```sh
+eval &quot;$(majordomus completion init --shell zsh)&quot;
+```
+
+`majordomus`, not a path into a build directory: the integration is generic and outlives any
+one checkout. Inside a repository, `.envrc` exports `MAJORDOMUS_COMPLETION_BIN` and the
+adapter asks *that* executable instead — which is how the completion works in this
+repository, where the name `majordomus` on the path is the shell tool and has no
+`completion query` of its own.
+
+### What it will not do
+
+- **No network.** A value that can only be learned remotely is not offered.
+- **No secret.** An argument classified as a secret is never enumerated, never cached and
+  never logged. The graph refuses to build if one has a value source that would enumerate it.
+- **No dependence on a server.** A running server changes nothing; nothing here starts one.
+- **No index.** The completion never builds the repository index — the index takes seconds
+  and answers a question about `.ai/`, which is not a question about what commands exist.
+
+### Where values come from
+
+Inference first: a value-enum argument carries its own values, a `PATH` placeholder is a
+path, a `BRANCH` placeholder is a branch. Only an identifier whose set lives in a registry
+here is annotated, in `VALUE_BINDINGS` beside the command line. A command author who gives an
+argument a typed value has already said everything a completion needs.
+
+## Repository entry
+
+```sh
+# .envrc
+PATH_add bin
+watch_file .ai/local/state/mcp/server.json
+eval &quot;$(bin/majordomus-env enter --shell direnv)&quot;
+```
+
+One call, and it is the whole of entering: the assignments on stdout for `eval`, the banner
+on stderr, the workflow bridge refreshed when a declaration behind it changed, and this
+repository&#39;s shared server ensured when nothing is serving this checkout. Which of those are
+worth doing, and when each may be skipped, is the tool&#39;s work — a staleness rule or a
+liveness check implemented in the shell entry point would be a second implementation running
+on every `cd` that nothing tests. The rules `project.envrc-is-an-adapter` and
+`project.entry-converges` hold that shut, and ADR 0043 is the decision.
+
+Entering the repository never builds anything, never reaches a remote network, and never
+waits for a server it started to answer: the entry returns and `watch_file` over the lease
+brings the published address in when the server publishes one. A checkout that has not built
+the executable yet prints one line naming the recipe that builds it and exits 0 — and
+ensures no runtime, because a server started from stale code answers with a tree that is no
+longer there.
+
+## Adding a command
+
+### To the Rust executable
+
+1. Add the clap arm in `apps/majordomus-cli/src/cli.rs` and its implementation under
+   `src/commands/`.
+2. Add its example to `EXAMPLES` beside the declaration — the crate&#39;s own tests run it.
+3. If it is anything other than read-only and non-interactive, add one entry to
+   `SEMANTICS` in `src/command_graph/semantics.rs`.
+
+Then: the command line, `--help`, the workflow bridge, the shell completion of both surfaces,
+`majordomus commands`, `/api/v1/commands`, the MCP tools that serve the graph, the Cockpit and
+the generated reference all carry it. **No other file is edited.**
+
+### To the shell tool
+
+Add the entry to `share/commands.yaml` and the arm to the dispatch table in `bin/majordomus`.
+The `command_surface_complete` doctrine reconciles the two; the graph reads the registry.
+
+### As a workflow
+
+Write the recipe in `.just/&lt;context&gt;.just`. The runner reports it, the graph reads it, and
+the bridge does not touch it.
+
+## Pages
+
+A command&#39;s page is not a new page tree. Each program&#39;s commands already have a reference
+here, generated from the same declarations the graph reads, and the graph&#39;s only decision is
+which one a command points at:
+
+| program | route |
+|---|---|
+| the Rust executable | `/docs/cli/&lt;path&gt;/` — one page per command, from the clap tree |
+| the shell tool | `/commands/&lt;id&gt;/` — one page per command, from `share/commands.yaml` |
+| a workflow | `/docs/commands/` — this page; a recipe has no reference of its own |
+
+The graph itself is deliberately **not** a committed artifact. It carries the workflows the
+runner reports, which depend on what is installed on the machine that built it; committing
+one would be committing a machine&#39;s state and calling it a projection. It is served instead —
+over HTTP, over MCP and from the command line — and the Cockpit renders it at
+`/cockpit/commands`.
+
+## Reading the graph
+
+```sh
+majordomus commands                          # every command, one line each
+majordomus commands list --effect read-only  # only what changes nothing
+majordomus commands show executable.serve    # one command, and every surface that carries it
+majordomus commands explain executable.serve # and why each surface does or does not
+majordomus commands graph --format json      # the whole document, fingerprinted
+majordomus commands bridge                   # materialise the workflow bridge
+majordomus commands bridge --check           # exit 10 when it is stale
+```
+
+The same graph over the other surfaces:
+
+```text
+GET /api/v1/commands           the index, filtered
+GET /api/v1/command?id=…       one command in full
+GET /api/v1/commands/graph     the whole document with its diagnostics
+majordomus_commands            the MCP tool over the first of those
+```
+
+## Diagnostics
+
+The build collects findings, and a projection refuses to write while any of them is an
+error. The codes are stable, so a gate can match on them.
+
+| code | what it means |
+|---|---|
+| `duplicate-command-id` | two commands claim one identity |
+| `duplicate-workflow-projection` | one recipe name would be written by two commands |
+| `duplicate-mcp-projection` | one MCP tool name is claimed by two commands |
+| `workflow-name-collision` | a declared workflow owns a name the bridge wanted |
+| `workflow-name-qualified` | two programs&#39; commands derived one name; both were qualified |
+| `capability-names-no-command` | a capability claims a command line that does not exist |
+| `semantics-names-no-command` | an annotation names a command that no longer exists |
+| `alias-names-no-command` | a compatibility alias points at nothing |
+| `execution-cycle` | a command projected as a recipe is executed through the runner |
+| `secret-is-suggestible` | a secret argument has a value source that would enumerate it |
+
+The first time the join ran it found a real one: a capability declared that it was reached as
+`majordomus scope classify`, and the command line had no such command. That is a documented
+command that did not exist, and nothing else in the repository could have noticed.
+
+## The cache
+
+`.ai/local/cache/command-graph/` holds the bridge, the manifest of what was written, and the
+graph itself. All three are written atomically — rendered beside the destination, then
+renamed — so two shells entering the repository at once cannot read a half-written file, and
+neither needs a lock.
+
+Two keys, for two questions:
+
+- the **stamp**, over the size and modification time of the declarations and of the
+  executable, answers &quot;has anything changed?&quot; in a few `stat` calls, on the hot path;
+- the **fingerprint**, over the graph&#39;s own semantic content, answers &quot;is this the same
+  graph?&quot; and is what a generated file, a client&#39;s cache and an integrity check key on.
+
+Nothing time-dependent is in either, so two builds over one tree agree.
+
+## Bootstrap
+
+A fresh clone has no bridge and no executable.
+
+```mermaid
+flowchart TD
+  clone[&quot;clone&quot;] --&gt; entry[&quot;direnv, or just&quot;]
+  entry --&gt; absent[&quot;the executable is absent:&lt;br&gt;one line naming just build, exit 0&quot;]
+  absent --&gt; build[&quot;just build&quot;]
+  build --&gt; bridge[&quot;just bridge&lt;br&gt;(or the next cd)&quot;]
+  bridge --&gt; recipes[&quot;every command of both programs, as a recipe&quot;]
+```
+
+The root justfile imports the bridge optionally, so a clone without one still has a
+justfile: `just build` and `just bridge` are the two recipes the bridge cannot provide,
+because they are what produce it.
+
+## What proves it
+
+| | |
+|---|---|
+| `scripts/ci/command-graph` | the gate: the graph builds without an error, and no workflow file carries a hand-written bridge |
+| `test/cases/100_environment.sh` | the shell entry point is an adapter, and the check can fail |
+| `test/cases/101_command_graph.sh` | the graph, the bridge, the completion, the secret sentinels, one repository at a time |
+| `test/cases/102_completion_shell.sh` | the generated adapter, loaded into a real zsh, offering real candidates |
+| `apps/majordomus-cli/benches/commands.rs` | the cost of composing, projecting and completing, measured rather than claimed |
+| `apps/majordomus-cli/src/command_graph/` | the unit half: no adapter names a command, no mutation reaches a machine surface, no workflow is bridged back into a workflow, the fingerprint is stable |
+
+Measured on this machine, macOS arm64. Two scales, because they answer different questions.
+
+**In process, release build** (`cargo bench --bench commands`) — what the engine costs:
+
+```text
+compose the graph, command line only        1.16 ms
+compose it with the capability join         1.18 ms
+compose it with the shell tool&#39;s registry   1.76 ms
+render the whole workflow bridge              71 µs
+answer one completion                  114 ns – 4.4 µs
+```
+
+**End to end, debug build** — what a person waits for:
+
+```text
+majordomus --help                      8.5 ms
+completion query (any shape)          14-16 ms
+commands bridge, nothing changed       8.8 ms
+commands graph, in full                128 ms   (two `just` subprocesses)
+repository entry, warm                 113 ms
+the bridge&#39;s overhead over a direct call 33 ms
+```
+
+The gap between the two is the point. A completion answers in microseconds and arrives in
+fourteen milliseconds, so essentially all of it is process start and finding the repository —
+which is why the fast load builds no index and spawns nothing, and why making the engine
+cleverer would buy nothing at all.
+
+## Related
+
+- [`CAPABILITIES.md`](CAPABILITIES.md) — the capability registry the graph joins against
+- [`ENVIRONMENT.md`](ENVIRONMENT.md) — the typed snapshot repository entry renders
+- [`DYNAMICITY.md`](DYNAMICITY.md) — the ownership rule this is an instance of
+- [`CLI.md`](CLI.md) — the shell tool&#39;s own command specification
+</code></pre></section></div></main></div><div class="mj-palette" x-show="paletteOpen" x-cloak role="dialog" aria-modal="true" aria-label="Command palette" x-on:keydown.escape.window="closePalette"><div class="mj-palette-backdrop" x-on:click="closePalette"></div><div class="mj-palette-panel"><input class="mj-palette-input" type="search" placeholder="Go to a capability, an object, a graph, a page" aria-label="Command palette query" x-ref="paletteInput" x-model="paletteQuery" x-on:input.debounce.120ms="paletteFilter" x-on:keydown.arrow-down.prevent="paletteNext" x-on:keydown.arrow-up.prevent="palettePrevious" x-on:keydown.enter.prevent="paletteChoose"><ul class="mj-palette-results" role="listbox" x-ref="paletteResults"></ul><p class="mj-palette-hint">Enter opens · arrows move · Escape closes</p></div></div><footer class="mj-footer"><span>majordomus 0.23.0</span><span>·</span><a class="mj-link" href="/openapi.json">openapi.json</a><span>·</span><a class="mj-link" href="../../../live/index.html#/swagger">Swagger UI</a><span>·</span><a class="mj-link" href="../../../health/index.html">health</a></footer></body>
+</html>
