@@ -31,6 +31,11 @@ needs no server. The build takes about seventeen seconds and reads only this tre
 
 Nothing in the second column is typed into a chapter. The built page is not committed.
 
+An edition chooses no colour either. Its stylesheet names the roles `share/design/tokens.yaml`
+declares, the build inlines the projection that gives those roles their values in both
+themes, and the charts read the categorical series from the page at run time; `design-check`
+holds an edition to that like every other surface.
+
 ## What keeps it in step with the repository
 
 Each chapter declares what it rests on in `handbook/<language>/chapter_sources.py`: documents,

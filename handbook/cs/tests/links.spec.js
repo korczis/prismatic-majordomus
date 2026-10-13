@@ -10,7 +10,7 @@ const path = require('path');
 
 const DIR = __dirname;
 const page_html = fs.readFileSync(PAGE, 'utf8');
-const RESET = '<style>:root{color-scheme:light;box-sizing:border-box}body{margin:0;padding:0;font:14px -apple-system,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>';
+const RESET = '<style>:root{color-scheme:light;box-sizing:border-box}body{margin:0;padding:0;font:14px -apple-system,sans-serif;background:Canvas;color:CanvasText}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>';
 fs.writeFileSync(path.join(OUT, 'pw-page.html'),
   '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">' + RESET + '</head><body>' + page_html + '</body></html>');
 fs.writeFileSync(path.join(OUT, 'pw-host.html'),
