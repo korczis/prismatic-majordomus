@@ -1,7 +1,7 @@
 +++
 title = "Worktrees share what cargo compiles on the way, and never the finished artifact"
 description = "Worktrees share what cargo compiles on the way, and never the finished artifact"
-weight = 177
+weight = 178
 [extra]
 kind = "rule"
 slug = "project-worktrees-share-build-intermediates-1"

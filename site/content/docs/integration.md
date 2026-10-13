@@ -584,6 +584,48 @@ one the forge cannot show and every branch that is no record are left alone. If 
 refuses the reopen after the closure, the pull request is closed: the drain says so, names
 `gh pr reopen <n>`, records `reopen_failed` and exits 10.
 
+## An expedited landing
+
+Everything above is the executor, and the executor never passes `--admin`. One thing is
+outside it: the owner of the branch protection may decide to spend it. Rule
+`project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
+merge past the required check, and what that never reaches.
+
+The required check takes about an hour and the pool judges one pull request at a time. On
+2026-10-12 a release record that changed one file waited two and a half hours behind runs
+nobody was going to read, while the site named a release two versions old. The owner's order
+that followed is quoted in the ADR. What makes a landing under it safe was measured over the
+next day:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the lander | because |
+|---|---|
+| holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
+| merges master into the branch, commits the merge, then derives | a head judged alone is not the tree that lands, and a derive taken on an uncommitted merge is stale |
+| runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
+| merges with `gh pr merge --admin --merge --match-head-commit <head>` | a head that moved after it was judged is refused |
+| cancels its own branch's run after the merge | a run nobody will read still holds a runner, and the trunk's run waits behind it |
+| verifies the commit production serves, with `scripts/pages verify` | every landing is a deployment, and a merge that broke the publication says nothing |
+
+</div>
+
+
+A run is stale, and is cancelled, when its pull request is merged or closed, when its head is
+no longer the head of its branch, or when another run of the same workflow already judges
+the same commit. The trunk's only run of a commit, a deployment in flight, a release run and
+another session's run on a current head are never cancelled. A landing on the trunk cancels
+nothing by itself: the trunk's validation runs are each their own concurrency group, and the
+publication queue never cancels the deploy in flight.
+
+A red on the trunk has one carrier, named by the integrator. A second session that builds the
+same fix costs a disk and lands nothing sooner.
+
+A release is never expedited. A tag is pushed only on a commit whose `ci` check concluded
+success; `scripts/ci/release-verdict` refuses anything else, the release workflow asks it
+before it builds, and no gate is disabled, skipped or edited to get there. A merge is
+corrected by the next merge. A tag publishes executables that people install.
+
 ## Repair
 
 The `repair` lane is a person's. Most pull requests here go `CONFLICTING` on the forge within

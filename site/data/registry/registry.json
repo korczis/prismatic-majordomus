@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "c22c3daf082041628440703c1b9296ae17a1fbc3a679f0b5e6bc456bdfb27504",
+    "fingerprint": "0f3d2c2bf17f96b081edbb1c748ec3113482b014fcebb58831b6212bce202827",
     "summary": {
-      "total": 2323,
+      "total": 2327,
       "builtin": 196,
-      "declarative": 2127,
+      "declarative": 2131,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2127
+        "resource": 2131
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2136
+        "implemented": 2140
       },
       "mcp_tools": 187,
-      "mcp_resources": 2182,
+      "mcp_resources": 2186,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80066,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 103,
+        "capabilities": 104,
         "capability_ids": []
       },
       {
@@ -80684,7 +80684,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": []
       },
       {
@@ -81084,7 +81084,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 177,
+        "capabilities": 178,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 466,
+        "capabilities": 467,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9154cccffc638f7415ce44bbc1aade41e2e78bd26f2ad8911ccbdd464c033edc",
+    "fingerprint": "5e819a2d3a02ba311588ad01bff69ab83bf5aa0cce963eadfad8396dd6351387",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81341,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 103,
+      "adr": 104,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81359,7 +81359,7 @@
       "implementation": 52,
       "intent": 4,
       "issue": 342,
-      "knowledge": 1,
+      "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 35,
       "moment": 38,
@@ -81367,12 +81367,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 22,
-      "rule": 177,
+      "rule": 178,
       "scope": 1,
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 466,
+      "test": 467,
       "use-case": 49,
       "workspace": 1
     },
@@ -83080,6 +83080,23 @@
           "language",
           "governance",
           "derivation"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0155",
+        "kind": "adr",
+        "identity": "adr-0155",
+        "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "description": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "path": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7140,
+        "tags": [
+          "integration",
+          "governance",
+          "ci",
+          "release"
         ]
       },
       {
@@ -87188,7 +87205,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 64565
+        "bytes": 67332
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -94493,6 +94510,22 @@
         "bytes": 4464
       },
       {
+        "uri": "majordomus://knowledge/an-expedited-landing",
+        "kind": "knowledge",
+        "identity": "an-expedited-landing",
+        "title": "How a pull request is landed past the required check, and what that never reaches",
+        "description": "The lander's sequence for an expedited landing under the owner's standing order, the runs that are cancelled and the ones that never are, and why a tag is outside it.",
+        "path": ".ai/repo/knowledge/curated/an-expedited-landing.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2383,
+        "tags": [
+          "integration",
+          "deployment",
+          "ci"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -97014,6 +97047,24 @@
           "advisors",
           "providers",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "rule",
+        "identity": "project.an-expedited-landing-is-the-owners-word@1",
+        "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "description": "While the owner's authorisation is in force, a named lander may merge a pull request past the required check, one at a time, under the landing claim, pinned to a head that contains master and whose merged tree it judged locally; every such landing is verified in production; a run nobody will read is cancelled; a red on the trunk has one carrier; and a release is still cut only on a commit whose required check succeeded.",
+        "path": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7959,
+        "tags": [
+          "process",
+          "integration",
+          "deployment",
+          "governance",
+          "evidence"
         ]
       },
       {
@@ -101246,6 +101297,14 @@
         "bytes": 7923
       },
       {
+        "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "kind": "test",
+        "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "path": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "source_class": "case",
+        "bytes": 5503
+      },
+      {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "identity": "test/cases/29_prompt_capture.sh",
@@ -104173,7 +104232,7 @@
       "identity": [
         "id"
       ],
-      "objects": 103
+      "objects": 104
     },
     {
       "name": "application",
@@ -104346,7 +104405,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1
+      "objects": 2
     },
     {
       "name": "mesh-declaration",
@@ -104433,7 +104492,7 @@
         "id",
         "version"
       ],
-      "objects": 177
+      "objects": 178
     },
     {
       "name": "scope",
@@ -104488,7 +104547,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 466
+      "objects": 467
     },
     {
       "name": "use-case",
