@@ -1,7 +1,7 @@
 +++
 title = "Nothing a client leaves behind locks another client out"
 description = "Nothing a client leaves behind locks another client out"
-weight = 151
+weight = 153
 [extra]
 kind = "rule"
 slug = "project-shared-server-resilience-1"
