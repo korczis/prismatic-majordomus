@@ -109,6 +109,7 @@ A **capability** is a descriptor with:
 | `input`, `output` | canonical JSON Schemas; for a query, derived from its Rust types; for a resource, the object view |
 | `provenance` | `builtin` with the module, or `declarative` with the repository-relative path, directory, source class, section and, for a member of a collection file, the member's key path |
 | `exposure` | explicit, per projection: `mcp` (tool name and/or resource URI), `http` (method and path under `/api/v1/`), `cli` (the words after `majordomus`); absent means not exposed there, and nothing infers one |
+| `skill` | optional: the short name a person invokes the capability by from an agent's prompt (`alias`) and the one string field of the input the typed text fills (`argument`), declared with `.skill(alias, argument)`; the registry refuses a malformed, reserved or taken alias and an argument the input cannot take alone; the file an agent product reads is generated from it ([`EDITORS.md`](@/docs/editors.md)) |
 | `stability` | `implemented`, `behaviorally_verified`, `experimental`, `planned`, `unsupported`; a planned or unsupported capability may be listed and is never executable through any projection |
 
 </div>

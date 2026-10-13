@@ -214,7 +214,7 @@ fn the_editor_projection_answers_over_mcp_as_over_http() {
         .iter()
         .map(|a| a["id"].as_str().unwrap())
         .collect();
-    assert_eq!(adapters, ["antigravity", "zed"]);
+    assert_eq!(adapters, ["antigravity", "claude-code", "zed"]);
     let discarded = via_mcp["diagnostics"]
         .as_array()
         .expect("diagnostics")

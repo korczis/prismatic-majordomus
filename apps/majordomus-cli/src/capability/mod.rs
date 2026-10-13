@@ -53,8 +53,8 @@ pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
     Availability, BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Capability, CapabilityId,
     CapabilityKind, CliExposure, Concurrency, Effect, ExecutionPolicy, Exposure, Hints,
-    HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability,
-    Visibility, WaiverReason,
+    HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId, Provenance, SkillExposure,
+    Stability, Visibility, WaiverReason, RESERVED_SKILL_NAMES,
 };
 pub use module::ModuleDescriptor;
 pub use registry::{CapabilityRegistry, Entry, RegistryError};

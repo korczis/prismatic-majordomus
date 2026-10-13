@@ -100,6 +100,7 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
             benchmark,
             cache,
             execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<Value, EchoOut, _>(|_, v| {
             Ok(EchoOut {
