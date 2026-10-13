@@ -1,0 +1,29 @@
+id: I2591
+milestone: a-second-adopter-is-served
+title: "A projection target the policy declares is in scope without being listed twice"
+slug: a-projection-target-is-in-scope
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a freshly initialised repository free of out-of-scope warnings about files the tool itself generates."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G07); read again on master e506c041a4. `update` created GEMINI.md and every later command warned that it is out of the repository scope. On master the skeleton scope lists README.md and AGENTS.md only, while the `readme` source class claims every root Markdown file."
+current_state: "share/skeleton/ai/repo/scope.yaml and share/skeleton/ai/repo/knowledge/sources.yaml disagree; apps/majordomus-cli/src/index.rs:231-245 warns for each root *.md the scope does not name."
+desired_state: "Every `projections[].target` of the policy is in scope by derivation, and the skeleton's scope and source classes agree about root documents."
+scope:
+  - "share/skeleton/ai/repo/scope.yaml"
+  - "share/skeleton/ai/repo/knowledge/sources.yaml"
+  - "apps/majordomus-cli/src/scope.rs"
+  - "lib/init.sh"
+  - "docs/SCOPE.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "init then update in an empty repository yields no out_of_scope diagnostic from any command"
+  - "A root document the scope does not name and no projection declares is still reported"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "fresh_repository_has_no_out_of_scope_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

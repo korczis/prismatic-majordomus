@@ -1,0 +1,31 @@
+id: I2593
+milestone: a-second-adopter-is-served
+title: "A deployment declares what runs where without inventing a cargo package"
+slug: a-deployment-declares-what-runs-where
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let a repository whose product is not one cargo binary on one machine pool declare its deployments truthfully."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G09); read again on master e506c041a4. The adopter runs Docker Compose on two virtual machines and could declare nothing: 0.22.0 admitted only the provider `fly`. #1032 removed the provider block; the contract still requires build.package, build.binary, build.profile, resources.cpu_kind, machines and region."
+current_state: "apps/majordomus-cli/src/deploy/mod.rs requires build, resources, machines and region for every deployment."
+desired_state: "Those groups are validated only when present, and a deployment can name its targets by a free kind with a health URL. This is a design change and carries a proposed ADR."
+scope:
+  - "apps/majordomus-cli/src/deploy"
+  - "lib/deployment.sh"
+  - "share/skeleton/ai/repo/deployments"
+  - "docs/SCHEMAS.md"
+  - "docs/DELIVERY.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A deployment object with an application, a listen address, a health route and two targets validates with no build block"
+  - "This repository's own deployment object validates unchanged"
+  - "The Deployments screen lists the adopter-shaped object"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "adopter_shaped_deployment_case"
+  - "adr_proposed"
+created_at: 2026-10-13
+updated_at: 2026-10-13

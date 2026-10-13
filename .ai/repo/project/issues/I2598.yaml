@@ -1,0 +1,33 @@
+id: I2598
+milestone: a-second-adopter-is-served
+title: "plan answers in time linear in its issues and names a scope conflict once"
+slug: plan-is-linear-and-names-a-conflict-once
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the plan commands usable at several hundred issues: bounded time, bounded output, and one call for several transitions."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G14); read again on master e506c041a4. With 541 issues `plan list` took about 20 seconds, each transition the same, and `plan validate` printed 11,860 scope_conflict warnings. This repository's own 273 issues take 20 seconds and print 678."
+current_state: "lib/project.awk:304-316 and apps/majordomus-cli/src/plan.rs:1111-1139 emit one warning per conflicting pair; lib/plan.sh mj_plan_list forks five times per issue; a transition loads the model twice; a transition takes one id."
+desired_state: "A scope conflict is one finding per issue listing its peers, in both engines; list is one pass; start, verify and done accept several ids with one load."
+scope:
+  - "lib/plan.sh"
+  - "lib/project.sh"
+  - "lib/project.awk"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/devtask/graph.rs"
+  - "docs/PLANNING.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With 400 generated issues sharing one scope path, the number of scope_conflict findings is at most the number of issues"
+  - "`plan done A B C` moves three issues and loads the model once"
+  - "Both engines print the same findings"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "conflict_findings_are_bounded_case"
+  - "bulk_transition_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

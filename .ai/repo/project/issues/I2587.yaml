@@ -1,0 +1,30 @@
+id: I2587
+milestone: a-second-adopter-is-served
+title: "The reasoning check judges a gate, not every workflow that names a credential"
+slug: the-reasoning-check-judges-a-gate
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop `reasoning check` from failing a repository on a model credential named in a comment or in a workflow that gates nothing, and let a repository say which workflows are gates."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G03); read again on master e506c041a4. doctor failed on .github/workflows/issue-mining.yml, where the credential appears only in a YAML comment, and on an opt-in e2e workflow no ruleset requires. No policy key exempts either, so an adopter can never get doctor green. I1996 proposes not applying the check outside this repository, which is an identity special case."
+current_state: "apps/majordomus-cli/src/reasoning/check.rs:269-296 reads every workflow file and tests `text.contains(credential)`; nothing strips comments and nothing knows which workflow is a gate."
+desired_state: "The check reads YAML comments as comments, judges the workflows the CI model or the policy names as gates, and reports a credential in any other workflow as information."
+scope:
+  - "apps/majordomus-cli/src/reasoning"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "docs/REASONING.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A workflow that names a model credential only in a comment produces no finding"
+  - "A workflow outside the declared gate set that names a credential is reported as INFO and does not fail doctor"
+  - "A declared gate that names a credential is still refused, in this repository and in a fixture adopter"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "comment_only_credential_case"
+  - "non_gate_workflow_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

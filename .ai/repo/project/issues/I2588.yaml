@@ -1,0 +1,27 @@
+id: I2588
+milestone: a-second-adopter-is-served
+title: "A region projection's host document is not judged as a bootstrap"
+slug: a-region-host-is-not-judged-as-a-bootstrap
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the bootstrap check read only the generated region of a target projected in region mode."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G04); read again on master e506c041a4. With `mode: region`, doctor still failed the adopter's hand-written CLAUDE.md for carrying 'a rule corpus of its own'. docs/ADOPTION.md promises that text outside the markers is the repository's own business."
+current_state: "lib/doctor.sh:276 greps the whole target for rule bullets and rule headings whatever its mode; the neighbouring reference and budget checks already read the region through mj_region_extract."
+desired_state: "In region mode the corpus check and the layer-pointer check run over the extracted region."
+scope:
+  - "lib/doctor.sh"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A region-mode target whose host text carries bold bullets and a rules heading outside the markers passes bootstrap"
+  - "The same text inside the markers is still refused"
+  - "A whole-file target is judged as before"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "region_host_is_not_judged_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13
