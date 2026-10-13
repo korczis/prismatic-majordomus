@@ -217,17 +217,26 @@ reading of it. Nothing about the order is decided in `site/templates/index.html`
 
 | Section | What it shows | Where it comes from |
 |---|---|---|
-| `hero` | the positioning, one install command, and the verdict a worker that said it was done received, line by line | `marketing.toml`, `distribution.json`, `challenge.json` |
+| `hero` | the positioning, one install command, and the product: a call that opens the first interface a person opens, beside a view of it read from this project's own plan | `marketing.toml`, `distribution.json`, `web.json`, `build.json` `snapshots`, `plan.json`, `roadmap.json` |
 | `recognise` | three failures, each a domain's `problem`; the featured moments behind a disclosure | `homepage.toml` `problems`, `product.json` domains, the Why catalogue |
 | `map` | the product's domains as disclosures: the failure each answers, its features, its counts | `product.json` domains (ADR 0104), via `partials/domain-map.html` |
 | `how` | the task lifecycle in its order; the recorded run of each step behind a disclosure | `terminal.json` |
-| `refuses` | the challenge stepped through, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
+| `refuses` | the challenge stepped through, its first verdict line by line, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
 | `surfaces` | declaration to interfaces, the model's size, the providers, one capability on every surface | `product.json`, `registry.json` |
 | `proof` | every claim counted by its declared status, what a recorded run supports, where the page came from, what is not built | `docs/CLAIMS.yaml`, `product.json` `evidence`, `manifesto.toml` |
 | `install` | the install, next-step and verification commands | `distribution.json` |
 
 </div>
 
+
+The hero opens the product instead of describing it. Which product is not written in the
+template: it is the first of the interfaces a person opens — the stable features the web
+topology gives an `interface` surface, in the features' own order — and the call leads to its
+published copy exactly when a publication holds one (the rule the `surfaces` list already
+follows), otherwise to the page that says how to open it. The view beside the call counts this
+project's issues by the plan's statuses and draws the milestones that are under way; until
+2026-10-13 that place held a terminal transcript, which is now told in `refuses`, where the
+page argues it.
 
 The long-form argument the homepage used to carry section by section is `/method/argument/`,
 moved verbatim, so no sentence of `manifesto.toml` stopped being rendered.

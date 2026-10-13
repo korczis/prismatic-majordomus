@@ -47,6 +47,11 @@
 #               a surface a publication carries, or the build names a snapshot of that surface
 #               (build.json `snapshots`, the publication model's); one only a running process
 #               answers states its mount and links no copy
+#   product     the hero opens the product: the first interface a person opens, as the data
+#               orders them — exactly once, named by its feature, at its mount when a
+#               publication holds it there and at no such address when only a running process
+#               answers it; the view beside it is of that product, and the issues it counts
+#               are the plan's, by the plan's statuses, in the plan's order
 #   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
 #               any graph data it carries inline, weigh no more than site/data/homepage.toml's
 #               [budget] declares
@@ -480,6 +485,7 @@ else:
 web_path = os.path.join(root, "site", "data", "generated", "web.json")
 rendered_faces = re.findall(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)
 model_surfaces = product.get("surfaces") or []
+faces, by_feature, web_surfaces, snapshots = [], {}, [], []
 if not os.path.exists(web_path):
     if rendered_faces or model_surfaces:
         bad("interfaces", "site/data/generated/web.json is missing; where an interface runs cannot be held to the topology (regenerate: scripts/generate-site-data)")
@@ -527,6 +533,69 @@ else:
     if not problems:
         n_pub = sum(1 for _, fid in starts if f'data-published="{fid}"' in home)
         ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them held by the publication and linked as a snapshot; each states the mount a local server answers at)")
+
+# ---------------------------------------------------------------- product
+# The landing page is the product's front door, so the hero opens the product rather than
+# describing it: the first interface a person opens, in the order the list above is held
+# to. Where the call leads is decided the way an interface's own entry is — the published
+# copy exactly when a publication holds one — and the view the hero draws beside it is a
+# reading of this project's plan, so each figure in it is the plan's own count.
+hero_m = re.search(r'<section\b[^>]*\bid="hero".*?</section>', home, re.S)
+hero = hero_m.group(0) if hero_m else ""
+opened = re.findall(r'<a\b[^>]*\bdata-cta="product"[^>]*>', hero)
+views = re.findall(r'\bdata-product-view="([^"]+)"', hero)
+pp = []
+if not faces:
+    if opened or views:
+        pp.append("the hero opens a product, and the data gives no interface a person opens")
+else:
+    pid = faces[0]["id"]
+    pmount = by_feature[pid].get("mount") or ""
+    held = [p.get("id") for p in web_surfaces if p.get("mount") == pmount and p.get("visibility") == "public"
+            and p.get("availability") in ("both", "published-only")]
+    held += [f"a snapshot of {s.get('id')}" for s in snapshots if s.get("id") == by_feature[pid].get("id")]
+    if len(opened) != 1:
+        pp.append(f"the hero carries {len(opened)} call(s) to open the product; {pid} is the first interface the data gives, and the hero opens it once")
+    else:
+        named = re.search(r'\bdata-product="([^"]+)"', opened[0])
+        href = re.search(r'\bhref="([^"]*)"', opened[0])
+        # the page about the product may itself end in the mount's last word (/features/ui
+        # against /ui), so an address is the mount only when it is not that page's
+        about = next((x.get("route") for x in model_surfaces if x.get("id") == pid), None) or faces[0].get("route") or ""
+        target = href.group(1).split("#")[0].rstrip("/") if href else ""
+        leads = bool(pmount) and target.endswith(pmount) and not (about.rstrip("/") and target.endswith(about.rstrip("/")))
+        said = "data-published-product=" in opened[0]
+        if not named or named.group(1) != pid:
+            pp.append(f"the hero opens {named.group(1) if named else 'an unnamed product'}, and the first interface the data gives is {pid}")
+        if held and not (leads and said):
+            pp.append(f"the publication holds {held[0]} at {pmount}, and the hero's call to open {pid} does not lead there")
+        if not held and (leads or said):
+            pp.append(f"the hero opens {pid} at {pmount}, and no publication holds it: only a running process answers that address")
+    if views != [pid]:
+        pp.append(f"the hero shows the product view(s) [{', '.join(views)}], and the product is {pid}")
+    shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*([0-9]+)', hero)]
+    plan_path = os.path.join(root, "site", "data", "generated", "plan.json")
+    if shown and not os.path.exists(plan_path):
+        pp.append("the product view counts issues, and site/data/generated/plan.json is missing (regenerate: scripts/generate-site-data)")
+    elif os.path.exists(plan_path):
+        with open(plan_path) as f:
+            plan = json.load(f)
+        tally = {}
+        for i in plan.get("issues") or []:
+            tally[i.get("status")] = tally.get(i.get("status"), 0) + 1
+        want_counts = [(st, tally[st]) for st in (plan.get("statuses") or {}).get("issue") or [] if tally.get(st)]
+        if views and shown != want_counts:
+            pp.append("the product view counts the issues as [" + ", ".join(f"{st} {n}" for st, n in shown)
+                      + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+for pr in pp:
+    bad("product", pr)
+if not pp:
+    if faces:
+        ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
+                      + ("at the copy the publication holds" if held else "at the page that says how to open it")
+                      + ", and the view beside it counts what the plan counts")
+    else:
+        ok("product", "the data gives no interface a person opens, and the hero opens none")
 
 # ---------------------------------------------------------------- weight
 # What this page decides: its own HTML, the same-origin scripts and stylesheets it links, and

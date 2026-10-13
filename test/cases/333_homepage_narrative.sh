@@ -84,7 +84,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces interfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces interfaces product evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -153,6 +153,9 @@ faces() {
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":5},{"id":"draft","route":"/features/draft/","status":"draft"}],"surfaces":[{"id":"cli","title":"Command line","route":"/docs/cli/"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"}]}' > "$F/site/data/generated/web.json"
   sed -i.bak 's#<section id="how">#<section id="how"><ul><li data-interface="good">Good, at <code>/good</code></li><li data-interface="cli">Command line</li></ul>#' "$F/site/public/index.html"
+  # and the hero opens the first of them, at the page about it, beside a view of it
+  sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/features/good/" data-cta="product" data-product="good">open</a><figure data-product-view="good"><dl><dd data-issues="READY">2</dd><dd data-issues="DONE">1</dd></dl></figure>#' "$F/site/public/index.html"
+  printf '%s\n' '{"statuses":{"issue":["READY","BLOCKED","DONE"]},"issues":[{"id":"I1","status":"READY"},{"id":"I2","status":"DONE"},{"id":"I3","status":"READY"}]}' > "$F/site/data/generated/plan.json"
 }
 fresh; faces
 expect_finding 0 '^OK   interfaces +the homepage lists the 2 interface' "an interface list that is the data's"
@@ -167,7 +170,27 @@ expect_finding 10 'its entry does not state that mount' "an interface with no ad
 fresh; faces; printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"},{"id":"good-snapshot","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"published-only"}]}' > "$F/site/data/generated/web.json"
 expect_finding 10 'the publication holds good-snapshot at /good, and the homepage still describes good as running only locally' "a published surface the page calls local"
 sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+expect_finding 10 "the publication holds good-snapshot at /good, and the hero's call to open good does not lead there" "a published product the hero still sends to the page about it"
+sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">#<a href="/good/" data-cta="product" data-product="good" data-published-product="good">#' "$F/site/public/index.html"
 expect_finding 0 '1 of them held by the publication' "a published surface linked as one"
+expect_finding 0 '^OK   product +the hero opens good, the first interface the data gives, at the copy the publication holds' "a published product the hero opens"
+
+# --- product: the hero opens the first interface the data gives, once, where the data says it
+#     is, and the view beside it counts what the plan counts
+fresh; faces
+expect_finding 0 '^OK   product +the hero opens good, the first interface the data gives, at the page that says how to open it' "a hero that opens the product"
+fresh; faces; sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">open</a>##' "$F/site/public/index.html"
+expect_finding 10 'the hero carries 0 call\(s\) to open the product' "a hero that opens nothing"
+fresh; faces; sed -i.bak 's#data-product="good"#data-product="typed"#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens typed, and the first interface the data gives is good' "a product typed into the template"
+fresh; faces; sed -i.bak 's#<a href="/features/good/" data-cta="product"#<a href="/good/" data-cta="product"#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens good at /good, and no publication holds it' "a hero that sends a visitor to an address only a process answers"
+fresh; faces; sed -i.bak 's#data-product-view="good"#data-product-view="other"#' "$F/site/public/index.html"
+expect_finding 10 'the hero shows the product view\(s\) \[other\], and the product is good' "a view of something else"
+fresh; faces; sed -i.bak 's#data-issues="READY">2#data-issues="READY">7#' "$F/site/public/index.html"
+expect_finding 10 'counts the issues as \[READY 7, DONE 1\], and the plan gives \[READY 2, DONE 1\]' "a figure the plan does not give"
+fresh; sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/x/" data-cta="product" data-product="x">open</a>#' "$F/site/public/index.html"
+expect_finding 10 'the hero opens a product, and the data gives no interface a person opens' "a product where the data gives none"
 # the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),
 # which the topology does not carry because it exists only where its producer ran
 snap() { printf '%s\n' '{"commit":"abcdef1234567890","dirty":false,"snapshots":[{"id":"good","mount":"/good"}],"release":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/build.json"; }
@@ -176,6 +199,7 @@ expect_finding 10 'the publication holds a snapshot of good at /good, and the ho
 sed -i.bak 's#Good, at <code>/good</code>#<a href="/elsewhere/" data-published="good">open</a>, live at <code>/good</code>#' "$F/site/public/index.html"
 expect_finding 10 'the link does not lead to its mount /good/' "a snapshot link that leads somewhere else"
 fresh; faces; snap; sed -i.bak 's#Good, at <code>/good</code>#<a href="/good/" data-published="good">open the snapshot</a>, live at <code>/good</code>#' "$F/site/public/index.html"
+sed -i.bak 's#<a href="/features/good/" data-cta="product" data-product="good">#<a href="/good/" data-cta="product" data-product="good" data-published-product="good">#' "$F/site/public/index.html"
 expect_finding 0 '1 of them held by the publication' "a snapshot linked as one"
 fresh; faces; rm "$F/site/data/generated/web.json"
 expect_finding 10 'site/data/generated/web.json is missing' "an interface list with no topology to hold it to"
