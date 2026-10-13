@@ -1,0 +1,37 @@
+id: I2573
+milestone: a-profile-is-resolved-once-and-enforced
+title: "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record"
+slug: a-profile-is-traced-from-its-file-to-finish
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Write the audit the rest of the milestone is built on: one table that follows a profile from its YAML file through validation, the task record, the context, check, finish and every Rust reader, marking each link; a baseline of what reading and resolving a profile costs today; and a decision record that names the owner of the resolver, what an effective profile is, how its schema changes and where a profile's word ends and enforcement begins."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 00, asks for a reality audit with exact paths, a compatibility matrix, a benchmark baseline and an ADR in the repository's convention before any resolver is written, and says a later phase drops whatever the audit shows is already there. The repository has no decision record about profiles: fourteen ADRs mention the word and none decides the model. The readers are spread over six shell files and three Rust modules, and nothing lists them."
+current_state: "Shell readers: lib/common.sh mj_load_profile, lib/start.sh, lib/context.sh, lib/check.sh, lib/finish.sh, lib/doctor.sh, lib/update.sh. Rust readers: policy.rs ProfilesPolicy (default, checkpoint_interval_default, the policy hash), gates/done.rs (the regression-test predicate repeated), continuity/record.rs and plan.rs (a name carried). docs/claims/profile-axes.md says the axes are advisory. No document traces a profile end to end, no bench target reads one, and no ADR under .ai/repo/adrs decides who resolves it."
+desired_state: "docs/PROFILES.md holds the trace as a table (path, what it reads, what it does with it, who consumes the result, and the link's standing: proven by a named test, advisory, duplicated, missing), and a compatibility table for the four shipped profiles, the schema, the allowlist, the task record's profile field, the ledger's task.started and the continuity record. A decision record under .ai/repo/adrs names apps/majordomus-cli/src/profile as the owner, defines the effective profile and its fingerprint, says which inputs are constraints that intersect and which are preferences that take precedence, says whether new keys keep majordomus.profile/v1 or need v2, and draws the line with runtime-adapters. The baseline records the wall time of check --explain and of start under each shipped profile, with the command that measured it."
+scope:
+  - "docs/PROFILES.md"
+  - "docs/README.md"
+  - ".ai/repo/adrs"
+  - ".ai/repo/profiles/README.md"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/project/issues/I2573.yaml"
+non_scope:
+  - "Any change of behaviour: the audit reads and the record decides"
+  - "Re-planning milestone runtime-adapters: the record says how I0201 to I0206 relate and leaves their records to their owner"
+depends_on: []
+acceptance_criteria:
+  - "Every file that a search for profile under lib, share and apps/majordomus-cli/src finds reading a profile is a row of the trace, and a test or gate fails when a new reader appears that is not a row"
+  - "Each row's standing names the test that proves it or says none does"
+  - "The decision record is numbered through the board, links the brief by path, and is cited by docs/PROFILES.md and .ai/repo/profiles/README.md"
+  - "The baseline states the commit, the build profile, the host load and the commands, and holds a median and a spread, not one sample"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles"
+evidence_required:
+  - "profile_trace_audit"
+  - "profile_resolver_decision_record"
+  - "profile_read_baseline"
+created_at: 2026-10-13
+updated_at: 2026-10-13

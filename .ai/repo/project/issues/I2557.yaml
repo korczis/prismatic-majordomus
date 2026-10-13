@@ -1,0 +1,51 @@
+id: I2557
+milestone: shell-shrinks-to-its-bootstrap
+title: "The first ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row"
+slug: the-first-ten-cases-are-rust-tests
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Port ten named shell cases that drive only the Rust executable to Rust integration tests declared as cases, run old and new side by side once, and delete each shell file with a mapping row that lists the assertions that moved."
+why: "campaigns/majordomus-shellfall/04-port-tests-to-rust-rhai.md asks that the suite be ported in batches, pure validators and command-line contracts first, that old and new run together for a short overlap, and that the case counts be reported per batch. The honest first batch is bounded by what can move today: 298 of the 458 cases exercise the shell tool and cannot be ported before the commands they test are capabilities, while 45 never invoke it. Ten of those 45 are named here because their subjects are single modules of the executable with existing Rust test files to join: 366_automation_inventory_agrees_with_the_tree, 730_reasoning_works_with_no_advisor, 732_disagreement_is_settled_by_evidence, 733_advisor_failure_and_recovery, 734_reasoning_survives_the_session, 735_a_new_advisor_needs_no_consumer_edit, 736_reasoning_check_refuses_drift, 430_economics, 131_models and 620_mcp_tools_are_invoked_and_answer."
+current_state: "Each of the ten is a bash script that builds a temporary repository, calls the executable through rust_bin from test/lib.sh and compares output with jq and grep. Rules, claims and gates.yaml path selectors name several of them by file name."
+desired_state: "Each of the ten is one or more Rust tests under apps/majordomus-cli/tests, declared as a case, using the helpers in tests/common. Every reference to the old file name (rule proofs, docs/CLAIMS.yaml, .ai/repo/ci/gates.yaml, .ai/repo/ci/suite-durations.tsv) names the new identity. The mapping has ten rows. The pull request reports the wall-clock time of the ten before and after on the same machine."
+scope:
+  - "apps/majordomus-cli/tests"
+  - "test/cases/366_automation_inventory_agrees_with_the_tree.sh"
+  - "test/cases/730_reasoning_works_with_no_advisor.sh"
+  - "test/cases/732_disagreement_is_settled_by_evidence.sh"
+  - "test/cases/733_advisor_failure_and_recovery.sh"
+  - "test/cases/734_reasoning_survives_the_session.sh"
+  - "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
+  - "test/cases/736_reasoning_check_refuses_drift.sh"
+  - "test/cases/430_economics.sh"
+  - "test/cases/131_models.sh"
+  - "test/cases/620_mcp_tools_are_invoked_and_answer.sh"
+  - ".ai/repo/ci"
+  - ".ai/repo/rules/project"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/issues/I2557.yaml"
+non_scope:
+  - "Any case that invokes bin/majordomus, and the installer, launcher and completion cases, whose subject is shell"
+  - "Changing what a case asserts: an assertion that cannot be expressed is reported in the mapping row, not dropped"
+  - "A Rust test that spawns bash to run the old script"
+depends_on:
+  - "I2556"
+acceptance_criteria:
+  - "The ten files are gone from test/cases and the mapping has a row for each that names at least one existing Rust test"
+  - "Each new test fails when the behaviour its case asserted is broken, shown for at least one assertion per case by a mutation described in the pull request"
+  - "No tracked file names any of the ten old file names outside the mapping"
+  - "The count of files under test/cases is 448 or lower"
+  - "A full run's report verifies with --verify-report"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test reasoning_mesh"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "MJ_TEST_LIST=1 bash test/run.sh"
+  - "bash test/run.sh --verify-report <the report of a full run>"
+evidence_required:
+  - "ten_cases_mapped"
+  - "old_and_new_ran_together"
+  - "timing_before_and_after"
+created_at: 2026-10-13
+updated_at: 2026-10-13

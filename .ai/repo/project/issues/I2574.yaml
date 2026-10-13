@@ -1,0 +1,44 @@
+id: I2574
+milestone: a-profile-is-resolved-once-and-enforced
+title: "A profile is a typed object: one Rust definition parses, validates and lists the profiles, and profile.list, profile.show and profile.validate answer everywhere"
+slug: a-profile-is-a-typed-object
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the typed definition of a profile to the Rust executable and declare the three capabilities that read definitions, so that the command line, HTTP, OpenAPI and MCP list, show and validate profiles from one type."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 01 (typed parse and validation, reject unknown and conflicting values) and PROMPT 04 (majordomus profile list, show and validate, derived and never registered per surface). Today only the shell can read a profile: the executable that serves the API, MCP and the UI has ProfilesPolicy with two fields and no Profile, so no surface but check --explain can show a definition and doctor is the only validator."
+current_state: "share/schemas/majordomus/profile/profile.v1.schema.json is authored and share/allow/profile.txt is generated from it. lib/doctor.sh validates keys against the allowlist, name against file name, and the policy's default against the files. apps/majordomus-cli/src has no profile module; policy.rs profile_files lists the files to hash them. share/kinds.yaml declares kind profile (identity name), so objects.get answers a profile as an untyped object. share/commands.yaml has no profile command."
+desired_state: "apps/majordomus-cli/src/profile/mod.rs holds Profile with one typed field per key of the schema (enums for capability, effort, verbosity, presentation and reasoning; the context and verification blocks; checkpoint_interval as a duration; output_contract), refusing an unknown key. A test holds the type and the authored schema to each other in both directions, so neither can gain a key alone. profile.list, profile.show and profile.validate are declared with capability! under capability/builtin and generated to majordomus profile list, show and validate, HTTP, OpenAPI and MCP. validate reports what doctor reports (does not parse, unknown key, name differs from file name, default has no file) as typed findings with the same wording, and a test runs both on the same broken fixtures."
+scope:
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/tests"
+  - "share/commands.yaml"
+  - "docs/CLI.md"
+  - "docs/PROFILES.md"
+  - ".ai/repo/project/issues/I2574.yaml"
+non_scope:
+  - "Resolution, provenance and the fingerprint: I2575"
+  - "Any new key or profile: I2578"
+  - "Removing doctor's shell validation: I2576 moves the shell readers"
+depends_on:
+  - I2573
+acceptance_criteria:
+  - "The four shipped profiles and the four skeleton profiles parse into the type, and serialising them yields the values their files hold"
+  - "A key the schema lacks is refused by name, and a key the schema has and the type lacks fails a test"
+  - "profile.validate and doctor report the same findings for a profile that does not parse, has an unknown key, is misnamed, and for a default with no file"
+  - "majordomus profile list --json, GET of the generated route and the MCP tool answer the same bytes on a fixture"
+  - "A profile file added to a fixture is listed with no other file changed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "bin/majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles"
+evidence_required:
+  - "typed_profile_unit_tests"
+  - "schema_and_type_agree_test"
+  - "validate_matches_doctor_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

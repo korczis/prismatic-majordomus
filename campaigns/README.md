@@ -110,6 +110,20 @@ Where a plan is not yet on master, the branch carries it.
 | `majordomus-living-site-v2-20261011` | measured against its premise on 2026-10-11 before planning: the deployed /roadmap/ was built from master 890e112d04 (build.json), master's only later commit touches campaigns/ alone, and the page lists all 27 milestones master holds, so it is not stale against master; what it lacks are the milestones planned on unmerged branches (owner packs, autopilot, atomic, mesh, UI), which reach it when their pull requests land. Its other items map to open work: deployed versus released identity to #918, the release delta to #925 (I2374), incremental derive to I2344-I2349 and Flux V1. No new issue is planned for it | measured by 25 |
 | `operation-zero-autonomous-night-shift` | executed by p5 as orchestrator and repair worker (zero open pull requests), with p7 keeping the merge loop | p5, p7 |
 | `majordomus-pr-throughput-pack-20261010`, `majordomus-release-15min-pack`, `majordomus-rapid-delivery-living-site-v3-20261010` | executed by the integration executors (`majordomus prs`, the landing train) and the release chain; no separate plan records | cd, 3d |
+| `majordomus-incremental-derive-prompt-pack` | I2521-I2533 (a-derive-does-only-the-work-its-inputs-changed, a-derivation-computed-once-is-reused); the incremental-derive items of `majordomus-flux-v1-20261011` (M03) map to the same records | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-intent-ui-pack` | I2536-I2545 (the-ui-starts-work-through-the-executor, an-intent-is-carried-from-a-sentence-to-a-verdict); the UI stays a reader, so its "action plane" is a form posted to the executor | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-autonomous-idd-maximal` | I2502, I2503, I2505-I2508 and I2511 (started-work-is-explained-bounded-and-survives-a-restart, an-intent-is-followed-to-the-deployment-that-carries-it); what it shares with the intent UI pack is planned once, there | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-shellfall` | I2549-I2561 (automation-is-scripted-capabilities, shell-shrinks-to-its-bootstrap); its first issue puts ADR 0069 on master, which seven tracked files cite and no record carries | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-ui-speed-pack` | I2563-I2570 (a-screen-is-fast-bounded-and-says-why): what the brief still asks for after ADR 0142 and I2486 | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-profile-system-v2-prompt-pack` | I2573-I2584 (a-profile-is-resolved-once-and-enforced): an extension of the profiles under `.ai/repo/profiles`, not a second system | p16, `chore/seven-owner-packs-are-tracked-and-planned` |
+| `majordomus-convergence-pack-20261012` | executed as the campaign `majordomus-autonomous-convergence` (coordinator p8, integrator p9), its plan kept as revision 2 beside the campaign in the primary checkout's ignored `tmp/`; no separate plan records, and `.ai/repo/ci/campaigns-unplanned.txt` says so | p8, p9 |
+
+Since 2026-10-13 the two directions are a gate and not a habit. `scripts/ci/campaigns-check`
+reads every `campaigns/<pack>` a record under `.ai/repo/project/` cites: a citation of a pack
+that is not kept fails, and a pack no record cites fails unless
+`.ai/repo/ci/campaigns-unplanned.txt` names it with the reason. A line of that list whose pack
+a record does cite fails too, so the list can only shrink. `docs/OWNER_PACKS.md` is the page
+to start from when working on what a pack asked for.
 
 ## Adding one
 

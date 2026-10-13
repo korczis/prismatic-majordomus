@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "29d73e33e3d5e084ea20d488e1a8d106a78a74d009d323db9f8ea27d0638fb2a",
+    "fingerprint": "0dd8f83e4a1fb61b2583d2f099f04d7da2a7c8e93b39e289949f9b47b1eed19d",
     "summary": {
-      "total": 2295,
+      "total": 2369,
       "builtin": 195,
-      "declarative": 2100,
+      "declarative": 2174,
       "by_kind": {
         "command": 29,
         "query": 166,
-        "resource": 2100
+        "resource": 2174
       },
       "by_stability": {
         "behaviorally_verified": 135,
         "experimental": 51,
-        "implemented": 2109
+        "implemented": 2183
       },
       "mcp_tools": 187,
-      "mcp_resources": 2155,
+      "mcp_resources": 2229,
       "http_routes": 191,
       "cli_commands": 106,
       "modules": 90,
@@ -80245,7 +80245,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 341,
+        "capabilities": 342,
         "capability_ids": []
       },
       {
@@ -80529,7 +80529,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 337,
+        "capabilities": 400,
         "capability_ids": []
       },
       {
@@ -80645,7 +80645,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 45,
         "capability_ids": []
       },
       {
@@ -81170,7 +81170,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d2660d03d1f1b98a141a79a4f73997dd8dc12c8acb0934ceea8555c559b90a93",
+    "fingerprint": "cbed6ee48b217fd1cefc6ce6d5dcfcc7a971eedf0e75353c660671e32581845b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81204,16 +81204,16 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 341,
+      "document": 342,
       "domain": 6,
       "feature": 28,
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 337,
+      "issue": 400,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 35,
+      "milestone": 45,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -87064,6 +87064,15 @@
         "bytes": 11569
       },
       {
+        "uri": "majordomus://document/docs/OWNER_PACKS.md",
+        "kind": "document",
+        "identity": "docs/OWNER_PACKS.md",
+        "title": "Working from the owner's packs",
+        "path": "docs/OWNER_PACKS.md",
+        "source_class": "document",
+        "bytes": 7762
+      },
+      {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
         "kind": "document",
         "identity": "docs/PAGES_STATUS.md",
@@ -87106,7 +87115,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 243738
+        "bytes": 359618
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87142,7 +87151,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25004
+        "bytes": 25360
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -94230,6 +94239,699 @@
         "bytes": 4702
       },
       {
+        "uri": "majordomus://issue/I2502",
+        "kind": "issue",
+        "identity": "I2502",
+        "title": "plan dispatch says which ready issue may start now, and why each other one may not",
+        "description": "Add one read capability, plan.dispatch, that judges every ready issue against the live exclusive claims, the issues already started and a declared cap on open pull requests, and answers a deterministic decision per issue with the cause of each rejection.",
+        "path": ".ai/repo/project/issues/I2502.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3865
+      },
+      {
+        "uri": "majordomus://issue/I2503",
+        "kind": "issue",
+        "identity": "I2503",
+        "title": "An execution accepted before a restart is answered after it as interrupted, never as absent",
+        "description": "Put a bounded journal behind the execution store so that the executions a server accepted, with their events, are still answered after the server stops and starts, and one that had not finished reads a final state named interrupted.",
+        "path": ".ai/repo/project/issues/I2503.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4218
+      },
+      {
+        "uri": "majordomus://issue/I2505",
+        "kind": "issue",
+        "identity": "I2505",
+        "title": "The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere",
+        "description": "Add one policy key that states, per transport, the highest declared effect a call may cause, and enforce it in the one dispatcher every transport already goes through, so that a capability above the ceiling is refused with one typed error before its handler runs.",
+        "path": ".ai/repo/project/issues/I2505.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4227
+      },
+      {
+        "uri": "majordomus://issue/I2506",
+        "kind": "issue",
+        "identity": "I2506",
+        "title": "A criterion can be settled by an observed deployment, and a failed or unobserved one leaves it unmet",
+        "description": "Add deployment as an evidence kind of an intent criterion: its reference names an environment, and its state is derived from the recorded forge observation, so that an intent can require that its work is deployed and read satisfied only when the observation says so.",
+        "path": ".ai/repo/project/issues/I2506.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4050
+      },
+      {
+        "uri": "majordomus://issue/I2507",
+        "kind": "issue",
+        "identity": "I2507",
+        "title": "intent explain continues past the merge to the release and the observed deployment that carry each served issue",
+        "description": "Extend the answer of intent_realization.explain so that each completed issue serving the intent is followed to its merge commit, the first release record whose commit contains it, and the first observed deployment per environment whose commit contains it, with each absent link stated.",
+        "path": ".ai/repo/project/issues/I2507.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3901
+      },
+      {
+        "uri": "majordomus://issue/I2508",
+        "kind": "issue",
+        "identity": "I2508",
+        "title": "How long merged work waits to be deployed is measured from the trail and the recorded observation",
+        "description": "Fold one more fact into the integrator's metrics: per merge in the window, the time from the merge to the first observed successful deployment that contains it, answered as a median with its sample size, and the merges still waiting counted apart.",
+        "path": ".ai/repo/project/issues/I2508.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3318
+      },
+      {
+        "uri": "majordomus://issue/I2511",
+        "kind": "issue",
+        "identity": "I2511",
+        "title": "The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart",
+        "description": "Write one test case that, in a fresh disposable repository, carries an intent with a deployment criterion through its plan and its evidence, restarts the server in the middle, feeds a fixture forge observation, and asserts at each step what every surface reads, ending satisfied only after the successful deployment is observed.",
+        "path": ".ai/repo/project/issues/I2511.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4203
+      },
+      {
+        "uri": "majordomus://issue/I2521",
+        "kind": "issue",
+        "identity": "I2521",
+        "title": "What a derive costs is measured per stage and per kind of change, and every file a stage reads is listed",
+        "description": "Measure the present derive on a named commit, stage by stage, for the kinds of change the incremental design is meant to make cheap, and establish which files each stage reads, so that every later issue of this milestone is judged against a recorded baseline and a known input set.",
+        "path": ".ai/repo/project/issues/I2521.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3439
+      },
+      {
+        "uri": "majordomus://issue/I2522",
+        "kind": "issue",
+        "identity": "I2522",
+        "title": "The derivation is a typed graph in the crate: every producer is a node with declared inputs and outputs, answered by one capability",
+        "description": "Declare the derivation graph as data in the Rust crate: one node per producer, with a stable identity, input selectors, exact outputs, an operation version and edges, ordered deterministically and refused when it is unsound, and answer it through one read capability and its generated schema.",
+        "path": ".ai/repo/project/issues/I2522.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4220
+      },
+      {
+        "uri": "majordomus://issue/I2523",
+        "kind": "issue",
+        "identity": "I2523",
+        "title": "A node's key is computed from the bytes its producer reads, the index membership it enumerates and the generation of the executable",
+        "description": "Give every node of the derivation graph a deterministic SHA-256 key over its identity, its operation version, its declared inputs as the producer actually reads them, the keys of the nodes it depends on and the generation of the executable, with a schema version of its own.",
+        "path": ".ai/repo/project/issues/I2523.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3868
+      },
+      {
+        "uri": "majordomus://issue/I2524",
+        "kind": "issue",
+        "identity": "I2524",
+        "title": "majordomus derive plan and derive explain say, without writing, which nodes would run and which input moved each one",
+        "description": "Add the read-only half of incremental derivation: a planner that marks every node reuse, regenerate, invalid or blocked with its reason, and the commands derive plan, derive status and derive explain over it, declared once as capabilities and projected everywhere.",
+        "path": ".ai/repo/project/issues/I2524.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4051
+      },
+      {
+        "uri": "majordomus://issue/I2525",
+        "kind": "issue",
+        "identity": "I2525",
+        "title": "An incremental derive runs only the nodes its plan marks, a no-op derive runs no generator, and the full derive stays as it is",
+        "description": "Execute the plan of I2524: run the producers of the nodes marked regenerate in graph order, leave the others untouched, record the keys of what succeeded, and keep the present full derive reachable and unchanged as the oracle. Opt-in; the default does not change here.",
+        "path": ".ai/repo/project/issues/I2525.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4447
+      },
+      {
+        "uri": "majordomus://issue/I2526",
+        "kind": "issue",
+        "identity": "I2526",
+        "title": "The site generator's sections are nodes with inputs of their own, and the use-case scenarios run only when what they exercise changed",
+        "description": "Split stage B into the nodes its real dependencies allow, starting with the execution of the use-case scenarios, so that an edit to one canonical file does not rerun every section of the site generator, and keep a coarser node wherever a finer one cannot be shown to be both correct and faster.",
+        "path": ".ai/repo/project/issues/I2526.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4128
+      },
+      {
+        "uri": "majordomus://issue/I2527",
+        "kind": "issue",
+        "identity": "I2527",
+        "title": "An incremental derive equals a full derive byte for byte, and an omitted dependency turns a gate red",
+        "description": "Hold the invariant that an incremental derive and a clean full derive of the same inputs leave the same tracked bytes, by a differential case over disposable repositories, by mutation tests that break the graph on purpose, and by a project rule with a check that runs.",
+        "path": ".ai/repo/project/issues/I2527.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4009
+      },
+      {
+        "uri": "majordomus://issue/I2528",
+        "kind": "issue",
+        "identity": "I2528",
+        "title": "The UI shows the derivation graph and its last plan, and one documentation page explains the model",
+        "description": "Show the derivation graph, the state of each node and the reason for it on one screen of majordomus ui, reading the capabilities of I2522 and I2524 and nothing else, and complete the documentation of the model in docs/DERIVE.md so that the published site carries it.",
+        "path": ".ai/repo/project/issues/I2528.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3257
+      },
+      {
+        "uri": "majordomus://issue/I2529",
+        "kind": "issue",
+        "identity": "I2529",
+        "title": "A node's outputs are kept under its key and restored only after every digest is verified",
+        "description": "Add a local content-addressed store of node outputs: a typed manifest and the output bytes per key, published atomically, verified on read, restored into the work tree only for paths the node owns, and never able to turn a damaged entry into a success.",
+        "path": ".ai/repo/project/issues/I2529.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4197
+      },
+      {
+        "uri": "majordomus://issue/I2530",
+        "kind": "issue",
+        "identity": "I2530",
+        "title": "The derivation store is bounded and measured: its size and hit rate are read by a capability, and only an explicit command removes entries",
+        "description": "Make the store a quantity the repository measures and reclaims like its other accumulating directories: report its size, entries, hits, misses and time saved or spent, and remove entries by age and quota only through one explicit mutating command that spares entries in use.",
+        "path": ".ai/repo/project/issues/I2530.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3618
+      },
+      {
+        "uri": "majordomus://issue/I2531",
+        "kind": "issue",
+        "identity": "I2531",
+        "title": "Two worktrees deriving the same key compute it once, and the machine lock covers the write into a tree, not the computation",
+        "description": "Let the worktrees of one machine share the store safely: one computation per key at a time, each worktree's files written only by its own run, and the machine-wide derive lock narrowed to what must not interleave, with the rule that states it amended in the same change.",
+        "path": ".ai/repo/project/issues/I2531.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4112
+      },
+      {
+        "uri": "majordomus://issue/I2532",
+        "kind": "issue",
+        "identity": "I2532",
+        "title": "CI reuses derivation entries keyed by the graph, and still fails on a stale committed file whether or not the cache was restored",
+        "description": "Restore and save the derivation store in the CI job that proves the derived data current, keyed from the graph and never from a second mapping of paths, while the job's verdict remains the byte comparison against the committed files.",
+        "path": ".ai/repo/project/issues/I2532.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3947
+      },
+      {
+        "uri": "majordomus://issue/I2533",
+        "kind": "issue",
+        "identity": "I2533",
+        "title": "The incremental derive becomes the default after a shadow period proves it equal, and one flag returns to the full derive",
+        "description": "Move scripts/derive to the incremental path by default in guarded steps: a shadow mode that runs both and compares, a recorded comparison on the real repository, the switch of the default, and a tested way back.",
+        "path": ".ai/repo/project/issues/I2533.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3830
+      },
+      {
+        "uri": "majordomus://issue/I2536",
+        "kind": "issue",
+        "identity": "I2536",
+        "title": "An execution opens on the UI: its state, steps, log and outcome at an address of its own",
+        "description": "Give one execution a page on the primary surface: the Command screen's execution rows lead to an inspector that shows what the execution engine holds about that execution, read from executions.get and executions.events, so that a person follows work on /ui without leaving for the Cockpit.",
+        "path": ".ai/repo/project/issues/I2536.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4207
+      },
+      {
+        "uri": "majordomus://issue/I2537",
+        "kind": "issue",
+        "identity": "I2537",
+        "title": "A capability's inspector on the UI starts it as an execution, from the one form both surfaces share",
+        "description": "Let a person start a capability from the primary surface: the capability inspector on /ui draws the form generated from the capability's input schema, the form posts to the route the registry declares for executions.start, and the person lands on the execution's inspector. The form builder is the Cockpit's, moved to a module both surfaces import.",
+        "path": ".ai/repo/project/issues/I2537.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5336
+      },
+      {
+        "uri": "majordomus://issue/I2538",
+        "kind": "issue",
+        "identity": "I2538",
+        "title": "A start repeated under one key is one execution",
+        "description": "Let a caller of executions.start name a key, and make a second start under the same key answer the execution the first one created instead of creating another, so that a double click, a retried request or a resent MCP call cannot run a writing capability twice.",
+        "path": ".ai/repo/project/issues/I2538.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3661
+      },
+      {
+        "uri": "majordomus://issue/I2539",
+        "kind": "issue",
+        "identity": "I2539",
+        "title": "An issue's moves are offered where the issue is read: start, verify and done from the UI's inspector",
+        "description": "Offer on the UI's issue inspector the moves an issue can make, each started as an execution of plan.transition, so that a person who reads that an issue is ready can start it from the page that told them.",
+        "path": ".ai/repo/project/issues/I2539.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3835
+      },
+      {
+        "uri": "majordomus://issue/I2540",
+        "kind": "issue",
+        "identity": "I2540",
+        "title": "A mesh node's inspector offers the cooperation the mesh declares, each as an execution",
+        "description": "Offer on the inspector of one machine of the mesh the command capabilities the mesh module declares that can be addressed to a runtime, such as asking it for a review or publishing a handover, each started through the shared runner with the node's runtime filled in.",
+        "path": ".ai/repo/project/issues/I2540.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4160
+      },
+      {
+        "uri": "majordomus://issue/I2541",
+        "kind": "issue",
+        "identity": "I2541",
+        "title": "An intent opens its gap, its critique and how it is being realised",
+        "description": "Complete the UI's intent inspector with the three things the intent model holds and the page does not show: the recorded gap with its observations, the recorded critique with its findings, and the realisation of the intent with the reasons for its stage, each read from a capability's answer.",
+        "path": ".ai/repo/project/issues/I2541.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4680
+      },
+      {
+        "uri": "majordomus://issue/I2542",
+        "kind": "issue",
+        "identity": "I2542",
+        "title": "A proposal is planned by a capability: an intent is given its criteria, invariants and milestones, or nothing is written",
+        "description": "Add the second intent writer ADR 0144 leaves open: one command capability that sets the invariants, the satisfaction criteria and the milestones of an existing intent record, validates the result with the intent validator before it is written, refuses a record that changed since the caller read it, and answers the same verdict as a preview without writing.",
+        "path": ".ai/repo/project/issues/I2542.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4851
+      },
+      {
+        "uri": "majordomus://issue/I2543",
+        "kind": "issue",
+        "identity": "I2543",
+        "title": "A milestone or an issue is proposed by a capability, validated against the graph before it exists",
+        "description": "Add one command capability that writes one new milestone or issue record of the project model, validated against the whole plan before the file appears, with a preview that answers the same verdict and writes nothing, so that a plan can be extended through the registry instead of by typing YAML.",
+        "path": ".ai/repo/project/issues/I2543.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4601
+      },
+      {
+        "uri": "majordomus://issue/I2544",
+        "kind": "issue",
+        "identity": "I2544",
+        "title": "An issue opens what realised it: its branches and their commits, from the trace",
+        "description": "Show on the UI's issue inspector the branches that name the issue and the commits each holds, read from trace.issue, so that the chain a reader follows from an intent to a criterion to an issue continues to the work in git.",
+        "path": ".ai/repo/project/issues/I2544.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4039
+      },
+      {
+        "uri": "majordomus://issue/I2545",
+        "kind": "issue",
+        "identity": "I2545",
+        "title": "One intent is carried from a sentence to a derived verdict in a disposable repository, through capabilities only",
+        "description": "Prove the whole path once, outside this repository's own plan: a case creates a repository, proposes an intent from a sentence, plans it, proposes a milestone and an issue that serve its criterion, moves the issue through an execution, and reads the intent's stage and verdict, calling capabilities and editing no record by hand.",
+        "path": ".ai/repo/project/issues/I2545.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4220
+      },
+      {
+        "uri": "majordomus://issue/I2549",
+        "kind": "issue",
+        "identity": "I2549",
+        "title": "ADR 0069 is a record on master, and an ADR number cited with no record behind it fails a gate",
+        "description": "Land the decision that a capability may be scripted as .ai/repo/adrs/0069-a-capability-may-be-scripted.md on the current tree, with its context rewritten to what the tree measures today, and make a citation of an ADR number that has no record a finding.",
+        "path": ".ai/repo/project/issues/I2549.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3236
+      },
+      {
+        "uri": "majordomus://issue/I2550",
+        "kind": "issue",
+        "identity": "I2550",
+        "title": "shell check states the baseline: units and lines by directory and disposition, the units nothing in shell calls any more, and a head with more exempt shell than its base is refused",
+        "description": "Extend the shell.check capability so that its answer carries the measured totals the migration is judged by and an order to migrate in, both derived from the tree and the inventory on every call, and add a comparison with a base revision that refuses growth.",
+        "path": ".ai/repo/project/issues/I2550.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4209
+      },
+      {
+        "uri": "majordomus://issue/I2551",
+        "kind": "issue",
+        "identity": "I2551",
+        "title": "The sandboxed engine a scripted capability runs in is part of the executable",
+        "description": "Embed Rhai in the Rust executable as one engine constructor under apps/majordomus-cli/src/script: eval disabled, no clock, no module resolved from the filesystem, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, a cancel predicate asked on every operation, and print and debug routed nowhere until a caller routes them.",
+        "path": ".ai/repo/project/issues/I2551.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3931
+      },
+      {
+        "uri": "majordomus://issue/I2552",
+        "kind": "issue",
+        "identity": "I2552",
+        "title": "A scripted capability is a kind: discovered, registered, run and projected like any capability, and held to the effect it declares",
+        "description": "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: a kind in share/kinds.yaml with a versioned schema, discovered by the index, validated with errors that name file, line and column, runnable through majordomus run, projected onto the command line, HTTP, OpenAPI, MCP and the generated reference by the projections that exist, and refused at run time when it calls a capability whose effect exceeds its own.",
+        "path": ".ai/repo/project/issues/I2552.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5013
+      },
+      {
+        "uri": "majordomus://issue/I2553",
+        "kind": "issue",
+        "identity": "I2553",
+        "title": "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string",
+        "description": "Add one capability that runs an external program from a typed specification (the executable by name, an argument list, a working directory inside the repository, an environment delta, what standard input is, and a deadline), kills the whole process group when the deadline passes or the execution is cancelled, and reports exit status and bounded, redacted output as execution events.",
+        "path": ".ai/repo/project/issues/I2553.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4632
+      },
+      {
+        "uri": "majordomus://issue/I2554",
+        "kind": "issue",
+        "identity": "I2554",
+        "title": "The ratchet is one typed capability, and the first scripts/ci gates that are only a ratchet become scripted capabilities",
+        "description": "Move the count-against-a-recorded-baseline logic that scripts/ci gates each carry into one typed Rust capability, and replace at least three gates whose remaining logic is a call to an existing capability with scripted capabilities over it, deleting each file and its inventory record in the same change.",
+        "path": ".ai/repo/project/issues/I2554.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4035
+      },
+      {
+        "uri": "majordomus://issue/I2555",
+        "kind": "issue",
+        "identity": "I2555",
+        "title": "A hand-written recipe is one call: the eight recipe bodies the inventory describes as shell leave .just, and a recipe that grows a second line fails a gate",
+        "description": "Reduce every recipe written by hand in justfile and .just/*.just to a single invocation of a program with its arguments forwarded positionally, move the logic of the eight recipes that carry more into the command or script they belong to, and hold the property with a check over just's own JSON dump.",
+        "path": ".ai/repo/project/issues/I2555.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4406
+      },
+      {
+        "uri": "majordomus://issue/I2556",
+        "kind": "issue",
+        "identity": "I2556",
+        "title": "A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise",
+        "description": "Give the suite a second kind of case, a Rust integration test declared as a behavioural case, that appears in the report test/run.sh writes; add a tracked mapping from each removed shell case to the tests that carry its assertions; and refuse a head whose count of shell cases is above its base.",
+        "path": ".ai/repo/project/issues/I2556.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4278
+      },
+      {
+        "uri": "majordomus://issue/I2557",
+        "kind": "issue",
+        "identity": "I2557",
+        "title": "The first ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row",
+        "description": "Port ten named shell cases that drive only the Rust executable to Rust integration tests declared as cases, run old and new side by side once, and delete each shell file with a mapping row that lists the assertions that moved.",
+        "path": ".ai/repo/project/issues/I2557.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4081
+      },
+      {
+        "uri": "majordomus://issue/I2558",
+        "kind": "issue",
+        "identity": "I2558",
+        "title": "The lifecycle units leave lib: start, checkpoint, handover, evidence, finish and session are routed to their capabilities and their shell is deleted",
+        "description": "Once the lifecycle transitions are capabilities, route bin/majordomus start, checkpoint, handover, evidence, finish and session to the executable with the same names, arguments, output and exit codes, and delete lib/start.sh, lib/checkpoint.sh, lib/handover.sh, lib/evidence.sh, lib/finish.sh and lib/session.sh together with their inventory records.",
+        "path": ".ai/repo/project/issues/I2558.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4305
+      },
+      {
+        "uri": "majordomus://issue/I2559",
+        "kind": "issue",
+        "identity": "I2559",
+        "title": "Embedded shell is judged, not described: a sh -c spawn in Rust, a multi-line workflow step and a record whose anchor is gone are findings of shell check",
+        "description": "Extend shell check from shell files to shell embedded in other files: find every spawn of sh, bash or zsh with -c in the crate's Rust sources and every run step of a GitHub workflow that is more than one command, require an inventory record with an anchor for each, and refuse a record whose anchor the file no longer contains.",
+        "path": ".ai/repo/project/issues/I2559.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4490
+      },
+      {
+        "uri": "majordomus://issue/I2560",
+        "kind": "issue",
+        "identity": "I2560",
+        "title": "An exemption for shell that is to be migrated names the issue that removes it, and the number that name none does not rise",
+        "description": "Add an optional issue field to an exemption, have shell check verify that it names an issue of the plan, report how many exemptions of disposition A, B and D carry none, and refuse a head with more of them than its base.",
+        "path": ".ai/repo/project/issues/I2560.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3794
+      },
+      {
+        "uri": "majordomus://issue/I2561",
+        "kind": "issue",
+        "identity": "I2561",
+        "title": "A provider hook reaches the executable: recording a prompt and a session event are capabilities, and the generated hook starts the shell tool only when no executable is there",
+        "description": "Implement capture prompt and capture session (start, end, compact) as capabilities of the executable that write the same records lib/capture.sh writes, and change the generated provider hooks to exec the executable when one is present and fall back to bin/majordomus otherwise, with the hook's fail-open exit unchanged.",
+        "path": ".ai/repo/project/issues/I2561.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4449
+      },
+      {
+        "uri": "majordomus://issue/I2563",
+        "kind": "issue",
+        "identity": "I2563",
+        "title": "A screen answers a conditional request: its validator is derived from its readings, and an unchanged screen is a 304 that renders nothing",
+        "description": "Give every screen and panel of majordomus ui an ETag derived from the readings it was drawn from, and answer a request whose If-None-Match names it with 304 Not Modified before the screen is rendered.",
+        "path": ".ai/repo/project/issues/I2563.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3692
+      },
+      {
+        "uri": "majordomus://issue/I2564",
+        "kind": "issue",
+        "identity": "I2564",
+        "title": "A link a reader points at has its readings taken before it is opened",
+        "description": "Take the readings of a UI link when a reader points at it, focuses it or it has been visible while the page is idle, so that opening an inspector does not wait for a first reading.",
+        "path": ".ai/repo/project/issues/I2564.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3022
+      },
+      {
+        "uri": "majordomus://issue/I2565",
+        "kind": "issue",
+        "identity": "I2565",
+        "title": "A graph draws a bounded neighbourhood: no page hands the browser more nodes than a stated bound, and the rest is reached through the URL",
+        "description": "Bound what every relationship graph of the UI hands the browser, say how much it left out, and let a reader move the neighbourhood with the URL instead of receiving the whole graph.",
+        "path": ".ai/repo/project/issues/I2565.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3029
+      },
+      {
+        "uri": "majordomus://issue/I2566",
+        "kind": "issue",
+        "identity": "I2566",
+        "title": "The issue list is read a page at a time, and the page is in the URL",
+        "description": "Draw the issues screen a bounded page at a time, with the page in the query string beside the filters, so the size of the response does not grow with the plan.",
+        "path": ".ai/repo/project/issues/I2566.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2356
+      },
+      {
+        "uri": "majordomus://issue/I2567",
+        "kind": "issue",
+        "identity": "I2567",
+        "title": "A reading explains itself: perf.readings lists every remembered reading, and a screen's response says what it cost in Server-Timing",
+        "description": "Make the readings store answerable: one read capability lists every remembered reading with its age, standing, cost and why it was last read again, and every screen's response carries a Server-Timing header with the render time and each source's standing.",
+        "path": ".ai/repo/project/issues/I2567.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3578
+      },
+      {
+        "uri": "majordomus://issue/I2568",
+        "kind": "issue",
+        "identity": "I2568",
+        "title": "A move of the repository reads again only the sources that read what moved",
+        "description": "Measure how many handler runs a move of the repository causes in the readings store and how many of them answer what they answered before, then let a source that reads nothing that moved keep its reading as current.",
+        "path": ".ai/repo/project/issues/I2568.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3875
+      },
+      {
+        "uri": "majordomus://issue/I2569",
+        "kind": "issue",
+        "identity": "I2569",
+        "title": "The bench reads a screen from 1, 20 and 100 readers at once, and a hundred readers of an unread source run its handler once",
+        "description": "Give the bench a concurrency dimension for the UI's targets and record the result as a tracked baseline, and prove that a hundred simultaneous readers of a source never read before cause one handler run.",
+        "path": ".ai/repo/project/issues/I2569.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3321
+      },
+      {
+        "uri": "majordomus://issue/I2570",
+        "kind": "issue",
+        "identity": "I2570",
+        "title": "The Cockpit's pages ask for readings: no page of the technical layer computes on the request",
+        "description": "Move the Cockpit's pages from ctx.execute to the readings the UI already uses, so that a Cockpit page shows the latest reading with its standing and no handler runs on the path of a page request.",
+        "path": ".ai/repo/project/issues/I2570.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
+        "uri": "majordomus://issue/I2573",
+        "kind": "issue",
+        "identity": "I2573",
+        "title": "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record",
+        "description": "Write the audit the rest of the milestone is built on: one table that follows a profile from its YAML file through validation, the task record, the context, check, finish and every Rust reader, marking each link; a baseline of what reading and resolving a profile costs today; and a decision record that names the owner of the resolver, what an effective profile is, how its schema changes and where a profile's word ends and enforcement begins.",
+        "path": ".ai/repo/project/issues/I2573.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3992
+      },
+      {
+        "uri": "majordomus://issue/I2574",
+        "kind": "issue",
+        "identity": "I2574",
+        "title": "A profile is a typed object: one Rust definition parses, validates and lists the profiles, and profile.list, profile.show and profile.validate answer everywhere",
+        "description": "Add the typed definition of a profile to the Rust executable and declare the three capabilities that read definitions, so that the command line, HTTP, OpenAPI and MCP list, show and validate profiles from one type.",
+        "path": ".ai/repo/project/issues/I2574.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3890
+      },
+      {
+        "uri": "majordomus://issue/I2575",
+        "kind": "issue",
+        "identity": "I2575",
+        "title": "An effective profile is resolved by one function: every field with its source and reason, one fingerprint, the same answer in any order",
+        "description": "Add the resolver: one pure function from the policy, the definitions and what is asked about (a named profile, the active task, an issue) to an effective profile whose every field carries where it came from and why, with a fingerprint over its inputs, and declare profile.resolve and profile.explain over it.",
+        "path": ".ai/repo/project/issues/I2575.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4876
+      },
+      {
+        "uri": "majordomus://issue/I2576",
+        "kind": "issue",
+        "identity": "I2576",
+        "title": "The lifecycle reads the resolver: start, check --explain, context, finish and doctor take a profile from one answer, and no shell function reads a profile's keys",
+        "description": "Make the shell lifecycle a consumer of the resolver: each command that reads a profile today asks profile.resolve and acts on its answer, mj_load_profile is removed, and the regression-test predicate exists once.",
+        "path": ".ai/repo/project/issues/I2576.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3904
+      },
+      {
+        "uri": "majordomus://issue/I2577",
+        "kind": "issue",
+        "identity": "I2577",
+        "title": "A task carries the fingerprint it was started with, and check says when the profile under it has moved",
+        "description": "Record the effective profile's fingerprint and definition digest on the task when it starts, carry them into the ledger, the handover and the closed session, and have check report a task whose resolution today differs from the one it started with.",
+        "path": ".ai/repo/project/issues/I2577.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3770
+      },
+      {
+        "uri": "majordomus://issue/I2578",
+        "kind": "issue",
+        "identity": "I2578",
+        "title": "A profile says which effects it grants, and one preset, review, grants reading only",
+        "description": "Add one optional axis to the profile, the capability effects a task under it may cause, with absence meaning everything that is granted today, and ship one new profile, review, that grants reading only.",
+        "path": ".ai/repo/project/issues/I2578.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3954
+      },
+      {
+        "uri": "majordomus://issue/I2579",
+        "kind": "issue",
+        "identity": "I2579",
+        "title": "The executor refuses what the task's profile does not grant: a typed refusal on every transport, and an event in the ledger",
+        "description": "Enforce the granted effects at the one place every transport passes: before a capability's handler runs, the executor compares its declared effect with the effects the active task's effective profile grants, and refuses with a typed error and a ledger event when it is not among them.",
+        "path": ".ai/repo/project/issues/I2579.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4448
+      },
+      {
+        "uri": "majordomus://issue/I2580",
+        "kind": "issue",
+        "identity": "I2580",
+        "title": "Every axis says how far it is enforced: enforced, observed, requested or unobservable, declared once and shown wherever a profile is",
+        "description": "Declare, beside each axis of the typed profile, how far the tool enforces it, show that standing in every answer of the resolver, and hold each stronger standing to a test that proves it.",
+        "path": ".ai/repo/project/issues/I2580.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3665
+      },
+      {
+        "uri": "majordomus://issue/I2581",
+        "kind": "issue",
+        "identity": "I2581",
+        "title": "Governance shows the profiles: each one's axes and standing, the effective profile of the active task with where every field came from, and what another profile would change",
+        "description": "Give majordomus ui a view of the profile system drawn from the resolver: the list of profiles, an inspector for one, the effective profile of the active task with its provenance and standing, and the structured difference a candidate profile would make.",
+        "path": ".ai/repo/project/issues/I2581.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4315
+      },
+      {
+        "uri": "majordomus://issue/I2582",
+        "kind": "issue",
+        "identity": "I2582",
+        "title": "A task's profile is changed by one declared command that names the fingerprint it expects",
+        "description": "Declare the one operation that changes the profile of the active task: it takes the new profile and the fingerprint the caller last saw, refuses when the task has moved on, rewrites the task record and appends a ledger event, and is the same operation that accepts a re-resolution in I2577.",
+        "path": ".ai/repo/project/issues/I2582.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3874
+      },
+      {
+        "uri": "majordomus://issue/I2583",
+        "kind": "issue",
+        "identity": "I2583",
+        "title": "One profile, one answer everywhere: a gate adds a profile to a fixture and reads the same fingerprint from the command line, HTTP, MCP and the UI",
+        "description": "Hold the milestone's central property with a gate rather than with each issue's own tests: a case that adds a profile to a fixture and changes no other file, then reads its definition and its resolution from every surface and compares them, and a rule that names the case as its proof.",
+        "path": ".ai/repo/project/issues/I2583.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3763
+      },
+      {
+        "uri": "majordomus://issue/I2584",
+        "kind": "issue",
+        "identity": "I2584",
+        "title": "The profile system is documented where a reader looks, its claims say what is now enforced, and one real task is delivered under it",
+        "description": "Close the milestone in the open: the guide, the concepts page, the profiles directory's own README and the claims state the system as built, the bootstrap's profile table shows the granted effects, and one bounded task of this repository is run under review and under implementation with the recorded difference as evidence.",
+        "path": ".ai/repo/project/issues/I2584.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3984
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -94308,6 +95010,50 @@
         "bytes": 4617
       },
       {
+        "uri": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "milestone",
+        "identity": "a-derivation-computed-once-is-reused",
+        "title": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence",
+        "description": "A node's outputs are kept under its key outside every work tree, restored only after their digests are verified, bounded in size and age, and shared by the worktrees of one machine and by CI runs. The machine lock covers the moment a worktree's files are written and no longer the computation. The incremental path is the default only after the differential case, the measurements and a rollback case exist, and scripts/derive --full remains.",
+        "path": ".ai/repo/project/milestones/a-derivation-computed-once-is-reused.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6093
+      },
+      {
+        "uri": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "milestone",
+        "identity": "a-derive-does-only-the-work-its-inputs-changed",
+        "title": "A derive does only the work its inputs changed, and can say why",
+        "description": "The derivation is a typed graph the executable owns: every producer is a node with declared inputs and outputs, every node has a key computed from the bytes it reads, a read-only plan says for each node whether it would be reused or regenerated and why, and an incremental run regenerates only the nodes whose keys moved. The full derivation stays as the oracle, and a test holds the incremental result byte-identical to it.",
+        "path": ".ai/repo/project/milestones/a-derive-does-only-the-work-its-inputs-changed.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6749
+      },
+      {
+        "uri": "majordomus://milestone/a-profile-is-resolved-once-and-enforced",
+        "kind": "milestone",
+        "identity": "a-profile-is-resolved-once-and-enforced",
+        "title": "A profile is resolved once, explains every field, and refuses at the executor what it does not grant",
+        "description": "One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it.",
+        "path": ".ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 8248
+      },
+      {
+        "uri": "majordomus://milestone/a-screen-is-fast-bounded-and-says-why",
+        "kind": "milestone",
+        "identity": "a-screen-is-fast-bounded-and-says-why",
+        "title": "A screen is fast, bounded and able to say why: what the UI speed brief still asks for after the readings",
+        "description": "Every screen of majordomus ui answers a conditional request without rendering, has the readings of a link taken before it is opened, draws no more rows or nodes than a stated bound, and explains each of its readings over a capability and a response header. A move of the repository reads again only the sources that read what moved, the bench measures 1, 20 and 100 readers at once, and the Cockpit's pages are drawn from readings as the UI's are.",
+        "path": ".ai/repo/project/milestones/a-screen-is-fast-bounded-and-says-why.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6798
+      },
+      {
         "uri": "majordomus://milestone/a-session-leaves-what-it-observed",
         "kind": "milestone",
         "identity": "a-session-leaves-what-it-observed",
@@ -94330,6 +95076,28 @@
         "bytes": 3523
       },
       {
+        "uri": "majordomus://milestone/an-intent-is-carried-from-a-sentence-to-a-verdict",
+        "kind": "milestone",
+        "identity": "an-intent-is-carried-from-a-sentence-to-a-verdict",
+        "title": "An intent is carried from a sentence to a derived verdict through capabilities, and the UI shows every step",
+        "description": "A sentence becomes a proposal, the proposal is given criteria and milestones, the milestones are given issues, an issue is moved, and the intent's verdict is derived from evidence, every write being one capability with a declared effect that refuses what the validators refuse. The UI's intent inspector shows the gap, the critique and the realisation beside the criteria, an issue's inspector shows what realised it, and one case proves the whole path in a disposable repository.",
+        "path": ".ai/repo/project/milestones/an-intent-is-carried-from-a-sentence-to-a-verdict.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6609
+      },
+      {
+        "uri": "majordomus://milestone/an-intent-is-followed-to-the-deployment-that-carries-it",
+        "kind": "milestone",
+        "identity": "an-intent-is-followed-to-the-deployment-that-carries-it",
+        "title": "An intent is followed from its criteria to the deployment that carries its work, and one scenario proves it across a restart",
+        "description": "A criterion can require an observed deployment; intent explain continues from each served issue to the release and the deployment that carry it; the wait from merge to deployment is a measured number with its sample size; and the disposable-repository case of I2545 is continued to a deployment, a failed deployment and a restart.",
+        "path": ".ai/repo/project/milestones/an-intent-is-followed-to-the-deployment-that-carries-it.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5492
+      },
+      {
         "uri": "majordomus://milestone/architecture-is-enforced",
         "kind": "milestone",
         "identity": "architecture-is-enforced",
@@ -94339,6 +95107,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4102
+      },
+      {
+        "uri": "majordomus://milestone/automation-is-scripted-capabilities",
+        "kind": "milestone",
+        "identity": "automation-is-scripted-capabilities",
+        "title": "A capability may be scripted on master: the decision, the sandbox, a typed way to run a program, and the first shell that leaves through them",
+        "description": "ADR 0069 is a record on master and says what the tree measures today; the sandboxed engine and the scripted-capability kind are part of the executable and reach the command line, HTTP, OpenAPI, MCP and the generated reference through the one registry; a program is run by one typed capability that takes an argument list and never a command string; majordomus shell check prints the counts the migration is judged by and refuses a head that has more exempt shell than its base; the first scripts/ci gates and the hand-written recipe bodies have left shell through that path, each with its inventory record deleted in the same change.",
+        "path": ".ai/repo/project/milestones/automation-is-scripted-capabilities.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7970
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -94583,6 +95362,28 @@
         "bytes": 1441
       },
       {
+        "uri": "majordomus://milestone/shell-shrinks-to-its-bootstrap",
+        "kind": "milestone",
+        "identity": "shell-shrinks-to-its-bootstrap",
+        "title": "The shell half shrinks to its bootstrap: cases, lifecycle units and embedded shell leave in a declared order, under counts that only lower",
+        "description": "A behavioural case may be a Rust integration test that counts in the suite; every shell case that is removed has a tracked row naming the tests that replaced it; the number of shell cases, of exempt units and of exemptions with no issue behind them is refused when a head raises it above its base; the lifecycle units leave lib in the same change that routes their commands to capabilities; the provider hooks reach the executable without the shell tool when it is present; and embedded shell in Rust sources, workflow steps and recipes is judged by shell check rather than described beside it.",
+        "path": ".ai/repo/project/milestones/shell-shrinks-to-its-bootstrap.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7457
+      },
+      {
+        "uri": "majordomus://milestone/started-work-is-explained-bounded-and-survives-a-restart",
+        "kind": "milestone",
+        "identity": "started-work-is-explained-bounded-and-survives-a-restart",
+        "title": "What may start is explained, what was started survives a restart, and the policy bounds what a transport may cause",
+        "description": "One read capability says which ready issue may start now and why each other one may not; an execution accepted before a restart is answered after it as a record; and the policy names the highest effect each transport may cause, refused the same way on the command line, HTTP and MCP.",
+        "path": ".ai/repo/project/milestones/started-work-is-explained-bounded-and-survives-a-restart.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5233
+      },
+      {
         "uri": "majordomus://milestone/surfaces-never-disagree",
         "kind": "milestone",
         "identity": "surfaces-never-disagree",
@@ -94603,6 +95404,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/the-ui-starts-work-through-the-executor",
+        "kind": "milestone",
+        "identity": "the-ui-starts-work-through-the-executor",
+        "title": "The UI starts work through the executor, and shows the execution it started",
+        "description": "A person on /ui opens a capability, an issue or a mesh node, starts the work that page names as an execution of the capability that owns it, and lands on that execution's page on the UI, where its state, steps, log and outcome are read from the execution engine. Every control is a projection of a capability's own declaration, a control that cannot be used says why, and a request repeated under one key starts one execution.",
+        "path": ".ai/repo/project/milestones/the-ui-starts-work-through-the-executor.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6546
       },
       {
         "uri": "majordomus://milestone/two-folder-integration",
@@ -100969,7 +101781,7 @@
         "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
         "path": "test/cases/340_a_brief_is_kept_as_received.sh",
         "source_class": "case",
-        "bytes": 19622
+        "bytes": 23377
       },
       {
         "uri": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
@@ -103813,7 +104625,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 341
+      "objects": 342
     },
     {
       "name": "domain",
@@ -103870,7 +104682,7 @@
       "identity": [
         "id"
       ],
-      "objects": 337
+      "objects": 400
     },
     {
       "name": "knowledge",
@@ -103900,7 +104712,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 45
     },
     {
       "name": "moment",

@@ -1,0 +1,64 @@
+# Packs under campaigns/ that no record under .ai/repo/project/ cites, each with the reason.
+#
+# scripts/ci/campaigns-check reads this file: a pack that is neither cited by a plan record nor
+# named here fails, and so does a line whose pack a record has come to cite, so this list can
+# only shrink. One pack a line: its directory name, then why it has no citing record. The
+# names are derived from the tree on 2026-10-13; the reasons are one of five:
+#
+#   campaign   executed as a running campaign with a plan of its own, and no plan records
+#   executed   executed directly by the integration executors or one session; no plan records
+#   elsewhere  planned as records that do not cite it by path, or on a branch that has not
+#              landed; campaigns/README.md, "Where each pack is planned", names them
+#   before     handed over before 2026-10-11, when records began to cite their pack; what
+#              came of it is in the tree, and campaigns/README.md says so
+#   images     reference images, not a brief with work of its own
+
+bro-net-majordomus-prompt-pack                           elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-0.15.0-release-prompt-pack                    elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-ai-layer                                      before     handed over before records cited their pack
+majordomus-ai-transform-pack                             before     handed over before records cited their pack
+majordomus-antigravity-pack                              before     handed over before records cited their pack
+majordomus-antigravity-v2                                before     handed over before records cited their pack
+majordomus-auto-control-plane-pack                       before     handed over before records cited their pack
+majordomus-autopilot-pack-20261010                       elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-chatgpt-project-pack                          before     handed over before records cited their pack
+majordomus-chatgpt-project-provider-prompts              before     handed over before records cited their pack
+majordomus-ci-delivery-adoption-v4-20261010              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-cockpit-ide-prompt-pack-v1                    before     handed over before records cited their pack
+majordomus-cockpit-landing-claude-code-prompt-pack       before     handed over before records cited their pack
+majordomus-cockpit-orchestration-prompt-pack             before     handed over before records cited their pack
+majordomus-convergence-pack-20261010                     elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-convergence-pack-20261012                     campaign   the running campaign majordomus-autonomous-convergence; its plan is the campaign's
+majordomus-convergence-prompt-pack-20260911              before     handed over before records cited their pack
+majordomus-convergence-prompt-pack-20261010              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-dashboard-concepts                            images     dashboard concepts handed over beside the UI packs
+majordomus-delivery-acceleration-prompt-pack-20261011    elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-derive-infer-enforce-prompt-pack              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-editor-intelligence-pack                      before     handed over before records cited their pack
+majordomus-flux-v1-20261011                              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-github-workgraph-prompt-pack                  before     handed over before records cited their pack
+majordomus-idd-completion-prompt-pack                    elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-intent-closure-pack                           elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-intent-outcome-prompt-pack                    elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-intent-tight-integration-pack                 elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-landing-atomic-pack                           elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-living-site-v2-20261011                       elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-mesh-pack                                     before     handed over before records cited their pack
+majordomus-openai-provider-control-plane-prompts         before     handed over before records cited their pack
+majordomus-opus55-recovery-pack                          elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-pr-throughput-pack-20261010                   executed   by the integration executors and the release chain; no separate plan records
+majordomus-prismatic-import-pack                         before     handed over before records cited their pack
+majordomus-provider-context-prompt-pack                  before     handed over before records cited their pack
+majordomus-rapid-delivery-living-site-v3-20261010        executed   by the integration executors and the release chain; no separate plan records
+majordomus-release-15min-pack                            executed   by the integration executors and the release chain; no separate plan records
+majordomus-rks-fable-1m-prompts                          before     handed over before records cited their pack
+majordomus-runtime-mcp-mesh-opus-fable-pack              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-two-folder-consolidation-prompts              before     handed over before records cited their pack
+majordomus-ui-execution-control-v4-20261011              elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-ui-fidelity-v1-20261011                       elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-ui-implementation-prompt-pack                 before     handed over before records cited their pack
+majordomus-ui-implementation-prompt-pack-v1.1            elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-ui-ux-dx-prompt-pack                          elsewhere  see campaigns/README.md, "Where each pack is planned"
+majordomus-worktree-cleanup-pack                         before     handed over before records cited their pack
+operation-zero-autonomous-night-shift                    executed   by the integration executors and the release chain; no separate plan records
+prismatic-majordomus-evening-project-v0.1                before     handed over before records cited their pack

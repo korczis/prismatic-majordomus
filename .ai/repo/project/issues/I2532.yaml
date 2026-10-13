@@ -1,0 +1,48 @@
+id: I2532
+milestone: a-derivation-computed-once-is-reused
+title: "CI reuses derivation entries keyed by the graph, and still fails on a stale committed file whether or not the cache was restored"
+slug: ci-reuses-derivations-and-still-compares-bytes
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Restore and save the derivation store in the CI job that proves the derived data current, keyed from the graph and never from a second mapping of paths, while the job's verdict remains the byte comparison against the committed files."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/09_09_CI_GITHUB_CACHE.md asks that CI reuse the same graph and keys, that the workflow stay an adapter, that a cache hit never equal a pass, that a missing cache fall back, and that a cache a pull request controls never reach a privileged context. The site job of .github/workflows/validate.yml runs scripts/generate-site-data --check, a full staged generation, under a bound of 2700 seconds, and scripts/ci-plan decides which gates a change runs from classes of paths written in .ai/repo/ci/gates.yaml, a mapping kept beside the generators rather than read from them."
+current_state: "validate.yml caches the Rust build and the npm install. No derivation output is carried between runs. The Pages workflow proves the committed data current by input hash and does not generate (.github/workflows/pages.yml). I1409 records that a shallow checkout writes a different changelog and that abbreviated commit ids depend on the object store."
+desired_state: "The site job restores the store with a cache key derived from the key schema, the runner image and the executable's generation, runs the incremental check, and saves new entries; a miss runs what runs today. The verdict is still that every committed derived file equals what the node produces. Entries saved by a pull request's run are scoped so that a run on the default branch or a release never restores them. A node whose output depends on the depth of the checkout or the object store declares that input or is excluded from reuse. scripts/ci-plan reads which gates a derived path needs from the graph's node of that path where the model today repeats it."
+scope:
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci-plan"
+  - "scripts/ci"
+  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src/capability/builtin/derive.rs"
+  - "test/cases"
+  - "docs/CI.md"
+  - "docs/DERIVE.md"
+  - ".ai/repo/project/issues/I2532.yaml"
+non_scope:
+  - "The Pages and release workflows, which do not generate and restore nothing"
+  - "Archiving target directories; the Rust cache stays as it is"
+  - "Changing which check is required on the default branch, or any repository setting"
+  - "New logic in workflow YAML or new shell beyond calling the capability (ADR 0069)"
+depends_on:
+  - "I2527"
+  - "I2529"
+acceptance_criteria:
+  - "A run whose cache restored and a run whose cache was absent give the same verdict on the same commit"
+  - "A commit with one stale derived file fails the job with the cache restored"
+  - "A cache entry whose manifest was altered is a miss and the job regenerates"
+  - "A node added to the graph is checked by the job with no edit to the workflow or to gates.yaml"
+  - "An entry saved by a pull request's run is not restored by a run on the default branch, shown by the cache keys of two recorded runs"
+  - "The job summary of a warm and of a cold run records the duration of the check and of the cache transfer, on the actual commit"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci-plan --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 56_derived_current_gate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "ci_warm_and_cold_measured"
+  - "ci_stale_file_fails_with_cache"
+  - "pr_cache_not_restored_on_default_branch"
+created_at: 2026-10-13
+updated_at: 2026-10-13
