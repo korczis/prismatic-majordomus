@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 100,
+      "count": 102,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 172,
+      "count": 177,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 100
+      "count": 102
     },
     {
       "kind": "application",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 341
+      "count": 342
     },
     {
       "kind": "domain",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 337
+      "count": 341
     },
     {
       "kind": "knowledge",
@@ -237,7 +237,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 21
+      "count": 22
     },
     {
       "kind": "rule",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 172
+      "count": 177
     },
     {
       "kind": "scope",
@@ -261,7 +261,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 85
+      "count": 89
     },
     {
       "kind": "skill",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 459
+      "count": 465
     },
     {
       "kind": "use-case",
@@ -456,6 +456,20 @@
           "label": "adr-0144",
           "kind": "adr",
           "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
           "external": false
         }
       ]
@@ -3093,9 +3107,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@2",
+          "label": "project.english-only@3",
           "kind": "rule",
-          "route": "/rules/project-english-only-2/",
+          "route": "/rules/project-english-only-3/",
           "external": false
         },
         {
@@ -4603,9 +4617,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@2",
+          "label": "project.english-only@3",
           "kind": "rule",
-          "route": "/rules/project-english-only-2/",
+          "route": "/rules/project-english-only-3/",
           "external": false
         },
         {
@@ -4616,7 +4630,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7359,7 +7381,15 @@
       ],
       "source": ".ai/repo/adrs/0140-editors-and-agents-read-projections-of-the-layer-and-cargo-e.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7449,7 +7479,7 @@
         },
         {
           "edge": "put_in_force",
-          "label": "test/cases/1096_the_published_ui_is_the_trunks.sh",
+          "label": "test/cases/2983_the_published_ui_is_the_trunks.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -7591,7 +7621,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0146",
+          "kind": "adr",
+          "route": "/adrs/adr-0146/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7690,6 +7728,169 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0146",
+      "identity": "adr-0146",
+      "slug": "adr-0146",
+      "cockpit": "/cockpit/objects/adr/adr-0146",
+      "title": "A capability is invoked by name through a generated skill",
+      "status": "proposed",
+      "tags": [
+        "capabilities",
+        "providers",
+        "editors"
+      ],
+      "source": ".ai/repo/adrs/0146-a-capability-is-invoked-by-name-through-a-generated-skill.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/editors/claude.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0140",
+          "kind": "adr",
+          "route": "/adrs/adr-0140/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EDITORS.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0149",
+      "identity": "adr-0149",
+      "slug": "adr-0149",
+      "cockpit": "/cockpit/objects/adr/adr-0149",
+      "title": "A handbook edition is a declared locale tree, built from the tree it describes",
+      "status": "proposed",
+      "tags": [
+        "handbook",
+        "language",
+        "governance",
+        "derivation"
+      ],
+      "source": ".ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "handbook/build.py",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "handbook/cs/chapter_sources.py",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "handbook/cs/edition.toml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/english-only-allow.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/english-only-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0077",
+          "kind": "adr",
+          "route": "/adrs/adr-0077/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/HANDBOOK.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.english-only@3",
+          "kind": "rule",
+          "route": "/rules/project-english-only-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-handbook-is-built-from-the-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-handbook-is-built-from-the-tree-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -10628,6 +10829,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-failed-read-is-not-an-empty-answer@1",
+      "identity": "project.a-failed-read-is-not-an-empty-answer@1",
+      "slug": "project-a-failed-read-is-not-an-empty-answer-1",
+      "cockpit": "/cockpit/objects/rule/project-a-failed-read-is-not-an-empty-answer-1",
+      "title": "A source that did not answer is not a source with nothing in it",
+      "status": "active",
+      "tags": [
+        "projection",
+        "github",
+        "shell",
+        "failure",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/a-failed-read-is-not-an-empty-answer.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.github-projection-gated@1",
+          "kind": "rule",
+          "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-number-names-one-case@1",
       "identity": "project.a-number-names-one-case@1",
       "slug": "project-a-number-names-one-case-1",
@@ -10726,6 +10961,39 @@
           "label": "project.work-serves-a-declared-intent@1",
           "kind": "rule",
           "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-producer-declares-what-it-writes@1",
+      "identity": "project.a-producer-declares-what-it-writes@1",
+      "slug": "project-a-producer-declares-what-it-writes-1",
+      "cockpit": "/cockpit/objects/rule/project-a-producer-declares-what-it-writes-1",
+      "title": "The program that writes into the checkout says what it wrote, and whoever measures the tree reads that",
+      "status": "active",
+      "tags": [
+        "evidence",
+        "ci",
+        "working-tree",
+        "measurement"
+      ],
+      "source": ".ai/repo/rules/project/a-producer-declares-what-it-writes.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
           "external": false
         }
       ],
@@ -11638,6 +11906,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-producer-declares-what-it-writes@1",
+          "kind": "rule",
+          "route": "/rules/project-a-producer-declares-what-it-writes-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.an-intent-outlives-its-sessions@3",
           "kind": "rule",
           "route": "/rules/project-an-intent-outlives-its-sessions-3/",
@@ -12111,16 +12386,16 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.english-only@2",
-      "identity": "project.english-only@2",
-      "slug": "project-english-only-2",
-      "cockpit": "/cockpit/objects/rule/project-english-only-2",
+      "id": "majordomus://rule/project.english-only@3",
+      "identity": "project.english-only@3",
+      "slug": "project-english-only-3",
+      "cockpit": "/cockpit/objects/rule/project-english-only-3",
       "title": "English only",
       "status": "active",
       "tags": [
         "language"
       ],
-      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "source": ".ai/repo/rules/project/english-only.v3.md",
       "references": [],
       "referenced_by": [
         {
@@ -12138,10 +12413,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "published-translation-is-declared",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-handbook-is-built-from-the-tree@1",
+          "kind": "rule",
+          "route": "/rules/project-the-handbook-is-built-from-the-tree-1/",
           "external": false
         }
       ]
@@ -12801,7 +13090,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-projection-is-applied-at-landing@1",
+          "kind": "rule",
+          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -13811,9 +14115,23 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.a-personal-layer-changes-nothing-shared@1",
           "kind": "rule",
           "route": "/rules/project-a-personal-layer-changes-nothing-shared-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-producer-declares-what-it-writes@1",
+          "kind": "rule",
+          "route": "/rules/project-a-producer-declares-what-it-writes-1/",
           "external": false
         },
         {
@@ -13870,6 +14188,13 @@
           "label": "project.rust-public-api-quality@1",
           "kind": "rule",
           "route": "/rules/project-rust-public-api-quality-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-projection-is-applied-at-landing@1",
+          "kind": "rule",
+          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
           "external": false
         },
         {
@@ -15254,6 +15579,23 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.ssh-key-access-is-preauthorized@1",
+      "identity": "project.ssh-key-access-is-preauthorized@1",
+      "slug": "project-ssh-key-access-is-preauthorized-1",
+      "cockpit": "/cockpit/objects/rule/project-ssh-key-access-is-preauthorized-1",
+      "title": "Owner-authorized SSH access persists across clients",
+      "status": "active",
+      "tags": [
+        "providers",
+        "authorization",
+        "ssh"
+      ],
+      "source": ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.tests-run-in-disposable-repos@1",
       "identity": "project.tests-run-in-disposable-repos@1",
       "slug": "project-tests-run-in-disposable-repos-1",
@@ -15365,6 +15707,39 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.the-handbook-is-built-from-the-tree@1",
+      "identity": "project.the-handbook-is-built-from-the-tree@1",
+      "slug": "project-the-handbook-is-built-from-the-tree-1",
+      "cockpit": "/cockpit/objects/rule/project-the-handbook-is-built-from-the-tree-1",
+      "title": "The handbook is built from the tree it describes, and a chapter names what it rests on",
+      "status": "active",
+      "tags": [
+        "handbook",
+        "derivation",
+        "documentation"
+      ],
+      "source": ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.english-only@3",
+          "kind": "rule",
+          "route": "/rules/project-english-only-3/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.the-lease-is-read-once@1",
       "identity": "project.the-lease-is-read-once@1",
       "slug": "project-the-lease-is-read-once-1",
@@ -15410,6 +15785,40 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+      "identity": "project.the-projection-is-applied-at-landing@1",
+      "slug": "project-the-projection-is-applied-at-landing-1",
+      "cockpit": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-1",
+      "title": "A landing that changes what GitHub shows applies the change itself",
+      "status": "active",
+      "tags": [
+        "projection",
+        "github",
+        "enforcement",
+        "landing",
+        "ci"
+      ],
+      "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.github-projection-gated@1",
+          "kind": "rule",
+          "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
