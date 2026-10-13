@@ -14,10 +14,7 @@
   var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js';
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-  function dark() {
-    var t = document.documentElement.getAttribute('data-theme');
-    return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  }
+  function dark() { return document.documentElement.classList.contains(document.body.getAttribute('data-theme-class') || ''); }
   var libP = null;
   function lib() {
     if (window.echarts) return Promise.resolve();
@@ -37,7 +34,7 @@
     rows.forEach(function (r) { var t = el('tr', null, tb); r.forEach(function (c) { el('td', null, t, String(c)); }); });
   }
   function sankey(box, nodes, links, onClick) {
-    var c = window.echarts.init(box), fg = cssv('--fg'), panel = cssv('--panel'), line = cssv('--line');
+    var c = window.echarts.init(box), fg = paint('--fg'), panel = paint('--panel'), line = paint('--line');
     c.setOption({
       tooltip: { trigger: 'item', backgroundColor: panel, borderColor: line, textStyle: { color: fg, fontSize: 13 }, confine: true,
                  formatter: function (p) { return p.dataType === 'edge' ? p.data.source + ' → ' + p.data.target + ': <b>' + p.data.value + '</b>' : '<b>' + p.name + '</b>: ' + p.value; } },
@@ -53,7 +50,18 @@
     window.addEventListener('resize', function () { c.resize(); });
     return c;
   }
-  var PAL = function () { return dark() ? ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#9085e9'] : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6']; };
+  /* The series of the declared design, read from the page and resolved to red, green and blue: a chart
+     library parses colours itself and does not know every notation a stylesheet may use. */
+  function paint(name) {
+    var c = document.createElement('canvas'); c.width = c.height = 1;
+    var x = c.getContext('2d');
+    x.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    x.fillRect(0, 0, 1, 1);
+    var d = x.getImageData(0, 0, 1, 1).data;
+    return '#' + [d[0], d[1], d[2]].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
+  }
+  function series() { return [1, 2, 3, 4, 5, 6].map(function (i) { return paint('--mj-series-' + i); }); }
+  var PAL = series;
 
   /* ---------- rule -> proof ---------- */
   var DOCS = window.mjDocs.index.docs;
@@ -78,7 +86,7 @@
       count[c] = (count[c] || 0) + 1; count[n] = (count[n] || 0) + 1; count[p] = (count[p] || 0) + 1;
       a[c + '|' + n] = (a[c + '|' + n] || 0) + 1; b[n + '|' + p] = (b[n + '|' + p] || 0) + 1;
     });
-    var pal = PAL(), colors = { 'blokující': pal[1], 'doporučující': pal[3], 'test a validátor': pal[2], 'test': pal[2], 'validátor': pal[2], 'posuzuje člověk': pal[5], 'bez jmenovaného důkazu': cssv('--bad') };
+    var pal = PAL(), colors = { 'blokující': pal[1], 'doporučující': pal[3], 'test a validátor': pal[2], 'test': pal[2], 'validátor': pal[2], 'posuzuje člověk': pal[5], 'bez jmenovaného důkazu': paint('--bad') };
     var nodes = Object.keys(count).map(function (k) { return { name: k, itemStyle: { color: colors[k] || pal[0] } }; });
     var links = [];
     [a, b].forEach(function (m) { Object.keys(m).forEach(function (k) { var p = k.split('|'); links.push({ source: p[0], target: p[1], value: m[k] }); }); });

@@ -240,7 +240,7 @@ fn what_was_deployed_answers_over_mcp_as_over_http() {
     assert_eq!(via_http, via_mcp, "HTTP and MCP must not be two opinions");
     assert_eq!(via_mcp["observed"], false);
     assert!(
-        via_mcp["reason"].as_str().unwrap().contains("prs refresh"),
+        via_mcp["reason"].as_str().unwrap().contains("served forge"),
         "{via_mcp}"
     );
     assert_eq!(via_mcp["deployments"], json!([]));
