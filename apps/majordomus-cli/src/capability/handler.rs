@@ -501,6 +501,38 @@ impl Executable {
         self
     }
 
+    /// Declare the short name a person invokes this by from an agent's prompt, and the
+    /// input field the text typed after it fills. See [`crate::capability::SkillExposure`];
+    /// the registry refuses a name that is malformed, reserved or taken, and an argument
+    /// the input does not have.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In { text: String }
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out {}
+    /// fn say(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out {}) }
+    /// let e = capability! {
+    ///     id: "demo.say", kind: CapabilityKind::Command, title: "Say", description: "Says.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: say,
+    /// }.skill("say", "text");
+    /// let skill = e.capability.skill.unwrap();
+    /// assert_eq!((skill.alias.as_str(), skill.argument.as_str()), ("say", "text"));
+    /// ```
+    pub fn skill(mut self, alias: &str, argument: &str) -> Self {
+        self.capability.skill = Some(crate::capability::SkillExposure {
+            alias: alias.into(),
+            argument: argument.into(),
+        });
+        self
+    }
+
     /// Declare that the input is a signed message the handler verifies before it changes
     /// anything, so a caller on another host is admitted by its key rather than refused by
     /// its address. See [`crate::capability::ExecutionPolicy::authenticates_its_input`].
@@ -608,6 +640,7 @@ macro_rules! capability {
                 benchmark: $benchmark,
                 cache: $cache,
                 execution: $crate::capability::ExecutionPolicy::classify(kind),
+                skill: None,
             },
             handler: $crate::capability::handler::handler::<$input, $output, _>($handler),
             cases: <$input as $crate::capability::BenchmarkCases>::benchmark_cases_json,
