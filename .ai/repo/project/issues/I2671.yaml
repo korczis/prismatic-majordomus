@@ -1,0 +1,31 @@
+id: I2671
+milestone: development-runtime
+title: "A provider offers its cache as a signed, expiring mesh record, and a stopped provider goes stale"
+slug: a-provider-offers-its-cache-as-an-expiring-mesh-record
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a node publish its offer through the mesh journal so peers discover it without a committed endpoint, and let the offer expire when the provider stops."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: the advertisement datagram carries transports only and is size-bound; no generic service event exists in the journal."
+desired_state: "A signed service record kind in the journal with a lifetime shorter than a few heartbeats, refreshed only while the provider's own health probe passes, replayed and expired by the existing liveness rules."
+scope:
+  - "apps/majordomus-cli/src/mesh/"
+  - "docs/MESH.md"
+non_scope:
+  - "Provisioning the store: I2674"
+depends_on:
+  - I2670
+acceptance_criteria:
+  - "A peer sees an offer within one heartbeat of the provider becoming healthy"
+  - "The offer is stale within its lifetime after the provider stops"
+  - "A record from a key that is not trusted is not an offer (mesh-is-observation-not-authority)"
+  - "The record carries no secret"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3011_a_mesh_build_cache"
+evidence_required:
+  - "offer_discovery_case"
+  - "offer_expiry_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

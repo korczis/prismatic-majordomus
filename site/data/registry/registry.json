@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "c1829a079e2a0ccd9c8112da0205c58d96819b386390fb149fb5889e0ec7ff6b",
+    "fingerprint": "b77509d0ac28254e0f1838af1475a9c1e0f6e2f83849612b865c6b30a322424d",
     "summary": {
-      "total": 2337,
+      "total": 2346,
       "builtin": 196,
-      "declarative": 2141,
+      "declarative": 2150,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2141
+        "resource": 2150
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2150
+        "implemented": 2159
       },
       "mcp_tools": 187,
-      "mcp_resources": 2196,
+      "mcp_resources": 2205,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80066,7 +80066,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 105,
         "capability_ids": []
       },
       {
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 343,
+        "capabilities": 351,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "82add4e970e028f8f70fa57cc11e4707d18c83f7e2741e98400d52d76aa56f19",
+    "fingerprint": "1117110803a8050244c55c0c0135c34c2b078231320f529e4fa4f2954c444f6f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81341,7 +81341,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 104,
+      "adr": 105,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81358,7 +81358,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 343,
+      "issue": 351,
       "knowledge": 3,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -83097,6 +83097,23 @@
           "governance",
           "ci",
           "release"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0157",
+        "kind": "adr",
+        "identity": "adr-0157",
+        "title": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+        "description": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+        "path": ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6139,
+        "tags": [
+          "mesh",
+          "build",
+          "cache",
+          "capability"
         ]
       },
       {
@@ -87341,7 +87358,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232547
+        "bytes": 234719
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94529,6 +94546,94 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3595
+      },
+      {
+        "uri": "majordomus://issue/I2670",
+        "kind": "issue",
+        "identity": "I2670",
+        "title": "A build-cache offer is a typed model and its selection is a pure, explained function",
+        "description": "Model an offer (protocol, provider, scope, non-secret endpoint, bucket, priority, capacity, health) and select among offers deterministically with the reason.",
+        "path": ".ai/repo/project/issues/I2670.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1883
+      },
+      {
+        "uri": "majordomus://issue/I2671",
+        "kind": "issue",
+        "identity": "I2671",
+        "title": "A provider offers its cache as a signed, expiring mesh record, and a stopped provider goes stale",
+        "description": "Let a node publish its offer through the mesh journal so peers discover it without a committed endpoint, and let the offer expire when the provider stops.",
+        "path": ".ai/repo/project/issues/I2671.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1777
+      },
+      {
+        "uri": "majordomus://issue/I2672",
+        "kind": "issue",
+        "identity": "I2672",
+        "title": "The offers and the selection are one read, projected to CLI, MCP, HTTP and OpenAPI",
+        "description": "Declare the read once with capability! so that every surface answers the same offers, the same choice and the same reason.",
+        "path": ".ai/repo/project/issues/I2672.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1507
+      },
+      {
+        "uri": "majordomus://issue/I2673",
+        "kind": "issue",
+        "identity": "I2673",
+        "title": "The sccache client configuration is derived from the selected offer, local disk first",
+        "description": "Emit the sccache environment for the chosen offer through majordomus env, local as level one and the offer as level two, with no hand-set variable.",
+        "path": ".ai/repo/project/issues/I2673.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1901
+      },
+      {
+        "uri": "majordomus://issue/I2674",
+        "kind": "issue",
+        "identity": "I2674",
+        "title": "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository",
+        "description": "Provision a MinIO service on a chosen node: native or declared service, persistent storage on a bounded path, a private bucket with expiry, a least-privilege client identity, and a bounded bind.",
+        "path": ".ai/repo/project/issues/I2674.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1899
+      },
+      {
+        "uri": "majordomus://issue/I2675",
+        "kind": "issue",
+        "identity": "I2675",
+        "title": "Build-cache health, headroom and hit statistics are visible where the mesh is",
+        "description": "Show which offers exist, which is selected and why, headroom and the statistics sccache supports, labelling estimates, on the existing health, monitor and UI surfaces.",
+        "path": ".ai/repo/project/issues/I2675.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1663
+      },
+      {
+        "uri": "majordomus://issue/I2676",
+        "kind": "issue",
+        "identity": "I2676",
+        "title": "The build cache is verified and validated: failure paths, security and a real second-node hit",
+        "description": "Prove the acceptance contract: stop the provider and build, restart and recover, bad credential, low space, put/get, remote hit across two nodes of one platform.",
+        "path": ".ai/repo/project/issues/I2676.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1798
+      },
+      {
+        "uri": "majordomus://issue/I2677",
+        "kind": "issue",
+        "identity": "I2677",
+        "title": "The build cache is documented, governed by a rule and described on the site and the Pages",
+        "description": "Say once, derived, what the cache is, how a node offers and uses it and how to see it, on the handbook, the site and the landing's account of how the cluster compiles.",
+        "path": ".ai/repo/project/issues/I2677.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1539
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -104346,7 +104451,7 @@
       "identity": [
         "id"
       ],
-      "objects": 104
+      "objects": 105
     },
     {
       "name": "application",
@@ -104509,7 +104614,7 @@
       "identity": [
         "id"
       ],
-      "objects": 343
+      "objects": 351
     },
     {
       "name": "knowledge",

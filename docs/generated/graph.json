@@ -7236,6 +7236,31 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0157",
+        "kind": "adr",
+        "label": "adr-0157",
+        "summary": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+        "route": "/cockpit/objects/adr/adr-0157",
+        "source": ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "file:.ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+            "file:.ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
+            "file:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+            "file:docs/MESH.md",
+            "file:docs/OFFLOAD.md"
+          ],
+          "tags": [
+            "mesh",
+            "build",
+            "cache",
+            "capability"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -35048,6 +35073,353 @@
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
             "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source",
             "majordomus bench system.http. --transport system --profile ci --no-write --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2670",
+        "kind": "issue",
+        "label": "I2670",
+        "summary": "A build-cache offer is a typed model and its selection is a pure, explained function",
+        "route": "/cockpit/objects/issue/i2670",
+        "source": ".ai/repo/project/issues/I2670.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Selection is deterministic for any ordering of the same offers",
+            "A stale or unhealthy offer is never chosen over a healthy one and is listed as passed over",
+            "No offers selects none and says so",
+            "The serialized form cannot carry a credential"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "build_cache_model_unit_tests"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Discovery transport: I2671",
+            "Any command or endpoint: I2672"
+          ],
+          "objective": "Model an offer (protocol, provider, scope, non-secret endpoint, bucket, priority, capacity, health) and select among offers deterministically with the reason.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "share/schemas/majordomus/mesh-declaration/"
+          ],
+          "slug": "a-build-cache-offer-is-a-typed-model-and-selection-is-a-pure-function",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::build_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2671",
+        "kind": "issue",
+        "label": "I2671",
+        "summary": "A provider offers its cache as a signed, expiring mesh record, and a stopped provider goes stale",
+        "route": "/cockpit/objects/issue/i2671",
+        "source": ".ai/repo/project/issues/I2671.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A peer sees an offer within one heartbeat of the provider becoming healthy",
+            "The offer is stale within its lifetime after the provider stops",
+            "A record from a key that is not trusted is not an offer (mesh-is-observation-not-authority)",
+            "The record carries no secret"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: the advertisement datagram carries transports only and is size-bound; no generic service event exists in the journal.",
+          "depends_on": [
+            "I2670"
+          ],
+          "evidence_required": [
+            "offer_discovery_case",
+            "offer_expiry_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Provisioning the store: I2674"
+          ],
+          "objective": "Let a node publish its offer through the mesh journal so peers discover it without a committed endpoint, and let the offer expire when the provider stops.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/",
+            "docs/MESH.md"
+          ],
+          "slug": "a-provider-offers-its-cache-as-an-expiring-mesh-record",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3011_a_mesh_build_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2672",
+        "kind": "issue",
+        "label": "I2672",
+        "summary": "The offers and the selection are one read, projected to CLI, MCP, HTTP and OpenAPI",
+        "route": "/cockpit/objects/issue/i2672",
+        "source": ".ai/repo/project/issues/I2672.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The CLI, MCP tool and HTTP route answer identical content",
+            "The OpenAPI document names the type and no secret field",
+            "majordomus generate --check is clean"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: mesh.status, mesh.nodes and mesh.peers exist; none of them answers what a node offers.",
+          "depends_on": [
+            "I2670"
+          ],
+          "desired_state": "mesh.build_cache answers offers, selection, rationale and the fallback taken; generated projections are current; no surface keeps a list of its own.",
+          "evidence_required": [
+            "build_cache_read_projections"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The screen: I2675"
+          ],
+          "objective": "Declare the read once with capability! so that every surface answers the same offers, the same choice and the same reason.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/generated/"
+          ],
+          "slug": "the-offers-and-the-selection-are-one-read-with-three-projections",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2673",
+        "kind": "issue",
+        "label": "I2673",
+        "summary": "The sccache client configuration is derived from the selected offer, local disk first",
+        "route": "/cockpit/objects/issue/i2673",
+        "source": ".ai/repo/project/issues/I2673.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With an offer selected the exported variables name it and the local level and no secret is printed",
+            "With no offer the client is local-only",
+            "The installed sccache's multi-level support is read from the executable, not assumed",
+            "Cross-checkout path normalisation is investigated and the finding recorded"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it.",
+          "depends_on": [
+            "I2670",
+            "I2672"
+          ],
+          "evidence_required": [
+            "client_derivation_case",
+            "sccache_multilevel_measured"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Writing ~/.cargo/config.toml",
+            "Distributed compilation"
+          ],
+          "objective": "Emit the sccache environment for the chosen offer through majordomus env, local as level one and the offer as level two, with no hand-set variable.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/environment/",
+            "docs/ENVIRONMENT.md"
+          ],
+          "slug": "the-sccache-client-is-derived-from-the-selected-offer",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3011_a_mesh_build_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2674",
+        "kind": "issue",
+        "label": "I2674",
+        "summary": "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository",
+        "route": "/cockpit/objects/issue/i2674",
+        "source": ".ai/repo/project/issues/I2674.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Applied twice, the second run changes nothing",
+            "An unauthenticated write is refused by the store",
+            "No credential appears in git, .ai, a log, an API answer or the docs",
+            "The data path cannot exhaust the root filesystem under the policy's floor"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: no provisioning exists; the Jetson that was to host it is off the tailnet and answers on the LAN only slowly.",
+          "depends_on": [
+            "I2670"
+          ],
+          "evidence_required": [
+            "provision_idempotent",
+            "write_refused_unauthenticated"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A second provider",
+            "Public exposure of the store or its console"
+          ],
+          "objective": "Provision a MinIO service on a chosen node: native or declared service, persistent storage on a bounded path, a private bucket with expiry, a least-privilege client identity, and a bounded bind.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "docs/BUILD_CACHE.md"
+          ],
+          "slug": "a-node-is-provisioned-as-an-s3-cache-provider-idempotently",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus mesh build-cache provision --dry-run"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2675",
+        "kind": "issue",
+        "label": "I2675",
+        "summary": "Build-cache health, headroom and hit statistics are visible where the mesh is",
+        "route": "/cockpit/objects/issue/i2675",
+        "source": ".ai/repo/project/issues/I2675.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A provider stopping is reflected on the screen within the stream's lifetime",
+            "Estimates are labelled",
+            "The screen is within the UI latency budget and executes nothing"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: the UI has no mesh drill-down for services and health.rs has no build-cache check.",
+          "depends_on": [
+            "I2672"
+          ],
+          "desired_state": "A check in health, a row in monitor, a UI screen reading mesh.build_cache as a reading, and live updates over the existing event stream.",
+          "evidence_required": [
+            "build_cache_screen",
+            "health_check"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A new streaming transport"
+          ],
+          "objective": "Show which offers exist, which is selected and why, headroom and the statistics sccache supports, labelling estimates, on the existing health, monitor and UI surfaces.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/ui/",
+            "apps/majordomus-cli/src/monitor/"
+          ],
+          "slug": "build-cache-health-and-capacity-are-visible-where-the-mesh-is",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus bench system.http. --transport system --profile ci --no-write --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2676",
+        "kind": "issue",
+        "label": "I2676",
+        "summary": "The build cache is verified and validated: failure paths, security and a real second-node hit",
+        "route": "/cockpit/objects/issue/i2676",
+        "source": ".ai/repo/project/issues/I2676.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the provider stopped a build succeeds and the diagnostic names the cause",
+            "A restart recovers with no client edit",
+            "A bad credential gives an actionable message with no key in it",
+            "A second node's build hits what the first wrote, or the report says it could not be shown"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: nothing is proved because nothing exists; the only candidate provider is unreachable over SSH.",
+          "depends_on": [
+            "I2673",
+            "I2674"
+          ],
+          "desired_state": "A case against a stub S3 for the failure paths, and a recorded run on real nodes for the hit, or a statement that two compatible nodes were not available; no cross-architecture claim.",
+          "evidence_required": [
+            "failure_path_case",
+            "second_node_hit_recorded"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Performance tuning beyond the recorded measurement"
+          ],
+          "objective": "Prove the acceptance contract: stop the provider and build, restart and recover, bad credential, low space, put/get, remote hit across two nodes of one platform.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3011_a_mesh_build_cache.sh",
+            "docs/BUILD_CACHE.md"
+          ],
+          "slug": "the-build-cache-is-verified-and-validated-on-real-nodes",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3011_a_mesh_build_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2677",
+        "kind": "issue",
+        "label": "I2677",
+        "summary": "The build cache is documented, governed by a rule and described on the site and the Pages",
+        "route": "/cockpit/objects/issue/i2677",
+        "source": ".ai/repo/project/issues/I2677.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Public pages carry no private address or key",
+            "The rule is enforced by the case of I2676",
+            "majordomus generate --check and scripts/pages current are clean"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Measured on master b29cf4e487 on 2026-10-13: the docs describe sharing between worktrees only.",
+          "depends_on": [
+            "I2672"
+          ],
+          "desired_state": "docs/BUILD_CACHE.md, a project rule that a build never depends on the cache, the site page and the Pages, all generated from the canonical model and rule.",
+          "evidence_required": [
+            "docs_and_rule"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Private addresses in any public page"
+          ],
+          "objective": "Say once, derived, what the cache is, how a node offers and uses it and how to see it, on the handbook, the site and the landing's account of how the cluster compiles.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/BUILD_CACHE.md",
+            ".ai/repo/rules/project/",
+            "site/"
+          ],
+          "slug": "the-build-cache-is-documented-governed-and-on-the-site",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus generate --check",
+            "scripts/pages current"
           ]
         }
       },
@@ -63802,6 +64174,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0157",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0157",
+        "target": "majordomus://adr/adr-0055",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0157",
+        "target": "majordomus://adr/adr-0139",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0157",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0157",
+        "target": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0157",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -76827,6 +77229,131 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2670",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2670",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2671",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2671",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2671",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2672",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2672",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2672",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2673",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2673",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2673",
+        "target": "majordomus://issue/I2672",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2673",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2674",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2674",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2674",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2675",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2675",
+        "target": "majordomus://issue/I2672",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2675",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2676",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2676",
+        "target": "majordomus://issue/I2673",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2676",
+        "target": "majordomus://issue/I2674",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2676",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2677",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2677",
+        "target": "majordomus://issue/I2672",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2677",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -86358,8 +86885,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2751,
-      "edges": 6035,
+      "nodes": 2760,
+      "edges": 6066,
       "acyclic": false,
       "truncated": false
     }

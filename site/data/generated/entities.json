@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 104,
+      "count": 105,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 104
+      "count": 105
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 343
+      "count": 351
     },
     {
       "kind": "knowledge",
@@ -3744,7 +3744,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7384,7 +7392,15 @@
       ],
       "source": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8087,6 +8103,60 @@
           "label": "test/cases/362_a_release_follows_the_ci_verdict.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0157",
+      "identity": "adr-0157",
+      "slug": "adr-0157",
+      "cockpit": "/cockpit/objects/adr/adr-0157",
+      "title": "A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "build",
+        "cache",
+        "capability"
+      ],
+      "source": ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0139",
+          "kind": "adr",
+          "route": "/adrs/adr-0139/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/OFFLOAD.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-is-observation-not-authority@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-is-observation-not-authority-1/",
           "external": false
         }
       ],
@@ -14121,6 +14191,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0157",
+          "kind": "adr",
+          "route": "/adrs/adr-0157/",
           "external": false
         },
         {
