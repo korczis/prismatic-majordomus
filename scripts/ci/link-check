@@ -15,6 +15,13 @@
 #                published, releases/tag/<tag> and tree/<tag> a tag, compare/<a>...<b> two refs.
 #                The ref @source-ref@ is refused by name: it is the placeholder committed content
 #                carries (scripts/lib/project-links.awk) until scripts/site-build pins it
+#   snapshot     the root of a mount the publication holds a snapshot at and this build does not
+#                compose (ADR 0141; /build.json `snapshots`, which scripts/site-build writes
+#                from the publication model's deploy.snapshots). The deploy places the snapshot
+#                after this check and refuses a site without it, and the public probe asks for
+#                it (project.the-published-ui-is-the-trunks), so the root is decided by that
+#                declaration. A link deeper into the mount is refused unless the snapshot is in
+#                the tree: which pages a snapshot holds is its producer's bound, not this site's
 #   refused      javascript:, an empty href, and a host none of the above resolves. A link that
 #                cannot be decided without the network is not published: the finding says so,
 #                and the way to add one is to teach this check how to decide it
@@ -79,6 +86,17 @@ if os.path.isfile(ev):
 
 def git(*args):
     return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)
+
+# The mounts the publication holds a snapshot at, as this build's own identity file states them.
+SNAPSHOT_MOUNTS = set()
+bj = os.path.join(PUB, 'build.json')
+if os.path.isfile(bj):
+    import json
+    try:
+        for s in (json.load(open(bj, encoding='utf-8')) or {}).get('snapshots') or []:
+            if (s.get('mount') or '').strip('/'): SNAPSHOT_MOUNTS.add('/' + s['mount'].strip('/'))
+    except ValueError:
+        pass
 
 # ------------------------------------------------------------------ the built site
 # the composed mounts, relative to the build: "/rustdoc" -> "rustdoc"
@@ -242,6 +260,12 @@ def decide(page, raw):
     if page == '/sitemap.xml' and not path: path = '/'
     target = resolve_file(path) if path else None
     if target is None:
+        rel = urllib.parse.unquote(path)
+        if PREFIX and rel.startswith(PREFIX): rel = rel[len(PREFIX):] or '/'
+        for mnt in SNAPSHOT_MOUNTS:
+            if rel.rstrip('/') == mnt and not u.fragment: return ('snapshot', None)
+            if rel.startswith(mnt + '/'):
+                return ('snapshot', f'{raw} leads into the snapshot the publication holds at {mnt}/, past its root; only the root is decided before the snapshot is placed')
         return ('internal', f'{raw} resolves to no file under site/public')
     if u.fragment:
         r = route_of(target)
@@ -264,7 +288,7 @@ for (cls, problem), where in sorted(by_page.items()):
     fail(cls, f'{where[0]}: {problem}{extra}')
 
 total = sum(counts.values())
-summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'refused') if counts[c])
+summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'snapshot', 'refused') if counts[c])
 if undecided:
     missing = ' and '.join(x for x, ok in (('history', knows_history), ('tags', knows_tags)) if not ok) or 'refs'
     print(f'link-check: {len(undecided)} link(s) to a commit, compare, tag or ref cannot be decided '
