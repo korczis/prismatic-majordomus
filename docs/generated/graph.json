@@ -34992,6 +34992,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2588",
+        "kind": "issue",
+        "label": "I2588",
+        "summary": "A region projection's host document is not judged as a bootstrap",
+        "route": "/cockpit/objects/issue/i2588",
+        "source": ".ai/repo/project/issues/I2588.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A region-mode target whose host text carries bold bullets and a rules heading outside the markers passes bootstrap",
+            "The same text inside the markers is still refused",
+            "A whole-file target is judged as before"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "lib/doctor.sh:276 greps the whole target for rule bullets and rule headings whatever its mode; the neighbouring reference and budget checks already read the region through mj_region_extract.",
+          "depends_on": [],
+          "desired_state": "In region mode the corpus check and the layer-pointer check run over the extracted region.",
+          "evidence_required": [
+            "region_host_is_not_judged_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-region-host-is-not-judged-as-a-bootstrap",
+          "started_at": "2026-10-13T11:17:46Z",
+          "started_event": "sha256:6d908b8b69c389d6d3f08dfc28f2074f781bfcede344b10179a154269121d41b",
+          "updated_at": "2026-10-13T17:43:54Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -35377,6 +35417,44 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "label": "a-second-adopter-is-served",
+        "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "route": "/cockpit/objects/milestone/a-second-adopter-is-served",
+        "source": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "findings_recorded"
+          ],
+          "non_scope": [
+            "The adopting repository itself: it is the evidence, read only",
+            "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 116,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-second-adopter-is-served",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/derive-check"
           ]
         }
       },
@@ -76705,6 +76783,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2588",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2588",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -76756,6 +76844,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-second-adopter-is-served",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -86196,8 +86289,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2744,
-      "edges": 6023,
+      "nodes": 2746,
+      "edges": 6026,
       "acyclic": false,
       "truncated": false
     }
