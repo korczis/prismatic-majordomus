@@ -534,9 +534,9 @@ relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
 relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
-for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
+for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/charts.js js/echarts.min.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
-done; ok asset "css, nav, search, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
+done; ok asset "css, nav, search, alpine, mermaid, echarts, cytoscape, theme, diagrams, charts, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
 # 7b. the status vocabulary: every state word a rendered badge carries is one the design
 # declaration files under a status. A word it does not know renders neutral and says nothing,

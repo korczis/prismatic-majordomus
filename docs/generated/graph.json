@@ -3732,6 +3732,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/lib/diagrams.mjs",
+        "kind": "file",
+        "label": "diagrams.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/diagrams.mjs",
+        "external": true
+      },
+      {
         "id": "file:scripts/lib/executable-site.jq",
         "kind": "file",
         "label": "executable-site.jq",
@@ -3937,6 +3945,14 @@
         "label": "trains.js",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/trains.js",
+        "external": true
+      },
+      {
+        "id": "file:share/design/figure.css",
+        "kind": "file",
+        "label": "figure.css",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/figure.css",
         "external": true
       },
       {
@@ -4196,6 +4212,14 @@
         "external": true
       },
       {
+        "id": "file:site/charts.js",
+        "kind": "file",
+        "label": "charts.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/charts.js",
+        "external": true
+      },
+      {
         "id": "file:site/content-src/dokumentace-kterou-lze-odmitnout.md",
         "kind": "file",
         "label": "dokumentace-kterou-lze-odmitnout.md",
@@ -4209,6 +4233,14 @@
         "label": "proof-carrying-documentation.md",
         "summary": "named by the layer; not an object of this index",
         "source": "site/content-src/proof-carrying-documentation.md",
+        "external": true
+      },
+      {
+        "id": "file:site/diagrams.js",
+        "kind": "file",
+        "label": "diagrams.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/diagrams.js",
         "external": true
       },
       {
@@ -7208,6 +7240,39 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0152",
+        "kind": "adr",
+        "label": "adr-0152",
+        "summary": "A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference",
+        "route": "/cockpit/objects/adr/adr-0152",
+        "source": ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "rule:project.a-diagram-is-drawn-not-typed",
+            "rule:project.derived-once",
+            "rule:project.interfaces-are-projections",
+            "rule:project.homepage-tells-a-declared-story",
+            "rule:project.every-link-and-control-is-tested",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:scripts/lib/diagrams.mjs",
+            "file:site/diagrams.js",
+            "file:site/charts.js",
+            "file:share/design/figure.css",
+            "file:scripts/ci/link-check",
+            "file:docs/DIAGRAMS.md",
+            "file:test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+          ],
+          "tags": [
+            "site",
+            "diagrams",
+            "charts",
+            "derivation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0155",
         "kind": "adr",
         "label": "adr-0155",
@@ -7808,6 +7873,21 @@
           "responsibility": "layer",
           "source": "docs/KNOWLEDGE.md",
           "test": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "kind": "claim",
+        "label": "a-diagram-is-named-linked-and-addressable",
+        "summary": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to",
+        "route": "/cockpit/objects/claim/a-diagram-is-named-linked-and-addressable",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/lib/diagrams.mjs",
+          "responsibility": "none",
+          "source": "docs/DIAGRAMS.md",
+          "test": "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
         }
       },
       {
@@ -14147,6 +14227,14 @@
         "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
+        "id": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "document",
+        "label": "docs/DIAGRAMS.md",
+        "summary": "Diagrams and charts",
+        "route": "/cockpit/objects/document/docs-diagrams-md",
+        "source": "docs/DIAGRAMS.md"
+      },
+      {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
         "kind": "document",
         "label": "docs/DISTRIBUTION.md",
@@ -14577,6 +14665,14 @@
         "summary": "Every observation candidate is routed by the structure of what it is about",
         "route": "/cockpit/objects/document/docs-claims-a-candidate-is-routed-by-what-it-is-about-md",
         "source": "docs/claims/a-candidate-is-routed-by-what-it-is-about.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/a-diagram-is-named-linked-and-addressable.md",
+        "kind": "document",
+        "label": "docs/claims/a-diagram-is-named-linked-and-addressable.md",
+        "summary": "Every Mermaid diagram of the built site gets an id (diagram-<name>), the list of its nodes, the viewer's controls and a link for each node that is the identity of an object the site has a page for, all derived at build; a link to #diagram-<name>:<node> fails the build when the diagram does not declare the node",
+        "route": "/cockpit/objects/document/docs-claims-a-diagram-is-named-linked-and-addressable-md",
+        "source": "docs/claims/a-diagram-is-named-linked-and-addressable.md"
       },
       {
         "id": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -35044,6 +35140,219 @@
         }
       },
       {
+        "id": "majordomus://issue/I2653",
+        "kind": "issue",
+        "label": "I2653",
+        "summary": "Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart",
+        "route": "/cockpit/objects/issue/i2653",
+        "source": ".ai/repo/project/issues/I2653.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every <pre class=\\\"mermaid\\\"> of the built site carries a unique id diagram-<name>, the list of its nodes, and tabindex=0; a build that would publish two diagrams with one id on a page is refused",
+            "A node whose id or label is the identity of an object the site has a page for is listed beside the diagram as a link to that page, and scripts/ci/link-check resolves every such link",
+            "A link to #diagram-<name>:<node> is refused by scripts/ci/link-check when the diagram does not declare that node",
+            "In a browser, the viewer zooms, pans and resets from its toolbar and from the keyboard, copies its own link, and opens the diagram and node a fragment names",
+            "A <figure data-chart> is drawn from the table inside it, and the table stays on the page",
+            "The hand-drawn-diagram ratchet stays at diagrams=0"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "diagram_pass_unit_tests",
+            "diagram_case_3006",
+            "site_check_passes"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The homepage: its story and its byte budget are declared (site/data/homepage.toml) and it carries no diagram by decision; I2655 asks that question on its own",
+            "The Cockpit and majordomus ui: they render their own graphs; sharing this viewer with them is I2656",
+            "Typing links into a diagram's source with Mermaid's click directive: a link is inferred from an identity or it does not exist"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/diagrams.js",
+            "site/charts.js",
+            "site/tailwind.css",
+            "site/templates/partials/mermaid.html",
+            "site/templates/partials/charts.html",
+            "site/templates/components.html",
+            "site/templates/argument.html",
+            "site/templates/dag.html",
+            "site/templates/milestone.html",
+            "site/templates/plan-section.html",
+            "site/templates/economics.html",
+            "share/design/figure.css",
+            "scripts/lib/diagrams.mjs",
+            "scripts/lib/diagrams.test.mjs",
+            "scripts/lib/interaction-specs/diagram.mjs",
+            "scripts/lib/interaction-specs/scroll-region.mjs",
+            "scripts/site-build",
+            "scripts/site-check",
+            "scripts/ci/link-check",
+            "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+            "docs/DIAGRAMS.md",
+            "docs/claims/a-diagram-is-named-linked-and-addressable.md",
+            "docs/CLAIMS.yaml",
+            "docs/README.md",
+            "docs/DESIGN_SYSTEM.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "package.json",
+            "package-lock.json",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md",
+            ".ai/repo/project/issues/I2653.yaml",
+            ".ai/repo/project/issues/I2654.yaml",
+            ".ai/repo/project/issues/I2655.yaml",
+            ".ai/repo/project/issues/I2656.yaml"
+          ],
+          "slug": "every-diagram-is-interactive-and-linkable",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "node --test scripts/lib/diagrams.test.mjs",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3006_diagrams_are_interactive_and_linkable 12_site_build 272_diagrams_are_drawn",
+            "scripts/site-build && scripts/site-check",
+            "scripts/ci/diagram-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2654",
+        "kind": "issue",
+        "label": "I2654",
+        "summary": "A chart is held to its table by a gate, and the tables that are measured series are drawn",
+        "route": "/cockpit/objects/issue/i2654",
+        "source": ".ai/repo/project/issues/I2654.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A figure[data-chart] whose drawn series differs from its table fails a check that names the figure",
+            "A figure[data-chart] without a table, a data-series header or an id fails scripts/site-check",
+            "Each newly declared chart is listed in docs/DIAGRAMS.md with the dataset it reads"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "Two figures carry data-chart (/plan/, /economics/). No case builds a fixture figure and asserts the series; no behaviour spec opens a chart; ECharts is loaded only where those two pages ask for it.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "chart_table_agreement_check",
+            "chart_markup_check"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A second charting library, or a chart whose data is not a table on the same page"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/charts.js",
+            "site/templates/registry-benchmarks.html",
+            "site/templates/economics.html",
+            "site/templates/features-matrix.html",
+            "scripts/site-check",
+            "scripts/lib/interaction-specs/chart.mjs",
+            "docs/DIAGRAMS.md",
+            ".ai/repo/project/issues/I2654.yaml"
+          ],
+          "slug": "a-chart-is-held-to-its-table",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "scripts/site-build && scripts/site-check",
+            "scripts/interaction-probe --only /plan/"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2655",
+        "kind": "issue",
+        "label": "I2655",
+        "summary": "The homepage decides whether it carries a derived figure, within its declared story and budget",
+        "route": "/cockpit/objects/issue/i2655",
+        "source": ".ai/repo/project/issues/I2655.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ci/homepage-check passes with the section order and the budget as declared",
+            "The homepage reaches the diagrams page in one click"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "The homepage loads neither the Mermaid nor the ECharts build and links docs/DIAGRAMS.md from nowhere.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "homepage_check_passes"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Loading a diagram or chart library on the homepage without a figure that uses it"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/index.html",
+            "site/data/homepage.toml",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            ".ai/repo/project/issues/I2655.yaml"
+          ],
+          "slug": "the-homepage-decides-about-a-figure",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "scripts/site-build && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2656",
+        "kind": "issue",
+        "label": "I2656",
+        "summary": "The diagram viewer serves the Cockpit and majordomus ui, and a node that is a repository file links to its source",
+        "route": "/cockpit/objects/issue/i2656",
+        "source": ".ai/repo/project/issues/I2656.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A diagram in the Cockpit is drawn by site/diagrams.js under the Cockpit content policy",
+            "A node labelled with a tracked path is listed as a link to that file and link-check passes it; an untracked path is not linked",
+            "majordomus design contrast measures the pairs figure.css uses"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "share/design/figure.css is imported by the site only; share/cockpit and share/ui load no diagram viewer; the link index holds site routes only.",
+          "depends_on": [
+            "I2653"
+          ],
+          "evidence_required": [
+            "cockpit_viewer_case",
+            "file_link_unit_tests"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A second viewer for any surface"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "site/diagrams.js",
+            "share/design/figure.css",
+            "share/cockpit/src/cockpit.css",
+            "share/ui/src/ui.css",
+            "apps/majordomus-cli/src/design/contrast.rs",
+            "scripts/lib/diagrams.mjs",
+            "scripts/lib/diagrams.test.mjs",
+            ".ai/repo/project/issues/I2656.yaml"
+          ],
+          "slug": "one-viewer-across-the-surfaces",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "node --test scripts/lib/diagrams.test.mjs",
+            "scripts/rust-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "label": "an-expedited-landing",
@@ -51578,6 +51887,13 @@
         "source": "test/cases/3003_the_knowledge_screen_answers.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "kind": "test",
+        "label": "test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "route": "/cockpit/objects/test/test-cases-3006-diagrams-are-interactive-and-linkable-sh",
+        "source": "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "kind": "test",
         "label": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -63655,6 +63971,76 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:scripts/ci/link-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:scripts/lib/diagrams.mjs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:share/design/figure.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:site/charts.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "file:site/diagrams.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0152",
+        "target": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0155",
         "target": "file:scripts/ci/release-verdict",
         "kind": "put_in_force"
@@ -63902,6 +64288,26 @@
       {
         "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
         "target": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "file:scripts/lib/diagrams.mjs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "majordomus://document/docs/DIAGRAMS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-diagram-is-named-linked-and-addressable",
+        "target": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
         "kind": "tested_by"
       },
       {
@@ -69540,6 +69946,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/DIAGRAMS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/DISTRIBUTION.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -69806,6 +70217,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/a-diagram-is-named-linked-and-addressable.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -76720,6 +77136,61 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2653",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2653",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2654",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2655",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "majordomus://issue/I2653",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2656",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/an-expedited-landing",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -80891,6 +81362,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86196,8 +86672,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2744,
-      "edges": 6023,
+      "nodes": 2757,
+      "edges": 6055,
       "acyclic": false,
       "truncated": false
     }

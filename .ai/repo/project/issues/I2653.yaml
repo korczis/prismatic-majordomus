@@ -1,0 +1,69 @@
+id: I2653
+milestone: surfaces-never-disagree
+title: "Every diagram on the site is one interactive, linkable viewer whose node links are inferred, and a derived table can be drawn as a chart"
+slug: every-diagram-is-interactive-and-linkable
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make every Mermaid diagram the site publishes zoomable, pannable, full-screen, downloadable and addressable by a fragment (#diagram-<name>, and #diagram-<name>:<node> for one node), with a node that names a rule, a decision, a command, a capability, an issue, a milestone or a document linked to that object's page by the build rather than by the diagram's author; and let a table the site already renders from derived data be drawn as an interactive Apache ECharts chart by declaring it, with no second copy of the numbers."
+why: "ADR 0152. site/diagrams.js initialised Mermaid and nothing else: a wide dependency graph was a horizontal scrollbar, no diagram had an address, and a node that was an issue or a rule was text. Rule project.a-diagram-is-drawn-not-typed says a parseable diagram is what makes linking and checking possible; nothing used that. The site drew no chart at all, although ADR 0135 names ECharts as the library for measured series."
+current_state: "Each <pre class=\"mermaid\"> is rendered at its natural width inside a scrolling box. It has no id, no controls and no links. The Mermaid runtime (the heaviest file on the site) is fetched by a blocking script tag. Numbers the generator derives (issues per milestone and state, benchmark percentiles) are tables only."
+desired_state: "scripts/lib/diagrams.mjs names every diagram after the build (an explicit data-diagram, else the heading it sits under), lists its nodes, and writes beside it the links it inferred from site/data/generated; site/diagrams.js turns each into the same viewer; scripts/ci/link-check resolves a node fragment against the diagram's declared nodes; site/charts.js draws any <figure data-chart> from the table inside it, with the vendored ECharts build fetched only when a chart nears the viewport; docs/DIAGRAMS.md is the manual."
+scope:
+  - "site/diagrams.js"
+  - "site/charts.js"
+  - "site/tailwind.css"
+  - "site/templates/partials/mermaid.html"
+  - "site/templates/partials/charts.html"
+  - "site/templates/components.html"
+  - "site/templates/argument.html"
+  - "site/templates/dag.html"
+  - "site/templates/milestone.html"
+  - "site/templates/plan-section.html"
+  - "site/templates/economics.html"
+  - "share/design/figure.css"
+  - "scripts/lib/diagrams.mjs"
+  - "scripts/lib/diagrams.test.mjs"
+  - "scripts/lib/interaction-specs/diagram.mjs"
+  - "scripts/lib/interaction-specs/scroll-region.mjs"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/ci/link-check"
+  - "test/cases/3006_diagrams_are_interactive_and_linkable.sh"
+  - "docs/DIAGRAMS.md"
+  - "docs/claims/a-diagram-is-named-linked-and-addressable.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/README.md"
+  - "docs/DESIGN_SYSTEM.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "package.json"
+  - "package-lock.json"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md"
+  - ".ai/repo/project/issues/I2653.yaml"
+  - ".ai/repo/project/issues/I2654.yaml"
+  - ".ai/repo/project/issues/I2655.yaml"
+  - ".ai/repo/project/issues/I2656.yaml"
+non_scope:
+  - "The homepage: its story and its byte budget are declared (site/data/homepage.toml) and it carries no diagram by decision; I2655 asks that question on its own"
+  - "The Cockpit and majordomus ui: they render their own graphs; sharing this viewer with them is I2656"
+  - "Typing links into a diagram's source with Mermaid's click directive: a link is inferred from an identity or it does not exist"
+depends_on: []
+acceptance_criteria:
+  - "Every <pre class=\"mermaid\"> of the built site carries a unique id diagram-<name>, the list of its nodes, and tabindex=0; a build that would publish two diagrams with one id on a page is refused"
+  - "A node whose id or label is the identity of an object the site has a page for is listed beside the diagram as a link to that page, and scripts/ci/link-check resolves every such link"
+  - "A link to #diagram-<name>:<node> is refused by scripts/ci/link-check when the diagram does not declare that node"
+  - "In a browser, the viewer zooms, pans and resets from its toolbar and from the keyboard, copies its own link, and opens the diagram and node a fragment names"
+  - "A <figure data-chart> is drawn from the table inside it, and the table stays on the page"
+  - "The hand-drawn-diagram ratchet stays at diagrams=0"
+validation:
+  - "node --test scripts/lib/diagrams.test.mjs"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3006_diagrams_are_interactive_and_linkable 12_site_build 272_diagrams_are_drawn"
+  - "scripts/site-build && scripts/site-check"
+  - "scripts/ci/diagram-check"
+evidence_required:
+  - "diagram_pass_unit_tests"
+  - "diagram_case_3006"
+  - "site_check_passes"
+created_at: 2026-10-13
+updated_at: 2026-10-13
