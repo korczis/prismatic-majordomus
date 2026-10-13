@@ -1,7 +1,7 @@
 +++
 title = "Capabilities"
 description = "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails"
-weight = 42
+weight = 43
 [extra]
 source = "docs/CAPABILITIES.md"
 +++
