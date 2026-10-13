@@ -191,6 +191,11 @@ mj_validate_scope() {
       else mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "$repro"; fi
     fi
   done < <(mj_git_touched "$(mj_cur head)")
+  # said, not only applied: a reader who sees a dirty tree and a passing scope is owed why
+  local predating; predating="$(mj_start_dirty_unchanged | grep -c . || true)"
+  if [ "${predating:-0}" -gt 0 ]; then
+    mj_info scope "$id" "$predating path(s) were already changed when the task started and hold what they held then: not counted as this task's" "cat $(mj_rel "$(mj_start_dirty_file)"); git status --porcelain"
+  fi
   if [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   elif [ "$soft" = 1 ]; then
     mj_doctrine_skip scope "$id" "$n_out file(s) outside scope; outcome is $MJ_FINISH_OUTCOME, not completed, so scope does not refuse it"
