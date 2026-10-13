@@ -1,0 +1,134 @@
+---
+schema: adr/v1
+id: adr-0155
+kind: adr
+title: An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag
+status: proposed
+date: 2026-10-13
+tags:
+  - integration
+  - governance
+  - ci
+  - release
+related:
+  - file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md
+  - file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md
+  - file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md
+  - file:.ai/repo/rules/project/land-and-publish.v1.md
+  - test:test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh
+  - test:test/cases/362_a_release_follows_the_ci_verdict.sh
+  - file:docs/INTEGRATION.md
+  - file:scripts/ci/release-verdict
+provenance:
+  origin: authored
+---
+
+# 155. An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag
+
+## Context
+
+ADR 0101 made integration one typed subsystem and listed "merge with `--admin`" among the
+alternatives it rejected: the branch protection's refusal is the answer, not an obstacle.
+Rule `project.integration-follows-the-current-master` carries that sentence.
+
+On 2026-10-12 the required check took about an hour on the hosted runners and the pool
+judged one pull request at a time. The record pull request of v0.21.0, which changed one
+file, waited two and a half hours; the site named v0.20.0 meanwhile. The owner wrote "almost
+24h with no release on gh pages + binaries, this is tragic", chose a one-off admin merge of
+that pull request, and then gave a standing order. Its words, as written to the sessions:
+
+- 2026-10-12: "deploy using --admin, bump, deploy, verify, rinse and repeat" and "proceed
+  use --admin".
+- 2026-10-12, asked how that sits with "never bypass failing required gates": "--admin after
+  local gates", with the tag still requiring a green `ci`.
+- 2026-10-13: "use --admin mode, merge and deploy asap, review and cancel staled jobs, be
+  agressively efficient in delivery, you have my max clearance and this should be .ai rule /
+  adr / knowledge base / article / post, enforced and used asap".
+
+Between the two dates about twenty landings went in that way, by several sessions. What
+went wrong in them is the evidence this decision is written from:
+
+| what happened | what it cost |
+|---|---|
+| branches green on their own head landed on a master that had moved | seven reds on master in one evening |
+| two sessions merged within minutes of each other | each one's local gates judged a tree that no longer existed |
+| a landing went in with the structure job unfinished | shell-lint and finding-reproduce red on master |
+| a merged branch's run kept going | the trunk's run of the merged commit queued behind it |
+| two sessions carried the same red fix, twice | a second cold build took the disk to 1 GiB free |
+| landings went in between a tag and its record pull request | the record needed master merged and a derive; the site named the previous release for 2.5 hours |
+| an intra-doc link to a private item was merged | the publication failed and production stayed on the old commit for hours |
+
+Nothing went wrong in a release: every tag in the period was cut on a commit whose `ci`
+concluded success, because the release workflow asks `scripts/ci/release-verdict` and
+refuses.
+
+## Decision
+
+**The owner may spend the branch protection, and only the owner.** The authorisation is the
+owner's own words, quoted with their date in a decision of this repository — this one, until
+a later one replaces it. A session does not infer it, does not carry it to another
+repository, and does not act on another session's account of it.
+
+**An expedited landing is a named lander's act, never the executor's.** `majordomus prs`
+keeps merging only what the branch protection allows, and no integration code passes
+`--admin`. ADR 0101's rejection stands for that code.
+
+**The lander judges the merged tree and says what it judged.** It holds the exclusive
+landing claim, merges the current master into the branch, commits the merge, derives, and
+runs the whole structure job, the library tests, the rustdoc build when the crate changed
+and the cases the change touches. It names the commit each ran on and names what did not
+run. The merge is pinned: `gh pr merge --admin --merge --match-head-commit <head>`.
+
+**Every landing is a deployment and is verified as one**, as `project.land-and-publish`
+already requires of any merge.
+
+**A run nobody will read is cancelled.** Stale means: the pull request is merged or closed,
+the head is no longer the branch's head, or another run of the same workflow judges the same
+commit. The trunk's only run of a commit, a deployment in flight, a release run and another
+session's run on a current head are not stale and are not cancelled.
+
+**A red on the trunk has one carrier**, named by the integrator.
+
+**Between a tag and its record nothing else lands.** The record pull request carries files
+derived against the master of that minute, and it is merged first.
+
+**A release is never expedited.** A tag goes on a commit whose `ci` check concluded success.
+No gate, hook or check is disabled, skipped or edited to reach it.
+
+The rule is `project.an-expedited-landing-is-the-owners-word`. Its mechanical half is case
+2999 with cases 362, 720 and 97. Its other half is the record: the landing claim on the
+mesh, the gates a pull request names, the board.
+
+## Alternatives rejected
+
+**Keep "never `--admin`" and make the required check fast enough.** That is the right end
+state and work toward it is under way: a release record plans a light validation, a stacked
+link is judged against master, the derive skips what did not change. It does not exist
+today, and the owner decided not to wait for it.
+
+**Let the executor pass `--admin` when a policy field says so.** Then a configuration value
+spends the branch protection, at machine speed, for every pull request the queue calls
+ready. The exception is a person's decision about a particular day; it stays a person's
+word and a lander's act.
+
+**Remove the required check from the branch protection.** Then nothing distinguishes an
+expedited landing from an ordinary one, and the release verdict has no check to read.
+
+**Expedite the tag as well.** v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from red
+commits before `release-verdict` existed. A merge is corrected by the next merge; published
+executables are installed.
+
+## Consequences
+
+- The statement of `project.integration-follows-the-current-master@3` says "never merge with
+  --admin". It is true of the executor and too wide for a lander under this decision. A
+  version 4 of that rule that names this exception is owed; until it lands, this decision and
+  its rule are where the exception is written, and both name the older rule.
+- Reviewing and cancelling stale runs is a judgement made by hand today. A capability that
+  lists the runs this decision calls stale, and cancels them on request, is the next step
+  and is what makes clause 7 of the rule mechanical.
+- The cost of the required check is now visible as a number that the owner's order was a
+  response to. Merge-to-deploy latency belongs among the derived measurements.
+- This decision is `proposed`. The owner ordered the practice and the writing of it; the
+  acceptance of the text is the owner's act. If it is rejected, the rule is withdrawn with
+  it and `project.integration-follows-the-current-master` stands alone again.
