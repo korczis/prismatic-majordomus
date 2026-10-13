@@ -17,11 +17,19 @@
   var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js';
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-  function dark() {
-    var t = document.documentElement.getAttribute('data-theme');
-    return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  function dark() { return document.documentElement.classList.contains(document.body.getAttribute('data-theme-class') || ''); }
+  /* The series of the declared design, read from the page and resolved to red, green and blue: a chart
+     library parses colours itself and does not know every notation a stylesheet may use. */
+  function paint(name) {
+    var c = document.createElement('canvas'); c.width = c.height = 1;
+    var x = c.getContext('2d');
+    x.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    x.fillRect(0, 0, 1, 1);
+    var d = x.getImageData(0, 0, 1, 1).data;
+    return '#' + [d[0], d[1], d[2]].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
   }
-  function pal() { return dark() ? ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#9085e9'] : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6']; }
+  function series() { return [1, 2, 3, 4, 5, 6].map(function (i) { return paint('--mj-series-' + i); }); }
+  function pal() { return series(); }
 
   /* The only hand-written parts: which family a kind is drawn in, a Czech gloss, and the flow patterns. */
   var GROUPS = [
@@ -205,7 +213,7 @@
     function draw() {
       if (chart) chart.dispose();
       chart = window.echarts.init(box);
-      var fg = cssv('--fg'), panel = cssv('--panel'), line = cssv('--line'), muted = cssv('--muted');
+      var fg = paint('--fg'), panel = paint('--panel'), line = paint('--line'), muted = paint('--muted');
       var order = [];
       GROUPS.forEach(function (gr, gi) { K.filter(function (k) { return groupOf[k] === gi; }).sort(function (a, b) { return byKind[b].length - byKind[a].length; }).forEach(function (k) { order.push(k); }); });
       var links = agg().filter(function (r) { return r.a !== r.b; }).map(function (r) {
