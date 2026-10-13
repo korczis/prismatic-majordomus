@@ -34992,6 +34992,58 @@
         }
       },
       {
+        "id": "majordomus://issue/I2652",
+        "kind": "issue",
+        "label": "I2652",
+        "summary": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
+        "route": "/cockpit/objects/issue/i2652",
+        "source": ".ai/repo/project/issues/I2652.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/knowledge answers from knowledge_base.status and knowledge_base.candidates and names both as its sources with their age",
+            "A queue longer than the screen's bound is drawn newest first to the bound and says how many records it left out",
+            "An empty queue and a checkout where the deriver never ran are said in words, never as an empty table or an empty cell",
+            "The page carries no form and no button: the review is the commands a person runs, shown as text",
+            "No handler under src/ui executes a capability on the request, which case 1096 holds, and the route is within the UI's latency budget, which bench --check holds",
+            "Every screen's navigation leads to it"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2486"
+          ],
+          "evidence_required": [
+            "knowledge_screen_unit_tests",
+            "knowledge_screen_case_3003",
+            "knowledge_screen_within_budget"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Promoting or rejecting a record from the screen: a screen reads and never executes (ADR 0142), and promotion is a person's act",
+            "The evolve skill itself and its projection as a command, which are another session's",
+            "A panel on the dashboard and a link from the Command screen, which follow once the application shell another session is building has landed",
+            "A change to what knowledge_base.candidates answers"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/3003_the_knowledge_screen_answers.sh",
+            ".ai/repo/project/issues/I2652.yaml"
+          ],
+          "slug": "the-ui-shows-what-the-knowledge-base-holds",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source",
+            "majordomus bench system.http. --transport system --profile ci --no-write --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "label": "an-expedited-landing",
@@ -51524,6 +51576,13 @@
         "label": "test/cases/29_prompt_capture.sh",
         "route": "/cockpit/objects/test/test-cases-29-prompt-capture-sh",
         "source": "test/cases/29_prompt_capture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "kind": "test",
+        "label": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "route": "/cockpit/objects/test/test-cases-3003-the-knowledge-screen-answers-sh",
+        "source": "test/cases/3003_the_knowledge_screen_answers.sh"
       },
       {
         "id": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -76653,6 +76712,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2652",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2652",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2652",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/an-expedited-landing",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -80824,6 +80898,11 @@
       },
       {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86129,8 +86208,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2743,
-      "edges": 6020,
+      "nodes": 2745,
+      "edges": 6024,
       "acyclic": false,
       "truncated": false
     }

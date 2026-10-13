@@ -6,23 +6,23 @@
     "version": "0.24.0"
   },
   "registry": {
-    "fingerprint": "5ae488f52d291197ace2cc158366b9ef09c855b002ac4674248838718cf4a7bb",
+    "fingerprint": "c5e5e536d11a08281330a8ff989b5de3fcbfa3b09fcd525f13fe41eb563921f3",
     "summary": {
-      "total": 2329,
+      "total": 2331,
       "builtin": 196,
-      "declarative": 2133,
+      "declarative": 2135,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2133
+        "resource": 2135
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2142
+        "implemented": 2144
       },
       "mcp_tools": 187,
-      "mcp_resources": 2188,
+      "mcp_resources": 2190,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 343,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 468,
+        "capabilities": 469,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4c6aeb91759f29823fb805f0d8d619134e6b183e224eef9e9c60b04259947dd9",
+    "fingerprint": "51d6cb4036dcabb946e4807f9dd680484293d120deddc9ecf42c6c2e2ae7d77c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81358,7 +81358,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 342,
+      "issue": 343,
       "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81372,7 +81372,7 @@
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 468,
+      "test": 469,
       "use-case": 49,
       "workspace": 1
     },
@@ -87241,7 +87241,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 25176
+        "bytes": 25504
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87331,7 +87331,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232014
+        "bytes": 232547
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94510,6 +94510,17 @@
         "bytes": 6346
       },
       {
+        "uri": "majordomus://issue/I2652",
+        "kind": "issue",
+        "identity": "I2652",
+        "title": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
+        "description": "Give the queue the work leaves behind a screen: what awaits a reviewer, what it is about, and whether a derivation still follows every closed episode, so that the result of a review is seen where every other state of the delivery is.",
+        "path": ".ai/repo/project/issues/I2652.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3595
+      },
+      {
         "uri": "majordomus://knowledge/an-expedited-landing",
         "kind": "knowledge",
         "identity": "an-expedited-landing",
@@ -101331,6 +101342,14 @@
         "bytes": 26890
       },
       {
+        "uri": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "kind": "test",
+        "identity": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "path": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "source_class": "case",
+        "bytes": 2474
+      },
+      {
         "uri": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "kind": "test",
         "identity": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -104413,7 +104432,7 @@
       "identity": [
         "id"
       ],
-      "objects": 342
+      "objects": 343
     },
     {
       "name": "knowledge",
@@ -104565,7 +104584,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 468
+      "objects": 469
     },
     {
       "name": "use-case",
@@ -148114,6 +148133,14 @@
         "route": "GET /ui/evidence"
       },
       {
+        "key": "system.http.ui.knowledge",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/knowledge"
+      },
+      {
         "key": "system.http.ui.docs",
         "kind": "page",
         "transport": "http",
@@ -148216,6 +148243,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/evidence"
+      },
+      {
+        "key": "system.http.live.ui.knowledge",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/knowledge"
       },
       {
         "key": "system.http.live.ui.docs",
