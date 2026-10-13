@@ -1,7 +1,7 @@
 +++
 title = "A screen shows the latest reading of its sources at once, and never waits for a handler"
 description = "A screen shows the latest reading of its sources at once, and never waits for a handler"
-weight = 130
+weight = 131
 [extra]
 kind = "rule"
 slug = "project-no-screen-waits-for-a-source-1"
