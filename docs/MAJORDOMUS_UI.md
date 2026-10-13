@@ -102,8 +102,8 @@ since no capability the other screens ask at first paint states the forge's addr
 Drain, which asks the queue, and Deployments, which asks what was observed, do link the
 forge), and a path that is not an object of the index.
 
-What the forge recorded is read from one observation, taken by `majordomus prs refresh` — the
-one command that asks the forge — and kept beside the pull-request observation. A checkout
+What the forge recorded is read from one observation, taken by `majordomus served forge` and
+kept beside the pull-request observation, which `majordomus prs refresh` takes. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
 empty.
@@ -218,6 +218,22 @@ screen in `SCREENS` and every panel in `PANELS`, cold and warm:
 
 The targets are listed in [`generated/benchmarks.md`](generated/benchmarks.md).
 
+**A screen over its budget fails the build** (I2489). The benchmark policy,
+`.ai/repo/benchmarks/rust/policy.yaml`, declares that a warm screen answers within 100 ms at
+p95, for both views. `majordomus bench --check` holds every budget with or without a
+baseline and on every host, prints each bounded screen with its value and its bound, and
+exits 10 when one is over. The `ui` job of CI runs it before the browser audit:
+
+<!-- majordomus:unrun a benchmark of every screen over a real socket: the ui job of validate runs it, and case 1099 runs it against a fixture -->
+```bash
+majordomus bench system.http. --transport system --profile ci --no-write --check
+```
+
+A regression threshold could not do this: a screen that was always slow never regresses, and
+a platform with no baseline compares nothing. The first run of the check found `/ui/command`
+at 400-660 ms, where every other screen read 1-21 ms. The first request after the repository
+moved is not measured by the bench yet (I2485).
+
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
@@ -331,7 +347,7 @@ publication model declares that a publication holds it (`deploy.snapshots` in
 page the record lists. A snapshot that stopped at its bound passes and the probe states what
 it left out; one that is missing, names an older commit or does not say what ended its
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
-`test/cases/1096_the_published_ui_is_the_trunks.sh` holds them.
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
 ## What it does not do yet
 

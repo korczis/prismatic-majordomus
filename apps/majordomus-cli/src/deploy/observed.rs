@@ -8,8 +8,8 @@
 //! an environment exists because the forge has a deployment in it, so a new target appears
 //! the first time something is deployed there and no file names it.
 //!
-//! The reading is one GraphQL question through `gh`, asked by `majordomus prs refresh` (the
-//! one command that observes the forge) and recorded beside the pull-request observation.
+//! The reading is one GraphQL question through `gh`, asked by `majordomus served forge` and
+//! recorded beside the pull-request observation, which `majordomus prs refresh` takes.
 //! Every reader — `deploy.observed`, the Deployments screen, the published snapshot — reads
 //! the record and never the network, and a checkout that has never observed says so rather
 //! than showing an empty table.
@@ -273,7 +273,7 @@ pub fn observe_with(program: &str, root: &Path) -> Result<DeploymentObservation,
 pub const GH: &str = "gh";
 
 /// Observe the forge through `program` and record what it said. The network step, taken by
-/// `prs refresh` with [`GH`].
+/// `served forge` with [`GH`].
 pub fn refresh_with(program: &str, root: &Path) -> Result<DeploymentObservation, String> {
     observe_with(program, root).and_then(|observation| {
         store(root, &observation)?;
@@ -308,7 +308,7 @@ pub fn load(root: &Path) -> Result<Option<DeploymentObservation>, String> {
             .map(Some)
             .map_err(|e| format!("{}: {e}", path.display())),
         other => Err(format!(
-            "{}: schema {}, this reads {SCHEMA}; majordomus prs refresh records one this reads",
+            "{}: schema {}, this reads {SCHEMA}; majordomus served forge records one this reads",
             path.display(),
             other.map_or("none".to_string(), |s| s.to_string())
         )),
@@ -363,7 +363,7 @@ pub fn report(root: &Path) -> ObservedDeployments {
             releases: o.releases,
         },
         Ok(None) => unobserved(
-            "the forge has not been observed from this checkout; majordomus prs refresh asks it"
+            "the forge has not been observed from this checkout; majordomus served forge asks it"
                 .into(),
         ),
         Err(reason) => unobserved(reason),
@@ -452,7 +452,7 @@ mod tests {
         assert_eq!(load(dir.path()).unwrap(), None);
         let unobserved = report(dir.path());
         assert!(!unobserved.observed);
-        assert!(unobserved.reason.unwrap().contains("prs refresh"));
+        assert!(unobserved.reason.unwrap().contains("served forge"));
 
         let o = parse("o/r", "2026-10-12T14:00:00Z", &answer());
         store(dir.path(), &o).unwrap();

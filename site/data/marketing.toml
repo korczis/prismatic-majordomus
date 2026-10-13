@@ -1,22 +1,23 @@
 # The only hand-written prose on the site: positioning sentences and button labels. No
 # capability claims (features, domains and claims are objects of the layer, derived onto the
 # page) and no numbers (the generator computes every count). Budget: scripts/site-check fails
-# when this file exceeds 60 lines.
+# when this file exceeds 80 lines (60 until the landing page named its interfaces in plain words).
 [hero]
-eyebrow = "A supervisory control layer for AI-assisted work"
+eyebrow = "For teams that build software with AI coding agents"
 title = "AI coding agents do the work."
 subtitle = "Your repository decides whether it is done."
-lead = "Majordomus keeps the context, the paths each agent may touch, the rules and the definition of done in the repository instead of a chat window, and it refuses to record work as finished until the repository's own checks pass. It runs beside whichever coding agent you use, and it never calls a model."
-cta_primary = "Watch it refuse an agent"
-cta_install = "Install"
+lead = "Majordomus keeps AI-assisted work coordinated, traceable and verifiable. It carries what was learned from one session to the next, shows who is working on what, applies your repository's own rules, and records a task as finished only when your own checks pass. It runs beside whichever coding agent you use, and it never calls a model."
+cta_primary = "See it working"
+cta_install = "Get started"
 verdict_kicker = "recorded run · the worker says it is done"
 verdict_after = "It is accepted only when every line passes:"
-verdict_link = "Step through the whole run"
+verdict_link = "Replay the whole run, step by step"
 console_caption = "Recorded runs, not a mockup: each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
 [recognise]
 title = "Where AI-assisted work breaks down"
 lead = "None of these are model problems. They are operations problems, and the repository is where operations belong."
 closing = "Majordomus turns each of them into repository state, a contract a machine checks and a record of what happened."
+who = "Who runs into them"
 more = "Recognise a specific moment? The failure modes it answers, by who meets them"
 [map]
 kicker = "what it controls"
@@ -29,19 +30,33 @@ kicker = "how it works"
 title = "One task, from start to finish"
 lead = "A worker claims a task and the paths it may touch, reads what the repository knows, records progress, is checked against policy, leaves a handover, and asks to finish. The repository answers each step."
 closing = "Nothing here asks a model to behave. check reports what does not hold against the task's scope and policy, and finish refuses to record the work while any line of the contract fails."
-inspect = "Inspect the recorded runs behind every step"
+recorded = "See a recorded run"
 [refuses]
 kicker = "the proof"
 title = "A worker's word is not proof"
 lead = "A worker strays outside its scope, says it is done, and is refused; fixes the scope and is refused again, because the repository's own test still fails; and is accepted only when every line of the contract passes. A recorded run of the real tool, stepped through."
 closing = "This is the difference between a tool that tells a worker what to do and one that decides whether what it did counts. A worker can always say it is finished; here that sentence is a claim the repository evaluates, line by line, and nothing is recorded while any line fails."
+replay = "Replay the recorded run, step by step"
 more = "Every other refusal the lifecycle recorded"
 [surfaces]
-kicker = "one source, every surface"
-title = "Declared once, projected everywhere"
-lead = "A capability, a rule, a feature, a domain: each is declared once in the repository. The command line, the HTTP API and its OpenAPI document, MCP, the Cockpit, the reference and this site are projections of that declaration, and a projection that disagrees with it fails the build."
+kicker = "working interfaces"
+title = "One product, whichever way you work"
+lead = "People and agents work with Majordomus in different places, and every one of them shows the same repository records. Each is declared once and generated from that declaration, and a view that disagrees with it fails the build."
 source = ".ai/ declarations and the executable's capabilities"
 registry = "one registry, validated"
+[interfaces]
+ui = "For a person following the delivery: health, releases, the roadmap, the open work, the evidence and the rules, in one place."
+cockpit = "For a person who wants the detail: every rule, record and check behind a figure, with its source."
+cli = "For whoever does the work, person or agent: start a task, check it, hand it over, finish it."
+api = "For your own tools and dashboards: the same answers, over HTTP."
+mcp = "For coding agents: the same answers, as tools an agent can call."
+docs = "For everyone: the guides, the reference and the decisions behind them."
+local = "Runs on your own machine, beside the repository, once the local server is started. It answers at"
+live = "On your own repository it is live: start the local server and it answers at"
+published = "Open the published snapshot"
+snapshot = "A snapshot of this project's own repository, read once at the commit this site was published from. It is not a live reading, and nothing on it refreshes."
+[proof]
+plain = "Read the two figures apart. Declared is a promise the project has written down, together with the test that is meant to prove it. Supported means that test was run against this exact revision and the run was recorded. A promise without a recorded run is counted as a promise, and as nothing more."
 [chain]
 legend = "A solid line is held by a machine: a projection that disagrees with its declaration fails the build, and a blocking rule is decided by a validator or a test. A dashed line is declared and waits for its evidence: a guaranteed claim names the test that is to prove it, and it counts as supported only when a recorded run of this revision does."
 [providers]

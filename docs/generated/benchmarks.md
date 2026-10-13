@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.23.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 195 | 166 | 0 | 29 |
+| direct | 196 | 166 | 0 | 30 |
 | http | 191 | 166 | 0 | 25 |
 | mcp | 187 | 162 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 587 | 508 | 0 | 79 |
+| total | 588 | 508 | 0 | 80 |
 
 ## Capabilities
 
@@ -191,6 +191,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
 | `rules.report` | rules | query | process, 8 entries, per checkout state | covered | covered | covered | `all`, `findings`, `blocking` |
 | `rules.show` | rules | query | process, 32 entries, per checkout state | covered | covered | covered | `first` |
+| `served.forge` | served | command | — | waived | — | — | — |
 | `served.observe` | served | command | — | waived | — | — | — |
 | `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
