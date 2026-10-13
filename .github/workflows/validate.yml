@@ -945,6 +945,11 @@ jobs:
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      # before the browser: a screen that computes on the request is a failure the audit cannot
+      # see, and this one is told in seconds (I2489, project.no-screen-waits-for-a-source). No
+      # baseline exists for this platform, so only the policy's budgets are judged here.
+      - name: every warm screen of the UI is within its budget
+        run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
       - name: audit the UI in a browser
         run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
       - if: always()

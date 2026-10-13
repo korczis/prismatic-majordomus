@@ -27,10 +27,11 @@ const CAPABILITIES: Source = Source::of("capabilities.list");
 
 /// The capability a command is, by its invocation: the one whose declared command-line path,
 /// after the executable's name, is that invocation. None when no capability declares it.
-pub fn capability_of<'a>(
-    invocation: &str,
-    capabilities: &'a [serde_json::Value],
-) -> Option<&'a str> {
+///
+/// The definition, one command at a time. The screen asks [`by_command_line`], which answers
+/// the same for a whole catalogue in one pass; the tests hold the two to each other.
+#[cfg(test)]
+fn capability_of<'a>(invocation: &str, capabilities: &'a [serde_json::Value]) -> Option<&'a str> {
     let line = invocation.strip_prefix("majordomus ")?;
     capabilities.iter().find_map(|c| {
         let path: Vec<&str> = c
@@ -43,6 +44,33 @@ pub fn capability_of<'a>(
             .then(|| c.get("id").and_then(serde_json::Value::as_str))
             .flatten()
     })
+}
+
+/// Every capability that declares a command line, by that line as a person types it after
+/// the executable's name: what [`capability_of`] answers, for a whole catalogue at once. A
+/// catalogue of a few hundred commands against a registry of a few thousand capabilities is
+/// one pass over each, where asking [`capability_of`] per command walked the registry and
+/// built every path again for every row (measured: 0.4-0.6 s of a screen that otherwise
+/// renders in a few milliseconds). The first capability to declare a line keeps it, as
+/// [`capability_of`] finds the first.
+fn by_command_line(capabilities: &[serde_json::Value]) -> std::collections::HashMap<String, &str> {
+    let mut lines = std::collections::HashMap::new();
+    for c in capabilities {
+        let Some(path) = c
+            .pointer("/exposure/cli/path")
+            .and_then(serde_json::Value::as_array)
+        else {
+            continue;
+        };
+        let words: Vec<&str> = path.iter().filter_map(serde_json::Value::as_str).collect();
+        let Some(id) = c.get("id").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        if !words.is_empty() {
+            lines.entry(words.join(" ")).or_insert(id);
+        }
+    }
+    lines
 }
 
 /// Where a capability's inspector is.
@@ -134,11 +162,15 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 /// changes.
 fn catalogue(commands: &Answer, registry: &[serde_json::Value]) -> El {
     unanswered(commands).unwrap_or_else(|| {
+        let lines = by_command_line(registry);
         let rows = list(commands, "/commands")
             .iter()
             .map(|c| {
                 let invocation = text(c, "invocation");
-                let command = match capability_of(&invocation, registry) {
+                let capability = invocation
+                    .strip_prefix("majordomus ")
+                    .and_then(|line| lines.get(line).copied());
+                let command = match capability {
                     Some(id) => code_link(capability_href(id), invocation)
                         .attr("title", format!("the capability {id}")),
                     None => el("code").class("mj-ui-mono").text(value(c, "invocation")),
@@ -191,6 +223,39 @@ fn running(executions: &Answer) -> El {
 mod tests {
     use super::*;
     use crate::synthetic::SyntheticRepository;
+
+    /// The catalogue's index answers what `capability_of` answers, for every command line a
+    /// capability declares and for one none does: the screen and the single lookup cannot
+    /// name different capabilities.
+    #[test]
+    fn the_index_of_command_lines_answers_what_capability_of_answers() {
+        let registry = vec![
+            serde_json::json!({ "id": "plan.status", "exposure": { "cli": { "path": ["plan", "status"] } } }),
+            serde_json::json!({ "id": "plan.second", "exposure": { "cli": { "path": ["plan", "status"] } } }),
+            serde_json::json!({ "id": "bench.run", "exposure": { "cli": { "path": ["bench"] } } }),
+            serde_json::json!({ "id": "no.cli", "exposure": {} }),
+            serde_json::json!({ "id": "empty.path", "exposure": { "cli": { "path": [] } } }),
+        ];
+        let lines = by_command_line(&registry);
+        assert_eq!(lines.len(), 2, "one entry per declared line: {lines:?}");
+        for invocation in [
+            "majordomus plan status",
+            "majordomus bench",
+            "majordomus nothing",
+        ] {
+            let line = invocation.strip_prefix("majordomus ").expect("the prefix");
+            assert_eq!(
+                lines.get(line).copied(),
+                capability_of(invocation, &registry),
+                "{invocation}"
+            );
+        }
+        assert_eq!(
+            lines.get("plan status").copied(),
+            Some("plan.status"),
+            "the first keeps it"
+        );
+    }
 
     /// The origin filter is the capability's own input: the tab it names is current, and an
     /// origin the capability does not declare is ignored rather than passed on.
