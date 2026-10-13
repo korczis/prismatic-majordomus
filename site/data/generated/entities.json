@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 103,
+      "count": 104,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 177,
+      "count": 178,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 103
+      "count": 104
     },
     {
       "kind": "application",
@@ -181,7 +181,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 1
+      "count": 2
     },
     {
       "kind": "mesh-declaration",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 177
+      "count": 178
     },
     {
       "kind": "scope",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 466
+      "count": 467
     },
     {
       "kind": "use-case",
@@ -6059,6 +6059,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0138/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
         }
       ]
     },
@@ -8003,6 +8010,81 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0155",
+      "identity": "adr-0155",
+      "slug": "adr-0155",
+      "cockpit": "/cockpit/objects/adr/adr-0155",
+      "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "governance",
+        "ci",
+        "release"
+      ],
+      "source": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-verdict",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/362_a_release_follows_the_ci_verdict.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -11406,6 +11488,48 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+      "identity": "project.an-expedited-landing-is-the-owners-word@1",
+      "slug": "project-an-expedited-landing-is-the-owners-word-1",
+      "cockpit": "/cockpit/objects/rule/project-an-expedited-landing-is-the-owners-word-1",
+      "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+      "status": "active",
+      "tags": [
+        "process",
+        "integration",
+        "deployment",
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
       "identity": "project.an-intent-outlives-its-sessions@3",
       "slug": "project-an-intent-outlives-its-sessions-3",
@@ -13378,6 +13502,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0129/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
         }
       ]
     },
@@ -13793,6 +13931,20 @@
           "label": "adr-0129",
           "kind": "adr",
           "route": "/adrs/adr-0129/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
           "external": false
         },
         {

@@ -3644,6 +3644,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/release-verdict",
+        "kind": "file",
+        "label": "release-verdict",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/release-verdict",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci/rule-proof-check",
         "kind": "file",
         "label": "rule-proof-check",
@@ -7196,6 +7204,34 @@
             "language",
             "governance",
             "derivation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0155",
+        "kind": "adr",
+        "label": "adr-0155",
+        "summary": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "route": "/cockpit/objects/adr/adr-0155",
+        "source": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+            "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/land-and-publish.v1.md",
+            "test:test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+            "test:test/cases/362_a_release_follows_the_ci_verdict.sh",
+            "file:docs/INTEGRATION.md",
+            "file:scripts/ci/release-verdict"
+          ],
+          "tags": [
+            "integration",
+            "governance",
+            "ci",
+            "release"
           ]
         }
       },
@@ -34503,6 +34539,8 @@
             "the declaration is a published-only surface at /ui built from this commit, and the topology validates with it beside the served UI",
             "the Pages deploy places the snapshot of the commit it publishes at /ui and refuses one of another commit"
           ],
+          "completed_at": "2026-10-13T12:49:21Z",
+          "completed_event": "sha256:5aad37576e44014743e1329eb0bec556598522695ba0f8021192f7ed8ed46bad",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2462"
@@ -34532,14 +34570,18 @@
             "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh"
           ],
           "slug": "the-ui-is-published-as-a-snapshot",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:47:49Z",
+          "started_event": "sha256:4f52ab1e849b1d06d6a508241dc2921a8f53c48581e9eaaca46c8b6818d3d22f",
+          "updated_at": "2026-10-13T12:49:21Z",
           "validation": [
             "cargo test --lib web::report::snapshot",
             "test/run.sh 1092_the_ui_snapshot_holds_every_screen",
             "test/run.sh 1093_the_ui_snapshot_links_nothing_absent",
             "test/run.sh 97_pages_fast_path",
             "test/run.sh 26_ci_wiring"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:48:08Z",
+          "verified_event": "sha256:e5df6e147d74cf8ebd081389110b17e72cce587c6922567e3c36ada5033efe40"
         }
       },
       {
@@ -34638,6 +34680,8 @@
         "route": "/cockpit/objects/issue/i2486",
         "source": ".ai/repo/project/issues/I2486.yaml",
         "facts": {
+          "completed_at": "2026-10-13T12:47:30Z",
+          "completed_event": "sha256:d227f7fbb5c4d7115d02ac791744512ab168677190d6bc39983c5ab0f76eec7c",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2461"
@@ -34669,13 +34713,17 @@
             ".ai/repo/project/issues/I2486.yaml"
           ],
           "slug": "no-screen-waits-for-a-source",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:45:05Z",
+          "started_event": "sha256:d44362e179b066d87d723c88b76e490bb5ccfd60485a9613729796404af12293",
+          "updated_at": "2026-10-13T12:47:30Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test executor",
             "cargo test --lib ui::",
             "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:45:29Z",
+          "verified_event": "sha256:922c5dee82fd3592d95d4d05e0e97a167d923dc7832078b0f8dab7ca9bfeae50"
         }
       },
       {
@@ -34784,6 +34832,8 @@
             "The repository's policy declares the UI's budget for the pinned and the live view, and every screen is within it",
             "The ui job runs the check before the browser audit, under a bound smaller than the job's"
           ],
+          "completed_at": "2026-10-13T12:50:44Z",
+          "completed_event": "sha256:f969b1727cb9977dd9378d5d67d2b2a648683bc65841b69c45fc9e5e676bdbe2",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2486"
@@ -34810,13 +34860,17 @@
             ".ai/repo/project/issues/I2489.yaml"
           ],
           "slug": "a-screen-over-its-budget-fails-the-build",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:50:07Z",
+          "started_event": "sha256:022c9b1364a58490655c313ce04cb4c48811df86e9b087cf8cb12fca609c3a74",
+          "updated_at": "2026-10-13T12:50:44Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test bench_units",
             "MJ_TEST_JOBS=2 bash test/run.sh 1099_a_screen_over_its_budget_fails",
             "majordomus bench system.http. --transport system --profile ci --no-write --check"
-          ]
+          ],
+          "verified_at": "2026-10-13T12:50:24Z",
+          "verified_event": "sha256:629858dc8d31de3a119cdf75cdee264f8a68f5cc74b60673a3e9eb861086c32c"
         }
       },
       {
@@ -34890,6 +34944,8 @@
         "route": "/cockpit/objects/issue/i2495",
         "source": ".ai/repo/project/issues/I2495.yaml",
         "facts": {
+          "completed_at": "2026-10-13T12:52:11Z",
+          "completed_event": "sha256:18755ed4e186b9ea84769fdab240052045776d1b1a5f9130010eba494681f6f7",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2483"
@@ -34922,12 +34978,35 @@
             ".ai/repo/project/issues/I2495.yaml"
           ],
           "slug": "the-cockpit-is-published-as-a-snapshot",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-13T12:51:02Z",
+          "started_event": "sha256:973877e19a18e6438a24a06f952ec555a8fa5ea32ebedf613e55e8fedf5e202b",
+          "updated_at": "2026-10-13T12:52:11Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib web::report::snapshot",
             "MJ_TEST_JOBS=2 bash test/run.sh 2981_the_cockpit_snapshot_holds_its_routes 2982_two_snapshots_link_what_the_other_holds",
             "scripts/pages verify-ui --surface cockpit"
+          ],
+          "verified_at": "2026-10-13T12:51:17Z",
+          "verified_event": "sha256:badc5d79f88beea02bc656a173f6da95aea7c3867ee3c20aba42889c5a18b014"
+        }
+      },
+      {
+        "id": "majordomus://knowledge/an-expedited-landing",
+        "kind": "knowledge",
+        "label": "an-expedited-landing",
+        "summary": "How a pull request is landed past the required check, and what that never reaches",
+        "route": "/cockpit/objects/knowledge/an-expedited-landing",
+        "source": ".ai/repo/knowledge/curated/an-expedited-landing.md",
+        "status": "verified",
+        "facts": {
+          "class": "convention",
+          "date": "2026-10-13",
+          "epistemics": "decided",
+          "tags": [
+            "integration",
+            "deployment",
+            "ci"
           ]
         }
       },
@@ -41799,6 +41878,29 @@
             "advisors",
             "providers",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "rule",
+        "label": "project.an-expedited-landing-is-the-owners-word@1",
+        "summary": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+        "route": "/cockpit/objects/rule/project-an-expedited-landing-is-the-owners-word-1",
+        "source": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.integration-follows-the-current-master@3",
+            "project.land-and-publish@1"
+          ],
+          "tags": [
+            "process",
+            "integration",
+            "deployment",
+            "governance",
+            "evidence"
           ]
         }
       },
@@ -51401,6 +51503,13 @@
         "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "kind": "test",
+        "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "route": "/cockpit/objects/test/test-cases-2999-delivery-is-expedited-only-where-the-rule-says-sh",
+        "source": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -63484,6 +63593,51 @@
       {
         "source": "majordomus://adr/adr-0149",
         "target": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "file:scripts/ci/release-verdict",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://test/test/cases/362_a_release_follows_the_ci_verdict.sh",
         "kind": "put_in_force"
       },
       {
@@ -76492,6 +76646,11 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://knowledge/an-expedited-landing",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -77904,6 +78063,21 @@
       {
         "source": "majordomus://rule/project.advisors-are-optional@1",
         "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
       {
@@ -80628,6 +80802,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -85938,8 +86117,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2737,
-      "edges": 6005,
+      "nodes": 2742,
+      "edges": 6019,
       "acyclic": false,
       "truncated": false
     }
