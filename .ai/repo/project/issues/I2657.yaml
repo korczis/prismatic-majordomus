@@ -1,0 +1,46 @@
+id: I2657
+milestone: development-runtime
+title: "The board is shown whole: one derived answer for API and MCP, and a screen over it with every worker, every claim, the paths they name and where two of them meet"
+slug: the-board-is-shown-whole
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make what the workers of a repository said they are doing something a person and an agent can read in one place: who is here, in which worktree, every claim each one holds, which paths are named by whom, which two claims meet, and what the mesh holds exclusively."
+why: "The owner, 2026-10-13: a board visualization at maximum extent must be part of the derived, inferred UI, API and MCP. Measured on master a241eb04a1: the board's data is whole and almost none of it is shown. /ui has no board screen; the Cockpit's peers page draws each worker's latest claim only and one side of an overlap; nothing computes who holds a path; three surfaces each derive a different part from peers.list. On 2026-10-13 nine sessions coordinated landings through that board by reading raw JSON."
+current_state: "peers.list answers the peers of every checkout with their claims and a list of overlaps that names the earlier worker of each pair and not the later. The UI's mesh screen reads the mesh alone. Claims by path, both sides of a collision, and the exclusive claims beside the board's are computed nowhere."
+desired_state: "peers.board derives, on every read and from nothing stored: every worker with its checkout, branch and standing; every claim of every worker, newest first; every path named with its holders and whether two workers hold it; every pair of claims that meet with both sides; the exclusive claims the mesh holds with the board claims announced under each; the checkouts whose board could not be read; and the counts of all of these. It is served over HTTP and MCP from the one declaration. /ui/board reads it as a reading and draws it as a graph of checkout, worker, claim and path and as tables, each bounded and saying what it left out."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/ui/board.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/MCP.md"
+  - "test/cases/3008_the_board_is_shown_whole.sh"
+  - ".ai/repo/project/issues/I2657.yaml"
+non_scope:
+  - "Announcing, claiming or releasing from the screen: a screen reads and never executes (ADR 0142)"
+  - "A history of announcements: a board keeps a worker's current claims and overwrites; a past claim is the mesh journal's to answer, where the mesh is active"
+  - "The board on the command line, which is I1997"
+  - "A graph family over live state: a derivation of graph.rs reads the registry and the index and has no board to read"
+  - "Publishing a live board: the published snapshot is read in CI, where the board holds no worker"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "peers.board answers every claim of every worker, and two boards' first peers are two workers told apart by their checkout"
+  - "A pair of claims of two different workers whose scope meets is answered once, with both claims named and the paths they meet on; a worker never collides with itself"
+  - "A path is answered with the claims and workers that name it, and is contested when a second worker holds it by the same path or by one above or below it"
+  - "An exclusive claim the mesh holds is answered with the board claims announced under it, and an inactive mesh is said with its reason"
+  - "A checkout whose board could not be read makes the answer say it is not whole and is named with the reason, on the answer and first on the screen"
+  - "The same boards give the same answer byte for byte, and nothing is written"
+  - "/ui/board draws the answer as a graph and as tables, carries no control, is in the navigation, and no handler under src/ui executes a capability on the request"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::peers"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::board"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3008_the_board_is_shown_whole 1096_no_screen_waits_for_a_source"
+evidence_required:
+  - "board_derivation_unit_tests"
+  - "board_screen_unit_tests"
+  - "board_case_3008"
+created_at: 2026-10-13
+updated_at: 2026-10-13
