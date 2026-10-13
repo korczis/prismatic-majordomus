@@ -100,6 +100,20 @@ A **capability** is a descriptor with:
 | `skill` | optional: the short name a person invokes the capability by from an agent's prompt (`alias`) and the one string field of the input the typed text fills (`argument`), declared with `.skill(alias, argument)`; the registry refuses a malformed, reserved or taken alias and an argument the input cannot take alone; the file an agent product reads is generated from it ([`EDITORS.md`](EDITORS.md)) |
 | `stability` | `implemented`, `behaviorally_verified`, `experimental`, `planned`, `unsupported`; a planned or unsupported capability may be listed and is never executable through any projection |
 
+Any executable capability can be run from a shell by its id, with its input as JSON:
+
+```bash
+majordomus capabilities invoke repository.info
+majordomus capabilities invoke intents.record --input-json '{"id": "intent-lifecycle"}'
+```
+
+`--input-file <path>` reads the object from a file and `-` from standard input; with neither,
+the input is `{}`. The input is held to the capability's own schema and the answer is the value
+its MCP tool and its HTTP route return. The command adds no operation of its own: an unknown id
+exits 12, and invalid input, a refusal or a failure exit 13 with the capability's own words. A
+capability that writes the repository writes it here as it does over MCP; the command line is
+the trusted surface, and nothing is retried.
+
 Id grammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty with no
 whitespace or control character, any other Unicode included; ids are compared as strings,
 case-sensitively. Declarative ids are `<kind>.<identity>`, where the identity is what the

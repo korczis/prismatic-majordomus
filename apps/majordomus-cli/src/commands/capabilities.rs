@@ -74,6 +74,22 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 }
             }
         }
+        CapabilitiesCommand::Invoke {
+            id,
+            input_json,
+            input_file,
+        } => {
+            let input = invoke_input(input_json.as_deref(), input_file.as_deref())?;
+            // the capability's own answer, and its own refusal: this command adds neither
+            let v = ctx.execute(&id, input).map_err(|e| match e {
+                CapabilityError::NotFound(reason) if ctx.registry.get(&id).is_none() => {
+                    let _ = reason;
+                    Error::CapabilityNotFound { id: id.clone() }
+                }
+                other => map(other),
+            })?;
+            w(&mut out, pretty(&v))?;
+        }
         CapabilitiesCommand::Describe { id, format } => {
             let v = ctx
                 .execute(
@@ -390,6 +406,33 @@ fn cli_capability<'a>(ctx: &'a crate::capability::Context, path: &[&str]) -> Res
         })
 }
 
+/// The input of `capabilities invoke`: the JSON given on the command line, the file named
+/// (`-` for standard input), or an empty object. It must be one JSON object, because that
+/// is what every capability's input schema describes.
+fn invoke_input(json: Option<&str>, file: Option<&std::path::Path>) -> Result<Value> {
+    let text = match (json, file) {
+        (Some(text), _) => text.to_string(),
+        (None, Some(path)) if path == std::path::Path::new("-") => {
+            let mut text = String::new();
+            std::io::Read::read_to_string(&mut std::io::stdin(), &mut text)
+                .map_err(Error::Transport)?;
+            text
+        }
+        (None, Some(path)) => std::fs::read_to_string(path).map_err(|e| Error::io(path, e))?,
+        (None, None) => return Ok(json!({})),
+    };
+    match serde_json::from_str::<Value>(&text) {
+        Ok(v) if v.is_object() => Ok(v),
+        Ok(_) => Err(Error::Protocol {
+            reason: "the input is not a JSON object; a capability takes its input as one object"
+                .into(),
+        }),
+        Err(e) => Err(Error::Protocol {
+            reason: format!("the input is not JSON: {e}"),
+        }),
+    }
+}
+
 fn map(e: CapabilityError) -> Error {
     Error::Protocol {
         reason: e.to_string(),
@@ -410,5 +453,100 @@ fn provenance_line(p: &Value) -> String {
             p["section"].as_str().unwrap_or("-")
         ),
         _ => p.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+
+    fn run_in(repo: &SyntheticRepository, extra: &[&str]) -> Result<u8> {
+        let root = repo.root().to_string_lossy().into_owned();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .into_owned();
+        let mut argv = vec![
+            "majordomus",
+            "capabilities",
+            "invoke",
+            "--repo",
+            &root,
+            "--discovery",
+            "filesystem",
+            "--share",
+            &share,
+        ];
+        argv.extend_from_slice(extra);
+        crate::commands::run(<crate::cli::Cli as clap::Parser>::parse_from(argv))
+    }
+
+    /// The input is one JSON object from the command line or a file, and `{}` when neither
+    /// is given; anything else is refused before a capability is asked.
+    #[test]
+    fn the_input_is_one_json_object_or_nothing() {
+        assert_eq!(invoke_input(None, None).unwrap(), json!({}));
+        assert_eq!(
+            invoke_input(Some(r#"{"id": "x"}"#), None).unwrap(),
+            json!({"id": "x"})
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("input.json");
+        std::fs::write(&file, r#"{"statement": "s"}"#).unwrap();
+        assert_eq!(
+            invoke_input(None, Some(&file)).unwrap(),
+            json!({"statement": "s"})
+        );
+        for bad in ["[1]", "\"text\"", "{"] {
+            match invoke_input(Some(bad), None) {
+                Err(Error::Protocol { reason }) => {
+                    assert!(reason.starts_with("the input is not"), "{reason}")
+                }
+                other => panic!("{bad} answered {other:?}"),
+            }
+        }
+        match invoke_input(None, Some(&dir.path().join("absent.json"))) {
+            Err(e) => assert!(e.to_string().contains("absent.json"), "{e}"),
+            Ok(v) => panic!("an absent file answered {v}"),
+        }
+    }
+
+    /// A read and a write through the one generic command: the read answers, the write
+    /// writes its record once and is the capability's own refusal the second time, and an id
+    /// the registry does not hold is said as that.
+    #[test]
+    fn invoke_runs_the_named_capability_and_adds_nothing_of_its_own() {
+        let repo = SyntheticRepository::small().unwrap();
+        assert_eq!(run_in(&repo, &["repository.info"]).unwrap(), 0);
+        let propose = [
+            "intents.propose",
+            "--input-json",
+            r#"{"statement": "Invoked by its id", "id": "invoked"}"#,
+        ];
+        assert_eq!(run_in(&repo, &propose).unwrap(), 0);
+        let record = repo.root().join(".ai/repo/project/intents/invoked.yaml");
+        let text = std::fs::read_to_string(&record).unwrap();
+        assert!(text.contains("statement: \"Invoked by its id\""), "{text}");
+        match run_in(&repo, &propose) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("never overwrites"), "{reason}")
+            }
+            other => panic!("a second proposal answered {other:?}"),
+        }
+        assert_eq!(std::fs::read_to_string(&record).unwrap(), text);
+        match run_in(&repo, &["no.such"]) {
+            Err(e @ Error::CapabilityNotFound { .. }) => assert_eq!(e.exit_code(), 12),
+            other => panic!("an unknown capability answered {other:?}"),
+        }
+        // a field the capability's input does not have is the capability's refusal
+        match run_in(
+            &repo,
+            &["intents.propose", "--input-json", r#"{"stage": "x"}"#],
+        ) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("invalid input"), "{reason}")
+            }
+            other => panic!("an unknown field answered {other:?}"),
+        }
     }
 }
