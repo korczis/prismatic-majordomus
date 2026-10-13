@@ -599,7 +599,7 @@ mj_validate_ai_layout() {
     mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
   else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
   # a personal layer is held to what it claims on every doctor, not only when it was made
-  if mj_personal_active; then mj_personal_verify mj_doctrine_ok mj_doctrine_fail || bad=1; fi
+  if mj_personal_active; then mj_personal_verify doctrine || bad=1; fi
   if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
     mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
   fi

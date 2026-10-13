@@ -72,9 +72,17 @@ printf '%s' "$mcp" | jq -e '.result.isError == false' >/dev/null || { echo "    
   || { echo "    the MCP tool and the HTTP route disagree:"; printf '%s' "$mcp" | head -c 600; exit 1; }
 
 # ---------------------------------------------------------------- the screen
-page="$(get /ui/delivery)"
-printf '%s' "$page" | grep -q '40 min 00 s' \
-  || { echo "    the CI/CD screen does not draw the slowest check's median"; exit 1; }
+# No screen waits for a source (ADR 0142): the first answer may be drawn from a reading that is
+# still catching up, and says so. The screen is asked again until it has the reading, for a
+# bounded time, and a screen that never draws it fails as it did.
+drawn=0
+for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  page="$(get /ui/delivery)"
+  if printf '%s' "$page" | grep -q '40 min 00 s'; then drawn=1; break; fi
+  sleep 0.5
+done
+[ "$drawn" = 1 ] \
+  || { echo "    the CI/CD screen does not draw the slowest check's median, ten seconds after it was first asked"; exit 1; }
 printf '%s' "$page" | grep -qF 'href="/ui/prs?pr=11#pr"' \
   || { echo "    the longest wait does not lead to its pull request"; exit 1; }
 
