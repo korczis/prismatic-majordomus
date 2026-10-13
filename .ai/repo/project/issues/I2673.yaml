@@ -21,6 +21,8 @@ depends_on:
 acceptance_criteria:
   - "With an offer selected the exported variables name it and the local level and no secret is printed"
   - "With no offer the client is local-only"
+  - "With the offer unhealthy at the moment the sccache server would start, the second level is left out and the compile succeeds: measured on 2026-10-13, a server started with a down store fails the compile (exit 2)"
+  - "A store that stops while the server runs leaves the compile correct (measured: a miss, exit 0)"
   - "The installed sccache's multi-level support is read from the executable, not assumed"
   - "Cross-checkout path normalisation is investigated and the finding recorded"
 validation:

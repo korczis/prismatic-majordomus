@@ -22,6 +22,7 @@ acceptance_criteria:
   - "Applied twice, the second run changes nothing"
   - "An unauthenticated write is refused by the store"
   - "No credential appears in git, .ai, a log, an API answer or the docs"
+  - "The provider is not tied to MinIO: dl.min.io serves no binaries since 2025 (410 Gone), so the provisioning names a supported S3 server or records that it builds an unpatched release from source"
   - "The data path cannot exhaust the root filesystem under the policy's floor"
 validation:
   - "bin/majordomus plan validate"

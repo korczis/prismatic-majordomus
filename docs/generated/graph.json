@@ -35208,12 +35208,6 @@
         "route": "/cockpit/objects/issue/i2673",
         "source": ".ai/repo/project/issues/I2673.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "With an offer selected the exported variables name it and the local level and no secret is printed",
-            "With no offer the client is local-only",
-            "The installed sccache's multi-level support is read from the executable, not assumed",
-            "Cross-checkout path normalisation is investigated and the finding recorded"
-          ],
           "created_at": "2026-10-13",
           "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it.",
           "depends_on": [
@@ -35257,6 +35251,7 @@
             "Applied twice, the second run changes nothing",
             "An unauthenticated write is refused by the store",
             "No credential appears in git, .ai, a log, an API answer or the docs",
+            "The provider is not tied to MinIO: dl.min.io serves no binaries since 2025 (410 Gone), so the provisioning names a supported S3 server or records that it builds an unpatched release from source",
             "The data path cannot exhaust the root filesystem under the policy's floor"
           ],
           "created_at": "2026-10-13",

@@ -95,6 +95,28 @@ and that store second, and the result is verified and validated, not assumed.
   configuration is exported through the environment, and a missing sccache is a
   diagnostic, not a silent edit.
 
+## Measured on 2026-10-13
+
+The first provider was set up and verified before this decision was written down, and the
+measurements change it:
+
+- **MinIO publishes no binaries any more.** `dl.min.io` answers `410 Gone` for the server and
+  the client; the last source tag is `RELEASE.2025-10-15T17-29-55Z`. The provider here was
+  built from that tag (a static `linux/arm64` executable), which makes it a build nobody
+  patches for us. `provider` is a field of the offer because of this: an S3 server with
+  supported releases (Garage, SeaweedFS) replaces it without a change to the model.
+- **sccache 0.18.0 has the two levels** (`SCCACHE_MULTILEVEL_CHAIN=disk,s3`, with
+  `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY`). It was read from the executable, not assumed.
+- **A real remote hit was shown:** the local level wiped, the second compile reported one
+  hit from the store and an identical object.
+- **A provider that is down when the sccache server starts fails the compile** (exit 2,
+  no object): the start-up check of the store is a hard error. A provider that stops while
+  the server is running does not: the compile succeeds as a miss. So decision 5 is a rule
+  about *when* the second level is put into the chain — only when the offer is healthy at
+  the moment the server is started — and not only about what happens after a failure.
+- **Writes without a credential are refused (403)**, a client identity cannot create a
+  bucket or reach the admin interface, and it sees only the one bucket.
+
 ## Verification
 
 The model and the selection are proved by unit tests (discovery, determinism, no offer,
