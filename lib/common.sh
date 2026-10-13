@@ -1244,14 +1244,21 @@ mj_tmp_root_init() {
   # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
   # "write error: Broken pipe" line on stderr that was never there. So the root carries its
   # process id, and here every root of this user's whose process no longer exists goes. A
-  # process id that has been reused keeps a dead root until that process ends too; nothing
-  # living is removed, since `kill -0` answers for a process this user can signal.
-  local stale pid
+  # process id that has been reused keeps a dead root until that process ends too.
+  #
+  # Gone means the system said "no such process" and nothing else. `kill -0` also fails when
+  # this process may not signal that one, and a session inside a sandbox may signal nobody:
+  # read as "gone", that refusal removed the roots of every living command of this user's,
+  # and on 2026-10-12 three derives died mid-run with their temporary files deleted under
+  # them. Any other answer — permission, or a wording this cannot read — keeps the root:
+  # a root kept too long costs disk, and a root removed too soon costs somebody's work.
+  local stale pid why
   for stale in "${base%/}"/mj.[0-9]*.??????; do
     [ -d "$stale" ] && [ -O "$stale" ] || continue
     pid="${stale##*/mj.}"; pid="${pid%.*}"
     case "$pid" in ''|*[!0-9]*) continue ;; esac
-    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+    why="$(LC_ALL=C; export LC_ALL; kill -0 "$pid" 2>&1)" && continue
+    case "$why" in *[Nn]'o such process'*) rm -rf "$stale" 2>/dev/null || true ;; esac
   done
 }
 mktemp() {

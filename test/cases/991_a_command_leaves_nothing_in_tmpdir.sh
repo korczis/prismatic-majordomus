@@ -106,6 +106,25 @@ mkdir "$PROBE/mj.$$.living"
 probed "$MJ" context >/dev/null
 [ -d "$PROBE/mj.$$.living" ] || { echo "    a root whose process is alive was removed"; exit 1; }
 rmdir "$PROBE/mj.$$.living"
+# and one this process may not signal is not gone. A sandboxed session is refused `kill -0`
+# for every other process, living or not, and read that refusal as death: it removed the
+# roots of every running command of this user's. The refusal is staged with a `kill` that
+# answers as the system does when permission is the reason; the dead root beside it stays
+# too, because from inside such a session nothing can be known about it.
+true & dead=$!; wait "$dead" 2>/dev/null || true   # a process id that has just ended
+mkdir "$PROBE/mj.$$.living" "$PROBE/mj.$dead.unseen"
+# (handed to the tool's shell as an exported function, which is how bash lets a builtin be
+# replaced for a child without this case's own `kill` changing)
+TMPDIR="$PROBE/" env 'BASH_FUNC_kill%%=() { echo "kill: ($2) - Operation not permitted" >&2; return 1; }' \
+  "$MJ" context >/dev/null
+for kept in "mj.$$.living" "mj.$dead.unseen"; do
+  [ -d "$PROBE/$kept" ] || { echo "    a session that may signal nobody removed $kept"; exit 1; }
+done
+# asked by a process that may signal, the dead one goes and the living one stays
+probed "$MJ" context >/dev/null
+[ -d "$PROBE/mj.$$.living" ] || { echo "    a root whose process is alive was removed"; exit 1; }
+[ ! -e "$PROBE/mj.$dead.unseen" ] || { echo "    a root whose process is gone was kept by a process that could see so"; exit 1; }
+rmdir "$PROBE/mj.$$.living"
 
 # a script that sources the library and defers its root (MJ_TMP_ROOT_DEFER, as the entry
 # point does before an exec): `mktemp` answers where it was asked until the root is made,
