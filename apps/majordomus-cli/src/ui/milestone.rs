@@ -147,7 +147,8 @@ const NARRATIVE: &[(&str, &str)] = &[
     ("acceptance_criteria", "Proven when"),
 ];
 
-/// The record's narrative as headed prose: a string as a paragraph, a list as a list.
+/// The record's narrative as headed prose: a string as a paragraph, a list as a list. Each
+/// part is headed one level below the panel's own title, so no heading level is skipped.
 fn narrative(record: &Value, known: &super::prose::Known) -> Vec<El> {
     let mut out = Vec::new();
     for (key, heading) in NARRATIVE {
@@ -160,7 +161,7 @@ fn narrative(record: &Value, known: &super::prose::Known) -> Vec<El> {
             }
             _ => continue,
         };
-        out.push(el("h4").class("mj-ui-panel-title").text(*heading));
+        out.push(el("h3").class("mj-ui-panel-title").text(*heading));
         out.push(drawn);
     }
     out
@@ -446,6 +447,17 @@ mod tests {
         ] {
             assert!(html.contains(expected), "{expected} is missing from {html}");
         }
+        // the panel's title is level two and each part of the narrative the level below it:
+        // no level is skipped on the way down to the inspector's own headings
+        assert!(
+            html.contains("<h3 class=\"mj-ui-panel-title\">The problem</h3>"),
+            "{html}"
+        );
+        let first_h4 = html.find("<h4").expect("the inspector's own headings");
+        assert!(
+            html[..first_h4].contains("<h3"),
+            "a level-four heading comes before any level-three one"
+        );
         for absent in ["Where it stands", "Out of scope", "Where it should stand"] {
             assert!(
                 !html.contains(absent),

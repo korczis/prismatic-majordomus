@@ -1,0 +1,181 @@
+<title>Příručka Majordomusu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/*BASE_CSS*/
+</style>
+<style>
+/* Handbook additions: grouped rail with scroll-spy, part dividers, see-also asides, glossary, clickable schematics. */
+.shell { max-width: 1160px; }
+@media (min-width: 1000px) { .shell { grid-template-columns: 236px minmax(0, 1fr); } }
+nav.rail details > summary { list-style: none; cursor: pointer; font: 600 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 4px 0 10px; }
+nav.rail details > summary::-webkit-details-marker { display: none; }
+nav.rail details > summary::after { content: " +"; }
+nav.rail details[open] > summary::after { content: " −"; }
+nav.rail p.grp { margin: 14px 0 4px; font: 600 11px/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+nav.rail p.grp a { color: var(--muted); border: 0; font: inherit; padding: 0; }
+nav.rail ol { gap: 4px 14px; }
+@media (min-width: 1000px) { nav.rail ol { gap: 0; } }
+nav.rail li { margin: 0; }
+nav.rail ol a { font-size: 13.5px; }
+nav.rail a[aria-current="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+@media (min-width: 1000px) { nav.rail { padding-bottom: 32px; } }
+
+.part { font: 600 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 88px 0 0; padding-top: 16px; border-top: 2px solid var(--accent); scroll-margin-top: 24px; }
+.part + section { padding-top: 22px; }
+.small { font-size: 13.5px; color: var(--muted); }
+
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0 8px; max-width: 720px; }
+@media (min-width: 700px) { .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.facts > div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+.facts b { display: block; font: 700 28px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.facts span { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+.facts code { font-size: 12px; }
+
+.see { margin: 22px 0 0; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 6px; font-size: 14px; max-width: 68ch; }
+.see span { font: 600 11.5px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+
+table.hub td:first-child { font-weight: 600; }
+table.hub td:last-child { white-space: normal; }
+
+.three { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin: 16px 0 22px; }
+@media (min-width: 760px) { .three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+ol.path { margin: 0; padding-left: 20px; font-size: 14.5px; }
+ol.path li { margin-bottom: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
+.chips code { font-size: 13px; }
+.steps h4 { margin: 5px 0 4px; font: 600 17px/1.3 var(--display); }
+.card p:last-child { margin-bottom: 0; }
+
+svg a { cursor: pointer; }
+svg a .hit rect { transition: stroke .12s; }
+svg a:hover .hit rect, svg a:focus .hit rect { stroke: var(--accent); stroke-width: 2; }
+svg a:focus { outline: none; }
+
+.filter { display: block; font: 600 12px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 6px 0 6px; }
+.filter-input { width: 100%; max-width: 420px; font: 15px/1.4 var(--body); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; }
+.filter-input:focus { outline: 2px solid var(--link); outline-offset: 1px; }
+dl.gloss { margin: 16px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+dl.gloss > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 18px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+dl.gloss > div:last-child { border-bottom: 0; }
+@media (min-width: 640px) { dl.gloss > div { grid-template-columns: 190px minmax(0, 1fr); } }
+dl.gloss dt { font-weight: 600; }
+dl.gloss dd { margin: 0; font-size: 14.5px; min-width: 0; }
+
+header.hero .links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 0; font-size: 14.5px; }
+</style>
+<style>
+/*WIDGETS_CSS*/
+</style>
+<div class="shell">
+  <nav class="rail" aria-label="Obsah">
+    <div class="tools"><button type="button" class="tool-b" data-palette>Hledat<kbd>⌘K</kbd></button><button type="button" class="tool-b" data-brief aria-pressed="false">Jen TL;DR</button></div>
+    <details id="toc" open>
+      <summary>Obsah</summary>
+<!--NAV-->
+    </details>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Majordomus · harness, paměť, pravidla a mesh</p>
+      <h1>Příručka Majordomusu</h1>
+      <p class="lede">Jak udržet repozitář, ve kterém pracuje víc AI agentů, lidí a strojů najednou, v jednom pravdivém stavu. Co agent dostane do kontextu, co si repo pamatuje a jak, která pravidla platí a co je vynucuje, kdy je práce hotová a jak se paralelní sessions navzájem vidí. Všechno na jednom místě, s odkazy mezi kapitolami.</p>
+      <div class="axioms">
+        <p>Discover and model a fact once, then derive every relevant interface.<span>Fakt objevit a zachytit jednou, každé rozhraní z něj odvodit.</span></p>
+        <p>Conversation is ephemeral. Operational state is durable.<span>Konverzace je dočasná, provozní stav je trvalý.</span></p>
+        <p>A rule existing is not a rule being enforced.<span>Že pravidlo existuje, ještě neznamená, že ho něco vynucuje.</span></p>
+        <p>Discovery creates awareness, not authority.<span>Najít jiný runtime neznamená mu věřit.</span></p>
+      </div>
+      <div class="tools"><button type="button" class="tool-b" data-palette>Hledat<kbd>⌘K</kbd></button><button type="button" class="tool-b" data-brief aria-pressed="false">Jen TL;DR</button></div>
+      <div class="links">
+        <a href="#problemy">Problémy a root causes</a>
+        <a href="#hodnoceni">Sebehodnocení</a>
+        <a href="#stavba">Celá stavba</a>
+        <a href="#kudy">Kudy číst</a>
+        <a href="#mapa-prirucky">Mapa příručky</a>
+        <a href="#cisla-tempo">Čísla</a>
+        <a href="#slovnik">Slovník</a>
+        <a href="#prikazy">Příkazy</a>
+      </div>
+    </header>
+
+<!--MAIN-->
+
+    <footer>
+      <p>Stav k 12. 10. 2026, Majordomus 0.21.0. Čítárna, graf, průzkumník a čísla jsou sestavené z <code>origin/master</code> na commitu <code>%%commit%%</code>: %%docs%% dokumentů, %%adrs%% ADR, %%rules%% pravidel, %%gates%% gates, %%caps%% capabilities. Identifikátory, adresy a klíče v ukázkách jsou ilustrační nebo zkrácené.</p>
+      <p>Zdroje v repozitáři <a href="https://github.com/korczis/prismatic-majordomus">korczis/prismatic-majordomus</a>: <code>docs/HOW_IT_WORKS.md</code>, <code>docs/CONCEPTS.md</code>, <code>docs/MCP.md</code>, <code>docs/MESH.md</code>, <code>docs/CONTINUITY.md</code>, <code>docs/KNOWLEDGE.md</code>, <code>docs/CONTEXT.md</code>, <code>docs/DOCTRINE.md</code>, <code>docs/SCOPE.md</code>, <code>docs/COMMIT.md</code>, <code>docs/PREFLIGHT.md</code>, <code>docs/REASONING.md</code>, <code>docs/ECONOMICS.md</code>, <code>docs/MODELS.md</code>, <code>docs/CLI.md</code>, <code>.ai/repo/</code> (policy, profily, šablony providerů, pravidla, <code>ci/gates.yaml</code>, <code>mesh/</code>, workflows), <code>share/obligations.yaml</code>, <code>.claude/</code> a <code>.githooks/</code>.</p>
+      <p>Rozhodnutí: ADR 0001, 0003, 0004, 0010, 0014, 0015, 0017, 0043, 0044, 0049, 0050, 0052, 0053, 0059, 0066, 0067, 0091, 0098, 0105 a 0111.</p>
+      <p>Web: <a href="https://majordomus.dev">majordomus.dev</a>.</p>
+    </footer>
+  </main>
+</div>
+<!--DATA-->
+<script>
+/*WIDGETS_JS*/
+/*EXTRAS_JS*/
+</script>
+<script>
+(function () {
+  document.querySelectorAll('.code button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var text = pre ? pre.innerText : '';
+      var done = function () { btn.textContent = 'Zkopírováno'; setTimeout(function () { btn.textContent = 'Kopírovat'; }, 1600); };
+      var fallback = function () {
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Označeno';
+      };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  var toc = document.getElementById('toc');
+  var wide = window.matchMedia('(min-width: 1000px)');
+  function syncToc() { if (toc) toc.open = wide.matches; }
+  syncToc();
+  if (wide.addEventListener) wide.addEventListener('change', syncToc);
+  if (toc) toc.addEventListener('click', function (e) {
+    var a = e.target.closest('a');
+    if (a && !wide.matches) toc.open = false;
+  });
+
+  var input = document.getElementById('gloss-filter');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#gloss > div'));
+  var empty = document.getElementById('gloss-empty');
+  if (input) input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var hit = !q || row.textContent.toLowerCase().indexOf(q) !== -1;
+      row.hidden = !hit;
+      if (hit) shown++;
+    });
+    if (empty) empty.hidden = shown !== 0;
+  });
+
+  if ('IntersectionObserver' in window) {
+    var links = {};
+    document.querySelectorAll('nav.rail ol a').forEach(function (a) { links[a.getAttribute('href').split('#').pop()] = a; });
+    var current = null;
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var link = links[entry.target.id];
+        if (!link) return;
+        if (current) current.removeAttribute('aria-current');
+        link.setAttribute('aria-current', 'true');
+        current = link;
+        if (wide.matches && link.scrollIntoView) {
+          var rail = document.querySelector('nav.rail');
+          var r = link.getBoundingClientRect(), b = rail.getBoundingClientRect();
+          if (r.top < b.top + 40 || r.bottom > b.bottom - 40) rail.scrollTop += r.top - b.top - b.height / 3;
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('main section[id]').forEach(function (s) { observer.observe(s); });
+  }
+})();
+</script>

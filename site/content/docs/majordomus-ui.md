@@ -1,7 +1,7 @@
 +++
 title = "`majordomus ui`"
 description = "`majordomus ui`, the primary surface: how it differs from the Cockpit, where every value on it comes from and how a missing one reads, how the first screen stays fast with slow panels on routes of their own, the page without JavaScript, the assets and gates that hold it, and how a screen is added"
-weight = 50
+weight = 51
 [extra]
 source = "docs/MAJORDOMUS_UI.md"
 +++
@@ -125,8 +125,8 @@ since no capability the other screens ask at first paint states the forge's addr
 Drain, which asks the queue, and Deployments, which asks what was observed, do link the
 forge), and a path that is not an object of the index.
 
-What the forge recorded is read from one observation, taken by `majordomus served forge` — the
-one command that asks the forge — and kept beside the pull-request observation. A checkout
+What the forge recorded is read from one observation, taken by `majordomus served forge` and
+kept beside the pull-request observation, which `majordomus prs refresh` takes. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
 empty.

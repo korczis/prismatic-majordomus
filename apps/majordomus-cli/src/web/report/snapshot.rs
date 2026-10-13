@@ -81,6 +81,11 @@ pub struct Snapshot {
     /// UI pages a page links to that are not in the snapshot: past the bound, or a query no
     /// file can stand for. Each link to one leads to the live page.
     pub left_out: Vec<String>,
+    /// The panels written into the pages that ask for them, by route: what a running UI
+    /// fetches after a screen has painted and a snapshot has no process to fetch. A record
+    /// that carries this field is one whose pages wait for no panel; a route whose panel did
+    /// not answer is absent from it, and its placeholder stands on the page.
+    pub panels: Vec<String>,
     /// The bound the run was given.
     pub limit: usize,
     /// The seconds the run was given for the pages the screens link to.
@@ -242,6 +247,10 @@ pub fn render(
         pages,
         assets: copied.iter().map(|n| format!("assets/{n}")).collect(),
         left_out: left_out.into_iter().collect(),
+        panels: panels
+            .into_iter()
+            .filter_map(|(route, drawn)| drawn.map(|_| route))
+            .collect(),
         limit,
         budget_seconds,
         stopped_by,
@@ -979,6 +988,21 @@ mod tests {
                 );
             }
         }
+        // the record says which panels it wrote into pages, and every panel is among them
+        for panel in crate::ui::PANELS {
+            assert!(
+                snapshot
+                    .panels
+                    .iter()
+                    .any(|p| p.split('?').next() == Some(*panel)),
+                "{panel} is not recorded as written into a page: {:?}",
+                snapshot.panels
+            );
+        }
+        let record: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(dir.join("snapshot.json")).unwrap())
+                .unwrap();
+        assert!(record["panels"].is_array(), "the record names its panels");
         // no screen of a snapshot waits for a panel nobody will fetch: each one is in the page
         for screen in crate::ui::SCREENS {
             let html = std::fs::read_to_string(dir.join(&snapshot.pages[screen.route])).unwrap();

@@ -10131,7 +10131,7 @@
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/project/english-only.v2.md",
+            ".ai/repo/rules/project/english-only.v3.md",
             "scripts/ci/english-only-check",
             "test/cases/403_published_translation.sh"
           ]
@@ -16415,6 +16415,12 @@
           "via": "negative",
           "test": "suite:138_governance_gates",
           "path": "test/cases/138_governance_gates.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
           "category": "e2e"
         },
         {
@@ -23050,7 +23056,18 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/english-only.v3.md"
+          ]
+        }
+      ],
       "mechanisms": [
         "scripts/ci/english-only-check"
       ],
@@ -25065,6 +25082,27 @@
         "scripts/site-build",
         "scripts/site-check"
       ],
+      "findings": []
+    },
+    "rule:project.the-handbook-is-built-from-the-tree": {
+      "kind": "rule",
+      "id": "project.the-handbook-is-built-from-the-tree",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
+          "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+            ".ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.the-lease-is-read-once": {
