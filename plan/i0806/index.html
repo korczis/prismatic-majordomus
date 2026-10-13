@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>I0806 — Make the session rules doctrines, with retention and archiving — Prismatic Majordomus</title>
-<meta name="description" content="Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.">
+<meta name="description" content="Finish the session rules: the record and lifecycle rules are declared in share/standard/majordomus/ and dispatched by doctor and watch; what remains is a reference to a record that does not exist, retention over a declared cap, and policy-driven archiving that never deletes and never overwrites.">
 <link rel="canonical" href="https://majordomus.dev/plan/i0806/"><meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="I0806 — Make the session rules doctrines, with retention and archiving — Prismatic Majordomus">
-<meta property="og:description" content="Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.">
+<meta property="og:description" content="Finish the session rules: the record and lifecycle rules are declared in share/standard/majordomus/ and dispatched by doctor and watch; what remains is a reference to a record that does not exist, retention over a declared cap, and policy-driven archiving that never deletes and never overwrites.">
 <meta property="og:url" content="https://majordomus.dev/plan/i0806/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.23.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -152,7 +152,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">I0806 — Make the session rules doctrines, with retention and archiving</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Finish the session rules: the record and lifecycle rules are declared in share/standard/majordomus/ and dispatched by doctor and watch; what remains is a reference to a record that does not exist, retention over a declared cap, and policy-driven archiving that never deletes and never overwrites.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -165,11 +165,11 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people&#39;s repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The doctrine registry declares every enforced rule with a validator, the commands that dispatch it, a claim and a test. history --rotate is the existing precedent for retention that archives rather than deletes and refuses to overwrite an existing archive.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and majordomus.retention-caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Finish the session rules: the record and lifecycle rules are declared in share/standard/majordomus/ and dispatched by doctor and watch; what remains is a reference to a record that does not exist, retention over a declared cap, and policy-driven archiving that never deletes and never overwrites.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people&#39;s repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured on master 4090b2b8ae, 2026-10-08. Two session rules are declared in share/standard/majordomus/rules and dispatched by doctor and watch: majordomus.session-records (validator session_records, test/cases/63_session_records.sh) and majordomus.session-lifecycle (validator session_lifecycle, test/cases/54_session_lifecycle_hooks.sh), landed in e9ffa54f1c. Doctor reports an episode left open past session.stranded_after. Not on master: the policy (.ai/repo/policy.yaml since bd7cb2a579) carries retention caps for checkpoints, handovers and the ledger and none for sessions; share/allow/policy.txt lists no session retention key; majordomus.retention-caps does not report sessions; lib/session.sh has no archiving. history --rotate remains the precedent for retention that archives rather than deletes and refuses to overwrite an existing archive.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The session rules that exist stay declared and dispatched. The policy carries a session retention cap and whether archiving is enabled, its keys are in the policy allowlist, and majordomus.retention-caps reports sessions alongside checkpoints and handovers. A session naming a checkpoint that does not exist is reported, naming both. Archiving happens only when a command asks for it.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">share/standard/majordomus/</li><li class="font-mono text-heading break-words">share/allow/policy.txt</li><li class="font-mono text-heading break-words">share/skeleton</li><li class="font-mono text-heading break-words">lib/session.sh</li><li class="font-mono text-heading break-words">lib/doctor.sh</li><li class="font-mono text-heading break-words">lib/watch.sh</li><li class="font-mono text-heading break-words">.majordomus/policy.yaml</li><li class="font-mono text-heading break-words">test/cases/63_session_doctrines.sh</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">share/standard/majordomus/</li><li class="font-mono text-heading break-words">share/allow/policy.txt</li><li class="font-mono text-heading break-words">share/skeleton</li><li class="font-mono text-heading break-words">lib/session.sh</li><li class="font-mono text-heading break-words">lib/doctor.sh</li><li class="font-mono text-heading break-words">lib/watch.sh</li><li class="font-mono text-heading break-words">.ai/repo/policy.yaml</li><li class="font-mono text-heading break-words">test/cases/63_session_records.sh</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Any background or automatic maintenance</li><li>Deleting a record under any circumstance</li></ul>
@@ -185,10 +185,10 @@
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Both doctrines appear in doctrine list with a validator that exists, and doctor proves each reaches the command that claims to run it</li><li>A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command</li><li>A session naming a checkpoint path that does not exist is reported, naming both</li><li>Archiving moves records without deleting them and refuses to overwrite an existing archive</li><li>A session left open longer than the policy allows is reported by watch and does not block anything</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>majordomus.session-records and majordomus.session-lifecycle appear in the rule list with a validator that exists, and doctor proves each reaches the command that claims to run it</li><li>A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command</li><li>A session naming a checkpoint path that does not exist is reported, naming both</li><li>Archiving moves records without deleting them and refuses to overwrite an existing archive</li><li>A session left open longer than the policy allows is reported by watch and does not block anything</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh 63_session_doctrines</li><li class="font-mono text-heading break-words">bin/majordomus doctor</li><li class="font-mono text-heading break-words">bin/majordomus watch</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh 63_session_records</li><li class="font-mono text-heading break-words">bin/majordomus doctor</li><li class="font-mono text-heading break-words">bin/majordomus watch</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">session_doctrines_wired</li></ul>
@@ -204,7 +204,7 @@
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/.ai/repo/project/issues/I0806.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0806.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0806</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/.ai/repo/project/issues/I0806.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0806.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0806</code>.</p>
 </div>
 
 </div>
@@ -254,9 +254,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -264,7 +264,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/73d3c8cc31aeccd185416bd6b2973d134e565c13" class="font-mono underline">73d3c8c</a> · inputs <span class="font-mono">8f0c25ba4fda</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.23.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e506c041a44ca9e5853500e10452c648b19ca858" class="font-mono underline">e506c04</a> · inputs <span class="font-mono">f2771714478a</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

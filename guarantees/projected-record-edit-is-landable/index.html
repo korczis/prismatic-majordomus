@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.23.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -162,7 +162,7 @@
 <span class="text-sm text-body">Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.</span></p>
     <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="projected-record-edit-is-landable"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
 <span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
-    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">GitHub shows the trunk&#39;s plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.</p>
+    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">GitHub shows the trunk&#39;s plan and nothing else, so a record a pull request edits is behind there until the pull request has merged and the landing has applied it (.github/workflows/github.yml). The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p>GitHub's issues and milestones are a projection of the plan on the trunk. A pull request
 that edits a plan record, closes one, or moves one to another milestone changes what GitHub
@@ -170,7 +170,7 @@ should say, and GitHub cannot say it before the pull request has merged. The gat
 compares the two does not hold that against the pull request. It reports the records the
 pull request changed as <code>PENDING</code> and refuses only drift the pull request did not cause.</p>
 <p>After the merge the same records are <code>PENDING</code> on the trunk for a declared window, which is
-the time the executor has to apply the projection. Past the window the trunk is refused and
+the time the landing has to apply the projection. Past the window the trunk is refused and
 the refusal names the command to run.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Anchor link for: how-it-works">How it works</a></h2>
 <p><code>scripts/ci/github-check</code> runs <code>scripts/github-sync --check</code> and reads its drift lines. Four
@@ -181,7 +181,7 @@ which records changed since a reference commit.</p>
 <table tabindex="0"><thead><tr><th>run</th><th>reference commit</th><th>words on the <code>PENDING</code> line</th></tr></thead><tbody>
 <tr><td>a pull request, or a tree given <code>MJ_GH_BASE=&lt;ref&gt;</code></td><td>the merge base with the base branch</td><td>projected after merge</td></tr>
 <tr><td>a tree the default branch does not contain</td><td>the merge base with the remote's default branch</td><td>projected after merge</td></tr>
-<tr><td>the default branch</td><td>the youngest first-parent commit older than the window</td><td>the executor applies after landing</td></tr>
+<tr><td>the default branch</td><td>the youngest first-parent commit older than the window</td><td>the landing applies</td></tr>
 </tbody></table>
 </div>
 <p>A record has changed when its file differs from the reference, or when its rendering does.
@@ -201,10 +201,12 @@ landed a minute ago.</p>
 <span class="giallo-l"><span>MJ_GH_BASE</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">i</span><span class="z-l-8 z-d-8">g</span><span class="z-l-8 z-d-8">i</span><span class="z-l-8 z-d-8">n</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">r</span><span class="z-l-1 z-d-3"> scripts/ci/github-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> as a head that merges into origin/master</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/github-sync</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-plan</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> offline: the rendering the gate compares</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 1038_a_head_is_judged_against_what_it_changes</span></span></code></pre><h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
-<p>Nothing applies the projection. After a landing that changes plan records the executor runs
-<code>scripts/github-sync --apply</code> from master (<a href="https://majordomus.dev/docs/integration/">Pull-request integration</a>),
-and the gate only bounds how late that may be. A job that applies on every push to master is
-the owner's open choice and does not exist.</p>
+<p>The gate applies nothing. After a landing the projection is applied by
+<code>.github/workflows/github.yml</code>, which every push to master starts
+(<a href="https://majordomus.dev/docs/integration/">Pull-request integration</a>,
+<code>project.the-projection-is-applied-at-landing</code>), and the gate only bounds how late that may
+be. When that run fails, a person's <code>scripts/github-sync --apply</code> from master is the
+fallback.</p>
 <p>Only the four states an apply writes can be pending. A hand-edited region (<code>edited</code>,
 <code>conflict</code>) and a remote issue claiming an unknown record (<code>unmanaged</code>) are refused on every
 run, whoever changed the record.</p>
@@ -233,9 +235,9 @@ a record whose rendering moved with an untouched file is pending, that a landing
 window is pending on the trunk and the same landing two hours old is refused with the remedy
 named, that the window is the declared one, and that a base or a window that cannot be read
 refuses. The case names the mutation that breaks each assertion.</p>
-<p>The rule is <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/.ai/repo/rules/project/github-projection-gated.v1.md"><code>project.github-projection-gated@1</code></a>.</p>
+<p>The rule is <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/.ai/repo/rules/project/github-projection-gated.v1.md"><code>project.github-projection-gated@1</code></a>.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/docs/claims/projected-record-edit-is-landable.md" class="font-mono underline">docs/claims/projected-record-edit-is-landable.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/docs/claims/projected-record-edit-is-landable.md" class="font-mono underline">docs/claims/projected-record-edit-is-landable.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
     <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="projected-record-edit-is-landable">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
@@ -245,15 +247,15 @@ refuses. The case names the mutation that breaks each assertion.</p>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">projected-record-edit-is-landable</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
-<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
-        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/planning/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/docs/PLANNING.md" class="font-mono text-fg-brand hover:underline">docs/PLANNING.md</a></p>
+<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/planning/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/docs/PLANNING.md" class="font-mono text-fg-brand hover:underline">docs/PLANNING.md</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
-        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/scripts/ci/github-check" class="font-mono text-fg-brand hover:underline">scripts/ci/github-check</a></p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/scripts/ci/github-check" class="font-mono text-fg-brand hover:underline">scripts/ci/github-check</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/test/cases/1038_a_head_is_judged_against_what_it_changes.sh" class="font-mono text-fg-brand hover:underline">test/cases/1038_a_head_is_judged_against_what_it_changes.sh</a></p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/test/cases/1038_a_head_is_judged_against_what_it_changes.sh" class="font-mono text-fg-brand hover:underline">test/cases/1038_a_head_is_judged_against_what_it_changes.sh</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
@@ -349,9 +351,9 @@ refuses. The case names the mutation that breaks each assertion.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -359,7 +361,7 @@ refuses. The case names the mutation that breaks each assertion.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/73d3c8cc31aeccd185416bd6b2973d134e565c13" class="font-mono underline">73d3c8c</a> · inputs <span class="font-mono">8f0c25ba4fda</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.23.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e506c041a44ca9e5853500e10452c648b19ca858" class="font-mono underline">e506c04</a> · inputs <span class="font-mono">f2771714478a</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["COMMON_FILES","SALT","WORKTREE_FILES"],"struct":["Live","Memo","Stamp","View"],"trait":["IntoLive"]};
+window.SIDEBAR_ITEMS = {"constant":["COMMON_FILES","RETRY_AFTER","SALT","WORKTREE_FILES"],"struct":["Live","Memo","Stamp","View"],"trait":["IntoLive"]};

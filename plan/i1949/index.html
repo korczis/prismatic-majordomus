@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.22.0 -->
+     Generator: majordomus-cli 0.23.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -165,7 +165,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run&#39;s executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087&#39;s interim rule (decision 1).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">As PR #577 is written, the collector records first and derives the report after, so the transcript the site publishes as current is a verdict over the run&#39;s own rows from a checkout nobody measured. ADR 0087 amends ADR 0068 on exactly those sentences.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">PR #577 (feature/ci-records-evidence) records the run&#39;s executions, then runs evidence show, and publishes the result as current when the manifest&#39;s commit is the published commit. The producing jobs write their reports into their workspaces, and nothing measures those trees. This slice&#39;s branch is fix/the-ci-evidence-is-recorded-clean, with its pull request into feature/ci-records-evidence.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The evidence job derives its report over the tracked ledger as committed at the run&#39;s commit before it records; the suite and rust jobs measure their trees, excluding only their named outputs, and upload the measurement; scripts/pages evidence publishes current only when the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and nothing was absent, refused or failed, and otherwise stale or unknown, naming each reason.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run&#39;s executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087&#39;s interim rule (decision 1).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">As PR #577 is written, the collector records first and derives the report after, so the transcript the site publishes as current is a verdict over the run&#39;s own rows from a checkout nobody measured. ADR 0087 amends ADR 0068 on exactly those sentences.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured 2026-10-08 on master 4090b2b8ae. PR 577 and this slice (PR 645) are on master: the evidence job derives its report before recording and each producing job measures its tree (case 357 passes). Still open: every rust lane measures its tree dirty, because an untracked timings.tsv at the repository root is not among the excluded paths (.github/workflows/validate.yml excludes only apps/majordomus-cli/timings.tsv and apps/majordomus-cli/dist), so the evidence manifest of run 37744906831 carries working_tree dirty for the crate producer and the site cannot publish current from it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The evidence job derives its report over the tracked ledger as committed at the run&#39;s commit before it records; the suite and rust jobs measure their trees, excluding only their named outputs, and upload the measurement; scripts/pages evidence publishes current only when the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and nothing was absent, refused or failed, and otherwise stale or unknown, naming each reason.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -202,7 +202,7 @@
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/.ai/repo/project/issues/I1949.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I1949.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I1949</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/.ai/repo/project/issues/I1949.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I1949.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I1949</code>.</p>
 </div>
 
 </div>
@@ -252,9 +252,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/73d3c8cc31aeccd185416bd6b2973d134e565c13/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e506c041a44ca9e5853500e10452c648b19ca858/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -262,7 +262,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.22.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/73d3c8cc31aeccd185416bd6b2973d134e565c13" class="font-mono underline">73d3c8c</a> · inputs <span class="font-mono">8f0c25ba4fda</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.23.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e506c041a44ca9e5853500e10452c648b19ca858" class="font-mono underline">e506c04</a> · inputs <span class="font-mono">f2771714478a</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
