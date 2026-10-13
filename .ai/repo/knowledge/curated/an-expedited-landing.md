@@ -43,7 +43,9 @@ ADR 0155 records the words. This is the sequence that order is carried out by.
 A run is cancelled when its pull request is merged or closed, when its head is no longer its
 branch's head, or when another run of the same workflow judges the same commit. The trunk's
 only run of a commit, a deployment in flight, a release run and another session's run on a
-current head are left alone.
+current head are left alone. Do not decide this by reading the run list: ask
+`monitor.stale-runs` (the MCP tool `majordomus_monitor_stale_runs`) and run only the
+`gh run cancel <id>` commands it answers.
 
 A red on the trunk has one carrier, named by the integrator. Do not build a second fix.
 

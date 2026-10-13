@@ -34,6 +34,9 @@ pub(crate) const BUDGET: Duration = Duration::from_secs(4);
 /// How many pull requests and runs one fetch asks for.
 const WINDOW: usize = 40;
 
+/// The program that answers for the forge.
+pub(crate) const GH: &str = "gh";
+
 /// The trunk: a run on it is news even when it succeeds.
 const TRUNK: &str = "master";
 
@@ -64,7 +67,7 @@ pub(crate) fn seed(root: &Path, fetched: Fetched) {
 /// The pull requests and runs of the repository at `root`, from the cache when it is
 /// younger than [`TTL`].
 pub(crate) fn fetch(root: &Path) -> Fetch {
-    fetch_with("gh", root)
+    fetch_with(GH, root)
 }
 
 /// [`fetch`], asking `program` in place of `gh`: the seam a test puts its own program in.
@@ -115,7 +118,11 @@ fn fetch_now(program: &str, root: &Path) -> Fetch {
 
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
-fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
+pub(crate) fn run(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+) -> Result<Value, (MonitorSourceHealth, String)> {
     let mut child = Command::new(program)
         .args(args)
         .current_dir(root)
