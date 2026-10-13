@@ -11,7 +11,7 @@ depends_on: [project.derived-once@1, project.interfaces-are-projections@1]
 tags: [ci, evidence, troubleshooting, gates]
 
 x-majordomus:
-  tests: [test/cases/2999_a_post_mortem_is_a_typed_record.sh, test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh]
+  tests: [test/cases/3010_a_post_mortem_is_a_typed_record.sh, test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh]
 ---
 
 # Rationale

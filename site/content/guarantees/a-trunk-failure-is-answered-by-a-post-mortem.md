@@ -45,7 +45,7 @@ finding), `owed` prints the answered and the owed runs (exit 10 past the grace) 
 runs: the answered one is not listed, the unanswered one is owed and refuses only past its
 grace, the cancelled one and the one from before the rule owe nothing; the draft printed
 for the owed run is accepted and answers it; and a failure's text names the record by its
-signal. `test/cases/2999_a_post_mortem_is_a_typed_record.sh` breaks one clause of the
+signal. `test/cases/3010_a_post_mortem_is_a_typed_record.sh` breaks one clause of the
 judgement at a time.
 
 ## What it does not cover

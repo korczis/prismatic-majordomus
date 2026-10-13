@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.23.0",
+  "generator": "majordomus-cli 0.24.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -12862,7 +12862,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Open, inspect and close one execution episode.",
-          "syntax": "majordomus session <start|status|close|list|show|latest|context> [options]",
+          "syntax": "majordomus session <start|status|close|list|show|latest|context|archive> [options]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/sessions-open/",
@@ -35291,7 +35291,7 @@
           "current_state": "No kind holds a failure and its cause; seven causes of 2026-10-13 are explained only on the peer board.",
           "depends_on": [],
           "evidence_required": [
-            "case_2999",
+            "case_3010",
             "site_pages_built"
           ],
           "milestone": "a-failure-is-answered-by-a-record",
@@ -35314,13 +35314,13 @@
             ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md",
             ".ai/repo/adrs",
             "docs/POST_MORTEMS.md",
-            "test/cases/2999_a_post_mortem_is_a_typed_record.sh"
+            "test/cases/3010_a_post_mortem_is_a_typed_record.sh"
           ],
           "slug": "a-post-mortem-is-a-typed-record",
           "updated_at": "2026-10-13",
           "validation": [
             "bin/majordomus plan validate",
-            "bash test/run.sh 2999_a_post_mortem_is_a_typed_record",
+            "bash test/run.sh 3010_a_post_mortem_is_a_typed_record",
             "bin/majordomus adr check"
           ],
           "why": "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
@@ -35548,6 +35548,58 @@
             "bin/majordomus-cli postmortem check"
           ],
           "why": "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2652",
+        "kind": "issue",
+        "label": "I2652",
+        "summary": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
+        "route": "/cockpit/objects/issue/i2652",
+        "source": ".ai/repo/project/issues/I2652.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/knowledge answers from knowledge_base.status and knowledge_base.candidates and names both as its sources with their age",
+            "A queue longer than the screen's bound is drawn newest first to the bound and says how many records it left out",
+            "An empty queue and a checkout where the deriver never ran are said in words, never as an empty table or an empty cell",
+            "The page carries no form and no button: the review is the commands a person runs, shown as text",
+            "No handler under src/ui executes a capability on the request, which case 1096 holds, and the route is within the UI's latency budget, which bench --check holds",
+            "Every screen's navigation leads to it"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2486"
+          ],
+          "evidence_required": [
+            "knowledge_screen_unit_tests",
+            "knowledge_screen_case_3003",
+            "knowledge_screen_within_budget"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Promoting or rejecting a record from the screen: a screen reads and never executes (ADR 0142), and promotion is a person's act",
+            "The evolve skill itself and its projection as a command, which are another session's",
+            "A panel on the dashboard and a link from the Command screen, which follow once the application shell another session is building has landed",
+            "A change to what knowledge_base.candidates answers"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/3003_the_knowledge_screen_answers.sh",
+            ".ai/repo/project/issues/I2652.yaml"
+          ],
+          "slug": "the-ui-shows-what-the-knowledge-base-holds",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source",
+            "majordomus bench system.http. --transport system --profile ci --no-write --check"
+          ]
         }
       },
       {
@@ -35904,7 +35956,7 @@
           ],
           "created_at": "2026-10-13",
           "evidence_required": [
-            "case_2999",
+            "case_3010",
             "case_3000",
             "a_failed_trunk_run_answered_through_the_hook"
           ],
@@ -35933,7 +35985,7 @@
           "validation": [
             "bin/majordomus plan validate",
             "bin/majordomus-cli postmortem check",
-            "bash test/run.sh 2999_a_post_mortem_is_a_typed_record 3000_a_trunk_failure_owes_a_post_mortem"
+            "bash test/run.sh 3010_a_post_mortem_is_a_typed_record 3000_a_trunk_failure_owes_a_post_mortem"
           ]
         }
       },
@@ -42108,7 +42160,7 @@
           "depends_on": [
             "majordomus.sessions-are-workers@1"
           ],
-          "statement": "The ledger, the handovers and the checkpoints stay under the caps the policy sets.",
+          "statement": "The ledger, the handovers, the checkpoints and the session records stay under the caps the policy sets, and a cap is met by moving records aside, never by deleting one.",
           "tags": [
             "retention"
           ]
@@ -52369,11 +52421,11 @@
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
       },
       {
-        "id": "majordomus://test/test/cases/2999_a_post_mortem_is_a_typed_record.sh",
+        "id": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
         "kind": "test",
-        "label": "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
-        "route": "/cockpit/objects/test/test-cases-2999-a-post-mortem-is-a-typed-record-sh",
-        "source": "test/cases/2999_a_post_mortem_is_a_typed_record.sh"
+        "label": "test/cases/2985_session_records_are_capped_and_archived.sh",
+        "route": "/cockpit/objects/test/test-cases-2985-session-records-are-capped-and-archived-sh",
+        "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
       },
       {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -52397,11 +52449,25 @@
         "source": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "kind": "test",
+        "label": "test/cases/3003_the_knowledge_screen_answers.sh",
+        "route": "/cockpit/objects/test/test-cases-3003-the-knowledge-screen-answers-sh",
+        "source": "test/cases/3003_the_knowledge_screen_answers.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "kind": "test",
         "label": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "route": "/cockpit/objects/test/test-cases-300-a-pipeline-cannot-hide-a-failure-sh",
         "source": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3010_a_post_mortem_is_a_typed_record.sh",
+        "kind": "test",
+        "label": "test/cases/3010_a_post_mortem_is_a_typed_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3010-a-post-mortem-is-a-typed-record-sh",
+        "source": "test/cases/3010_a_post_mortem_is_a_typed_record.sh"
       },
       {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -77779,6 +77845,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2652",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2652",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2652",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/an-expedited-landing",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -82244,7 +82325,7 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/2999_a_post_mortem_is_a_typed_record.sh",
+        "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -82264,7 +82345,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3010_a_post_mortem_is_a_typed_record.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87590,8 +87681,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2791,
-      "edges": 6137,
+      "nodes": 2794,
+      "edges": 6142,
       "acyclic": false,
       "truncated": false
     }

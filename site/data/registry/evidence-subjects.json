@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.23.0"
+    "version": "0.24.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -17049,6 +17049,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -22213,6 +22219,16 @@
             "test/cases/02_doctor_basic.sh",
             ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
           ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:2985_session_records_are_capped_and_archived",
+          "path": "test/cases/2985_session_records_are_capped_and_archived.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2985_session_records_are_capped_and_archived.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
+          ]
         }
       ],
       "mechanisms": [],
@@ -22511,21 +22527,21 @@
       "routes": [
         {
           "via": "rule",
-          "test": "suite:2999_a_post_mortem_is_a_typed_record",
-          "path": "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
-            ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:3000_a_trunk_failure_owes_a_post_mortem",
           "path": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+            ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3010_a_post_mortem_is_a_typed_record",
+          "path": "test/cases/3010_a_post_mortem_is_a_typed_record.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3010_a_post_mortem_is_a_typed_record.sh",
             ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
           ]
         }
@@ -27563,6 +27579,7 @@
     "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
+    "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",

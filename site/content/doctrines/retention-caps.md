@@ -1,6 +1,6 @@
 +++
 title = "Retention caps"
-description = "The ledger and the handover directory stay under the caps the policy sets, so durable state does not grow without bound."
+description = "The ledger, the handovers, the checkpoints and the session records stay under the caps the policy sets, so durable state does not grow without bound."
 weight = 33
 [extra]
 id = "majordomus.retention-caps"
