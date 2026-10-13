@@ -10,7 +10,7 @@ why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache serve
 current_state: "Measured on master b29cf4e487 on 2026-10-13: nothing is proved because nothing exists; the only candidate provider is unreachable over SSH."
 desired_state: "A case against a stub S3 for the failure paths, and a recorded run on real nodes for the hit, or a statement that two compatible nodes were not available; no cross-architecture claim."
 scope:
-  - "test/cases/3011_a_mesh_build_cache.sh"
+  - "test/cases/3013_a_mesh_build_cache.sh"
   - "docs/BUILD_CACHE.md"
 non_scope:
   - "Performance tuning beyond the recorded measurement"
@@ -24,7 +24,7 @@ acceptance_criteria:
   - "A second node's build hits what the first wrote, or the report says it could not be shown"
 validation:
   - "bin/majordomus plan validate"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3011_a_mesh_build_cache"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
 evidence_required:
   - "failure_path_case"
   - "second_node_hit_recorded"
