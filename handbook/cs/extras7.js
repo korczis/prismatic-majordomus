@@ -87,7 +87,7 @@
   }
 
   /* sub-headings and labs get their own anchors */
-  document.querySelectorAll('main section[id] h3').forEach(function (h) {
+  document.querySelectorAll('main section[id] h3:not(.h4)').forEach(function (h) {
     if (!h.id || h.querySelector('.h-anchor')) return;
     el('a', { 'class': 'h-anchor h3a', href: '#' + h.id, 'aria-label': 'Odkaz na oddíl' }, h, '#').addEventListener('click', function (e) {
       e.preventDefault(); if (window.mjJump) window.mjJump(h.id);

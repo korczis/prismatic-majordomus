@@ -524,6 +524,34 @@ page = page.replace('<script type="application/json" id="data-arch">',
                     % json.dumps(evidence, separators=(",", ":")), 1)
 print("evidence: %d chapter(s), %d seed object(s), %d neighbouring" % (
     len(evidence), sum(len(v["s"]) for v in evidence.values()), sum(v["nt"] for v in evidence.values())))
+# A heading never skips a level. The chapters title their cards with a fourth-level heading
+# wherever a card sits, and a card directly under a chapter's title would be a second level
+# followed by a fourth: a reader of the outline (a screen reader, a search index) loses the
+# step. The level is decided here from where the heading stands; the class keeps its look.
+def level_headings(html):
+    last = [1]
+    def one(m):
+        slash, level, rest = m.group(1), int(m.group(2)), m.group(3)
+        if slash:
+            return "</h%d>" % last.pop() if len(last) > 1 else m.group(0)
+        want = min(level, last[0] + 1)
+        last[0] = want
+        last.append(want)
+        if want == level:
+            return m.group(0)
+        if re.search(r'\bclass="', rest):
+            rest = re.sub(r'\bclass="', 'class="h%d ' % level, rest, count=1)
+        else:
+            rest = ' class="h%d"' % level + rest
+        return "<h%d%s>" % (want, rest)
+    return re.sub(r"<(/?)h([1-6])\b([^>]*)>", one, html)
+
+_head, _sep, _tail = page.partition("<script")
+page = level_headings(_head) + _sep + _tail
+_levels = [int(x) for x in re.findall(r"<h([1-6])\b", _head and page.partition("<script")[0])]
+if any(b > a + 1 for a, b in zip(_levels, _levels[1:])):
+    sys.exit("a heading of the edition skips a level")
+
 # The built page is a whole document: opened from a file it is read in standards mode, laid
 # out at the device's width, and says which language it is in — the one edition.toml declares.
 _lang = re.search(r'^\s*lang\s*=\s*"([a-z-]+)"', read(os.path.join(HERE, "edition.toml")), re.M).group(1)
