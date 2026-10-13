@@ -25245,6 +25245,831 @@
       {
         "path": [
           "majordomus",
+          "postmortem"
+        ],
+        "route": "/docs/cli/postmortem/",
+        "executable": false,
+        "usage": "majordomus postmortem [OPTIONS] <COMMAND>",
+        "about": "What turned the trunk's CI red and why: the post-mortems under .ai/repo/post-mortems/ listed and judged, the trunk's failed runs no record answers, the records a failing log looks like, and the draft of a record for one failed run",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "postmortem",
+              "list"
+            ],
+            "route": "/docs/cli/postmortem/list/",
+            "executable": true,
+            "usage": "majordomus postmortem list [OPTIONS]",
+            "about": "Every record, newest first, with the counts by status and by cause class",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "postmortem-list-json",
+                "title": "Every post-mortem, with the counts by status and by cause",
+                "description": "Every record under `.ai/repo/post-mortems/`, newest first: its status, day, cause class and summary, the runs it answers, its components and how many signals it carries. The same answer `GET /api/v1/post-mortems` and the MCP tool `majordomus_postmortems` give. A repository that has recorded nothing answers an empty list.",
+                "argv": [
+                  "postmortem",
+                  "list",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus postmortem list --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /directory, /count, /by_status, /by_cause, /records"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "postmortem",
+              "check"
+            ],
+            "route": "/docs/cli/postmortem/check/",
+            "executable": true,
+            "usage": "majordomus postmortem check [OPTIONS]",
+            "about": "Judge the records against the rules their schema cannot say; exit 10 on any finding",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "postmortem-check",
+                "title": "The rules a post-mortem's schema cannot say",
+                "description": "Judges every record against the rules that relate two of its fields, the record to the tree and one record to another: a draft carries no cause and a later status carries one, an explained record names a component and a signal, a fix is named exactly when the record is resolved, a path named exists, no identity is shared. Exit 0 when nothing is found, 10 on any finding, each printed with its record and a stable code.",
+                "argv": [
+                  "postmortem",
+                  "check"
+                ],
+                "command": "majordomus postmortem check",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "postmortem",
+              "owed"
+            ],
+            "route": "/docs/cli/postmortem/owed/",
+            "executable": true,
+            "usage": "majordomus postmortem owed [OPTIONS]",
+            "about": "The trunk's failed runs no record answers; exit 10 when one is past its grace",
+            "args": [
+              {
+                "name": "branch",
+                "long": "branch",
+                "positional": false,
+                "help": "The branch whose runs are asked about (default master)",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "limit",
+                "long": "limit",
+                "positional": false,
+                "help": "How many of its newest runs the forge is asked for (default 60)",
+                "value_name": "LIMIT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "grace_hours",
+                "long": "grace-hours",
+                "positional": false,
+                "help": "Hours after a run finished during which its record may still be missing (default 24)",
+                "value_name": "GRACE_HOURS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "since",
+                "long": "since",
+                "positional": false,
+                "help": "The day (YYYY-MM-DD) or RFC 3339 moment before which no run owes anything (default 2026-10-13)",
+                "value_name": "SINCE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "workflows",
+                "long": "workflow",
+                "positional": false,
+                "help": "Only this workflow, by the name the forge reports; repeatable (default every workflow)",
+                "value_name": "NAME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "now",
+                "long": "now",
+                "positional": false,
+                "help": "The RFC 3339 moment ages are measured from (default the clock)",
+                "value_name": "NOW",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "runs_json",
+                "long": "runs-json",
+                "positional": false,
+                "help": "Read the runs from this file, in the shape `gh run list --json databaseId,workflowName,conclusion,headSha,createdAt,updatedAt,url,headBranch` prints, instead of asking the forge; `-` reads stdin",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "postmortem-owed-unobserved",
+                "title": "A forge that cannot be asked owes nothing, and says so",
+                "description": "Asks the forge for the trunk's newest runs and names every failed one no record answers, with its age and whether it is within its grace. Here the repository has no remote the forge knows, so nothing is observed: the answer is `observed: false` with the reason and exit 0 — never a guess, and never a green trunk nobody saw. In a checkout of a repository on the forge it exits 10 when a failed run is past its grace with no record. `--runs-json <file>` reads the runs from a file instead of asking.",
+                "argv": [
+                  "postmortem",
+                  "owed",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus postmortem owed --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed, /reason, /owed, /past_grace"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "postmortem",
+              "diagnose"
+            ],
+            "route": "/docs/cli/postmortem/diagnose/",
+            "executable": true,
+            "usage": "majordomus postmortem diagnose [OPTIONS]",
+            "about": "The records whose signals a failure shows: text from --text, --file, --run, or stdin",
+            "args": [
+              {
+                "name": "text",
+                "long": "text",
+                "positional": false,
+                "help": "The text of the failure",
+                "value_name": "TEXT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "file",
+                "long": "file",
+                "positional": false,
+                "help": "Read the text of the failure from this file; `-` reads stdin",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "run",
+                "long": "run",
+                "positional": false,
+                "help": "Fetch the failed steps' log of this run from the forge (`gh run view <id> --log-failed`)",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "postmortem-diagnose-text",
+                "title": "Which recorded failures a log looks like",
+                "description": "Searches the text for the signals of every record, ignoring case, and returns the records whose own words are in it — the one with the most signals first, then the newest — with the cause, the components and what fixed it. The text comes from `--text`, `--file`, standard input, or `--run <id>`, which fetches the failed steps' log of a run from the forge. No record matching is an answer, exit 0, with an empty list.",
+                "argv": [
+                  "postmortem",
+                  "diagnose",
+                  "--text",
+                  "error: the lease was lost",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus postmortem diagnose --text 'error: the lease was lost' --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /records, /signals, /matches"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "postmortem",
+              "draft"
+            ],
+            "route": "/docs/cli/postmortem/draft/",
+            "executable": true,
+            "usage": "majordomus postmortem draft [OPTIONS]",
+            "about": "Print the draft of a record for one failed run; nothing is written",
+            "args": [
+              {
+                "name": "run",
+                "long": "run",
+                "positional": false,
+                "help": "The forge's identifier of the run",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "runs_json",
+                "long": "runs-json",
+                "positional": false,
+                "help": "Look the run up in this file, in the shape `gh run list --json` prints, instead of asking the forge; `-` reads stdin",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "jobs",
+                "long": "job",
+                "positional": false,
+                "help": "A job that failed in the run, for a run read from --runs-json; repeatable",
+                "value_name": "NAME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "postmortem-draft-unobserved",
+                "title": "A draft needs the run, and says when the forge did not give it",
+                "description": "Asks the forge for one run and its failed jobs and prints a `draft` record for it: the front matter with the cause class `undetermined`, and the four required sections saying nothing is established yet. It prints; it never writes a file. Here the repository has no remote the forge knows, so the run is not observed and the command says why with exit 12. `--runs-json <file> --job <name>` drafts from a file instead of asking.",
+                "argv": [
+                  "postmortem",
+                  "draft",
+                  "--run",
+                  "1"
+                ],
+                "command": "majordomus postmortem draft --run 1",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "rules"
         ],
         "route": "/docs/cli/rules/",

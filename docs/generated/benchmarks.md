@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 196 | 166 | 0 | 30 |
-| http | 191 | 166 | 0 | 25 |
-| mcp | 187 | 162 | 0 | 25 |
+| direct | 201 | 169 | 0 | 32 |
+| http | 194 | 169 | 0 | 25 |
+| mcp | 190 | 165 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 588 | 508 | 0 | 80 |
+| total | 599 | 517 | 0 | 82 |
 
 ## Capabilities
 
@@ -166,6 +166,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `postmortems.check` | postmortems | query | — | covered | covered | covered | `default` |
+| `postmortems.diagnose` | postmortems | query | — | covered | covered | covered | `no-known-signal`, `a-recorded-signal` |
+| `postmortems.draft` | postmortems | query | — | waived | — | — | — |
+| `postmortems.list` | postmortems | query | — | covered | covered | covered | `default` |
+| `postmortems.owed` | postmortems | query | — | waived | — | — | — |
 | `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |
@@ -252,6 +257,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
 | `system.http.ui.evidence` | `/ui/evidence` | pinned | — |
+| `system.http.ui.post_mortems` | `/ui/post-mortems` | pinned | — |
 | `system.http.ui.docs` | `/ui/docs` | pinned | — |
 | `system.http.ui.governance` | `/ui/governance` | pinned | — |
 | `system.http.live.ui.index` | `/ui` | live | — |
@@ -265,6 +271,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
 | `system.http.live.ui.evidence` | `/ui/evidence` | live | — |
+| `system.http.live.ui.post_mortems` | `/ui/post-mortems` | live | — |
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |
 | `system.http.live.ui.governance` | `/ui/governance` | live | — |
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |

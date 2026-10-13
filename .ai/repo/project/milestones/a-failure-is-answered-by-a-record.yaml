@@ -1,0 +1,41 @@
+id: a-failure-is-answered-by-a-record
+title: A failure of the trunk's CI is answered by a record the tool reads, and the next failure is diagnosed from the records
+slug: a-failure-is-answered-by-a-record
+order: 540
+priority: p0
+problem: "On 2026-10-13 the trunk's CI concluded in failure six times before noon, from seven causes. Each was explained by the session that met it, on a peer board, in a pull request body or in a commit subject, and none of the explanations was a record: nothing could list them, check that one existed for a run, link one from the component it concerns or search them when the same job went red again. One failed job of the night's candidate had been read by nobody and nothing said so. The owner ordered that day that every CI failure has a post-mortem kept in the repository, typed, analysed, wired into troubleshooting, on every surface, derived, tested, published, enforced and connected to the hooks of CI, the forge and the coding agents."
+outcome: "A failed run of a workflow on the trunk is named by a typed post-mortem record within a stated grace, or the tool says which run owes one. A record states its root cause, components and signals, or states that the cause is not established. A new failure is searched against the records before anybody reads a log. The records are on the command line, HTTP, MCP, the UI and the published site from one module and one declaration, and the hooks that can reach the forge run the check that needs it."
+current_state: "At master e506c041a4 no document kind holds a failure and its cause. The only reader of the forge's workflow runs is monitor.stream, which keeps nothing. majordomus why diagnose matches product pains against moments. Seven causes of 2026-10-13 are explained on a board that is gone with its processes."
+desired_state: "Kind post-mortem (schema majordomus.post-mortem/v1) under .ai/repo/post-mortems/, rule project.a-ci-failure-has-a-post-mortem active and blocking with two cases, module postmortems with list, check, owed, diagnose and draft, the gate post-mortems in the structure job, a UI screen, one published page per record, and the forge half run by the trunk's workflow and by a session's start."
+scope:
+  - .ai/repo/post-mortems
+  - .ai/repo/rules/project
+  - .ai/repo/adrs
+  - .ai/repo/ci
+  - share
+  - apps/majordomus-cli/src
+  - .github/workflows
+  - lib
+  - docs
+  - site
+  - test/cases
+non_scope:
+  - "Failures on a pull request's head: they block their own merge"
+  - "Deriving a root cause by a model: the executable invokes none"
+  - "Accepting ADR 0156: acceptance is the owner's act"
+acceptance_criteria:
+  - "Every failed or timed-out run of a workflow on master since 2026-10-13 is named by a post-mortem record, or postmortem owed names it and exits 10 past the grace"
+  - "A record that is inconsistent, or names a file or a case the tree does not hold, fails the structure job"
+  - "The text of a failure seen before is answered by postmortem diagnose with the record written for it"
+  - "A record is reached from the page of every issue, rule, file and case it names, on the Cockpit and on the published site"
+  - "Every issue of this milestone is DONE or CANCELLED with its reason"
+validation:
+  - bin/majordomus plan validate
+  - bin/majordomus-cli postmortem check
+  - bash test/run.sh 2999_a_post_mortem_is_a_typed_record 3000_a_trunk_failure_owes_a_post_mortem
+evidence_required:
+  - case_2999
+  - case_3000
+  - a_failed_trunk_run_answered_through_the_hook
+created_at: 2026-10-13
+updated_at: 2026-10-13

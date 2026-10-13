@@ -192,6 +192,12 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus served observe`](#majordomus-served-observe) | `/docs/cli/served/observe/` | Probe the build identity a deployment serves, judge it against a commit and record it |
 | [`majordomus served forge`](#majordomus-served-forge) | `/docs/cli/served/forge/` | Ask the forge which deployments and releases it recorded, and keep the answer for the readers |
 | [`majordomus served show`](#majordomus-served-show) | `/docs/cli/served/show/` | Each deployment's newest record, re-judged against a commit |
+| [`majordomus postmortem`](#majordomus-postmortem) | `/docs/cli/postmortem/` | What turned the trunk's CI red and why: the post-mortems under .ai/repo/post-mortems/ listed and judged, the trunk's failed runs no record answers, the records a failing log looks like, and the draft of a record for one failed run |
+| [`majordomus postmortem list`](#majordomus-postmortem-list) | `/docs/cli/postmortem/list/` | Every record, newest first, with the counts by status and by cause class |
+| [`majordomus postmortem check`](#majordomus-postmortem-check) | `/docs/cli/postmortem/check/` | Judge the records against the rules their schema cannot say; exit 10 on any finding |
+| [`majordomus postmortem owed`](#majordomus-postmortem-owed) | `/docs/cli/postmortem/owed/` | The trunk's failed runs no record answers; exit 10 when one is past its grace |
+| [`majordomus postmortem diagnose`](#majordomus-postmortem-diagnose) | `/docs/cli/postmortem/diagnose/` | The records whose signals a failure shows: text from --text, --file, --run, or stdin |
+| [`majordomus postmortem draft`](#majordomus-postmortem-draft) | `/docs/cli/postmortem/draft/` | Print the draft of a record for one failed run; nothing is written |
 | [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
@@ -251,7 +257,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus postmortem`](#majordomus-postmortem), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -5545,6 +5551,173 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments.
+
+<a id="majordomus-postmortem"></a>
+## `majordomus postmortem`
+
+What turned the trunk's CI red and why: the post-mortems under .ai/repo/post-mortems/ listed and judged, the trunk's failed runs no record answers, the records a failing log looks like, and the draft of a record for one failed run
+
+Subcommands: [`majordomus postmortem list`](#majordomus-postmortem-list), [`majordomus postmortem check`](#majordomus-postmortem-check), [`majordomus postmortem owed`](#majordomus-postmortem-owed), [`majordomus postmortem diagnose`](#majordomus-postmortem-diagnose), [`majordomus postmortem draft`](#majordomus-postmortem-draft).
+
+```text
+majordomus postmortem [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-postmortem-list"></a>
+## `majordomus postmortem list`
+
+Every record, newest first, with the counts by status and by cause class
+
+```text
+majordomus postmortem list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every post-mortem, with the counts by status and by cause** — Every record under `.ai/repo/post-mortems/`, newest first: its status, day, cause class and summary, the runs it answers, its components and how many signals it carries. The same answer `GET /api/v1/post-mortems` and the MCP tool `majordomus_postmortems` give. A repository that has recorded nothing answers an empty list.
+
+  ```console
+  $ majordomus postmortem list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /directory, /count, /by_status, /by_cause, /records.
+
+<a id="majordomus-postmortem-check"></a>
+## `majordomus postmortem check`
+
+Judge the records against the rules their schema cannot say; exit 10 on any finding
+
+```text
+majordomus postmortem check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The rules a post-mortem's schema cannot say** — Judges every record against the rules that relate two of its fields, the record to the tree and one record to another: a draft carries no cause and a later status carries one, an explained record names a component and a signal, a fix is named exactly when the record is resolved, a path named exists, no identity is shared. Exit 0 when nothing is found, 10 on any finding, each printed with its record and a stable code.
+
+  ```console
+  $ majordomus postmortem check
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-postmortem-owed"></a>
+## `majordomus postmortem owed`
+
+The trunk's failed runs no record answers; exit 10 when one is past its grace
+
+```text
+majordomus postmortem owed [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--branch` | `<BRANCH>` | — | The branch whose runs are asked about (default master) |
+| `--limit` | `<LIMIT>` | — | How many of its newest runs the forge is asked for (default 60) |
+| `--grace-hours` | `<GRACE_HOURS>` | — | Hours after a run finished during which its record may still be missing (default 24) |
+| `--since` | `<SINCE>` | — | The day (YYYY-MM-DD) or RFC 3339 moment before which no run owes anything (default 2026-10-13) |
+| `--workflow` | `<NAME>` | — | Only this workflow, by the name the forge reports; repeatable (default every workflow) |
+| `--now` | `<NOW>` | — | The RFC 3339 moment ages are measured from (default the clock) |
+| `--runs-json` | `<FILE>` | — | Read the runs from this file, in the shape `gh run list --json databaseId,workflowName,conclusion,headSha,createdAt,updatedAt,url,headBranch` prints, instead of asking the forge; `-` reads stdin |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A forge that cannot be asked owes nothing, and says so** — Asks the forge for the trunk's newest runs and names every failed one no record answers, with its age and whether it is within its grace. Here the repository has no remote the forge knows, so nothing is observed: the answer is `observed: false` with the reason and exit 0 — never a guess, and never a green trunk nobody saw. In a checkout of a repository on the forge it exits 10 when a failed run is past its grace with no record. `--runs-json <file>` reads the runs from a file instead of asking.
+
+  ```console
+  $ majordomus postmortem owed --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /observed, /reason, /owed, /past_grace.
+
+<a id="majordomus-postmortem-diagnose"></a>
+## `majordomus postmortem diagnose`
+
+The records whose signals a failure shows: text from --text, --file, --run, or stdin
+
+```text
+majordomus postmortem diagnose [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--text` | `<TEXT>` | — | The text of the failure |
+| `--file` | `<FILE>` | — | Read the text of the failure from this file; `-` reads stdin |
+| `--run` | `<ID>` | — | Fetch the failed steps' log of this run from the forge (`gh run view <id> --log-failed`) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Which recorded failures a log looks like** — Searches the text for the signals of every record, ignoring case, and returns the records whose own words are in it — the one with the most signals first, then the newest — with the cause, the components and what fixed it. The text comes from `--text`, `--file`, standard input, or `--run <id>`, which fetches the failed steps' log of a run from the forge. No record matching is an answer, exit 0, with an empty list.
+
+  ```console
+  $ majordomus postmortem diagnose --text 'error: the lease was lost' --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /records, /signals, /matches.
+
+<a id="majordomus-postmortem-draft"></a>
+## `majordomus postmortem draft`
+
+Print the draft of a record for one failed run; nothing is written
+
+```text
+majordomus postmortem draft [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--run` | `<ID>` | required | The forge's identifier of the run |
+| `--runs-json` | `<FILE>` | — | Look the run up in this file, in the shape `gh run list --json` prints, instead of asking the forge; `-` reads stdin |
+| `--job` | `<NAME>` | — | A job that failed in the run, for a run read from --runs-json; repeatable |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A draft needs the run, and says when the forge did not give it** — Asks the forge for one run and its failed jobs and prints a `draft` record for it: the front matter with the cause class `undetermined`, and the four required sections saying nothing is established yet. It prints; it never writes a file. Here the repository has no remote the forge knows, so the run is not observed and the command says why with exit 12. `--runs-json <file> --job <name>` drafts from a file instead of asking.
+
+  ```console
+  $ majordomus postmortem draft --run 1
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-rules"></a>
 ## `majordomus rules`

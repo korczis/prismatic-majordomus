@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/post-mortem/post-mortem.v1.schema.json",
+  "x-majordomus-schema": "majordomus.post-mortem/v1",
+  "x-majordomus-derived-from": "majordomus/post-mortem/post-mortem.v1.proto",
+  "x-majordomus-allow": "post-mortem",
+  "description": "The whole record: the front matter, then the account in prose.",
+  "title": "post-mortem",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "kind",
+        "title",
+        "description",
+        "status",
+        "date",
+        "runs",
+        "cause"
+      ],
+      "properties": {
+        "schema": {
+          "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+          "const": "post-mortem/v1"
+        },
+        "id": {
+          "description": "The identity: `pm-`, the day the failure was first seen, and a slug. It fixes the file name and survives a retitle.",
+          "type": "string",
+          "pattern": "^pm-[0-9]{8}-[a-z0-9][a-z0-9-]*$"
+        },
+        "kind": {
+          "const": "post-mortem"
+        },
+        "title": {
+          "description": "What went wrong, in one line, as an assertion: the cause when it is known, the symptom while it is not.",
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "description": "One line saying what a reader who meets the same failure should take from the record.",
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "analysed",
+            "resolved"
+          ]
+        },
+        "date": {
+          "description": "The day the failure was first seen, YYYY-MM-DD.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "runs": {
+          "description": "Every run this record answers. One cause can fail several runs, and each of them is answered by naming it here; a record that names none answers nothing and is refused.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Run"
+          }
+        },
+        "cause": {
+          "$ref": "#/$defs/Cause"
+        },
+        "components": {
+          "description": "Where the cause lives, as references of the layer: `file:<repository-relative path>`, `test:<path>`, or `<kind>:<identity>` for an object the layer holds (`rule:`, `adr:`, `claim:`, `skill:`). Each is an edge of the graph, so the record is reached from the page of every component it names. A reference must resolve while the record is not `resolved`; a record that is `analysed` or `resolved` names at least one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z-]*:.+$"
+          }
+        },
+        "signals": {
+          "description": "What the failure looks like from outside: text a failing log or a job's summary shows. `majordomus postmortem diagnose` searches a failure for these, so a signal is the shortest text that is this failure's and no other's.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Signal"
+          }
+        },
+        "fixed_by": {
+          "description": "What removed the cause: `commit:<sha>`, `pr:<number>`. Present exactly when the status is `resolved`.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(commit:[0-9a-f]{7,40}|pr:[0-9]+)$"
+          }
+        },
+        "prevention": {
+          "description": "What now stops the cause from returning or shortens the next diagnosis, as references of the layer: `test:<path>`, `file:<path>`, `rule:<identity>`, `issue:<id>`. Each must resolve.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z-]*:.+$"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "related": {
+          "description": "What else of the layer the failure concerns, as `<kind>:<identity>`: the issue that plans the follow-up, the milestone, the decision, the intent or the claim it touched. Each must resolve, and each is an edge both ways: the issue's page names the record.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z-]*:.+$"
+          }
+        }
+      }
+    },
+    "Run": {
+      "description": "One failed run of a workflow on the trunk.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow",
+        "id",
+        "commit",
+        "jobs"
+      ],
+      "properties": {
+        "workflow": {
+          "description": "The workflow's name as the forge reports it (`validate`, `pages`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "id": {
+          "description": "The forge's identifier of the run, as a string: it is an identity, never a quantity.",
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "commit": {
+          "description": "The commit the run judged.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "jobs": {
+          "description": "The jobs that failed in it, by name.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "step": {
+          "description": "The step that failed, where one job failed in one step.",
+          "type": "string"
+        }
+      }
+    },
+    "Cause": {
+      "description": "Why it failed, as a class and one sentence. The prose is the body's; this is what a table, a count and a diagnosis read.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "summary"
+      ],
+      "properties": {
+        "class": {
+          "enum": [
+            "defect",
+            "test",
+            "race",
+            "gate",
+            "environment",
+            "dependency",
+            "undetermined"
+          ]
+        },
+        "summary": {
+          "description": "The cause in one sentence. For `undetermined`, what is known and what was ruled out.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Signal": {
+      "description": "One recognisable trace of the failure.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "description": "The signal's name within the record, lower-case letters, digits and hyphens.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "text": {
+          "description": "The text itself, matched as written, ignoring case.",
+          "type": "string",
+          "minLength": 4
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body is the account a reader comes for when the same job is red again.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "What failed",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Root cause",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Fix",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Prevention",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Timeline",
+          "level": 2,
+          "required": false,
+          "non_empty": false,
+          "description": "Optional: when it was seen, by whom, and how long the trunk stayed red."
+        }
+      ]
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/post-mortem/post-mortem.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.23.0"
+}

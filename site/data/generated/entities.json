@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 103,
+      "count": 104,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,10 +23,24 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 177,
+      "count": 178,
       "dir": "rules",
       "statuses": [
         "active"
+      ]
+    },
+    {
+      "kind": "post-mortem",
+      "projection": "entity",
+      "route": "/post-mortems/",
+      "title": "Post-mortems",
+      "description": "Every cause that turned this repository's trunk red in CI: the runs it failed, what failed in them, why, the components the cause lives in, what fixed it and what now stops it returning. One page per record, generated from the record's own file.",
+      "weight": 47,
+      "count": 8,
+      "dir": "post-mortems",
+      "statuses": [
+        "draft",
+        "resolved"
       ]
     }
   ],
@@ -37,7 +51,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 103
+      "count": 104
     },
     {
       "kind": "application",
@@ -69,7 +83,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 245
+      "count": 246
     },
     {
       "kind": "command",
@@ -85,7 +99,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 37
+      "count": 38
     },
     {
       "kind": "critique",
@@ -125,7 +139,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 342
+      "count": 344
     },
     {
       "kind": "domain",
@@ -173,7 +187,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 342
+      "count": 348
     },
     {
       "kind": "knowledge",
@@ -197,7 +211,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 35
+      "count": 36
     },
     {
       "kind": "moment",
@@ -214,6 +228,14 @@
       "title": null,
       "reason": null,
       "count": 1
+    },
+    {
+      "kind": "post-mortem",
+      "projection": "entity",
+      "route": "/post-mortems/",
+      "title": "Post-mortems",
+      "reason": null,
+      "count": 8
     },
     {
       "kind": "profile",
@@ -245,7 +267,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 177
+      "count": 178
     },
     {
       "kind": "scope",
@@ -285,7 +307,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 466
+      "count": 468
     },
     {
       "kind": "use-case",
@@ -350,6 +372,13 @@
           "label": "adr-0038",
           "kind": "adr",
           "route": "/adrs/adr-0038/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
           "external": false
         }
       ]
@@ -470,6 +499,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
           "external": false
         }
       ]
@@ -8011,6 +8047,541 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0156",
+      "identity": "adr-0156",
+      "slug": "adr-0156",
+      "cockpit": "/cockpit/objects/adr/adr-0156",
+      "title": "A failure of the trunk's CI is answered by a post-mortem record",
+      "status": "proposed",
+      "tags": [
+        "ci",
+        "evidence",
+        "troubleshooting",
+        "derivation"
+      ],
+      "source": ".ai/repo/adrs/0156-a-failure-of-the-trunks-ci-is-answered-by-a-post-mortem-record.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/post-mortem/post-mortem.v1.proto",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0002",
+          "kind": "adr",
+          "route": "/adrs/adr-0002/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "ai.repo.post-mortems",
+          "kind": "context",
+          "route": "/context/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-ci-failure-has-a-post-mortem@1",
+          "kind": "rule",
+          "route": "/rules/project-a-ci-failure-has-a-post-mortem-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-a-rule-linked-three-external-pages",
+      "identity": "pm-20261013-a-rule-linked-three-external-pages",
+      "slug": "pm-20261013-a-rule-linked-three-external-pages",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-a-rule-linked-three-external-pages",
+      "title": "A rule linked three external pages and the offline link check refused the site",
+      "status": "resolved",
+      "tags": [
+        "pages",
+        "site",
+        "links"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-a-rule-linked-three-external-pages.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": ".github/workflows/pages.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ci/link-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ci/pages-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:b7ef193abe",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1079",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "concerns",
+          "label": "I2647",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "concerns",
+          "label": "project.ssh-key-access-is-preauthorized@1",
+          "kind": "rule",
+          "route": "/rules/project-ssh-key-access-is-preauthorized-1/",
+          "external": false
+        },
+        {
+          "edge": "failed_in",
+          "label": "project.ssh-key-access-is-preauthorized@1",
+          "kind": "rule",
+          "route": "/rules/project-ssh-key-access-is-preauthorized-1/",
+          "external": false
+        },
+        {
+          "edge": "guarded_by",
+          "label": "test/cases/12_site_build.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-a-stopped-server-accepted-one-more-connection",
+      "identity": "pm-20261013-a-stopped-server-accepted-one-more-connection",
+      "slug": "pm-20261013-a-stopped-server-accepted-one-more-connection",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-a-stopped-server-accepted-one-more-connection",
+      "title": "A stopped test server accepted one more connection and reset it",
+      "status": "resolved",
+      "tags": [
+        "rust",
+        "race",
+        "http"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-a-stopped-server-accepted-one-more-connection.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": "apps/majordomus-cli/src/http/server.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "apps/majordomus-cli/tests/shared_units.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "guarded_by",
+          "label": "apps/majordomus-cli/tests/shared_units.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:a178e1b2bd",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1078",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-a-third-served-capability-left-two-proofs-counting-two",
+      "identity": "pm-20261013-a-third-served-capability-left-two-proofs-counting-two",
+      "slug": "pm-20261013-a-third-served-capability-left-two-proofs-counting-two",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-a-third-served-capability-left-two-proofs-counting-two",
+      "title": "Adding served.forge left a doctest and a test asserting the module as it was",
+      "status": "resolved",
+      "tags": [
+        "rust",
+        "capabilities"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-a-third-served-capability-left-two-proofs-counting-two.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": "apps/majordomus-cli/src/capability/builtin/served.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "apps/majordomus-cli/tests/http_serve.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "guarded_by",
+          "label": "apps/majordomus-cli/tests/http_serve.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:c03a5ff769",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:e6d0371cfb",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1061",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "concerns",
+          "label": "I2649",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-case-1097s-message-read-as-an-early-exit",
+      "identity": "pm-20261013-case-1097s-message-read-as-an-early-exit",
+      "slug": "pm-20261013-case-1097s-message-read-as-an-early-exit",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-case-1097s-message-read-as-an-early-exit",
+      "title": "A failure message in case 1097 contained \"exit 0\" and case 413 read it as an early exit",
+      "status": "resolved",
+      "tags": [
+        "suite"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-case-1097s-message-read-as-an-early-exit.md",
+      "references": [
+        {
+          "edge": "fixed_by",
+          "label": "commit:93c9c21894",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1079",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "test/cases/1097_the_projection_is_applied_at_landing.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "failed_in",
+          "label": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "guarded_by",
+          "label": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-case-486-held-a-line-the-site-check-no-longer-prints",
+      "identity": "pm-20261013-case-486-held-a-line-the-site-check-no-longer-prints",
+      "slug": "pm-20261013-case-486-held-a-line-the-site-check-no-longer-prints",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-case-486-held-a-line-the-site-check-no-longer-prints",
+      "title": "Case 486 asserted a line of the site check that a landing had reworded",
+      "status": "resolved",
+      "tags": [
+        "suite",
+        "site"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-case-486-held-a-line-the-site-check-no-longer-prints.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": "scripts/site-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:ba49c586c2",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1079",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "concerns",
+          "label": "I2650",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "failed_in",
+          "label": "test/cases/486_rustdoc_composition.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "guarded_by",
+          "label": "test/cases/486_rustdoc_composition.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-the-handbook-failed-three-structure-gates",
+      "identity": "pm-20261013-the-handbook-failed-three-structure-gates",
+      "slug": "pm-20261013-the-handbook-failed-three-structure-gates",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-the-handbook-failed-three-structure-gates",
+      "title": "The handbook sources failed the design, ui-check and lease-reader gates on the trunk",
+      "status": "resolved",
+      "tags": [
+        "structure",
+        "handbook",
+        "design"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-the-handbook-failed-three-structure-gates.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": "handbook/build.py",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ci/design-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "guarded_by",
+          "label": "scripts/ci/design-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ci/lease-reader-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "guarded_by",
+          "label": "scripts/ci/lease-reader-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ui",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "share/design/tokens.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1062",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "concerns",
+          "label": "I2650",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "guarded_by",
+          "label": "test/cases/110_lease_reader.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-two-workflow-guards-were-and-or-chains",
+      "identity": "pm-20261013-two-workflow-guards-were-and-or-chains",
+      "slug": "pm-20261013-two-workflow-guards-were-and-or-chains",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-two-workflow-guards-were-and-or-chains",
+      "title": "Two steps of the projection workflow used A && B || C and shell-lint refused them",
+      "status": "resolved",
+      "tags": [
+        "structure",
+        "workflow",
+        "shell"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-two-workflow-guards-were-and-or-chains.md",
+      "references": [
+        {
+          "edge": "failed_in",
+          "label": ".github/workflows/github.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "failed_in",
+          "label": "scripts/ci/shell-lint",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "guarded_by",
+          "label": "scripts/ci/shell-lint",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "commit:8d852d79f0",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "fixed_by",
+          "label": "pr:1079",
+          "kind": "fix",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "concerns",
+          "label": "I2650",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "post-mortem",
+      "id": "majordomus://post-mortem/pm-20261013-validate-38328889515-interactions",
+      "identity": "pm-20261013-validate-38328889515-interactions",
+      "slug": "pm-20261013-validate-38328889515-interactions",
+      "cockpit": "/cockpit/objects/post-mortem/pm-20261013-validate-38328889515-interactions",
+      "title": "The interactions job of validate 38328889515 failed and its cause was not established",
+      "status": "draft",
+      "tags": [
+        "interactions"
+      ],
+      "source": ".ai/repo/post-mortems/pm-20261013-validate-38328889515-interactions.md",
+      "references": [
+        {
+          "edge": "concerns",
+          "label": "I2650",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -10805,6 +11376,54 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-ci-failure-has-a-post-mortem@1",
+      "identity": "project.a-ci-failure-has-a-post-mortem@1",
+      "slug": "project-a-ci-failure-has-a-post-mortem-1",
+      "cockpit": "/cockpit/objects/rule/project-a-ci-failure-has-a-post-mortem-1",
+      "title": "Every failure of the trunk's CI has a post-mortem",
+      "status": "active",
+      "tags": [
+        "ci",
+        "evidence",
+        "troubleshooting",
+        "gates"
+      ],
+      "source": ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
+          "external": false
+        },
+        {
+          "edge": "tracks",
+          "label": "ai.repo.post-mortems",
+          "kind": "context",
+          "route": "/context/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
       "identity": "project.a-closing-question-is-answered-by-measurement@1",
       "slug": "project-a-closing-question-is-answered-by-measurement-1",
@@ -12000,6 +12619,13 @@
           "label": "adr-0111",
           "kind": "adr",
           "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-ci-failure-has-a-post-mortem@1",
+          "kind": "rule",
+          "route": "/rules/project-a-ci-failure-has-a-post-mortem-1/",
           "external": false
         },
         {
@@ -13514,6 +14140,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-ci-failure-has-a-post-mortem@1",
+          "kind": "rule",
+          "route": "/rules/project-a-ci-failure-has-a-post-mortem-1/",
           "external": false
         },
         {
@@ -15704,7 +16337,22 @@
       ],
       "source": ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "concerns",
+          "label": "pm-20261013-a-rule-linked-three-external-pages",
+          "kind": "post-mortem",
+          "route": "/post-mortems/pm-20261013-a-rule-linked-three-external-pages/",
+          "external": false
+        },
+        {
+          "edge": "failed_in",
+          "label": "pm-20261013-a-rule-linked-three-external-pages",
+          "kind": "post-mortem",
+          "route": "/post-mortems/pm-20261013-a-rule-linked-three-external-pages/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",

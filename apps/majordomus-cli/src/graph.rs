@@ -1014,6 +1014,7 @@ fn compose_with(registry: &CapabilityRegistry, objects: &[Object], limit: usize)
     .node_kind("command", "a command a scenario runs")
     .node_kind("doctrine", "a doctrine a scenario exercises")
     .node_kind("claim", "a claim the layer stands behind")
+    .node_kind("fix", "a commit or a pull request that removed a cause")
     .edge_kind("composes", "the module composes the capability")
     .edge_kind("projects", "the capability is projected through the transport")
     .edge_kind("is_a", "the object is of that kind")
@@ -1030,7 +1031,11 @@ fn compose_with(registry: &CapabilityRegistry, objects: &[Object], limit: usize)
     .edge_kind("tested_by", "the claim is proved by that case")
     .edge_kind("belongs_to", "the issue belongs to that milestone")
     .edge_kind("serves", "the use case serves that application")
-    .edge_kind("governed_by", "the application is governed by that doctrine");
+    .edge_kind("governed_by", "the application is governed by that doctrine")
+    .edge_kind("failed_in", "the failure's cause lived in that component")
+    .edge_kind("guarded_by", "the failure is now guarded against by that")
+    .edge_kind("concerns", "the failure concerns that object")
+    .edge_kind("fixed_by", "the failure's cause was removed by that change");
 
     // the kinds are read off what was indexed; a kind named here would be a second
     // declaration of something share/kinds.yaml already owns
@@ -1376,6 +1381,39 @@ pub(crate) const RELATIONS: &[Relation] = &[
         field: "mcp_tools",
         edge: "exercises",
         target: Target::McpTool,
+        inverted: false,
+    },
+    // A post-mortem names where the cause lived, what now guards against it and what else
+    // of the layer it concerns, each as `<kind>:<identity>`: the record is then reached
+    // from the page of the rule, the issue or the file it names, not only the other way.
+    Relation {
+        kinds: &["post-mortem"],
+        field: "components",
+        edge: "failed_in",
+        target: Target::Prefixed,
+        inverted: false,
+    },
+    Relation {
+        kinds: &["post-mortem"],
+        field: "prevention",
+        edge: "guarded_by",
+        target: Target::Prefixed,
+        inverted: false,
+    },
+    Relation {
+        kinds: &["post-mortem"],
+        field: "related",
+        edge: "concerns",
+        target: Target::Prefixed,
+        inverted: false,
+    },
+    // what removed the cause is a commit or a pull request, which the forge holds and the
+    // layer does not: a name, drawn as a node outside the index
+    Relation {
+        kinds: &["post-mortem"],
+        field: "fixed_by",
+        edge: "fixed_by",
+        target: Target::Name("fix"),
         inverted: false,
     },
 ];

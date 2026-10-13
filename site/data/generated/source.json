@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source_version": "0.23.0",
-  "source_hash": "22eb3fb062abab8eb416c07a2f7140301448a95227a8ccfba114130d82de6120",
+  "source_hash": "59114424bb78809eb5463bc85ba4a9d7513196ea576498f48defb5e5156efca2",
   "generator_version": 1,
   "input_files": [
     "bin/majordomus",
@@ -146,6 +146,7 @@
     "docs/PERFORMANCE.md",
     "docs/PERSONAL_MODE.md",
     "docs/PLANNING.md",
+    "docs/POST_MORTEMS.md",
     "docs/PREFLIGHT.md",
     "docs/PRODUCT.md",
     "docs/QUALITY.md",
@@ -169,6 +170,7 @@
     "docs/claims/a-finding-names-how-to-see-it-again.md",
     "docs/claims/a-session-records-what-it-observed.md",
     "docs/claims/a-skipped-case-is-not-a-proof.md",
+    "docs/claims/a-trunk-failure-is-answered-by-a-post-mortem.md",
     "docs/claims/adr-catalogue.md",
     "docs/claims/adr-propose.md",
     "docs/claims/adr-traceability.md",
@@ -603,7 +605,9 @@
     "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
     "test/cases/2983_the_published_ui_is_the_trunks.sh",
     "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+    "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
     "test/cases/29_prompt_capture.sh",
+    "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
     "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
     "test/cases/301_the_mesh_stays_one_subsystem.sh",
     "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -1041,6 +1045,7 @@
     "share/schemas/majordomus/capture/capture.v1.proto",
     "share/schemas/majordomus/context/context.v1.proto",
     "share/schemas/majordomus/knowledge/knowledge.v1.proto",
+    "share/schemas/majordomus/post-mortem/post-mortem.v1.proto",
     "share/schemas/majordomus/prompt/prompt.v1.proto",
     "share/schemas/majordomus/rule/rule.v1.proto",
     "share/schemas/majordomus/skill/skill.v1.proto",
@@ -1070,6 +1075,7 @@
     "share/schemas/majordomus/milestone/milestone.v1.schema.json",
     "share/schemas/majordomus/moment/moment.v1.schema.json",
     "share/schemas/majordomus/policy/policy.v1.schema.json",
+    "share/schemas/majordomus/post-mortem/post-mortem.v1.schema.json",
     "share/schemas/majordomus/profile/profile.v1.schema.json",
     "share/schemas/majordomus/project/project.v1.schema.json",
     "share/schemas/majordomus/prompt/prompt.v1.schema.json",
@@ -1089,6 +1095,7 @@
     ".ai/repo/project/milestones/M002.yaml",
     ".ai/repo/project/milestones/M003.yaml",
     ".ai/repo/project/milestones/M004.yaml",
+    ".ai/repo/project/milestones/a-failure-is-answered-by-a-record.yaml",
     ".ai/repo/project/milestones/a-session-leaves-what-it-observed.yaml",
     ".ai/repo/project/milestones/adopter-upgrades.yaml",
     ".ai/repo/project/milestones/architecture-is-enforced.yaml",
@@ -1460,6 +1467,12 @@
     ".ai/repo/project/issues/I2488.yaml",
     ".ai/repo/project/issues/I2489.yaml",
     ".ai/repo/project/issues/I2491.yaml",
-    ".ai/repo/project/issues/I2495.yaml"
+    ".ai/repo/project/issues/I2495.yaml",
+    ".ai/repo/project/issues/I2645.yaml",
+    ".ai/repo/project/issues/I2646.yaml",
+    ".ai/repo/project/issues/I2647.yaml",
+    ".ai/repo/project/issues/I2648.yaml",
+    ".ai/repo/project/issues/I2649.yaml",
+    ".ai/repo/project/issues/I2650.yaml"
   ]
 }

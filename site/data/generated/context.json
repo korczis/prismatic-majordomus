@@ -337,6 +337,33 @@
       ]
     },
     {
+      "id": "ai.repo.post-mortems",
+      "path": ".ai/repo/post-mortems/README.md",
+      "dir": ".ai/repo/post-mortems",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Post-mortems",
+      "description": "One record per cause that turned the trunk's CI red — the runs it failed, why, the components the cause lives in, what fixed it and what stops it returning; `majordomus postmortem` reads them and searches a new failure for their signals.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "share/schemas/majordomus/post-mortem/post-mortem.v1.proto",
+        "share/kinds.yaml",
+        "docs/POST_MORTEMS.md",
+        ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
+      ]
+    },
+    {
       "id": "ai.repo.profiles",
       "path": ".ai/repo/profiles/README.md",
       "dir": ".ai/repo/profiles",
@@ -1103,7 +1130,7 @@
       "depth": 3,
       "name": "economics",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.benchmarks.economics",
         "path": ".ai/repo/benchmarks/economics/README.md",
         "dir": ".ai/repo/benchmarks/economics",
@@ -1238,7 +1265,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 27,
+        "index": 28,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -1273,7 +1300,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 28,
+        "index": 29,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -1454,7 +1481,7 @@
       "depth": 3,
       "name": "domains",
       "contract": {
-        "index": 37,
+        "index": 38,
         "id": "ai.repo.features.domains",
         "path": ".ai/repo/features/domains/README.md",
         "dir": ".ai/repo/features/domains",
@@ -1530,7 +1557,7 @@
       "depth": 3,
       "name": "candidates",
       "contract": {
-        "index": 29,
+        "index": 30,
         "id": "ai.repo.knowledge.candidates",
         "path": ".ai/repo/knowledge/candidates/README.md",
         "dir": ".ai/repo/knowledge/candidates",
@@ -1563,7 +1590,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 30,
+        "index": 31,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1663,6 +1690,44 @@
       }
     },
     {
+      "dir": ".ai/repo/post-mortems",
+      "document": "ai.repo.post-mortems",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "post-mortems",
+      "contract": {
+        "index": 15,
+        "id": "ai.repo.post-mortems",
+        "path": ".ai/repo/post-mortems/README.md",
+        "dir": ".ai/repo/post-mortems",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Post-mortems",
+        "description": "One record per cause that turned the trunk's CI red — the runs it failed, why, the components the cause lives in, what fixed it and what stops it returning; `majordomus postmortem` reads them and searches a new failure for their signals.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "share/schemas/majordomus/post-mortem/post-mortem.v1.proto",
+          "share/kinds.yaml",
+          "docs/POST_MORTEMS.md",
+          ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
+        ],
+        "paths": [],
+        "sha256": "82bbad4ca0bab89090622efb62697e1f54f2e6f5f8c9bd66dcb3f6f7fe99bb4f"
+      }
+    },
+    {
       "dir": ".ai/repo/profiles",
       "document": "ai.repo.profiles",
       "requires_contract": true,
@@ -1670,7 +1735,7 @@
       "depth": 2,
       "name": "profiles",
       "contract": {
-        "index": 15,
+        "index": 16,
         "id": "ai.repo.profiles",
         "path": ".ai/repo/profiles/README.md",
         "dir": ".ai/repo/profiles",
@@ -1706,7 +1771,7 @@
       "depth": 2,
       "name": "project",
       "contract": {
-        "index": 16,
+        "index": 17,
         "id": "ai.repo.project",
         "path": ".ai/repo/project/README.md",
         "dir": ".ai/repo/project",
@@ -1743,7 +1808,7 @@
       "depth": 3,
       "name": "critiques",
       "contract": {
-        "index": 31,
+        "index": 32,
         "id": "ai.repo.project.critiques",
         "path": ".ai/repo/project/critiques/README.md",
         "dir": ".ai/repo/project/critiques",
@@ -1776,7 +1841,7 @@
       "depth": 3,
       "name": "gaps",
       "contract": {
-        "index": 32,
+        "index": 33,
         "id": "ai.repo.project.gaps",
         "path": ".ai/repo/project/gaps/README.md",
         "dir": ".ai/repo/project/gaps",
@@ -1809,7 +1874,7 @@
       "depth": 3,
       "name": "intents",
       "contract": {
-        "index": 33,
+        "index": 34,
         "id": "ai.repo.project.intents",
         "path": ".ai/repo/project/intents/README.md",
         "dir": ".ai/repo/project/intents",
@@ -1845,7 +1910,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 34,
+        "index": 35,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1880,7 +1945,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 35,
+        "index": 36,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1915,7 +1980,7 @@
       "depth": 2,
       "name": "prompts",
       "contract": {
-        "index": 17,
+        "index": 18,
         "id": "ai.repo.prompts",
         "path": ".ai/repo/prompts/README.md",
         "dir": ".ai/repo/prompts",
@@ -1951,7 +2016,7 @@
       "depth": 2,
       "name": "providers",
       "contract": {
-        "index": 18,
+        "index": 19,
         "id": "ai.repo.providers",
         "path": ".ai/repo/providers/README.md",
         "dir": ".ai/repo/providers",
@@ -2020,7 +2085,7 @@
       "depth": 2,
       "name": "rules",
       "contract": {
-        "index": 19,
+        "index": 20,
         "id": "ai.repo.rules",
         "path": ".ai/repo/rules/README.md",
         "dir": ".ai/repo/rules",
@@ -2058,7 +2123,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 36,
+        "index": 37,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -2091,7 +2156,7 @@
       "depth": 2,
       "name": "sessions",
       "contract": {
-        "index": 20,
+        "index": 21,
         "id": "ai.repo.sessions",
         "path": ".ai/repo/sessions/README.md",
         "dir": ".ai/repo/sessions",
@@ -2127,7 +2192,7 @@
       "depth": 2,
       "name": "skills",
       "contract": {
-        "index": 21,
+        "index": 22,
         "id": "ai.repo.skills",
         "path": ".ai/repo/skills/README.md",
         "dir": ".ai/repo/skills",
@@ -2277,7 +2342,7 @@
       "depth": 2,
       "name": "use-cases",
       "contract": {
-        "index": 22,
+        "index": 23,
         "id": "ai.repo.use-cases",
         "path": ".ai/repo/use-cases/README.md",
         "dir": ".ai/repo/use-cases",
@@ -2310,7 +2375,7 @@
       "depth": 2,
       "name": "why",
       "contract": {
-        "index": 23,
+        "index": 24,
         "id": "ai.repo.why",
         "path": ".ai/repo/why/README.md",
         "dir": ".ai/repo/why",
@@ -2373,7 +2438,7 @@
       "depth": 2,
       "name": "workflows",
       "contract": {
-        "index": 24,
+        "index": 25,
         "id": "ai.repo.workflows",
         "path": ".ai/repo/workflows/README.md",
         "dir": ".ai/repo/workflows",
@@ -2412,7 +2477,7 @@
       "depth": 2,
       "name": "workspaces",
       "contract": {
-        "index": 25,
+        "index": 26,
         "id": "ai.repo.workspaces",
         "path": ".ai/repo/workspaces/README.md",
         "dir": ".ai/repo/workspaces",
@@ -2442,8 +2507,8 @@
     }
   ],
   "counts": {
-    "directories": 64,
-    "documented": 37,
+    "directories": 65,
+    "documented": 38,
     "exempt": 27
   }
 }

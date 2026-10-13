@@ -147,7 +147,8 @@ fn chip(href: String, label: String) -> El {
         .child(el("code").class("mj-ui-chip-value").text(label))
 }
 
-fn issue_href(id: &str) -> String {
+/// Where an issue's inspector is.
+pub(crate) fn issue_href(id: &str) -> String {
     format!("{}?issue={id}#issue", super::prs::ROUTE)
 }
 

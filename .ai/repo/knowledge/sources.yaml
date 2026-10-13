@@ -141,6 +141,15 @@ sources:
     pathspec: ':(glob).ai/repo/knowledge/candidates/*.md'
     required: false
 
+  # What turned the trunk's CI red and why: one record per cause, naming the runs it answers.
+  # `majordomus postmortem owed` compares the trunk's failed runs with these, and
+  # `postmortem diagnose` searches a new failure for their signals.
+  - id: post-mortem
+    kind: post-mortem
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/post-mortems/*.md'
+    required: false
+
   - id: use_case
     kind: use-case
     discovery: vcs

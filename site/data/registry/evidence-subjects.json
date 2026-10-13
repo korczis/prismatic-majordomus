@@ -779,6 +779,31 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:postmortems.check",
+      "path": "/evidence/capabilities/postmortems-check/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:postmortems.diagnose",
+      "path": "/evidence/capabilities/postmortems-diagnose/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:postmortems.draft",
+      "path": "/evidence/capabilities/postmortems-draft/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:postmortems.list",
+      "path": "/evidence/capabilities/postmortems-list/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:postmortems.owed",
+      "path": "/evidence/capabilities/postmortems-owed/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:product.domains",
       "path": "/evidence/capabilities/product-domains/"
     },
@@ -1041,6 +1066,11 @@
       "kind": "claim",
       "subject": "claim:a-skipped-case-is-not-a-proof",
       "path": "/evidence/claims/a-skipped-case-is-not-a-proof/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:a-trunk-failure-is-answered-by-a-post-mortem",
+      "path": "/evidence/claims/a-trunk-failure-is-answered-by-a-post-mortem/"
     },
     {
       "kind": "claim",
@@ -2931,6 +2961,31 @@
       "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:postmortem check",
+      "path": "/evidence/commands/postmortem-check/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:postmortem diagnose",
+      "path": "/evidence/commands/postmortem-diagnose/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:postmortem draft",
+      "path": "/evidence/commands/postmortem-draft/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:postmortem list",
+      "path": "/evidence/commands/postmortem-list/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:postmortem owed",
+      "path": "/evidence/commands/postmortem-owed/"
     },
     {
       "kind": "command",
@@ -5463,6 +5518,66 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:postmortems.check": {
+      "kind": "capability",
+      "id": "postmortems.check",
+      "page": "/evidence/capabilities/postmortems-check/",
+      "programs": [],
+      "members": [
+        "command:postmortem check"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:postmortems.diagnose": {
+      "kind": "capability",
+      "id": "postmortems.diagnose",
+      "page": "/evidence/capabilities/postmortems-diagnose/",
+      "programs": [],
+      "members": [
+        "command:postmortem diagnose"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:postmortems.draft": {
+      "kind": "capability",
+      "id": "postmortems.draft",
+      "page": "/evidence/capabilities/postmortems-draft/",
+      "programs": [],
+      "members": [
+        "command:postmortem draft"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:postmortems.list": {
+      "kind": "capability",
+      "id": "postmortems.list",
+      "page": "/evidence/capabilities/postmortems-list/",
+      "programs": [],
+      "members": [
+        "command:postmortem list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:postmortems.owed": {
+      "kind": "capability",
+      "id": "postmortems.owed",
+      "page": "/evidence/capabilities/postmortems-owed/",
+      "programs": [],
+      "members": [
+        "command:postmortem owed"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:product.domains": {
       "kind": "capability",
       "id": "product.domains",
@@ -6111,6 +6226,29 @@
             "docs/EVIDENCE.md",
             "test/run.sh",
             "test/cases/413_a_skipped_case_is_not_a_proof.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:a-trunk-failure-is-answered-by-a-post-mortem": {
+      "kind": "claim",
+      "id": "a-trunk-failure-is-answered-by-a-post-mortem",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-trunk-failure-is-answered-by-a-post-mortem/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3000_a_trunk_failure_owes_a_post_mortem",
+          "path": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/POST_MORTEMS.md",
+            "apps/majordomus-cli/src/postmortem/mod.rs",
+            "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh"
           ]
         }
       ],
@@ -15633,6 +15771,101 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:postmortem check": {
+      "kind": "command",
+      "id": "postmortem check",
+      "page": "/evidence/commands/postmortem-check/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:postmortem diagnose": {
+      "kind": "command",
+      "id": "postmortem diagnose",
+      "page": "/evidence/commands/postmortem-diagnose/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:postmortem draft": {
+      "kind": "command",
+      "id": "postmortem draft",
+      "page": "/evidence/commands/postmortem-draft/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:postmortem list": {
+      "kind": "command",
+      "id": "postmortem list",
+      "page": "/evidence/commands/postmortem-list/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:postmortem owed": {
+      "kind": "command",
+      "id": "postmortem owed",
+      "page": "/evidence/commands/postmortem-owed/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product": {
       "kind": "command",
       "id": "product",
@@ -20329,6 +20562,42 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_postmortems": {
+      "kind": "mcp",
+      "id": "majordomus_postmortems",
+      "alias_of": "capability:postmortems.list",
+      "programs": [],
+      "members": [
+        "capability:postmortems.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_postmortems_check": {
+      "kind": "mcp",
+      "id": "majordomus_postmortems_check",
+      "alias_of": "capability:postmortems.check",
+      "programs": [],
+      "members": [
+        "capability:postmortems.check"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_postmortems_diagnose": {
+      "kind": "mcp",
+      "id": "majordomus_postmortems_diagnose",
+      "alias_of": "capability:postmortems.diagnose",
+      "programs": [],
+      "members": [
+        "capability:postmortems.diagnose"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_preflight": {
       "kind": "mcp",
       "id": "majordomus_preflight",
@@ -22231,6 +22500,37 @@
       "mechanisms": [
         "scripts/ci/campaigns-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-ci-failure-has-a-post-mortem": {
+      "kind": "rule",
+      "id": "project.a-ci-failure-has-a-post-mortem",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2999_a_post_mortem_is_a_typed_record",
+          "path": "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2999_a_post_mortem_is_a_typed_record.sh",
+            ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3000_a_trunk_failure_owes_a_post_mortem",
+          "path": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+            ".ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-closing-question-is-answered-by-measurement": {
@@ -27134,6 +27434,7 @@
     "crate:objects",
     "crate:pack",
     "crate:peer_claims",
+    "crate:postmortem",
     "crate:properties",
     "crate:providers_projection",
     "crate:reasoning_mesh",

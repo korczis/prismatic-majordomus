@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.23.0
 coverage:
   - scope: direct
-    required: 196
-    covered: 166
+    required: 201
+    covered: 169
     missing: 0
-    waived: 30
+    waived: 32
     inapplicable: 0
   - scope: http
-    required: 191
-    covered: 166
+    required: 194
+    covered: 169
     missing: 0
     waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 187
-    covered: 162
+    required: 190
+    covered: 165
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 588
-    covered: 508
+    required: 599
+    covered: 517
     missing: 0
-    waived: 80
+    waived: 82
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -1382,6 +1382,50 @@ capabilities:
     cases:
       - whole-plan
       - one-milestone
+  - id: postmortems.check
+    module: postmortems
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: postmortems.diagnose
+    module: postmortems
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - no-known-signal
+      - a-recorded-signal
+  - id: postmortems.draft
+    module: postmortems
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
+  - id: postmortems.list
+    module: postmortems
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: postmortems.owed
+    module: postmortems
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: product.domains
     module: product
     kind: query
@@ -1926,6 +1970,10 @@ pages:
     route: /ui/evidence
     view: pinned
     deferred: false
+  - key: system.http.ui.post_mortems
+    route: /ui/post-mortems
+    view: pinned
+    deferred: false
   - key: system.http.ui.docs
     route: /ui/docs
     view: pinned
@@ -1976,6 +2024,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.evidence
     route: /ui/evidence
+    view: live
+    deferred: false
+  - key: system.http.live.ui.post_mortems
+    route: /ui/post-mortems
     view: live
     deferred: false
   - key: system.http.live.ui.docs

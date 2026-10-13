@@ -2220,6 +2220,15 @@
       "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass."
     },
     {
+      "id": "claim:a-trunk-failure-is-answered-by-a-post-mortem",
+      "kind": "claim",
+      "label": "A failed run of a workflow on the trunk is answered by a typed post-mortem record or named as owed; postmortem owed exits 10 while a failed run past its grace has no record, a printed draft is a record the tool accepts, and the text of a failure seen before is answered by the record whose signal it carries.",
+      "status": "guaranteed",
+      "route": "/guarantees/a-trunk-failure-is-answered-by-a-post-mortem/",
+      "external": false,
+      "note": "the forge is replaced by a file of runs in its own listing's shape; running the check from the trunk's workflow and a session's start is milestone a-failure-is-answered-by-a-record."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -2559,6 +2568,13 @@
       "id": "impl:apps/majordomus-cli/src/perf.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/perf.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/postmortem/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/postmortem/mod.rs",
       "route": null,
       "external": false
     },
@@ -3382,6 +3398,13 @@
       "external": false
     },
     {
+      "id": "source:docs/POST_MORTEMS.md",
+      "kind": "source",
+      "label": "docs/POST_MORTEMS.md",
+      "route": "/docs/post-mortems/",
+      "external": false
+    },
+    {
       "id": "source:docs/PRODUCT.md",
       "kind": "source",
       "label": "docs/PRODUCT.md",
@@ -3877,6 +3900,13 @@
       "label": "test/cases/29_prompt_capture.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/29_prompt_capture.sh"
+    },
+    {
+      "id": "test:test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+      "kind": "test",
+      "label": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh"
     },
     {
       "id": "test:test/cases/30_command_registry.sh",
@@ -5729,6 +5759,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:a-trunk-failure-is-answered-by-a-post-mortem",
+      "target": "source:docs/POST_MORTEMS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6894,6 +6929,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:a-trunk-failure-is-answered-by-a-post-mortem",
+      "target": "impl:apps/majordomus-cli/src/postmortem/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -8056,6 +8096,11 @@
     {
       "source": "claim:the-closing-question-is-measured",
       "target": "test:test/cases/1037_the_closing_question_is_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-trunk-failure-is-answered-by-a-post-mortem",
+      "target": "test:test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
       "kind": "proved_by"
     }
   ]

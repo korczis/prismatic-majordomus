@@ -187,6 +187,10 @@
       "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
     },
     {
+      "name": "postmortems",
+      "description": "What turned the trunk's CI red and why: one record per cause under .ai/repo/post-mortems/, naming the runs it answers, the cause as a class and a sentence, the components it lives in, the signals a failing log shows, what fixed it and what now prevents it. The records are listed, judged against the rules their schema cannot say, compared with the trunk's failed runs to find the run nobody has answered, and searched for the signals of a new failure. Nothing here changes the repository; the two operations that ask the forge are the command line's alone."
+    },
+    {
       "name": "product",
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
     },
@@ -14094,6 +14098,271 @@
         }
       }
     },
+    "/api/v1/post-mortems": {
+      "get": {
+        "operationId": "postmortems.list",
+        "summary": "Every post-mortem, newest first",
+        "description": "Every record under .ai/repo/post-mortems/ with its status, day, cause class and summary, the runs it answers, its components, what fixed and what prevents it, what else of the layer it concerns, how many signals it carries and its path, with the counts by status and by cause class. A file indexed as a post-mortem whose front matter does not read as one is listed apart, with the reason. Reads the index and nothing else.",
+        "tags": [
+          "postmortems"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Every post-mortem, newest first: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostMortemList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "postmortems.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::postmortems"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_postmortems",
+          "resource": {
+            "uri": "majordomus://post-mortems",
+            "name": "post-mortems"
+          }
+        },
+        "x-majordomus-cli": "postmortem list"
+      }
+    },
+    "/api/v1/post-mortems/check": {
+      "get": {
+        "operationId": "postmortems.check",
+        "summary": "Judge the post-mortems against the rules their schema cannot say",
+        "description": "The rules that relate two fields of a record, a record to the tree and one record to another: a draft carries the cause class `undetermined` and a later status does not; an analysed or resolved record names a component and a signal; `fixed_by` is present exactly when the record is resolved; a component or a prevention that names a path (`file:`, `test:`) names one in the tree (a resolved record may name a component its fix removed); no two records share an identity. Whether a reference to an object of the layer resolves is the graph's question, answered for every kind by the one check of unresolved relations, and is not asked again here. Each finding names the record, a stable code and one sentence. Reads the index and the tree; asks no network.",
+        "tags": [
+          "postmortems"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Judge the post-mortems against the rules their schema cannot say: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostMortemCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "postmortems.check",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::postmortems"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_postmortems_check"
+        },
+        "x-majordomus-cli": "postmortem check"
+      }
+    },
+    "/api/v1/post-mortems/diagnose": {
+      "get": {
+        "operationId": "postmortems.diagnose",
+        "summary": "Which post-mortems a failure looks like",
+        "description": "Searches the text of a failure — a failing log, a job's summary, an excerpt — for the signals of every record, ignoring case and matching each signal as written. Every record with at least one signal in the text is returned with its status, cause, the signals found, its components, what fixed it, what now prevents it and what else it concerned, the record with the most signals first and among equals the newest. No weighting and no closeness: a record is named because its own words are in the log. Reads the index and nothing else.",
+        "tags": [
+          "postmortems"
+        ],
+        "parameters": [
+          {
+            "name": "text",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The failing log, a job's summary, or any excerpt of either.",
+            "examples": {
+              "a-recorded-signal": {
+                "value": "step 3\ncannot be decided offline\nstep 4"
+              },
+              "no-known-signal": {
+                "value": "error: process completed with exit code 1"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Which post-mortems a failure looks like: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostMortemDiagnosis"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "postmortems.diagnose",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::postmortems"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_postmortems_diagnose"
+        },
+        "x-majordomus-cli": "postmortem diagnose"
+      }
+    },
     "/api/v1/product/domains": {
       "get": {
         "operationId": "product.domains",
@@ -20200,6 +20469,44 @@
         ],
         "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an `ObjectView` where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
       },
+      "AnsweredRun": {
+        "type": "object",
+        "properties": {
+          "workflow": {
+            "type": "string",
+            "description": "The workflow's name as the forge reports it.",
+            "default": ""
+          },
+          "id": {
+            "type": "string",
+            "description": "The forge's identifier of the run: an identity, never a quantity."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The commit the run judged.",
+            "default": ""
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The jobs that failed in it, by name.",
+            "default": []
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The step that failed, where one job failed in one step."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "description": "One run a record answers."
+      },
       "AppliedExemption": {
         "type": "object",
         "properties": {
@@ -22755,6 +23062,46 @@
           }
         },
         "description": "One category of `out`: pathspecs and file-name patterns."
+      },
+      "CauseClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "defect",
+            "description": "The change under test was wrong."
+          },
+          {
+            "type": "string",
+            "const": "test",
+            "description": "The test asserted something that was no longer, or never, true."
+          },
+          {
+            "type": "string",
+            "const": "race",
+            "description": "The outcome depended on timing."
+          },
+          {
+            "type": "string",
+            "const": "gate",
+            "description": "The gate judged something other than what it names."
+          },
+          {
+            "type": "string",
+            "const": "environment",
+            "description": "The runner, a tool on it or the forge."
+          },
+          {
+            "type": "string",
+            "const": "dependency",
+            "description": "Something outside the repository changed."
+          },
+          {
+            "type": "string",
+            "const": "undetermined",
+            "description": "Not established: the only class a draft may carry."
+          }
+        ],
+        "description": "Why a run failed, as a class."
       },
       "ChangeShape": {
         "type": "object",
@@ -46318,6 +46665,349 @@
         "minimum": 0,
         "description": "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
       },
+      "PostMortemCause": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "$ref": "#/components/schemas/CauseClass",
+            "description": "The class of the cause."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The cause in one sentence.",
+            "default": ""
+          }
+        },
+        "required": [
+          "class"
+        ],
+        "description": "The cause of a record: its class and one sentence."
+      },
+      "PostMortemCheck": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Whether no rule was broken."
+          },
+          "records": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many records were judged."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostMortemFinding"
+            },
+            "description": "Every broken rule, by record."
+          }
+        },
+        "required": [
+          "ok",
+          "records",
+          "findings"
+        ],
+        "description": "What the cross-field rules found in the records."
+      },
+      "PostMortemDiagnosis": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many records were searched."
+          },
+          "signals": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many signals those records carry."
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostMortemMatch"
+            },
+            "description": "The records with at least one signal in the text: most signals first, then newest."
+          }
+        },
+        "required": [
+          "records",
+          "signals",
+          "matches"
+        ],
+        "description": "The records whose signals a failure shows."
+      },
+      "PostMortemFinding": {
+        "type": "object",
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "The record's identity."
+          },
+          "code": {
+            "type": "string",
+            "description": "A stable code naming the rule."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, in one sentence."
+          }
+        },
+        "required": [
+          "record",
+          "code",
+          "message"
+        ],
+        "description": "One thing a record gets wrong that its schema cannot say."
+      },
+      "PostMortemList": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "Where the records live, repository-relative."
+          },
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many records there are."
+          },
+          "by_status": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "How many records carry each status."
+          },
+          "by_cause": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "How many records carry each cause class."
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostMortemSummary"
+            },
+            "description": "The records, newest first."
+          },
+          "unreadable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnreadablePostMortem"
+            },
+            "description": "Files indexed as post-mortems that could not be read as one."
+          }
+        },
+        "required": [
+          "directory",
+          "count",
+          "by_status",
+          "by_cause",
+          "records",
+          "unreadable"
+        ],
+        "description": "Every record, newest first, with the counts a reader asks for first."
+      },
+      "PostMortemMatch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The record's identity."
+          },
+          "title": {
+            "type": "string",
+            "description": "The record's title."
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostMortemStatus",
+            "description": "How far the record has come."
+          },
+          "date": {
+            "type": "string",
+            "description": "The day the failure was first seen."
+          },
+          "cause": {
+            "$ref": "#/components/schemas/PostMortemCause",
+            "description": "Why it failed then."
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The signals of the record found in the text, by their ids, in the record's order."
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where the cause lived."
+          },
+          "fixed_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What removed it, when it was removed."
+          },
+          "prevention": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What now stops it from returning."
+          },
+          "related": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What else of the layer it concerned."
+          },
+          "path": {
+            "type": "string",
+            "description": "The record's file."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "date",
+          "cause",
+          "signals",
+          "components",
+          "fixed_by",
+          "prevention",
+          "related",
+          "path"
+        ],
+        "description": "A record whose signals a failure shows."
+      },
+      "PostMortemStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "draft",
+            "description": "The failure is recorded and its cause is not established."
+          },
+          {
+            "type": "string",
+            "const": "analysed",
+            "description": "The cause is established and named, with the components it lives in."
+          },
+          {
+            "type": "string",
+            "const": "resolved",
+            "description": "The fix is on the trunk and `fixed_by` names it."
+          }
+        ],
+        "description": "How far a record has come: recorded, explained, fixed."
+      },
+      "PostMortemSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The record's identity."
+          },
+          "uri": {
+            "type": "string",
+            "description": "The record's URI in the index."
+          },
+          "title": {
+            "type": "string",
+            "description": "What went wrong, in one line."
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostMortemStatus",
+            "description": "How far the record has come."
+          },
+          "date": {
+            "type": "string",
+            "description": "The day the failure was first seen."
+          },
+          "cause": {
+            "$ref": "#/components/schemas/PostMortemCause",
+            "description": "Why it failed."
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnsweredRun"
+            },
+            "description": "The runs the record answers."
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where the cause lives."
+          },
+          "signals": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many signals a failing log is searched for."
+          },
+          "fixed_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What removed the cause, once it is removed."
+          },
+          "prevention": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What now stops the cause from returning, as references of the layer."
+          },
+          "related": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What else of the layer the failure concerns, as `<kind>:<identity>`."
+          },
+          "path": {
+            "type": "string",
+            "description": "The record's file, repository-relative."
+          }
+        },
+        "required": [
+          "id",
+          "uri",
+          "title",
+          "status",
+          "date",
+          "cause",
+          "runs",
+          "components",
+          "signals",
+          "fixed_by",
+          "prevention",
+          "related",
+          "path"
+        ],
+        "description": "One record as a list shows it."
+      },
       "Preflight": {
         "type": "object",
         "properties": {
@@ -59859,6 +60549,24 @@
           "open"
         ],
         "description": "A prepared head whose pull request is no link of any train."
+      },
+      "UnreadablePostMortem": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file, repository-relative."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it could not be read."
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "description": "A file indexed as a post-mortem whose front matter is not one."
       },
       "UpstreamState": {
         "type": "object",

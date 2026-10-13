@@ -315,6 +315,17 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
     summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
 
+  # Every post-mortem under .ai/repo/post-mortems/ holds together beyond its schema (rule
+  # project.a-ci-failure-has-a-post-mortem, ADR 0156): a draft claims no cause, an analysed
+  # record names its components and signals, a resolved one names what fixed it, and every
+  # path and test a record names is in the tree. Offline; what the trunk still owes is
+  # `postmortem owed`, which asks the forge and is not this gate.
+  - id: post-mortems
+    job: structure
+    always: true
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- postmortem check
+    summary: every post-mortem record is consistent — status against cause, components, signals and fix — and names only paths and tests the tree holds
+
   # The third population. A public command must have an executable use case and doctor fails
   # without one; a guaranteed claim is held by claim-proof above. The tools the registry
   # projects over MCP were held by nothing: `use_cases.coverage.mcp_tools` is advisory, and
@@ -953,6 +964,11 @@ classes:
 
   # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
   # so beyond the suite the only gate this class needs is the one that decides them
+  # the post-mortem records and what proves them
+  - id: post-mortems
+    paths: [.ai/repo/post-mortems/**, test/cases/2999_a_post_mortem_is_a_typed_record.sh, test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh, .ai/repo/rules/project/a-ci-failure-has-a-post-mortem.v1.md]
+    gates: [post-mortems, core-check, shell-suite]
+
   - id: campaigns
     paths: [campaigns/**, scripts/ci/campaigns-check, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
     gates: [campaigns-provenance, shell-suite]

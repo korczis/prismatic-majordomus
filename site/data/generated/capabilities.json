@@ -3197,6 +3197,19 @@
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "1037_the_closing_question_is_measured"
+    },
+    {
+      "id": "a-trunk-failure-is-answered-by-a-post-mortem",
+      "claim": "A failed run of a workflow on the trunk is answered by a typed post-mortem record or named as owed; postmortem owed exits 10 while a failed run past its grace has no record, a printed draft is a record the tool accepts, and the text of a failure seen before is answered by the record whose signal it carries.",
+      "source": "docs/POST_MORTEMS.md",
+      "implementation": "apps/majordomus-cli/src/postmortem/mod.rs",
+      "test": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh",
+      "status": "guaranteed",
+      "note": "the forge is replaced by a file of runs in its own listing's shape; running the check from the trunk's workflow and a session's start is milestone a-failure-is-answered-by-a-record.",
+      "responsibility": "none",
+      "source_route": "/docs/post-mortems/",
+      "command": null,
+      "test_case": "3000_a_trunk_failure_owes_a_post_mortem"
     }
   ]
 }

@@ -50,6 +50,7 @@ pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod postmortems;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
@@ -180,6 +181,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which claims hold, which are stale or untested, and why.",
     },
     Screen {
+        route: postmortems::ROUTE,
+        title: "Post-mortems",
+        icon: "alert",
+        answers: "What turned the trunk's CI red, why, and what now stops it.",
+    },
+    Screen {
         route: docs::ROUTE,
         title: "Documentation",
         icon: "book",
@@ -308,6 +315,7 @@ impl Ui {
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
             docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
+            postmortems::ROUTE => postmortems::screen(&ctx),
             governance::ROUTE => governance::screen(&ctx, &req.query),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
@@ -509,6 +517,7 @@ mod tests {
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
+            (postmortems::ROUTE, postmortems::screen(&ctx)),
         ] {
             let html = view.main.render();
             assert_eq!(view.status, 200, "{route}");

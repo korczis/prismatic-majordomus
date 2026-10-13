@@ -71,6 +71,7 @@ pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
+pub(crate) mod postmortems;
 pub(crate) mod product;
 pub mod quality;
 pub mod reasoning;
@@ -193,6 +194,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         deploy,
         delivery,
         served,
+        postmortems,
         evidence,
         rules,
         executions,

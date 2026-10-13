@@ -1,0 +1,30 @@
+id: I2648
+milestone: a-failure-is-answered-by-a-record
+title: "A session is told what the trunk owes: the briefing, check and finish name the runs without a record"
+slug: a-session-is-told-what-the-trunk-owes
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bring the owed list to where a worker starts: the session-start briefing of every provider's hook names the failed runs that owe a record, from a cached reading that never delays the hook, and check reports the same."
+why: "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
+current_state: "A session learns of a red trunk from the board or from its own failed push."
+desired_state: "The briefing the session hooks print (Claude Code, Codex, Gemini) carries one line per owed run from a reading cached under .ai/local with an age; the hook never calls the forge inline; majordomus check reports the owed runs as a finding."
+scope:
+  - "apps/majordomus-cli/src"
+  - "lib"
+  - "share/providers"
+  - "test/cases"
+  - "docs/POST_MORTEMS.md"
+non_scope:
+  - "Blocking a session's start on the forge"
+depends_on: [I2646]
+acceptance_criteria:
+  - "With a cached reading that names one owed run, the briefing names it and its age; with none it says nothing"
+  - "The hook's measured latency does not grow by a forge call"
+  - "A case holds both"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "briefing_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

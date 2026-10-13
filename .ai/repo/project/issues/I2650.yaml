@@ -1,0 +1,25 @@
+id: I2650
+milestone: a-failure-is-answered-by-a-record
+title: "The records of 2026-10-13 are reviewed by the sessions that fixed the failures, and the draft is settled"
+slug: the-first-records-are-reviewed
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Have each record of 2026-10-13 read by the session that fixed its failure, replace every sentence marked not established with what that session knows, and settle the interactions draft by reading its log end to end."
+why: "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
+current_state: "Eight records written by one session from job logs and the board; four carry a sentence marked not established and one is a draft."
+desired_state: "Each record carries either a verified statement or a stated unknown in every section; the interactions record is analysed or names what was read and ruled out; the mesh review requests for them are answered."
+scope:
+  - ".ai/repo/post-mortems"
+non_scope:
+  - "Runs before 2026-10-13"
+depends_on: [I2645]
+acceptance_criteria:
+  - "A mesh review request exists for the records and each answer is applied or declined with a reason"
+  - "The interactions job log of run 38328889515 is read end to end and the record says what it holds"
+validation:
+  - "bin/majordomus-cli postmortem check"
+evidence_required:
+  - "mesh_review_answers"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -2670,6 +2670,91 @@
       "tool": "majordomus_plan_waves"
     },
     {
+      "api_anchor": "/docs/api/postmortems/#op-postmortems-check",
+      "claims": [],
+      "cli": "majordomus postmortem check",
+      "id": "postmortems.check",
+      "kind": "query",
+      "module": "postmortems",
+      "module_route": "/registry/modules/postmortems/",
+      "resource": null,
+      "route": "/registry/capabilities/postmortems-check/",
+      "slug": "postmortems-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "tests": [],
+      "title": "Judge the post-mortems against the rules their schema cannot say",
+      "tool": "majordomus_postmortems_check"
+    },
+    {
+      "api_anchor": "/docs/api/postmortems/#op-postmortems-diagnose",
+      "claims": [],
+      "cli": "majordomus postmortem diagnose",
+      "id": "postmortems.diagnose",
+      "kind": "query",
+      "module": "postmortems",
+      "module_route": "/registry/modules/postmortems/",
+      "resource": null,
+      "route": "/registry/capabilities/postmortems-diagnose/",
+      "slug": "postmortems-diagnose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "tests": [],
+      "title": "Which post-mortems a failure looks like",
+      "tool": "majordomus_postmortems_diagnose"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus postmortem draft",
+      "id": "postmortems.draft",
+      "kind": "query",
+      "module": "postmortems",
+      "module_route": "/registry/modules/postmortems/",
+      "resource": null,
+      "route": "/registry/capabilities/postmortems-draft/",
+      "slug": "postmortems-draft",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "tests": [],
+      "title": "Draft a post-mortem for one failed run",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/postmortems/#op-postmortems-list",
+      "claims": [],
+      "cli": "majordomus postmortem list",
+      "id": "postmortems.list",
+      "kind": "query",
+      "module": "postmortems",
+      "module_route": "/registry/modules/postmortems/",
+      "resource": "majordomus://post-mortems",
+      "route": "/registry/capabilities/postmortems-list/",
+      "slug": "postmortems-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "tests": [],
+      "title": "Every post-mortem, newest first",
+      "tool": "majordomus_postmortems"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus postmortem owed",
+      "id": "postmortems.owed",
+      "kind": "query",
+      "module": "postmortems",
+      "module_route": "/registry/modules/postmortems/",
+      "resource": null,
+      "route": "/registry/capabilities/postmortems-owed/",
+      "slug": "postmortems-owed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "tests": [],
+      "title": "The trunk's failed runs no post-mortem answers",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/product/#op-product-domains",
       "claims": [],
       "cli": "majordomus product domains",
@@ -4068,6 +4153,13 @@
         "route": "/guarantees/the-closing-question-is-measured/",
         "status": "guaranteed",
         "test": "test/cases/1037_the_closing_question_is_measured.sh"
+      },
+      {
+        "id": "a-trunk-failure-is-answered-by-a-post-mortem",
+        "implementation": "apps/majordomus-cli/src/postmortem/mod.rs",
+        "route": "/guarantees/a-trunk-failure-is-answered-by-a-post-mortem/",
+        "status": "guaranteed",
+        "test": "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh"
       }
     ],
     "http": [
@@ -4132,9 +4224,9 @@
     ]
   },
   "counts": {
-    "capabilities": 196,
-    "claims": 92,
-    "modules": 56
+    "capabilities": 201,
+    "claims": 93,
+    "modules": 57
   },
   "generator": "majordomus-cli 0.23.0",
   "modules": [
@@ -5344,6 +5436,42 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
       "title": "The plan and its derivations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "postmortems.check",
+          "route": "/registry/capabilities/postmortems-check/",
+          "slug": "postmortems-check"
+        },
+        {
+          "id": "postmortems.diagnose",
+          "route": "/registry/capabilities/postmortems-diagnose/",
+          "slug": "postmortems-diagnose"
+        },
+        {
+          "id": "postmortems.draft",
+          "route": "/registry/capabilities/postmortems-draft/",
+          "slug": "postmortems-draft"
+        },
+        {
+          "id": "postmortems.list",
+          "route": "/registry/capabilities/postmortems-list/",
+          "slug": "postmortems-list"
+        },
+        {
+          "id": "postmortems.owed",
+          "route": "/registry/capabilities/postmortems-owed/",
+          "slug": "postmortems-owed"
+        }
+      ],
+      "claims": [],
+      "id": "postmortems",
+      "route": "/registry/modules/postmortems/",
+      "slug": "postmortems",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/postmortems.rs",
+      "title": "Post-mortems"
     },
     {
       "capabilities": [

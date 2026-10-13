@@ -144,6 +144,9 @@
     "op-plan-transition": "docs/api/plan/",
     "op-plan-validate": "docs/api/plan/",
     "op-plan-waves": "docs/api/plan/",
+    "op-postmortems-check": "docs/api/postmortems/",
+    "op-postmortems-diagnose": "docs/api/postmortems/",
+    "op-postmortems-list": "docs/api/postmortems/",
     "op-product-domains": "docs/api/product/",
     "op-product-feature": "docs/api/product/",
     "op-product-features": "docs/api/product/",
@@ -209,6 +212,7 @@
     "schema-Announcement": "docs/api/peers/",
     "schema-AnswerObservation": "docs/api/shared/",
     "schema-AnswerView": "docs/api/objects/",
+    "schema-AnsweredRun": "docs/api/postmortems/",
     "schema-AppliedExemption": "docs/api/release/",
     "schema-Arch": "docs/api/distribution/",
     "schema-AreaList": "docs/api/why/",
@@ -273,6 +277,7 @@
     "schema-Carries": "docs/api/design/",
     "schema-CatalogueView": "docs/api/why/",
     "schema-Category": "docs/api/repository/",
+    "schema-CauseClass": "docs/api/postmortems/",
     "schema-ChangeShape": "docs/api/integration/",
     "schema-ChangeStage": "docs/api/commit/",
     "schema-Channel": "docs/api/distribution/",
@@ -822,6 +827,14 @@
     "schema-Port": "docs/api/deploy/",
     "schema-Position": "docs/api/continuity/",
     "schema-Positive": "docs/api/deploy/",
+    "schema-PostMortemCause": "docs/api/postmortems/",
+    "schema-PostMortemCheck": "docs/api/postmortems/",
+    "schema-PostMortemDiagnosis": "docs/api/postmortems/",
+    "schema-PostMortemFinding": "docs/api/postmortems/",
+    "schema-PostMortemList": "docs/api/postmortems/",
+    "schema-PostMortemMatch": "docs/api/postmortems/",
+    "schema-PostMortemStatus": "docs/api/postmortems/",
+    "schema-PostMortemSummary": "docs/api/postmortems/",
     "schema-Preflight": "docs/api/environment/",
     "schema-PreflightCheck": "docs/api/environment/",
     "schema-PreflightEvidence": "docs/api/environment/",
@@ -1128,6 +1141,7 @@
     "schema-Trust": "docs/api/continuity/",
     "schema-TrustState": "docs/api/mesh/",
     "schema-UnattachedPrep": "docs/api/integration/",
+    "schema-UnreadablePostMortem": "docs/api/postmortems/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UseCaseRef": "docs/api/product/",
     "schema-ValidationOutcome": "docs/api/reasoning/",
@@ -1191,6 +1205,7 @@
     "tag-peers": "docs/api/peers/",
     "tag-perf": "docs/api/perf/",
     "tag-plan": "docs/api/plan/",
+    "tag-postmortems": "docs/api/postmortems/",
     "tag-product": "docs/api/product/",
     "tag-quality": "docs/api/quality/",
     "tag-reasoning": "docs/api/reasoning/",
@@ -1210,9 +1225,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 191,
-    "schemas": 960,
-    "tags": 56
+    "operations": 194,
+    "schemas": 971,
+    "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1447,6 +1462,9 @@
     "plan.transition": "plan",
     "plan.validate": "plan",
     "plan.waves": "plan",
+    "postmortems.check": "postmortems",
+    "postmortems.diagnose": "postmortems",
+    "postmortems.list": "postmortems",
     "product.domains": "product",
     "product.feature": "product",
     "product.features": "product",
@@ -1516,6 +1534,7 @@
     "Announcement": "peers",
     "AnswerObservation": "shared",
     "AnswerView": "objects",
+    "AnsweredRun": "postmortems",
     "AppliedExemption": "release",
     "Arch": "distribution",
     "AreaList": "why",
@@ -1580,6 +1599,7 @@
     "Carries": "design",
     "CatalogueView": "why",
     "Category": "repository",
+    "CauseClass": "postmortems",
     "ChangeShape": "integration",
     "ChangeStage": "commit",
     "Channel": "distribution",
@@ -2129,6 +2149,14 @@
     "Port": "deploy",
     "Position": "continuity",
     "Positive": "deploy",
+    "PostMortemCause": "postmortems",
+    "PostMortemCheck": "postmortems",
+    "PostMortemDiagnosis": "postmortems",
+    "PostMortemFinding": "postmortems",
+    "PostMortemList": "postmortems",
+    "PostMortemMatch": "postmortems",
+    "PostMortemStatus": "postmortems",
+    "PostMortemSummary": "postmortems",
     "Preflight": "environment",
     "PreflightCheck": "environment",
     "PreflightEvidence": "environment",
@@ -2435,6 +2463,7 @@
     "Trust": "continuity",
     "TrustState": "mesh",
     "UnattachedPrep": "integration",
+    "UnreadablePostMortem": "postmortems",
     "UpstreamState": "worktree",
     "UseCaseRef": "product",
     "ValidationOutcome": "reasoning",
@@ -3414,6 +3443,56 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One run a record answers.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "AnsweredRun",
+      "properties": [
+        {
+          "description": "The workflow's name as the forge reports it.",
+          "name": "workflow",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The forge's identifier of the run: an identity, never a quantity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the run judged.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The jobs that failed in it, by name.",
+          "name": "jobs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The step that failed, where one job failed in one step.",
+          "name": "step",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemSummary"
       ],
       "values": [],
       "variants": []
@@ -6772,6 +6851,49 @@
         "Out"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why a run failed, as a class.",
+      "home": "postmortems",
+      "is_enum": true,
+      "name": "CauseClass",
+      "properties": [],
+      "type": "\"defect\" | \"test\" | \"race\" | \"gate\" | \"environment\" | \"dependency\" | \"undetermined\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemCause"
+      ],
+      "values": [
+        {
+          "description": "The change under test was wrong.",
+          "value": "defect"
+        },
+        {
+          "description": "The test asserted something that was no longer, or never, true.",
+          "value": "test"
+        },
+        {
+          "description": "The outcome depended on timing.",
+          "value": "race"
+        },
+        {
+          "description": "The gate judged something other than what it names.",
+          "value": "gate"
+        },
+        {
+          "description": "The runner, a tool on it or the forge.",
+          "value": "environment"
+        },
+        {
+          "description": "Something outside the repository changed.",
+          "value": "dependency"
+        },
+        {
+          "description": "Not established: the only class a draft may carry.",
+          "value": "undetermined"
+        }
+      ],
       "variants": []
     },
     {
@@ -18966,6 +19088,9 @@
         "plan.transition",
         "plan.validate",
         "plan.waves",
+        "postmortems.list",
+        "postmortems.check",
+        "postmortems.diagnose",
         "product.domains",
         "product.feature",
         "product.features",
@@ -37429,6 +37554,447 @@
       "variants": []
     },
     {
+      "description": "The cause of a record: its class and one sentence.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemCause",
+      "properties": [
+        {
+          "description": "The class of the cause.",
+          "name": "class",
+          "refs": [
+            "CauseClass"
+          ],
+          "required": true,
+          "type": "CauseClass"
+        },
+        {
+          "description": "The cause in one sentence.",
+          "name": "summary",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemMatch",
+        "PostMortemSummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the cross-field rules found in the records.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemCheck",
+      "properties": [
+        {
+          "description": "Whether no rule was broken.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many records were judged.",
+          "name": "records",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every broken rule, by record.",
+          "name": "findings",
+          "refs": [
+            "PostMortemFinding"
+          ],
+          "required": true,
+          "type": "array of PostMortemFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "postmortems.check"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The records whose signals a failure shows.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemDiagnosis",
+      "properties": [
+        {
+          "description": "How many records were searched.",
+          "name": "records",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many signals those records carry.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The records with at least one signal in the text: most signals first, then newest.",
+          "name": "matches",
+          "refs": [
+            "PostMortemMatch"
+          ],
+          "required": true,
+          "type": "array of PostMortemMatch"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "postmortems.diagnose"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing a record gets wrong that its schema cannot say.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemFinding",
+      "properties": [
+        {
+          "description": "The record's identity.",
+          "name": "record",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "A stable code naming the rule.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong, in one sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemCheck"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every record, newest first, with the counts a reader asks for first.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemList",
+      "properties": [
+        {
+          "description": "Where the records live, repository-relative.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many records there are.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many records carry each status.",
+          "name": "by_status",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint64)"
+        },
+        {
+          "description": "How many records carry each cause class.",
+          "name": "by_cause",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint64)"
+        },
+        {
+          "description": "The records, newest first.",
+          "name": "records",
+          "refs": [
+            "PostMortemSummary"
+          ],
+          "required": true,
+          "type": "array of PostMortemSummary"
+        },
+        {
+          "description": "Files indexed as post-mortems that could not be read as one.",
+          "name": "unreadable",
+          "refs": [
+            "UnreadablePostMortem"
+          ],
+          "required": true,
+          "type": "array of UnreadablePostMortem"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "postmortems.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A record whose signals a failure shows.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemMatch",
+      "properties": [
+        {
+          "description": "The record's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the record has come.",
+          "name": "status",
+          "refs": [
+            "PostMortemStatus"
+          ],
+          "required": true,
+          "type": "PostMortemStatus"
+        },
+        {
+          "description": "The day the failure was first seen.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it failed then.",
+          "name": "cause",
+          "refs": [
+            "PostMortemCause"
+          ],
+          "required": true,
+          "type": "PostMortemCause"
+        },
+        {
+          "description": "The signals of the record found in the text, by their ids, in the record's order.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Where the cause lived.",
+          "name": "components",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What removed it, when it was removed.",
+          "name": "fixed_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What now stops it from returning.",
+          "name": "prevention",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What else of the layer it concerned.",
+          "name": "related",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The record's file.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemDiagnosis"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far a record has come: recorded, explained, fixed.",
+      "home": "postmortems",
+      "is_enum": true,
+      "name": "PostMortemStatus",
+      "properties": [],
+      "type": "\"draft\" | \"analysed\" | \"resolved\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemMatch",
+        "PostMortemSummary"
+      ],
+      "values": [
+        {
+          "description": "The failure is recorded and its cause is not established.",
+          "value": "draft"
+        },
+        {
+          "description": "The cause is established and named, with the components it lives in.",
+          "value": "analysed"
+        },
+        {
+          "description": "The fix is on the trunk and `fixed_by` names it.",
+          "value": "resolved"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One record as a list shows it.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "PostMortemSummary",
+      "properties": [
+        {
+          "description": "The record's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's URI in the index.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What went wrong, in one line.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the record has come.",
+          "name": "status",
+          "refs": [
+            "PostMortemStatus"
+          ],
+          "required": true,
+          "type": "PostMortemStatus"
+        },
+        {
+          "description": "The day the failure was first seen.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it failed.",
+          "name": "cause",
+          "refs": [
+            "PostMortemCause"
+          ],
+          "required": true,
+          "type": "PostMortemCause"
+        },
+        {
+          "description": "The runs the record answers.",
+          "name": "runs",
+          "refs": [
+            "AnsweredRun"
+          ],
+          "required": true,
+          "type": "array of AnsweredRun"
+        },
+        {
+          "description": "Where the cause lives.",
+          "name": "components",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How many signals a failing log is searched for.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What removed the cause, once it is removed.",
+          "name": "fixed_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What now stops the cause from returning, as references of the layer.",
+          "name": "prevention",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What else of the layer the failure concerns, as `<kind>:<identity>`.",
+          "name": "related",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The record's file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether Majordomus is in force in this checkout, claim by claim, with the evidence.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Preflight};\nlet p = derive(&Observations::empty(\"demo\", 0));\nassert_eq!(p.schema, Preflight::schema_id());\nassert_eq!(p.verdicts().len(), p.sections.iter().map(|s| s.checks.len()).sum::<usize>());\n```",
       "home": "environment",
       "is_enum": false,
@@ -54906,6 +55472,35 @@
       "variants": []
     },
     {
+      "description": "A file indexed as a post-mortem whose front matter is not one.",
+      "home": "postmortems",
+      "is_enum": false,
+      "name": "UnreadablePostMortem",
+      "properties": [
+        {
+          "description": "The file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it could not be read.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PostMortemList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.",
       "home": "worktree",
       "is_enum": false,
@@ -66137,6 +66732,195 @@
         }
       ],
       "slug": "plan"
+    },
+    {
+      "description": "What turned the trunk's CI red and why: one record per cause under .ai/repo/post-mortems/, naming the runs it answers, the cause as a class and a sentence, the components it lives in, the signals a failing log shows, what fixed it and what now prevents it. The records are listed, judged against the rules their schema cannot say, compared with the trunk's failed runs to find the run nobody has answered, and searched for the signals of a new failure. Nothing here changes the repository; the two operations that ask the forge are the command line's alone.",
+      "name": "postmortems",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "postmortem list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/post-mortems\"",
+          "description": "Every record under .ai/repo/post-mortems/ with its status, day, cause class and summary, the runs it answers, its components, what fixed and what prevents it, what else of the layer it concerns, how many signals it carries and its path, with the counts by status and by cause class. A file indexed as a post-mortem whose front matter does not read as one is listed apart, with the reason. Reads the index and nothing else.",
+          "home": "postmortems",
+          "id": "postmortems.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "post-mortems",
+            "uri": "majordomus://post-mortems"
+          },
+          "mcp_tool": "majordomus_postmortems",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/post-mortems",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::postmortems",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every post-mortem, newest first: the result.",
+              "schema": "PostMortemList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PostMortemList",
+          "stability": "behaviorally_verified",
+          "summary": "Every post-mortem, newest first"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "postmortem check",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/post-mortems/check\"",
+          "description": "The rules that relate two fields of a record, a record to the tree and one record to another: a draft carries the cause class `undetermined` and a later status does not; an analysed or resolved record names a component and a signal; `fixed_by` is present exactly when the record is resolved; a component or a prevention that names a path (`file:`, `test:`) names one in the tree (a resolved record may name a component its fix removed); no two records share an identity. Whether a reference to an object of the layer resolves is the graph's question, answered for every kind by the one check of unresolved relations, and is not asked again here. Each finding names the record, a stable code and one sentence. Reads the index and the tree; asks no network.",
+          "home": "postmortems",
+          "id": "postmortems.check",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_postmortems_check",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/post-mortems/check",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::postmortems",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge the post-mortems against the rules their schema cannot say: the result.",
+              "schema": "PostMortemCheck",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PostMortemCheck",
+          "stability": "behaviorally_verified",
+          "summary": "Judge the post-mortems against the rules their schema cannot say"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "postmortem diagnose",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/post-mortems/diagnose?text=step%203%0Acannot%20be%20decided%20offline%0Astep%204\"",
+          "description": "Searches the text of a failure — a failing log, a job's summary, an excerpt — for the signals of every record, ignoring case and matching each signal as written. Every record with at least one signal in the text is returned with its status, cause, the signals found, its components, what fixed it, what now prevents it and what else it concerned, the record with the most signals first and among equals the newest. No weighting and no closeness: a record is named because its own words are in the log. Reads the index and nothing else.",
+          "home": "postmortems",
+          "id": "postmortems.diagnose",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_postmortems_diagnose",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The failing log, a job's summary, or any excerpt of either.",
+              "examples": [
+                {
+                  "case": "a-recorded-signal",
+                  "value": "\"step 3\\ncannot be decided offline\\nstep 4\""
+                },
+                {
+                  "case": "no-known-signal",
+                  "value": "\"error: process completed with exit code 1\""
+                }
+              ],
+              "name": "text",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/post-mortems/diagnose",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::postmortems",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Which post-mortems a failure looks like: the result.",
+              "schema": "PostMortemDiagnosis",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PostMortemDiagnosis",
+          "stability": "behaviorally_verified",
+          "summary": "Which post-mortems a failure looks like"
+        }
+      ],
+      "slug": "postmortems"
     },
     {
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own.",

@@ -97,6 +97,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// What turned the trunk's CI red and why: the post-mortems under .ai/repo/post-mortems/ listed and judged, the trunk's failed runs no record answers, the records a failing log looks like, and the draft of a record for one failed run
+    Postmortem(PostmortemArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
     /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
@@ -2729,6 +2731,119 @@ pub enum ServedCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus postmortem`: the records of what turned the trunk's CI red. `PostmortemArgs`
+/// carries the repository the question is asked of, the subcommand and the output shape.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PostmortemArgs, PostmortemCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "postmortem", "check", "--format", "json"]).unwrap();
+/// let Command::Postmortem(args) = cli.command else { panic!("postmortem") };
+/// let args: PostmortemArgs = args;   // the group's own arguments
+/// assert!(matches!(args.command, PostmortemCommand::Check));
+/// assert_eq!(args.format, OutputFormat::Json);
+/// // there is no default subcommand: the group names what it does
+/// assert!(Cli::try_parse_from(["majordomus", "postmortem"]).is_err());
+/// ```
+pub struct PostmortemArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `check`, `owed`, `diagnose` or `draft`.
+    pub command: PostmortemCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus postmortem`, each the command line of the capability of
+/// the same name in the `postmortems` module. `list`, `check` and `diagnose` read the index;
+/// `owed` and `draft` ask the forge unless they are handed the runs in a file.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, PostmortemCommand};
+/// fn parse(args: &[&str]) -> PostmortemCommand {
+///     let Command::Postmortem(a) = Cli::try_parse_from(args).unwrap().command else { panic!() };
+///     a.command
+/// }
+/// assert!(matches!(
+///     parse(&["majordomus", "postmortem", "owed", "--runs-json", "-", "--grace-hours", "6"]),
+///     PostmortemCommand::Owed { grace_hours: Some(6), runs_json: Some(f), .. } if f.to_str() == Some("-")
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "postmortem", "diagnose", "--text", "the lease was lost"]),
+///     PostmortemCommand::Diagnose { text: Some(t), file: None, run: None } if t.contains("lease")
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "postmortem", "draft", "--run", "38359869013"]),
+///     PostmortemCommand::Draft { run, .. } if run == "38359869013"
+/// ));
+/// // one source of text at a time, and a draft names its run
+/// assert!(Cli::try_parse_from(["majordomus", "postmortem", "diagnose", "--text", "x", "--run", "1"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "postmortem", "draft"]).is_err());
+/// ```
+pub enum PostmortemCommand {
+    /// Every record, newest first, with the counts by status and by cause class
+    List,
+    /// Judge the records against the rules their schema cannot say; exit 10 on any finding
+    Check,
+    /// The trunk's failed runs no record answers; exit 10 when one is past its grace
+    Owed {
+        /// The branch whose runs are asked about (default master)
+        #[arg(long)]
+        branch: Option<String>,
+        /// How many of its newest runs the forge is asked for (default 60)
+        #[arg(long)]
+        limit: Option<u64>,
+        /// Hours after a run finished during which its record may still be missing (default 24)
+        #[arg(long)]
+        grace_hours: Option<u64>,
+        /// The day (YYYY-MM-DD) or RFC 3339 moment before which no run owes anything (default 2026-10-13)
+        #[arg(long)]
+        since: Option<String>,
+        /// Only this workflow, by the name the forge reports; repeatable (default every workflow)
+        #[arg(long = "workflow", value_name = "NAME")]
+        workflows: Vec<String>,
+        /// The RFC 3339 moment ages are measured from (default the clock)
+        #[arg(long)]
+        now: Option<String>,
+        /// Read the runs from this file, in the shape `gh run list --json databaseId,workflowName,conclusion,headSha,createdAt,updatedAt,url,headBranch` prints, instead of asking the forge; `-` reads stdin
+        #[arg(long, value_name = "FILE")]
+        runs_json: Option<PathBuf>,
+    },
+    /// The records whose signals a failure shows: text from --text, --file, --run, or stdin
+    Diagnose {
+        /// The text of the failure
+        #[arg(long, conflicts_with_all = ["file", "run"])]
+        text: Option<String>,
+        /// Read the text of the failure from this file; `-` reads stdin
+        #[arg(long, value_name = "FILE", conflicts_with = "run")]
+        file: Option<PathBuf>,
+        /// Fetch the failed steps' log of this run from the forge (`gh run view <id> --log-failed`)
+        #[arg(long, value_name = "ID")]
+        run: Option<String>,
+    },
+    /// Print the draft of a record for one failed run; nothing is written
+    Draft {
+        /// The forge's identifier of the run
+        #[arg(long, value_name = "ID")]
+        run: String,
+        /// Look the run up in this file, in the shape `gh run list --json` prints, instead of asking the forge; `-` reads stdin
+        #[arg(long, value_name = "FILE")]
+        runs_json: Option<PathBuf>,
+        /// A job that failed in the run, for a run read from --runs-json; repeatable
+        #[arg(long = "job", value_name = "NAME", requires = "runs_json")]
+        jobs: Vec<String>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus entity`. Every object of the layer as an addressable node.
 ///
 /// The command-line half of the projection the Cockpit renders and the HTTP and MCP
@@ -5294,6 +5409,61 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["served", "show", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/expected", "/observations", "/unreadable", "/deployments"]),
+        }],
+    },
+    CommandExamples {
+        command: "postmortem list",
+        examples: &[ExampleDoc {
+            id: "postmortem-list-json",
+            title: "Every post-mortem, with the counts by status and by cause",
+            description: "Every record under `.ai/repo/post-mortems/`, newest first: its status, day, cause class and summary, the runs it answers, its components and how many signals it carries. The same answer `GET /api/v1/post-mortems` and the MCP tool `majordomus_postmortems` give. A repository that has recorded nothing answers an empty list.",
+            argv: &["postmortem", "list", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/directory", "/count", "/by_status", "/by_cause", "/records"]),
+        }],
+    },
+    CommandExamples {
+        command: "postmortem check",
+        examples: &[ExampleDoc {
+            id: "postmortem-check",
+            title: "The rules a post-mortem's schema cannot say",
+            description: "Judges every record against the rules that relate two of its fields, the record to the tree and one record to another: a draft carries no cause and a later status carries one, an explained record names a component and a signal, a fix is named exactly when the record is resolved, a path named exists, no identity is shared. Exit 0 when nothing is found, 10 on any finding, each printed with its record and a stable code.",
+            argv: &["postmortem", "check"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "postmortem owed",
+        examples: &[ExampleDoc {
+            id: "postmortem-owed-unobserved",
+            title: "A forge that cannot be asked owes nothing, and says so",
+            description: "Asks the forge for the trunk's newest runs and names every failed one no record answers, with its age and whether it is within its grace. Here the repository has no remote the forge knows, so nothing is observed: the answer is `observed: false` with the reason and exit 0 — never a guess, and never a green trunk nobody saw. In a checkout of a repository on the forge it exits 10 when a failed run is past its grace with no record. `--runs-json <file>` reads the runs from a file instead of asking.",
+            argv: &["postmortem", "owed", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/observed", "/reason", "/owed", "/past_grace"]),
+        }],
+    },
+    CommandExamples {
+        command: "postmortem diagnose",
+        examples: &[ExampleDoc {
+            id: "postmortem-diagnose-text",
+            title: "Which recorded failures a log looks like",
+            description: "Searches the text for the signals of every record, ignoring case, and returns the records whose own words are in it — the one with the most signals first, then the newest — with the cause, the components and what fixed it. The text comes from `--text`, `--file`, standard input, or `--run <id>`, which fetches the failed steps' log of a run from the forge. No record matching is an answer, exit 0, with an empty list.",
+            argv: &["postmortem", "diagnose", "--text", "error: the lease was lost", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/records", "/signals", "/matches"]),
+        }],
+    },
+    CommandExamples {
+        command: "postmortem draft",
+        examples: &[ExampleDoc {
+            id: "postmortem-draft-unobserved",
+            title: "A draft needs the run, and says when the forge did not give it",
+            description: "Asks the forge for one run and its failed jobs and prints a `draft` record for it: the front matter with the cause class `undetermined`, and the four required sections saying nothing is established yet. It prints; it never writes a file. Here the repository has no remote the forge knows, so the run is not observed and the command says why with exit 12. `--runs-json <file> --job <name>` drafts from a file instead of asking.",
+            argv: &["postmortem", "draft", "--run", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

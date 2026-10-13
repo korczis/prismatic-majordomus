@@ -1,0 +1,42 @@
+id: I2646
+milestone: a-failure-is-answered-by-a-record
+title: "The executable judges, lists, owes, diagnoses and drafts post-mortems, on every surface"
+slug: the-executable-reads-post-mortems
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add module postmortems to the registry with list, check, owed, diagnose and draft, the command group majordomus postmortem, the gate post-mortems and the UI screen."
+why: "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
+current_state: "Nothing in the executable reads a post-mortem beyond the generic object capabilities."
+desired_state: "postmortems.list, check, owed, diagnose and draft are capabilities; majordomus postmortem is their command group; check is a gate of the structure job; /ui/post-mortems draws a reading of the list; owed and draft ask the forge in one place and say observed false when they cannot."
+scope:
+  - "apps/majordomus-cli/src/postmortem"
+  - "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/ui"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/generated"
+  - "test/cases/3000_a_trunk_failure_owes_a_post_mortem.sh"
+non_scope:
+  - "Running owed from a hook: I2647, I2648"
+  - "A model that writes the cause"
+depends_on: [I2645]
+acceptance_criteria:
+  - "Each rule of the check has a unit test that fails when the rule is removed"
+  - "owed over a list of runs read from a file names an unanswered run, exits 10 past the grace and 0 within it, and ignores cancelled runs and runs before 2026-10-13"
+  - "diagnose over the text of a job log of 2026-10-13 names the record written for that failure first"
+  - "A draft printed for a run is accepted by the index and by the check"
+  - "No page and no remote caller can make the executable run gh"
+  - "generate --check is in sync and the module is in docs/generated"
+  - "A record's components, prevention and related references are edges of graph::RELATIONS: the entity page of an issue or a rule a record names lists the record as an incoming relation"
+  - "The handbook's Czech edition (handbook/cs) names the rule and the command group in the same change, or the handbook lane holds a request for it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib postmortem"
+  - "bash test/run.sh 3000_a_trunk_failure_owes_a_post_mortem"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "unit_tests_postmortem"
+  - "case_3000"
+created_at: 2026-10-13
+updated_at: 2026-10-13

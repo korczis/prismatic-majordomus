@@ -116,6 +116,35 @@ fn fetch_now(program: &str, root: &Path) -> Fetch {
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
+    json_within(program, root, args, BUDGET)
+}
+
+/// [`run`] with a budget of the caller's: a question whose answer is larger than one page
+/// of runs, asked by a command line that can wait for it.
+pub(crate) fn json_within(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+    budget: Duration,
+) -> Result<Value, (MonitorSourceHealth, String)> {
+    let out = capture(program, root, args, budget)?;
+    serde_json::from_str(&out).map_err(|e| {
+        (
+            MonitorSourceHealth::Error,
+            format!("gh {} printed no JSON: {e}", args[0]),
+        )
+    })
+}
+
+/// One call of `program`, bounded by `budget`, its stdout as text. Both pipes are read while
+/// the program runs, so an answer larger than a pipe holds (a failed run's log) is read
+/// whole instead of stalling the program until the budget ends it.
+pub(crate) fn capture(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+    budget: Duration,
+) -> Result<String, (MonitorSourceHealth, String)> {
     let mut child = Command::new(program)
         .args(args)
         .current_dir(root)
@@ -129,7 +158,29 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
                 format!("gh could not be started: {e}"),
             )
         })?;
-    let deadline = Instant::now() + BUDGET;
+    // both were piped above, so both are there to read
+    let drain = |pipe: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            if let Some(mut pipe) = pipe {
+                let _ = pipe.read_to_end(&mut bytes);
+            }
+            String::from_utf8_lossy(&bytes).into_owned()
+        })
+    };
+    let out = drain(
+        child
+            .stdout
+            .take()
+            .map(|s| Box::new(s) as Box<dyn Read + Send>),
+    );
+    let err = drain(
+        child
+            .stderr
+            .take()
+            .map(|s| Box::new(s) as Box<dyn Read + Send>),
+    );
+    let deadline = Instant::now() + budget;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
@@ -140,16 +191,13 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
                 let _ = child.wait();
                 return Err((
                     MonitorSourceHealth::Error,
-                    format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),
+                    format!("gh {} took longer than {}s", args[0], budget.as_secs()),
                 ));
             }
         }
     };
-    let mut out = String::new();
-    let mut err = String::new();
-    // both were piped above, so both are there to read
-    let _ = child.stdout.take().map(|mut s| s.read_to_string(&mut out));
-    let _ = child.stderr.take().map(|mut s| s.read_to_string(&mut err));
+    let out = out.join().unwrap_or_default();
+    let err = err.join().unwrap_or_default();
     if !status.success() {
         let reason = err
             .lines()
@@ -162,12 +210,7 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
             format!("gh {} failed: {reason}", args[0]),
         ));
     }
-    serde_json::from_str(&out).map_err(|e| {
-        (
-            MonitorSourceHealth::Error,
-            format!("gh {} printed no JSON: {e}", args[0]),
-        )
-    })
+    Ok(out)
 }
 
 /// Fold what `gh` printed into signals after `after` (Unix seconds); without a position,

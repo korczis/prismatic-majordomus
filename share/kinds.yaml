@@ -390,6 +390,21 @@ kinds:
       field: schema
       supported: [majordomus-distribution/v1]
 
+  # One cause that turned the trunk's CI red, with the runs it failed, the components it
+  # lives in and the signals a failing log shows (rule project.a-ci-failure-has-a-post-mortem,
+  # ADR 0156). `majordomus postmortem` reads these and nothing else.
+  post-mortem:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: majordomus.post-mortem/v1
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [post-mortem/v1]
+
   release-record:
     format: yaml
     schema: majordomus.release/v1

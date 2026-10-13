@@ -70,6 +70,7 @@ pub mod peers;
 pub mod perf;
 pub mod plan;
 pub mod policy;
+pub(crate) mod postmortem;
 pub mod product;
 pub mod proto;
 pub mod providers;

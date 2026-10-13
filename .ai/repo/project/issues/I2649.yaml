@@ -1,0 +1,29 @@
+id: I2649
+milestone: a-failure-is-answered-by-a-record
+title: "A failing gate is followed by the records that match it: diagnose runs where a failure is printed"
+slug: a-failing-gate-names-the-records-that-match
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the search automatic: when the gate runner or the suite reports a failure, its output is searched for the signals of every record and the matches are printed under it, and doctor does the same for the findings it prints."
+why: "The owner's order of 2026-10-13 and ADR 0156: an explanation of a red trunk that is not a record cannot be listed, checked, linked or searched."
+current_state: "diagnose is a command somebody has to think of running."
+desired_state: "scripts/ci/run-plan and test/run.sh end a failed run with the records postmortem diagnose matched in the failing output, or with the sentence that none matched; the structure job's summary carries the same."
+scope:
+  - "scripts/ci"
+  - "test"
+  - "apps/majordomus-cli/src"
+  - "docs/POST_MORTEMS.md"
+non_scope:
+  - "Changing a gate's verdict: the search informs and decides nothing"
+depends_on: [I2646]
+acceptance_criteria:
+  - "A fixture gate that fails with the text of a record's signal is followed by that record's id, title and fix"
+  - "A failure no record matches is followed by one sentence saying so and naming postmortem draft"
+  - "The search adds less than a second to a failed run and nothing to a passing one"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "run_plan_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

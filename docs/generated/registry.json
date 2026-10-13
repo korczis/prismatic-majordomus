@@ -324,6 +324,14 @@
       "capabilities": 9
     },
     {
+      "id": "postmortems",
+      "title": "Post-mortems",
+      "description": "What turned the trunk's CI red and why: one record per cause under .ai/repo/post-mortems/, naming the runs it answers, the cause as a class and a sentence, the components it lives in, the signals a failing log shows, what fixed it and what now prevents it. The records are listed, judged against the rules their schema cannot say, compared with the trunk's failed runs to find the run nobody has answered, and searched for the signals of a new failure. Nothing here changes the repository; the two operations that ask the forge are the command line's alone.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 5
+    },
+    {
       "id": "product",
       "title": "Product",
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own.",
@@ -58233,6 +58241,1096 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
     },
     {
+      "id": "postmortems.check",
+      "module": "postmortems",
+      "kind": "query",
+      "title": "Judge the post-mortems against the rules their schema cannot say",
+      "description": "The rules that relate two fields of a record, a record to the tree and one record to another: a draft carries the cause class `undetermined` and a later status does not; an analysed or resolved record names a component and a signal; `fixed_by` is present exactly when the record is resolved; a component or a prevention that names a path (`file:`, `test:`) names one in the tree (a resolved record may name a component its fix removed); no two records share an identity. Whether a reference to an object of the layer resolves is the graph's question, answered for every kind by the one check of unresolved relations, and is not asked again here. Each finding names the record, a stable code and one sentence. Reads the index and the tree; asks no network.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "PostMortemCheck",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "description": "Whether no rule was broken."
+            },
+            "records": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many records were judged."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PostMortemFinding"
+              },
+              "description": "Every broken rule, by record."
+            }
+          },
+          "required": [
+            "ok",
+            "records",
+            "findings"
+          ],
+          "description": "What the cross-field rules found in the records.",
+          "title": "PostMortemCheck",
+          "$defs": {
+            "PostMortemFinding": {
+              "type": "object",
+              "properties": {
+                "record": {
+                  "type": "string",
+                  "description": "The record's identity."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "A stable code naming the rule."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong, in one sentence."
+                }
+              },
+              "required": [
+                "record",
+                "code",
+                "message"
+              ],
+              "description": "One thing a record gets wrong that its schema cannot say."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::postmortems"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_postmortems_check"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/post-mortems/check"
+        },
+        "cli": {
+          "path": [
+            "postmortem",
+            "check"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "post-mortem",
+        "ci",
+        "verification"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+    },
+    {
+      "id": "postmortems.diagnose",
+      "module": "postmortems",
+      "kind": "query",
+      "title": "Which post-mortems a failure looks like",
+      "description": "Searches the text of a failure — a failing log, a job's summary, an excerpt — for the signals of every record, ignoring case and matching each signal as written. Every record with at least one signal in the text is returned with its status, cause, the signals found, its components, what fixed it, what now prevents it and what else it concerned, the record with the most signals first and among equals the newest. No weighting and no closeness: a record is named because its own words are in the log. Reads the index and nothing else.",
+      "input": {
+        "name": "PostMortemDiagnoseInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The failing log, a job's summary, or any excerpt of either."
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "description": "The input of `postmortems.diagnose`: the text of a failure.",
+          "title": "PostMortemDiagnoseInput"
+        }
+      },
+      "output": {
+        "name": "PostMortemDiagnosis",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many records were searched."
+            },
+            "signals": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many signals those records carry."
+            },
+            "matches": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PostMortemMatch"
+              },
+              "description": "The records with at least one signal in the text: most signals first, then newest."
+            }
+          },
+          "required": [
+            "records",
+            "signals",
+            "matches"
+          ],
+          "description": "The records whose signals a failure shows.",
+          "title": "PostMortemDiagnosis",
+          "$defs": {
+            "PostMortemMatch": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The record's identity."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The record's title."
+                },
+                "status": {
+                  "$ref": "#/$defs/PostMortemStatus",
+                  "description": "How far the record has come."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The day the failure was first seen."
+                },
+                "cause": {
+                  "$ref": "#/$defs/PostMortemCause",
+                  "description": "Why it failed then."
+                },
+                "signals": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The signals of the record found in the text, by their ids, in the record's order."
+                },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the cause lived."
+                },
+                "fixed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What removed it, when it was removed."
+                },
+                "prevention": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What now stops it from returning."
+                },
+                "related": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What else of the layer it concerned."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The record's file."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status",
+                "date",
+                "cause",
+                "signals",
+                "components",
+                "fixed_by",
+                "prevention",
+                "related",
+                "path"
+              ],
+              "description": "A record whose signals a failure shows."
+            },
+            "PostMortemStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "The failure is recorded and its cause is not established."
+                },
+                {
+                  "type": "string",
+                  "const": "analysed",
+                  "description": "The cause is established and named, with the components it lives in."
+                },
+                {
+                  "type": "string",
+                  "const": "resolved",
+                  "description": "The fix is on the trunk and `fixed_by` names it."
+                }
+              ],
+              "description": "How far a record has come: recorded, explained, fixed."
+            },
+            "PostMortemCause": {
+              "type": "object",
+              "properties": {
+                "class": {
+                  "$ref": "#/$defs/CauseClass",
+                  "description": "The class of the cause."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "The cause in one sentence.",
+                  "default": ""
+                }
+              },
+              "required": [
+                "class"
+              ],
+              "description": "The cause of a record: its class and one sentence."
+            },
+            "CauseClass": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "defect",
+                  "description": "The change under test was wrong."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "The test asserted something that was no longer, or never, true."
+                },
+                {
+                  "type": "string",
+                  "const": "race",
+                  "description": "The outcome depended on timing."
+                },
+                {
+                  "type": "string",
+                  "const": "gate",
+                  "description": "The gate judged something other than what it names."
+                },
+                {
+                  "type": "string",
+                  "const": "environment",
+                  "description": "The runner, a tool on it or the forge."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "Something outside the repository changed."
+                },
+                {
+                  "type": "string",
+                  "const": "undetermined",
+                  "description": "Not established: the only class a draft may carry."
+                }
+              ],
+              "description": "Why a run failed, as a class."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::postmortems"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_postmortems_diagnose"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/post-mortems/diagnose"
+        },
+        "cli": {
+          "path": [
+            "postmortem",
+            "diagnose"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "post-mortem",
+        "ci",
+        "diagnosis"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+    },
+    {
+      "id": "postmortems.draft",
+      "module": "postmortems",
+      "kind": "query",
+      "title": "Draft a post-mortem for one failed run",
+      "description": "Asks the forge, through its own command-line tool, for one run and its failed jobs, and returns the text of a `draft` record for it: the front matter the schema asks for, with the cause class `undetermined`, and the four required sections, each saying that nothing is established yet. The identity is `pm-`, the day of the run, the workflow and the run's identifier. The text is returned, with the path a record of that identity lives at and the records that already name the run; nothing is written. When `runs` is given the run is looked up there and the forge is not asked. Exit 0 when drafted, 12 when the forge could not be asked.",
+      "input": {
+        "name": "PostMortemDraftInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "run": {
+              "type": "string",
+              "description": "The forge's identifier of the run: digits."
+            },
+            "runs": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": true,
+              "description": "Runs in the shape `gh run list --json` prints them. When given, the run is looked up\namong them and the forge is not asked."
+            },
+            "jobs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The names of the jobs that failed, for a run given in `runs`."
+            }
+          },
+          "required": [
+            "run"
+          ],
+          "description": "The input of `postmortems.draft`: the run to draft a record for.",
+          "title": "PostMortemDraftInput"
+        }
+      },
+      "output": {
+        "name": "PostMortemDraft",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "observed": {
+              "type": "boolean",
+              "description": "Whether the run was observed. False when the forge could not be asked."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not; absent when the run was observed."
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The identity the draft carries."
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Where a record of that identity lives, repository-relative. Nothing was written\nthere."
+            },
+            "answered_by": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The records that already name the run, by identity."
+            },
+            "text": {
+              "type": "string",
+              "description": "The draft: front matter and the four sections. Empty when the run was not observed."
+            },
+            "exit_code": {
+              "type": "integer",
+              "format": "int32",
+              "description": "The exit status the command line reports: 0 drafted, 12 the forge was not answered."
+            }
+          },
+          "required": [
+            "observed",
+            "answered_by",
+            "text",
+            "exit_code"
+          ],
+          "description": "The text of a draft record for one failed run.",
+          "title": "PostMortemDraft"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::postmortems"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "postmortem",
+            "draft"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "post-mortem",
+        "ci",
+        "forge"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+    },
+    {
+      "id": "postmortems.list",
+      "module": "postmortems",
+      "kind": "query",
+      "title": "Every post-mortem, newest first",
+      "description": "Every record under .ai/repo/post-mortems/ with its status, day, cause class and summary, the runs it answers, its components, what fixed and what prevents it, what else of the layer it concerns, how many signals it carries and its path, with the counts by status and by cause class. A file indexed as a post-mortem whose front matter does not read as one is listed apart, with the reason. Reads the index and nothing else.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "PostMortemList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "directory": {
+              "type": "string",
+              "description": "Where the records live, repository-relative."
+            },
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many records there are."
+            },
+            "by_status": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0
+              },
+              "description": "How many records carry each status."
+            },
+            "by_cause": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0
+              },
+              "description": "How many records carry each cause class."
+            },
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PostMortemSummary"
+              },
+              "description": "The records, newest first."
+            },
+            "unreadable": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/UnreadablePostMortem"
+              },
+              "description": "Files indexed as post-mortems that could not be read as one."
+            }
+          },
+          "required": [
+            "directory",
+            "count",
+            "by_status",
+            "by_cause",
+            "records",
+            "unreadable"
+          ],
+          "description": "Every record, newest first, with the counts a reader asks for first.",
+          "title": "PostMortemList",
+          "$defs": {
+            "PostMortemSummary": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The record's identity."
+                },
+                "uri": {
+                  "type": "string",
+                  "description": "The record's URI in the index."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "What went wrong, in one line."
+                },
+                "status": {
+                  "$ref": "#/$defs/PostMortemStatus",
+                  "description": "How far the record has come."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The day the failure was first seen."
+                },
+                "cause": {
+                  "$ref": "#/$defs/PostMortemCause",
+                  "description": "Why it failed."
+                },
+                "runs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/AnsweredRun"
+                  },
+                  "description": "The runs the record answers."
+                },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the cause lives."
+                },
+                "signals": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many signals a failing log is searched for."
+                },
+                "fixed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What removed the cause, once it is removed."
+                },
+                "prevention": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What now stops the cause from returning, as references of the layer."
+                },
+                "related": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What else of the layer the failure concerns, as `<kind>:<identity>`."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The record's file, repository-relative."
+                }
+              },
+              "required": [
+                "id",
+                "uri",
+                "title",
+                "status",
+                "date",
+                "cause",
+                "runs",
+                "components",
+                "signals",
+                "fixed_by",
+                "prevention",
+                "related",
+                "path"
+              ],
+              "description": "One record as a list shows it."
+            },
+            "PostMortemStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "The failure is recorded and its cause is not established."
+                },
+                {
+                  "type": "string",
+                  "const": "analysed",
+                  "description": "The cause is established and named, with the components it lives in."
+                },
+                {
+                  "type": "string",
+                  "const": "resolved",
+                  "description": "The fix is on the trunk and `fixed_by` names it."
+                }
+              ],
+              "description": "How far a record has come: recorded, explained, fixed."
+            },
+            "PostMortemCause": {
+              "type": "object",
+              "properties": {
+                "class": {
+                  "$ref": "#/$defs/CauseClass",
+                  "description": "The class of the cause."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "The cause in one sentence.",
+                  "default": ""
+                }
+              },
+              "required": [
+                "class"
+              ],
+              "description": "The cause of a record: its class and one sentence."
+            },
+            "CauseClass": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "defect",
+                  "description": "The change under test was wrong."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "The test asserted something that was no longer, or never, true."
+                },
+                {
+                  "type": "string",
+                  "const": "race",
+                  "description": "The outcome depended on timing."
+                },
+                {
+                  "type": "string",
+                  "const": "gate",
+                  "description": "The gate judged something other than what it names."
+                },
+                {
+                  "type": "string",
+                  "const": "environment",
+                  "description": "The runner, a tool on it or the forge."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "Something outside the repository changed."
+                },
+                {
+                  "type": "string",
+                  "const": "undetermined",
+                  "description": "Not established: the only class a draft may carry."
+                }
+              ],
+              "description": "Why a run failed, as a class."
+            },
+            "AnsweredRun": {
+              "type": "object",
+              "properties": {
+                "workflow": {
+                  "type": "string",
+                  "description": "The workflow's name as the forge reports it.",
+                  "default": ""
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The forge's identifier of the run: an identity, never a quantity."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The commit the run judged.",
+                  "default": ""
+                },
+                "jobs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The jobs that failed in it, by name.",
+                  "default": []
+                },
+                "step": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The step that failed, where one job failed in one step."
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "description": "One run a record answers."
+            },
+            "UnreadablePostMortem": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The file, repository-relative."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it could not be read."
+                }
+              },
+              "required": [
+                "path",
+                "reason"
+              ],
+              "description": "A file indexed as a post-mortem whose front matter is not one."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::postmortems"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_postmortems",
+          "resource": {
+            "uri": "majordomus://post-mortems",
+            "name": "post-mortems"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/post-mortems"
+        },
+        "cli": {
+          "path": [
+            "postmortem",
+            "list"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "post-mortem",
+        "ci",
+        "evidence"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+    },
+    {
+      "id": "postmortems.owed",
+      "module": "postmortems",
+      "kind": "query",
+      "title": "The trunk's failed runs no post-mortem answers",
+      "description": "Asks the forge, through its own command-line tool and with the caller's credential, for the newest runs of the trunk (branch `master`, 60 runs, unless named), and returns every run that ended in `failure` or `timed_out` since the rule came into force and that no record names in `runs[].id`, each with its page, its age and whether it is still within its grace (24 hours unless named). A cancelled, skipped or green run owes nothing. When the forge cannot be asked the answer is `observed: false` with the reason and owes nothing: an unobserved forge is said, never guessed. When `runs` is given the forge is not asked. Exit 0 when nothing is owed past its grace, 10 when something is.",
+      "input": {
+        "name": "PostMortemOwedInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The branch whose runs are asked about; `master` when absent."
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "How many of its newest runs the forge is asked for; 60 when absent, 500 at most."
+            },
+            "grace_hours": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "How many hours after a run finished its record may still be missing; 24 when absent."
+            },
+            "since": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The day (`YYYY-MM-DD`) or moment (RFC 3339) before which no run owes anything;\n`2026-10-13` when absent."
+            },
+            "workflows": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Only these workflows, by the name the forge reports; every workflow when empty."
+            },
+            "now": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The moment ages are measured from, RFC 3339; the clock when absent."
+            },
+            "runs": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": true,
+              "description": "The runs, in the shape `gh run list --json` prints them. When given, the forge is\nnot asked."
+            }
+          },
+          "description": "The input of `postmortems.owed`: which runs are asked about and how late a record may\nbe. Everything is optional.",
+          "title": "PostMortemOwedInput"
+        }
+      },
+      "output": {
+        "name": "PostMortemOwed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "observed": {
+              "type": "boolean",
+              "description": "Whether the runs were observed. False when the forge could not be asked: nothing is\nowed by a forge nobody saw, and nothing is cleared by it either."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, in the words of whatever refused; absent when the runs were observed."
+            },
+            "source": {
+              "type": "string",
+              "description": "Where the runs came from: `forge` or `input`."
+            },
+            "branch": {
+              "type": "string",
+              "description": "The branch asked about."
+            },
+            "since": {
+              "type": "string",
+              "description": "The moment before which no run owes anything, as it was given."
+            },
+            "grace_hours": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The grace, in hours."
+            },
+            "runs": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many runs of the branch were looked at."
+            },
+            "failed": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of them failed inside the window."
+            },
+            "answered": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of those a record names."
+            },
+            "owed": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OwedRun"
+              },
+              "description": "The failed runs no record names, newest first."
+            },
+            "past_grace": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of them are past their grace."
+            },
+            "exit_code": {
+              "type": "integer",
+              "format": "int32",
+              "description": "The exit status the command line reports: 0 nothing is owed past its grace, 10\nsomething is."
+            }
+          },
+          "required": [
+            "observed",
+            "source",
+            "branch",
+            "since",
+            "grace_hours",
+            "runs",
+            "failed",
+            "answered",
+            "owed",
+            "past_grace",
+            "exit_code"
+          ],
+          "description": "Which of the trunk's failed runs no record answers.",
+          "title": "PostMortemOwed",
+          "$defs": {
+            "OwedRun": {
+              "type": "object",
+              "properties": {
+                "workflow": {
+                  "type": "string",
+                  "description": "The workflow's name."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The forge's identifier of the run."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The commit the run judged."
+                },
+                "conclusion": {
+                  "type": "string",
+                  "description": "How the run ended."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The run's page on the forge."
+                },
+                "finished_at": {
+                  "type": "string",
+                  "description": "When the run finished, as the forge wrote it."
+                },
+                "age_seconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long ago that was, in seconds; absent when the forge gave no readable time."
+                },
+                "within_grace": {
+                  "type": "boolean",
+                  "description": "Whether the run finished less than the grace ago: owed, and not yet late."
+                }
+              },
+              "required": [
+                "workflow",
+                "id",
+                "commit",
+                "conclusion",
+                "url",
+                "finished_at",
+                "within_grace"
+              ],
+              "description": "A failed run of the trunk that no record names."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::postmortems"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "postmortem",
+            "owed"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "post-mortem",
+        "ci",
+        "forge"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/postmortems.rs"
+    },
+    {
       "id": "product.domains",
       "module": "product",
       "kind": "query",
@@ -80506,6 +81604,7 @@
     "milestone",
     "moment",
     "policy",
+    "post-mortem",
     "profile",
     "prompt",
     "release-record",
