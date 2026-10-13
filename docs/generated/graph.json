@@ -7136,6 +7136,37 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0147",
+        "kind": "adr",
+        "label": "adr-0147",
+        "summary": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+        "route": "/cockpit/objects/adr/adr-0147",
+        "source": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+            "file:apps/majordomus-cli/src/cockpit/mod.rs",
+            "file:.ai/repo/ci/pages.yaml",
+            "file:docs/COCKPIT.md",
+            "file:docs/MAJORDOMUS_UI.md",
+            "file:test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+            "file:test/cases/2982_two_snapshots_link_what_the_other_holds.sh"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "cockpit",
+            "ui",
+            "pages"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0149",
         "kind": "adr",
         "label": "adr-0149",
@@ -34852,6 +34883,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I2495",
+        "kind": "issue",
+        "label": "I2495",
+        "summary": "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it",
+        "route": "/cockpit/objects/issue/i2495",
+        "source": ".ai/repo/project/issues/I2495.yaml",
+        "facts": {
+          "created_at": "2026-10-12",
+          "depends_on": [
+            "I2483"
+          ],
+          "evidence_required": [
+            "cockpit_snapshot_unit_tests",
+            "cockpit_snapshot_cases_2981_2982",
+            "public_cockpit_verified"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "apps/majordomus-cli/src/commands/web.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "scripts/pages",
+            "scripts/ci/pages-check",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/pages.yml",
+            "docs/COCKPIT.md",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+            "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+            ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+            ".ai/repo/project/issues/I2495.yaml"
+          ],
+          "slug": "the-cockpit-is-published-as-a-snapshot",
+          "updated_at": "2026-10-12",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib web::report::snapshot",
+            "MJ_TEST_JOBS=2 bash test/run.sh 2981_the_cockpit_snapshot_holds_its_routes 2982_two_snapshots_link_what_the_other_holds",
+            "scripts/pages verify-ui --surface cockpit"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -40068,6 +40148,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.22.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.23.0",
+        "kind": "release-record",
+        "label": "v0.23.0",
+        "summary": "v0.23.0",
+        "route": "/cockpit/objects/release-record/v0-23-0",
+        "source": ".ai/repo/releases/v0.23.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "e506c041a44ca9e5853500e10452c648b19ca858",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.23.0",
+          "published_at": "2026-10-13T12:45:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.23.0"
         }
       },
       {
@@ -51270,6 +51373,20 @@
         "label": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
         "route": "/cockpit/objects/test/test-cases-2980-a-capability-is-invoked-by-name-from-claude-code-sh",
         "source": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "kind": "test",
+        "label": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "route": "/cockpit/objects/test/test-cases-2981-the-cockpit-snapshot-holds-its-routes-sh",
+        "source": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "kind": "test",
+        "label": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "route": "/cockpit/objects/test/test-cases-2982-two-snapshots-link-what-the-other-holds-sh",
+        "source": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh"
       },
       {
         "id": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
@@ -63252,6 +63369,61 @@
       {
         "source": "majordomus://adr/adr-0146",
         "target": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "file:.ai/repo/ci/pages.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "file:apps/majordomus-cli/src/web/report/snapshot.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://adr/adr-0141",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://test/test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0147",
+        "target": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
         "kind": "put_in_force"
       },
       {
@@ -76305,6 +76477,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2495",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2495",
+        "target": "majordomus://issue/I2483",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2495",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -76861,6 +77048,11 @@
       },
       {
         "source": "majordomus://release-record/v0.22.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.23.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -80416,6 +80608,16 @@
       },
       {
         "source": "majordomus://test/test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -85736,8 +85938,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2732,
-      "edges": 5988,
+      "nodes": 2737,
+      "edges": 6005,
       "acyclic": false,
       "truncated": false
     }

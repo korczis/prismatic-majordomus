@@ -87,14 +87,21 @@ grep -qF "href=\"${base%/}/rustdoc/\"" site/public/index.html \
   || { echo "    the built home page's menu does not link ${base%/}/rustdoc/"; exit 1; }
 expect_exit 0 scripts/site-check --no-sync
 expect_grep "^OK   surfaces +1 composed surface\(s\) \(/rustdoc\) are in the build, each built from ${built:0:12}, the commit this build is$"
-expect_grep '^OK   nav +every navigation link on the homepage resolves$'
+# The line also says how many of those links are the root of a snapshot the publication holds
+# and this build does not compose (the published UI, since the landing page links it): the
+# count is the publication's, not this case's, so the sentence is held and the count is not.
+expect_grep '^OK   nav +every navigation link on the homepage resolves \([0-9]+ of them the root of a snapshot the publication holds and this build does not compose\)$'
 expect_grep "^OK   link +.* the [0-9]+ page\(s\) under /rustdoc/ are composed surfaces' own and were not scanned"
 
 # ---------------------------------------------------------------- a build that lost the compose
 # The regression simulated where it happens: the topology the build reads lacks the surface —
 # a declaration dropped, or a composition that stopped reading it — and site-build carries it
 # out without a word, because it composes what the topology says. The site's own check, over
-# the committed topology, refuses that build from three sections at once.
+# the committed topology, refuses that build from two sections at once: the composed surfaces
+# (13m) and the links. The navigation section (13d) does not: it reads the homepage up to the
+# end of the hero, and since the navigation is rendered once (#1045) the reference is linked
+# from the footer alone, so 13d never meets the link. That 13d should see a footer-only link
+# is owed as a change of its own; this case asserts what refuses today.
 jq 'del(.surfaces[] | select(.id == "rustdoc"))' docs/generated/web.json > "$S/web-without.json"
 cp "$S/web-without.json" docs/generated/web.json
 expect_exit 0 scripts/site-build --no-data
@@ -103,7 +110,6 @@ expect_no_grep 'compose rustdoc'
 git checkout -q -- docs/generated/web.json
 expect_exit 10 scripts/site-check --no-sync
 expect_grep '^FAIL surfaces +surface rustdoc is not in the build: no /rustdoc/index\.html \(run its producer, scripts/rust-check --doc, then scripts/site-build\)$'
-expect_grep '^FAIL nav +navigation/hero link /rustdoc/ does not resolve$'
 expect_grep "^FAIL link +internal +[^ ]+: ${base%/}/rustdoc/ resolves to no file under site/public"
 # With the declaration itself gone as well, the check's own list of composed surfaces is empty
 # and 13m has nothing to ask about; the site's links into the reference are still links, and

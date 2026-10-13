@@ -44,6 +44,9 @@ use assets::Assets;
 /// Every Cockpit route starts here.
 pub const PREFIX: &str = "/cockpit";
 
+/// The Cockpit's identity in the web topology (`web.surfaces`).
+pub const SURFACE: &str = "cockpit";
+
 /// The stylesheet the shell links.
 pub const STYLESHEET: &str = "cockpit.css";
 

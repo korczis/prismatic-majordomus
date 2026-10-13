@@ -35,15 +35,79 @@ use super::{write, write_json, Origin};
 use crate::cockpit::html::el;
 use crate::error::{Error, Result};
 use crate::http::router::Request;
-use crate::ui::{Ui, ASSETS_PREFIX, PREFIX, SURFACE};
+use crate::http::router::Response;
 use crate::web::discover::{Declaration, DECLARATION_FILE, DECLARATION_SCHEMA, GENERATED_ROOT};
 use crate::web::model::{Availability, Category, Provenance, SurfaceKind, Topology, Visibility};
 
-/// The snapshot's identity in the web topology.
-pub const ID: &str = "ui-snapshot";
+/// The surface a snapshot is taken of: what tells the UI's snapshot from the Cockpit's.
+///
+/// One exporter reads both. Everything that differs between them is a value of this type,
+/// so that a third surface is a constant here and not a second exporter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Subject {
+    /// The snapshot's identity in the web topology, and its directory under the web root.
+    pub id: &'static str,
+    /// What produces it, as a reader would run it.
+    pub producer: &'static str,
+    /// The identity of the surface a process serves at the same mount.
+    pub served: &'static str,
+    /// The mount: the snapshot is published where the process serves the surface.
+    pub prefix: &'static str,
+    /// The prefix of the surface's assets.
+    pub assets: &'static str,
+    /// The surface in a sentence: "UI", "Cockpit".
+    pub name: &'static str,
+    /// The declaration's title.
+    pub title: &'static str,
+    /// The title of the page about the live surface.
+    pub live_title: &'static str,
+    /// A query key that asks for a part of a page and is no page of its own; empty for none.
+    pub fragment: &'static str,
+    /// Whether a page keeps its scripts. The UI's one script knows a snapshot and reads
+    /// nothing again in one. The Cockpit's scripts open sockets, poll and post to the
+    /// process, so a snapshot of it carries none: every page is complete without them.
+    pub scripts: bool,
+    /// Routes a publication never holds, whatever links to them: a page about the machine
+    /// that renders it and not about the repository. Such a route is no page of the
+    /// snapshot, so it is never read, and a link to it leads to the live page.
+    pub withheld: &'static [&'static str],
+}
 
-/// What produces it, as a reader would run it.
-pub const PRODUCER: &str = "majordomus web report ui-snapshot";
+/// The UI's snapshot (ADR 0141).
+pub const UI: Subject = Subject {
+    id: "ui-snapshot",
+    producer: "majordomus web report ui-snapshot",
+    served: crate::ui::SURFACE,
+    prefix: crate::ui::PREFIX,
+    assets: crate::ui::ASSETS_PREFIX,
+    name: "UI",
+    title: "The UI, as it was read at one commit",
+    live_title: "The live UI · majordomus ui",
+    fragment: crate::ui::FRAGMENT,
+    scripts: true,
+    withheld: &[],
+};
+
+/// The Cockpit's snapshot (ADR 0147).
+pub const COCKPIT: Subject = Subject {
+    id: "cockpit-snapshot",
+    producer: "majordomus web report cockpit-snapshot",
+    served: crate::cockpit::SURFACE,
+    prefix: crate::cockpit::PREFIX,
+    assets: crate::cockpit::assets::PREFIX,
+    name: "Cockpit",
+    title: "The Cockpit, as it was read at one commit",
+    live_title: "The live Cockpit · majordomus",
+    fragment: "",
+    scripts: false,
+    // `/cockpit/continuity` reads `.ai/local/`: the open episodes and handovers of one
+    // checkout, which name a disk. It is the one page of the Cockpit with no counterpart in
+    // a publication (ADR 0014, docs/COCKPIT.md).
+    withheld: &["/cockpit/continuity"],
+};
+
+/// Every subject there is a snapshot of.
+pub const SUBJECTS: &[&Subject] = &[&UI, &COCKPIT];
 
 /// The pages a snapshot holds at most when the caller names no bound: every screen and
 /// panel, and the inspectors they link to, until this many pages are written.
@@ -70,7 +134,9 @@ pub struct Snapshot {
     pub dir: PathBuf,
     /// Where it came from.
     pub origin: Origin,
-    /// Every page written, as the UI target it was read from and the file it is in.
+    /// The mount it is published at: the surface's own.
+    pub mount: String,
+    /// Every page written, as the target it was read from and the file it is in.
     pub pages: BTreeMap<String, String>,
     /// The asset files copied beside the pages.
     pub assets: Vec<String>,
@@ -85,11 +151,17 @@ pub struct Snapshot {
     pub stopped_by: &'static str,
 }
 
-/// Read the UI and write it under the generated web root, with the declaration that makes
+/// Read a surface and write it under the generated web root, with the declaration that makes
 /// the directory a surface of every publication.
+///
+/// `handle` is the surface itself, asked in-process: the same function the server routes a
+/// request to. `seeds` are the pages read first and whatever they cost, in order; what they
+/// link to is read after, until the bound or the budget.
 pub fn render(
     root: &Path,
-    ui: &Ui,
+    subject: &Subject,
+    handle: &dyn Fn(&Request) -> Response,
+    seeds: Vec<String>,
     topology: &Topology,
     limit: usize,
     budget_seconds: u64,
@@ -97,24 +169,20 @@ pub fn render(
     let started = std::time::Instant::now();
     let budget = std::time::Duration::from_secs(budget_seconds);
     let mut stopped_by = "limit";
-    let dir = root.join(GENERATED_ROOT).join(ID);
+    let dir = root.join(GENERATED_ROOT).join(subject.id);
     if dir.exists() {
         // a snapshot is one reading: pages of an earlier one must not survive into it
         std::fs::remove_dir_all(&dir).map_err(|e| Error::io(dir.display().to_string(), e))?;
     }
     std::fs::create_dir_all(&dir).map_err(|e| Error::io(dir.display().to_string(), e))?;
     let origin = Origin::read(root);
-    let outside = Outside::from(topology);
+    let outside = Outside::from(root, subject, topology);
 
     // The screens and panels first, in the navigation's order. What they link to is then
     // taken one page per family in turn (a family is a route and the one key it is asked
     // with: every rule's inspector, every issue's), so that a bound leaves each family the
     // same share instead of the first long list all of it.
-    let mut seeds: VecDeque<String> = crate::ui::SCREENS
-        .iter()
-        .map(|s| s.route.to_string())
-        .chain(crate::ui::PANELS.iter().map(|p| p.to_string()))
-        .collect();
+    let mut seeds: VecDeque<String> = seeds.into();
     let mut seen: BTreeSet<String> = seeds.iter().cloned().collect();
     let mut families: Vec<(String, VecDeque<String>)> = Vec::new();
     let mut turn = 0usize;
@@ -145,11 +213,11 @@ pub fn render(
                 }
             }
         };
-        let Some(file) = page_file(&target) else {
+        let Some(file) = subject.page_file(&target) else {
             continue;
         };
         let asked = std::time::Instant::now();
-        let response = ui.handle(&Request::parse_target("GET", &target, Vec::new()));
+        let response = handle(&Request::parse_target("GET", &target, Vec::new()));
         tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;
@@ -157,10 +225,10 @@ pub fn render(
         let html = response.body.text().into_owned();
         for link in links(&html) {
             let link = unescape(&link);
-            if let Some(name) = asset_name(&link) {
+            if let Some(name) = subject.asset_name(&link) {
                 assets.insert(name);
-            } else if page_file(&link).is_some() {
-                let key = canonical(&link);
+            } else if subject.page_file(&link).is_some() {
+                let key = subject.canonical(&link);
                 if seen.insert(key.clone()) {
                     let family = family(&key);
                     match families.iter_mut().find(|(name, _)| *name == family) {
@@ -177,9 +245,9 @@ pub fn render(
     // the assets first: a page names only the ones the snapshot holds
     let mut copied = Vec::new();
     for name in &assets {
-        let response = ui.handle(&Request::parse_target(
+        let response = handle(&Request::parse_target(
             "GET",
-            &format!("{ASSETS_PREFIX}{name}"),
+            &format!("{}{name}", subject.assets),
             Vec::new(),
         ));
         if response.status != 200 {
@@ -201,6 +269,7 @@ pub fn render(
     let mut frame: Option<String> = None;
     for (file, html) in &rendered {
         let page = rewrite(
+            subject,
             html,
             file,
             &written,
@@ -214,12 +283,13 @@ pub fn render(
             frame = Some(page);
         }
     }
-    let live = live_page(frame.as_deref(), &origin);
+    let live = live_page(subject, frame.as_deref(), &origin);
     write(&dir, LIVE_PAGE, &live)?;
 
     let snapshot = Snapshot {
         dir: dir.clone(),
         origin,
+        mount: subject.prefix.to_string(),
         pages,
         assets: copied.iter().map(|n| format!("assets/{n}")).collect(),
         left_out: left_out.into_iter().collect(),
@@ -228,20 +298,117 @@ pub fn render(
         stopped_by,
     };
     write_json(&dir, "snapshot.json", &snapshot)?;
-    declare(&dir, &snapshot.origin)?;
+    declare(subject, &dir, &snapshot.origin)?;
+    // the snapshots written before this one led their links into this surface to their live
+    // page, because this one did not exist yet: now it does, and they lead to its pages
+    for other in SUBJECTS.iter().filter(|other| other.id != subject.id) {
+        relink_into(root, other, subject, &snapshot.pages)?;
+    }
     Ok(snapshot)
 }
 
-/// The declaration beside the pages: a surface of every publication at the UI's own mount,
-/// which no process serves, because a process serves the UI itself there.
-fn declare(dir: &Path, origin: &Origin) -> Result<()> {
+/// Lead the links of an earlier snapshot (`from`) into a surface that has a snapshot now
+/// (`to`, holding `pages`): every link `from` led to its live page because `to` had none is
+/// led to the page itself when `to` holds it, and left where it was when it does not.
+///
+/// Two snapshots link into each other, and one of them is written first. Without this the
+/// first would be read twice, once to learn what it links to and once to link it; with it,
+/// each surface is read once, in either order, and the files say the same thing. A snapshot
+/// that is not there has nothing to correct. Returns how many links were led.
+fn relink_into(
+    root: &Path,
+    from: &Subject,
+    to: &Subject,
+    pages: &BTreeMap<String, String>,
+) -> Result<usize> {
+    let Some(files) = pages_of(root, from) else {
+        return Ok(0);
+    };
+    let dir = root.join(GENERATED_ROOT).join(from.id);
+    let led = regex::Regex::new(&format!(
+        r##"(?:\.\./)*{}#({}(?:/[^"#]*)?)"##,
+        regex::escape(LIVE_PAGE),
+        regex::escape(to.prefix)
+    ))
+    .expect("the pattern of a link led to the live page compiles");
+    let mut count = 0;
+    let mut names: Vec<String> = files.into_values().collect();
+    crate::order::canonical_strings(&mut names);
+    for name in names {
+        let path = dir.join(&name);
+        let Ok(html) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let mut changed = 0;
+        let page = led.replace_all(&html, |c: &regex::Captures<'_>| {
+            match pages.get(&to.canonical(&unescape(&c[1]))) {
+                Some(file) => {
+                    changed += 1;
+                    let directory = file.strip_suffix("index.html").unwrap_or(file);
+                    escape(&format!("{}/{directory}", to.prefix))
+                }
+                None => c[0].to_string(),
+            }
+        });
+        if changed > 0 {
+            std::fs::write(&path, page.as_bytes())
+                .map_err(|e| Error::io(path.display().to_string(), e))?;
+            count += changed;
+        }
+    }
+    Ok(count)
+}
+
+/// The pages the Cockpit's snapshot reads first: every static route but the one page about
+/// this machine, then every Cockpit page the UI's snapshot under `root` wanted to link to.
+///
+/// The page about this machine is the subject's to withhold ([`Subject::withheld`]), so it
+/// is no seed and no link reaches it either. The UI's links come from the UI's own
+/// snapshot, where a link into a Cockpit that was not yet published was led to the live
+/// page with the path it meant: those paths are what a reader of the UI will follow first,
+/// so they are read before the bound can leave them out. No list of them is kept anywhere.
+pub fn cockpit_seeds(root: &Path) -> Vec<String> {
+    let mut seeds: Vec<String> = crate::cockpit::STATIC_ROUTES
+        .iter()
+        .map(|(path, _)| path.to_string())
+        .filter(|path| COCKPIT.page_file(path).is_some())
+        .collect();
+    let wanted = regex::Regex::new(&format!(
+        r##"{}#({}/[^"#&<> ]*)"##,
+        regex::escape(LIVE_PAGE),
+        regex::escape(COCKPIT.prefix)
+    ))
+    .expect("the pattern of a link the UI led to its live page compiles");
+    let ui = root.join(GENERATED_ROOT).join(UI.id);
+    let mut names: Vec<String> = pages_of(root, &UI)
+        .unwrap_or_default()
+        .into_values()
+        .collect();
+    crate::order::canonical_strings(&mut names);
+    for file in names.into_iter().map(|name| ui.join(name)) {
+        let Ok(html) = std::fs::read_to_string(&file) else {
+            continue;
+        };
+        for found in wanted.captures_iter(&html) {
+            let target = COCKPIT.canonical(&unescape(&found[1]));
+            if COCKPIT.page_file(&target).is_some() && !seeds.contains(&target) {
+                seeds.push(target);
+            }
+        }
+    }
+    seeds
+}
+
+/// The declaration beside the pages: a surface of every publication at the surface's own
+/// mount, which no process serves, because a process serves the surface itself there.
+fn declare(subject: &Subject, dir: &Path, origin: &Origin) -> Result<()> {
     let declaration = Declaration {
         schema: DECLARATION_SCHEMA.into(),
-        id: ID.into(),
-        mount: PREFIX.into(),
-        title: Some("The UI, as it was read at one commit".into()),
+        id: subject.id.into(),
+        mount: subject.prefix.into(),
+        title: Some(subject.title.into()),
         index: Some("index.html".into()),
-        producer: Some(PRODUCER.into()),
+        producer: Some(subject.producer.into()),
         availability: Some(Availability::PublishedOnly),
         category: Some(Category::Interface),
         visibility: Some(Visibility::Public),
@@ -249,24 +416,47 @@ fn declare(dir: &Path, origin: &Origin) -> Result<()> {
     };
     let mut body =
         serde_json::to_string_pretty(&declaration).map_err(|e| Error::InvalidSurface {
-            surface: ID.into(),
+            surface: subject.id.into(),
             reason: format!("its declaration cannot be serialised: {e}"),
         })?;
     body.push('\n');
     write(dir, DECLARATION_FILE, &body)
 }
 
-/// Where a link that leaves the UI goes in a publication.
+/// Where a link that leaves the surface goes in a publication.
 struct Outside {
     /// Mounts a publication holds, so a link under one keeps its path.
     kept: Vec<crate::web::model::Mount>,
     /// Mounts a process serves from the application's own source (the documentation build),
     /// whose pages a publication holds at the application's root instead.
     rebased: Vec<crate::web::model::Mount>,
+    /// The other snapshots under the same web root, each with the pages it holds. A link
+    /// into one leads to the page when the snapshot has it and to the live page when it
+    /// does not: a snapshot is bounded, so its mount being published says nothing about one
+    /// page of it.
+    snapshots: Vec<(&'static Subject, BTreeMap<String, String>)>,
+}
+
+/// The pages another snapshot under `root` holds, read from its own account of itself;
+/// none when it has not been written.
+fn pages_of(root: &Path, subject: &Subject) -> Option<BTreeMap<String, String>> {
+    let path = root
+        .join(GENERATED_ROOT)
+        .join(subject.id)
+        .join("snapshot.json");
+    let text = std::fs::read_to_string(path).ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let pages = value.get("pages")?.as_object()?;
+    Some(
+        pages
+            .iter()
+            .filter_map(|(target, file)| Some((target.clone(), file.as_str()?.to_string())))
+            .collect(),
+    )
 }
 
 impl Outside {
-    fn from(topology: &Topology) -> Self {
+    fn from(root: &Path, subject: &Subject, topology: &Topology) -> Self {
         let from_site = |s: &crate::web::model::Surface| {
             matches!(
                 s.provenance.get("kind"),
@@ -282,7 +472,8 @@ impl Outside {
                 .surfaces
                 .iter()
                 .filter(|s| !s.mount.is_root() && s.availability.is_published())
-                .filter(|s| s.id != SURFACE && s.id != ID)
+                // a surface a snapshot stands for is never kept by its mount alone
+                .filter(|s| !SUBJECTS.iter().any(|x| s.id == x.served || s.id == x.id))
                 .map(|s| s.mount.clone())
                 .collect(),
             rebased: topology
@@ -292,7 +483,27 @@ impl Outside {
                 .filter(|s| s.kind == SurfaceKind::StaticDirectory && from_site(s))
                 .map(|s| s.mount.clone())
                 .collect(),
+            snapshots: SUBJECTS
+                .iter()
+                .filter(|other| other.id != subject.id)
+                .filter_map(|other| Some((*other, pages_of(root, other)?)))
+                .collect(),
         }
+    }
+
+    /// Where a link into another snapshot leads: `Some(Some(href))` for a page it holds,
+    /// `Some(None)` for a page of that surface it does not hold, and `None` for a link that
+    /// is not into another snapshot's surface at all. `link` carries its query and no
+    /// fragment.
+    fn snapshot(&self, link: &str) -> Option<Option<String>> {
+        let path = link.split('?').next().unwrap_or(link);
+        let (other, pages) = self.snapshots.iter().find(|(other, _)| {
+            path == other.prefix || path.starts_with(&format!("{}/", other.prefix))
+        })?;
+        Some(pages.get(&other.canonical(link)).map(|file| {
+            let directory = file.strip_suffix("index.html").unwrap_or(file);
+            format!("{}/{directory}", other.prefix)
+        }))
     }
 
     /// The link a publication answers for `path`, or none when only a process does.
@@ -310,53 +521,63 @@ impl Outside {
     }
 }
 
-/// The file a UI target is written to, relative to the snapshot's root; none for a target
-/// that is not a page of the UI, or that no file can stand for.
-///
-/// ```text
-/// /ui                       index.html
-/// /ui/roadmap               roadmap/index.html
-/// /ui/roadmap?milestone=M1  roadmap/_milestone/M1/index.html
-/// /ui/issues?a=1&b=2        none: two pairs are a query, not a page
-/// ```
-fn page_file(target: &str) -> Option<String> {
-    let (path, query) = target.split_once('?').unwrap_or((target, ""));
-    let path = path.split('#').next().unwrap_or(path);
-    if path.starts_with(ASSETS_PREFIX) {
-        return None;
-    }
-    let rest = if path == PREFIX {
-        ""
-    } else {
-        path.strip_prefix(&format!("{PREFIX}/"))?
-    };
-    let rest = rest.trim_end_matches('/');
-    if rest
-        .split('/')
-        .any(|s| s.is_empty() && !rest.is_empty() || s == "." || s == "..")
-    {
-        return None;
-    }
-    let base = if rest.is_empty() {
-        String::new()
-    } else {
-        format!("{rest}/")
-    };
-    let pairs: Vec<(String, String)> = query
-        .split('&')
-        .filter(|p| !p.is_empty())
-        .map(|p| {
-            let (k, v) = p.split_once('=').unwrap_or((p, ""));
-            (decode(k), decode(v))
-        })
-        .filter(|(k, _)| k != crate::ui::FRAGMENT)
-        .collect();
-    match pairs.as_slice() {
-        [] => Some(format!("{base}index.html")),
-        [(k, v)] if !k.is_empty() && !v.is_empty() => {
-            Some(format!("{base}_{}/{}/index.html", slug(k), slug(v)))
+impl Subject {
+    /// The file a target is written to, relative to the snapshot's root; none for a target
+    /// that is not a page of the surface, or that no file can stand for.
+    ///
+    /// ```text
+    /// /ui                       index.html
+    /// /ui/roadmap               roadmap/index.html
+    /// /ui/roadmap?milestone=M1  roadmap/_milestone/M1/index.html
+    /// /ui/issues?a=1&b=2        none: two pairs are a query, not a page
+    /// ```
+    fn page_file(&self, target: &str) -> Option<String> {
+        let (path, query) = target.split_once('?').unwrap_or((target, ""));
+        let path = path.split('#').next().unwrap_or(path);
+        let route = path.trim_end_matches('/');
+        if self
+            .withheld
+            .iter()
+            .any(|w| route == *w || route.starts_with(&format!("{w}/")))
+        {
+            return None;
         }
-        _ => None,
+        if path.starts_with(self.assets) {
+            return None;
+        }
+        let rest = if path == self.prefix {
+            ""
+        } else {
+            path.strip_prefix(&format!("{}/", self.prefix))?
+        };
+        let rest = rest.trim_end_matches('/');
+        if rest
+            .split('/')
+            .any(|s| s.is_empty() && !rest.is_empty() || s == "." || s == "..")
+        {
+            return None;
+        }
+        let base = if rest.is_empty() {
+            String::new()
+        } else {
+            format!("{rest}/")
+        };
+        let pairs: Vec<(String, String)> = query
+            .split('&')
+            .filter(|p| !p.is_empty())
+            .map(|p| {
+                let (k, v) = p.split_once('=').unwrap_or((p, ""));
+                (decode(k), decode(v))
+            })
+            .filter(|(k, _)| self.fragment.is_empty() || k != self.fragment)
+            .collect();
+        match pairs.as_slice() {
+            [] => Some(format!("{base}index.html")),
+            [(k, v)] if !k.is_empty() && !v.is_empty() => {
+                Some(format!("{base}_{}/{}/index.html", slug(k), slug(v)))
+            }
+            _ => None,
+        }
     }
 }
 
@@ -367,23 +588,25 @@ fn family(target: &str) -> String {
     format!("{path}?{key}")
 }
 
-/// One spelling per page, so that two links to one page are one page.
-fn canonical(target: &str) -> String {
-    let target = target.split('#').next().unwrap_or(target);
-    let (path, query) = target.split_once('?').unwrap_or((target, ""));
-    let path = if path.len() > PREFIX.len() {
-        path.trim_end_matches('/')
-    } else {
-        path
-    };
-    let query: Vec<&str> = query
-        .split('&')
-        .filter(|p| !p.is_empty() && *p != crate::ui::FRAGMENT)
-        .collect();
-    if query.is_empty() {
-        path.to_string()
-    } else {
-        format!("{path}?{}", query.join("&"))
+impl Subject {
+    /// One spelling per page, so that two links to one page are one page.
+    fn canonical(&self, target: &str) -> String {
+        let target = target.split('#').next().unwrap_or(target);
+        let (path, query) = target.split_once('?').unwrap_or((target, ""));
+        let path = if path.len() > self.prefix.len() {
+            path.trim_end_matches('/')
+        } else {
+            path
+        };
+        let query: Vec<&str> = query
+            .split('&')
+            .filter(|p| !p.is_empty() && (self.fragment.is_empty() || *p != self.fragment))
+            .collect();
+        if query.is_empty() {
+            path.to_string()
+        } else {
+            format!("{path}?{}", query.join("&"))
+        }
     }
 }
 
@@ -433,12 +656,14 @@ fn decode(raw: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// The name of a UI asset a link names, without its digest.
-fn asset_name(link: &str) -> Option<String> {
-    let rest = link.strip_prefix(ASSETS_PREFIX)?;
-    let name = rest.split(['?', '#']).next().unwrap_or(rest);
-    (!name.is_empty() && !name.split('/').any(|s| s.is_empty() || s == ".."))
-        .then(|| name.to_string())
+impl Subject {
+    /// The name of an asset of the surface a link names, without its digest.
+    fn asset_name(&self, link: &str) -> Option<String> {
+        let rest = link.strip_prefix(self.assets)?;
+        let name = rest.split(['?', '#']).next().unwrap_or(rest);
+        (!name.is_empty() && !name.split('/').any(|s| s.is_empty() || s == ".."))
+            .then(|| name.to_string())
+    }
 }
 
 /// The attributes whose value is a URL a reader or the script follows.
@@ -492,6 +717,7 @@ fn up(file: &str) -> String {
 
 /// Where one link of the page in `file` leads in the snapshot.
 fn relink(
+    subject: &Subject,
     link: &str,
     file: &str,
     written: &BTreeMap<String, String>,
@@ -504,7 +730,7 @@ fn relink(
         return link.to_string(); // the page itself, another origin, or a scheme: unchanged
     }
     let fragment = link.find('#').map(|i| &link[i..]).unwrap_or("");
-    if let Some(name) = asset_name(link) {
+    if let Some(name) = subject.asset_name(link) {
         // an asset the distribution did not have is named nowhere: the page's own fallback
         // stands (the tables beside a graph), and no link leads to nothing
         return if held.contains(&name) {
@@ -513,13 +739,25 @@ fn relink(
             String::new()
         };
     }
-    if page_file(link).is_some() || link == PREFIX || link.starts_with(&format!("{PREFIX}/")) {
-        if let Some(target) = written.get(&canonical(link)) {
+    if subject.page_file(link).is_some()
+        || link == subject.prefix
+        || link.starts_with(&format!("{}/", subject.prefix))
+    {
+        if let Some(target) = written.get(&subject.canonical(link)) {
             return format!("{}{target}{fragment}", up(file));
         }
-        let missing = canonical(link);
+        let missing = subject.canonical(link);
         left_out.insert(missing.clone());
         return format!("{}{LIVE_PAGE}#{}", up(file), missing);
+    }
+    let bare = link.split('#').next().unwrap_or(link);
+    // a page of another snapshot: the page itself when that snapshot holds it, and what
+    // says only a process answers it when it does not
+    if let Some(held) = outside.snapshot(bare) {
+        return match held {
+            Some(href) => format!("{href}{fragment}"),
+            None => format!("{}{LIVE_PAGE}#{bare}", up(file)),
+        };
     }
     let path = link.split(['?', '#']).next().unwrap_or(link);
     match outside.resolve(path) {
@@ -532,8 +770,10 @@ fn relink(
     }
 }
 
-/// One page of the UI as a file of the snapshot.
+/// One page of the surface as a file of the snapshot.
+#[allow(clippy::too_many_arguments)]
 fn rewrite(
+    subject: &Subject,
     html: &str,
     file: &str,
     written: &BTreeMap<String, String>,
@@ -551,16 +791,31 @@ fn rewrite(
             let path = link.split(['?', '#']).next().unwrap_or(&link).to_string();
             format!("{}{LIVE_PAGE}#{path}", up(file))
         } else {
-            relink(&link, file, written, held, outside, left_out)
+            relink(subject, &link, file, written, held, outside, left_out)
         };
         format!(r#"{name}="{}""#, escape(&target))
     });
     let graphs = graph_href_pattern();
     let page = graphs.replace_all(&page, |c: &regex::Captures<'_>| {
-        let target = relink(&unescape(&c[1]), file, written, held, outside, left_out);
+        let target = relink(
+            subject,
+            &unescape(&c[1]),
+            file,
+            written,
+            held,
+            outside,
+            left_out,
+        );
         format!("&quot;href&quot;:&quot;{}&quot;", escape(&target))
     });
     let page = page.replacen("<body ", &format!("<body {SNAPSHOT_ATTRIBUTE} "), 1);
+    // a surface whose scripts talk to the process carries none of them in a snapshot: a
+    // script that opened a socket or posted a form would ask a host that answers neither
+    let page = if subject.scripts {
+        page
+    } else {
+        script_pattern().replace_all(&page, "").into_owned()
+    };
     let banner = banner(origin, &format!("{}{LIVE_PAGE}", up(file))).render();
     match page.find("<main") {
         Some(start) => match page[start..].find('>') {
@@ -572,6 +827,12 @@ fn rewrite(
         },
         None => page,
     }
+}
+
+/// A script a page loads from a file: `<script … src="…"></script>`, with nothing inside.
+fn script_pattern() -> regex::Regex {
+    regex::Regex::new(r#"<script\b[^>]*\bsrc="[^"]*"[^>]*>\s*</script>"#)
+        .expect("the script pattern compiles")
 }
 
 /// What every page of a snapshot says about itself.
@@ -593,17 +854,22 @@ fn banner(origin: &Origin, live: &str) -> crate::cockpit::html::El {
         )
 }
 
-/// The one page about the live UI: what a link to a running process meant, and how to get
-/// one. Drawn in the UI's own frame, taken from the dashboard page the snapshot already read.
-fn live_page(frame: Option<&str>, origin: &Origin) -> String {
+/// The one page about the live surface: what a link to a running process meant, and how to
+/// get one. Drawn in the surface's own frame, taken from the first page the snapshot read.
+fn live_page(subject: &Subject, frame: Option<&str>, origin: &Origin) -> String {
     let body = el("div")
         .class("mj-ui-stack")
-        .child(el("h1").class("mj-ui-title").text("The live UI"))
+        .child(
+            el("h1")
+                .class("mj-ui-title")
+                .text(format!("The live {}", subject.name)),
+        )
         .child(el("p").text(
-            "This link leads to something only a running process answers: a screen read again every minute, a query, a panel past the snapshot's bound, the Cockpit or the API. Run the server in a checkout and open the same path there:",
+            "This link leads to something only a running process answers: a page read again as the repository changes, a query, a form, a page past the snapshot's bound, another surface of the server or its API. Run the server in a checkout and open the same path there:",
         ))
         .child(crate::cockpit::view::pre(format!(
-            "majordomus serve\n# then open http://localhost:<port>{PREFIX}"
+            "majordomus serve\n# then open http://localhost:<port>{}",
+            subject.prefix
         )))
         .child(
             el("p")
@@ -615,8 +881,7 @@ fn live_page(frame: Option<&str>, origin: &Origin) -> String {
             origin.revision.as_deref().unwrap_or("an unknown commit"),
             origin.rendered_at
         )));
-    let bare =
-        || crate::cockpit::html::document("The live UI · majordomus ui", Vec::new(), body.clone());
+    let bare = || crate::cockpit::html::document(subject.live_title, Vec::new(), body.clone());
     // the frame of the dashboard as the snapshot wrote it, at the root: its <main> is replaced
     let Some(html) = frame else { return bare() };
     let (Some(open), Some(close)) = (html.find("<main"), html.rfind("</main>")) else {
@@ -641,11 +906,9 @@ fn live_page(frame: Option<&str>, origin: &Origin) -> String {
     };
     let head = relocate(&html[..open_end]);
     let head = match (head.find("<title>"), head.find("</title>")) {
-        (Some(a), Some(b)) if a < b => format!(
-            "{}<title>The live UI · majordomus ui{}",
-            &head[..a],
-            &head[b..]
-        ),
+        (Some(a), Some(b)) if a < b => {
+            format!("{}<title>{}{}", &head[..a], subject.live_title, &head[b..])
+        }
         _ => head,
     };
     format!("{head}{}{}", body.render(), relocate(&html[close..]))
@@ -657,29 +920,33 @@ mod tests {
 
     #[test]
     fn a_target_is_a_file_when_one_file_can_stand_for_it() {
-        assert_eq!(page_file("/ui").as_deref(), Some("index.html"));
-        assert_eq!(page_file("/ui/").as_deref(), Some("index.html"));
+        assert_eq!(UI.page_file("/ui").as_deref(), Some("index.html"));
+        assert_eq!(UI.page_file("/ui/").as_deref(), Some("index.html"));
         assert_eq!(
-            page_file("/ui/roadmap").as_deref(),
+            UI.page_file("/ui/roadmap").as_deref(),
             Some("roadmap/index.html")
         );
         assert_eq!(
-            page_file("/ui/roadmap?milestone=M001").as_deref(),
+            UI.page_file("/ui/roadmap?milestone=M001").as_deref(),
             Some("roadmap/_milestone/M001/index.html")
         );
         assert_eq!(
-            page_file("/ui/panels/pull-requests?fragment").as_deref(),
+            UI.page_file("/ui/panels/pull-requests?fragment").as_deref(),
             Some("panels/pull-requests/index.html")
         );
         assert_eq!(
-            page_file("/ui/governance?rule=project.a%2Fb").as_deref(),
+            UI.page_file("/ui/governance?rule=project.a%2Fb").as_deref(),
             Some("governance/_rule/project.a_2fb/index.html")
         );
-        assert_eq!(page_file("/ui/issues?status=READY&q=x"), None, "two pairs");
-        assert_eq!(page_file("/ui/assets/ui.css?v=1"), None, "an asset");
-        assert_eq!(page_file("/cockpit"), None, "another surface");
-        assert_eq!(page_file("/uix"), None, "only shares letters");
-        assert_eq!(page_file("/ui/../etc"), None, "walks out");
+        assert_eq!(
+            UI.page_file("/ui/issues?status=READY&q=x"),
+            None,
+            "two pairs"
+        );
+        assert_eq!(UI.page_file("/ui/assets/ui.css?v=1"), None, "an asset");
+        assert_eq!(UI.page_file("/cockpit"), None, "another surface");
+        assert_eq!(UI.page_file("/uix"), None, "only shares letters");
+        assert_eq!(UI.page_file("/ui/../etc"), None, "walks out");
     }
 
     #[test]
@@ -704,12 +971,14 @@ mod tests {
         let outside = Outside {
             kept: vec![crate::web::model::Mount::parse("/rustdoc").unwrap()],
             rebased: vec![crate::web::model::Mount::parse("/docs").unwrap()],
+            snapshots: Vec::new(),
         };
         let mut left = BTreeSet::new();
         let file = "governance/index.html";
         let held: BTreeSet<String> = ["ui.css".to_string()].into();
-        let go =
-            |l: &str, left: &mut BTreeSet<String>| relink(l, file, &written, &held, &outside, left);
+        let go = |l: &str, left: &mut BTreeSet<String>| {
+            relink(&UI, l, file, &written, &held, &outside, left)
+        };
         assert_eq!(go("/ui", &mut left), "../index.html");
         assert_eq!(
             go("/ui/roadmap?milestone=M1#x", &mut left),
@@ -754,10 +1023,12 @@ mod tests {
         let outside = Outside {
             kept: Vec::new(),
             rebased: Vec::new(),
+            snapshots: Vec::new(),
         };
         let html = r#"<!doctype html><html><body class="mj-body"><main id="main" class="m"><a href="/ui">d</a><form action="/cockpit/search"></form><div data-graph="{&quot;href&quot;:&quot;/ui&quot;}"></div></main></body></html>"#;
         let mut left = BTreeSet::new();
         let page = rewrite(
+            &UI,
             html,
             "index.html",
             &written,
@@ -793,12 +1064,21 @@ mod tests {
             .expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
         let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
-        let ui = Ui::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let ui = crate::ui::Ui::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let ask = |req: &Request| ui.handle(req);
+        let seeds = || -> Vec<String> {
+            crate::ui::SCREENS
+                .iter()
+                .map(|s| s.route.to_string())
+                .chain(crate::ui::PANELS.iter().map(|p| p.to_string()))
+                .collect()
+        };
         let root = tempfile::tempdir().unwrap();
         let topology =
             crate::web::discover::discover(root.path(), crate::web::discover::Runtime::full())
                 .expect("a topology");
-        let snapshot = render(root.path(), &ui, &topology, 60, 600).expect("a snapshot");
+        let snapshot =
+            render(root.path(), &UI, &ask, seeds(), &topology, 60, 600).expect("a snapshot");
         for screen in crate::ui::SCREENS {
             assert!(
                 snapshot.pages.contains_key(screen.route),
@@ -808,14 +1088,16 @@ mod tests {
         }
         assert!(snapshot.pages.len() <= 60);
         // no budget at all still writes every screen and panel, and says what stopped it
-        let hurried = render(root.path(), &ui, &topology, 60, 0).expect("a snapshot");
+        let hurried =
+            render(root.path(), &UI, &ask, seeds(), &topology, 60, 0).expect("a snapshot");
         assert_eq!(hurried.stopped_by, "budget");
         assert_eq!(
             hurried.pages.len(),
             crate::ui::SCREENS.len() + crate::ui::PANELS.len(),
             "the screens and panels, and nothing they link to"
         );
-        let snapshot = render(root.path(), &ui, &topology, 60, 600).expect("a snapshot");
+        let snapshot =
+            render(root.path(), &UI, &ask, seeds(), &topology, 60, 600).expect("a snapshot");
         let dir = &snapshot.dir;
         assert!(dir.join(DECLARATION_FILE).is_file());
         assert!(dir.join(LIVE_PAGE).is_file());
@@ -855,7 +1137,218 @@ mod tests {
         let declared: Declaration =
             serde_json::from_str(&std::fs::read_to_string(dir.join(DECLARATION_FILE)).unwrap())
                 .unwrap();
-        assert_eq!(declared.mount, PREFIX);
+        assert_eq!(declared.mount, UI.prefix);
         assert_eq!(declared.availability, Some(Availability::PublishedOnly));
+    }
+    /// Every relative link of every page of a snapshot under `dir` names a file it holds,
+    /// and no page keeps an absolute link into the surface itself.
+    fn holds_what_it_links(subject: &Subject, snapshot: &Snapshot) {
+        let dir = &snapshot.dir;
+        for file in snapshot
+            .pages
+            .values()
+            .chain(std::iter::once(&LIVE_PAGE.to_string()))
+        {
+            let html = std::fs::read_to_string(dir.join(file)).unwrap();
+            for link in links(&html) {
+                let link = unescape(&link);
+                assert!(
+                    link != subject.prefix && !link.starts_with(&format!("{}/", subject.prefix)),
+                    "{file} keeps an absolute link into its own surface: {link}"
+                );
+                if link.is_empty()
+                    || link.starts_with('/')
+                    || link.starts_with('#')
+                    || link.contains("://")
+                {
+                    continue;
+                }
+                let path = link.split(['#', '?']).next().unwrap();
+                let base = Path::new(file).parent().unwrap_or(Path::new(""));
+                assert!(
+                    dir.join(base).join(path).exists(),
+                    "{file} links {link}, which is not in the snapshot"
+                );
+            }
+        }
+    }
+
+    /// The Cockpit is read by the same exporter: every static route but the one page about
+    /// this machine, no script on any page, every page stamped, no link to nothing, and a
+    /// declaration at the Cockpit's own mount.
+    #[test]
+    fn the_cockpit_snapshot_holds_its_routes_without_scripts_or_the_page_about_this_machine() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let cockpit =
+            crate::cockpit::Cockpit::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let root = tempfile::tempdir().unwrap();
+        let topology =
+            crate::web::discover::discover(root.path(), crate::web::discover::Runtime::full())
+                .expect("a topology");
+        let seeds = cockpit_seeds(root.path());
+        assert!(seeds.contains(&COCKPIT.prefix.to_string()));
+        assert!(
+            !seeds.iter().any(|s| s == "/cockpit/continuity"),
+            "the page about this machine is no seed"
+        );
+        let snapshot = render(
+            root.path(),
+            &COCKPIT,
+            &|request| cockpit.handle(request),
+            seeds,
+            &topology,
+            80,
+            600,
+        )
+        .expect("a snapshot");
+        assert_eq!(snapshot.mount, "/cockpit");
+        assert!(snapshot.pages.contains_key("/cockpit"));
+        assert!(snapshot.pages.contains_key("/cockpit/capabilities"));
+        assert!(
+            !snapshot
+                .pages
+                .keys()
+                .any(|p| p.starts_with("/cockpit/continuity")),
+            "the page about this machine is not published: {:?}",
+            snapshot.pages.keys().collect::<Vec<_>>()
+        );
+        for file in snapshot.pages.values() {
+            let html = std::fs::read_to_string(snapshot.dir.join(file)).unwrap();
+            assert!(html.contains(SNAPSHOT_ATTRIBUTE), "{file} is not stamped");
+            assert!(
+                html.contains("data-snapshot-of"),
+                "{file} does not say what it was read at"
+            );
+            assert!(
+                !script_pattern().is_match(&html),
+                "{file} carries a script that would talk to a process"
+            );
+        }
+        holds_what_it_links(&COCKPIT, &snapshot);
+        // the page is withheld by the subject, so a link to it says only a process answers it
+        assert_eq!(COCKPIT.page_file("/cockpit/continuity"), None);
+        assert_eq!(COCKPIT.page_file("/cockpit/continuity/"), None);
+        assert_eq!(COCKPIT.page_file("/cockpit/continuity/episode"), None);
+        assert!(COCKPIT
+            .page_file("/cockpit/capabilities/continuity.state")
+            .is_some());
+        let overview = std::fs::read_to_string(snapshot.dir.join("index.html")).unwrap();
+        assert!(
+            overview.contains(&format!("{LIVE_PAGE}#/cockpit/continuity")),
+            "the navigation's link to the withheld page leads to the live page"
+        );
+        assert!(snapshot.left_out.iter().any(|p| p == "/cockpit/continuity"));
+        let declared: Declaration = serde_json::from_str(
+            &std::fs::read_to_string(snapshot.dir.join(DECLARATION_FILE)).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(declared.id, "cockpit-snapshot");
+        assert_eq!(declared.mount, COCKPIT.prefix);
+        assert_eq!(declared.availability, Some(Availability::PublishedOnly));
+    }
+
+    /// Two snapshots under one root link into each other by the pages each holds: the one
+    /// written first is corrected by the one written after it, a page the other does not
+    /// hold still leads to the live page, and the second one's seeds are what the first
+    /// wanted to link to.
+    #[test]
+    fn two_snapshots_link_only_the_pages_the_other_holds() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let ui = crate::ui::Ui::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let cockpit =
+            crate::cockpit::Cockpit::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let root = tempfile::tempdir().unwrap();
+        let topology =
+            crate::web::discover::discover(root.path(), crate::web::discover::Runtime::full())
+                .expect("a topology");
+        let screens: Vec<String> = crate::ui::SCREENS
+            .iter()
+            .map(|s| s.route.to_string())
+            .collect();
+        let first = render(
+            root.path(),
+            &UI,
+            &|request| ui.handle(request),
+            screens,
+            &topology,
+            40,
+            0,
+        )
+        .expect("the UI's snapshot");
+        let cockpit_links =
+            |dir: &Path, pages: &BTreeMap<String, String>| -> (Vec<String>, usize) {
+                let mut held = Vec::new();
+                let mut live = 0;
+                for file in pages.values() {
+                    let html = std::fs::read_to_string(dir.join(file)).unwrap();
+                    for link in links(&html) {
+                        let link = unescape(&link);
+                        if link.starts_with("/cockpit") {
+                            held.push(link);
+                        } else if link.contains(&format!("{LIVE_PAGE}#/cockpit")) {
+                            live += 1;
+                        }
+                    }
+                }
+                (held, live)
+            };
+        let (held, live) = cockpit_links(&first.dir, &first.pages);
+        assert!(held.is_empty(), "no Cockpit snapshot exists yet: {held:?}");
+        assert!(live > 0, "the UI's source lines lead to the Cockpit");
+
+        // the Cockpit's seeds are what the UI wanted to link to
+        let seeds = cockpit_seeds(root.path());
+        assert!(
+            seeds
+                .iter()
+                .any(|s| s.starts_with("/cockpit/capabilities/")),
+            "the capabilities the UI cites are read first: {seeds:?}"
+        );
+        let second = render(
+            root.path(),
+            &COCKPIT,
+            &|request| cockpit.handle(request),
+            seeds,
+            &topology,
+            400,
+            600,
+        )
+        .expect("the Cockpit's snapshot");
+
+        // the UI's files were corrected: a link into the Cockpit names a page it holds
+        let (held, _) = cockpit_links(&first.dir, &first.pages);
+        assert!(
+            !held.is_empty(),
+            "the UI's links were led into the Cockpit's snapshot"
+        );
+        for link in &held {
+            let path = link.split(['#', '?']).next().unwrap();
+            let rest = path
+                .strip_prefix("/cockpit")
+                .unwrap()
+                .trim_start_matches('/');
+            assert!(
+                second.dir.join(rest).join("index.html").is_file(),
+                "the UI links {link}, which the Cockpit's snapshot does not hold"
+            );
+        }
+        // and a page of another snapshot it does not hold is the live page, never a guess
+        let outside = Outside::from(root.path(), &UI, &topology);
+        assert_eq!(
+            outside.snapshot("/cockpit/capabilities"),
+            Some(Some("/cockpit/capabilities/".to_string()))
+        );
+        assert_eq!(outside.snapshot("/cockpit/no/such/page"), Some(None));
+        assert_eq!(
+            outside.snapshot("/rustdoc/x"),
+            None,
+            "not a snapshot's surface"
+        );
     }
 }

@@ -210,6 +210,32 @@ expect_grep "surface\.json is absent or unreadable \(status 404\): the publicati
 live "$PUB"
 expect_exit 0 gate --offline
 expect_grep '^ok    the live UI was not asked \(--offline\)'
+
+# A tree that adds a snapshot declares what the *next* publication owes. The published commit's
+# own model is what the publication is held to: asked for a snapshot that commit never declared,
+# the gate refused every checkout from the commit that added the Cockpit's until its first
+# deployment. So: a commit whose model has no Cockpit row is the published one, the trunk's
+# newest commit adds the row, and the live site holds no Cockpit snapshot at all.
+if grep -qE '^ *- surface: cockpit$' "$R/.ai/repo/ci/pages.yaml"; then
+  cp "$R/.ai/repo/ci/pages.yaml" "$S/model-with.yaml"
+  awk '/^ *- surface: cockpit$/ { skip = 1 } !skip { print } skip && /marker:/ { skip = 0 }' \
+    "$S/model-with.yaml" > "$R/.ai/repo/ci/pages.yaml"
+  gitq -C "$R" commit -qam 'published before the Cockpit snapshot was declared'
+  PUB="$(git -C "$R" rev-parse HEAD)"
+  cp "$S/model-with.yaml" "$R/.ai/repo/ci/pages.yaml"
+  gitq -C "$R" commit -qam 'the Cockpit snapshot is declared'
+  was="$gp"
+  gp="$(printf 'deploy: site from %s (registry deadbeefcafe), 800 routes\n' "$PUB" | gitq -C "$R" commit-tree "$empty")"
+  git -C "$R" update-ref refs/heads/gh-pages "$gp"
+  git -C "$R" fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+  sed -i.bak "s/$was/$gp/" "$S/bin/gh" && rm -f "$S/bin/gh.bak"
+  live "$PUB"
+  rm -rf "$W/cockpit"
+  expect_exit 0 gate
+  expect_grep "^ok    the published commit ${PUB:0:12} declares no cockpit snapshot; the one this tree declares is owed by the next publication$"
+  expect_no_grep 'the live cockpit snapshot'
+  echo "    pages-check: a snapshot the published commit never declared is owed by the next publication, not refused"
+fi
 stop_http
 echo "    pages-check: ok for the UI read at the published commit, exit 10 for an older one and for none"
 
