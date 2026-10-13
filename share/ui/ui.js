@@ -12,6 +12,8 @@
 // The theme toggle is revealed and wired to the same storage key and class the Cockpit
 // and the site use. The page carries both as data attributes, so no name is written here.
 //
+// The Observatory's screen (`data-observatory`) is handed to `observatory.js`, below.
+//
 // A relationship graph (`data-graph`) is drawn with the vendored Cytoscape, loaded only when
 // the screen has one, from the URL the page names (`data-graph-lib`). The nodes and edges are
 // the ones the server put on the page; the table beside them is what a reader without the
@@ -231,6 +233,7 @@ async function refresh() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;
+  if (main.querySelector('[data-observatory]')) return;
   // the screen as it is shown, filters included: the query is the reader's, not this script's
   const query = window.location.search ? `${window.location.search}&` : '?';
   const controller = new AbortController();
@@ -276,6 +279,23 @@ function showSnapshotPath() {
   }
 }
 
+// The Observatory (`data-observatory`) is drawn by its own script, loaded only on its screen
+// from the URL the page names. It reads its page again by itself, so this script's refresh
+// leaves that screen alone: replacing it would take the display down every minute.
+let observatory = null;
+async function drawObservatory() {
+  const holder = document.querySelector('[data-observatory]');
+  if (!holder || observatory) return;
+  const lib = holder.dataset.observatoryLib;
+  if (!lib) return;
+  try {
+    if (!window.mjObservatory) await loadScript(lib);
+  } catch (e) {
+    return; // the table of scenes stands
+  }
+  observatory = window.mjObservatory.mount(holder, { snapshot: SNAPSHOT });
+}
+
 function enhance() {
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
@@ -283,6 +303,7 @@ function enhance() {
     }
   }
   drawGraphs();
+  drawObservatory();
 }
 
 wireTheme();

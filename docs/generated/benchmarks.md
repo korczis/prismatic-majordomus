@@ -255,6 +255,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.knowledge` | `/ui/knowledge` | pinned | — |
 | `system.http.ui.docs` | `/ui/docs` | pinned | — |
 | `system.http.ui.governance` | `/ui/governance` | pinned | — |
+| `system.http.ui.observatory` | `/ui/observatory` | pinned | — |
 | `system.http.live.ui.index` | `/ui` | live | — |
 | `system.http.live.ui.command` | `/ui/command` | live | — |
 | `system.http.live.ui.roadmap` | `/ui/roadmap` | live | — |
@@ -269,6 +270,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.knowledge` | `/ui/knowledge` | live | — |
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |
 | `system.http.live.ui.governance` | `/ui/governance` | live | — |
+| `system.http.live.ui.observatory` | `/ui/observatory` | live | — |
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |

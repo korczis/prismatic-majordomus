@@ -821,6 +821,13 @@ pub struct MeshPeerArgs {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
 /// assert_eq!((events.after, events.limit), (None, None));
+/// assert!(!events.newest);
+///
+/// // the journal as it stands now: its newest events
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--newest"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert!(events.newest);
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
@@ -829,6 +836,9 @@ pub struct MeshEventsArgs {
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
+    /// The newest events instead of the first ones after `--after`
+    #[arg(long)]
+    pub newest: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,

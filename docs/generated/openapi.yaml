@@ -6376,6 +6376,12 @@ paths:
           examples:
             default:
               value: 100
+        - name: newest
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
       responses:
         "200":
           description: "The cooperation journal: the result."

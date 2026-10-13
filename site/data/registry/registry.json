@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "17930539430009ebc88d9ee3b133a823cddda2f3524cbf51dc59cd93ce3a18d1",
+    "fingerprint": "ccb80719ccc7c6190e04b27df8a321c2a6588cd2ad25cd66bec72b5ea24d5145",
     "summary": {
-      "total": 2343,
+      "total": 2348,
       "builtin": 196,
-      "declarative": 2147,
+      "declarative": 2152,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2147
+        "resource": 2152
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2156
+        "implemented": 2161
       },
       "mcp_tools": 187,
-      "mcp_resources": 2202,
+      "mcp_resources": 2207,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -44759,6 +44759,13 @@
                 "format": "uint64",
                 "minimum": 0,
                 "description": "At most this many (default 100, at most 1000)."
+              },
+              "newest": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
               }
             },
             "description": "The input of `mesh.events`.",
@@ -80066,7 +80073,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 105,
         "capability_ids": []
       },
       {
@@ -80676,7 +80683,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 348,
+        "capabilities": 351,
         "capability_ids": []
       },
       {
@@ -81228,7 +81235,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 471,
+        "capabilities": 472,
         "capability_ids": []
       },
       {
@@ -81318,7 +81325,7 @@
     ]
   },
   "index": {
-    "fingerprint": "99c335d867e0e4d64da558d2dd18e2a000347088ebbc301a7c9b499528fc79d1",
+    "fingerprint": "26f09bf5520dffc838603bc0f396d06b9d36f7cc1866c027ffafed5767694b00",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81341,7 +81348,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 104,
+      "adr": 105,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81358,7 +81365,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 348,
+      "issue": 351,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81372,7 +81379,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 471,
+      "test": 472,
       "use-case": 49,
       "workspace": 1
     },
@@ -83097,6 +83104,23 @@
           "governance",
           "ci",
           "release"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0158",
+        "kind": "adr",
+        "identity": "adr-0158",
+        "title": "The Observatory is one screen of the UI, and it draws only what was observed",
+        "description": "The Observatory is one screen of the UI, and it draws only what was observed",
+        "path": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7571,
+        "tags": [
+          "ui",
+          "observatory",
+          "evidence",
+          "mesh"
         ]
       },
       {
@@ -87251,7 +87275,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 25504
+        "bytes": 29785
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87341,7 +87365,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 237284
+        "bytes": 239316
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94586,6 +94610,39 @@
         "bytes": 3355
       },
       {
+        "uri": "majordomus://issue/I2678",
+        "kind": "issue",
+        "identity": "I2678",
+        "title": "The public Observatory replays events that were recorded, and says it is a replay",
+        "description": "Let the three scenes of the mesh move on the public site without inventing a single event: from a capture of real events, redacted, with its manifest, labelled as a recorded replay with its original times.",
+        "path": ".ai/repo/project/issues/I2678.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2300
+      },
+      {
+        "uri": "majordomus://issue/I2679",
+        "kind": "issue",
+        "identity": "I2679",
+        "title": "The Observatory follows a stream with a cursor instead of asking for its page again",
+        "description": "Make a change on the mesh reach the display when it happens, and make a gap in what was received something the display knows and says.",
+        "path": ".ai/repo/project/issues/I2679.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2258
+      },
+      {
+        "uri": "majordomus://issue/I2680",
+        "kind": "issue",
+        "identity": "I2680",
+        "title": "The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills",
+        "description": "Close each acceptance gate of the owner's Observatory specification with a command, its result, its environment and a path to the evidence, or record it as not run.",
+        "path": ".ai/repo/project/issues/I2680.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2211
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -100616,7 +100673,7 @@
         "identity": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "path": "test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
         "source_class": "case",
-        "bytes": 4063
+        "bytes": 4084
       },
       {
         "uri": "majordomus://test/test/cases/1096_no_screen_waits_for_a_source.sh",
@@ -101505,6 +101562,14 @@
         "path": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "source_class": "case",
         "bytes": 8042
+      },
+      {
+        "uri": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "test",
+        "identity": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "path": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "source_class": "case",
+        "bytes": 7871
       },
       {
         "uri": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -104418,7 +104483,7 @@
       "identity": [
         "id"
       ],
-      "objects": 104
+      "objects": 105
     },
     {
       "name": "application",
@@ -104581,7 +104646,7 @@
       "identity": [
         "id"
       ],
-      "objects": 348
+      "objects": 351
     },
     {
       "name": "knowledge",
@@ -104733,7 +104798,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 471
+      "objects": 472
     },
     {
       "name": "use-case",
@@ -125280,6 +125345,20 @@
                 "global": false,
                 "possible_values": [],
                 "defaults": []
+              },
+              {
+                "name": "newest",
+                "long": "newest",
+                "positional": false,
+                "help": "The newest events instead of the first ones after `--after`",
+                "value_name": "NEWEST",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
               },
               {
                 "name": "repo",
@@ -148306,6 +148385,14 @@
         "route": "GET /ui/governance"
       },
       {
+        "key": "system.http.ui.observatory",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/observatory"
+      },
+      {
         "key": "system.http.live.ui.index",
         "kind": "page",
         "transport": "http",
@@ -148416,6 +148503,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/governance"
+      },
+      {
+        "key": "system.http.live.ui.observatory",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/observatory"
       },
       {
         "key": "system.http.ui.panels.pull_requests",
