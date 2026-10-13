@@ -1,17 +1,19 @@
-{#- Flowbite footer with link groups (flowbite.com/docs/components/footer/). The columns are not
-    typed here: they are site/data/nav.toml's groups, the same declaration the navbar projects, so
+{#- The site map: Flowbite's footer with link groups (flowbite.com/docs/components/footer/),
+    and the one place every item of the navigation is listed — the bar shows the few its
+    declaration marks, and each of its menus ends with a link to its group here
+    (#site-map-<n>, the group's position in the declaration). The columns are not typed here: they are site/data/nav.toml's groups, the same declaration the navbar projects, so
     a route added to the navigation appears in the footer without anyone editing this file. Only
     the last column is hand-kept, and only because GitHub, the licence, the security policy and
     the contributing guide are files in the repository rather than routes on this site — there is
     no group in nav.toml for them to come from. -#}
 {% set nav = load_data(path="data/nav.toml") %}
-<footer class="border-t border-default bg-neutral-primary-soft">
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Site map">
   <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
     <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
       {% for g in nav.groups %}
       {#- a group with no items (Why) is a heading and nothing else: the heading is itself the link. -#}
       {% set items = g.items or [] %}
-      <div class="min-w-0">
+      <div class="min-w-0 scroll-mt-20" id="site-map-{{ loop.index }}">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="{{ get_url(path=g.href, trailing_slash=true) }}" class="hover:text-heading hover:underline">{{ g.label }}</a></h2>
         {% if items | length > 0 %}
         <ul class="space-y-2 text-sm font-medium text-body">

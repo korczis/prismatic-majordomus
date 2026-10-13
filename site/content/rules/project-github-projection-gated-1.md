@@ -1,7 +1,7 @@
 +++
 title = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
 description = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
-weight = 107
+weight = 109
 [extra]
 kind = "rule"
 slug = "project-github-projection-gated-1"
@@ -47,6 +47,17 @@ It amends version 1 rather than issuing a version 2 because a rule in an open pu
 dependency that does not resolve stops the whole set from applying. A version 2 carrying
 this text follows once that pull request is on the trunk.
 
+## Amended in place, 2026-10-12
+
+Until this amendment the last line of the required behaviour read "Applying the projection
+stays a deliberate human act. CI proves agreement; it does not create issues." On 2026-10-12
+the window passed with I2460 to I2478 behind, because the person whose act it was had gone on
+to the next landing, and master was refused (validate run 38278173940 at `81178f5362`). The
+owner ordered the apply to follow the landing. The line now names the rule that says who
+applies, `project.the-projection-is-applied-at-landing@1`; nothing this rule refuses is
+refused less, and the window still bounds how late the trunk may be. Amended in version 1
+for the reason the amendment above gives.
+
 ## Required behaviour
 
 - A gate reads the remote and fails on drift. It runs on every change that can move the
@@ -73,8 +84,9 @@ this text follows once that pull request is on the trunk.
 - A gate that cannot reach the remote — no `gh`, no token, no permission — exits unusable
   and says which, and never exits clean. A projection gate that skips quietly reintroduces
   the exact defect it was written to remove.
-- Applying the projection stays a deliberate human act. CI proves agreement; it does not
-  create issues.
+- This gate proves agreement and applies nothing. Who applies is
+  `project.the-projection-is-applied-at-landing@1`: the landing, through a workflow that runs
+  this gate after its apply; a person's apply is the fallback.
 
 ## Failure behaviour
 

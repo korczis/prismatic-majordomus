@@ -58,6 +58,23 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
         if a.document.starts_with("providers/") {
             continue;
         }
+        // an editor's or an agent's file is read by that product, whose format decides
+        // where the banner can go: after a skill's front matter, as `//` lines in JSONC
+        // (ADR 0140). The plan's own validation holds the exact rule; here, that it is there.
+        if a.document.starts_with("editors/") {
+            let after_front_matter = a
+                .content
+                .strip_prefix("---\n")
+                .and_then(|rest| rest.split_once("\n---\n").map(|(_, body)| body))
+                .unwrap_or(&a.content);
+            assert!(
+                after_front_matter.starts_with(&format!("<!-- {HEADER}"))
+                    || a.content.starts_with(&format!("// {HEADER}")),
+                "{} carries no banner",
+                a.path
+            );
+            continue;
+        }
         // `opens_with_banner`, not `starts_with`: an executable script opens with its `#!`
         // line and a projected page with its own title, and both carry the banner on the
         // line after. The rule is stated once, in the generator, and read here.

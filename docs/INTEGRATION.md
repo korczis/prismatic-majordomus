@@ -440,15 +440,21 @@ new observation.
 A merge that changes a projected plan record leaves GitHub behind by exactly that change.
 The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
 and every record whose derived status moves with one of them. `scripts/github-sync --apply`
-projects master and nothing else, and `prs drain` never runs it. So after landing such a pull
-request, whoever operates the executor runs `scripts/github-sync --apply` from master as the
-next step. `scripts/ci/github-check` gives that step a declared window, `apply.window` in
-`.ai/repo/ci/github.yaml`. On the pull request's own head the records it changed are reported
-`PENDING` and not refused. On master they stay `PENDING` while the landing is younger than the
-window. Past it the gate refuses master and names the command. A job on every push to master
-that applies with a token allowed to write issues would remove the manual step. That is the
-owner's open choice and nothing runs one: the workflow token reads issues, and applying stays
-a deliberate act (`project.github-projection-gated`).
+projects master and nothing else, and `prs drain` never runs it. The landing does: every push
+to master starts `.github/workflows/github.yml`, which asks what GitHub does not show yet
+(`scripts/github-sync --check`), applies it, and proves the result with
+`scripts/ci/github-check`. The workflow holds `issues: write` and nothing broader, runs one
+at a time, is never cancelled, and refuses to apply without the Rust executable. Its model is
+`.ai/repo/ci/github.yaml` and the rule is `project.the-projection-is-applied-at-landing`.
+Whoever operates the executor has no step to remember here.
+
+`scripts/ci/github-check` gives the apply a declared window, `apply.window` in the same
+file. On the pull request's own head the records it changed are reported `PENDING` and not
+refused. On master they stay `PENDING` while the landing is younger than the window. Past it
+the gate refuses master and names the command. That is the fallback, for a run that failed: a
+person runs `scripts/github-sync --apply` from the clean tip of master, with `MAJORDOMUS_BIN`
+naming the executable. Until 2026-10-12 that manual apply was the mechanism, and master went
+red on the day the executor was busy for longer than the window.
 
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge

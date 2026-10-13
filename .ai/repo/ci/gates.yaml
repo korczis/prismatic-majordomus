@@ -182,8 +182,12 @@ gates:
   # files of one identity in one tree is the defect this refuses; the collisions of the day it
   # was written sit on the baseline, because they are spread across other sessions' branches
   # and renumbering them would break those. File reads only, no build, no git.
+  # always: two branches that each add a case under the same number are both clean alone,
+  # and neither change's paths select this gate on the other's merge. The pair exists only
+  # in the merged tree, so the gate is asked of every plan (2026-10-12, 1096 twice on master).
   - id: case-numbers
     job: structure
+    always: true
     runs: scripts/case-numbers check
     summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
 
@@ -571,8 +575,8 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/rust-check --doc && scripts/ui audit --report
-    summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
+    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
 
   # The one gate that measures the published site rather than this tree: the advertised
   # install command, run as it is written, against what GitHub Pages and GitHub Releases

@@ -1,7 +1,7 @@
 +++
 title = "A graph, a chart or a diagram is something a reader can act on, never a picture"
 description = "A graph, a chart or a diagram is something a reader can act on, never a picture"
-weight = 71
+weight = 73
 [extra]
 kind = "rule"
 slug = "project-a-visualisation-is-interactive-1"

@@ -95,3 +95,9 @@ share/cockpit/vendor/p5.min.js
 # writer unlinks its own and sweeps what a killed run left behind; this line is the third guard,
 # so that a leftover can dirty the tree but never reach a commit.
 .ai/repo/**/.tmp.*
+
+# Python bytecode. The handbook's generator is python; a cache is rewritten with different
+# bytes on every run and by every interpreter version, so a tracked one dirties each tree
+# that builds and conflicts on its next merge.
+__pycache__/
+*.pyc

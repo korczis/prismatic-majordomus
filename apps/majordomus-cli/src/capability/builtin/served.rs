@@ -444,14 +444,14 @@ impl BenchmarkCases for ShowInput {
     }
 }
 
-/// The module: `served.observe` (a command of the trusted command line) and `served.show`
-/// (a read on every surface).
+/// The module: `served.observe` and `served.forge` (commands of the trusted command line)
+/// and `served.show` (a read on every surface).
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::served;
 /// let ids: Vec<_> = served::module().capabilities.iter()
 ///     .map(|c| c.capability.id.as_str().to_string()).collect();
-/// assert_eq!(ids, vec!["served.observe", "served.show"]);
+/// assert_eq!(ids, vec!["served.observe", "served.forge", "served.show"]);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
