@@ -3999,6 +3999,12 @@
           "command": "majordomus web report ui-snapshot",
           "name": "ui-snapshot",
           "route": "/docs/cli/web/report/ui-snapshot/"
+        },
+        {
+          "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+          "command": "majordomus web report cockpit-snapshot",
+          "name": "cockpit-snapshot",
+          "route": "/docs/cli/web/report/cockpit-snapshot/"
         }
       ],
       "command": "majordomus web report",
@@ -4739,6 +4745,196 @@
       ],
       "route": "/docs/cli/web/report/ui-snapshot/",
       "usage": "majordomus web report ui-snapshot [OPTIONS]"
+    },
+    {
+      "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "240"
+          ],
+          "global": false,
+          "help": "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost",
+          "long": "budget-seconds",
+          "name": "budget_seconds",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report cockpit-snapshot",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "cockpit-snapshot",
+            "--limit",
+            "12"
+          ],
+          "command": "majordomus web report cockpit-snapshot --limit 12",
+          "description": "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+          "expectation": "exits 0; prints web report, cockpit-snapshot",
+          "id": "web-report-cockpit-snapshot",
+          "setup": [],
+          "title": "Read the Cockpit once and write it as the pages a publication carries at /cockpit"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "cockpit-snapshot",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "cockpit-snapshot"
+      ],
+      "route": "/docs/cli/web/report/cockpit-snapshot/",
+      "usage": "majordomus web report cockpit-snapshot [OPTIONS]"
     },
     {
       "about": "Compose every published surface into one publishable tree",
@@ -36697,10 +36893,10 @@
     }
   ],
   "counts": {
-    "arguments": 1595,
-    "commands": 230,
-    "examples": 231,
-    "runnable": 203
+    "arguments": 1604,
+    "commands": 231,
+    "examples": 232,
+    "runnable": 204
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.22.0",

@@ -305,7 +305,8 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | In the UI | In the snapshot |
 |---|---|
 | a link to another screen or inspector | a relative link to that page's file; an inspector's query is a directory (`governance/_rule/<id>/`) |
-| a link to a page past the bound, a filter of several fields, a form, the Cockpit, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page past the bound, a filter of several fields, a form, the API | the snapshot's page about the live UI, carrying the path the link meant |
+| a link to a page of the Cockpit: the "technical view" of a source or of an object | that page of the Cockpit's own snapshot at `/cockpit/` when it holds it (ADR 0147), and the page about the live UI when it does not |
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | the script reads the screen again every minute and pulls in slow panels | it does neither: the body carries `data-snapshot` |
@@ -322,6 +323,13 @@ publication holds the snapshot there, and `majordomus web validate` holds both w
 collision. `snapshot.json` beside it lists every page written, every page left to the live
 UI, and what ended the reading (`complete`, `limit` or `budget`). `test/cases/1092_the_ui_snapshot_holds_every_screen.sh` and
 `test/cases/1093_the_ui_snapshot_links_nothing_absent.sh` hold it to this.
+
+The Cockpit is published the same way, by the same exporter (ADR 0147,
+[`COCKPIT.md`](COCKPIT.md#on-the-public-site-a-snapshot)). It is written after the UI's
+snapshot: it reads first the Cockpit pages the UI's snapshot wanted to link to, and then leads
+those links to the pages it wrote, so a capability a screen cites is a page a reader can
+open. Each surface is read once. `test/cases/2982_two_snapshots_link_what_the_other_holds.sh`
+holds it.
 
 The published snapshot is held to the trunk (`project.the-published-ui-is-the-trunks`). The
 publication model declares that a publication holds it (`deploy.snapshots` in

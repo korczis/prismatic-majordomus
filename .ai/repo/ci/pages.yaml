@@ -120,6 +120,12 @@ deploy:
       artifact: target/web/ui-snapshot
       producer: majordomus web report ui-snapshot
       marker: data-snapshot-of
+    # the Cockpit, by the same exporter (ADR 0147). Written after the UI's, because it reads
+    # first the pages the UI's snapshot links to, and then leads those links to its own pages.
+    - surface: cockpit
+      artifact: target/web/cockpit-snapshot
+      producer: majordomus web report cockpit-snapshot
+      marker: data-snapshot-of
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from

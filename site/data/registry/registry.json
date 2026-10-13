@@ -6,23 +6,23 @@
     "version": "0.22.0"
   },
   "registry": {
-    "fingerprint": "2197328d94958879e349cb64644c31edb46c84ae41ad6e591038aa1d051ec481",
+    "fingerprint": "dbb804d5bcd4023c4449266a795e0cf30b7444ba0b33e31c5895ceb30475dfff",
     "summary": {
-      "total": 2300,
+      "total": 2304,
       "builtin": 196,
-      "declarative": 2104,
+      "declarative": 2108,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2104
+        "resource": 2108
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2113
+        "implemented": 2117
       },
       "mcp_tools": 187,
-      "mcp_resources": 2159,
+      "mcp_resources": 2163,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80033,7 +80033,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 101,
+        "capabilities": 102,
         "capability_ids": []
       },
       {
@@ -80643,7 +80643,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 337,
+        "capabilities": 338,
         "capability_ids": []
       },
       {
@@ -81195,7 +81195,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 459,
+        "capabilities": 461,
         "capability_ids": []
       },
       {
@@ -81285,7 +81285,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5948409a8458005bffe3a1ca77fee34b2ccb77976e2d4708e7fa3dbeb79f7021",
+    "fingerprint": "f8cef17dbf4a3a267f28d516377d9a24c7a6ef198d10699c81c411ac9ab455c7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81308,7 +81308,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 101,
+      "adr": 102,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81325,7 +81325,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 337,
+      "issue": 338,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81339,7 +81339,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 459,
+      "test": 461,
       "use-case": 49,
       "workspace": 1
     },
@@ -82996,6 +82996,24 @@
           "adoption",
           "discovery",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0147",
+        "kind": "adr",
+        "identity": "adr-0147",
+        "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+        "description": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+        "path": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6184,
+        "tags": [
+          "architecture",
+          "interface",
+          "cockpit",
+          "ui",
+          "pages"
         ]
       },
       {
@@ -86851,7 +86869,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 48166
+        "bytes": 50142
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -87067,7 +87085,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 56677
+        "bytes": 57167
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -87157,7 +87175,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 23529
+        "bytes": 24184
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87247,7 +87265,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 243738
+        "bytes": 243930
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94371,6 +94389,17 @@
         "bytes": 4702
       },
       {
+        "uri": "majordomus://issue/I2495",
+        "kind": "issue",
+        "identity": "I2495",
+        "title": "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it",
+        "description": "Publish the Cockpit on the public site as a snapshot read at the published commit, with the exporter that already reads the UI, so that /cockpit/ is a verified surface of the product and a capability the UI cites is a page a reader can open.",
+        "path": ".ai/repo/project/issues/I2495.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4464
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -100937,6 +100966,22 @@
         "bytes": 17378
       },
       {
+        "uri": "majordomus://test/test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "kind": "test",
+        "identity": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "path": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+        "source_class": "case",
+        "bytes": 5163
+      },
+      {
+        "uri": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "kind": "test",
+        "identity": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "path": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "source_class": "case",
+        "bytes": 3821
+      },
+      {
         "uri": "majordomus://test/test/cases/2983_the_published_ui_is_the_trunks.sh",
         "kind": "test",
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
@@ -103872,7 +103917,7 @@
       "identity": [
         "id"
       ],
-      "objects": 101
+      "objects": 102
     },
     {
       "name": "application",
@@ -104035,7 +104080,7 @@
       "identity": [
         "id"
       ],
-      "objects": 337
+      "objects": 338
     },
     {
       "name": "knowledge",
@@ -104187,7 +104232,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 459
+      "objects": 461
     },
     {
       "name": "use-case",
@@ -108128,6 +108173,174 @@
                     "command": "majordomus web report ui-snapshot --limit 20",
                     "setup": [],
                     "expectation": "exits 0; prints web report, ui-snapshot"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "cockpit-snapshot"
+                ],
+                "route": "/docs/cli/web/report/cockpit-snapshot/",
+                "executable": true,
+                "usage": "majordomus web report cockpit-snapshot [OPTIONS]",
+                "about": "The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)",
+                "args": [
+                  {
+                    "name": "limit",
+                    "long": "limit",
+                    "positional": false,
+                    "help": "The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to",
+                    "value_name": "LIMIT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "240"
+                    ]
+                  },
+                  {
+                    "name": "budget_seconds",
+                    "long": "budget-seconds",
+                    "positional": false,
+                    "help": "The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost",
+                    "value_name": "BUDGET_SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "180"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-cockpit-snapshot",
+                    "title": "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+                    "description": "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "cockpit-snapshot",
+                      "--limit",
+                      "12"
+                    ],
+                    "command": "majordomus web report cockpit-snapshot --limit 12",
+                    "setup": [],
+                    "expectation": "exits 0; prints web report, cockpit-snapshot"
                   }
                 ],
                 "subcommands": []

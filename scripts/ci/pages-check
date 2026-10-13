@@ -287,6 +287,21 @@ ui_live() {
         printf '%s\n' "$out" | tail -n 2 | awk '{ print "      " $0 }'
         unmeasured="${unmeasured:+$unmeasured, and }the UI the live site holds" ;;
   esac
+  # Every other snapshot the model declares is held by the same probe (ADR 0147: the Cockpit
+  # is one). The UI above keeps its own wording, which the final line and case 1096 read.
+  local other
+  for other in $(printf '%s\n' "$declared" | awk -F '\t' '$1 != "" && $1 != "ui" { print $1 }'); do
+    rc=0
+    out="$(scripts/pages verify-ui --surface "$other" --url "$URL" --commit "$source_sha" --timeout 0 2>&1)" || rc=$?
+    case "$rc" in
+      0)  ok "the live $other snapshot is the one read at ${source_sha:0:12}: $(printf '%s\n' "$out" | sed -n 's/^pages verify-ui: .* read at [0-9a-f]*: //p' | head -n 1)" ;;
+      10) bad "the live $other snapshot is not the one read at ${source_sha:0:12}, is missing, or not all of it is served"
+          printf '%s\n' "$out" | awk '/^pages verify-ui: / { print "      " $0 }' ;;
+      *)  note "the live $other snapshot could not be judged (verify-ui exit $rc); not measured"
+          printf '%s\n' "$out" | tail -n 2 | awk '{ print "      " $0 }'
+          unmeasured="${unmeasured:+$unmeasured, and }the $other snapshot the live site holds" ;;
+    esac
+  done
 }
 if [ "$OFFLINE" = 1 ]; then
   ok "the live UI was not asked (--offline)"

@@ -616,6 +616,13 @@ and the deploy job waits for both. After `scripts/pages check` and before the pu
 job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
 that is absent, one read at another commit, and a mount the site itself already built.
 
+The Cockpit is published the same way at `/cockpit/` (ADR 0147). The same job runs
+`majordomus web report cockpit-snapshot` after the UI's, because the Cockpit's snapshot reads
+first what the UI's links to and then leads those links to its own pages; both directories
+are uploaded once that step is over. The deploy job places every snapshot the model declares
+at the mount the topology gives it, and after the push
+`scripts/pages verify-ui --surface cockpit` asks the public site for it.
+
 The snapshot is a generated surface, known only where its producer ran, so it is not in the
 committed topology and `scripts/site-build` does not compose it: a local build of the site has
 no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages.

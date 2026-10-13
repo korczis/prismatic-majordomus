@@ -42,6 +42,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks) | `/docs/cli/web/report/benchmarks/` | The benchmark run: a results document, or the accepted baseline |
 | [`majordomus web report ui`](#majordomus-web-report-ui) | `/docs/cli/web/report/ui/` | The UI conformance audit, rendered as a section of the test surface (/tests/ui) |
 | [`majordomus web report ui-snapshot`](#majordomus-web-report-ui-snapshot) | `/docs/cli/web/report/ui-snapshot/` | The UI itself, read once at this commit and written as static pages a publication carries at /ui (ADR 0141) |
+| [`majordomus web report cockpit-snapshot`](#majordomus-web-report-cockpit-snapshot) | `/docs/cli/web/report/cockpit-snapshot/` | The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147) |
 | [`majordomus web compose`](#majordomus-web-compose) | `/docs/cli/web/compose/` | Compose every published surface into one publishable tree |
 | [`majordomus why`](#majordomus-why) | `/docs/cli/why/` | The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation |
 | [`majordomus why list`](#majordomus-why-list) | `/docs/cli/why/list/` | Every operational moment, narrowed by any facet the catalogue reports |
@@ -951,7 +952,7 @@ Examples:
 
 Render a generated report into its own surface under the generated web root
 
-Subcommands: [`majordomus web report tests`](#majordomus-web-report-tests), [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks), [`majordomus web report ui`](#majordomus-web-report-ui), [`majordomus web report ui-snapshot`](#majordomus-web-report-ui-snapshot).
+Subcommands: [`majordomus web report tests`](#majordomus-web-report-tests), [`majordomus web report benchmarks`](#majordomus-web-report-benchmarks), [`majordomus web report ui`](#majordomus-web-report-ui), [`majordomus web report ui-snapshot`](#majordomus-web-report-ui-snapshot), [`majordomus web report cockpit-snapshot`](#majordomus-web-report-cockpit-snapshot).
 
 ```text
 majordomus web report [OPTIONS] <COMMAND>
@@ -1088,6 +1089,37 @@ Examples:
   ```
 
   Verified: exits 0; prints web report, ui-snapshot.
+
+<a id="majordomus-web-report-cockpit-snapshot"></a>
+## `majordomus web report cockpit-snapshot`
+
+The Cockpit itself, read once at this commit and written as static pages a publication carries at /cockpit (ADR 0147)
+
+```text
+majordomus web report cockpit-snapshot [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--limit` | `<LIMIT>` | `240` | The most pages to write: every static route first, then the pages the UI's snapshot links to, then what those link to |
+| `--budget-seconds` | `<BUDGET_SECONDS>` | `180` | The most seconds to spend on the pages the static routes link to; the routes themselves are written whatever they cost |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--only` | `<ONLY>` | — | Only these surfaces, by discovered id (repeat or separate with commas) (accepted by every subcommand) |
+| `--exclude` | `<EXCLUDE>` | — | Every surface except these, by discovered id (accepted by every subcommand) |
+
+Examples:
+
+- **Read the Cockpit once and write it as the pages a publication carries at /cockpit** — Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.
+
+  ```console
+  $ majordomus web report cockpit-snapshot --limit 12
+  ```
+
+  Verified: exits 0; prints web report, cockpit-snapshot.
 
 <a id="majordomus-web-compose"></a>
 ## `majordomus web compose`
