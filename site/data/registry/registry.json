@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "c1829a079e2a0ccd9c8112da0205c58d96819b386390fb149fb5889e0ec7ff6b",
+    "fingerprint": "b2197dc198251cd9f6a4e58f4b380805b6b594d13626c44502dcfda85be98270",
     "summary": {
-      "total": 2337,
+      "total": 2342,
       "builtin": 196,
-      "declarative": 2141,
+      "declarative": 2146,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2141
+        "resource": 2146
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2150
+        "implemented": 2155
       },
       "mcp_tools": 187,
-      "mcp_resources": 2196,
+      "mcp_resources": 2201,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 343,
+        "capabilities": 347,
         "capability_ids": []
       },
       {
@@ -80684,7 +80684,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "82add4e970e028f8f70fa57cc11e4707d18c83f7e2741e98400d52d76aa56f19",
+    "fingerprint": "7526765fee04e992411aba1324fb3c9f5eda44c8befbe0e84e7179ba2c5808db",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81358,8 +81358,8 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 343,
-      "knowledge": 3,
+      "issue": 347,
+      "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
       "moment": 38,
@@ -87341,7 +87341,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 232547
+        "bytes": 237079
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94531,6 +94531,50 @@
         "bytes": 3595
       },
       {
+        "uri": "majordomus://issue/I2660",
+        "kind": "issue",
+        "identity": "I2660",
+        "title": "The site is published as an artifact by the job that built it, so a ready site waits for no second workflow",
+        "description": "Remove the second queue from a publication: the job that built and checked the site hands it to GitHub Pages itself, and one publisher writes everything the site serves.",
+        "path": ".ai/repo/project/issues/I2660.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2810
+      },
+      {
+        "uri": "majordomus://issue/I2661",
+        "kind": "issue",
+        "identity": "I2661",
+        "title": "A publication that did not arrive is a finding the next reader meets, never a green step",
+        "description": "Make the gap between 'the workflow succeeded' and 'the site serves the commit' visible where a lander looks, the minute it exists.",
+        "path": ".ai/repo/project/issues/I2661.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2477
+      },
+      {
+        "uri": "majordomus://issue/I2662",
+        "kind": "issue",
+        "identity": "I2662",
+        "title": "Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs",
+        "description": "Bound what validation may occupy, so that the two things only the trunk can do, publish and record a release, start when they are ready.",
+        "path": ".ai/repo/project/issues/I2662.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2320
+      },
+      {
+        "uri": "majordomus://issue/I2663",
+        "kind": "issue",
+        "identity": "I2663",
+        "title": "The published UI is not read from nothing on every deployment",
+        "description": "Stop paying a quarter of an hour per deployment for a snapshot whose inputs did not change.",
+        "path": ".ai/repo/project/issues/I2663.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2491
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -94545,6 +94589,23 @@
           "build",
           "worktrees",
           "liveness"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/a-merge-reached-production-an-hour-later",
+        "kind": "knowledge",
+        "identity": "a-merge-reached-production-an-hour-later",
+        "title": "A merge reached production an hour later, and the workflow that published it was green",
+        "description": "The measurement of 2026-10-13 - where the time between a merge and the served site went, why nothing turned red, and the four issues that remove each cause.",
+        "path": ".ai/repo/knowledge/curated/a-merge-reached-production-an-hour-later.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4196,
+        "tags": [
+          "post-mortem",
+          "delivery",
+          "pages",
+          "ci"
         ]
       },
       {
@@ -104509,7 +104570,7 @@
       "identity": [
         "id"
       ],
-      "objects": 343
+      "objects": 347
     },
     {
       "name": "knowledge",
@@ -104519,7 +104580,7 @@
       "identity": [
         "id"
       ],
-      "objects": 3
+      "objects": 4
     },
     {
       "name": "mesh-declaration",
