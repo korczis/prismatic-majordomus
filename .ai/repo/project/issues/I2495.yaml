@@ -1,0 +1,49 @@
+id: I2495
+milestone: development-runtime
+title: "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it"
+slug: the-cockpit-is-published-as-a-snapshot
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Publish the Cockpit on the public site as a snapshot read at the published commit, with the exporter that already reads the UI, so that /cockpit/ is a verified surface of the product and a capability the UI cites is a page a reader can open."
+why: "The owner's Unified Product Experience mission (2026-10-12) names the landing page, /ui and /cockpit as the product's surfaces and asks that the public /cockpit be verified. https://majordomus.dev/cockpit/ answered the site's not-found page. Every source line of the UI links the capability's page in the Cockpit (ADR 0135), and in the UI's published snapshot each of those links led to a page saying only a process answers it: 187 links on sixteen screens of this repository. ADR 0147 records the decision."
+current_state: "The exporter of ADR 0141 (web/report/snapshot.rs) names the UI's mount, assets, screens and script in its code. No command writes a snapshot of the Cockpit, the publication model declares one snapshot, and no probe asks the public site for /cockpit/."
+desired_state: "The exporter takes a Subject (identity, producer, served surface, mount, assets, the fragment key, whether pages keep scripts, the routes withheld), the surface's handler and the pages to read first. `majordomus web report cockpit-snapshot` writes target/web/cockpit-snapshot: every static route but /cockpit/continuity, then the Cockpit pages the UI's snapshot wanted to link to, then what those link to, bounded; no page carries a script; every page is stamped with the commit, the time and the executable. The page that reads .ai/local/ is withheld by the subject itself, so no link reaches it. A link into another snapshot's surface leads to the page when that snapshot's record lists it and to the live page otherwise, and a snapshot written second corrects the first one's files. deploy.snapshots declares both; the pages workflow reads the Cockpit after the UI, uploads both, places each at its mount from the model, and asks the public site for the Cockpit after the deploy; pages-check holds every declared snapshot."
+scope:
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/commands/web.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "apps/majordomus-cli/src/web/discover.rs"
+  - "scripts/pages"
+  - "scripts/ci/pages-check"
+  - ".ai/repo/ci/pages.yaml"
+  - ".github/workflows/pages.yml"
+  - "docs/COCKPIT.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh"
+  - "test/cases/2982_two_snapshots_link_what_the_other_holds.sh"
+  - ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md"
+  - ".ai/repo/project/issues/I2495.yaml"
+depends_on:
+  - I2483
+acceptance_criteria:
+  - "`majordomus web report cockpit-snapshot` writes the overview and the capability listing, every relative link of every page names a file the snapshot holds, and no page keeps an absolute link into /cockpit"
+  - "No page of the Cockpit's snapshot carries a script, and every page states the commit it was read at"
+  - "/cockpit/continuity is in no snapshot, whatever links to it, and a link to it leads to the page about the live Cockpit"
+  - "After the Cockpit's snapshot is written, every link from the UI's snapshot into /cockpit names a page the Cockpit's snapshot holds, and the capabilities the UI cites are among its pages"
+  - "The topology holds cockpit-snapshot at /cockpit beside the served Cockpit without a conflict"
+  - "The publication model declares both snapshots, and the pages workflow asks the public site for the Cockpit after a deploy"
+  - "https://majordomus.dev/cockpit/ answers 200 with a page that states the published commit"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib web::report::snapshot"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2981_the_cockpit_snapshot_holds_its_routes 2982_two_snapshots_link_what_the_other_holds"
+  - "scripts/pages verify-ui --surface cockpit"
+evidence_required:
+  - "cockpit_snapshot_unit_tests"
+  - "cockpit_snapshot_cases_2981_2982"
+  - "public_cockpit_verified"
+created_at: 2026-10-12
+updated_at: 2026-10-12
