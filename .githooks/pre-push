@@ -11,6 +11,10 @@ while read -r _local_ref local_sha remote_ref _remote_sha; do
 done
 [ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
 bin/majordomus finish --check || exit $?
+# No two cases share a number. Each branch is clean alone and the pair exists only once both
+# are merged, so the trunk is where it was found (2026-10-12, two cases numbered 1096): the
+# check reads file names, takes under a second, and is asked of every push.
+scripts/case-numbers check >/dev/null || { scripts/case-numbers check >&2; exit 1; }
 # The crate's API reference builds with warnings denied, or the push is refused. Clippy, the
 # tests and the doctests all pass over a doc comment that links a private item; only rustdoc
 # refuses it, and CI's rustdoc job is where the Pages deploy starts. On 2026-10-12 a head that

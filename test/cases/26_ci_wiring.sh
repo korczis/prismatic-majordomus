@@ -148,6 +148,8 @@ grep -q 'majordomus finish --check' "$ROOT/.githooks/pre-push" || { echo "    pr
 # gate of the crate nothing else stands in for, and the job the Pages deploy starts with
 grep -q 'scripts/rust-check --doc ||' "$ROOT/.githooks/pre-push" \
   || { echo "    pre-push does not build the crate's rustdoc before a push that changes the crate"; exit 1; }
+grep -q 'scripts/case-numbers check' "$ROOT/.githooks/pre-push" \
+  || { echo "    pre-push does not check that no two cases share a number"; exit 1; }
 grep -q 'git diff --quiet "$base" "$head" -- apps/majordomus-cli/src' "$ROOT/.githooks/pre-push" \
   || { echo "    pre-push does not ask the rustdoc gate only of a push that changes the crate"; exit 1; }
 

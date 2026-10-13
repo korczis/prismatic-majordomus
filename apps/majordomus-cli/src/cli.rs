@@ -2670,7 +2670,7 @@ pub struct ServedArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `observe` or `show`.
+    /// `observe`, `forge` or `show`.
     pub command: ServedCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -2680,8 +2680,8 @@ pub struct ServedArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus served`: `observe` is the command line of
-/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
-/// network, and it is a command line and nothing else.
+/// `served.observe`, `forge` of `served.forge` and `show` of `served.show`. `observe` and
+/// `forge` reach the network, and each is a command line and nothing else.
 ///
 /// ```
 /// use clap::Parser;
@@ -2689,6 +2689,9 @@ pub struct ServedArgs {
 /// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
 /// let Command::Served(args) = cli.command else { panic!("served") };
 /// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// let cli = Cli::try_parse_from(["majordomus", "served", "forge"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Forge));
 /// ```
 pub enum ServedCommand {
     /// Probe the build identity a deployment serves, judge it against a commit and record it
@@ -2712,6 +2715,8 @@ pub enum ServedCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Ask the forge which deployments and releases it recorded, and keep the answer for the readers
+    Forge,
     /// Each deployment's newest record, re-judged against a commit
     Show {
         /// The commit to judge against (default HEAD)
@@ -5253,6 +5258,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "A deployment that could not be reached is not a deployment that is current",
             description: "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not.",
             argv: &["served", "observe", "--url", "http://127.0.0.1:9", "--timeout", "1", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "served forge",
+        examples: &[ExampleDoc {
+            id: "served-forge-unknown-repository",
+            title: "A forge that cannot be asked is said, and what was recorded before stands",
+            description: "Asks the forge, through its own command-line tool, for the newest deployments to every environment and the newest releases, and records the answer `deploy.observed` reads. Here the repository has no remote the forge knows, so nothing is asked and the command says why with exit 12 — not answered, never an empty list read as none. In a checkout of a repository on the forge, with a credential, it prints how many deployments, environments and releases the answer held and exits 0.",
+            argv: &["served", "forge"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
