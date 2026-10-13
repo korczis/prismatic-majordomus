@@ -21,4 +21,18 @@ validation:
 evidence_required:
   - "init_scope_detected_case"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-13T07:30:45Z
+started_at: 2026-10-13T07:30:23Z
+started_event: sha256:c56ad5e01f29c5c5ffca5585a3296e99c489eb9db5e1d511c3865d8eb0317519
+verified_at: 2026-10-13T07:30:32Z
+verified_event: sha256:48c96df0f5c35177a1adb431f87325be6a35ba04a2397dccca5b2e20b04768c2
+completed_at: 2026-10-13T07:30:45Z
+completed_event: sha256:9cd2687f8fc02e544220ebb38b048dc7b18cf1d5d55afcaf49379e2f0667a7ad
+evidence:
+  - covers: init_scope_detected_case
+    type: test
+    command: "bash test/run.sh 2991_init_seeds_a_scope_for_the_stack_it_finds"
+    result: "ok: init in a JavaScript fixture writes package.json, scripts/** and .github/** and no Elixir or Rust path; an Elixir fixture gets mix.exs, apps/** and priv/**; a committed dist/ and a file over max_bytes stay out and are reported; --extend leaves an existing scope byte for byte"
+    artifact: "test/cases/2991_init_seeds_a_scope_for_the_stack_it_finds.sh"
+    commit: fe56c1b0da0d191490b4d57c1ffe952b289ec38a
+    recorded_at: 2026-10-13T07:30:41Z

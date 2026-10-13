@@ -13,6 +13,10 @@
 # Read at start-up by the Rust executable, which then discovers, indexes and serves nothing
 # outside it; `majordomus doctor` refuses a key nothing reads. Edit this file, never the
 # tool: a repository that needs `garden/**` adds it here.
+#
+# `in` below names the layer and the places a repository of any stack keeps its source and
+# its documents. It names no language: `majordomus init` adds what it finds tracked at the
+# root of the repository it is run in, under a comment that says so, and reports each guess.
 version: 1
 
 in:
@@ -21,20 +25,12 @@ in:
   - .ai/repo/**
   - src/**
   - lib/**
-  - apps/**/lib/**
-  - apps/**/src/**
   - test/**
   - tests/**
   - config/**
   - docs/**
-  - priv/**/*.exs
-  - priv/**/*.sql
   - README.md
   - AGENTS.md
-  - Cargo.toml
-  - Cargo.lock
-  - mix.exs
-  - mix.lock
   - Makefile
   - justfile
 
