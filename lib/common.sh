@@ -492,7 +492,7 @@ mj_git_label() {
 # four images as twenty out-of-scope "paths").
 mj_git_touched() {
   local base="$1" trunk all foreign own keep
-  { mj_git_dirty_paths
+  { mj_git_dirty_paths | mj_start_dirty_drop
     if [ -n "$base" ] && [ "$base" != "NONE" ]; then
       trunk="$(mj_git_trunk_ref)"
       foreign=""
@@ -516,6 +516,69 @@ mj_git_touched() {
       fi
     fi
   } | LC_ALL=C sort -u | sed '/^$/d'
+}
+
+# What was already changed when the task started is not what the task changed.
+#
+# `start` records the head and one word about the working tree, `dirty` or `clean`, and
+# every later question about what the task touched began from `git status`: everything
+# changed now. A repository whose own hooks regenerate tracked files (an index, a report,
+# a tree listing) is dirty before any task begins, and so is one where somebody's work in
+# progress is sitting in the tree. Measured on 2026-10-13 in a repository of that kind:
+# a task scoped to three paths was refused at `finish --check` for seven files it had never
+# opened, all of them changed before `start` and byte-identical since. The only ways out
+# were to discard somebody else's changes or to claim them, and neither is true.
+#
+# So `start` writes down what was dirty and what each such file held, and a path is left out
+# of the task's touched set while it still holds exactly that. Content, not the name: a file
+# that was dirty at the start and that the task then edited has changed since, and is the
+# task's. A file the task commits is the task's whatever it held, because the commit is
+# counted on its own. A directory git reports whole (untracked, not walked) is not recorded:
+# what it contains cannot be named by one line, so it stays counted, as before.
+#
+# The record is this checkout's, beside current.yaml, and carries the task it belongs to on
+# its first line. A record of another task answers nothing, so a state directory written by
+# an older tool, or a task started by one, behaves exactly as it did.
+mj_start_dirty_file() { printf '%s/start-dirty.tsv' "$MJ_STATE_DIR"; }
+# What one path holds now, as one word: a blob id for a file, the link's target hashed for
+# a symbolic link, `absent` for a path that is not there. Empty for anything else.
+mj_path_identity() {
+  local f="$MJ_ROOT/$1"
+  if [ -L "$f" ]; then printf 'link:%s' "$(readlink "$f" | git hash-object --stdin 2>/dev/null)"
+  elif [ -f "$f" ]; then git hash-object -- "$f" 2>/dev/null
+  elif [ ! -e "$f" ]; then printf 'absent'
+  fi
+}
+# mj_start_dirty_record <task id>: what is dirty now, with what each path holds.
+mj_start_dirty_record() {
+  local out p id
+  out="$(mj_start_dirty_file)"
+  { printf 'task\t%s\n' "$1"
+    mj_git_dirty_paths | while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      id="$(mj_path_identity "$p")"
+      [ -n "$id" ] || continue
+      printf '%s\t%s\n' "$id" "$p"
+    done
+  } > "$out.mj-tmp" && mv "$out.mj-tmp" "$out"
+}
+# The recorded paths that still hold what they held when the active task started.
+mj_start_dirty_unchanged() {
+  local rec id p
+  rec="$(mj_start_dirty_file)"
+  [ -f "$rec" ] || return 0
+  [ "$(sed -n '1s/^task	//p' "$rec")" = "$(mj_cur id 2>/dev/null)" ] || return 0
+  sed 1d "$rec" | while IFS="$(printf '\t')" read -r id p; do
+    [ -n "$p" ] || continue
+    [ "$(mj_path_identity "$p")" = "$id" ] && printf '%s\n' "$p"
+  done
+  return 0
+}
+# Paths on standard input, without the ones above.
+mj_start_dirty_drop() {
+  local same
+  same="$(mj_start_dirty_unchanged)"
+  if [ -z "$same" ]; then cat; else grep -vxF -f <(printf '%s\n' "$same") || true; fi
 }
 
 # The paths the working tree and the index change, one per line, as git stores them.
