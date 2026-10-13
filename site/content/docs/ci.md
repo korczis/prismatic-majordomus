@@ -64,6 +64,18 @@ shows: it triggers directly on a master push whose paths can change the site and
 soon as the bytes are proved, without waiting for gates that cannot change a published byte.
 Neither repeats the other's work.
 
+A third decides what GitHub's issues and milestones show. `.github/workflows/github.yml` runs
+on every push to master, with no path filter: it builds the executable, asks
+`scripts/github-sync --check` what GitHub does not show yet, runs `scripts/github-sync --apply`
+when something is owed and the checkout is still the tip of master, and then runs
+`scripts/ci/github-check`, the same `github-projection` gate validate runs. It holds
+`issues: write` and `contents: read`, one run at a time and never cancelled, and every step
+refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`, the rule is
+`project.the-projection-is-applied-at-landing`, and
+`test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
+runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
+how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
+
 ## The model: what can affect what
 
 `.ai/repo/ci/gates.yaml` is the one place the dependency map lives. It declares the gates

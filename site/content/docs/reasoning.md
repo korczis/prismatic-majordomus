@@ -162,6 +162,7 @@ written, and the shapes removed are named in the record.
 </div>
 
 
+<!-- majordomus:unrun it reads assessment.json, a record the reader writes for their own task, and it writes checkout state; the example reasoning-record-refused runs the command and case 730 records through the same writer -->
 ```sh
 majordomus reasoning record --file assessment.json      # or JSON on standard input
 ```
