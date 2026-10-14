@@ -39,4 +39,21 @@ evidence_required:
   - "release_metadata_published_ahead_of_record_case"
   - "decision_recorded"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:00:34Z
+started_at: 2026-10-14T08:00:25Z
+started_event: sha256:b6e896148d5f0cd861a0800b2076817ae3d9e86a462d292440196edd211540f2
+completed_at: 2026-10-14T08:00:34Z
+completed_event: sha256:1ba8f873f9bed20431a4f95fdfcec4bd0a912ba6229a6af158ac4a7fbb581b2e
+evidence:
+  - covers: release_metadata_published_ahead_of_record_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1041_a_release_publishes_its_metadata"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:30Z
+  - covers: decision_recorded
+    type: artifact
+    result: "ADR 0131, status proposed, on master ce5959db59"
+    artifact: ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:32Z

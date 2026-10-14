@@ -21811,7 +21811,7 @@
             "lib/knowledge.sh",
             "bin/majordomus",
             "docs/CLI.md",
-            "test/cases/69_knowledge_query.sh"
+            "test/cases"
           ],
           "slug": "knowledge-query",
           "updated_at": "2026-09-04",
@@ -21858,7 +21858,7 @@
             "share/doctrines.yaml",
             "lib/doctor.sh",
             "lib/watch.sh",
-            "test/cases/70_knowledge_validate.sh"
+            "test/cases"
           ],
           "slug": "knowledge-validation",
           "updated_at": "2026-09-04",
@@ -21904,7 +21904,7 @@
           "scope": [
             "lib/knowledge.sh",
             "lib/knowledge.awk",
-            "test/cases/71_session_knowledge.sh"
+            "test/cases"
           ],
           "slug": "session-knowledge-integration",
           "updated_at": "2026-09-04",
@@ -21952,7 +21952,7 @@
             "share/allow/profile.txt",
             ".majordomus/profiles",
             "docs",
-            "test/cases/72_context_knowledge.sh"
+            "test/cases"
           ],
           "slug": "context-knowledge-section",
           "updated_at": "2026-09-04",
@@ -22001,7 +22001,7 @@
             ".majordomus/providers",
             "CLAUDE.md",
             "AGENTS.md",
-            "test/cases/73_claims_and_docs.sh"
+            "test/cases"
           ],
           "slug": "claims-and-docs",
           "updated_at": "2026-09-04",
@@ -22301,7 +22301,7 @@
             "share/skeleton/policy.yaml",
             ".ai/repo/policy.yaml",
             "docs/SCHEMAS.md",
-            "test/cases/77_flatten_cache.sh"
+            "test/cases"
           ],
           "slug": "flatten-cache",
           "updated_at": "2026-09-05",
@@ -22342,7 +22342,7 @@
           "profile": "implementation",
           "risk": "Some validators legitimately flatten a file twice in different shapes; the case names the allowed exceptions explicitly rather than tolerating a margin.",
           "scope": [
-            "test/cases/78_flatten_once.sh",
+            "test/cases",
             "lib/common.sh"
           ],
           "slug": "flatten-once-invariant",
@@ -23028,7 +23028,7 @@
           "risk": "The generated records must pass plan validate; the helper builds them from the same templates the skeleton ships.",
           "scope": [
             "test/lib.sh",
-            "test/cases/84_scaling.sh"
+            "test/cases"
           ],
           "slug": "synthetic-repository",
           "updated_at": "2026-09-05",
@@ -23115,7 +23115,7 @@
           "scope": [
             "lib/bench.sh",
             "docs/CLI.md",
-            "test/cases/85_bench_compare.sh"
+            "test/cases"
           ],
           "slug": "bench-compare",
           "updated_at": "2026-09-05",
@@ -23241,7 +23241,7 @@
           "profile": "implementation",
           "risk": "Commands whose output carries a timestamp (context) are compared after the timestamp line is dropped, and the case says which line.",
           "scope": [
-            "test/cases/86_cache_equivalence.sh",
+            "test/cases",
             "share/commands.yaml"
           ],
           "slug": "cache-equivalence",
@@ -23394,6 +23394,8 @@
         "route": "/cockpit/objects/issue/i0902",
         "source": ".ai/repo/project/issues/I0902.yaml",
         "facts": {
+          "completed_at": "2026-10-14T08:01:10Z",
+          "completed_event": "sha256:0f809eda721a5d65790bbe1402615e14b965643b7ad44021ce9835917ae6bd9a",
           "created_at": "2026-09-06",
           "depends_on": [
             "I0901"
@@ -23418,7 +23420,9 @@
             "apps/majordomus-cli/src/deploy"
           ],
           "slug": "typed-deployment-model",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-14T08:00:59Z",
+          "started_event": "sha256:0ea2fa48b75d802c323fdaebab8b7af885f9b03f8f2a9f939abef9e626fed733",
+          "updated_at": "2026-10-14T08:01:10Z",
           "validation": [
             "cargo test --workspace --all-features",
             "cargo clippy --workspace --all-targets --all-features -- -D warnings"
@@ -24414,6 +24418,7 @@
         "route": "/cockpit/objects/issue/i0924",
         "source": ".ai/repo/project/issues/I0924.yaml",
         "facts": {
+          "cancelled": true,
           "created_at": "2026-09-06",
           "depends_on": [
             "I0901"
@@ -24435,7 +24440,7 @@
             ".ai/repo/adrs"
           ],
           "slug": "deployment-adr",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
@@ -28777,6 +28782,8 @@
             "A tree carrying two objects that claim one identity is refused by a check, with both paths named",
             "The repository's own diagnostics report no duplicate_identity on a clean tree"
           ],
+          "completed_at": "2026-10-14T07:58:34Z",
+          "completed_event": "sha256:5adf39a5d8a0a2085eac62d080a0f995d53c45b436d97205f17e9374b456523e",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -28798,7 +28805,9 @@
             "test/cases"
           ],
           "slug": "one-record-per-session-identity",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T07:58:26Z",
+          "started_event": "sha256:47e88a83ad66b898057aad7bf4dc0902f4ed5d6ff1398263421f678a541b661d",
+          "updated_at": "2026-10-14T07:58:34Z",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh"
@@ -29009,6 +29018,8 @@
             "The route table in docs/COCKPIT.md is generated or checked against the dispatcher",
             "The probe reaches every routed page"
           ],
+          "completed_at": "2026-10-14T07:58:48Z",
+          "completed_event": "sha256:16f999076e497106da94ca2a9c451ed5a5e12396f0d7f19c57feac0932b9893c",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -29031,7 +29042,9 @@
             "test/cases"
           ],
           "slug": "phase-f-navigation-is-derived",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T07:58:39Z",
+          "started_event": "sha256:75f42d265734a8b7e18f78fd4439da22f36a50545d05fdbda5f30668e25f0083",
+          "updated_at": "2026-10-14T07:58:48Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus-cli product validate",
@@ -29131,6 +29144,8 @@
             "A checkout that has not built the site gets an answer or an error naming the command that fixes it",
             "Nothing builds anything as a side effect of a GET"
           ],
+          "completed_at": "2026-10-14T07:58:59Z",
+          "completed_event": "sha256:0bd1c890168ed38b02f3044b09c0d1bb9f8a7b50bbd0ffc386426af84d54f60a",
           "created_at": "2026-09-11",
           "current_state": "GET /docs/ returns 503 with a 251-byte JSON body in a checkout whose site has not been built. Nothing on the way in says the surface has a build step.",
           "depends_on": [],
@@ -29153,7 +29168,9 @@
             "test/cases"
           ],
           "slug": "docs-surface-answers-unbuilt",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T07:58:52Z",
+          "started_event": "sha256:94ae7bf3f07a741a23bd47ed7b564f55f69237928fbde9ca75aa9923078a7274",
+          "updated_at": "2026-10-14T07:58:59Z",
           "validation": [
             "bash test/run.sh"
           ]
@@ -29373,6 +29390,8 @@
             "The command line, HTTP and MCP answer the same derived intents",
             "intent validate exits 10 naming the finding on an invalid model, and the intent-check gate runs it"
           ],
+          "completed_at": "2026-10-14T08:01:23Z",
+          "completed_event": "sha256:171f2a2ec63b5cb05b0e0ee90d758f39feb050ec43814de86e5047ee5ff2fc95",
           "created_at": "2026-09-15",
           "current_state": "No intent kind, capability or gate exists on master.",
           "depends_on": [],
@@ -29398,7 +29417,9 @@
             "intent-lifecycle#model-is-gated"
           ],
           "slug": "an-intent-is-a-typed-record",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-10-14T08:01:15Z",
+          "started_event": "sha256:31672c1fc0aeded2f66804f4003ec6ffc114619b26bac535ee7899c77da419fd",
+          "updated_at": "2026-10-14T08:01:23Z",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -29790,6 +29811,8 @@
             "scripts/pages evidence publishes current only under ADR 0087's interim rule, and otherwise stale or unknown naming each reason",
             "Case 357 asserts both halves, and this slice's own pull-request run shows crate executions and clean measured trees"
           ],
+          "completed_at": "2026-10-14T07:59:56Z",
+          "completed_event": "sha256:958fe9c2be35cdc05ec72e7f7f29a4498918f4dc2466eacfeebdd517d7ee9b76",
           "created_at": "2026-09-26",
           "depends_on": [],
           "evidence_required": [
@@ -29818,7 +29841,9 @@
             "test/cases/357_ci_records_evidence.sh"
           ],
           "slug": "the-ci-evidence-is-recorded-clean",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T07:59:48Z",
+          "started_event": "sha256:8e0259e71e40b293a8d809f09626ec8dc1b6b2aec23d373e60433e9fe4c14837",
+          "updated_at": "2026-10-14T07:59:56Z",
           "validation": [
             "bash test/run.sh 357_ci_records_evidence"
           ]
@@ -30041,8 +30066,7 @@
             "apps/majordomus-cli/src/evidence/supplementary.rs",
             "apps/majordomus-cli/src/evidence/mod.rs",
             "apps/majordomus-cli/src/evidence/subject.rs",
-            "test/cases/508_evidence_answers_by_subject.sh",
-            "test/cases/509_supplementary_records_only_weaken.sh",
+            "test/cases",
             "docs/EVIDENCE.md",
             "docs/HOW_IT_WORKS.md",
             "docs/README.md",
@@ -30098,8 +30122,7 @@
             "test/run.sh",
             "test/cases/94_ci_plan.sh",
             "test/cases/357_ci_records_evidence.sh",
-            "test/cases/510_ci_evidence_reaches_the_ledger_through_a_recording_branch.sh",
-            "test/cases/511_every_runner_report_carries_its_revision_and_reason.sh",
+            "test/cases",
             ".ai/repo/automation/inventory.jsonl",
             "docs/EVIDENCE.md",
             "docs/COVERAGE.md",
@@ -30152,7 +30175,7 @@
             "apps/majordomus-cli/src/cli.rs",
             "apps/majordomus-cli/src/commands/evidence.rs",
             "apps/majordomus-cli/tests/evidence_publication.rs",
-            "test/cases/512_evidence_publication_is_a_projection.sh",
+            "test/cases",
             "docs/EVIDENCE.md",
             "docs/CLAIMS.yaml",
             "docs/claims",
@@ -30201,7 +30224,7 @@
             "apps/majordomus-cli/src/cockpit/mod.rs",
             "apps/majordomus-cli/src/cockpit/pages.rs",
             "apps/majordomus-cli/tests/cockpit_evidence.rs",
-            "test/cases/513_cockpit_shows_evidence.sh",
+            "test/cases",
             "docs/COCKPIT.md",
             ".ai/repo/features/evidence.md",
             "docs/CLAIMS.yaml",
@@ -30261,8 +30284,7 @@
             "apps/majordomus-cli/src/web/report/tests.rs",
             "apps/majordomus-cli/tests/evidence_local_runs.rs",
             "test/fixtures/evidence-adapters",
-            "test/cases/514_every_test_line_is_read.sh",
-            "test/cases/515_a_local_run_stays_local.sh",
+            "test/cases",
             "docs/EVIDENCE.md",
             "docs/CLAIMS.yaml",
             "docs/claims",
@@ -30317,8 +30339,7 @@
             "site/content-src/evidence",
             "site/templates/evidence.html",
             "site/data/nav.toml",
-            "test/cases/516_evidence_routes_render_from_the_subject_index.sh",
-            "test/cases/517_a_panel_subject_is_joined_from_its_route.sh",
+            "test/cases",
             "docs/CLAIMS.yaml",
             "docs/claims",
             ".gitattributes"
@@ -30367,8 +30388,7 @@
             ".github/workflows/validate.yml",
             ".ai/repo/ci/pages.yaml",
             ".gitignore",
-            "test/cases/518_evidence_publication_is_bound_to_its_build.sh",
-            "test/cases/519_evidence_survives_artifact_expiry.sh",
+            "test/cases",
             "test/cases/357_ci_records_evidence.sh",
             "docs/EVIDENCE.md",
             "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -30436,7 +30456,7 @@
             "site/data/homepage.toml",
             "scripts/ci/homepage-check",
             "apps/majordomus-cli/src/delivery/mod.rs",
-            "test/cases/520_every_widget_names_its_proof.sh",
+            "test/cases",
             "test/cases/333_homepage_narrative.sh",
             "docs/CLAIMS.yaml",
             "docs/claims",
@@ -30487,7 +30507,7 @@
             "scripts/ci/pages-check",
             "scripts/pages",
             ".github/workflows/pages.yml",
-            "test/cases/521_deploy_verifies_evidence_routes.sh",
+            "test/cases",
             "docs/CLAIMS.yaml",
             "docs/claims/deploy-verifies-evidence-routes.md",
             ".ai/repo/features/ci.md"
@@ -30548,8 +30568,7 @@
             ".ai/repo/features/coverage.md",
             "docs/CLAIMS.yaml",
             "docs/claims",
-            "test/cases/522_evidence_check_reads_widgets.sh",
-            "test/cases/523_evidence_rules_are_gated.sh"
+            "test/cases"
           ],
           "slug": "evidence-check-reads-widgets",
           "updated_at": "2026-09-26",
@@ -30597,10 +30616,7 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "test/cases/524_no_surface_is_greener_than_the_ledger.sh",
-            "test/cases/525_an_evidence_badge_works_in_a_browser.sh",
-            "test/cases/526_tampered_evidence_is_refused.sh",
-            "test/cases/527_coverage_is_shown_with_its_commit.sh",
+            "test/cases",
             "test/fixtures/evidence-end-to-end",
             "docs/CLAIMS.yaml",
             "docs/claims",
@@ -30655,7 +30671,7 @@
             "docs/GITHUB_PAGES_ARCHITECTURE.md",
             "docs/CLAIMS.yaml",
             "docs/claims",
-            "test/cases/528_the_evidence_reference_is_held_to_the_tree.sh",
+            "test/cases",
             ".ai/repo/features/evidence.md",
             ".ai/repo/features/coverage.md",
             ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
@@ -30702,7 +30718,7 @@
           "risk": "It starts only once PR #578 and PR #597, carrying I1948's slice, are both on master. The case name is this slice's to confirm when it is written.",
           "scope": [
             "apps/majordomus-cli/src/environment/preflight.rs",
-            "test/cases/529_the_preflight_reads_the_one_verdict.sh"
+            "test/cases"
           ],
           "slug": "the-preflight-reads-the-one-verdict",
           "updated_at": "2026-09-26",
@@ -30846,6 +30862,8 @@
             "A live scenario step `check --checkpoint` is refused at validate time, naming the flag",
             "The command-registry reconciliation in doctor covers the new per-subcommand declarations"
           ],
+          "completed_at": "2026-10-14T07:39:39Z",
+          "completed_event": "sha256:3be36dfdb97deba2150873d177a35ceb7acf7015f47d42d1e7a13bbb3a593a8f",
           "created_at": "2026-10-04",
           "current_state": "lib/usecase.sh:383-386 admits a live step when the top-level command's class is read-only (commands.sh:27). The registry has no per-subcommand or per-flag effect.",
           "evidence_required": [
@@ -30867,7 +30885,7 @@
           "slug": "the-effect-class-is-judged-per-subcommand",
           "started_at": "2026-10-11T05:05:14Z",
           "started_event": "sha256:cd71eed1d51dcb4c9c9319284076b1b44771e1d25587065ecb155dec73b6332a",
-          "updated_at": "2026-10-11T05:05:29Z",
+          "updated_at": "2026-10-14T07:39:39Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31270,6 +31288,8 @@
             "A load that keeps failing is attempted at most once per interval, not once per request",
             "Case 545 still passes; with the retry removed, the new test fails"
           ],
+          "completed_at": "2026-10-14T07:59:09Z",
+          "completed_event": "sha256:cc2d5ed1969d98d943121e689b01ccf08da8e879217857f4ef66eb1506e81421",
           "created_at": "2026-10-06",
           "current_state": "A failed App::load sets the generation's stamp to the stamp it was taken under: the change is consumed, and no request retries the load until the git control files move again.",
           "evidence_required": [
@@ -31289,7 +31309,9 @@
             "test/cases"
           ],
           "slug": "a-failed-rebuild-consumes-no-change",
-          "updated_at": "2026-10-06",
+          "started_at": "2026-10-14T07:59:03Z",
+          "started_event": "sha256:4914181167ba2c90fe3e1414d9bf35575bed6bf639a1cbfb3a436f9a75a3aa15",
+          "updated_at": "2026-10-14T07:59:09Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib live::",
@@ -31849,6 +31871,8 @@
             "A subject is a repository path or capability:, rule:, command:, gate: followed by an identifier, and anything else is refused",
             "With no open episode the observation is refused with exit 10 naming session start, and nothing is written"
           ],
+          "completed_at": "2026-10-14T08:01:33Z",
+          "completed_event": "sha256:cda71f47be420cdfa02b75491a00fe1998628501509e095468d698b686277baf",
           "created_at": "2026-10-09",
           "current_state": "No observation event or command exists; workers keep friction in private memory files.",
           "depends_on": [],
@@ -31877,7 +31901,9 @@
             "a-session-leaves-what-it-observed#an-observation-is-recorded"
           ],
           "slug": "a-worker-records-an-observation",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:01:27Z",
+          "started_event": "sha256:8a5f19168749df4eba61a3913b176f46deb5d864cdd8323cc476161459c3f07b",
+          "updated_at": "2026-10-14T08:01:33Z",
           "validation": [
             "bash test/run.sh 980_a_session_records_what_it_observed",
             "bash test/run.sh 33_event_registry"
@@ -32562,6 +32588,8 @@
             "A journal with 1024 live marks and 4096 tombstones replicates to an empty peer over several rounds, every message under MAX_LINK_MESSAGE",
             "No sync message the dialer or the answerer builds exceeds MAX_LINK_MESSAGE, asserted where it is built"
           ],
+          "completed_at": "2026-10-14T08:01:43Z",
+          "completed_event": "sha256:f34732eeb6a51cb75950d4673c63d70a1ee7851474ca87cd58b6909a96ed057b",
           "created_at": "2026-10-09",
           "current_state": "The event budget is a constant that does not account for the marks.",
           "depends_on": [],
@@ -32581,7 +32609,9 @@
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ],
           "slug": "sync-respects-the-link-bound",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:01:37Z",
+          "started_event": "sha256:a7559d2353e8de906c7583e0ce056c94ad8659cccf4625f01797e23dff8012e2",
+          "updated_at": "2026-10-14T08:01:43Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh",
@@ -32643,6 +32673,8 @@
             "A read-only tool call that timed out is retried and returns its answer",
             "docs/MCP.md states when the bridge resends"
           ],
+          "completed_at": "2026-10-14T08:01:55Z",
+          "completed_event": "sha256:3be6f9e228aad9ef35dbf4c8ba2db7434745547fcb62760825ddf762a4780d73",
           "created_at": "2026-10-09",
           "current_state": "A timed-out or rejected tool call is re-sent after a re-election, whatever its effect.",
           "depends_on": [],
@@ -32664,7 +32696,9 @@
             "docs/MCP.md"
           ],
           "slug": "a-tool-call-is-never-sent-twice",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:01:47Z",
+          "started_event": "sha256:6cac21c51be0f955956202eb39683c45b464d1dd74abe3de5e8a3c50e368f752",
+          "updated_at": "2026-10-14T08:01:55Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared --test shared_units"
@@ -32773,6 +32807,8 @@
             "Four clients that each send one byte per second hold no worker past the declared deadline, and a fifth client is answered",
             "The deadline is a declared policy key and the count of connections closed by it appears in the server's diagnostics"
           ],
+          "completed_at": "2026-10-14T08:02:05Z",
+          "completed_event": "sha256:22ad8e1a91b0d7a9a6b22c2fc0ab8d42c1a9c1b71e2d44e679eebe054f3e9afb",
           "created_at": "2026-10-09",
           "current_state": "Any client that reaches the port can occupy a worker indefinitely.",
           "depends_on": [],
@@ -32794,7 +32830,9 @@
             "docs/MCP.md"
           ],
           "slug": "a-slow-client-cannot-hold-a-worker",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:01:59Z",
+          "started_event": "sha256:c39db5829aafa89a616be854979492b72e2b06f13c8e23467d7ec79fd5ada949",
+          "updated_at": "2026-10-14T08:02:05Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test http_serve --test mcp_shared"
@@ -32902,6 +32940,8 @@
             "install-check starts a shared server from the installed binary in a fresh repository and reads its readiness and a repository id that differs from this repository's",
             "No step of the release smoke ends in || true"
           ],
+          "completed_at": "2026-10-14T08:02:17Z",
+          "completed_event": "sha256:ffc70cc943aeb4222d944865dc626f7efee2a98193738e7946b23529f6162881",
           "created_at": "2026-10-09",
           "current_state": "An installed release is proven to print its version and run init, not to serve.",
           "depends_on": [],
@@ -32922,7 +32962,9 @@
             "docs/DISTRIBUTION.md"
           ],
           "slug": "an-installed-release-serves-a-foreign-repository",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:02:09Z",
+          "started_event": "sha256:d074e47102ac7c209a791cb88f086ef8250a655d8647c10f5e1a5836b9d67085",
+          "updated_at": "2026-10-14T08:02:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline",
@@ -32988,6 +33030,8 @@
             "install.sh reports whether it verified provenance or only the checksum",
             "docs/DISTRIBUTION.md names what each installation path verifies"
           ],
+          "completed_at": "2026-10-14T08:02:30Z",
+          "completed_event": "sha256:a3bd528e624e57e3703dcc94b51b2d998e247752000d2093f8d0afe2b3812e94",
           "created_at": "2026-10-09",
           "current_state": "install.sh verifies a checksum served beside the archive; provenance is not verifiable.",
           "depends_on": [],
@@ -33007,7 +33051,9 @@
             "test/cases/85_installer.sh"
           ],
           "slug": "releases-carry-provenance",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T08:02:21Z",
+          "started_event": "sha256:0690a02a2d4cbf22b57e38c5bc9b63ce06badc1bb25d393152a1496c551cf7cd",
+          "updated_at": "2026-10-14T08:02:30Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
@@ -33054,6 +33100,8 @@
         "route": "/cockpit/objects/issue/i2296",
         "source": ".ai/repo/project/issues/I2296.yaml",
         "facts": {
+          "completed_at": "2026-10-14T08:00:09Z",
+          "completed_event": "sha256:795a69efbe4ccba1fc4222dd491777f363f203071f77cef682957a034c8809c5",
           "created_at": "2026-10-10",
           "evidence_required": [
             "record_reopened_once_under_the_lease_case",
@@ -33073,7 +33121,9 @@
             "docs/DISTRIBUTION.md"
           ],
           "slug": "the-executor-reopens-a-record-pull-request",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:00:01Z",
+          "started_event": "sha256:564762183049b21d3e969748b5334ed91cf0c80aadfd7cf67261a4ac5136548c",
+          "updated_at": "2026-10-14T08:00:09Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 1036_the_executor_reopens_a_record_pull_request",
@@ -33089,6 +33139,8 @@
         "route": "/cockpit/objects/issue/i2298",
         "source": ".ai/repo/project/issues/I2298.yaml",
         "facts": {
+          "completed_at": "2026-10-14T08:00:21Z",
+          "completed_event": "sha256:8ce70d7e6d00544c522f9c5c057416fd0815bb362fcbbbdf81a2824c07bf9e0a",
           "created_at": "2026-10-10",
           "evidence_required": [
             "stacked_head_carries_master_case",
@@ -33122,7 +33174,9 @@
             "site/data"
           ],
           "slug": "the-refresh-pipeline-is-a-train",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:00:13Z",
+          "started_event": "sha256:cf22697199f4bccaedba1e042aafde3fd7635c8a715cc94cca15d9169fece75c",
+          "updated_at": "2026-10-14T08:00:21Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::",
             "bash test/run.sh 1040_a_stacked_head_lands_on_the_verdict_it_has",
@@ -33146,6 +33200,8 @@
             "The window is read from .ai/repo/ci/github.yaml and the gate carries no copy of it",
             "A base or a window that cannot be read refuses what the gate refused before"
           ],
+          "completed_at": "2026-10-14T08:02:42Z",
+          "completed_event": "sha256:7452aa6520699a3fe275e3929cdc3760ce835d794d43f5a42d039d595ac5f9ba",
           "created_at": "2026-10-10",
           "current_state": "scripts/ci/github-check refuses behind, state, milestone and closed on every run, whatever the run is of. scripts/github-sync --apply is run by hand from master.",
           "depends_on": [],
@@ -33171,7 +33227,9 @@
             "docs/claims/github-projection-gated.md"
           ],
           "slug": "a-head-is-judged-against-what-it-changes",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:02:34Z",
+          "started_event": "sha256:d5e1fdc6d85cf76670e7721504355c923e343b601a87357d6e5ac65571a6f21b",
+          "updated_at": "2026-10-14T08:02:42Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 1038_a_head_is_judged_against_what_it_changes 97_github_gate 45_github_projection"
@@ -33234,6 +33292,8 @@
         "route": "/cockpit/objects/issue/i2303",
         "source": ".ai/repo/project/issues/I2303.yaml",
         "facts": {
+          "completed_at": "2026-10-14T08:00:34Z",
+          "completed_event": "sha256:1ba8f873f9bed20431a4f95fdfcec4bd0a912ba6229a6af158ac4a7fbb581b2e",
           "created_at": "2026-10-10",
           "evidence_required": [
             "release_metadata_published_ahead_of_record_case",
@@ -33262,7 +33322,9 @@
             "site/data"
           ],
           "slug": "the-release-publishes-its-metadata",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:00:25Z",
+          "started_event": "sha256:b6e896148d5f0cd861a0800b2076817ae3d9e86a462d292440196edd211540f2",
+          "updated_at": "2026-10-14T08:00:34Z",
           "validation": [
             "bash test/run.sh 1041_a_release_publishes_its_metadata",
             "MJ_TEST_JOBS=3 bash test/run.sh 87_release_pipeline 26_ci_wiring 996_the_record_pull_request_gets_its_verdict",
@@ -33278,6 +33340,8 @@
         "route": "/cockpit/objects/issue/i2396",
         "source": ".ai/repo/project/issues/I2396.yaml",
         "facts": {
+          "completed_at": "2026-10-14T08:00:44Z",
+          "completed_event": "sha256:2566a781bb38a45b0988d635e3bd99c5388d6c29946dbc4b200eec2ac13de7b6",
           "created_at": "2026-10-10",
           "current_state": "scripts/ci-baseline records runs, jobs and steps; nothing on master holds a measurement of the current CI, and docs/CI.md names no critical path.",
           "evidence_required": [
@@ -33302,7 +33366,9 @@
             "site/data"
           ],
           "slug": "the-ci-critical-path-is-measured",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:00:38Z",
+          "started_event": "sha256:d323a92cd15ff17301492abcc810489d8bec729986e7aa796aecd83852cd58cc",
+          "updated_at": "2026-10-14T08:00:44Z",
           "validation": [
             "jq '.runs | length' .ai/repo/ci/baseline-2026-10-10.json",
             "bin/majordomus plan validate"
@@ -33317,6 +33383,8 @@
         "route": "/cockpit/objects/issue/i2398",
         "source": ".ai/repo/project/issues/I2398.yaml",
         "facts": {
+          "completed_at": "2026-10-14T07:59:22Z",
+          "completed_event": "sha256:bb5f4256a83c97f3bcd5ded8548e0ebe304a374c84336cc1c702f09ecab55973",
           "created_at": "2026-10-11",
           "depends_on": [],
           "evidence_required": [
@@ -33355,7 +33423,9 @@
             "site/data"
           ],
           "slug": "the-derive-offload-is-a-capability",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-14T07:59:13Z",
+          "started_event": "sha256:7fed87b4e78779cd3eacc576a9ec5e39a82f3382eb76e2e0cc5c1add8c45e5bc",
+          "updated_at": "2026-10-14T07:59:22Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test offload",
@@ -33380,6 +33450,8 @@
             "The mod renders the status line, injects the multi-line brief once per interval, and prints the keep-awake instruction at session start (claude plugin test)",
             "ADR 0136 is proposed and docs/BRIEF.md documents the surface"
           ],
+          "completed_at": "2026-10-14T07:59:34Z",
+          "completed_event": "sha256:b5a18f8974dd98494714b622ac2938a7cc00d750f7254b63e966380abf4cb3cb",
           "created_at": "2026-10-11",
           "evidence_required": [
             "session_brief_case",
@@ -33429,7 +33501,9 @@
             "site/data"
           ],
           "slug": "sessions-brief-themselves",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-14T07:59:26Z",
+          "started_event": "sha256:5c4df7667344fb13cd6930cd3eaf6f47ee9532cb64d09b965b11308e39317064",
+          "updated_at": "2026-10-14T07:59:34Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib brief",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test brief",
@@ -33451,6 +33525,8 @@
             "An unchanged session re-projection is suppressed and counted; a new session or a changed intent is a signal",
             "A signal is for_you when its reviewer, handover target, claim conflict or text names the reader"
           ],
+          "completed_at": "2026-10-14T08:02:52Z",
+          "completed_event": "sha256:e5ae1498dcf876c09ca98ee9cfdf2fa958a088e1913f331a3f4c8efa3c02680a",
           "created_at": "2026-10-10",
           "current_state": "No monitor module.",
           "depends_on": [],
@@ -33467,7 +33543,9 @@
             "apps/majordomus-cli/src/lib.rs"
           ],
           "slug": "monitor-core",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-14T08:02:46Z",
+          "started_event": "sha256:c999fc43beff88980fb517b6ab04dfcc0dd71cb1c52f0c99892f8cca4dbeaaff",
+          "updated_at": "2026-10-14T08:02:52Z",
           "validation": [
             "cargo test --lib monitor"
           ],
@@ -33773,6 +33851,8 @@
             "scripts/ci/timed and scripts/ci/run-plan write one receipt per step and per gate they ran, and none for a gate run-plan skips",
             "Every gate job of validate.yml uploads ci-receipts-<job>, and the ci job passes --receipts"
           ],
+          "completed_at": "2026-10-14T08:00:55Z",
+          "completed_event": "sha256:9139055564cd137c42bc03122f146fc7376f78815c9712bc997b8e909aee530c",
           "created_at": "2026-10-11",
           "current_state": "scripts/ci/verdict reads the plan and the `needs` context only. scripts/ci/timed and scripts/ci/run-plan record timings, not outcomes. No artifact says which gate's step ran.",
           "depends_on": [],
@@ -33796,7 +33876,9 @@
             "test/cases/26_ci_wiring.sh"
           ],
           "slug": "every-selected-gate-leaves-a-receipt",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-14T08:00:49Z",
+          "started_event": "sha256:73bae9e9afc3d2288aa20c9e32887ee50bf44fe05c3354b025b1063c362855f2",
+          "updated_at": "2026-10-14T08:00:55Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 26_ci_wiring",
@@ -34089,6 +34171,8 @@
             "an out-of-scope path with a space is reported once, whole, never in pieces or in quotes",
             "case 1073 fails against master without the change"
           ],
+          "completed_at": "2026-10-14T07:39:18Z",
+          "completed_event": "sha256:bed2f2137ec1f354d390436f216566a49e200fb9d92d15509939e3a1b2580129",
           "created_at": "2026-10-11",
           "current_state": "mj_git_touched and four other readers take `git status --porcelain` without -z, and two callers split its output into words; a path with a space is refused as several paths outside the scope.",
           "depends_on": [],
@@ -34111,7 +34195,9 @@
             ".ai/repo/project/issues/I2464.yaml"
           ],
           "slug": "a-path-with-a-space-is-one-path",
-          "updated_at": "2026-10-11",
+          "started_at": "2026-10-14T07:39:09Z",
+          "started_event": "sha256:8281dd965447458e08605104835aed29782643a28149eaa00412fd55b23a24b3",
+          "updated_at": "2026-10-14T07:39:18Z",
           "validation": [
             "bash test/run.sh 1073_a_path_with_a_space_is_one_path 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward",
             "bin/majordomus plan validate"
@@ -34568,6 +34654,8 @@
         "route": "/cockpit/objects/issue/i2481",
         "source": ".ai/repo/project/issues/I2481.yaml",
         "facts": {
+          "completed_at": "2026-10-14T07:59:44Z",
+          "completed_event": "sha256:5808d9463b88ea5e315db0f18e43ce08d2ff7653f440aa8b7588dce90cd7d2a9",
           "created_at": "2026-10-12",
           "depends_on": [
             "I2478"
@@ -34599,7 +34687,9 @@
             "test/cases/1079_the_drain_draws_its_throughput.sh"
           ],
           "slug": "the-ui-links-every-entity",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-14T07:59:38Z",
+          "started_event": "sha256:01ed220c633b44512af48f52236ac2d7e9ae987eaa9b7382023e52fea0a6d641",
+          "updated_at": "2026-10-14T07:59:44Z",
           "validation": [
             "cargo test --lib ui::",
             "scripts/ci/cockpit-projection-check --ui-integrity",
@@ -34748,7 +34838,7 @@
             "apps/majordomus-cli/src/cli.rs",
             "apps/majordomus-cli/src/ui",
             "docs/MAJORDOMUS_UI.md",
-            "test/cases/1094_majordomus_ui_opens_the_dashboard.sh",
+            "test/cases",
             ".ai/repo/project/issues/I2484.yaml"
           ],
           "slug": "majordomus-ui-opens-the-dashboard",
@@ -34789,7 +34879,7 @@
             "apps/majordomus-cli/src/bench",
             ".ai/repo/benchmarks/rust/policy.yaml",
             "docs/MAJORDOMUS_UI.md",
-            "test/cases/1095_the_bench_measures_the_request_after_a_move.sh",
+            "test/cases",
             ".ai/repo/project/issues/I2485.yaml"
           ],
           "slug": "the-bench-measures-the-request-after-a-move",
@@ -34889,7 +34979,7 @@
             "apps/majordomus-cli/src/capability/readings.rs",
             "share/ui/ui.js",
             "docs/MAJORDOMUS_UI.md",
-            "test/cases/1097_a_screen_is_streamed.sh",
+            "test/cases",
             ".ai/repo/project/issues/I2487.yaml"
           ],
           "slug": "a-screen-is-streamed-and-follows-its-readings",
@@ -34934,7 +35024,7 @@
             "apps/majordomus-cli/Cargo.toml",
             ".ai/repo/adrs",
             "docs/PERFORMANCE.md",
-            "test/cases/1098_the_http_stack_is_measured.sh",
+            "test/cases",
             ".ai/repo/project/issues/I2488.yaml"
           ],
           "slug": "the-http-stack-is-chosen-by-measurement",
@@ -35018,6 +35108,8 @@
             "init --extend --shared removes the block, writes the two .gitignore lines, prints the paths to commit, commits nothing, and refuses (15) a layer that is not personal",
             "A flag accepted by the installer's parser and absent from its --help fails case 86"
           ],
+          "completed_at": "2026-10-14T07:39:55Z",
+          "completed_event": "sha256:8f850144586a4c4dcae20e92804eb27ac13a998b158a5d1cd852e840c89253ab",
           "created_at": "2026-10-12",
           "depends_on": [],
           "evidence_required": [
@@ -35056,7 +35148,9 @@
             ".ai/repo/project/issues/I2491.yaml"
           ],
           "slug": "a-personal-layer-changes-nothing-shared",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-14T07:39:44Z",
+          "started_event": "sha256:54cc35058f03257a862683bf2f38756f9cec7d1221a31775ea6c333afce0f20a",
+          "updated_at": "2026-10-14T07:39:55Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 2979_a_personal_layer_changes_nothing_shared 86_installer_platform 85_installer 01_init",
