@@ -45,7 +45,8 @@ command -v jq >/dev/null || { echo "entity-check: jq is required" >&2; exit 12; 
 MJ="${MAJORDOMUS_BIN:-}"
 if [ -z "$MJ" ]; then
   MJ="$ROOT/apps/majordomus-cli/target/debug/majordomus"
-  [ -x "$MJ" ] || (cd "$ROOT/apps/majordomus-cli" && cargo build --quiet)
+  # shellcheck source=../../lib/rust_bin.sh
+  [ -x "$MJ" ] || (. "$ROOT/lib/rust_bin.sh" && cd "$ROOT/apps/majordomus-cli" && mj_cargo_bounded "$ROOT" build --quiet)
 fi
 [ -x "$MJ" ] || { echo "entity-check: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
 

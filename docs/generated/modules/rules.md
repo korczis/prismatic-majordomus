@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `rules` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.21.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 # Module `rules` — Rules
 
 What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.
@@ -31,7 +31,7 @@ Output: `TestSubjects`.
 
 ## `rules.report` — Every rule against the proof there is for it
 
-The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.
+The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a validator or of any tracked file, a new untracked file, a commit or a new ref is a new answer.
 
 | | |
 |---|---|
@@ -41,7 +41,7 @@ The whole rule corpus joined to the tree and the ledger: per rule, its class, it
 | MCP resource | `majordomus://rules` |
 | HTTP | `GET /api/v1/rules` |
 | CLI | `majordomus rules report` |
-| cache | — |
+| cache | process, 8 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::rules |
 | tags | rules, governance, verification, evidence, gates |
@@ -70,7 +70,7 @@ One rule with its full proof: the validator and the cases it names, the executio
 | MCP tool | `majordomus_rule` |
 | HTTP | `GET /api/v1/rules/rule` |
 | CLI | `majordomus rules show` |
-| cache | — |
+| cache | process, 32 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::rules |
 | tags | rules, governance, verification, evidence |

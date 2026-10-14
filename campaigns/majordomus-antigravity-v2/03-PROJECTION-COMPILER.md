@@ -1,0 +1,3 @@
+# Phase 03: Minimal capability-driven projections
+
+Read master prompt. Extend one canonical EditorAgentEnvironment used by both Zed and Antigravity. Discover installed product contract, native support and file formats before coding. Implement capability negotiation, semantics-to-native mapping, unsupported diagnostics, minimal-delta rendering, canonical ordering, source trace and projection version. Never mirror all editor settings or manufacture unsupported keys. Derive tasks/workflows/rules/skills/schema mapping from canonical registries, not duplicated prose. Test adding one canonical workflow propagates without registrations.

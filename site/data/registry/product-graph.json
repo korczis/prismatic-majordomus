@@ -449,6 +449,15 @@
       "status": "featured"
     },
     {
+      "id": "feature:observatory",
+      "kind": "feature",
+      "label": "Observatory",
+      "summary": "At /ui/observatory, and at /ui/kiosk filling the window unattended, the shared server draws the machines of the mesh and their runtimes, the newest events of its journal, the milestones of the plan, the dimensions of health, the published releases and the sessions cooperating, from the same capabilities the other screens read. The published site carries it as a snapshot that says which commit it was read at.",
+      "route": "/features/observatory/",
+      "source": ".ai/repo/features/observatory.md",
+      "status": "featured"
+    },
+    {
       "id": "feature:planning",
       "kind": "feature",
       "label": "Planning",
@@ -494,6 +503,15 @@
       "status": "stable"
     },
     {
+      "id": "feature:ui",
+      "kind": "feature",
+      "label": "UI",
+      "summary": "At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.",
+      "route": "/features/ui/",
+      "source": ".ai/repo/features/ui.md",
+      "status": "featured"
+    },
+    {
       "id": "feature:use-cases",
       "kind": "feature",
       "label": "Use cases",
@@ -524,7 +542,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "85 object(s) of the layer",
+      "summary": "105 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -552,7 +570,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "238 object(s) of the layer",
+      "summary": "246 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -566,7 +584,7 @@
       "id": "kind:context",
       "kind": "kind",
       "label": "context",
-      "summary": "36 object(s) of the layer",
+      "summary": "39 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -580,7 +598,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "328 object(s) of the layer",
+      "summary": "344 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -594,28 +612,28 @@
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "27 object(s) of the layer",
+      "summary": "29 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:intent",
       "kind": "kind",
       "label": "intent",
-      "summary": "3 object(s) of the layer",
+      "summary": "4 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:issue",
       "kind": "kind",
       "label": "issue",
-      "summary": "273 object(s) of the layer",
+      "summary": "362 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:knowledge",
       "kind": "kind",
       "label": "knowledge",
-      "summary": "1 object(s) of the layer",
+      "summary": "4 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -629,7 +647,7 @@
       "id": "kind:milestone",
       "kind": "kind",
       "label": "milestone",
-      "summary": "27 object(s) of the layer",
+      "summary": "35 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -664,14 +682,14 @@
       "id": "kind:release-record",
       "kind": "kind",
       "label": "release-record",
-      "summary": "20 object(s) of the layer",
+      "summary": "25 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "165 object(s) of the layer",
+      "summary": "179 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -685,14 +703,14 @@
       "id": "kind:session",
       "kind": "kind",
       "label": "session",
-      "summary": "85 object(s) of the layer",
+      "summary": "89 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:skill",
       "kind": "kind",
       "label": "skill",
-      "summary": "7 object(s) of the layer",
+      "summary": "8 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -706,7 +724,7 @@
       "id": "kind:use-case",
       "kind": "kind",
       "label": "use-case",
-      "summary": "48 object(s) of the layer",
+      "summary": "49 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -752,6 +770,24 @@
       "summary": "Continuity",
       "route": "/registry/modules/continuity/",
       "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:delivery",
+      "kind": "module",
+      "label": "delivery",
+      "summary": "Delivery",
+      "route": "/registry/modules/delivery/",
+      "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "status": "experimental"
+    },
+    {
+      "id": "module:deploy",
+      "kind": "module",
+      "label": "deploy",
+      "summary": "Deployment",
+      "route": "/registry/modules/deploy/",
+      "source": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -941,6 +977,15 @@
       "summary": "Obligations",
       "route": "/registry/modules/obligations/",
       "source": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:observatory",
+      "kind": "module",
+      "label": "observatory",
+      "summary": "Observatory",
+      "route": "/registry/modules/observatory/",
+      "source": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1980,6 +2025,61 @@
       "kind": "exposed_through"
     },
     {
+      "source": "feature:observatory",
+      "target": "feature:cockpit",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "feature:ui",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:distribution",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:economics",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:health",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:mesh",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:observatory",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:plan",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:release",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "module:repository",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:observatory",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
       "source": "feature:planning",
       "target": "command:plan",
       "kind": "made_of"
@@ -2161,6 +2261,111 @@
     },
     {
       "source": "feature:skills",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:ui",
+      "target": "feature:cockpit",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:ui",
+      "target": "feature:interfaces",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:capabilities",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:commands",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:delivery",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:deploy",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:distribution",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:evidence",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:executions",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:gates",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:health",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:integration",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:intents",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:mesh",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:objects",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:plan",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:release",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:repository",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:rules",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
+      "target": "module:web",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:ui",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2615,6 +2820,41 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:delivery",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:delivery",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:delivery",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:delivery",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:deploy",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:deploy",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:deploy",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:design",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2986,6 +3226,21 @@
     },
     {
       "source": "module:obligations",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:observatory",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:observatory",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:observatory",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -3271,14 +3526,14 @@
     }
   ],
   "metadata": {
-    "nodes": 130,
-    "edges": 430,
+    "nodes": 135,
+    "edges": 472,
     "acyclic": false,
     "truncated": false
   },
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the features, what they are made of, and the interfaces that follow, as the derived `product` graph; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.21.0"
+    "version": "0.26.0"
   }
 }

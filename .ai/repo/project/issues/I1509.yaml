@@ -29,4 +29,21 @@ evidence_required:
   - page_is_covered
 risk: "Low in mechanism. The risk is the reflex fix: adding ?page= to a detail page silently breaks the browser-search guarantee that the contract was written for, and it would break it in a way no test currently notices, because no test renders this page."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T11:14:49Z
+started_at: 2026-10-14T11:14:41Z
+started_event: sha256:a39fd51ac1e67b03c2cdbee8ffce524dee64196c89f18869a5fb99dde1761182
+completed_at: 2026-10-14T11:14:49Z
+completed_event: sha256:1dd19b3c819fe46117f64445e9ad1a14a56c0c89bfa21e56a6fed8cd8d04d8b9
+evidence:
+  - covers: complete_without_javascript
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+    result: "test result: ok. 17 passed; 0 failed; QUERY_PAGES holds /cockpit/graphs/composed?nodes=2&edges=2, reached by plain links (run 2026-10-14 11:14Z on master 981ad2c3ac plus this change)"
+    commit: 981ad2c3ac0fbfc56c739529c604ac95992283bc
+    recorded_at: 2026-10-14T11:14:45Z
+  - covers: page_is_covered
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+    result: "test result: ok. 17 passed; 0 failed (run 2026-10-14 11:14Z on master 981ad2c3ac plus this change)"
+    commit: 981ad2c3ac0fbfc56c739529c604ac95992283bc
+    recorded_at: 2026-10-14T11:14:47Z

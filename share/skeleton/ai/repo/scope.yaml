@@ -13,6 +13,11 @@
 # Read at start-up by the Rust executable, which then discovers, indexes and serves nothing
 # outside it; `majordomus doctor` refuses a key nothing reads. Edit this file, never the
 # tool: a repository that needs `garden/**` adds it here.
+#
+# `majordomus init` seeds the entries every repository shares, and a block between
+# `# stack: <name> (<marker>)` and `# end stack: <name>` only when the marker file is at
+# the repository's root: a repository without mix.exs gets no Elixir path. This file
+# unfiltered is also the distribution's default, read when a manifest names no scope.
 version: 1
 
 in:
@@ -21,22 +26,26 @@ in:
   - .ai/repo/**
   - src/**
   - lib/**
-  - apps/**/lib/**
   - apps/**/src/**
   - test/**
   - tests/**
   - config/**
   - docs/**
-  - priv/**/*.exs
-  - priv/**/*.sql
   - README.md
   - AGENTS.md
-  - Cargo.toml
-  - Cargo.lock
-  - mix.exs
-  - mix.lock
   - Makefile
   - justfile
+  # stack: elixir (mix.exs)
+  - apps/**/lib/**
+  - priv/**/*.exs
+  - priv/**/*.sql
+  - mix.exs
+  - mix.lock
+  # end stack: elixir
+  # stack: rust (Cargo.toml)
+  - Cargo.toml
+  - Cargo.lock
+  # end stack: rust
 
 out:
   # never read, by path: version control, the local half of the layer, dependencies,

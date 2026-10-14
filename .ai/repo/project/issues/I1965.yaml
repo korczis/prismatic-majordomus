@@ -11,7 +11,7 @@ current_state: "The preflight exists only on PR #578 (feature/entry-proves-what-
 desired_state: "observe_ledger judges each recorded run through the freshness function, with the test source as its input, at the working tree: a run counts as current only when proven, as failing only on a failure, and a skip as not run. enforcement_check says verified only when RulesVerdict is proven. The cache keeps its fingerprint, and no capability declaration or schema changes."
 scope:
   - apps/majordomus-cli/src/environment/preflight.rs
-  - test/cases/529_the_preflight_reads_the_one_verdict.sh
+  - test/cases
 non_scope:
   - "A capability declaration or an output schema change: if one proves necessary, the slice stops and joins the capability chain after I1953"
   - "apps/majordomus-cli/src/evidence and apps/majordomus-cli/src/rules"
