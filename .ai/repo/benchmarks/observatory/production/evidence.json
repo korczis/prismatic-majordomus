@@ -1,0 +1,83 @@
+{
+  "schema": "observatory-evidence/v1",
+  "origin": "https://majordomus.dev",
+  "measured_at": "2026-10-14T10:40:10Z",
+  "environment": {
+    "machine": "Apple M5 Pro x18, 64 GiB",
+    "os": "Darwin 25.5.0 arm64",
+    "browser": "chromium 141.0.7390.37",
+    "headless": true,
+    "precise_memory": true
+  },
+  "revision": "6f28de920723",
+  "status_word": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+  "checks": {
+    "screenshot-1080p": {
+      "verdict": "PASS",
+      "file": ".ai/repo/benchmarks/observatory/production/kiosk-1080p.png",
+      "viewport": "1920x1080",
+      "status": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) were live when recorded · 0 refused link(s)",
+      "script_errors": []
+    },
+    "screenshot-4k": {
+      "verdict": "PASS",
+      "file": ".ai/repo/benchmarks/observatory/production/kiosk-4k.png",
+      "viewport": "3840x2160",
+      "status": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) were live when recorded · 0 refused link(s)",
+      "script_errors": []
+    },
+    "accessibility-screen": {
+      "verdict": "PASS",
+      "route": "/ui/observatory/",
+      "rules": "wcag2a wcag2aa wcag21a wcag21aa wcag22aa",
+      "violations": []
+    },
+    "accessibility-kiosk": {
+      "verdict": "PASS",
+      "route": "/ui/kiosk/",
+      "rules": "wcag2a wcag2aa wcag21a wcag21aa wcag22aa",
+      "violations": []
+    },
+    "frames-1080p": {
+      "verdict": "PASS",
+      "frames_per_second": 60,
+      "window_seconds": 10,
+      "note": "headless chromium paints without a display; this is the display loop's rate on the machine named, not a panel's"
+    },
+    "reduced-motion": {
+      "verdict": "PASS",
+      "reduced_frame_unchanged_over_400ms": true,
+      "default_frame_changed_over_400ms": true
+    },
+    "event-reaches-the-display": {
+      "verdict": "NOT RUN",
+      "reason": "this origin serves no API (a published snapshot); the display holds a recording",
+      "replay": true,
+      "newest_in_display": {
+        "kind": "session_opened",
+        "lamport": 106207,
+        "at": 1791950185
+      }
+    },
+    "drill-scene-failure": {
+      "verdict": "NOT RUN",
+      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+    },
+    "drill-lost-server": {
+      "verdict": "NOT RUN",
+      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+    },
+    "drill-expired-cursor": {
+      "verdict": "NOT RUN",
+      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+    },
+    "soak": {
+      "verdict": "NOT RUN",
+      "reason": "no --soak-minutes was given"
+    }
+  }
+}

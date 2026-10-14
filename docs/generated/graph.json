@@ -13084,6 +13084,27 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.benchmarks.observatory",
+        "kind": "context",
+        "label": "ai.repo.benchmarks.observatory",
+        "summary": "Observatory evidence",
+        "route": "/cockpit/objects/context/ai-repo-benchmarks-observatory",
+        "source": ".ai/repo/benchmarks/observatory/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree"
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.benchmarks.pages",
         "kind": "context",
         "label": "ai.repo.benchmarks.pages",
@@ -70188,6 +70209,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.benchmarks.observatory",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.benchmarks.pages",
         "target": "file:scripts/pages",
         "kind": "tracks"
@@ -87859,8 +87885,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2783,
-      "edges": 6113,
+      "nodes": 2784,
+      "edges": 6114,
       "acyclic": false,
       "truncated": false
     }

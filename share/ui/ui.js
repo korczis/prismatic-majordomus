@@ -294,6 +294,7 @@ async function drawObservatory() {
     return; // the table of scenes stands
   }
   observatory = window.mjObservatory.mount(holder, { snapshot: SNAPSHOT });
+  holder.observatory = observatory;
 }
 
 function enhance() {

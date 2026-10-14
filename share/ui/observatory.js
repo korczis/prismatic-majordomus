@@ -25,6 +25,11 @@
   const LIVE_WITHIN_MS = 90000;
   const FADE_S = 1.2;
   const MANUAL_HOLD_S = 300;
+  // New events of the journal interrupt the rotation for the river, but only after the scene
+  // shown has had MIN_DWELL_S, and at most once per INTERRUPT_COOLDOWN_S, so a busy journal
+  // cannot hold the display on one scene. A reader's choice is never interrupted.
+  const MIN_DWELL_S = 12;
+  const INTERRUPT_COOLDOWN_S = 120;
   const TRACE = 24;
   const SEEN = 4000;
 
@@ -431,7 +436,12 @@
     let since = performance.now();
     let auto = kiosk || query.get('auto') !== '0';
     let held = 0;
-    const eligible = () => data.scenes.map((s, i) => (s.available ? i : -1)).filter((i) => i >= 0);
+    // A scene whose renderer threw is quarantined for the rest of this display's life: the
+    // rotation skips it, the others go on, and the scene says why when a reader asks for it.
+    const quarantined = new Map(); // scene id -> what it threw
+    const eligible = () => data.scenes
+      .map((s, i) => (s.available && !quarantined.has(s.id) ? i : -1))
+      .filter((i) => i >= 0);
     function select(index, reason) {
       if (index === current && reason !== 'start') return;
       previous = current;
@@ -538,6 +548,8 @@
     // read again at once, and the status says the display resynchronised.
     let cursor = null;
     let resyncedAt = 0;
+    let interrupt = null; // new events not yet shown: { events }
+    let interruptedAt = -Infinity;
     let streamTimer = null;
     let streamController = null;
     let streamFailures = 0;
@@ -569,6 +581,7 @@
             for (const e of fresh) { seen.add(e.id); born.set(e.id, performance.now()); }
             if (fresh.length) {
               r.model.events = [...fresh, ...(r.model.events || [])].slice(0, HELD);
+              interrupt = { events: (interrupt ? interrupt.events : 0) + fresh.length };
             }
             if (typeof page.cursor === 'number') { cursor = page.cursor; r.model.lamport = page.cursor; }
             readAt = Date.now();
@@ -621,8 +634,16 @@
 
       if (auto && (!held || (now - held) / 1000 > MANUAL_HOLD_S)) {
         held = 0;
+        const river_ = data.scenes.findIndex((s) => s.id === 'activity');
+        if (interrupt && current === river_) interrupt = null;
+        if (interrupt && river_ >= 0 && !quarantined.has('activity')
+            && (now - since) / 1000 >= MIN_DWELL_S && (now - interruptedAt) / 1000 >= INTERRUPT_COOLDOWN_S) {
+          interruptedAt = now;
+          select(river_, `interrupt: ${interrupt.events} new event(s)`);
+          interrupt = null;
+        }
         const scene = data.scenes[current];
-        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available) step(1, 'rotation');
+        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available || quarantined.has(scene.id)) step(1, 'rotation');
       }
 
       const u = Math.min(width, height) / 44;
@@ -649,10 +670,21 @@
       let line = '';
       c.save();
       c.globalAlpha = still ? 1 : fade;
-      if (scene.available && draw[scene.id]) {
+      if (quarantined.has(scene.id)) {
+        label(c, box, 'QUARANTINED', box.cx, box.cy - u * 1.2, 1.5);
+        label(c, box, `its renderer failed: ${quarantined.get(scene.id)}`, box.cx, box.cy + u * 1.2, 0.7);
+        line = 'nothing is drawn: this scene\'s renderer failed, and the others go on';
+      } else if (scene.available && draw[scene.id]) {
         // a replayed model says so to the scene that draws it, and its marks are not news
         const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
-        line = draw[scene.id](c, box, model, t, moving, scene.replay ? new Map() : born);
+        try {
+          line = draw[scene.id](c, box, model, t, moving, scene.replay ? new Map() : born);
+        } catch (e) {
+          quarantined.set(scene.id, String((e && e.message) || e).slice(0, 120));
+          trace.push({ at: new Date().toISOString(), scene: scene.id, reason: 'quarantined' });
+          if (trace.length > TRACE) trace.shift();
+          line = '';
+        }
       } else {
         label(c, box, 'UNAVAILABLE', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, scene.reason || 'this display has no renderer for the scene', box.cx, box.cy + u * 1.2, 0.7);
@@ -700,6 +732,11 @@
 
     return {
       trace: () => trace.slice(),
+      // the projection the display is drawing now, and the scenes it quarantined: what an
+      // inspector or an evidence run reads, never a second model
+      data: () => data,
+      quarantined: () => Object.fromEntries(quarantined),
+      policy: { min_dwell_seconds: MIN_DWELL_S, interrupt_cooldown_seconds: INTERRUPT_COOLDOWN_S, manual_hold_seconds: MANUAL_HOLD_S },
       dispose() {
         if (timer) clearTimeout(timer);
         if (controller) controller.abort();
