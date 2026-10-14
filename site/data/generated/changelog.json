@@ -13,6 +13,514 @@
     {
       "artifacts": [
         {
+          "name": "majordomus-v0.24.1-aarch64-apple-darwin.tar.gz",
+          "sha256": "4e6371d0760f7b2193429bf237256144d7d6c749ba93b3674c839221038b8d4d",
+          "target": "macos-aarch64"
+        },
+        {
+          "name": "majordomus-v0.24.1-x86_64-apple-darwin.tar.gz",
+          "sha256": "36322c978c1ca3b1cc34b1ee5df7a00d83c458f1f9abe8ddcab84a21c9351b45",
+          "target": "macos-x86_64"
+        },
+        {
+          "name": "majordomus-v0.24.1-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "5e6ff82feadd60e2663516b4b94c26b9a177798657a67fc04f7734c58e30c12c",
+          "target": "linux-x86_64-gnu"
+        },
+        {
+          "name": "majordomus-v0.24.1-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "263ac4ef71ceab6b32d7ef269cbb2acbafc680143f8aa76d5c822454af478118",
+          "target": "linux-x86_64-musl"
+        },
+        {
+          "name": "majordomus-v0.24.1-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "7ab71d5c08e28c553f4d332f05f62207ad79b22a2d29227e55421d28757e78b8",
+          "target": "linux-aarch64-gnu"
+        },
+        {
+          "name": "majordomus-v0.24.1-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "45291456055f45fe08f878f717a7d269f68f1e366379e13c9153fef3ef39d529",
+          "target": "linux-aarch64-musl"
+        }
+      ],
+      "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.23.0...v0.24.1",
+      "date": "2026-10-14T05:43:31Z",
+      "decisions": [
+        {
+          "added": "6e06a86c6cd60dccb6d6b91afeb4acb843b92658",
+          "date": "2026-10-14",
+          "id": "adr-0158",
+          "status": "proposed",
+          "title": "The Observatory is one screen of the UI, and it draws only what was observed",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md"
+        },
+        {
+          "added": "a383e44b32bc3e6bd0ac24d061b7edbdd2a909b1",
+          "date": "2026-10-13",
+          "id": "adr-0155",
+          "status": "proposed",
+          "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md"
+        },
+        {
+          "added": "46bdc20b68ae5bf00a329cc615522285d99b9828",
+          "date": "2026-10-12",
+          "id": "adr-0147",
+          "status": "proposed",
+          "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md"
+        }
+      ],
+      "groups": [
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "3d8da99be",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I2678",
+                  "kind": "issue",
+                  "route": "/plan/i2678/",
+                  "title": "The public Observatory replays events that were recorded, and says it is a replay"
+                },
+                {
+                  "id": "I2679",
+                  "kind": "issue",
+                  "route": "/plan/i2679/",
+                  "title": "The Observatory follows a stream with a cursor instead of asking for its page again"
+                },
+                {
+                  "id": "I2680",
+                  "kind": "issue",
+                  "route": "/plan/i2680/",
+                  "title": "The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills"
+                }
+              ],
+              "scope": "product",
+              "subject": "the Observatory is a feature with a claim a reader can check",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3d8da99be"
+            },
+            {
+              "breaking": false,
+              "commit": "6e06a86c6",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I2678",
+                  "kind": "issue",
+                  "route": "/plan/i2678/",
+                  "title": "The public Observatory replays events that were recorded, and says it is a replay"
+                },
+                {
+                  "id": "I2680",
+                  "kind": "issue",
+                  "route": "/plan/i2680/",
+                  "title": "The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills"
+                }
+              ],
+              "scope": "ui",
+              "subject": "the Observatory draws the repository and its mesh from what the sources answered",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6e06a86c6"
+            },
+            {
+              "breaking": false,
+              "commit": "a9d7b2115",
+              "kind": "feat",
+              "scope": "skills",
+              "subject": "evolve is a skill that composes the knowledge commands, and the version is 0.23.1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a9d7b2115"
+            },
+            {
+              "breaking": false,
+              "commit": "6b46a80f5",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I2652",
+                  "kind": "issue",
+                  "route": "/plan/i2652/",
+                  "title": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on"
+                },
+                {
+                  "id": "I2489",
+                  "kind": "issue",
+                  "route": "/plan/i2489/",
+                  "title": "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them"
+                }
+              ],
+              "scope": "ui",
+              "subject": "the UI shows what the knowledge base holds (I2652)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6b46a80f5"
+            },
+            {
+              "breaking": false,
+              "commit": "a383e44b3",
+              "kind": "feat",
+              "scope": "rules",
+              "subject": "an expedited landing is the owner's word and never reaches a tag",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/a383e44b3"
+            },
+            {
+              "breaking": false,
+              "commit": "46bdc20b6",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I2495",
+                  "kind": "issue",
+                  "route": "/plan/i2495/",
+                  "title": "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it"
+                }
+              ],
+              "scope": "pages",
+              "subject": "the Cockpit is published as a snapshot (I2495, ADR 0147)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/46bdc20b6"
+            },
+            {
+              "breaking": false,
+              "commit": "ebe15d2e4",
+              "kind": "feat",
+              "references": [
+                {
+                  "id": "I0806",
+                  "kind": "issue",
+                  "route": "/plan/i0806/",
+                  "title": "Make the session rules doctrines, with retention and archiving"
+                }
+              ],
+              "scope": "session",
+              "subject": "session records are capped by policy and archived on request",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ebe15d2e4"
+            }
+          ],
+          "heading": "Added",
+          "kind": "feat",
+          "rank": 0
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "ce94eb767",
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "the Observatory's projection carries no link into another surface",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ce94eb767"
+            },
+            {
+              "breaking": false,
+              "commit": "e37877639",
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "every name of the Observatory answers on the published site, and the homepage shows it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e37877639"
+            },
+            {
+              "breaking": false,
+              "commit": "9d31aa3a7",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "case 3011 finds the snapshot's observatory page by its path inside the snapshot",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9d31aa3a7"
+            },
+            {
+              "breaking": false,
+              "commit": "371100487",
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "the Observatory takes every colour from the tokens and numbers no event it cannot identify",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/371100487"
+            },
+            {
+              "breaking": false,
+              "commit": "65d86ff18",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "case 401 reads the build the bounded launcher asks cargo for",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/65d86ff18"
+            },
+            {
+              "breaking": false,
+              "commit": "689fc2555",
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "/ui/screensaver is the kiosk under its earlier name",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/689fc2555"
+            },
+            {
+              "breaking": false,
+              "commit": "bd82ee4e9",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I2664",
+                  "kind": "issue",
+                  "route": "/plan/i2664/",
+                  "title": "A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared"
+                }
+              ],
+              "scope": "test",
+              "subject": "the evolve skill is named by the two tests that prove every active skill",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bd82ee4e9"
+            },
+            {
+              "breaking": false,
+              "commit": "0a926184a",
+              "kind": "fix",
+              "scope": "ui",
+              "subject": "the first screen of the published UI leads only with decided figures",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/0a926184a"
+            },
+            {
+              "breaking": false,
+              "commit": "e7a37c636",
+              "kind": "fix",
+              "scope": "build",
+              "subject": "a build never waits in silence behind another build's lock",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e7a37c636"
+            },
+            {
+              "breaking": false,
+              "commit": "308857ded",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "a record a head adds is pending, not backlog",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/308857ded"
+            },
+            {
+              "breaking": false,
+              "commit": "d77991a7c",
+              "kind": "fix",
+              "scope": "pages",
+              "subject": "the surface name is braced in the pattern pages-check builds",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d77991a7c"
+            },
+            {
+              "breaking": false,
+              "commit": "5fa227b68",
+              "kind": "fix",
+              "scope": "pages",
+              "subject": "a snapshot is asked of the publication that declared it",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/5fa227b68"
+            }
+          ],
+          "heading": "Fixed",
+          "kind": "fix",
+          "rank": 1
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "51021b88c",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2660",
+                  "kind": "issue",
+                  "route": "/plan/i2660/",
+                  "title": "The site is published as an artifact by the job that built it, so a ready site waits for no second workflow"
+                },
+                {
+                  "id": "I2661",
+                  "kind": "issue",
+                  "route": "/plan/i2661/",
+                  "title": "A publication that did not arrive is a finding the next reader meets, never a green step"
+                },
+                {
+                  "id": "I2662",
+                  "kind": "issue",
+                  "route": "/plan/i2662/",
+                  "title": "Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs"
+                },
+                {
+                  "id": "I2663",
+                  "kind": "issue",
+                  "route": "/plan/i2663/",
+                  "title": "The published UI is not read from nothing on every deployment"
+                },
+                {
+                  "id": "M004",
+                  "kind": "milestone",
+                  "route": "/plan/m004/",
+                  "title": "Performance is executable evidence, and the hot path does no canonical work twice"
+                }
+              ],
+              "scope": "plan",
+              "subject": "the delivery latency of 2026-10-13 is recorded as a post-mortem and four issues",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/51021b88c"
+            },
+            {
+              "breaking": false,
+              "commit": "48cd7a07e",
+              "kind": "docs",
+              "scope": "rules",
+              "subject": "between a tag and its record nothing else lands",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/48cd7a07e"
+            },
+            {
+              "breaking": false,
+              "commit": "f4c90e2ee",
+              "kind": "docs",
+              "scope": "handbook",
+              "subject": "the Czech handbook says how session records are capped and archived",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f4c90e2ee"
+            }
+          ],
+          "heading": "Documentation",
+          "kind": "docs",
+          "rank": 4
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "44f3d84d2",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows master ee84e49b18",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/44f3d84d2"
+            },
+            {
+              "breaking": false,
+              "commit": "e7c83bbb4",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows master a6b1e10328",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e7c83bbb4"
+            },
+            {
+              "breaking": false,
+              "commit": "47aaa49d4",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows master 2ee40c5aa1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/47aaa49d4"
+            },
+            {
+              "breaking": false,
+              "commit": "507b1724d",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap and 0.24.0 on the master of its landing",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/507b1724d"
+            },
+            {
+              "breaking": false,
+              "commit": "e363d523d",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap and 0.24.0 on the master of its landing",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e363d523d"
+            },
+            {
+              "breaking": false,
+              "commit": "0b28ece25",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap and 0.24.0 on the master of its landing",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/0b28ece25"
+            },
+            {
+              "breaking": false,
+              "commit": "8783d8371",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap and 0.24.0 on master beb60f5f96",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8783d8371"
+            },
+            {
+              "breaking": false,
+              "commit": "8a29993b6",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2483",
+                  "kind": "issue",
+                  "route": "/plan/i2483/",
+                  "title": "The UI is published as a snapshot: read once at the published commit and carried by the site at /ui"
+                },
+                {
+                  "id": "I2486",
+                  "kind": "issue",
+                  "route": "/plan/i2486/",
+                  "title": "No screen waits for a source: a page shows the latest reading with its age, read again behind the reader"
+                },
+                {
+                  "id": "I2489",
+                  "kind": "issue",
+                  "route": "/plan/i2489/",
+                  "title": "A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them"
+                },
+                {
+                  "id": "I2495",
+                  "kind": "issue",
+                  "route": "/plan/i2495/",
+                  "title": "The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it"
+                }
+              ],
+              "scope": "plan",
+              "subject": "four delivered UI issues record their evidence and completion",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8a29993b6"
+            },
+            {
+              "breaking": false,
+              "commit": "d3b69169c",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap and 0.24.0 on master 5bfee30eb1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d3b69169c"
+            },
+            {
+              "breaking": false,
+              "commit": "2d933d314",
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.23.0 and the metadata it publishes",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/2d933d314"
+            },
+            {
+              "breaking": false,
+              "commit": "100c41bbb",
+              "kind": "chore",
+              "scope": "release",
+              "subject": "0.24.0, with the projections of the session cap on master 3442ce68c5",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/100c41bbb"
+            },
+            {
+              "breaking": false,
+              "commit": "cbe421c38",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections of the session cap on master e506c041a4",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/cbe421c38"
+            },
+            {
+              "breaking": false,
+              "commit": "9c56e7124",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows the merge of master e506c041a4",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9c56e7124"
+            }
+          ],
+          "heading": "Housekeeping",
+          "kind": "chore",
+          "rank": 7
+        }
+      ],
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.24.1",
+      "tag": "v0.24.1",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.24.1",
+      "unreleased": false,
+      "version": "0.24.1"
+    },
+    {
+      "artifacts": [
+        {
           "name": "majordomus-v0.23.0-aarch64-apple-darwin.tar.gz",
           "sha256": "237ded6539553cd7ce41060f8b78f8005f1273a47583163f513ed0fa57de473d",
           "target": "macos-aarch64"

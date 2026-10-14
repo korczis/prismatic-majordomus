@@ -19,6 +19,7 @@ the code is `apps/majordomus-cli/src/editors/`.
 | source | projection | read by |
 |---|---|---|
 | `.ai/repo/skills/<id>/SKILL.md` | `.agents/skills/<id>/SKILL.md` | Zed and Antigravity |
+| `.ai/repo/skills/<id>/SKILL.md` | `.claude/skills/<id>/SKILL.md` | Claude Code |
 | a capability that declares `.skill(alias, argument)` | `.claude/skills/<alias>/SKILL.md` | Claude Code |
 | `justfile`, `.just/*.just` | `.zed/tasks.json` | Zed |
 | `.ai/repo/policy.yaml` | `AGENTS.md` (`generate providers`) | both |
@@ -47,7 +48,13 @@ the justfile, or a capability that declares a skill appears in the projection at
 
 - **Skills.** One `SKILL.md` per active skill with the `name` and `description` both products
   require, the generated-file banner after the front matter, and a link to the definition. The
-  procedure is never copied: the agent is sent to the canonical file.
+  procedure is never copied: the agent is sent to the canonical file. It is written twice,
+  because the products look in two places: under `.agents/skills/` for Zed and Antigravity and
+  under `.claude/skills/` for Claude Code, which reads no other directory, so that `/<id>`
+  there reaches the layer's definition and not a command of the same name a person keeps in
+  their own settings. The two files differ in the directory they name and in nothing else. A
+  skill whose name a capability's command already has is written once, as the command, and
+  the pair is a finding.
 - **Commands.** One `SKILL.md` per capability whose declaration says `.skill(alias, argument)`,
   so that `/<alias> <text>` in Claude Code calls that capability once with the text in the
   named input field, verbatim. The file names the capability, its MCP tool and its command

@@ -481,6 +481,15 @@ it left out; one that is missing, names an older commit or does not say what end
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
 `test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
+The first screen leads only with figures the reader of a snapshot can decide. That process is
+no server, so `health.report` says `unknown` for the attached clients and the mesh runtime and
+therefore for the whole report. The Dashboard's health figure is the report's `repository`
+verdict instead: the worst of the dimensions that describe the repository and not the process
+serving it. The Health panel below it still lists every dimension with its own word. Where no
+mesh runtime is active the mesh figure reads `Mesh active: no` and counts no machines. The
+probe refuses a published first screen with an undecided figure, and
+`test/cases/1092_the_ui_snapshot_holds_every_screen.sh` holds the snapshot to the same.
+
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is

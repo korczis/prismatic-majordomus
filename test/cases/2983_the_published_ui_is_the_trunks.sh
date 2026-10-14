@@ -97,6 +97,17 @@ expect_exit 10 probe --commit "$B"
 expect_grep "surface\.json .*built_from=${A:0:10}, want $B\" fail\$"
 echo "    a stale built_from: refused by name, with the command that shows it"
 
+# (a2) the first screen leads with a figure nothing decided
+site "$A" "$A"
+printf '<span class="mj-ui-kpi"><span class="mj-ui-kpi-label">Repository health</span><span class="mj-ui-kpi-value"><span class="mj-badge mj-badge--unknown">unknown</span></span></span>\n' >> "$W$mount/index.html"
+expect_exit 10 probe --commit "$A"
+expect_grep "FAIL the first screen of $HTTP_BASE$mount/ leads with figure\(s\) nothing decided \(Repository health\)"
+expect_grep "first-screen figure\(s\) undecided: Repository health\" fail\$"
+site "$A" "$A"
+expect_exit 0 probe --commit "$A"
+expect_grep 'first-screen figures decided" ok$'
+echo "    an undecided figure on the first screen: refused by name"
+
 # (b) the deploy that lost the mount: the site answers and holds no declaration there
 site "$A" "$A"; rm "$W$mount/surface.json"
 expect_exit 10 probe --commit "$A"

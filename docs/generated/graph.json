@@ -17977,7 +17977,7 @@
             "docs/MAJORDOMUS_UI.md"
           ],
           "domain": "surfaces",
-          "featured": false,
+          "featured": true,
           "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
           "modules": [
             "mesh",
@@ -35520,6 +35520,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2694",
+        "kind": "issue",
+        "label": "I2694",
+        "summary": "A promoted note resolves in every checkout, not only where it was promoted",
+        "route": "/cockpit/objects/issue/i2694",
+        "source": ".ai/repo/project/issues/I2694.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A note promoted in one clone passes `majordomus knowledge check` in a second clone that has only what git carries",
+            "Promoting a candidate of an episode that is still open is refused and names `majordomus session close`",
+            "The evolve skill's procedure says when the episode is closed"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "promoted_note_resolves_in_a_second_clone_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Tracking the ledger or the task store"
+          ],
+          "objective": "Make `majordomus knowledge promote` produce a record that `knowledge check` accepts in a fresh clone and in CI, so that the evolve skill's procedure can be followed to its end.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "lib/knowledge.sh",
+            ".ai/repo/skills/evolve/SKILL.md",
+            ".ai/repo/project/issues/I2694.yaml"
+          ],
+          "slug": "a-promoted-note-resolves-in-every-checkout",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus knowledge check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40818,6 +40858,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.23.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.24.1",
+        "kind": "release-record",
+        "label": "v0.24.1",
+        "summary": "v0.24.1",
+        "route": "/cockpit/objects/release-record/v0-24-1",
+        "source": ".ai/repo/releases/v0.24.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.24.1",
+          "published_at": "2026-10-14T05:43:31Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.24.1"
         }
       },
       {
@@ -77487,6 +77550,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2694",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2694",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -78063,6 +78136,11 @@
       },
       {
         "source": "majordomus://release-record/v0.23.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.24.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -87028,8 +87106,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2767,
-      "edges": 6070,
+      "nodes": 2769,
+      "edges": 6073,
       "acyclic": false,
       "truncated": false
     }

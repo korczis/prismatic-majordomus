@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "2eb8fcbb7c3687c71b210400d1cf9673a05eabbc3f4a0b27bd4460f0c9b75ffc",
+    "fingerprint": "67200500657bdf7de1c13e03586c82b2bf1d1b28dacc8e27759bb24609ab77d3",
     "summary": {
-      "total": 2351,
+      "total": 2353,
       "builtin": 196,
-      "declarative": 2155,
+      "declarative": 2157,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2155
+        "resource": 2157
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2164
+        "implemented": 2166
       },
       "mcp_tools": 187,
-      "mcp_resources": 2210,
+      "mcp_resources": 2212,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -30965,6 +30965,10 @@
                 "$ref": "#/$defs/HealthStatus",
                 "description": "The worst check's status."
               },
+              "repository": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
+              },
               "tallies": {
                 "type": "object",
                 "additionalProperties": {
@@ -30991,6 +30995,7 @@
             },
             "required": [
               "status",
+              "repository",
               "tallies",
               "checks"
             ],
@@ -80683,7 +80688,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 351,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -81064,7 +81069,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": []
       },
       {
@@ -81325,7 +81330,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2d066abd66fba32f257d7469e95649024c6a205897110a8ecd72db552f07c10d",
+    "fingerprint": "d45fa5447559d0eacfd25ec669f859df50d2466a2ea9b85d2e1b121dd25b3562",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81365,7 +81370,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 351,
+      "issue": 352,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81373,7 +81378,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 23,
+      "release-record": 24,
       "rule": 179,
       "scope": 1,
       "session": 89,
@@ -87132,7 +87137,7 @@
         "title": "Editors and agents",
         "path": "docs/EDITORS.md",
         "source_class": "document",
-        "bytes": 5264
+        "bytes": 5855
       },
       {
         "uri": "majordomus://document/docs/ENTRY.md",
@@ -87240,7 +87245,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 13869
+        "bytes": 13974
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -87249,7 +87254,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 67758
+        "bytes": 69214
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -87285,7 +87290,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 29844
+        "bytes": 30561
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87375,7 +87380,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 239316
+        "bytes": 240553
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90178,7 +90183,7 @@
         "path": ".ai/repo/features/observatory.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3079,
+        "bytes": 3078,
         "tags": [
           "ui",
           "interface",
@@ -94678,6 +94683,17 @@
         "bytes": 2211
       },
       {
+        "uri": "majordomus://issue/I2694",
+        "kind": "issue",
+        "identity": "I2694",
+        "title": "A promoted note resolves in every checkout, not only where it was promoted",
+        "description": "Make `majordomus knowledge promote` produce a record that `knowledge check` accepts in a fresh clone and in CI, so that the evolve skill's procedure can be followed to its end.",
+        "path": ".ai/repo/project/issues/I2694.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2438
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -96043,6 +96059,16 @@
         "identity": "v0.23.0",
         "title": "v0.23.0",
         "path": ".ai/repo/releases/v0.23.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.24.1",
+        "kind": "release-record",
+        "identity": "v0.24.1",
+        "title": "v0.24.1",
+        "path": ".ai/repo/releases/v0.24.1.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -98693,7 +98719,7 @@
         "path": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8486,
+        "bytes": 9381,
         "tags": [
           "ui",
           "publication",
@@ -99981,7 +100007,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 6280,
+        "bytes": 6871,
         "tags": [
           "knowledge",
           "review",
@@ -100700,7 +100726,7 @@
         "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "source_class": "case",
-        "bytes": 4703
+        "bytes": 5806
       },
       {
         "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
@@ -101532,7 +101558,7 @@
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "source_class": "case",
-        "bytes": 20904
+        "bytes": 21589
       },
       {
         "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
@@ -101588,7 +101614,7 @@
         "identity": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "source_class": "case",
-        "bytes": 4905
+        "bytes": 5849
       },
       {
         "uri": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
@@ -101604,7 +101630,7 @@
         "identity": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "path": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "source_class": "case",
-        "bytes": 8301
+        "bytes": 9603
       },
       {
         "uri": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -104681,7 +104707,7 @@
       "identity": [
         "id"
       ],
-      "objects": 351
+      "objects": 352
     },
     {
       "name": "knowledge",
@@ -104767,7 +104793,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 23
+      "objects": 24
     },
     {
       "name": "rule",

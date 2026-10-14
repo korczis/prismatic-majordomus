@@ -16,6 +16,7 @@
 #                     unavailable and say so, on the server and in the snapshot alike
 #   without script    one row per scene, with its state in words
 #   the snapshot      holds the page and the script it loads
+#   every name        the two names the server redirects are pages of the snapshot that lead on
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
@@ -131,3 +132,16 @@ SP="$S/${SP#./}"
 projection "$SP" snap.json || exit 1
 held "$SP" snap.json "the snapshot's observatory" || exit 1
 [ -n "$(find "$S" -name 'observatory.js' | head -1)" ] || { echo "    the snapshot does not hold observatory.js"; exit 1; }
+# a file cannot redirect: each name the server redirects is a page of the publication that
+# sends its reader to the page the server would, without a script
+for pair in "screensaver kiosk" "obsrvatory observatory"; do
+  old="${pair% *}"; to="${pair#* }"
+  [ -f "$S/$to/index.html" ] || { echo "    the snapshot holds no $to page for $old to lead to"; exit 1; }
+  [ -f "$S/$old/index.html" ] || { echo "    the snapshot holds no page for /ui/$old, which the server redirects to /ui/$to"; exit 1; }
+  grep -qF "<meta http-equiv=\"refresh\" content=\"0; url=../$to/index.html\">" "$S/$old/index.html" \
+    || { echo "    $old/index.html does not send its reader to ../$to/index.html:"; head -c 400 "$S/$old/index.html"; echo; exit 1; }
+  grep -qF "href=\"../$to/index.html\"" "$S/$old/index.html" || { echo "    $old/index.html carries no link for a reader whose browser does not follow the refresh"; exit 1; }
+  grep -q '<script' "$S/$old/index.html" && { echo "    $old/index.html carries a script"; exit 1; }
+  jq -e --arg n "/ui/$old" --arg f "$old/index.html" '.redirects[$n] == $f' "$S/snapshot.json" >/dev/null \
+    || { echo "    snapshot.json does not record the page for /ui/$old"; exit 1; }
+done

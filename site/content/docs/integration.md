@@ -604,6 +604,8 @@ next day:
 | holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
 | merges master into the branch, commits the merge, then derives | a head judged alone is not the tree that lands, and a derive taken on an uncommitted merge is stale |
 | runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
+| before judging, searches the tests for what reads the change: a sibling's identifier across `apps/majordomus-cli/tests` and `test/cases` when the change adds a named record (a skill, a screen, a rule, a capability), the script's name when it changes how a script calls a tool; and runs every test found | a test that lists records by name, or that replaces a tool with a stand-in and reads what it was asked, lives in the rust lanes and the suite shards, which the structure job does not run; two landings of 2026-10-13 passed that job and left the trunk red there, for 95 minutes and for the length of the next run |
+| after a red is found, searches for the same shape before pushing its fix | the first fix of 2026-10-13 named the skill in the crate test; the case that makes the same demand would have been the next red, one run later |
 | merges with `gh pr merge --admin --merge --match-head-commit <head>` | a head that moved after it was judged is refused |
 | cancels its own branch's run after the merge | a run nobody will read still holds a runner, and the trunk's run waits behind it |
 | verifies the commit production serves, with `scripts/pages verify` | every landing is a deployment, and a merge that broke the publication says nothing |
@@ -617,6 +619,14 @@ the same commit. The trunk's only run of a commit, a deployment in flight, a rel
 another session's run on a current head are never cancelled. A landing on the trunk cancels
 nothing by itself: the trunk's validation runs are each their own concurrency group, and the
 publication queue never cancels the deploy in flight.
+
+A run that can no longer end green is cancelled as well: once one job of a branch's run has
+failed, the jobs still running decide nothing about that head, and they hold the runners the
+trunk's run waits for. The lander reads the failed job first, through the jobs API, which
+answers while the run is still going. The trunk's own run is left to finish: its other jobs
+are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
+run on a head that contains the trunk is that reading, lane by lane, and is read before it
+is cancelled. Issue I2664 is the workflow doing this by itself.
 
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.

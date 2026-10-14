@@ -35905,6 +35905,10 @@
             "$ref": "#/components/schemas/HealthStatus",
             "description": "The worst check's status."
           },
+          "repository": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
+          },
           "tallies": {
             "type": "object",
             "additionalProperties": {
@@ -35931,6 +35935,7 @@
         },
         "required": [
           "status",
+          "repository",
           "tallies",
           "checks"
         ],
