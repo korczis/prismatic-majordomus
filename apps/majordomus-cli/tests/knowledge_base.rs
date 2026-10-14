@@ -367,6 +367,108 @@ fn one_record_answers_with_every_reference_resolved_and_names_the_one_that_dangl
     s.stop();
 }
 
+/// A commit reference has one grammar (issue I2600, `docs/KNOWLEDGE.md`): an unambiguous
+/// abbreviation resolves exactly as the full name does, and a name that is absent, ambiguous
+/// or not a commit name at all is missing with a reason that says which. The shell tool's
+/// `knowledge check` gives the same verdicts in the same words; case
+/// `2999_a_commit_reference_has_one_grammar` holds the two side by side.
+#[test]
+fn a_commit_reference_resolves_by_one_grammar_and_says_why_when_it_does_not() {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let (f, head, _) = repository();
+    let root = f.root();
+    // fifteen hundred commits on a branch of their own, from one process, so that two of
+    // them share a four-digit prefix: the stream is fixed, and so are the names
+    let mut stream = String::new();
+    for i in 1..=1500 {
+        let message = format!("commit {i}");
+        stream.push_str(&format!(
+            "commit refs/heads/many\ncommitter T <t@example.invalid> {} +0000\ndata {}\n{message}\n",
+            1_700_000_000 + i,
+            message.len()
+        ));
+        if i == 1 {
+            stream.push_str("M 100644 inline f\ndata 2\nx\n");
+        }
+        stream.push('\n');
+    }
+    let mut import = Command::new("git")
+        .arg("-C")
+        .arg(&root)
+        .args(["fast-import", "--quiet"])
+        .stdin(Stdio::piped())
+        .spawn()
+        .expect("git fast-import runs");
+    import
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(stream.as_bytes())
+        .unwrap();
+    assert!(import.wait().unwrap().success());
+    let mut prefixes: Vec<String> = f
+        .git(&["rev-list", "many"])
+        .lines()
+        .map(|name| name[..4].to_string())
+        .collect();
+    prefixes.sort();
+    let ambiguous = prefixes
+        .windows(2)
+        .find(|pair| pair[0] == pair[1])
+        .map(|pair| pair[0].clone())
+        .expect("two of 1500 commits share a four-digit prefix");
+    let abbreviation = &head[..10];
+    assert_eq!(
+        f.git(&["rev-parse", &format!("{abbreviation}^{{commit}}")])
+            .trim(),
+        head,
+        "the abbreviation names the head alone"
+    );
+
+    f.write(
+        CANDIDATE_PATH,
+        &candidate(&head).replace(
+            &format!("    - commit:{head}\n"),
+            &format!(
+                "    - commit:{head}\n    - commit:{abbreviation}\n    - commit:{ambiguous}\n    - commit:deadbeef00\n    - commit:HEAD\n"
+            ),
+        ),
+    );
+    f.commit("one candidate, five commit references");
+
+    let (code, out, err) = run_in(&root, &["knowledge", "record", ID, "--format", "json"], "");
+    assert_eq!(code, 0, "{err}");
+    let v: Value = serde_json::from_str(&out).unwrap_or_else(|e| panic!("{e}: {out}"));
+    let refs = v["derived_from"].as_array().unwrap();
+    let of = |reference: &str| -> &Value {
+        refs.iter()
+            .find(|r| r["reference"] == reference)
+            .unwrap_or_else(|| panic!("no {reference} in {v}"))
+    };
+    for resolved in [format!("commit:{head}"), format!("commit:{abbreviation}")] {
+        let r = of(&resolved);
+        assert_eq!(r["resolution"], "external", "{r}");
+        assert_eq!(r["target"], "git", "{r}");
+    }
+    for (reference, why) in [
+        (
+            format!("commit:{ambiguous}"),
+            "is ambiguous: more than one commit of this history begins with it",
+        ),
+        (
+            "commit:deadbeef00".to_string(),
+            "names no commit of this history",
+        ),
+        ("commit:HEAD".to_string(), "is not a commit name"),
+    ] {
+        let r = of(&reference);
+        assert_eq!(r["resolution"], "missing", "{r}");
+        assert!(r["reason"].as_str().unwrap().contains(why), "{r}");
+    }
+}
+
 #[test]
 fn a_closed_episode_no_derivation_followed_is_a_stopped_writer_once_the_deriver_has_run() {
     let (f, _, branch) = repository();

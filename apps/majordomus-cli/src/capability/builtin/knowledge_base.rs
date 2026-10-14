@@ -880,6 +880,77 @@ fn candidates(ctx: &Context, _: Empty) -> Result<KnowledgeCandidates, Capability
 
 // --------------------------------------------------------------------- resolution
 
+/// What the name in a `commit:<name>` reference is to this history.
+///
+/// One grammar for every writer and every checker of both programs (`docs/KNOWLEDGE.md`):
+/// the name is 4 to 64 lower-case hexadecimal digits — a full object name or an abbreviation
+/// of one — and it resolves when git peels it to exactly one commit. `mj_commit_names_resolve`
+/// in `lib/common.sh` is the shell tool's half and asks git the same questions, so a record
+/// passes `knowledge check` exactly when `knowledge record` resolves it.
+enum CommitName {
+    /// The name names one commit.
+    Resolved,
+    /// Not hexadecimal, or too short or too long: a branch, a tag name, `HEAD`.
+    Malformed,
+    /// More than one commit of this history begins with the name.
+    Ambiguous,
+    /// No commit of this history begins with the name.
+    Missing,
+}
+
+impl CommitName {
+    /// What is wrong with the name, as the rest of a sentence that began with the reference;
+    /// the words `mj_commit_name_reason` says in the shell tool.
+    fn reason(&self) -> &'static str {
+        match self {
+            CommitName::Resolved => "names one commit",
+            CommitName::Malformed => "is not a commit name: 4 to 64 lower-case hexadecimal digits, a full object name or an abbreviation of one",
+            CommitName::Ambiguous => "is ambiguous: more than one commit of this history begins with it",
+            CommitName::Missing => "names no commit of this history",
+        }
+    }
+}
+
+/// Read `name` by the grammar of a commit reference and ask git which commit it is.
+///
+/// A name git cannot peel to one commit is ambiguous when two or more of the objects that
+/// begin with it are commits or tags, and missing otherwise: several trees or blobs sharing a
+/// prefix with at most one commit are not a choice between commits.
+fn commit_name(root: &Path, name: &str) -> CommitName {
+    let hexadecimal = (4..=64).contains(&name.len())
+        && name.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+    if !hexadecimal {
+        return CommitName::Malformed;
+    }
+    let said = |args: &[&str]| -> Option<String> {
+        let out = crate::git::read_only(root).args(args).output().ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+    };
+    let peeled = said(&[
+        "rev-parse",
+        "--verify",
+        "--quiet",
+        &format!("{name}^{{commit}}"),
+    ]);
+    if peeled.is_some_and(|full| !full.is_empty()) {
+        return CommitName::Resolved;
+    }
+    let candidates = said(&["rev-parse", &format!("--disambiguate={name}")]).unwrap_or_default();
+    let committish = candidates
+        .lines()
+        .filter(|oid| {
+            said(&["cat-file", "-t", oid]).is_some_and(|kind| kind == "commit" || kind == "tag")
+        })
+        .count();
+    if committish >= 2 {
+        CommitName::Ambiguous
+    } else {
+        CommitName::Missing
+    }
+}
+
 /// Resolve one typed reference against the index, the ledger, the task store and git.
 ///
 /// The prefixes are the schema's; a prefix the schema does not admit resolves to nothing,
@@ -963,22 +1034,14 @@ fn resolve(
                 format!("no ledger line and no task record names the task {value}"),
             )
         }
-        "commit" => {
-            let ok = crate::git::read_only(root)
-                .args([
-                    "rev-parse",
-                    "--verify",
-                    "--quiet",
-                    &format!("{value}^{{commit}}"),
-                ])
-                .output()
-                .is_ok_and(|o| o.status.success());
-            if ok {
-                (External, Some("git".into()), String::new())
-            } else {
-                (Missing, None, format!("this history has no commit {value}"))
-            }
-        }
+        "commit" => match commit_name(root, value) {
+            CommitName::Resolved => (External, Some("git".into()), String::new()),
+            unresolved => (
+                Missing,
+                None,
+                format!("`commit:{value}` {}", unresolved.reason()),
+            ),
+        },
         "file" | "test" => {
             if let Some(o) = ctx
                 .index
@@ -1728,7 +1791,13 @@ mod tests {
                 "commit:0123abc",
                 Missing,
                 None,
-                "this history has no commit 0123abc",
+                "`commit:0123abc` names no commit of this history",
+            ),
+            (
+                "commit:HEAD",
+                Missing,
+                None,
+                "`commit:HEAD` is not a commit name",
             ),
             (&document_ref, Obj, Some(document.uri.as_str()), ""),
             (

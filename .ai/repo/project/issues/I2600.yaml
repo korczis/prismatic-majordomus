@@ -1,0 +1,31 @@
+id: I2600
+milestone: a-second-adopter-is-served
+title: "A commit reference has one grammar for every writer and every checker"
+slug: a-commit-reference-has-one-grammar
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make an abbreviated commit reference either written as the full name or refused at writing, and accepted alike by both checkers."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G16); read again on master e506c041a4. `adr propose --from commit:<8 hex>` and knowledge records with abbreviations were written, and `knowledge check` then failed 75 of 76 records as resolving to nothing."
+current_state: "lib/knowledge.sh:1484-1502 compares the reference to the full name git prints; apps/majordomus-cli/src/capability/builtin/knowledge_base.rs:967-982 accepts an abbreviation; lib/adr.sh mj_adr_ref_valid does not resolve a commit reference at all."
+desired_state: "Writers resolve an abbreviation to the full name and refuse one that is ambiguous or absent; both checkers resolve the same way."
+scope:
+  - "lib/knowledge.sh"
+  - "lib/adr.sh"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "docs/KNOWLEDGE.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "`adr propose --from commit:<abbreviation>` writes the full name"
+  - "A reference that resolves to no commit is refused by the writer"
+  - "A record already carrying an unambiguous abbreviation passes both checkers"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "commit_reference_grammar_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13T12:37:15Z
+started_at: 2026-10-13T12:37:15Z
+started_event: sha256:53ad16d5e2ad57fe6da1734ff8a44cf9c5ded7aafd9815fe4f5d4135a4dbc188
