@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence — Prismatic Majordomus</title>
-<meta name="description" content="One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.">
+<title>fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence — Prismatic Majordomus</title>
+<meta name="description" content="One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.">
 <link rel="canonical" href="https://majordomus.dev/plan/fly-deployment/"><meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
-<meta property="og:title" content="fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence — Prismatic Majordomus">
-<meta property="og:description" content="One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.">
+<meta property="og:title" content="fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence — Prismatic Majordomus">
+<meta property="og:description" content="One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.">
 <meta property="og:url" content="https://majordomus.dev/plan/fly-deployment/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -147,48 +147,48 @@
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
     <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/plan/" class="font-medium text-body hover:text-fg-brand">The plan</a></li>
     <li aria-hidden="true">/</li>
-    <li aria-current="page" class="font-medium text-heading">fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence</li>
+    <li aria-current="page" class="font-medium text-heading">fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence</li>
   </ol>
 </nav>
 
-    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.</p>
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
-<span class="text-sm text-body">2 of 31 issues done</span></p>
+<span class="text-sm text-body">4 of 23 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">6</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">23</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">5</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">14</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">9</dd></div>
   </dl>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Majordomus has no deployment at all: no container, no hosting provider, no way for anyone who is not standing in front of this checkout to see the layer it serves. The obvious repair is the wrong one. A Dockerfile and a fly.toml written by hand would be a second description of facts the repository already holds — the port the server binds, the routes it registers, the assets the site build produces, the binary the workspace names — and every one of those pairs would drift the first time one half changed. The repository already refuses that shape everywhere else: capabilities are declared once and projected into CLI, HTTP, MCP, OpenAPI, docs and the site, and generate --check fails when a projection is stale. A deployment must arrive the same way or not at all.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">No Dockerfile, no fly.toml, no deployment kind, no deploy capability module and no container test exist anywhere in the repository. The HTTP server binds loopback by default and warns when it does not. system.health exists as a capability; /healthz and /readyz do not. The site is built by one pipeline already and deployed to GitHub Pages by scripts/site-deploy.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">majordomus deploy validates the canonical object, verifies that every generated projection matches it, builds the pinned multi-stage Alpine image, deploys one Machine to the chosen region, waits for Fly&#39;s health checks, asserts the Machine inventory against the declared cost profile, runs the route-derived smoke suite against the public URL and writes a machine-readable report. Changing the region, the memory, the port or the Machine count means changing one file and regenerating.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured 2026-10-14 on master e28daccd9b: .ai/repo/deployments/majordomus.yaml is the canonical object; deploy/Dockerfile and its ignore file are generated from it (Alpine, uid 10001, exec-form entrypoint); docker-image.yml builds and smoke-tests the image on pull requests and on master, and release.yml publishes it to GHCR; .github/actions/image-smoke checks the image runs as non-root and answers /api/v1/live and /api/v1/ready; deploy.list, deploy.get, deploy.check and deploy.observed are capabilities. Missing: a smoke derived from the route registry, a secret and developer-path scan of the image, an SBOM, size, cold-start and memory baselines, a documentation page. The object still carries region, machines and resources, which nothing reads since Fly.io was disconnected on 2026-10-12.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The GHCR image is a projection of the canonical object like every other artifact: generated, checked for drift, smoke-tested from the route registry, scanned for secrets and developer paths, measured against recorded budgets, documented and shown in the cockpit. Whether region, machines and resources leave the deployment/v1 schema is decided and recorded.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">.ai/repo/deployments</li><li class="font-mono text-heading break-words">.ai/repo/adrs</li><li class="font-mono text-heading break-words">.ai/repo/rules/project</li><li class="font-mono text-heading break-words">.ai/repo/policy.yaml</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/deploy</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/capability/builtin</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/http</li><li class="font-mono text-heading break-words">deploy</li><li class="font-mono text-heading break-words">fly.toml</li><li class="font-mono text-heading break-words">share/kinds.yaml</li><li class="font-mono text-heading break-words">share/allow</li><li class="font-mono text-heading break-words">share/schemas</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">site</li><li class="font-mono text-heading break-words">test/cases</li><li class="font-mono text-heading break-words">.github/workflows</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">.ai/repo/deployments</li><li class="font-mono text-heading break-words">.ai/repo/adrs</li><li class="font-mono text-heading break-words">.ai/repo/rules/project</li><li class="font-mono text-heading break-words">.ai/repo/policy.yaml</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/deploy</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/capability/builtin</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/http</li><li class="font-mono text-heading break-words">deploy</li><li class="font-mono text-heading break-words">share/kinds.yaml</li><li class="font-mono text-heading break-words">share/allow</li><li class="font-mono text-heading break-words">share/schemas</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">site</li><li class="font-mono text-heading break-words">test/cases</li><li class="font-mono text-heading break-words">.github/workflows</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Any dependency, in code, script, documentation, CI or default, on ~/dev/prismatic-platform</li><li>A provider abstraction covering hosts other than the one this repository deploys to</li><li>Kubernetes, Nomad, buildpacks, Nixpacks or a second container implementation</li><li>A persistent volume, a database or any stateful service, unless a measured requirement forces one</li><li>Mutating deployment operations exposed to unauthenticated HTTP or to the browser</li><li>Profile-guided optimisation</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>One canonical deployment object is the only place the port, the region, the resources, the Machine count, the health routes, the build inputs and the budgets are stated</li><li>Every provider artifact — the Dockerfile, its ignore file and fly.toml — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand</li><li>The deployment reads are declared once in the capability registry and appear in the CLI, the HTTP API, MCP, OpenAPI and the generated documentation without a second registration</li><li>The smoke suite is derived from the route registry; no second list of endpoints exists anywhere</li><li>The production image runs as a non-root user, contains no build toolchain, no repository history, no secret and no absolute developer path</li><li>The deployed service answers on its public HTTPS URL, its health and readiness checks pass from outside, and the Machine inventory matches the declared cost profile</li><li>Image size, binary size, build context size, cold start, resident memory and endpoint latency are measured, recorded as baselines and gated against unexplained regression</li><li>No Fly credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and CI deploys with an app-scoped token rather than an account-wide one</li><li>Every rule this milestone states is enforced by a check that CI executes</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>One canonical deployment object is the only place the port, the region, the resources, the Machine count, the health routes, the build inputs and the budgets are stated</li><li>Every image artifact — the Dockerfile and its ignore file — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand</li><li>The deployment reads are declared once in the capability registry and appear in the CLI, the HTTP API, MCP, OpenAPI and the generated documentation without a second registration</li><li>The smoke suite is derived from the route registry; no second list of endpoints exists anywhere</li><li>The production image runs as a non-root user, contains no build toolchain, no repository history, no secret and no absolute developer path</li><li>The published image answers live and ready in its smoke, run from outside the container on a free host port</li><li>Image size, binary size, build context size, cold start, resident memory and endpoint latency are measured, recorded as baselines and gated against unexplained regression</li><li>No credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and the image is published with the workflow&#39;s own token</li><li>Every rule this milestone states is enforced by a check that CI executes</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh</li><li class="font-mono text-heading break-words">bin/majordomus doctor</li><li class="font-mono text-heading break-words">cargo test --workspace --all-features</li><li class="font-mono text-heading break-words">cargo clippy --workspace --all-targets --all-features -- -D warnings</li><li class="font-mono text-heading break-words">majordomus generate --check</li><li class="font-mono text-heading break-words">majordomus deploy doctor</li><li class="font-mono text-heading break-words">fly config validate</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh</li><li class="font-mono text-heading break-words">bin/majordomus doctor</li><li class="font-mono text-heading break-words">cargo test --workspace --all-features</li><li class="font-mono text-heading break-words">cargo clippy --workspace --all-targets --all-features -- -D warnings</li><li class="font-mono text-heading break-words">majordomus generate --check</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">canonical_object</li><li class="font-mono text-heading break-words">typed_model</li><li class="font-mono text-heading break-words">generated_projections</li><li class="font-mono text-heading break-words">registry_derived_smoke</li><li class="font-mono text-heading break-words">container_minimal</li><li class="font-mono text-heading break-words">deployed_url</li><li class="font-mono text-heading break-words">budgets_measured</li><li class="font-mono text-heading break-words">secrets_isolated</li><li class="font-mono text-heading break-words">rules_enforced</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">canonical_object</li><li class="font-mono text-heading break-words">typed_model</li><li class="font-mono text-heading break-words">generated_projections</li><li class="font-mono text-heading break-words">registry_derived_smoke</li><li class="font-mono text-heading break-words">container_minimal</li><li class="font-mono text-heading break-words">image_smoke</li><li class="font-mono text-heading break-words">budgets_measured</li><li class="font-mono text-heading break-words">secrets_isolated</li><li class="font-mono text-heading break-words">rules_enforced</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risks</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Generation can hide the Dockerfile from the people who must read it. The generated file has to stay idiomatic and reviewable; the source describes intent, the output describes mechanics, and a contributor who edits the output is told which file to change instead.</li><li>The route topology and the served surfaces are being rewritten on other branches under ADR 0013. A smoke suite pinned to today&#39;s paths would be stale on arrival, so it must read the route registry rather than a path list.</li><li>256 MB is a hypothesis. It is held only as long as a measured run under that limit passes; the evidence, not the preference, decides the final number.</li><li>A deployment touches money. The first deploy must not leave two Machines running, and the Machine inventory is asserted rather than assumed.</li><li>The bootstrap credential comes from outside this repository. It may be used to obtain an authenticated session and nowhere else; anything else would make Majordomus depend on Prismatic Platform, which is forbidden.</li></ul>
@@ -217,7 +217,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0903/" class="text-fg-brand hover:underline">I0903</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0902/" class="text-fg-brand hover:underline">I0902</a></td>
@@ -225,7 +225,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0904/" class="text-fg-brand hover:underline">I0904</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0902/" class="text-fg-brand hover:underline">I0902</a></td>
@@ -241,7 +241,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0906/" class="text-fg-brand hover:underline">I0906</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0904/" class="text-fg-brand hover:underline">I0904</a></td>
@@ -297,7 +297,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0913/" class="text-fg-brand hover:underline">I0913</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0902/" class="text-fg-brand hover:underline">I0902</a>, <a href="https://majordomus.dev/plan/i0903/" class="text-fg-brand hover:underline">I0903</a></td>
@@ -305,7 +305,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0914/" class="text-fg-brand hover:underline">I0914</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">4</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0903/" class="text-fg-brand hover:underline">I0903</a>, <a href="https://majordomus.dev/plan/i0909/" class="text-fg-brand hover:underline">I0909</a>, <a href="https://majordomus.dev/plan/i0913/" class="text-fg-brand hover:underline">I0913</a></td>
@@ -313,7 +313,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0915/" class="text-fg-brand hover:underline">I0915</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">5</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0914/" class="text-fg-brand hover:underline">I0914</a></td>
@@ -329,7 +329,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0917/" class="text-fg-brand hover:underline">I0917</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">5</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0914/" class="text-fg-brand hover:underline">I0914</a></td>
@@ -337,7 +337,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0918/" class="text-fg-brand hover:underline">I0918</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0902/" class="text-fg-brand hover:underline">I0902</a></td>
@@ -369,7 +369,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0922/" class="text-fg-brand hover:underline">I0922</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">6</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0930/" class="text-fg-brand hover:underline">I0930</a></td>
@@ -409,7 +409,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0927/" class="text-fg-brand hover:underline">I0927</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0903/" class="text-fg-brand hover:underline">I0903</a></td>
@@ -425,7 +425,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0929/" class="text-fg-brand hover:underline">I0929</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">8</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0918/" class="text-fg-brand hover:underline">I0918</a>, <a href="https://majordomus.dev/plan/i0931/" class="text-fg-brand hover:underline">I0931</a></td>
@@ -441,7 +441,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i0931/" class="text-fg-brand hover:underline">I0931</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">7</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i0913/" class="text-fg-brand hover:underline">I0913</a>, <a href="https://majordomus.dev/plan/i0914/" class="text-fg-brand hover:underline">I0914</a>, <a href="https://majordomus.dev/plan/i0916/" class="text-fg-brand hover:underline">I0916</a>, <a href="https://majordomus.dev/plan/i0917/" class="text-fg-brand hover:underline">I0917</a>, <a href="https://majordomus.dev/plan/i0918/" class="text-fg-brand hover:underline">I0918</a>, <a href="https://majordomus.dev/plan/i0922/" class="text-fg-brand hover:underline">I0922</a>, <a href="https://majordomus.dev/plan/i0930/" class="text-fg-brand hover:underline">I0930</a></td>
@@ -466,35 +466,35 @@
   <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0">flowchart LR
     I0901[&quot;I0901&lt;br/&gt;The deployment description is a kind of the layer, not a provider file&quot;]:::done
     I0902[&quot;I0902&lt;br/&gt;The deployment object becomes typed Rust that refuses nonsense&quot;]:::done
-    I0903[&quot;I0903&lt;br/&gt;Deployment reads are declared once and projected everywhere&quot;]:::ready
-    I0904[&quot;I0904&lt;br/&gt;The listen address is one fact with two projections&quot;]:::ready
+    I0903[&quot;I0903&lt;br/&gt;Deployment reads are declared once and projected everywhere&quot;]:::done
+    I0904[&quot;I0904&lt;br/&gt;The listen address is one fact with two projections&quot;]:::done
     I0905[&quot;I0905&lt;br/&gt;Liveness and readiness are registered capabilities, not router hacks&quot;]:::ready
-    I0906[&quot;I0906&lt;br/&gt;Termination is graceful and proved against the real container&quot;]:::blocked
+    I0906[&quot;I0906&lt;br/&gt;Termination is graceful and proved against the real container&quot;]:::ready
     I0907[&quot;I0907&lt;br/&gt;The running process says what it is, from an allowlist&quot;]:::ready
     I0908[&quot;I0908&lt;br/&gt;A hosted process has no repository, and says so instead of failing&quot;]:::ready
     I0909[&quot;I0909&lt;br/&gt;The production image is a generated projection of the build specification&quot;]:::blocked
     I0910[&quot;I0910&lt;br/&gt;The release profile is chosen by measurement, not by folklore&quot;]:::blocked
     I0911[&quot;I0911&lt;br/&gt;A source change does not rebuild the world, and the context stays small&quot;]:::blocked
     I0912[&quot;I0912&lt;br/&gt;The image serves the site the canonical pipeline produced&quot;]:::blocked
-    I0913[&quot;I0913&lt;br/&gt;The provider configuration is generated, and the cheap profile is declared&quot;]:::blocked
-    I0914[&quot;I0914&lt;br/&gt;One deployment core, one command, and a dry run that mutates nothing&quot;]:::blocked
-    I0915[&quot;I0915&lt;br/&gt;Deployment joins the diagnostics that already exist&quot;]:::blocked
+    I0913[&quot;I0913&lt;br/&gt;The provider configuration is generated, and the cheap profile is declared&quot;]:::cancelled
+    I0914[&quot;I0914&lt;br/&gt;One deployment core, one command, and a dry run that mutates nothing&quot;]:::cancelled
+    I0915[&quot;I0915&lt;br/&gt;Deployment joins the diagnostics that already exist&quot;]:::cancelled
     I0916[&quot;I0916&lt;br/&gt;The smoke suite is derived from the route registry, never written twice&quot;]:::blocked
-    I0917[&quot;I0917&lt;br/&gt;A bad deployment can be undone deterministically&quot;]:::blocked
-    I0918[&quot;I0918&lt;br/&gt;The bootstrap credential is used once and belongs to nothing&quot;]:::ready
+    I0917[&quot;I0917&lt;br/&gt;A bad deployment can be undone deterministically&quot;]:::cancelled
+    I0918[&quot;I0918&lt;br/&gt;The bootstrap credential is used once and belongs to nothing&quot;]:::cancelled
     I0919[&quot;I0919&lt;br/&gt;Nothing secret and nothing local leaves in the image&quot;]:::blocked
     I0920[&quot;I0920&lt;br/&gt;The image&#39;s dependencies are known and its advisories are policy&quot;]:::blocked
     I0921[&quot;I0921&lt;br/&gt;Size is measured first and budgeted second&quot;]:::blocked
-    I0922[&quot;I0922&lt;br/&gt;The memory hypothesis is tested, not asserted&quot;]:::blocked
+    I0922[&quot;I0922&lt;br/&gt;The memory hypothesis is tested, not asserted&quot;]:::cancelled
     I0923[&quot;I0923&lt;br/&gt;Cold start and endpoint cost are benchmark targets like everything else&quot;]:::blocked
     I0924[&quot;I0924&lt;br/&gt;The decision is recorded where architecture decisions are recorded&quot;]:::cancelled
     I0925[&quot;I0925&lt;br/&gt;Every deployment rule is a check that runs&quot;]:::blocked
     I0926[&quot;I0926&lt;br/&gt;The deployment documentation is generated and reachable&quot;]:::blocked
-    I0927[&quot;I0927&lt;br/&gt;The cockpit shows the deployment from the same data&quot;]:::blocked
+    I0927[&quot;I0927&lt;br/&gt;The cockpit shows the deployment from the same data&quot;]:::ready
     I0928[&quot;I0928&lt;br/&gt;A pull request cannot merge a deployment that would not work&quot;]:::blocked
-    I0929[&quot;I0929&lt;br/&gt;Production deploys from CI with a token scoped to one application&quot;]:::blocked
+    I0929[&quot;I0929&lt;br/&gt;Production deploys from CI with a token scoped to one application&quot;]:::cancelled
     I0930[&quot;I0930&lt;br/&gt;The real image runs under the real limits before anything is deployed&quot;]:::blocked
-    I0931[&quot;I0931&lt;br/&gt;The application exists, one machine runs it, and the URL answers&quot;]:::blocked
+    I0931[&quot;I0931&lt;br/&gt;The application exists, one machine runs it, and the URL answers&quot;]:::cancelled
     I0932[&quot;I0932&lt;br/&gt;The milestone is accepted on its evidence&quot;]:::blocked
     I0901 --&gt; I0902
     I0901 --&gt; I0924
@@ -563,7 +563,7 @@
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/6f28de92072326209d83caa2053d4d2de1c16145/.ai/repo/project/milestones/fly-deployment.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/fly-deployment.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show fly-deployment</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/981ad2c3ac0fbfc56c739529c604ac95992283bc/.ai/repo/project/milestones/fly-deployment.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/fly-deployment.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show fly-deployment</code>.</p>
 </div>
 
 </div>
@@ -613,9 +613,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f28de92072326209d83caa2053d4d2de1c16145/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f28de92072326209d83caa2053d4d2de1c16145/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f28de92072326209d83caa2053d4d2de1c16145/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/981ad2c3ac0fbfc56c739529c604ac95992283bc/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/981ad2c3ac0fbfc56c739529c604ac95992283bc/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/981ad2c3ac0fbfc56c739529c604ac95992283bc/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -623,7 +623,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f28de92072326209d83caa2053d4d2de1c16145" class="font-mono underline">6f28de9</a> · inputs <span class="font-mono">5559eb20ef82</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/981ad2c3ac0fbfc56c739529c604ac95992283bc" class="font-mono underline">981ad2c</a> · inputs <span class="font-mono">2750e9e340b2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -2,9 +2,9 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "6f28de92072326209d83caa2053d4d2de1c16145",
+  "commit": "981ad2c3ac0fbfc56c739529c604ac95992283bc",
   "source_version": "0.25.0",
-  "registry_fingerprint": "0c45a7ec143887cdfa746607c463e59f58da873e7b05aec3eae494be22981daa"
+  "registry_fingerprint": "b90dabb75f4f1906afe7db4ff526febbdb4b98162bd2008ef0e1992e816b95f8"
  },
  "counts": {
   "pages": 2188,
@@ -5899,8 +5899,8 @@
   },
   {
    "route": "/plan/fly-deployment/",
-   "title": "fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence",
-   "description": "One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.",
+   "title": "fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence",
+   "description": "One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.",
    "section": "The plan"
   },
   {
@@ -11411,7 +11411,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.25.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.25.0, built from commit 6f28de92072326209d83caa2053d4d2de1c16145: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.25.0, built from commit 981ad2c3ac0fbfc56c739529c604ac95992283bc: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.25.0 — Rust API reference"
   },
   {
