@@ -262,6 +262,12 @@ mj_validate_projection() {
       file|region) ;;
       *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' $(mj_rel "$MJ_POLICY_FILE")"; j=$((j+1)); continue ;;
     esac
+    # Under a personal layer a target git tracks is the project's own file. It was not
+    # written by update and will not be, so it is not held to a stamp it never had.
+    if mj_personal_is_the_projects "$tgt"; then
+      mj_doctrine_skip projection "$tgt" "tracked, so it is the project's; a personal layer leaves it alone (point this projection at a file of your own)"
+      j=$((j+1)); continue
+    fi
     st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
     case "$st" in
       # update would die on this; doctor is the command that is supposed to say so first
@@ -286,13 +292,19 @@ mj_validate_projection() {
 # distilled from, so a generated target that holds a rule corpus fails here.
 mj_validate_bootstrap() {
   local j=0 tgt mode bad=0
-  if [ -f "$MJ_ROOT/README.md" ]; then
+  if mj_personal_active; then
+    # The chain starts at the project's README, and a personal layer changes nothing the
+    # project shares: the README is the repository's, the layer is one person's. The agent
+    # finds AGENTS.md beside it all the same.
+    mj_doctrine_skip bootstrap "README.md" "not asked to name AGENTS.md: the layer is personal, and the README is the project's"
+  elif [ -f "$MJ_ROOT/README.md" ]; then
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
+    mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
     if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
     elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
@@ -426,6 +438,15 @@ mj_validate_retention() {
   if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
   hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
+  # The sessions section is tracked and shared where the three above are local, and it is
+  # capped for the same reason: a store nothing bounds grows until a reader pays for it. A
+  # layer that declares no sessions section owes no cap for one. What `session archive`
+  # moved aside is not counted — that is what the command is for.
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
+  if ! cap="$(mj_pol_req session.retention_max_files)"; then mj_doctrine_fail retention "sessions" "policy declares no session.retention_max_files" "add it under session: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(mj_session_record_names | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "sessions" "$hc records, cap $cap"; else mj_doctrine_fail retention "sessions" "$hc records over cap $cap" "majordomus session archive --dry-run"; fi; fi
+  fi
 
   return 0
 }
@@ -435,19 +456,22 @@ mj_validate_retention() {
 # independent review capacity is a count. What does fail is a finding of `reasoning check`:
 # provider-independent code that names an advisor, CI that names a model credential, a
 # record claiming a review nobody planned. Read through the executable, never rebuilt here.
+# The CI and claims checks judge what this repository's own workflows and documents say,
+# so the executable runs them only where project.advisors-are-optional is declared; an
+# adopter is told so, as information (I1996). Every hint names a command an adopter has.
 mj_report_reasoning() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   local bin share advisors check
   bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
-    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (bin/majordomus-cli reasoning advisors)"
+    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (majordomus reasoning advisors)"
     return 0
   fi
   share="$(mj_rust_share "$MJ_ROOT")"
   advisors="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
                  "$bin" reasoning advisors --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || {
-    mj_info reasoning "-" "advisor availability could not be read (bin/majordomus-cli reasoning advisors)"; return 0; }
+    mj_info reasoning "-" "advisor availability could not be read (majordomus reasoning advisors)"; return 0; }
   mj_ok reasoning "share/advisors.yaml" "$(printf '%s' "$advisors" | jq -r '"operational, mode \(.mode.mode) (\(.mode.source)); independent review capacity \(.available) advisor(s)"')"
   printf '%s' "$advisors" | jq -r '.advisors[] | [.id, .status, .reason] | @tsv' | \
     while IFS="$(printf '\t')" read -r id status reason; do
@@ -458,14 +482,17 @@ mj_report_reasoning() {
   check="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
               "$bin" reasoning check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
   if [ -z "$check" ]; then
-    mj_info reasoning "-" "reasoning check could not run (bin/majordomus-cli reasoning check)"
+    mj_info reasoning "-" "reasoning check could not run (majordomus reasoning check)"
   elif [ "$(printf '%s' "$check" | jq -r '.ok')" = true ]; then
     mj_ok reasoning "-" "reasoning check: $(printf '%s' "$check" | jq -r '.checks | join(", ")') — no finding"
   else
     printf '%s' "$check" | jq -r '.findings[] | [.check, .subject, .message] | @tsv' | \
       while IFS="$(printf '\t')" read -r c subject message; do
-        mj_fail reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
+        mj_fail reasoning "$subject" "$c: $message" "majordomus reasoning check"
       done
+  fi
+  if [ -n "$check" ] && [ "$(printf '%s' "$check" | jq -r '.checks | index("ci") == null')" = true ]; then
+    mj_info reasoning "-" "ci, claims: not run; they judge Majordomus's own workflows and documents and apply where project.advisors-are-optional is declared (majordomus reasoning check)"
   fi
   return 0
 }
@@ -620,6 +647,8 @@ mj_validate_ai_layout() {
   elif [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
     mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
   else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
+  # a personal layer is held to what it claims on every doctor, not only when it was made
+  if mj_personal_active; then mj_personal_verify doctrine || bad=1; fi
   if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
     mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
   fi
@@ -978,14 +1007,16 @@ mj_validate_doctrine_wiring() {
     # reads its subject is excused for nothing if no job does. The header block only, as
     # test/run.sh reads it, so a case that writes the header into a fixture declares nothing.
     if [ -f "$ci" ]; then
-      local cf sj sjobs=""
-      for cf in "$root"/test/cases/*.sh; do
-        sj="$(awk '/^[[:space:]]*$/ { next }
-                   /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
-                            v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
-                            print v; exit } ; next }
-                   { exit }' "$cf" 2>/dev/null)"
-        [ -n "$sj" ] || continue
+      # one awk over every case rather than one per case: each file's header ends at its first
+      # line that is neither blank nor a comment, and yields its first such declaration
+      local sj sjobs=""
+      for sj in $(awk 'FNR == 1 { over = 0 }
+                       over { next }
+                       /^[[:space:]]*$/ { next }
+                       /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
+                                v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
+                                print v; over = 1 } ; next }
+                       { over = 1 }' "$root"/test/cases/*.sh 2>/dev/null); do
         case " $sjobs " in *" $sj "*) ;; *) sjobs="$sjobs $sj" ;; esac
       done
       for sj in $sjobs; do
@@ -1237,11 +1268,25 @@ mj_validate_schema_integrity() {
   # Every schema, wherever it sits. The files are two directories deep — the identifier
   # `majordomus.adr/v1` fixes the path share/schemas/majordomus/adr/adr.v1.schema.json — so
   # a one-level glob here examined nothing and reported it as a clean bill of health.
-  local f base id allow orphan="" bad="" m=0 gen=0
+  local f base id allow orphan="" bad="" m=0 gen=0 list facts="" fok fid fallow
+  list="$(find "$sdir" -name '*.schema.json' 2>/dev/null | LC_ALL=C sort)"
+  # Whether each file parses, and the two fields read from it, for every schema in one
+  # interpreter rather than two or three per file: the answers are mj_json_ok's and
+  # mj_json_string's, which each started python3 again for one file, and that start-up was
+  # most of what doctor spent here. Without python3 the per-file readers below still answer.
+  if command -v python3 >/dev/null 2>&1; then
+    facts="$(mktemp "${TMPDIR:-/tmp}/mj.schemas.XXXXXX")"
+    printf '%s\n' "$list" | python3 -c "$MJ_SCHEMA_FACTS_PY" > "$facts" 2>/dev/null || { rm -f "$facts"; facts=""; }
+  fi
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     base="$(basename "$f" .schema.json)"; m=$((m + 1))
-    mj_json_ok "$f" || { bad="$bad $base"; continue; }
+    if [ -n "$facts" ]; then
+      IFS= read -r -d '' fok <&3; IFS= read -r -d '' fid <&3; IFS= read -r -d '' fallow <&3
+      [ "$fok" = 1 ] || { bad="$bad $base"; continue; }
+    else
+      mj_json_ok "$f" || { bad="$bad $base"; continue; }
+    fi
     # The contracts of the generated documents are applied by the generator, which reads the
     # whole directory (apps/majordomus-cli/src/generate.rs) rather than any file by name, and
     # test/cases/52_generated_artifact_typing.sh asks the same question from the other side:
@@ -1249,11 +1294,11 @@ mj_validate_schema_integrity() {
     case "$f" in
       "$sdir"/generated/*) gen=$((gen + 1)); continue ;;
     esac
-    id="$(mj_schema_identifier "$f")"
+    if [ -n "$facts" ]; then id="$(mj_schema_identifier "$f" "$fid")"; else id="$(mj_schema_identifier "$f")"; fi
     case "$named" in
       *" $id "*) continue ;;
     esac
-    allow="$(mj_schema_allow "$f")"
+    if [ -n "$facts" ]; then allow="$(mj_schema_allow "$f" "$fallow")"; else allow="$(mj_schema_allow "$f")"; fi
     # `if`, not `a && b && continue`: bin/majordomus runs under `set -e`, where an && list
     # that fails as a whole ends the run rather than falling through to the next test.
     if [ -n "$allow" ] && mj_allow_applied "$allow"; then continue; fi
@@ -1262,9 +1307,10 @@ mj_validate_schema_integrity() {
     # source rather than a list kept here, so wiring one up is what makes it count.
     if mj_schema_named_in_source "$id"; then continue; fi
     orphan="$orphan $base"
-  done <<SCHEMAS
-$(find "$sdir" -name '*.schema.json' 2>/dev/null | LC_ALL=C sort)
+  done 3< "${facts:-/dev/null}" <<SCHEMAS
+$list
 SCHEMAS
+  [ -z "$facts" ] || rm -f "$facts"
 
   if [ -n "$bad" ]; then
     mj_doctrine_fail schema "share/schemas" "$(printf '%s' "$bad" | wc -w | tr -d ' ') schema(s) do not parse as JSON:$bad" "python3 -m json.tool share/schemas/*/*/${bad# }.schema.json"
@@ -1272,6 +1318,10 @@ SCHEMAS
     mj_doctrine_fail schema "share/schemas" \
       "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are applied by nothing — no kind names them and no allow-list the tool reads is derived from them:$orphan" \
       "grep -n 'schema:' share/kinds.yaml   # wire it to a kind, or delete the file"
+  elif [ "$MJ_JSON_PARSER" = none ]; then
+    # nothing here could parse a file, so "valid JSON" is not a thing this run established:
+    # it says what it did check and that the parse was not asked
+    mj_info schema "share/schemas" "$m schema(s), each applied; none was parsed, because neither python3 nor jq can run here — that every one is valid JSON was not established" "python3 -c 'import json'; jq -n 1"
   else
     mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract ($gen)"
   fi
@@ -1283,9 +1333,9 @@ SCHEMAS
 # path gives the identity back — share/schemas/majordomus/adr/adr.v1.schema.json is
 # majordomus.adr/v1 — so the file is read first and the path is the fallback, never the
 # other way round.
-mj_schema_identifier() {
+mj_schema_identifier() { # <file> [<its x-majordomus-schema, already read>]
   local id vendor name ver
-  id="$(mj_json_string "$1" x-majordomus-schema)"
+  if [ $# -ge 2 ]; then id="$2"; else id="$(mj_json_string "$1" x-majordomus-schema)"; fi
   if [ -n "$id" ]; then printf '%s' "$id"; return 0; fi
   name="$(basename "$(dirname "$1")")"
   vendor="$(basename "$(dirname "$(dirname "$1")")")"
@@ -1296,9 +1346,9 @@ mj_schema_identifier() {
 # The allow-list a schema is the source of, by name. Declared as `x-majordomus-allow`; where
 # it is not, the directory the schema sits in is the name, because that is what
 # `generate allow` writes.
-mj_schema_allow() {
+mj_schema_allow() { # <file> [<its x-majordomus-allow, already read>]
   local a
-  a="$(mj_json_string "$1" x-majordomus-allow)"
+  if [ $# -ge 2 ]; then a="$2"; else a="$(mj_json_string "$1" x-majordomus-allow)"; fi
   [ -n "$a" ] || a="$(basename "$(dirname "$1")")"
   printf '%s' "$a"
 }
@@ -1312,21 +1362,59 @@ mj_schema_named_in_source() {
   grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# One top-level string field of a JSON file, or nothing. A parser being absent is not a
-# reason to invent an answer: with neither python3 nor jq the field is unknown, and an
-# unknown identifier falls back to the path.
+# The JSON parser this process can actually run: python3, jq, or none. Found once.
+#
+# "Is python3 on PATH" is not that question. A version manager's shim is on PATH whether or
+# not it can start anything: asdf answers "No version is set for command python3" and exits
+# non-zero in any directory with no pinned Python, and pyenv does the same. Asked only
+# whether the command existed, the two readers below took the shim, read its failure as the
+# file's — every schema the tool ships "does not parse as JSON" — and never reached the jq
+# that was there. So each candidate is started on nothing first, and the one that runs is
+# used.
+MJ_JSON_PARSER=""
+mj_json_parser_find() {
+  [ -z "$MJ_JSON_PARSER" ] || return 0
+  if python3 -c 'import json' >/dev/null 2>&1; then MJ_JSON_PARSER=python3
+  elif jq -n 1 >/dev/null 2>&1; then MJ_JSON_PARSER=jq
+  else MJ_JSON_PARSER=none; fi
+}
+
+# One top-level string field of a JSON file, or nothing. A parser that cannot run is not a
+# reason to invent an answer: with neither python3 nor jq able to start, the field is
+# unknown, and an unknown identifier falls back to the path.
 mj_json_string() {
-  if command -v python3 >/dev/null 2>&1; then
-    python3 -c 'import json,sys
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3)
+      python3 -c 'import json,sys
 try:
     v = json.load(open(sys.argv[1])).get(sys.argv[2], "")
 except Exception:
     v = ""
-sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null
-  elif command -v jq >/dev/null 2>&1; then
-    jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null
-  fi
+sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null ;;
+    jq) jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null ;;
+  esac
 }
+
+# The batch form of mj_json_ok and mj_json_string over the paths on stdin, one per line:
+# for each, "1" or "0" (does it parse), then its x-majordomus-schema and x-majordomus-allow,
+# each NUL-terminated and each what "$(mj_json_string ...)" would have held — a string field
+# or nothing, without the trailing newlines and NUL bytes a command substitution drops.
+MJ_SCHEMA_FACTS_PY='import json,sys
+def field(d, k):
+    try:
+        v = d.get(k, "")
+    except Exception:
+        v = ""
+    return (v if isinstance(v, str) else "").replace("\0", "").rstrip("\n")
+for p in sys.stdin.read().split("\n"):
+    if not p:
+        continue
+    try:
+        d = json.load(open(p)); ok = "1"
+    except Exception:
+        d = None; ok = "0"
+    sys.stdout.write(ok + "\0" + field(d, "x-majordomus-schema") + "\0" + field(d, "x-majordomus-allow") + "\0")'
 
 # Is this schema applied through its generated allow-list? True when something in the tool
 # reads share/allow/<name>.txt, which is the only way a schema reaches the local half of the
@@ -1340,10 +1428,14 @@ mj_allow_applied() {
   grep -rqE "(ALLOW_DIR|share/allow)/$1\.txt" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# Does this file parse as JSON? The schemas are the tool's own data, so a parser being
-# absent is not a reason to pass them.
+# Does this file parse as JSON? Asked of a parser that runs (mj_json_parser_find): what a
+# parser that could not start says about a file is nothing about the file. With no parser
+# able to run the question cannot be put, and the file is not called broken on that account.
 mj_json_ok() {
-  if command -v python3 >/dev/null 2>&1; then python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1
-  elif command -v jq >/dev/null 2>&1; then jq -e . "$1" >/dev/null 2>&1
-  else return 0; fi
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3) python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1 ;;
+    jq) jq -e . "$1" >/dev/null 2>&1 ;;
+    *) return 0 ;;
+  esac
 }

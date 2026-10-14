@@ -377,27 +377,79 @@ report="$(printf '%s\n' "$suite_job" | sed -n 's/^ *MJ_TEST_REPORT: *//p' | head
 [ -n "$report" ] || { echo "    the suite job names no MJ_TEST_REPORT"; exit 1; }
 excludes "$(printf '%s\n' "$suite_job" | step_with 'suite-tree\.json')" "$report" \
   || { echo "    the suite job has no step measuring its tree with only its report ($report) excluded, and saying so"; exit 1; }
-# The rust job's outputs are the timings file and the artifact directory its rust-check step
-# names, and a relative name resolves where scripts/rust-check runs: in the crate's directory
-# when it changes into it. Read from the step and from the script, never written down here.
+# The rust job's outputs are whatever scripts/rust-check writes inside the checkout, and only
+# that script knows where a relative name lands: the timings where the caller stood, the
+# artifact directory under the crate it changes into. So the script says it (MJ_RUST_OUTPUTS)
+# and the measuring step reads what it said. The step once carried a list of its own, with
+# the timings under the crate: nothing was there, the file at the root was counted, and
+# every lane of every run measured a dirty tree.
+tree_step="$(printf '%s\n' "$rust_job" | step_with 'crate-tree\.json')"
+[ -n "$tree_step" ] || { echo "    the rust job has no step measuring its tree"; exit 1; }
+if printf '%s\n' "$tree_step" | grep -vE '^ *#' | grep -qF "':(exclude)"; then
+  echo "    the rust job's tree step excludes paths it wrote down itself"; exit 1
+fi
+outputs_at="$(printf '%s\n' "$tree_step" | sed -n 's/^ *OUTPUTS: *//p' | head -1)"
+case "$outputs_at" in '${{ runner.temp }}/'*) ;; *)
+  echo "    the rust job's tree step reads no list of outputs from outside the checkout: '$outputs_at'"; exit 1 ;;
+esac
+runs=0
+while IFS= read -r line; do
+  runs=$((runs + 1))
+done < <(printf '%s\n' "$rust_job" | grep -E '^ +run: .*scripts/rust-check ')
+said=0
+while IFS= read -r line; do
+  [ "$line" = "$outputs_at" ] && said=$((said + 1))
+done < <(printf '%s\n' "$rust_job" | sed -n 's/^ *MJ_RUST_OUTPUTS: *//p')
+[ "$runs" -ge 2 ] && [ "$said" = "$runs" ] \
+  || { echo "    $runs step(s) run scripts/rust-check and $said of them write the list the tree step reads ($outputs_at)"; exit 1; }
+
+# What the script says, asked of the script itself with the names the workflow's step gives
+# it: --lanes prints and builds nothing, and the list is written before any mode runs.
 run_line="$(printf '%s\n' "$check" | sed -n 's/^ *run: *//p' | head -1)"
 timings="$(printf '%s\n' "$run_line" | sed -n 's/.*MJ_CI_TIMINGS=\([^ ]*\).*/\1/p')"
 artifact="$(printf '%s\n' "$run_line" | sed -n 's/.*--artifact \([^ ]*\).*/\1/p')"
 [ -n "$timings" ] && [ -n "$artifact" ] \
   || { echo "    the rust-check step names no timings file or no artifact directory: $run_line"; exit 1; }
-RC="$ROOT/scripts/rust-check"
-base=""
-if grep -qE '^cd "\$CRATE"$' "$RC"; then
-  crate="$(sed -n 's|^CRATE="\$ROOT/\(.*\)"$|\1|p' "$RC" | head -1)"
-  [ -n "$crate" ] || { echo "    scripts/rust-check changes into a crate directory this case cannot read"; exit 1; }
-  base="$crate/"
-fi
-set --
-for out in "$timings" "$artifact"; do
-  case "$out" in /*|'$'*) ;; *) set -- "$@" "$base$out" ;; esac
-done
-excludes "$(printf '%s\n' "$rust_job" | step_with 'crate-tree\.json')" "$@" \
-  || { echo "    the rust job has no step measuring its tree with only the outputs rust-check writes excluded ($*), and saying so"; exit 1; }
+OUT="$W/rust-outputs.txt"
+( cd "$ROOT" && MJ_CI_TIMINGS="$timings" MJ_RUST_OUTPUTS="$OUT" scripts/rust-check --lanes --artifact "$artifact" >/dev/null ) \
+  || { echo "    scripts/rust-check could not say what it writes"; exit 1; }
+[ "$(wc -l < "$OUT" | tr -d ' ')" = 2 ] \
+  || { echo "    scripts/rust-check names other than its two outputs:"; cat "$OUT"; exit 1; }
+# a name outside the checkout is not an output inside it
+( cd "$ROOT" && MJ_CI_TIMINGS="$W/elsewhere.tsv" MJ_RUST_OUTPUTS="$W/none.txt" scripts/rust-check --lanes >/dev/null )
+[ ! -s "$W/none.txt" ] || { echo "    a timings file outside the checkout was named as an output inside it:"; cat "$W/none.txt"; exit 1; }
+
+# The step itself, run: in a checkout holding exactly what the script says it writes, the
+# tree is clean and the measurement names the same paths; one file more is dirty; and with
+# the list the step used to carry, the run's own timings are the dirt.
+printf '%s\n' "$tree_step" | awk '/^        run: \|$/ {f=1; next} f && /^          / {sub(/^          /, ""); print; next} f {exit}' > "$W/tree-step.sh"
+[ -s "$W/tree-step.sh" ] || { echo "    the tree step's script could not be read out of the workflow"; exit 1; }
+CO="$W/checkout"; mkdir -p "$CO"
+( cd "$CO" && git init -q && git config user.email t@example.invalid && git config user.name t \
+  && echo tracked > file && git add file && git commit -qm one ) || { echo "    no fixture checkout"; exit 1; }
+measure() {      # measure <outputs file> — run the step there; print "<working_tree> <excluded>"
+  rm -f "$W/rt/crate-tree.json"; mkdir -p "$W/rt"
+  ( cd "$CO" && RUNNER_TEMP="$W/rt" OUTPUTS="$1" bash -eu "$W/tree-step.sh" >/dev/null ) || return 1
+  jq -r '"\(.working_tree) \(.excluded | join(","))"' "$W/rt/crate-tree.json"
+}
+while IFS= read -r p; do
+  case "$p" in */dist) mkdir -p "$CO/$p"; echo bin > "$CO/$p/majordomus" ;; *) mkdir -p "$(dirname "$CO/$p")"; echo row > "$CO/$p" ;; esac
+done < "$OUT"
+want="clean $(paste -sd, "$OUT")"
+got="$(measure "$OUT")" || { echo "    the tree step failed in a fixture checkout"; exit 1; }
+[ "$got" = "$want" ] || { echo "    a run's own outputs were not measured as a clean tree: '$got', expected '$want'"; exit 1; }
+[ "$(jq -r .commit "$W/rt/crate-tree.json")" = "$(git -C "$CO" rev-parse HEAD)" ] \
+  || { echo "    the measurement names another commit than the checkout's"; exit 1; }
+echo stray > "$CO/left-behind.txt"
+got="$(measure "$OUT")"
+[ "${got%% *}" = dirty ] || { echo "    a file the run did not name was not measured as dirt: '$got'"; exit 1; }
+rm -f "$CO/left-behind.txt"
+printf 'apps/majordomus-cli/%s\napps/majordomus-cli/%s\n' "$timings" "$artifact" > "$W/old-list.txt"
+got="$(measure "$W/old-list.txt")"
+[ "${got%% *}" = dirty ] || { echo "    the list that named the timings under the crate measures clean: this case proves nothing"; exit 1; }
+# a run that left no list excludes nothing, and says so
+got="$(measure "$W/absent.txt")"
+[ "$got" = "dirty " ] || { echo "    with no list of outputs the step did not measure everything: '$got'"; exit 1; }
 # ... and before the plan it downloads into the checkout
 at_tree="$(printf '%s\n' "$rust_job" | grep -n 'crate-tree\.json' | head -1 | cut -d: -f1)"
 at_plan="$(printf '%s\n' "$rust_job" | grep -n 'name: ci-plan$' | head -1 | cut -d: -f1)"

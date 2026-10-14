@@ -1,30 +1,55 @@
 #!/usr/bin/env bash
-# verdict — the one required status of the workflow, decided from the plan and from what
-# the jobs reported. It is green only when planning succeeded, every gate the plan selected
-# ran in a job that succeeded, and no job that ran failed or was cancelled. A gate the plan
+# verdict — the one required status of the workflow, decided from the plan, from what the
+# jobs reported and from what each gate's steps left behind. It is green only when planning
+# succeeded, every gate the plan selected ran in a job that succeeded *and left a receipt
+# saying its steps succeeded*, and no job that ran failed or was cancelled. A gate the plan
 # left out may be skipped, and its job says why. An empty selection is a failure: a plan
 # that selects nothing is a broken plan, never a pass.
 #
-#   scripts/ci/verdict --plan plan.json --needs needs.json [--summary FILE]
+#   scripts/ci/verdict --plan plan.json --needs needs.json --receipts DIR [--summary FILE]
 #
 # needs.json is the workflow's `needs` context (toJSON(needs)): a job name to {result: ...}.
+# DIR holds the receipts every gate job uploads: rows of "<gate><TAB><outcome><TAB><source>"
+# in any *.tsv beneath it, written by scripts/ci/timed, scripts/ci/run-plan and the closing
+# step of each job that runs a gate any other way, from `steps.<id>.outcome` — so a skipped
+# or cancelled step is recorded as what it was, and an outcome that came back empty (a step
+# id naming no step) is read as `absent`. A job's `success` says only
+# that none of its steps failed — a step its condition skipped does not fail — so a selected
+# gate is green only with at least one receipt and every receipt `success`. No receipt is
+# red: the gate never said it ran, and a missing directory is no receipts, never a pass.
 # The table it writes (to --summary, or $GITHUB_STEP_SUMMARY, or stdout) says for every
 # gate whether it was planned, which job carried it, and what that job reported.
 # Exit 0 green, 1 red, 2 usage.
 set -eu
-PLAN=""; NEEDS=""; SUMMARY="${GITHUB_STEP_SUMMARY:-}"
+PLAN=""; NEEDS=""; RECEIPTS=""; SUMMARY="${GITHUB_STEP_SUMMARY:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --plan) PLAN="$2"; shift 2 ;;
     --needs) NEEDS="$2"; shift 2 ;;
+    --receipts) RECEIPTS="$2"; shift 2 ;;
     --summary) SUMMARY="$2"; shift 2 ;;
     *) echo "verdict: unknown option $1" >&2; exit 2 ;;
   esac
 done
-[ -n "$PLAN" ] && [ -n "$NEEDS" ] || { echo "verdict: --plan and --needs are required" >&2; exit 2; }
+[ -n "$PLAN" ] && [ -n "$NEEDS" ] && [ -n "$RECEIPTS" ] || { echo "verdict: --plan, --needs and --receipts are required" >&2; exit 2; }
 command -v jq >/dev/null || { echo "verdict: jq is required" >&2; exit 2; }
 jq -e '.schema == 1 and (.gates | type == "array")' "$PLAN" >/dev/null 2>&1 || { echo "verdict: $PLAN is not a plan" >&2; exit 1; }
 jq -e 'type == "object"' "$NEEDS" >/dev/null 2>&1 || { echo "verdict: $NEEDS is not the needs context" >&2; exit 1; }
+
+# Every receipt, as "<gate><TAB><outcome>" lines; none when the directory is missing or empty,
+# which leaves every selected gate without one, and so red.
+receipts=""
+if [ -d "$RECEIPTS" ]; then
+  receipts="$(find "$RECEIPTS" -type f -name '*.tsv' -exec cat {} + 2>/dev/null \
+    | awk -F'\t' 'NF >= 1 && $1 != "" { print $1 "\t" ($2 == "" ? "absent" : $2) }')"
+fi
+# "<n> <outcomes>" for one gate: how many receipts it left, and the distinct outcomes that
+# were not success, comma-joined (empty when all succeeded).
+receipt_of() {
+  printf '%s\n' "$receipts" | awk -F'\t' -v g="$1" '
+    $1 == g { n++; if ($2 != "success" && !seen[$2]++) bad = bad (bad == "" ? "" : ",") $2 }
+    END { printf "%d %s", n, bad }'
+}
 
 red=0; rows=""
 say() { rows="$rows
@@ -55,7 +80,19 @@ for g in $(jq -r '.gates[].id' "$PLAN"); do
   result="$(jq -r --arg j "$job" '.[$j].result // "absent"' "$NEEDS")"
   if [ "$selected" = true ]; then
     case "$result" in
-      success) say "$g" "$job" "run ($reason)" "success" "" ;;
+      success)
+        read -r n bad <<EOF_RECEIPT
+$(receipt_of "$g")
+EOF_RECEIPT
+        if [ "$n" = 0 ]; then
+          say "$g" "$job" "run ($reason)" "success, **no receipt**" "its job succeeded and no step of it said this gate ran"
+          echo "verdict: gate $g was selected and its job $job succeeded, but no step left a receipt for it: it never said it ran"; red=1
+        elif [ -n "$bad" ]; then
+          say "$g" "$job" "run ($reason)" "success, **step $bad**" "its job succeeded while a step of this gate reported $bad"
+          echo "verdict: gate $g was selected and its job $job succeeded, but a step of it reported $bad"; red=1
+        else
+          say "$g" "$job" "run ($reason)" "success" "$n receipt(s)"
+        fi ;;
       *) say "$g" "$job" "run ($reason)" "**$result**" "$(note_for "$result")"; echo "verdict: gate $g was selected and its job $job reported $result"; red=1 ;;
     esac
   else

@@ -1,0 +1,7 @@
+# M12: Delivery, deploy verification and non-fiction final report
+
+Run repository's canonical format/lint/build/test/schema/projection/docs/CI commands. Execute fresh-clone and clean injected repo demos; start two local MCP clients, run UI, 2-3 authenticated mesh peers, cross-peer handover, deliberate conflict/partition, restart recovery, compare CLI/HTTP/MCP projections and verify safeguards. Capture deterministic logs, timings and screenshots with provenance. Reconcile modified docs, examples, generated registries/OpenAPI, ADR, changelog, README and user-facing install guide. Remove obsolete code/config/duplicate indexes. Verify desktop and mobile flow and documented safe remote opt-in.
+
+Follow actual versioning, merge, release, deployment, check and rollback policy. Do NOT invent tags or claim production rollout if access/permissions not available. No gate bypass or destructive PR merge without authorization. Supply release URL, commit SHA, tag, actual deployed endpoint and smoke result only if confirmed.
+
+Final report must contain: status per mission; before/after capability matrix; architectures reused vs removed; exact commands/result summaries; security proof and limits; failure test matrix; evidence path IDs; cross-surface parity; measured SLOs; install/new repo proof; current version and deploy confirmation; remaining blocked gaps ranked by risk. A checked box without evidence is a failed box. End state: runtime is easy to start, mesh safe to join, agents truly coordinate, surfaces never disagree, failure is visible and recovery tested.

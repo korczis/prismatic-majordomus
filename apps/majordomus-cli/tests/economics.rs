@@ -11,7 +11,7 @@ mod common;
 
 use std::collections::BTreeMap;
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 use common::{run_in, Fixture, Served};
 use majordomus_cli::economics::model::*;
@@ -1321,7 +1321,7 @@ fn the_check_refuses_a_typed_savings_number_and_an_unsupported_guarantee() {
 }
 
 fn mcp_call(f: &Fixture, tool: &str, arguments: Value) -> Value {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_majordomus"))
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())

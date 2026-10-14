@@ -46,6 +46,15 @@ pub fn run(args: ServedArgs) -> Result<u8> {
             .map_err(Error::Transport)?;
             Ok(u8::try_from(v["exit_code"].as_i64().unwrap_or(12)).unwrap_or(12))
         }
+        ServedCommand::Forge => {
+            let v = execute(ctx, &["served", "forge"], json!({}))?;
+            match args.format {
+                OutputFormat::Json => writeln!(out, "{}", pretty(&v)),
+                OutputFormat::Text => writeln!(out, "{}", forge_line(&v)),
+            }
+            .map_err(Error::Transport)?;
+            Ok(u8::try_from(v["exit_code"].as_i64().unwrap_or(12)).unwrap_or(12))
+        }
         ServedCommand::Show { commit, deployment } => {
             let input = strip_nulls(json!({ "commit": commit, "deployment": deployment }));
             let v = execute(ctx, &["served", "show"], input)?;
@@ -79,6 +88,25 @@ pub fn run(args: ServedArgs) -> Result<u8> {
             }
             Ok(0)
         }
+    }
+}
+
+/// The receipt of asking the forge, as one line: what it held, or why it was not asked.
+fn forge_line(v: &Value) -> String {
+    if v["observed"].as_bool() == Some(true) {
+        format!(
+            "observed {} deployment(s) to {} environment(s) and {} release(s) of {} at {}",
+            v["deployments"],
+            v["environments"],
+            v["releases"],
+            v["repository"].as_str().unwrap_or("?"),
+            v["observed_at"].as_str().unwrap_or("?"),
+        )
+    } else {
+        format!(
+            "the forge's deployments were not observed: {}",
+            v["reason"].as_str().unwrap_or("no reason was given")
+        )
     }
 }
 
@@ -123,4 +151,48 @@ fn execute(ctx: &crate::capability::Context, path: &[&str], input: Value) -> Res
             reason: other.to_string(),
         },
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_receipt_of_asking_the_forge_is_one_line_either_way() {
+        let held = json!({"observed": true, "deployments": 50, "environments": 2, "releases": 21,
+            "repository": "o/r", "observed_at": "2026-10-12T21:00:00Z", "exit_code": 0});
+        assert_eq!(
+            forge_line(&held),
+            "observed 50 deployment(s) to 2 environment(s) and 21 release(s) of o/r at 2026-10-12T21:00:00Z"
+        );
+        let refused = json!({"observed": false, "reason": "gh could not run", "exit_code": 12});
+        assert_eq!(
+            forge_line(&refused),
+            "the forge's deployments were not observed: gh could not run"
+        );
+        assert!(forge_line(&json!({})).ends_with("no reason was given"));
+    }
+
+    /// `served forge`, run whole, in a repository the forge does not know: exit 12, said.
+    #[test]
+    fn asking_a_forge_that_knows_nothing_ends_on_not_answered() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            let code = run(ServedArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(repo.root().to_path_buf()),
+                    discovery: crate::cli::DiscoveryMode::Filesystem,
+                    strict: false,
+                    share: Some(
+                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share"),
+                    ),
+                },
+                command: ServedCommand::Forge,
+                format,
+            })
+            .expect("a receipt, not an error");
+            assert_eq!(code, 12);
+        }
+    }
 }

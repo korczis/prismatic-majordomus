@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "mission": "derived verified public surfaces",
+  "atoms": [
+    {
+      "id": "A00",
+      "title": "Baseline audit and evidence map",
+      "dependencies": [],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A01",
+      "title": "Intent, milestone and proof governance",
+      "dependencies": [
+        "A00"
+      ],
+      "public_checkpoint": false
+    },
+    {
+      "id": "A02",
+      "title": "Canonical public presentation schema",
+      "dependencies": [
+        "A00",
+        "A01"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A03",
+      "title": "Homepage story and value framing",
+      "dependencies": [
+        "A02"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A04",
+      "title": "Shared design tokens and components",
+      "dependencies": [
+        "A02"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A05",
+      "title": "Responsive navigation and docs IA",
+      "dependencies": [
+        "A03",
+        "A04"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A06",
+      "title": "Proof-first refusal walkthrough",
+      "dependencies": [
+        "A03",
+        "A04"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A07",
+      "title": "Canonical relationship graph explorer",
+      "dependencies": [
+        "A02",
+        "A04"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A08",
+      "title": "Feature/domain/guarantee drill-down",
+      "dependencies": [
+        "A02",
+        "A04",
+        "A06"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A09",
+      "title": "Docs architecture and connected reference",
+      "dependencies": [
+        "A05",
+        "A08"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A10",
+      "title": "Public-safe search and keyboard UX",
+      "dependencies": [
+        "A02",
+        "A05",
+        "A09"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A11",
+      "title": "Project-oriented onboarding and install",
+      "dependencies": [
+        "A03",
+        "A08",
+        "A09"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A12",
+      "title": "Performance, a11y, mobile hardening",
+      "dependencies": [
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A13",
+      "title": "Generalized .ai and CI enforcement",
+      "dependencies": [
+        "A02",
+        "A06",
+        "A08",
+        "A09",
+        "A10"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A14",
+      "title": "Continuous release and Pages verification",
+      "dependencies": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11",
+        "A12",
+        "A13"
+      ],
+      "public_checkpoint": true
+    },
+    {
+      "id": "A15",
+      "title": "Final dogfood and zero-registration audit",
+      "dependencies": [
+        "A12",
+        "A13",
+        "A14"
+      ],
+      "public_checkpoint": false
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit as a development surface: baseline, archaeology and gap matrix"
 description = "forensic finding, 2026-09-10: what the Cockpit would need in order to become a development surface — the governance preflight and its two defects, the two-program split, the system run end to end with every command and response recorded, the gap matrix, the drift audit, and the phased plan with the failures that must be fixed first"
-weight = 39
+weight = 41
 [extra]
 source = "docs/COCKPIT_IDE_AUDIT.md"
 +++
@@ -641,7 +641,7 @@ evidence,finish}.sh`, `src/cockpit/{nav,pages}.rs`, `docs/COCKPIT.md`.
 `docs/generated/**`, `site/data/**`, `site/content/**`, `share/allow/**`,
 `share/sections/**`, `AGENTS.md`, `CLAUDE.md`, `.bb/AGENTS.md`, `share/design/*.css`,
 `apps/majordomus-cli/src/web/tokens.css`, `apps/majordomus-cli/src/design/tokens.yaml`,
-`deploy/Dockerfile`, `fly.toml`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
+`deploy/Dockerfile`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
 `docs/PAGES_STATUS.md`. Each is written by `majordomus generate` or `scripts/derive` and
 checked against a fresh generation; an edit is a reported failure, not a silent divergence.
 

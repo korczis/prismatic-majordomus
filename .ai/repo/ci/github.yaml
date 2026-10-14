@@ -1,0 +1,102 @@
+# The model of the GitHub projection on the trunk: who applies a landed change to the plan,
+# what that actor may and may not do, and how long the trunk may carry the change before
+# GitHub must show it. .github/workflows/github.yml is an adapter over this file and carries
+# no rule of its own; test/cases/1097_the_projection_is_applied_at_landing.sh holds the two to
+# each other. `scripts/ci/github-check` reads this file for one value, apply.window, and
+# test/cases/1038_a_head_is_judged_against_what_it_changes.sh holds the gate to it, with a
+# fixture that declares its own.
+#
+# GitHub is a projection of the trunk and of nothing else: `scripts/github-sync --apply`
+# refuses any tree that is not the tip of the remote's default branch. So a change to a plan
+# record cannot reach GitHub before it lands. After it lands, the landing applies it: the
+# workflow below runs on every push to the default branch, asks what GitHub does not show yet,
+# applies it and proves the result with the gate (rule
+# project.the-projection-is-applied-at-landing). Until 2026-10-12 that step was a person's,
+# "a deliberate act and not a consequence of the merge", and on that day master went red
+# because the person was busy: I2460 to I2478 stayed behind past the window (validate run
+# 38278173940 on 81178f5362). A person's `scripts/github-sync --apply` from master remains the
+# fallback when the workflow fails, and is never the mechanism.
+#
+# Between a landing and its apply the remote is behind by exactly what landed. The gate
+# reports that as PENDING rather than refusing it, for as long as apply.window says, and
+# refuses it afterwards with the remedy named. The window now bounds how late the workflow
+# may be, and how long a failed run may go unrepaired, rather than how busy a person may be.
+version: 1
+
+apply:
+  # Seconds between a landing that changes what GitHub should show and the moment the gate
+  # refuses the trunk for not showing it. A bound on lateness, not a target: the workflow
+  # starts with the push.
+  #
+  # What is measured: one read of the remote by `scripts/github-sync --check` took 111 s on
+  # 2026-10-10 against 271 issues and 27 milestones. An apply is that read plus its writes,
+  # which the adapter paces one second apart, and it rewrites every milestone's description on
+  # every run; no apply was timed for this file, so its cost is that arithmetic and not a
+  # measurement. The workflow adds a build of the executable and a first read before the
+  # apply, neither of them timed on a runner yet. Thirty minutes is the lateness this
+  # repository already allows its other projection of the trunk, the public site
+  # (`scripts/ci/pages-check`, OWED_AFTER). A much shorter window would refuse a run that was
+  # merely queued behind the one before it; a much longer one would let GitHub go on telling a
+  # reader what the trunk stopped saying. The first runs of the workflow are the measurement
+  # this number is waiting for.
+  window: 1800
+
+# ---------------------------------------------------------------- who applies
+# The landing. The file named here is the only actor; a person's apply is the fallback.
+actor:
+  workflow: .github/workflows/github.yml
+  job: apply
+  # minutes; every step of the job declares a smaller bound of its own
+  bound: 60
+  fallback: scripts/github-sync --apply
+
+# ---------------------------------------------------------------- when it runs
+# Every push to the default branch, with no path filter: what GitHub shows is rendered from
+# the plan, the adapter and the tool, and a status is derived, so a path list would be a
+# second declaration of what can move a rendering. A daily schedule so a failed or cancelled
+# run does not leave the question unasked until the next landing, and a dispatch for a person.
+# No trigger a pull request can reach: a head's plan is never the shared one.
+trigger:
+  push:
+    branches: [master]
+  schedule: '23 5 * * *'
+  dispatch: true
+  # one apply at a time and never cancelled: a cancelled apply is a remote left half written
+  concurrency: github-projection
+
+# ---------------------------------------------------------------- what the token may do
+# Exactly these and nothing broader. Milestones and labels are written through `issues`.
+permissions:
+  contents: read
+  issues: write
+
+# ---------------------------------------------------------------- what reads the plan
+# The Rust executable, named to the adapter by this variable. Without it the adapter reads the
+# model through the shell fallback, which reported 318 drift findings on 2026-10-12 where the
+# executable reported 26. Every phase refuses to run when the variable names no executable.
+executable: MAJORDOMUS_BIN
+
+# ---------------------------------------------------------------- the phases, in order
+# Each `runs` is the command a person can run too.
+phases:
+  - id: owed
+    runs: scripts/github-sync --check
+    summary: what GitHub does not show yet; exit 0 means nothing is owed and that reading is the proof, exit 11 means the next two phases run, anything else fails the run
+
+  - id: apply
+    when: something is owed and the checkout is still the tip of the default branch
+    runs: scripts/github-sync --apply
+    summary: the trunk's plan is written to GitHub; a run the trunk has moved past applies nothing, because the landing that moved it has a run of its own
+
+  - id: prove
+    when: this run applied
+    runs: scripts/ci/github-check
+    summary: the gate validate runs, on the trunk, straight after the apply; a record still behind, a region a person edited or an unmanaged issue fails this run
+
+# ---------------------------------------------------------------- what the actor may not do
+forbidden:
+  - overwrite a region a person edited (--force)
+  - write or lower the drift baseline (--write-baseline)
+  - run for a pull request or from any tree that is not the tip of the default branch
+  - apply without the executable
+  - be cancelled by a newer run

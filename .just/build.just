@@ -12,6 +12,21 @@ build:
     source "{{root}}/lib/rust_bin.sh" && mj_rust_space_check "{{root}}" "just build"
     RUSTFLAGS='' cargo build --locked --manifest-path "{{manifest}}" {{ if profile == "release" { "--release" } else { "" } }}
 
+# Every build on this machine's builder shares its layers and its sccache mount, whichever
+# worktree or branch it started from, so a second worktree does not recompile the
+# dependencies. MJ_IMAGE_CACHE_FROM=ghcr.io/korczis/prismatic-majordomus:buildcache also
+# imports the layers master published (linux/amd64; on an arm64 machine they do not apply).
+# The commit and the dirty flag are this checkout's; the image answers them on /api/v1/live.
+#
+# Build the deployment image from the generated deploy/Dockerfile and load it (never pushes).
+[group('build')]
+image tag="majordomus:dev":
+    docker buildx build -f "{{root}}/deploy/Dockerfile" \
+      ${MJ_IMAGE_CACHE_FROM:+--cache-from "type=registry,ref=$MJ_IMAGE_CACHE_FROM"} \
+      --build-arg MAJORDOMUS_BUILD_COMMIT="$(git -C "{{root}}" rev-parse HEAD)" \
+      --build-arg MAJORDOMUS_BUILD_DIRTY="$(git -C "{{root}}" diff --quiet HEAD -- apps/majordomus-cli && echo false || echo true)" \
+      -t "{{tag}}" --load "{{root}}"
+
 # Build the release executable.
 [group('build')]
 build-release:

@@ -1,0 +1,36 @@
+id: I2417
+milestone: public-proof
+title: "The landing page is a click-through story: an editorial hero and an evidence chain a visitor steps through"
+slug: the-landing-page-is-a-click-through-story
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the homepage the editorial typography and the click-through interactivity of the prismatic case reports: a serif display hero and section heads, and an interactive evidence chain in the proof section — what the repository declares, what the registry generates, the interfaces it reaches, the rules a machine decides, the guaranteed claims, the executable use cases and what a recorded run supports — in which every node is a button that opens its figure, its sentence and its source, and every edge is solid where a machine holds the link and dashed where it is declared and awaits evidence."
+why: "Owner order of 2026-10-11: the landing page should look and behave like the case reports (prismatic-platform cases, report v57): a serif display with an italic accent, a mono eyebrow, an ownership graph whose boxes and edges open what is known with links to the source, solid lines for recorded facts and dashed for inference. The homepage showed its evidence as static cards, and nothing on it could be stepped through."
+current_state: "The hero and section heads are a sans display; the proof section shows claim counts as static cards; nothing on the homepage shows how a declaration reaches a recorded run, and no figure distinguishes what a machine holds from what is only declared."
+desired_state: "The hero title and every landing section head are set in the serif display, the subtitle italic in the brand colour, the eyebrow mono and tracked. The proof section opens with the evidence chain (site/templates/partials/evidence-chain.html): seven nodes in two lanes, every figure derived from the product model, the claims matrix and the catalogue, every node's sentence an existing derived or marketing.toml one, the last edge dashed while the evidence verdict supports fewer than the guaranteed claims. Without JavaScript every node's detail is shown in order; with it, Alpine shows the chosen one. The behaviour spec evidence-chain proves that choosing a node shows that node alone, pressed, with its figure. No graph runtime, no new script, no remote asset."
+scope:
+  - "site/templates/index.html"
+  - "site/templates/components.html"
+  - "site/templates/partials/evidence-chain.html"
+  - "site/data/marketing.toml"
+  - "scripts/lib/interaction-specs/evidence-chain.mjs"
+non_scope:
+  - "Chart.js or any charting runtime: the figure is markup and the homepage's budget is unchanged."
+  - "A new homepage section: the chain sits inside the proof section homepage.toml already declares."
+  - "Rewriting the copy: the only new sentence is the chain's legend in marketing.toml, within its budget."
+depends_on: []
+acceptance_criteria:
+  - "Every node of the chain is a button; choosing one shows its detail alone and marks it pressed; the behaviour spec evidence-chain claims exactly those buttons"
+  - "Every figure in the chain is derived; the evidence edge is dashed while the supported count is below the guaranteed count"
+  - "scripts/ci/homepage-check, scripts/ci/interaction-check and scripts/site-check pass; the homepage stays within its asset budget"
+  - "At 390 px the page does not scroll horizontally and the chain stacks into one column"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/interaction-check"
+  - "scripts/ci/homepage-check"
+  - "scripts/interaction-probe --only '/'"
+evidence_required:
+  - "evidence_chain_interaction_probe"
+created_at: 2026-10-11
+updated_at: 2026-10-11
