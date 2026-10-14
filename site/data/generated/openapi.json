@@ -65,6 +65,7 @@
     "op-executions-get": "docs/api/executions/",
     "op-executions-list": "docs/api/executions/",
     "op-executions-protocol": "docs/api/executions/",
+    "op-executions-report": "docs/api/executions/",
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
@@ -943,6 +944,8 @@
     "schema-ReleaseVersionReport": "docs/api/release/",
     "schema-ReleaseView": "docs/api/distribution/",
     "schema-ReleasesReport": "docs/api/distribution/",
+    "schema-ReportAnswer": "docs/api/executions/",
+    "schema-ReportInput": "docs/api/executions/",
     "schema-RepositoryEnvironment": "docs/api/environment/",
     "schema-RepositoryIdentity": "docs/api/environment/",
     "schema-RepositoryInfo": "docs/api/repository/",
@@ -1219,8 +1222,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 194,
-    "schemas": 965,
+    "operations": 195,
+    "schemas": 967,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1377,6 +1380,7 @@
     "executions.get": "executions",
     "executions.list": "executions",
     "executions.protocol": "executions",
+    "executions.report": "executions",
     "executions.start": "executions",
     "gates.completion": "gates",
     "gates.model": "gates",
@@ -2259,6 +2263,8 @@
     "ReleaseVersionReport": "release",
     "ReleaseView": "distribution",
     "ReleasesReport": "distribution",
+    "ReportAnswer": "executions",
+    "ReportInput": "executions",
     "RepositoryEnvironment": "environment",
     "RepositoryIdentity": "environment",
     "RepositoryInfo": "repository",
@@ -2620,6 +2626,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         }
       ],
       "type": "object",
@@ -2651,7 +2664,7 @@
           "value": "mcp"
         },
         {
-          "description": "The command line of this process.",
+          "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid.",
           "value": "cli"
         },
         {
@@ -18913,6 +18926,7 @@
         "executions.events",
         "executions.get",
         "executions.protocol",
+        "executions.report",
         "executions.start",
         "gates.model",
         "gates.completion",
@@ -20545,7 +20559,8 @@
       "type": "one of 12 variants",
       "used_by": [],
       "used_by_schemas": [
-        "EventHistory"
+        "EventHistory",
+        "ReportInput"
       ],
       "values": [],
       "variants": [
@@ -21227,7 +21242,8 @@
       ],
       "used_by_schemas": [
         "CancelReport",
-        "ExecutionList"
+        "ExecutionList",
+        "ReportAnswer"
       ],
       "values": [],
       "variants": []
@@ -44658,6 +44674,117 @@
       "variants": []
     },
     {
+      "description": "The answer of `executions.report`.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportAnswer",
+      "properties": [
+        {
+          "description": "How many of the reported events were applied.",
+          "name": "applied",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing.",
+          "name": "through",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it.",
+          "name": "cancel_requested",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The execution as this server now holds it.",
+          "name": "execution",
+          "refs": [
+            "ExecutionView"
+          ],
+          "required": true,
+          "type": "ExecutionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ReportInput",
+      "properties": [
+        {
+          "description": "The execution's id, as the reporting process minted it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability it runs, by its canonical id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That capability's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it.",
+          "name": "input",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        },
+        {
+          "description": "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report.",
+          "name": "cancellable",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The process that runs it.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat.",
+          "name": "events",
+          "refs": [
+            "ExecutionEvent"
+          ],
+          "required": false,
+          "type": "array of ExecutionEvent"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n`RepositoryEnvironment::generated_at`.",
       "home": "environment",
       "is_enum": false,
@@ -60580,7 +60707,7 @@
       "slug": "evidence"
     },
     {
-      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
       "name": "executions",
       "operations": [
         {
@@ -60592,7 +60719,7 @@
           "cache_detail": "",
           "cli": "executions list",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions?limit=50\"",
-          "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+          "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
           "home": "executions",
           "id": "executions.list",
           "kind": "query",
@@ -61008,6 +61135,65 @@
           "summary": "The live channel's contract"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "ReportInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/report\" -H \"content-type: application/json\" -d '{}'",
+          "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+          "home": "executions",
+          "id": "executions.report",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/executions/report",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Report an execution another process runs: the result.",
+              "schema": "ReportAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReportAnswer",
+          "stability": "behaviorally_verified",
+          "summary": "Report an execution another process runs"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [
@@ -61021,7 +61207,7 @@
           "cache_detail": "",
           "cli": "run",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/start\" -H \"content-type: application/json\" -d '{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}'",
-          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
           "home": "executions",
           "id": "executions.start",
           "kind": "command",

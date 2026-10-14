@@ -379,6 +379,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:executions.report",
+      "path": "/evidence/capabilities/executions-report/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:executions.start",
       "path": "/evidence/capabilities/executions-start/"
     },
@@ -4585,6 +4590,16 @@
       "members": [
         "command:executions protocol"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:executions.report": {
+      "kind": "capability",
+      "id": "executions.report",
+      "page": "/evidence/capabilities/executions-report/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -27521,6 +27536,7 @@
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:3021_a_tag_does_not_freeze_the_queue",
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
+    "suite:3024_a_run_is_seen_by_the_server",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
     "suite:305_a_command_is_claimed_or_classified",

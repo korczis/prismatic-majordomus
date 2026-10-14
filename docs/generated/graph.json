@@ -673,6 +673,15 @@
         "status": "query"
       },
       {
+        "id": "capability:executions.report",
+        "kind": "capability",
+        "label": "executions.report",
+        "summary": "Report an execution another process runs",
+        "route": "/cockpit/capabilities/executions.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:executions.start",
         "kind": "capability",
         "label": "executions.start",
@@ -28783,6 +28792,8 @@
             "The claim is proved by polling the server while a run is in flight, not by reading the source",
             "No surface describes an execution history that no writer reaches"
           ],
+          "completed_at": "2026-10-14T16:47:12Z",
+          "completed_event": "sha256:2de75be2d181a8ab00c6c2bdc0851ea5ed72d899a8197d829d90c9e6405813b4",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -28805,7 +28816,9 @@
             "test/cases"
           ],
           "slug": "execution-planes-converge",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T16:47:04Z",
+          "started_event": "sha256:010948b9443b764eb34755011574199405c1a3c7f7dd2e0a8205e9415854d461",
+          "updated_at": "2026-10-14T16:47:12Z",
           "validation": [
             "bash test/run.sh 100_execution_plane",
             "bin/majordomus-cli capabilities validate"
@@ -53022,6 +53035,13 @@
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "kind": "test",
+        "label": "test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "route": "/cockpit/objects/test/test-cases-3024-a-run-is-seen-by-the-server-sh",
+        "source": "test/cases/3024_a_run_is_seen_by_the_server.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "kind": "test",
         "label": "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -58722,6 +58742,16 @@
       {
         "source": "capability:executions.protocol",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:executions.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:executions.report",
+        "target": "projection:http",
         "kind": "projects"
       },
       {
@@ -82850,6 +82880,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -87496,6 +87531,11 @@
       },
       {
         "source": "module:executions",
+        "target": "capability:executions.report",
+        "kind": "composes"
+      },
+      {
+        "source": "module:executions",
         "target": "capability:executions.start",
         "kind": "composes"
       },
@@ -88156,8 +88196,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2795,
-      "edges": 6128,
+      "nodes": 2797,
+      "edges": 6132,
       "acyclic": false,
       "truncated": false
     }

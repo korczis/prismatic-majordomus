@@ -4,8 +4,12 @@
 //!
 //! - `run` starts an execution **here** and follows it. Following is the point, and the
 //!   cheapest way to follow something is to subscribe to the store it is writing into —
-//!   which this process has, because the execution is its own. Nothing is asked
-//!   repeatedly.
+//!   which this process has, because the execution is its own. When a server already
+//!   serves this repository, the run is also reported to it (`executions.report`) while it
+//!   goes, so the server's list, the Cockpit and the live channel show what a person ran
+//!   and not only what was started there; a stop asked of that server comes back in the
+//!   answer and is honoured here. With no server, the run says on stderr that nothing else
+//!   can see it. A run never starts a server: the cost of `run` without one is unchanged.
 //! - `executions` reads the **shared server** this repository's lease names, because that
 //!   is where the executions a browser and an agent started live. An execution does not
 //!   outlive the process that accepted it, and a one-shot command has run nothing, so
@@ -22,7 +26,7 @@ use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{ExecutionsArgs, ExecutionsCommand, OutputFormat, RunArgs};
 use crate::error::{Error, Result};
-use crate::execution::{Delivery, ExecutionState, Filter};
+use crate::execution::{Delivery, ExecutionId, ExecutionState, Filter, REPORT_HEARTBEAT};
 
 /// The exit code when the execution ran and did not succeed. The command worked; what it
 /// ran did not, and a script must be able to tell those apart.
@@ -52,6 +56,8 @@ pub fn run(args: RunArgs) -> Result<u8> {
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     let show = args.follow || (!args.quiet && args.format == OutputFormat::Text);
+    // the server already serving this checkout, if any; never one started for this run
+    let server = crate::lease::serving(&app.repository);
 
     // subscribe before starting: an execution this fast would otherwise be over before
     // anything was listening
@@ -63,9 +69,21 @@ pub fn run(args: RunArgs) -> Result<u8> {
         )
         .map_err(map)?;
     let id = started["id"].as_str().unwrap_or_default().to_string();
+    let mut relay = match &server {
+        Some(url) => Some(Relay::new(ctx, url, event_id(&id)?, show)),
+        None => {
+            if !args.quiet {
+                eprintln!("{NOT_VISIBLE}");
+            }
+            None
+        }
+    };
 
     let deadline = std::time::Instant::now() + PATIENCE;
     loop {
+        if let Some(relay) = relay.as_mut() {
+            relay.tick();
+        }
         match rx.recv_timeout(std::time::Duration::from_millis(250)) {
             Ok(Delivery::Event(event)) => {
                 if event.execution_id.as_str() != id {
@@ -98,6 +116,9 @@ pub fn run(args: RunArgs) -> Result<u8> {
         }
     }
     ctx.executions.store().unsubscribe(subscriber);
+    if let Some(relay) = relay.as_mut() {
+        relay.finish();
+    }
 
     let snapshot = ctx
         .execute(
@@ -131,6 +152,239 @@ pub fn run(args: RunArgs) -> Result<u8> {
         0
     } else {
         EXIT_EXECUTION_FAILED
+    })
+}
+
+/// What `run` says on stderr when no server serves this repository: the run is real, and
+/// nothing but this process will ever show it.
+pub const NOT_VISIBLE: &str = "majordomus run: no server is serving this repository, so this execution is visible to this process only: no execution list, Cockpit page or live channel will show it. A run never starts a server; start one with `majordomus serve` before the run to watch it there.";
+
+/// The most bytes of events one report carries, under the server's body bound with room
+/// for the description that travels with them.
+const REPORT_BUDGET: usize = crate::http::server::MAX_BODY_BYTES * 3 / 4;
+
+/// How long one report may take. The run never waits on the server for longer: a server
+/// that cannot answer in this time is told nothing more, and the run goes on.
+const REPORT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// How many reports in a row may fail before the run stops reporting.
+const REPORT_ATTEMPTS: u32 = 3;
+
+/// The report of one run to the server serving this checkout, from the run's own store.
+///
+/// Events are read from the store by cursor rather than taken from a subscription, so a
+/// reader that lagged loses nothing, and the cursor is the one the server answers: a report
+/// that was lost, cut short or sent twice is put right by the next.
+struct Relay<'a> {
+    ctx: &'a crate::capability::Context,
+    url: String,
+    id: ExecutionId,
+    show: bool,
+    /// The sequence the server holds everything up to.
+    through: u64,
+    /// When the last report was sent.
+    last: Option<std::time::Instant>,
+    /// Reports in a row that failed.
+    failures: u32,
+    /// Has any report been taken?
+    reached: bool,
+    /// The server's stop request, once it has been honoured here.
+    stopped: bool,
+    /// Why the run stopped reporting, once it has.
+    lost: Option<String>,
+}
+
+impl<'a> Relay<'a> {
+    fn new(ctx: &'a crate::capability::Context, url: &str, id: ExecutionId, show: bool) -> Self {
+        Relay {
+            ctx,
+            url: url.to_string(),
+            id,
+            show,
+            through: 0,
+            last: None,
+            failures: 0,
+            reached: false,
+            stopped: false,
+            lost: None,
+        }
+    }
+
+    /// The last sequence of the run here.
+    fn local_last(&self) -> u64 {
+        self.ctx
+            .executions
+            .store()
+            .get(&self.id)
+            .map_or(0, |e| e.last_sequence)
+    }
+
+    /// Report when there is something new and the last report is a moment old, or when the
+    /// heartbeat is due.
+    fn tick(&mut self) {
+        let since = self.last.map(|t| t.elapsed());
+        let news = self.local_last() > self.through;
+        let due = match since {
+            None => true,
+            Some(since) => {
+                (news && since >= std::time::Duration::from_millis(200))
+                    || since >= REPORT_HEARTBEAT
+            }
+        };
+        if due {
+            self.send();
+        }
+    }
+
+    /// Report until the server holds everything the run said, or it stops answering.
+    fn finish(&mut self) {
+        let mut rounds = 0;
+        while self.lost.is_none() && self.through < self.local_last() && rounds < 64 {
+            let before = self.through;
+            self.send();
+            if self.through == before {
+                rounds += 8;
+            }
+            rounds += 1;
+        }
+    }
+
+    fn send(&mut self) {
+        if self.lost.is_some() {
+            return;
+        }
+        self.last = Some(std::time::Instant::now());
+        let store = self.ctx.executions.store();
+        let Some(snapshot) = store.get(&self.id) else {
+            return;
+        };
+        let page = store
+            .events(
+                &self.id,
+                self.through,
+                crate::capability::builtin::executions::MAX_EVENTS,
+            )
+            .map(|p| p.events)
+            .unwrap_or_default();
+        if page.first().is_some_and(|e| e.sequence > self.through + 1) {
+            let missing = format!(
+                "this process no longer holds events {}..{} of it",
+                self.through + 1,
+                page[0].sequence - 1
+            );
+            self.lose(missing);
+            return;
+        }
+        let mut events = Vec::new();
+        let mut bytes = 0usize;
+        for event in &page {
+            let value = lighter(event, crate::http::ws::MAX_FRAME_BYTES);
+            let size = value.to_string().len();
+            if !events.is_empty() && bytes + size > REPORT_BUDGET {
+                break;
+            }
+            bytes += size;
+            events.push(value);
+        }
+        let input = json!({
+            "id": self.id.as_str(),
+            "capability": snapshot.capability,
+            "title": snapshot.title,
+            "input": if snapshot.input.to_string().len() > crate::http::ws::MAX_FRAME_BYTES {
+                withheld(&snapshot.input, crate::http::ws::MAX_FRAME_BYTES)
+            } else {
+                snapshot.input
+            },
+            "cancellable": snapshot.cancellable,
+            "pid": std::process::id(),
+            "events": events,
+        });
+        let answer = ask_server_within(
+            self.ctx,
+            &self.url,
+            "executions.report",
+            &input,
+            REPORT_TIMEOUT,
+        );
+        match answer {
+            Ok(answer) => {
+                self.failures = 0;
+                self.through = answer["through"].as_u64().unwrap_or(self.through);
+                if !self.reached {
+                    self.reached = true;
+                    if self.show {
+                        eprintln!(
+                            "---  visible on the server serving this repository: {}{}",
+                            self.url,
+                            answer["execution"]["links"]["cockpit"]
+                                .as_str()
+                                .unwrap_or("")
+                        );
+                    }
+                }
+                if answer["cancel_requested"] == Value::Bool(true) && !self.stopped {
+                    self.stopped = true;
+                    self.ctx.executions.cancel(&self.id, "the server");
+                }
+            }
+            Err(e) if !self.reached => self.lose(e.to_string()),
+            Err(e) => {
+                self.failures += 1;
+                if self.failures >= REPORT_ATTEMPTS {
+                    self.lose(e.to_string());
+                }
+            }
+        }
+    }
+
+    fn lose(&mut self, why: String) {
+        eprintln!(
+            "majordomus run: the server at {} did not take this run's report ({why}); from here on this execution is visible to this process only.",
+            self.url
+        );
+        self.lost = Some(why);
+    }
+}
+
+/// An event as a report carries it: whole, or with the one unbounded value it may hold —
+/// an output, an input — replaced by a note of its size when the event is over `limit`.
+/// The value stays in this process; the run prints it.
+fn lighter(event: &crate::execution::ExecutionEvent, limit: usize) -> Value {
+    use crate::execution::EventPayload;
+    let value = serde_json::to_value(event).unwrap_or(Value::Null);
+    let size = value.to_string().len();
+    if size <= limit {
+        return value;
+    }
+    let note = |v: &Value| withheld(v, limit);
+    let payload = match &event.payload {
+        EventPayload::Completed { output } => EventPayload::Completed {
+            output: note(output),
+        },
+        EventPayload::Created {
+            capability,
+            title,
+            input,
+        } => EventPayload::Created {
+            capability: capability.clone(),
+            title: title.clone(),
+            input: note(input),
+        },
+        _ => return value,
+    };
+    let mut lighter = event.clone();
+    lighter.payload = payload;
+    serde_json::to_value(lighter).unwrap_or(value)
+}
+
+/// What a report carries in place of a value over `limit`: how large it is, and that it
+/// stays in this process.
+fn withheld(value: &Value, limit: usize) -> Value {
+    json!({
+        "withheld": "too_large",
+        "bytes": value.to_string().len(),
+        "limit": limit,
+        "held_by": format!("the `majordomus run` process {}", std::process::id()),
     })
 }
 
@@ -235,6 +489,17 @@ pub(crate) fn ask_server(
     id: &str,
     input: &Value,
 ) -> Result<Value> {
+    ask_server_within(ctx, url, id, input, std::time::Duration::from_secs(30))
+}
+
+/// [`ask_server`], giving up after `timeout`.
+pub(crate) fn ask_server_within(
+    ctx: &crate::capability::Context,
+    url: &str,
+    id: &str,
+    input: &Value,
+    timeout: std::time::Duration,
+) -> Result<Value> {
     let http = ctx
         .registry
         .get(id)
@@ -250,7 +515,7 @@ pub(crate) fn ask_server(
         &request.target(),
         &[("Content-Type", "application/json")],
         (!body.is_empty()).then_some(body.as_str()),
-        std::time::Duration::from_secs(30),
+        timeout,
     )
     .map_err(|e| Error::Http {
         reason: format!("{url}{}: {e}", request.target()),
@@ -537,6 +802,41 @@ mod tests {
         }))
         .unwrap()
         .contains("it broke"));
+    }
+
+    /// A report carries every event, and an output too large for the server's channel as a
+    /// note of its size rather than as a body the server would refuse.
+    #[test]
+    fn a_report_carries_an_event_whole_or_names_what_it_withheld() {
+        let small = event(EventPayload::Completed {
+            output: json!({ "ok": true }),
+        });
+        assert_eq!(lighter(&small, 1024), serde_json::to_value(&small).unwrap());
+
+        let big = event(EventPayload::Completed {
+            output: json!({ "text": "x".repeat(4096) }),
+        });
+        let carried = lighter(&big, 1024);
+        assert_eq!(carried["type"], "execution.completed");
+        assert_eq!(
+            carried["sequence"], 1,
+            "the event keeps its place in the story"
+        );
+        assert_eq!(carried["data"]["output"]["withheld"], "too_large");
+        assert!(carried["data"]["output"]["bytes"].as_u64().unwrap() > 4096);
+        assert!(carried.to_string().len() < 1024);
+        // and it is still an event the server can read
+        let back: crate::execution::ExecutionEvent =
+            serde_json::from_value(carried).expect("an event");
+        assert_eq!(back.type_name(), "execution.completed");
+
+        // a payload with no unbounded value is carried as it is, whatever its size
+        let line = event(EventPayload::Log {
+            stream: LogStream::Handler,
+            message: "y".repeat(2000),
+        });
+        assert_eq!(lighter(&line, 16), serde_json::to_value(&line).unwrap());
+        assert!(NOT_VISIBLE.contains("visible to this process only"));
     }
 
     /// What each subcommand prints, from the answer its capability gave. The renderer is
