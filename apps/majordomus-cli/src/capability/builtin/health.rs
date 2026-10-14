@@ -107,6 +107,42 @@ impl HealthStatus {
     }
 }
 
+/// The dimensions that describe the process serving a checkout and not the repository: the
+/// shared server, its peer board and its mesh runtime. Only a process holding the checkout's
+/// lease decides the last two, so in any other they are `unknown` by construction, never by
+/// a fault of the repository.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::PROCESS_DIMENSIONS;
+/// assert!(PROCESS_DIMENSIONS.contains(&"mesh"));
+/// assert!(!PROCESS_DIMENSIONS.contains(&"layer"));
+/// ```
+pub const PROCESS_DIMENSIONS: [&str; 3] = ["server", "peers", "mesh"];
+
+/// The worst status among the checks that describe the repository
+/// (every one whose id is not in [`PROCESS_DIMENSIONS`]); `ok` when there is none.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::{repository_status, HealthCheck, HealthStatus};
+/// let check = |id: &str, status| HealthCheck {
+///     id: id.into(),
+///     title: id.into(),
+///     status,
+///     detail: String::new(),
+///     decided_by: String::new(),
+///     evidence: Vec::new(),
+///     findings: Vec::new(),
+/// };
+/// let checks = [check("layer", HealthStatus::Warn), check("mesh", HealthStatus::Unknown)];
+/// assert_eq!(repository_status(&checks), HealthStatus::Warn);
+/// ```
+pub fn repository_status(checks: &[HealthCheck]) -> HealthStatus {
+    checks
+        .iter()
+        .filter(|c| !PROCESS_DIMENSIONS.contains(&c.id.as_str()))
+        .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status))
+}
+
 /// One dimension of the system, decided by one engine, with what a reader needs to check
 /// it themselves.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -135,6 +171,13 @@ pub struct HealthCheck {
 pub struct Health {
     /// The worst check's status.
     pub status: HealthStatus,
+    /// The worst status among the dimensions that describe the repository at this commit:
+    /// every check but the ones in [`PROCESS_DIMENSIONS`]. A process that is no server —
+    /// the command line, or the reader of a published snapshot (ADR 0141) — cannot decide
+    /// who is attached or what the mesh runtime did, and says `unknown` for them; this is
+    /// the verdict that is the same whichever process read the repository, and it is what a
+    /// publication shows first.
+    pub repository: HealthStatus,
     /// How many checks stand where, by status word.
     pub tallies: BTreeMap<String, usize>,
     /// Every dimension, in a stable order.
@@ -510,10 +553,18 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             format!("{path} differs from the registry this process built"),
             vec![format!("{path} (differs)")],
         ),
-        Err(_) => (
+        // A repository that commits no manifest has nothing to drift from: that is every
+        // repository but the ones that run `majordomus generate`, and reading it as
+        // `unknown` made the whole report unknown wherever the layer was merely adopted.
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (
+            HealthStatus::Ok,
+            format!("{path} is not committed here, so there is nothing to compare"),
+            Vec::new(),
+        ),
+        Err(e) => (
             HealthStatus::Unknown,
-            format!("{path} could not be read"),
-            vec![format!("{path} (missing)")],
+            format!("{path} could not be read: {e}"),
+            vec![format!("{path} (unreadable)")],
         ),
     };
     record(
@@ -562,7 +613,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers
     // `GET /api/v1/server`, and this reports what it says. It costs one small file and,
-    // when the lease names an address, one probe bounded by `lease::PROBE_TIMEOUT`; the
+    // when the lease names an address, one probe bounded by the declared probe timeout; the
     // five-second cache on `health.report` is as fresh as a file other processes write can
     // usefully be, and `server.status` is the uncached answer for a caller that needs one.
     let checkout = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
@@ -708,6 +759,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     .collect();
     Ok(Health {
         status,
+        repository: repository_status(&checks),
         tallies,
         checks,
         observed,
@@ -978,6 +1030,70 @@ mod tests {
         assert_eq!(status, HealthStatus::Unknown);
         assert_eq!(detail, "the continuity store could not be read: no device");
         assert!(findings.is_empty());
+    }
+
+    /// A process that is no server cannot decide who is attached or what the mesh did, and the
+    /// whole report says `unknown` for it; the repository's own verdict does not, because none
+    /// of its dimensions is the process's.
+    #[test]
+    fn the_repositorys_verdict_is_decided_where_no_server_runs() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let report = health(&ctx, Empty {}).expect("a report");
+        let of = |id: &str| {
+            report
+                .checks
+                .iter()
+                .find(|c| c.id == id)
+                .unwrap_or_else(|| panic!("no {id} check"))
+                .status
+        };
+        assert_eq!(of("peers"), HealthStatus::Unknown);
+        assert_eq!(of("mesh"), HealthStatus::Unknown);
+        assert_eq!(report.status, HealthStatus::Unknown);
+        for id in PROCESS_DIMENSIONS {
+            of(id);
+        }
+        let expected = report
+            .checks
+            .iter()
+            .filter(|c| !PROCESS_DIMENSIONS.contains(&c.id.as_str()))
+            .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status));
+        assert_eq!(report.repository, expected);
+        assert_eq!(report.repository, repository_status(&report.checks));
+    }
+
+    /// The committed registry manifest is judged by what is there: a repository that commits
+    /// none has nothing to drift from and is `ok`; one whose manifest exists and cannot be
+    /// read is `unknown`, because this process cannot say whether it drifted.
+    #[test]
+    fn an_uncommitted_registry_manifest_is_ok_and_an_unreadable_one_is_unknown() {
+        let check = |repo: &SyntheticRepository| {
+            let ctx = repo.context().expect("a context");
+            health(&ctx, Empty {})
+                .expect("a report")
+                .checks
+                .into_iter()
+                .find(|c| c.id == "generated-registry")
+                .expect("the check is reported")
+        };
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let manifest = repo.root().join(generate::OUT_DIR).join("registry.json");
+        assert!(!manifest.exists(), "the fixture commits no manifest");
+        let absent = check(&repo);
+        assert_eq!(absent.status, HealthStatus::Ok, "{absent:?}");
+        assert!(absent.detail.contains("not committed here"), "{absent:?}");
+        assert!(absent.findings.is_empty(), "{absent:?}");
+
+        // a directory where the file belongs: it exists, and it cannot be read as a manifest
+        std::fs::create_dir_all(&manifest).expect("a directory at the manifest's path");
+        let unreadable = check(&repo);
+        assert_eq!(unreadable.status, HealthStatus::Unknown, "{unreadable:?}");
+        assert!(
+            unreadable.detail.contains("could not be read"),
+            "{unreadable:?}"
+        );
+        assert_eq!(unreadable.findings.len(), 1, "{unreadable:?}");
     }
 
     /// A layer read with an error diagnostic is served as read: readiness names it as a

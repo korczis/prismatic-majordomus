@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# The release record's pull request gets a verdict without a person.
+# The release dispatches validate on its record's branch, planned as the record's change.
 #
 # The release pipeline proposes its record as a pull request opened with GITHUB_TOKEN, and
 # GitHub starts no workflow from an event that token caused. After v0.15.0 and after v0.16.0
@@ -7,10 +7,14 @@
 # recorded concluded failure with no job in it — until somebody closed and reopened it, and
 # the release's smoke phase failed by design for as long as that took.
 #
-# A dispatch is the one event that token may cause. So the pipeline dispatches validate on
+# A dispatch is the one event that token may cause, so the pipeline dispatches validate on
 # the record's branch, and validate plans that dispatch as the pull request's own run would
-# have been planned. This case reads the two workflows, as case 87 reads the release
-# workflow, and holds five things:
+# have been planned. That run is not what lets the record merge: on v0.19.1 its `ci` passed
+# at the record's head and branch protection still refused the merge (I2282). What starts
+# the run the merge waits for is the close and reopen, which `majordomus prs drain` performs
+# (I2296) and case 1036 proves. This case observes neither a merge nor a reopen; it reads the
+# two workflows, as case 87 reads the release workflow, and holds the wiring of the dispatch
+# in five things:
 #
 #   1  the release workflow asks for validate on release/record-<tag>, with plan=change,
 #      only when a record was proposed, after proposing it
@@ -75,4 +79,4 @@ grep -qE '^[[:space:]]*\*\) echo "::error::.*"; exit 2 ;;' "$T/arm.txt" \
 grep -qE '^[[:space:]]*schedule\) scripts/ci-plan --full "\$EVENT on \$REF" --on-demand > plan.json ;;' "$VL" \
   || { echo "    a scheduled run no longer plans every gate with the on-demand ones"; exit 1; }
 
-echo "    the release asks for the record's verdict on its own branch, planned as the change it is; a request that cannot start is a warning; the input is read from the environment and an unknown value is refused"
+echo "    the release dispatches validate on the record's branch, planned as the change it is; a request that cannot start is a warning; the input is read from the environment and an unknown value is refused"

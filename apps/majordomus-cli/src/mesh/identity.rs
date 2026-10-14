@@ -335,21 +335,62 @@ pub fn relabel(path: &Path, label: &str) -> Result<NodeIdentity, MeshError> {
 
 /// Write `text` to `path` with owner-only permissions, atomically enough for one user's
 /// state directory: a temp file beside the target, then a rename.
+///
+/// The temp file is created owner-only. It was once written at the umask's mode and narrowed
+/// afterwards, with the narrowing's failure ignored, so a secret key stood readable by the
+/// group for as long as the write took, and for good when the narrowing failed. A stale temp
+/// file is removed first, because one that already exists keeps the mode it was created with.
 fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {
+    use std::io::Write;
     let tmp = path.with_extension("tmp");
-    std::fs::write(&tmp, text)
-        .map_err(|e| MeshError::Identity(format!("{}: {e}", tmp.display())))?;
+    let fail = |p: &Path, e: std::io::Error| MeshError::Identity(format!("{}: {e}", p.display()));
+    match std::fs::remove_file(&tmp) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(fail(&tmp, e)),
+    }
+    let mut open = std::fs::OpenOptions::new();
+    open.write(true).create_new(true);
     #[cfg(unix)]
     {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600));
+        use std::os::unix::fs::OpenOptionsExt;
+        open.mode(0o600);
     }
-    std::fs::rename(&tmp, path).map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))
+    let mut file = open.open(&tmp).map_err(|e| fail(&tmp, e))?;
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
+        .map_err(|e| fail(&tmp, e))?;
+    drop(file);
+    std::fs::rename(&tmp, path).map_err(|e| fail(path, e))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A node key is owner-only from the moment it exists, whatever the umask, and a stale
+    /// temp file left by an interrupted write does not lend it its mode.
+    #[cfg(unix)]
+    #[test]
+    fn a_node_key_is_never_readable_by_others() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let tmp = path.with_extension("tmp");
+        std::fs::write(&tmp, "stale").unwrap();
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o644)).unwrap();
+        NodeIdentity::load_or_create(&path).unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600, "the key file is {mode:o}");
+        assert!(
+            !tmp.exists(),
+            "the temp file is renamed, not left beside the key"
+        );
+        // rewritten with a label, it stays owner-only
+        write_private(&path, "{}").unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600, "the rewritten key file is {mode:o}");
+    }
 
     #[test]
     fn a_label_is_a_short_name_and_changes_nothing_but_itself() {

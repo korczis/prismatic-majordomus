@@ -311,6 +311,16 @@ intermediate commit, and an older tree can never land after a newer one. Cancell
 flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
 site stood 34 commits behind master for three hours.
 
+A pull request's run ends at its first red. Once one job has failed the run cannot be green,
+and the jobs still going hold runners the trunk's run and the deployments wait for: on
+2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
+step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
+cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
+still run, because they run `always()`, and report the run red. A push to master, the schedule
+and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
+its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
+rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
 ### The three ways a deploy fails, and who reports each
 
 A deploy that does not put the intended commit in front of a reader has failed, and until

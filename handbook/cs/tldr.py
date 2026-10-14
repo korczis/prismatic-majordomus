@@ -45,6 +45,8 @@ TLDR = {
              "Méně chyb z omylu typu „starý údaj vypadal jako aktuální“. Snazší audit toho, odkud číslo pochází."),
     "projekce": ("Každá operace se deklaruje jednou a CLI, MCP, HTTP, Cockpit i dokumentace se z ní generují.",
                  "Dokumentace a API se nerozcházejí. Nižší náklady na údržbu a méně podpory kvůli zastaralým popisům."),
+    "mj-way": ("„MJ way“ je pracovní postup, ne příkaz: deklaruj jednou, odvoď, vynuť, dokaž, zaber si práci, doruč do masteru.",
+               "Zadání „udělej to MJ way“ má ověřitelný obsah. Méně ručně udržovaných kopií a méně práce, která vypadá hotově a není."),
     "kudy": ("Tři trasy čtením podle role: principy, nasazení, práce s víc agenty a stroji.",
              "Čtenář se k tomu, co potřebuje, dostane za 15 minut místo čtení celé příručky."),
     "mapa-prirucky": ("Interaktivní graf všech kapitol a vazeb mezi nimi.",

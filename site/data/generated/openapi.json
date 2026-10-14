@@ -130,6 +130,9 @@
     "op-objects-verify": "docs/api/objects/",
     "op-obligations-closure": "docs/api/obligations/",
     "op-obligations-vocabulary": "docs/api/obligations/",
+    "op-observatory-capture": "docs/api/observatory/",
+    "op-observatory-events": "docs/api/observatory/",
+    "op-observatory-replay": "docs/api/observatory/",
     "op-pack-plan": "docs/api/pack/",
     "op-pack-verify": "docs/api/pack/",
     "op-peers-announce": "docs/api/peers/",
@@ -761,6 +764,9 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservatoryEvents": "docs/api/observatory/",
+    "schema-ObservatoryRecording": "docs/api/observatory/",
+    "schema-ObservatoryReplay": "docs/api/observatory/",
     "schema-ObservedClassification": "docs/api/integration/",
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
@@ -893,6 +899,8 @@
     "schema-RecordInput": "docs/api/continuity/",
     "schema-RecordView": "docs/api/continuity/",
     "schema-RecordedSpelling": "docs/api/session-domain/",
+    "schema-RecordingManifest": "docs/api/observatory/",
+    "schema-RecordingWindow": "docs/api/observatory/",
     "schema-Records": "docs/api/continuity/",
     "schema-RecoverOrphansInput": "docs/api/recover/",
     "schema-RecoverOrphansResult": "docs/api/recover/",
@@ -1187,6 +1195,7 @@
     "tag-monitor": "docs/api/monitor/",
     "tag-objects": "docs/api/objects/",
     "tag-obligations": "docs/api/obligations/",
+    "tag-observatory": "docs/api/observatory/",
     "tag-pack": "docs/api/pack/",
     "tag-peers": "docs/api/peers/",
     "tag-perf": "docs/api/perf/",
@@ -1210,9 +1219,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 191,
-    "schemas": 960,
-    "tags": 56
+    "operations": 194,
+    "schemas": 965,
+    "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1241,7 +1250,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.24.0",
+  "generated_by": "majordomus-cli 0.26.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1250,7 +1259,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.24.0"
+    "version": "0.26.0"
   },
   "infrastructure": [
     {
@@ -1433,6 +1442,9 @@
     "objects.verify": "objects",
     "obligations.closure": "obligations",
     "obligations.vocabulary": "obligations",
+    "observatory.capture": "observatory",
+    "observatory.events": "observatory",
+    "observatory.replay": "observatory",
     "pack.plan": "pack",
     "pack.verify": "pack",
     "peers.announce": "peers",
@@ -2068,6 +2080,9 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservatoryEvents": "observatory",
+    "ObservatoryRecording": "observatory",
+    "ObservatoryReplay": "observatory",
     "ObservedClassification": "integration",
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
@@ -2200,6 +2215,8 @@
     "RecordInput": "continuity",
     "RecordView": "continuity",
     "RecordedSpelling": "session-domain",
+    "RecordingManifest": "observatory",
+    "RecordingWindow": "observatory",
     "Records": "continuity",
     "RecoverOrphansInput": "recover",
     "RecoverOrphansResult": "recover",
@@ -18952,6 +18969,9 @@
         "objects.verify",
         "obligations.vocabulary",
         "obligations.closure",
+        "observatory.capture",
+        "observatory.events",
+        "observatory.replay",
         "pack.plan",
         "pack.verify",
         "peers.list",
@@ -23929,6 +23949,15 @@
         {
           "description": "The worst check's status.",
           "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first.",
+          "name": "repository",
           "refs": [
             "HealthStatus"
           ],
@@ -34232,6 +34261,148 @@
       "variants": []
     },
     {
+      "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryEvents",
+      "properties": [
+        {
+          "description": "Whether a mesh runs in this process; without one there is no journal to follow.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The cursor that was asked, when one was.",
+          "name": "after",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired.",
+          "name": "cursor",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection.",
+          "name": "expired",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "array of any"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.events"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryRecording",
+      "properties": [
+        {
+          "description": "`RECORDING_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the scenes were read.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the recording process stood at, short; absent when it could not say.",
+          "name": "revision",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty.",
+          "name": "scenes",
+          "refs": [],
+          "required": true,
+          "type": "object"
+        },
+        {
+          "description": "What the recording is a record of, and what it leaves out.",
+          "name": "manifest",
+          "refs": [
+            "RecordingManifest"
+          ],
+          "required": true,
+          "type": "RecordingManifest"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.capture"
+      ],
+      "used_by_schemas": [
+        "ObservatoryReplay"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryReplay",
+      "properties": [
+        {
+          "description": "Whether the repository carries a recording.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The file it is read from.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The recording.",
+          "name": "recording",
+          "refs": [
+            "ObservatoryRecording"
+          ],
+          "required": false,
+          "type": "ObservatoryRecording | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.replay"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One open pull request as the cycle classified it.",
       "home": "integration",
       "is_enum": false,
@@ -42182,6 +42353,94 @@
       "variants": []
     },
     {
+      "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "RecordingManifest",
+      "properties": [
+        {
+          "description": "The capabilities whose answers the recorded scenes were projected from.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none.",
+          "name": "window",
+          "refs": [
+            "RecordingWindow"
+          ],
+          "required": false,
+          "type": "RecordingWindow | null"
+        },
+        {
+          "description": "Every kind of thing removed before publication, and why.",
+          "name": "removed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservatoryRecording"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "RecordingWindow",
+      "properties": [
+        {
+          "description": "How many events.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The earliest event's time, in seconds since the epoch.",
+          "name": "from_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The latest event's time, in seconds since the epoch.",
+          "name": "to_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The smallest logical clock.",
+          "name": "from_lamport",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The largest logical clock.",
+          "name": "to_lamport",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RecordingManifest"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `continuity records`.",
       "home": "continuity",
       "is_enum": false,
@@ -42377,12 +42636,12 @@
       "variants": []
     },
     {
-      "description": "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```",
+      "description": "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```",
       "home": "knowledge-base",
       "is_enum": true,
       "name": "ReferenceResolution",
       "properties": [],
-      "type": "\"object\" | \"external\" | \"missing\"",
+      "type": "\"object\" | \"external\" | \"historical\" | \"missing\"",
       "used_by": [],
       "used_by_schemas": [
         "ResolvedReference",
@@ -42396,6 +42655,10 @@
         {
           "description": "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit.",
           "value": "external"
+        },
+        {
+          "description": "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads.",
+          "value": "historical"
         },
         {
           "description": "Nothing answers to it. A dangling reference is the integrity validator's finding.",
@@ -62393,7 +62656,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "knowledge record",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/knowledge/record?id=an-expedited-landing\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/knowledge/record?id=a-commit-stood-behind-a-build-lock\"",
           "description": "One knowledge record by id — candidate or curated — with every reference it names resolved: a session against the tracked session records and the ledger, a task or decision against the ledger and the task store, a commit against git, a file or test against the index and the tree, a rule, an ADR, an issue or another record against the index. Which references dangle is the question a reviewer asks before promoting, and the one the integrity validator asks of every record. A `task:none` or `decision:none` reference is refused by name.",
           "home": "knowledge-base",
           "id": "knowledge_base.record",
@@ -62407,7 +62670,7 @@
               "examples": [
                 {
                   "case": "first-record",
-                  "value": "\"an-expedited-landing\""
+                  "value": "\"a-commit-stood-behind-a-build-lock\""
                 }
               ],
               "name": "id",
@@ -63204,6 +63467,13 @@
               "name": "limit",
               "required": false,
               "type": "integer (uint64)"
+            },
+            {
+              "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time.",
+              "examples": [],
+              "name": "newest",
+              "required": false,
+              "type": "boolean"
             }
           ],
           "path": "/api/v1/mesh/events",
@@ -65205,6 +65475,200 @@
       "slug": "obligations"
     },
     {
+      "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
+      "name": "observatory",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/capture\"",
+          "description": "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it.",
+          "home": "observatory",
+          "id": "observatory.capture",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_capture",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/observatory/capture",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory capture: the result.",
+              "schema": "ObservatoryRecording",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryRecording",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory capture"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/events?after=0&limit=50\"",
+          "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+          "home": "observatory",
+          "id": "observatory.events",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_events",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The cursor: only events whose logical clock is above it. Absent is the newest page.",
+              "examples": [
+                {
+                  "case": "after a cursor",
+                  "value": "0"
+                }
+              ],
+              "name": "after",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "At most this many (default 200, at most 1000).",
+              "examples": [
+                {
+                  "case": "after a cursor",
+                  "value": "50"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/observatory/events",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory events: the result.",
+              "schema": "ObservatoryEvents",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryEvents",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory events"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/replay\"",
+          "description": "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error.",
+          "home": "observatory",
+          "id": "observatory.replay",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_replay",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/observatory/replay",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory replay: the result.",
+              "schema": "ObservatoryReplay",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryReplay",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory replay"
+        }
+      ],
+      "slug": "observatory"
+    },
+    {
       "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds.",
       "name": "pack",
       "operations": [
@@ -66908,7 +67372,7 @@
           "cache_detail": "",
           "cli": "reasoning check",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/reasoning/check\"",
-          "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+          "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.",
           "home": "reasoning",
           "id": "reasoning.check",
           "kind": "query",
