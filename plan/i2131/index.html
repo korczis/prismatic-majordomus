@@ -165,7 +165,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Count every surface&#39;s use toward the idle timeout, and bind a port derived from the checkout&#39;s identity before falling back to a random one.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">&#39;Attached&#39; means MCP HTTP sessions only (apps/majordomus-cli/src/shared.rs:250-253), and the serve --idle loop stops after 900 s without one (apps/majordomus-cli/src/commands/serve.rs:128-146). A person using only the Cockpit, REST or the /events WebSocket is not counted, so a UI-first server stops 15 minutes into being viewed. The default port 8741 (apps/majordomus-cli/src/cli.rs:3301) goes to one checkout and every other one falls back to a random port (apps/majordomus-cli/src/http/server.rs:77-86): on 2026-10-09 the live server asked for 8741 and serves 61068, an address that changes on every restart, so a Streamable HTTP client configuration or a bookmarked Cockpit has nothing stable to name. docs/MCP.md:29 shows :8741 as if it were the norm. There is no majordomus ui command; serve ensure and env enter are the UI-first entries (apps/majordomus-cli/src/commands/serve.rs:481-576, apps/majordomus-cli/src/commands/env.rs:701-760) and work without stdio (case 190_entry_is_automatic.sh). Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The idle timer counts as use an MCP session attached, an HTTP request answered within the last second (http::server::used_within) and an open /events channel, so the Cockpit, the REST API and a watched execution keep their server. Not done here: a port derived from the repository and worktree identity, so a checkout keeps one address across restarts; and the question whether an entry beyond serve ensure (the pack&#39;s majordomus ui) is needed.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Count every surface&#39;s use toward the idle timeout, and bind a port derived from the checkout&#39;s identity before falling back to a random one.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">&#39;Attached&#39; means MCP HTTP sessions only (apps/majordomus-cli/src/shared.rs:250-253), and the serve --idle loop stops after 900 s without one (apps/majordomus-cli/src/commands/serve.rs:128-146). A person using only the Cockpit, REST or the /events WebSocket is not counted, so a UI-first server stops 15 minutes into being viewed. The default port 8741 (apps/majordomus-cli/src/cli.rs:3301) goes to one checkout and every other one falls back to a random port (apps/majordomus-cli/src/http/server.rs:77-86): on 2026-10-09 the live server asked for 8741 and serves 61068, an address that changes on every restart, so a Streamable HTTP client configuration or a bookmarked Cockpit has nothing stable to name. docs/MCP.md:29 shows :8741 as if it were the norm. There is no majordomus ui command; serve ensure and env enter are the UI-first entries (apps/majordomus-cli/src/commands/serve.rs:481-576, apps/majordomus-cli/src/commands/env.rs:701-760) and work without stdio (case 190_entry_is_automatic.sh). Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The idle timer counts as use an MCP session attached, an HTTP request answered within the last second (http::server::used_within) and an open /events channel, so the Cockpit, the REST API and a watched execution keep their server. The deferred part, a port derived from the repository and worktree identity, is I2702; whether an entry beyond serve ensure is needed is decided by ADR 0135 and planned as I2484.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -176,16 +176,20 @@
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2702/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2702</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">A checkout keeps one address across restarts, because its server binds a port derived from the checkout</span></a></li>
+  </ul>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing</li><li>Two consecutive starts of one checkout&#39;s server bind the same port when it is free</li><li>Two checkouts of one repository derive different ports</li><li>docs/MCP.md describes the derived port and the fallback</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bin/majordomus plan validate</li><li class="font-mono text-heading break-words">cargo test --test serve_lifecycle</li><li class="font-mono text-heading break-words">MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">ui_use_keeps_server_alive_test</li><li class="font-mono text-heading break-words">stable_port_per_checkout_test</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">ui_use_keeps_server_alive_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
   <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
@@ -198,7 +202,7 @@
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/.ai/repo/project/issues/I2131.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2131.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2131</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/.ai/repo/project/issues/I2131.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2131.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2131</code>.</p>
 </div>
 
 </div>
@@ -248,9 +252,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -258,7 +262,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ac203c34dfc06785b082a463f057cd85bbe5d85b" class="font-mono underline">ac203c3</a> · inputs <span class="font-mono">a21865b6b40d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d" class="font-mono underline">2ca25bb</a> · inputs <span class="font-mono">bd65364a82bd</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

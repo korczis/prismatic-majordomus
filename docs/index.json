@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "ac203c34dfc06785b082a463f057cd85bbe5d85b",
+  "commit": "2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d",
   "source_version": "0.25.0",
-  "registry_fingerprint": "00c3de67e0cf8e24a5c66d1923fcd2801f64052929701c914da1b99b6820e13a"
+  "registry_fingerprint": "c57cc3001c21af960dd896f52f5286369cc1c6bfea95e52c0cd6e35edca88c28"
  },
  "counts": {
-  "pages": 2188,
-  "capabilities": 2357,
+  "pages": 2197,
+  "capabilities": 2367,
   "cli_commands": 107,
   "http_routes": 194,
   "mcp_tools": 190,
-  "mcp_resources": 2213,
+  "mcp_resources": 2223,
   "modules": 91
  },
  "kinds": [
@@ -70,7 +70,7 @@
    "route": "/context/",
    "title": null,
    "reason": null,
-   "count": 38
+   "count": 39
   },
   {
    "kind": "critique",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 352
+   "count": 361
   },
   {
    "kind": "knowledge",
@@ -8022,6 +8022,60 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2700/",
+   "title": "I2700 — A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder",
+   "description": "Point the lease probe at a liveness route that answers without resolving the index and carries the repository id, the leaseholder and a digest of the lease token, and judge a process whose digest differs from the lease's not the leaseholder.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2701/",
+   "title": "I2701 — The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration",
+   "description": "Declare the server's idle timeout under policy.yaml server: beside the lease timings, validate it by the policy schema, and make every server that starts stop after the declared time unless serve --idle says otherwise.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2702/",
+   "title": "I2702 — A checkout keeps one address across restarts, because its server binds a port derived from the checkout",
+   "description": "Bind a port derived from the repository and worktree identity before falling back to a free one, so that a Streamable HTTP client configuration or a bookmarked UI names an address that survives a restart.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2703/",
+   "title": "I2703 — The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order",
+   "description": "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2704/",
+   "title": "I2704 — A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate",
+   "description": "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2705/",
+   "title": "I2705 — A node key can be rotated, peers follow the new key, and the old key is refused",
+   "description": "Offer a node key rotation that peers which trusted the old key can follow to the new one, after which the old key's hello is refused, and purge a withdrawn key's events from the running journal without waiting for a restart.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2706/",
+   "title": "I2706 — An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size",
+   "description": "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2707/",
+   "title": "I2707 — majordomus doctor reports a stale server, or says plainly that it checks governance only",
+   "description": "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2708/",
+   "title": "I2708 — A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows",
+   "description": "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
@@ -11411,7 +11465,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.25.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.25.0, built from commit ac203c34dfc06785b082a463f057cd85bbe5d85b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 0.25.0, built from commit 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 0.25.0 — Rust API reference"
   },
   {

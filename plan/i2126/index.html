@@ -165,7 +165,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Make the lease probe reach a server whose HTTP workers are all running tool calls, and make it prove it reached the leaseholder, so that a client deciding whether the owner is alive is never answered by a full worker pool or by another process.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The probe a client sends before taking over is GET / (apps/majordomus-cli/src/lease.rs:896-925), served by the same four workers (apps/majordomus-cli/src/http/server.rs:23) that run each tools/call synchronously. Four tool calls that outlast the probe timeout plus the busy grace (about 12 s, apps/majordomus-cli/src/lease.rs:43-62, 555-568) make a healthy server look wedged, and the next client to start takes its lease. is_own (apps/majordomus-cli/src/lease.rs:429) fixes only a server probing itself. GET / is also the most expensive route: it resolves the index and every surface, while /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs:691,702) and the probe does not use them. The probe compares name, repository_id and leaseholder (apps/majordomus-cli/src/lease.rs:902-905) but not the lease token, pid or started_at, and GET / does not expose them. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 3 and the fencing row.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. Not done here: a cheap liveness probe route that carries a digest of the lease token and the check that refuses a server whose token differs.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Make the lease probe reach a server whose HTTP workers are all running tool calls, and make it prove it reached the leaseholder, so that a client deciding whether the owner is alive is never answered by a full worker pool or by another process.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The probe a client sends before taking over is GET / (apps/majordomus-cli/src/lease.rs:896-925), served by the same four workers (apps/majordomus-cli/src/http/server.rs:23) that run each tools/call synchronously. Four tool calls that outlast the probe timeout plus the busy grace (about 12 s, apps/majordomus-cli/src/lease.rs:43-62, 555-568) make a healthy server look wedged, and the next client to start takes its lease. is_own (apps/majordomus-cli/src/lease.rs:429) fixes only a server probing itself. GET / is also the most expensive route: it resolves the index and every surface, while /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs:691,702) and the probe does not use them. The probe compares name, repository_id and leaseholder (apps/majordomus-cli/src/lease.rs:902-905) but not the lease token, pid or started_at, and GET / does not expose them. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 3 and the fencing row.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. The deferred part, a liveness probe route carrying a digest of the lease token and the check that refuses a server whose token differs, is I2700.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -174,16 +174,20 @@
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2700/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2700</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder</span></a></li>
+  </ul>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged</li><li>The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token</li><li>A process that answers the probe with a token digest other than the lease&#39;s is judged not the leaseholder</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bin/majordomus plan validate</li><li class="font-mono text-heading break-words">cargo test --test lease_busy --test mcp_shared</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">busy_pool_is_not_taken_over_test</li><li class="font-mono text-heading break-words">probe_compares_the_token_test</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">busy_pool_is_not_taken_over_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
   <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
@@ -196,7 +200,7 @@
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/.ai/repo/project/issues/I2126.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2126.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2126</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/.ai/repo/project/issues/I2126.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2126.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2126</code>.</p>
 </div>
 
 </div>
@@ -246,9 +250,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ac203c34dfc06785b082a463f057cd85bbe5d85b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -256,7 +260,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ac203c34dfc06785b082a463f057cd85bbe5d85b" class="font-mono underline">ac203c3</a> · inputs <span class="font-mono">a21865b6b40d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d" class="font-mono underline">2ca25bb</a> · inputs <span class="font-mono">bd65364a82bd</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
