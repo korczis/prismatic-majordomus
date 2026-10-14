@@ -1,7 +1,7 @@
 {
   "schema": "observatory-evidence/v1",
   "origin": "https://majordomus.dev",
-  "measured_at": "2026-10-14T10:40:10Z",
+  "measured_at": "2026-10-14T12:57:39Z",
   "environment": {
     "machine": "Apple M5 Pro x18, 64 GiB",
     "os": "Darwin 25.5.0 arm64",
@@ -9,25 +9,25 @@
     "headless": true,
     "precise_memory": true
   },
-  "revision": "6f28de920723",
-  "status_word": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+  "revision": "2ca25bb9cf91",
+  "status_word": "REPLAY \u00b7 recorded 2026-10-14 11:39:44Z at d7a4361bcbac \u00b7 not live",
   "checks": {
     "screenshot-1080p": {
       "verdict": "PASS",
       "file": ".ai/repo/benchmarks/observatory/production/kiosk-1080p.png",
       "viewport": "1920x1080",
-      "status": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+      "status": "REPLAY \u00b7 recorded 2026-10-14 11:39:44Z at d7a4361bcbac \u00b7 not live",
       "scene": "01 / 08  MESH COSMOS",
-      "fact": "5 machine(s) · 8 of 19 runtime(s) were live when recorded · 0 refused link(s)",
+      "fact": "5 machine(s) \u00b7 8 of 19 runtime(s) were live when recorded \u00b7 0 refused link(s)",
       "script_errors": []
     },
     "screenshot-4k": {
       "verdict": "PASS",
       "file": ".ai/repo/benchmarks/observatory/production/kiosk-4k.png",
       "viewport": "3840x2160",
-      "status": "REPLAY · recorded 2026-10-14 06:28:36Z at ce5959db5909 · not live",
+      "status": "REPLAY \u00b7 recorded 2026-10-14 11:39:44Z at d7a4361bcbac \u00b7 not live",
       "scene": "01 / 08  MESH COSMOS",
-      "fact": "5 machine(s) · 8 of 19 runtime(s) were live when recorded · 0 refused link(s)",
+      "fact": "5 machine(s) \u00b7 8 of 19 runtime(s) were live when recorded \u00b7 0 refused link(s)",
       "script_errors": []
     },
     "accessibility-screen": {
@@ -59,21 +59,25 @@
       "replay": true,
       "newest_in_display": {
         "kind": "session_opened",
-        "lamport": 106207,
-        "at": 1791950185
+        "lamport": 115359,
+        "at": 1791966533
       }
     },
     "drill-scene-failure": {
-      "verdict": "NOT RUN",
-      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+      "verdict": "PASS",
+      "id": "mesh",
+      "quarantined": {
+        "mesh": "machines.forEach is not a function"
+      },
+      "now": "activity"
     },
     "drill-lost-server": {
       "verdict": "NOT RUN",
-      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+      "reason": "a published snapshot reads nothing again; there is no server to lose"
     },
     "drill-expired-cursor": {
       "verdict": "NOT RUN",
-      "reason": "the display at this origin exposes no inspector (observatory.data()); it predates it"
+      "reason": "a published snapshot follows no cursor"
     },
     "soak": {
       "verdict": "NOT RUN",

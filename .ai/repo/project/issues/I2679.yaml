@@ -28,4 +28,16 @@ validation:
 evidence_required:
   - "observatory_stream_resume_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-14T12:31:39Z
+started_at: 2026-10-14T12:31:19Z
+started_event: sha256:dd45de49cdb7007c0a59b2cee4e70b136012580aba760ce39de2ccf8ed019e17
+completed_at: 2026-10-14T12:31:39Z
+completed_event: sha256:bcf98413eec63a0abb0ce14cef4171401a5bad9a399abe98a09548711c481a94
+evidence:
+  - covers: observatory_stream_resume_case
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation -- three_runtimes"
+    result: "test result: ok. 1 passed (run 2026-10-14 on bb844110bd, #1123): the newest page, nothing above the cursor, an appended claim arrives above it with one identity however often it is read, an expired cursor is reported; browser drills on a live server: RESYNCED after an expired cursor, STALE then LIVE after a lost server"
+    artifact: "apps/majordomus-cli/tests/mesh_cooperation.rs"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:31:30Z

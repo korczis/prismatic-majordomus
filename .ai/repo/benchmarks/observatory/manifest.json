@@ -2,7 +2,7 @@
   "schema": "observatory-gates/v1",
   "spec": "tmp/owner-packs/observatory-20261014/ultimate/verification/03-RELEASE-MANIFEST-AND-GATES.md (owner pack, 2026-10-14)",
   "revision": {
-    "production": "6f28de920723",
+    "production": "2ca25bb9cf91",
     "live": "bb844110bdd6",
     "note": "production is the published site at the revision it served; live is a server of the evidence branch (bb844110bd, the head #1123 landed, with this branch's script changes in its working tree)"
   },
@@ -19,7 +19,7 @@
   ],
   "deployed_url": "https://majordomus.dev/ui/observatory/",
   "measured_at": {
-    "production": "2026-10-14T10:40:10Z",
+    "production": "2026-10-14T12:57:39Z",
     "live": "2026-10-14T10:42:24Z"
   },
   "environment": {
@@ -92,7 +92,8 @@
       "evidence": [
         ".ai/repo/benchmarks/observatory/live/drills.json"
       ],
-      "caveat": "the display paints a 2D canvas, so there is no GPU context to lose"
+      "caveat": "the display paints a 2D canvas, so there is no GPU context to lose",
+      "production": "on the published site the scene-failure drill passes as well (quarantined, the rotation goes on); the server drills need a server"
     },
     "G5": {
       "verdict": "PASS",
@@ -150,7 +151,7 @@
       "verdict": "PASS",
       "name": "deployment proof",
       "command": "gh pr view 1110 1117 1119 1123; curl https://majordomus.dev/build.json",
-      "result": "#1110, #1117, #1119 and #1123 merged pinned --admin after local gates; production serves 6f28de920723 (version 0.25.0); /ui/observatory/, /ui/kiosk/, /ui/screensaver/ and /features/observatory/ answer 200",
+      "result": "#1110, #1117, #1119 and #1123 merged pinned --admin after local gates; production serves 2ca25bb9cf91 (version 0.25.0); /ui/observatory/, /ui/kiosk/, /ui/screensaver/ and /features/observatory/ answer 200",
       "evidence": [
         "https://majordomus.dev/build.json",
         "https://majordomus.dev/ui/observatory/"
