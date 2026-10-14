@@ -92,6 +92,10 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 |---|---|---|---|
 | `after` | integer or null | no | Only events whose Lamport stamp is above this. |
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
+| `newest` | boolean or null | no | The newest `limit` events above `after` instead of the first ones: what a reader who
+wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
+then the newest stamp the journal holds, so resuming after it reads only what comes
+next. Without it the journal is read forward from `after`, a page at a time. |
 
 Output: `EventList`.
 

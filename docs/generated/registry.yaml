@@ -31930,6 +31930,11 @@ capabilities:
             format: uint64
             minimum: 0
             description: "At most this many (default 100, at most 1000)."
+          newest:
+            type:
+              - boolean
+              - "null"
+            description: "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
         description: "The input of `mesh.events`."
         title: MeshEventsInput
     output:
