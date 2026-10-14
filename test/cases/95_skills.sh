@@ -209,7 +209,9 @@ F="$S/site"; fixture_repo "$F" AGENTS.md docs
 rm -rf "$F/.ai/repo/skills"; mkdir -p "$F/.ai/repo/skills"
 cp -R "$ROOT/.ai/repo/skills/README.md" "$F/.ai/repo/skills/" 2>/dev/null || true
 cp -R .ai/repo/skills/review .ai/repo/skills/alpha "$F/.ai/repo/skills/"
-mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$F/site/data/"; cp -R "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" "$F/site/"; cp -R "$ROOT/test/cases" "$F/test/"
+# figures.toml too: the pages of content-src cite their counts through it, and the build
+# refuses a citation it cannot resolve
+mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$ROOT/site/data/figures.toml" "$F/site/data/"; cp -R "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" "$F/site/"; cp -R "$ROOT/test/cases" "$F/test/"
 # site/static/app.css is a Tailwind build product and is ignored, so whether it exists in
 # the tree depends on whether anyone has run a full build here. base.html links it with
 # cachebust=true, which makes zola read it, so the fixture build below passed on a machine
@@ -220,7 +222,13 @@ mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/si
 [ -f "$F/site/static/kit.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$F/site/static/kit.css"
 git -C "$F" init -q; git -C "$F" config user.email fixture@example.invalid; git -C "$F" config user.name fixture
 git -C "$F" add -A >/dev/null; git -C "$F" commit -qm fixture
-expect_exit 0 "$F/scripts/generate-site-data"
+# The derivation steps run with --no-scenarios, the flag the generator keeps for the cases
+# that test derivation: skills.json and the skill pages are read from the catalogue whether
+# or not the use-case scenarios execute, `--check` compares like with like, and executing
+# them was ~70% of each generation (652 of 924 s, measured 2026-10-12) with nothing here
+# reading what they produced. The last generation, the one zola builds from, runs them in
+# full, so the built site is the site the generator publishes.
+expect_exit 0 "$F/scripts/generate-site-data" --no-scenarios
 SJ="$F/site/data/generated/skills.json"
 jq -e '.count == 2 and ([.skills[].id]) == ["alpha","review"] and .skills[1].route == "/skills/review/" and .skills[1].examples[0].title == "Example for review" and (.skills[1].examples[0].body | contains("Apply the review skill")) and .by_tag.fixture == ["alpha","review"]' "$SJ" >/dev/null \
   || { echo "    skills.json is not the catalogue: "; jq -c . "$SJ"; exit 1; }
@@ -228,18 +236,18 @@ jq -e '.count == 2 and ([.skills[].id]) == ["alpha","review"] and .skills[1].rou
 grep -q '^## Procedure$' "$F/site/content/skills/review.md" || { echo "    the skill page does not carry the skill's body (its sections one level down)"; exit 1; }
 grep -q '^source = ".ai/repo/skills/review/SKILL.md"$' "$F/site/content/skills/review.md" || { echo "    the skill page does not name its source"; exit 1; }
 # in sync, then stale the moment a skill changes, then in sync again once regenerated
-expect_exit 0 "$F/scripts/generate-site-data" --check
+expect_exit 0 "$F/scripts/generate-site-data" --check --no-scenarios
 sed -i.bak 's/^description: The review procedure\.$/description: The review procedure, revised./' "$F/.ai/repo/skills/review/SKILL.md"; rm -f "$F/.ai/repo/skills/review/SKILL.md.bak"
-expect_exit 10 "$F/scripts/generate-site-data" --check
-expect_exit 0 "$F/scripts/generate-site-data"
+expect_exit 10 "$F/scripts/generate-site-data" --check --no-scenarios
+expect_exit 0 "$F/scripts/generate-site-data" --no-scenarios
 jq -e '.skills[1].description == "The review procedure, revised."' "$SJ" >/dev/null || { echo "    the regenerated catalogue does not carry the edit"; exit 1; }
 # a hand edit to the projection is drift
 cp "$SJ" "$S/skills.json.good"; jq '.count = 9' "$SJ" > "$SJ.tmp" && mv "$SJ.tmp" "$SJ"
-expect_exit 10 "$F/scripts/generate-site-data" --check
+expect_exit 10 "$F/scripts/generate-site-data" --check --no-scenarios
 cp "$S/skills.json.good" "$SJ"
 # a broken skill fails the build before a byte is published
 awk '{ print } /^schema: skill\/v1$/ { print "stray: yes" }' "$F/.ai/repo/skills/alpha/SKILL.md" > "$S/alpha.md" && mv "$S/alpha.md" "$F/.ai/repo/skills/alpha/SKILL.md"
-expect_exit 10 "$F/scripts/generate-site-data"
+expect_exit 10 "$F/scripts/generate-site-data" --no-scenarios
 expect_grep 'unknown front-matter key\(s\): stray'
 git -C "$F" checkout -q -- .ai/repo/skills/alpha/SKILL.md
 # removal: the page and the entry go with the file

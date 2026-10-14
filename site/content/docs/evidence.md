@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 66
+weight = 73
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -861,6 +861,7 @@ dispatches `pages.yml`, and that publication says current when the run confirms 
 When master has moved on, the newer publication already carries the evidence as stale and the
 newer run will refresh it.
 
+<!-- majordomus:unrun it fetches the workflow's retained artifacts with gh, which needs the network and a token; case 357 runs scripts/pages evidence --from over gathered fixture directories -->
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline

@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# Ten MCP tools asked a question about this repository — nine of which nothing had ever
+# Eleven MCP tools asked a question about this repository — nine of which nothing had ever
 # asked one — and the ratchet that stops the next tool from arriving unasked.
 #
 # The registry projects its tools over MCP. `use_cases.coverage.mcp_tools` is advisory, so a
@@ -18,7 +18,7 @@
 #
 # The repository it asks about is the checkout the suite lives in, read-only: `--standalone`
 # binds no port, writes no lease and writes nothing anywhere, and every sampled capability
-# declares `effect: read` but one, which is asked to refuse. test/run.sh permits a case to
+# declares `effect: read` but two, which are asked to refuse. test/run.sh permits a case to
 # read its checkout; it may not write into it, and this one does not.
 #
 # The second half is the gate: scripts/ci/mcp-tool-run-check, the ratchet that holds the
@@ -70,13 +70,25 @@ jq -e '[.tiers[].position] == ([.tiers[].position] | sort)' "$S/devpolicy.json" 
   || bad "the tiers are not in position order:" "$S/devpolicy.json"
 
 # ---------------------------------------------------------------- 4. executions.cancel
-# The one sampled capability that is not a read. It is asked to refuse, and a refusal is a
+# One of the two sampled capabilities that are not reads (4b is the other). It is asked to refuse, and a refusal is a
 # result with isError, never a transport error — the crate's own contract.
 call majordomus_execution_cancel '{"id":"not-an-execution"}' > "$S/cancel.json"
 jq -e '.result.isError == true and (.error | not)' "$S/cancel.json" >/dev/null \
   || bad "majordomus_execution_cancel does not refuse an id that is not one as a result:" "$S/cancel.json"
 jq -e '[.result.content[].text] | join(" ") | test("execution id")' "$S/cancel.json" >/dev/null \
   || bad "the refusal does not say what an execution id looks like:" "$S/cancel.json"
+
+# ---------------------------------------------------------------- 4b. mesh.review.withdraw
+# A write on the mesh, asked where no shared server activated the mesh: it refuses, as a
+# result that names why, and never as a transport error. A requester who withdraws a review
+# over MCP with nothing to withdraw from is told so in the same shape every other refusal has.
+call majordomus_mesh_review_withdraw '{"request":"none/r-0","note":"case 620"}' > "$S/withdraw.json"
+jq -e '.result.isError == true and (.error | not)' "$S/withdraw.json" >/dev/null \
+  || bad "majordomus_mesh_review_withdraw does not refuse as a result where the mesh is not active:" "$S/withdraw.json"
+jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/withdraw.json" >/dev/null \
+  || bad "the refusal does not say the mesh is not active:" "$S/withdraw.json"
+jq -e '.result._meta.majordomus.error.code == "refused"' "$S/withdraw.json" >/dev/null \
+  || bad "the refusal carries no typed code:" "$S/withdraw.json"
 
 # ---------------------------------------------------------------- 5. distribution.status
 # The version is the crate's, the stable channel resolves to a release this tree records,

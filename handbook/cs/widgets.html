@@ -1,0 +1,212 @@
+<!--@h-prubeh-->
+<div class="lab" id="lab-session">
+  <p class="lab-h">Vyzkoušej si · simulátor session</p>
+  <div class="graph-wrap"><svg id="session-svg" viewBox="0 0 720 150" role="img" aria-label="Časová osa devíti kroků session"></svg></div>
+  <div class="lab-row">
+    <button type="button" class="btn" id="sess-prev">← Zpět</button>
+    <button type="button" class="btn primary" id="sess-play">▶ Přehrát</button>
+    <button type="button" class="btn" id="sess-next">Dál →</button>
+    <span class="lab-note" id="sess-count"></span>
+  </div>
+  <div class="lab-panel" id="sess-panel" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@h-scope-->
+<div class="lab" id="lab-scope">
+  <p class="lab-h">Vyzkoušej si · je cesta ve scope repozitáře?</p>
+  <p class="lab-note">Podle výřezu <code>scope.yaml</code> výše. Velikost a binární obsah souboru tady nekontroluju, to dělá executable při čtení.</p>
+  <label class="lbl" for="scope-path">Cesta v repozitáři</label>
+  <input class="inp" id="scope-path" type="text" value="docs/generated/cli.md" autocomplete="off" spellcheck="false">
+  <div class="chips-btn" id="scope-presets"></div>
+  <div class="term" id="scope-out" aria-live="polite"></div>
+  <p class="lab-h" style="margin-top:22px">Vyzkoušej si · potkají se dva scope?</p>
+  <div class="two-inp">
+    <div><label class="lbl" for="ov-a">Scope A</label><input class="inp" id="ov-a" type="text" value="apps" spellcheck="false"></div>
+    <div><label class="lbl" for="ov-b">Scope B</label><input class="inp" id="ov-b" type="text" value="apps/majordomus-cli" spellcheck="false"></div>
+  </div>
+  <div class="term" id="ov-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@h-profily-->
+<div class="lab" id="lab-profiles">
+  <p class="lab-h">Vyzkoušej si · porovnej profily</p>
+  <div class="seg" role="tablist" id="prof-seg"></div>
+  <div id="prof-body" class="prof-body" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@h-finish-->
+<div class="lab" id="lab-finish">
+  <p class="lab-h">Vyzkoušej si · finish contract</p>
+  <div class="lab-cols">
+    <div>
+      <label class="lbl" for="fin-outcome">Outcome</label>
+      <select class="inp" id="fin-outcome">
+        <option value="completed">completed</option>
+        <option value="partial">partial</option>
+        <option value="blocked">blocked</option>
+        <option value="no_match">no_match</option>
+        <option value="failed">failed</option>
+        <option value="handed_over">handed_over</option>
+      </select>
+      <fieldset class="checks" id="fin-checks"><legend class="lbl">Co platí</legend></fieldset>
+    </div>
+    <div><div class="term tall" id="fin-out" aria-live="polite"></div></div>
+  </div>
+</div>
+<!--@end-->
+
+<!--@h-git-->
+<div class="lab" id="lab-commit">
+  <p class="lab-h">Vyzkoušej si · commit-msg</p>
+  <p class="lab-note">Zjednodušená kopie pravidel <code>commit.validate</code>. Slovník scope je naučený z historie repa (scope použité aspoň třikrát). Kontrolu referencí na záznamy vrstvy (<code>I1305</code>, <code>M000</code>) ukázka vynechává, protože potřebuje vrstvu <code>.ai/</code>.</p>
+  <label class="lbl" for="cm-msg">Zpráva</label>
+  <textarea class="inp mono" id="cm-msg" rows="4" spellcheck="false">fix(mesh): a claim of a dead holder expires instead of blocking.</textarea>
+  <label class="lbl" for="cm-paths">Staged soubory (čárkou)</label>
+  <input class="inp mono" id="cm-paths" type="text" value="apps/majordomus-cli/src/mesh/claims.rs" spellcheck="false">
+  <div class="chips-btn" id="cm-presets"></div>
+  <div class="term" id="cm-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@h-ci-->
+<div class="lab" id="lab-ci">
+  <p class="lab-h">Vyzkoušej si · CI plánovač nad skutečným gates.yaml</p>
+  <p class="lab-note">Data jsou ze skutečného <code>.ai/repo/ci/gates.yaml</code>: %%gates%% gates, %%classes%% tříd cest. Plánovač dělá totéž co <code>scripts/ci-plan</code>: sjednotí gates všech tříd, na které cesta sedí, přidá <code>always</code>, <code>implies</code> a <code>requires</code> a eskaluje na plný plán, když cestu nezná žádná třída.</p>
+  <label class="lbl" for="ci-paths">Změněné cesty (jedna na řádek)</label>
+  <textarea class="inp mono" id="ci-paths" rows="4" spellcheck="false">docs/MESH.md</textarea>
+  <div class="chips-btn" id="ci-presets"></div>
+  <div id="ci-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@h-vynuceni-->
+<div class="lab chart-lab"><div class="chart" id="chart-proof-mini"></div></div>
+<!--@end-->
+
+<!--@p-briefing-->
+<div class="lab" id="lab-budget">
+  <p class="lab-h">Vyzkoušej si · rozpočet briefingu</p>
+  <p class="lab-note">Velikosti sekcí jsou ilustrativní. Pořadí vypouštění je skutečné: historie, soubory, rozhodnutí, pak se těla checkpointu a handoveru zkrátí na odkaz. Git, task, profil a blokery nevypadnou nikdy.</p>
+  <label class="lbl" for="budget">Rozpočet: <b id="budget-v">120</b> řádků</label>
+  <input class="range" id="budget" type="range" min="20" max="170" value="120">
+  <div class="budget-bar" id="budget-bar" aria-hidden="true"></div>
+  <div class="term" id="budget-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@p-pamet-->
+<div class="lab" id="lab-diverge">
+  <p class="lab-h">Vyzkoušej si · štítek divergence</p>
+  <div class="seg" id="div-seg"></div>
+  <div class="graph-wrap"><svg id="div-svg" viewBox="0 0 720 170" role="img" aria-label="Git graf zapsaného a aktuálního HEAD"></svg></div>
+  <div class="term" id="div-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@p-znalosti-->
+<div class="lab" id="lab-know">
+  <p class="lab-h">Vyzkoušej si · život jedné znalosti</p>
+  <div class="graph-wrap"><svg id="know-svg" viewBox="0 0 720 150" role="img" aria-label="Stavy znalosti: candidate, verified, superseded"></svg></div>
+  <div class="lab-row">
+    <label class="chk"><input type="checkbox" id="know-ev"> důkaz na stdin</label>
+    <button type="button" class="btn" id="know-promote">knowledge promote</button>
+    <button type="button" class="btn" id="know-reject">knowledge reject</button>
+    <button type="button" class="btn" id="know-supersede">nový záznam supersedes</button>
+    <button type="button" class="btn ghost" id="know-reset">Znovu</button>
+  </div>
+  <div class="term" id="know-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@m-claims-->
+<div class="lab" id="lab-live">
+  <p class="lab-h">Vyzkoušej si · živost claimu po pádu držitele</p>
+  <div class="two-inp three-inp">
+    <div><label class="lbl" for="lv-hb">Heartbeat (s)</label><input class="inp" id="lv-hb" type="number" min="1" max="10" value="5"></div>
+    <div><label class="lbl" for="lv-exp">Expiry (s)</label><input class="inp" id="lv-exp" type="number" min="3" max="60" value="30"></div>
+    <div><label class="lbl" for="lv-t">Čas: <b id="lv-tv">0</b> s</label><input class="range" id="lv-t" type="range" min="0" max="60" value="0"></div>
+  </div>
+  <div class="lab-row"><button type="button" class="btn primary" id="lv-play">▶ Přehrát pád</button><span class="lab-note">Runtime A naposledy bije v t = 10 s.</span></div>
+  <div class="graph-wrap"><svg id="lv-svg" viewBox="0 0 720 200" role="img" aria-label="Stav linku a claimu v čase"></svg></div>
+  <div class="term" id="lv-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@m-handshake-->
+<div class="lab" id="lab-hs">
+  <p class="lab-h">Vyzkoušej si · co když se něco pokazí</p>
+  <label class="lbl" for="hs-sel">Hello od runtime A</label>
+  <select class="inp" id="hs-sel"></select>
+  <ol class="hs-list" id="hs-list"></ol>
+  <div class="term" id="hs-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@m-journal-->
+<div class="lab" id="lab-fold">
+  <p class="lab-h">Vyzkoušej si · fold nezávisí na pořadí doručení</p>
+  <p class="lab-note">Dva runtimes se během výpadku sítě neviděly a oba si vzaly exkluzivní claim na překrývající se cesty. Zamíchej doručení a přidej duplikáty: stav i digest vyjdou pokaždé stejně.</p>
+  <div class="lab-row"><button type="button" class="btn primary" id="fold-shuffle">Zamíchat a doručit</button><span class="lab-note" id="fold-count"></span></div>
+  <div class="ev-list" id="fold-events"></div>
+  <div class="term" id="fold-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@projekce-->
+<div class="lab" id="lab-proj">
+  <p class="lab-h">Vyzkoušej si · jedna capability, všechna rozhraní</p>
+  <div class="seg" id="proj-seg"></div>
+  <div class="table-wrap"><table><thead><tr><th>Rozhraní</th><th>Podoba</th></tr></thead><tbody id="proj-body"></tbody></table></div>
+  <p class="lab-note" id="proj-note"></p>
+</div>
+<!--@end-->
+
+<!--@x-plan-->
+<div class="lab" id="lab-issue">
+  <p class="lab-h">Vyzkoušej si · odvozený stav issue</p>
+  <div class="lab-cols">
+    <fieldset class="checks" id="is-checks"><legend class="lbl">Co je v záznamu</legend></fieldset>
+    <div><div class="term tall" id="is-out" aria-live="polite" style="min-height:170px"></div></div>
+  </div>
+</div>
+<!--@end-->
+
+<!--@x-evidence-->
+<div class="lab" id="lab-proof">
+  <p class="lab-h">Vyzkoušej si · stav důkazu jedné garance</p>
+  <div class="two-inp">
+    <div><label class="lbl" for="pf-test">Test</label><select class="inp" id="pf-test"><option value="ok">garance jmenuje spustitelný test</option><option value="none">garance nejmenuje test</option><option value="unrunnable">cestu neumí spustit žádný runner</option></select></div>
+    <div><label class="lbl" for="pf-run">Poslední zaznamenaný běh</label><select class="inp" id="pf-run"><option value="pass">pass</option><option value="none">žádný</option><option value="skip">skip</option><option value="fail">fail / timeout / error</option></select></div>
+  </div>
+  <fieldset class="checks" id="pf-checks"><legend class="lbl">Od běhu do posuzované revize</legend></fieldset>
+  <div class="term" id="pf-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@x-release-->
+<div class="lab" id="lab-bump">
+  <p class="lab-h">Vyzkoušej si · jakou verzi změna dluží</p>
+  <div class="two-inp three-inp">
+    <div><label class="lbl" for="bp-ver">Poslední vydání</label><input class="inp mono" id="bp-ver" type="text" value="0.21.0" spellcheck="false"></div>
+    <div><label class="lbl" for="bp-surf">Veřejný povrch</label><select class="inp" id="bp-surf"><option value="same">beze změny</option><option value="wider">něco přibylo nebo se rozšířilo</option><option value="narrow">něco zmizelo nebo se zúžilo</option><option value="unknown">baseline nejde změřit</option></select></div>
+    <div><label class="chk" style="margin-top:30px"><input type="checkbox" id="bp-commits" checked> commity od vydání nesou změny</label></div>
+  </div>
+  <div class="term" id="bp-out" aria-live="polite"></div>
+</div>
+<!--@end-->
+
+<!--@stavba-->
+<div class="lab" id="lab-arch">
+  <p class="lab-h">Vyzkoušej si · průzkumník architektury</p>
+  <p class="lab-note">Vyber vrstvu, pak komponentu. Detail ukáže, co komponenta dělá, kde je v repu a které capabilities, pravidla, gates, rozhodnutí a garance k ní patří. Klik na rámeček v diagramu nahoře otevře stejnou komponentu tady.</p>
+  <nav class="arch-crumb" id="arch-crumb" aria-label="Cesta v architektuře"></nav>
+  <div class="arch-cols">
+    <div class="arch-col" id="arch-l" role="listbox" aria-label="Vrstvy"></div>
+    <div class="arch-col" id="arch-i" role="listbox" aria-label="Komponenty"></div>
+    <div class="arch-detail" id="arch-d" aria-live="polite"></div>
+  </div>
+</div>
+<!--@end-->

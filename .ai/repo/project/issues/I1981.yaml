@@ -27,4 +27,35 @@ evidence_required:
   - "live_scenario_reads_knowledge"
   - "live_scenario_refuses_writing_flag"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-14T07:39:39Z
+started_at: 2026-10-11T05:05:14Z
+started_event: sha256:cd71eed1d51dcb4c9c9319284076b1b44771e1d25587065ecb155dec73b6332a
+verified_at: 2026-10-11T05:05:29Z
+verified_event: sha256:adaad72749b7cb06b9074717dccc9b025d84f1d33943fd189ab78d681f94f247
+completed_at: 2026-10-14T07:39:39Z
+completed_event: sha256:3be36dfdb97deba2150873d177a35ceb7acf7015f47d42d1e7a13bbb3a593a8f
+evidence:
+  - covers: live_scenario_reads_knowledge
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 359_live_scenarios"
+    result: "pass: knowledge edges and nodes --json validate and run live, knowledge derive is refused by command"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T05:05:22Z
+  - covers: live_scenario_refuses_writing_flag
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 359_live_scenarios"
+    result: "pass: check --checkpoint refused at validate naming flag '--checkpoint'; doctor rejects an effect flag the syntax lacks and a read-only flag"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T05:05:25Z
+  - covers: live_scenario_reads_knowledge
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 359_live_scenarios"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 before 07:36Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:39:33Z
+  - covers: live_scenario_refuses_writing_flag
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 359_live_scenarios"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 before 07:36Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:39:36Z

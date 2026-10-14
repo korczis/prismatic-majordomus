@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.26.0
 schema: majordomus/economics-summary/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
+generator: majordomus-cli 0.26.0
 present: true
 methodology: 1
 question: "For the same task, from the same repository state, with the same model, the same tools and the same acceptance tests: how many tokens does a coding session consume with Majordomus installed and without it?"
@@ -154,23 +154,23 @@ metrics:
     unit: ratio
     formula: "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by"
     not: "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything"
-    value: 0.974860762138
+    value: 0.97915159433
     status: measured
-    n: 257
+    n: 315
     distribution:
-      n: 257
-      mean: 0.976677072644
-      median: 0.974860762138
-      p25: 0.973547190071
-      p75: 0.981400956293
-      p95: 0.982277309852
-      min: 0.969696594358
-      max: 0.982758254897
-      sd: 0.004013373038
+      n: 315
+      mean: 0.979728765066
+      median: 0.97915159433
+      p25: 0.976573010372
+      p75: 0.983561206861
+      p95: 0.984666089243
+      min: 0.97508682937
+      max: 0.985032468211
+      sd: 0.003244360669
     interval:
       level_bp: 9500
-      low: 0.97410467539
-      high: 0.975407840541
+      low: 0.978500924938
+      high: 0.97964198858
       method: "percentile bootstrap of the median, each value resampled independently with replacement"
       resamples: 10000
       seed: 20260924
@@ -433,9 +433,68 @@ metrics:
       - I1989
       - I1990
       - I1991
+      - I1995
+      - I1996
+      - I1997
+      - I1998
+      - I1999
+      - I2000
+      - I2001
+      - I2002
+      - I2003
+      - I2004
+      - I2059
+      - I2114
+      - I2123
+      - I2124
+      - I2126
+      - I2127
+      - I2128
+      - I2129
+      - I2131
+      - I2132
+      - I2133
+      - I2134
+      - I2135
+      - I2137
+      - I2139
+      - I2140
+      - I2145
+      - I2147
+      - I2151
+      - I2156
+      - I2157
+      - I2161
+      - I2162
+      - I2163
+      - I2165
+      - I2282
+      - I2298
+      - I2300
+      - I2303
+      - I2396
+      - I2398
+      - I2399
+      - I2400
+      - I2401
+      - I2402
+      - I2403
+      - I2404
+      - I2405
+      - I2406
+      - I2407
+      - I2460
+      - I2461
+      - I2462
+      - I2463
+      - I2470
+      - I2471
+      - I2472
+      - I2473
     warnings:
       - "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model"
       - "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
+      - "dirty: this record was measured from a working tree with uncommitted changes"
   - id: context_cost_model_error
     title: "Error of the compiler's bytes-over-four cost model"
     class: derived
@@ -443,9 +502,9 @@ metrics:
     unit: ratio
     formula: "counted selected tokens / the compiler's own estimate of them - 1, over all seeds"
     not: "not a saving: it says how far the budget's unit is from counted tokens"
-    value: -0.024948912311
+    value: -0.015665477449
     status: measured
-    n: 257
+    n: 315
     suite: context
     evidence:
       - I0001
@@ -705,14 +764,73 @@ metrics:
       - I1989
       - I1990
       - I1991
-    warnings: []
+      - I1995
+      - I1996
+      - I1997
+      - I1998
+      - I1999
+      - I2000
+      - I2001
+      - I2002
+      - I2003
+      - I2004
+      - I2059
+      - I2114
+      - I2123
+      - I2124
+      - I2126
+      - I2127
+      - I2128
+      - I2129
+      - I2131
+      - I2132
+      - I2133
+      - I2134
+      - I2135
+      - I2137
+      - I2139
+      - I2140
+      - I2145
+      - I2147
+      - I2151
+      - I2156
+      - I2157
+      - I2161
+      - I2162
+      - I2163
+      - I2165
+      - I2282
+      - I2298
+      - I2300
+      - I2303
+      - I2396
+      - I2398
+      - I2399
+      - I2400
+      - I2401
+      - I2402
+      - I2403
+      - I2404
+      - I2405
+      - I2406
+      - I2407
+      - I2460
+      - I2461
+      - I2462
+      - I2463
+      - I2470
+      - I2471
+      - I2472
+      - I2473
+    warnings:
+      - "dirty: this record was measured from a working tree with uncommitted changes"
 suites:
   - id: context
     kind: context
     version: 1
     title: "Context selection, counted"
     freshness: current
-    runs: 8
+    runs: 9
     pairs:
       declared: 0
       attempted: 0
@@ -725,6 +843,7 @@ suites:
       - 1cc12af61de40456670620d92ba6ed6fb63aada4
       - 487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe
       - 78f09f8af8e3372fd7a972c69307117a0e20af2b
+      - 79bb4e3c18a9979f6a93e3e0416d65661c55569a
       - 8183164ade2d0c9cc2199c1379432b0aac84f0bb
       - 8d4486c1a9dfaa8a45e56cb57887a77b82106a7d
       - 94c51548080463f2b51245560041723b755ca253
@@ -865,20 +984,20 @@ pairs:
       - the control run is not recorded
 segments: []
 context:
-  revision: d446499470fecdc3454c1d04297bf3f4b706b5ec
-  measured_at: "2026-10-06T19:36:53Z"
+  revision: 79bb4e3c18a9979f6a93e3e0416d65661c55569a
+  measured_at: "2026-10-11T18:48:45Z"
   tokenizer:
     encoding: o200k_base
     implementation: tiktoken-rs 0.12.0
-  seeds: 257
-  candidate_tokens: 271218473
-  considered_tokens: 271218473
-  selected_tokens: 6145161
-  estimated_selected_tokens: 6302399
+  seeds: 315
+  candidate_tokens: 396047691
+  considered_tokens: 396047691
+  selected_tokens: 7857785
+  estimated_selected_tokens: 7982840
   excluded_tokens:
-    budget: 265073312
+    budget: 388189906
     unresolved: 0
-  seeds_over_budget_counted: 126
+  seeds_over_budget_counted: 192
   budget_tokens: 24000
 history:
   - suite: context
@@ -937,6 +1056,13 @@ history:
     metric: context_reduction_ratio
     value: 0.974860762138
     n: 257
+  - suite: context
+    methodology: 1
+    revision: 79bb4e3c18a9979f6a93e3e0416d65661c55569a
+    at: "2026-10-11T18:48:45Z"
+    metric: context_reduction_ratio
+    value: 0.97915159433
+    n: 315
 variants:
   - id: baseline
     role: control

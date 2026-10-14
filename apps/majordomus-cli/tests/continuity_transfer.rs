@@ -13,7 +13,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use common::{dist_share, Fixture, BIN};
+use common::{dist_share, Fixture};
 use serde_json::Value;
 
 /// One machine: a checkout, and the home and state directory it runs with.
@@ -34,7 +34,7 @@ impl Machine {
 
     /// Run `majordomus continuity <args>` here: the exit code, stdout and stderr.
     fn run(&self, args: &[&str]) -> (i32, String, String) {
-        let out = Command::new(BIN)
+        let out = common::majordomus()
             .arg("continuity")
             .args(args)
             .current_dir(&self.root)
@@ -220,7 +220,7 @@ fn an_answer_that_cannot_be_written_is_a_transport_failure() {
     for format in ["text", "json"] {
         // The writing end of a pipe whose only reader has exited: the stdin std made for a
         // process that is gone. `std::io::pipe` is newer than the crate's rust-version.
-        let mut gone = Command::new(BIN)
+        let mut gone = common::majordomus()
             .arg("--version")
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
@@ -229,7 +229,7 @@ fn an_answer_that_cannot_be_written_is_a_transport_failure() {
             .unwrap();
         let writer = gone.stdin.take().unwrap();
         assert!(gone.wait().unwrap().success());
-        let out = Command::new(BIN)
+        let out = common::majordomus()
             .args(["continuity", "status", "--format", format])
             .current_dir(&a.root)
             .env("HOME", &a.home)
@@ -271,7 +271,7 @@ fn a_repository_that_does_not_exist_is_refused_and_nothing_is_answered() {
 fn a_process_with_no_home_and_no_state_directory_is_refused() {
     let f = Fixture::new();
     for args in [&["status"][..], &["device"][..]] {
-        let out = Command::new(BIN)
+        let out = common::majordomus()
             .arg("continuity")
             .args(args)
             .current_dir(f.root())
@@ -352,7 +352,7 @@ fn a_repository_with_no_git_identity_still_publishes() {
         .arg(&a.root)
         .args(["config", "--unset-all", "user.name"])
         .status();
-    let out = Command::new(BIN)
+    let out = common::majordomus()
         .args(["continuity", "publish", "--format", "json"])
         .current_dir(&a.root)
         .env("HOME", &a.home)

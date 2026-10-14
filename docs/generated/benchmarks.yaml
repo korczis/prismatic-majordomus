@@ -1,39 +1,39 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.26.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
+generator: majordomus-cli 0.26.0
 coverage:
   - scope: direct
-    required: 184
-    covered: 160
+    required: 199
+    covered: 169
     missing: 0
-    waived: 24
+    waived: 30
     inapplicable: 0
   - scope: http
-    required: 181
-    covered: 160
+    required: 194
+    covered: 169
     missing: 0
-    waived: 21
+    waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 177
-    covered: 156
+    required: 190
+    covered: 165
     missing: 0
-    waived: 21
+    waived: 25
     inapplicable: 0
   - scope: system
-    required: 13
-    covered: 13
+    required: 14
+    covered: 14
     missing: 0
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 555
-    covered: 489
+    required: 597
+    covered: 517
     missing: 0
-    waived: 66
+    waived: 80
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -46,10 +46,19 @@ capabilities:
     cases:
       - all
       - one-encoding
+  - id: brief.session
+    module: brief
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: capabilities.describe
     module: capabilities
     kind: query
-    cache: "—"
+    cache: "process, 512 entries"
     direct: covered
     mcp: covered
     http: covered
@@ -272,6 +281,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.observed
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: design.contrast
     module: design
     kind: query
@@ -402,7 +420,7 @@ capabilities:
   - id: distribution.releases
     module: distribution
     kind: query
-    cache: "—"
+    cache: "process, 1 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -455,6 +473,15 @@ capabilities:
     cases:
       - default
       - narrowed
+  - id: editors.status
+    module: editors
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: entity.kinds
     module: entity
     kind: query
@@ -531,7 +558,7 @@ capabilities:
   - id: evidence.claim
     module: evidence
     kind: query
-    cache: "—"
+    cache: "process, 32 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -548,7 +575,7 @@ capabilities:
   - id: evidence.report
     module: evidence
     kind: query
-    cache: "—"
+    cache: "process, 8 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -749,6 +776,24 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: integration.timings
+    module: integration
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: integration.trains
+    module: integration
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: intent_realization.explain
     module: intent_realization
     kind: query
@@ -789,7 +834,7 @@ capabilities:
   - id: intents.list
     module: intents
     kind: query
-    cache: "—"
+    cache: "process, 2 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -804,6 +849,14 @@ capabilities:
     http: covered
     cases:
       - first-issue
+  - id: intents.propose
+    module: intents
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: intents.record
     module: intents
     kind: query
@@ -939,6 +992,22 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: mesh.firewall
+    module: mesh
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: mesh.firewall.apply
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: mesh.handover.consume
     module: mesh
     kind: command
@@ -1008,7 +1077,8 @@ capabilities:
     mcp: covered
     http: covered
     cases:
-      - default
+      - summary
+      - full
   - id: mesh.register
     module: mesh
     kind: command
@@ -1042,6 +1112,14 @@ capabilities:
     mcp: waived
     http: waived
     cases: []
+  - id: mesh.review.withdraw
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: mesh.session.close
     module: mesh
     kind: command
@@ -1066,7 +1144,8 @@ capabilities:
     mcp: covered
     http: covered
     cases:
-      - default
+      - summary
+      - full
   - id: mesh.status
     module: mesh
     kind: query
@@ -1103,6 +1182,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: monitor.stream
+    module: monitor
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - local-first-page
+      - local-resumed
   - id: objects.get
     module: objects
     kind: query
@@ -1160,6 +1249,34 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: observatory.capture
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: observatory.events
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - newest
+      - after a cursor
+  - id: observatory.replay
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: pack.plan
     module: pack
     kind: query
@@ -1209,7 +1326,7 @@ capabilities:
   - id: plan.issues
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1229,7 +1346,7 @@ capabilities:
   - id: plan.next
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1249,7 +1366,7 @@ capabilities:
   - id: plan.roadmap
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 4 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1258,7 +1375,7 @@ capabilities:
   - id: plan.status
     module: plan
     kind: query
-    cache: "—"
+    cache: "process, 16 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1452,10 +1569,18 @@ capabilities:
     cases:
       - all
       - one-version
-  - id: release.version
+  - id: release.next
     module: release
     kind: query
     cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: release.version
+    module: release
+    kind: query
+    cache: "process, 2 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1464,7 +1589,7 @@ capabilities:
   - id: repository.info
     module: repository
     kind: query
-    cache: "—"
+    cache: "process, 1 entries, per generation"
     direct: covered
     mcp: covered
     http: covered
@@ -1504,7 +1629,7 @@ capabilities:
   - id: rules.report
     module: rules
     kind: query
-    cache: "—"
+    cache: "process, 8 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
@@ -1515,12 +1640,20 @@ capabilities:
   - id: rules.show
     module: rules
     kind: query
-    cache: "—"
+    cache: "process, 32 entries, per checkout state"
     direct: covered
     mcp: covered
     http: covered
     cases:
       - first
+  - id: served.forge
+    module: served
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: served.observe
     module: served
     kind: command
@@ -1773,3 +1906,139 @@ system_targets:
   - key: system.http.cockpit_graph
     transport: http
     measures: GET /cockpit/graphs/registry (a page whose content is a derived graph)
+  - key: system.http.live.index
+    transport: http
+    measures: GET / over the live view a served process uses (the per-request git stamp and surface resolution)
+pages:
+  - key: system.http.ui.index
+    route: /ui
+    view: pinned
+    deferred: false
+  - key: system.http.ui.command
+    route: /ui/command
+    view: pinned
+    deferred: false
+  - key: system.http.ui.roadmap
+    route: /ui/roadmap
+    view: pinned
+    deferred: false
+  - key: system.http.ui.work
+    route: /ui/work
+    view: pinned
+    deferred: false
+  - key: system.http.ui.issues
+    route: /ui/issues
+    view: pinned
+    deferred: false
+  - key: system.http.ui.prs
+    route: /ui/prs
+    view: pinned
+    deferred: false
+  - key: system.http.ui.capabilities
+    route: /ui/capabilities
+    view: pinned
+    deferred: false
+  - key: system.http.ui.mesh
+    route: /ui/mesh
+    view: pinned
+    deferred: false
+  - key: system.http.ui.delivery
+    route: /ui/delivery
+    view: pinned
+    deferred: false
+  - key: system.http.ui.deployments
+    route: /ui/deployments
+    view: pinned
+    deferred: false
+  - key: system.http.ui.evidence
+    route: /ui/evidence
+    view: pinned
+    deferred: false
+  - key: system.http.ui.knowledge
+    route: /ui/knowledge
+    view: pinned
+    deferred: false
+  - key: system.http.ui.docs
+    route: /ui/docs
+    view: pinned
+    deferred: false
+  - key: system.http.ui.governance
+    route: /ui/governance
+    view: pinned
+    deferred: false
+  - key: system.http.ui.observatory
+    route: /ui/observatory
+    view: pinned
+    deferred: false
+  - key: system.http.live.ui.index
+    route: /ui
+    view: live
+    deferred: false
+  - key: system.http.live.ui.command
+    route: /ui/command
+    view: live
+    deferred: false
+  - key: system.http.live.ui.roadmap
+    route: /ui/roadmap
+    view: live
+    deferred: false
+  - key: system.http.live.ui.work
+    route: /ui/work
+    view: live
+    deferred: false
+  - key: system.http.live.ui.issues
+    route: /ui/issues
+    view: live
+    deferred: false
+  - key: system.http.live.ui.prs
+    route: /ui/prs
+    view: live
+    deferred: false
+  - key: system.http.live.ui.capabilities
+    route: /ui/capabilities
+    view: live
+    deferred: false
+  - key: system.http.live.ui.mesh
+    route: /ui/mesh
+    view: live
+    deferred: false
+  - key: system.http.live.ui.delivery
+    route: /ui/delivery
+    view: live
+    deferred: false
+  - key: system.http.live.ui.deployments
+    route: /ui/deployments
+    view: live
+    deferred: false
+  - key: system.http.live.ui.evidence
+    route: /ui/evidence
+    view: live
+    deferred: false
+  - key: system.http.live.ui.knowledge
+    route: /ui/knowledge
+    view: live
+    deferred: false
+  - key: system.http.live.ui.docs
+    route: /ui/docs
+    view: live
+    deferred: false
+  - key: system.http.live.ui.governance
+    route: /ui/governance
+    view: live
+    deferred: false
+  - key: system.http.live.ui.observatory
+    route: /ui/observatory
+    view: live
+    deferred: false
+  - key: system.http.ui.panels.pull_requests
+    route: /ui/panels/pull-requests
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.delivery
+    route: /ui/panels/delivery
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.drain
+    route: /ui/panels/drain
+    view: pinned
+    deferred: true

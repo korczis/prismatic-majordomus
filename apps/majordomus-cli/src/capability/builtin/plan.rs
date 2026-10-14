@@ -551,7 +551,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "status"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Generation { max_entries: 16 },
                 handler: plan_status,
             },
             capability! {
@@ -567,7 +567,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "issues"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Generation { max_entries: 16 },
                 handler: plan_issues,
             },
             capability! {
@@ -599,7 +599,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "next"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Generation { max_entries: 16 },
                 handler: plan_next,
             },
             capability! {
@@ -615,7 +615,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "roadmap"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Generation { max_entries: 4 },
                 handler: plan_roadmap,
             },
             capability! {
@@ -964,9 +964,15 @@ mod tests {
                 Some(*path),
                 "{id} lost or renamed its HTTP route"
             );
+            // a transition changes the plan between two calls; it is a write, and a write
+            // makes the next reading of the repository a new generation, so an answer is
+            // kept, if at all, per generation and never across one
             assert!(
-                !executable.capability.cache.is_enabled(),
-                "{id} must not cache: a transition changes the plan between two calls"
+                matches!(
+                    executable.capability.cache,
+                    CachePolicy::Disabled | CachePolicy::Generation { .. }
+                ),
+                "{id} may cache only per generation: a transition changes the plan between two calls"
             );
         }
         let resource = m.capabilities[0]

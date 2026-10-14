@@ -5,9 +5,9 @@ mod common;
 
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, Write};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{rule, Fixture, BIN};
+use common::{rule, Fixture};
 use serde_json::{json, Value};
 
 /// Send `requests` (one JSON message per line), close stdin, collect every stdout line
@@ -19,7 +19,7 @@ fn session(
 ) -> (i32, Vec<Value>, String) {
     let mut args = vec!["mcp"];
     args.extend_from_slice(extra_args);
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(&args)
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
@@ -290,7 +290,7 @@ fn handshake_discovery_and_a_real_round_trip() {
 #[test]
 fn protocol_errors_are_protocol_shaped() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
@@ -356,7 +356,7 @@ fn stdout_is_protocol_only_even_at_trace_level_with_a_degraded_layer() {
         "---\nid: project.broken\n",
     );
     f.commit("broken");
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
@@ -439,7 +439,7 @@ fn serving_mutates_nothing() {
 #[test]
 fn a_client_that_closes_its_read_end_ends_the_session() {
     let f = Fixture::new();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
