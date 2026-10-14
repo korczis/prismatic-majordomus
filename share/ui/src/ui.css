@@ -738,4 +738,69 @@
   .mj-obs-button[aria-pressed='false'] {
     color: var(--mj-muted);
   }
+  .mj-obs:focus-visible {
+    outline: 2px solid var(--mj-tone-cyan-fill);
+    outline-offset: 2px;
+  }
+  /* the scene dots: one button per scene, inside a foot that otherwise lets the pointer through */
+  .mj-obs-dots {
+    @apply pointer-events-auto flex gap-1;
+  }
+  .mj-obs-dot {
+    @apply cursor-pointer border-0 bg-transparent p-0 leading-none;
+    color: inherit;
+    font: inherit;
+  }
+  .mj-obs-dot:focus-visible {
+    outline: 1px solid var(--mj-tone-cyan-fill);
+  }
+  /* a mark's detail: the record it was drawn from, read-only, beside the stage's right edge */
+  .mj-obs-detail {
+    @apply absolute right-[3%] top-[16%] m-0 flex max-h-[68%] w-[min(26rem,40%)] flex-col gap-2 overflow-auto rounded-lg p-3 text-sm;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    border-left: 4px solid var(--obs-kind, var(--mj-accent));
+    color: var(--mj-fg);
+  }
+  .mj-obs-detail--gone {
+    border-style: dashed;
+    opacity: 0.75;
+  }
+  .mj-obs-detail-head {
+    @apply flex items-baseline gap-2 font-mono;
+  }
+  .mj-obs-detail-kind {
+    @apply text-xs uppercase;
+    color: var(--obs-kind, var(--mj-muted));
+    letter-spacing: 0.12em;
+  }
+  .mj-obs-detail-id {
+    @apply mr-auto font-semibold;
+    overflow-wrap: anywhere;
+  }
+  .mj-obs-detail-gone {
+    @apply m-0 text-xs;
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-detail-rows {
+    @apply m-0 grid gap-x-3 gap-y-1;
+    grid-template-columns: max-content 1fr;
+  }
+  .mj-obs-detail-rows dt {
+    @apply font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-obs-detail-rows dd {
+    @apply m-0;
+    overflow-wrap: anywhere;
+  }
+  .mj-obs-detail-link {
+    @apply text-xs;
+    color: var(--mj-tone-cyan-fill);
+  }
+  @media (max-width: 640px) {
+    .mj-obs-detail {
+      @apply inset-x-[3%] top-auto bottom-[14%] w-auto max-h-[50%];
+    }
+  }
 }
