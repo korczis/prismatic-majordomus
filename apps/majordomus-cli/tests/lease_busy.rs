@@ -241,6 +241,107 @@ fn a_patient_probe_of_a_wedged_live_owner_is_bounded() {
     );
 }
 
+/// A stand-in that answers as a current server does: the liveness route with the checkout's
+/// identity, the lease it holds by digest (`holding`), and every other path with the index.
+/// The paths it was asked are recorded, in order.
+fn live_stand_in(root: &Path, holding: &str) -> (String, Arc<std::sync::Mutex<Vec<String>>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a free loopback port");
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let live = serde_json::json!({
+        "alive": true,
+        "version": majordomus_cli::VERSION,
+        "repository_id": majordomus_cli::repository::identity(root),
+        lease::LEASEHOLDER_KEY: true,
+        "lease": lease::token_digest(holding),
+    })
+    .to_string();
+    let index = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(root),
+        lease::LEASEHOLDER_KEY: true,
+    })
+    .to_string();
+    let asked = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let seen = Arc::clone(&asked);
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { continue };
+            let mut buf = [0u8; 2048];
+            let n = stream.read(&mut buf).unwrap_or(0);
+            let head = String::from_utf8_lossy(&buf[..n]).to_string();
+            let path = head.split_whitespace().nth(1).unwrap_or_default().to_string();
+            seen.lock().unwrap().push(path.clone());
+            let body = if path == majordomus_cli::capability::builtin::health::LIVE_PATH {
+                live.clone()
+            } else {
+                index.clone()
+            };
+            let _ = stream.write_all(
+                format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            );
+        }
+    });
+    (url, asked)
+}
+
+/// I2700: the probe asks the liveness route, never the index, and a process that answers for
+/// this checkout while holding another lease of it is not this lease's holder.
+#[test]
+fn probe_compares_the_token() {
+    let f = Fixture::new();
+    let root = f.root();
+    let (url, asked) = live_stand_in(&root, "the-lease-it-holds");
+    assert!(
+        lease::probe_holder(&url, &root, "the-lease-it-holds"),
+        "the holder of the lease read is its holder"
+    );
+    assert!(
+        !lease::probe_holder(&url, &root, "a-lease-read-from-the-file"),
+        "a process holding another lease of the checkout was taken for this lease's holder"
+    );
+    assert!(
+        lease::probe(&url, &root),
+        "a probe without a lease in hand asks only whose checkout it is"
+    );
+    let asked = asked.lock().unwrap().clone();
+    assert_eq!(asked.len(), 3, "one request per probe: {asked:?}");
+    assert!(
+        asked
+            .iter()
+            .all(|p| p == majordomus_cli::capability::builtin::health::LIVE_PATH),
+        "the probe asked something other than the liveness route: {asked:?}"
+    );
+}
+
+/// I2700, in the election: a lease whose address is answered by a live process of this
+/// checkout holding another token is stale, and taken over at once rather than joined or
+/// waited on as a busy owner.
+#[test]
+fn a_server_holding_another_lease_is_taken_over_not_joined() {
+    let f = Fixture::new();
+    let repo = Repository::discover(&f.root()).expect("the fixture is a repository");
+    let (url, _) = live_stand_in(repo.root(), "a-newer-lease");
+    publish_as(&repo, &url, std::process::id(), "the-lease-in-the-file");
+    let started = Instant::now();
+    match lease::elect(&repo).expect("the election decides") {
+        Role::Server(mine) => {
+            assert!(
+                started.elapsed() < BUSY_GRACE,
+                "a server that answered no was waited on like a busy one: {:?}",
+                started.elapsed()
+            );
+            mine.release();
+        }
+        Role::Peer { url } => {
+            panic!("attached to a process that holds another lease of this checkout: {url}")
+        }
+    }
+}
+
 #[test]
 fn every_declared_timing_is_the_one_a_contest_is_judged_by() {
     assert_eq!(

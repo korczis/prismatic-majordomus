@@ -31,9 +31,9 @@ pub const WORKERS: usize = 4;
 
 /// How many requests are answered at once. A bound, so that a flood costs a fixed number of
 /// threads; far above what clients of one checkout send, so that a few slow tool calls never
-/// hold the probe up. Past it a request is answered 503, except the probe (`GET /`), which a
-/// worker answers itself: it is cheap, and it is what decides whether this server keeps its
-/// lease (I2156).
+/// hold the probe up. Past it a request is answered 503, except the probe (`GET /api/v1/live`,
+/// and `GET /`, which older probes ask), which a worker answers itself: it is cheap, and it is
+/// what decides whether this server keeps its lease (I2156, I2700).
 pub const MAX_HANDLERS: usize = 64;
 
 /// Requests being answered right now, on threads of their own.
@@ -272,10 +272,12 @@ fn worker(server: &Server, router: &Router, watch: &Arc<Watch>, stopping: &Atomi
 fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
     if HANDLERS.fetch_add(1, Ordering::SeqCst) >= MAX_HANDLERS {
         HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        // the index and the liveness route, which the lease probe asks first (I2700)
         let probe = matches!(
             request.method(),
             tiny_http::Method::Get | tiny_http::Method::Head
-        ) && request.url() == "/";
+        ) && (request.url() == "/"
+            || request.url() == crate::capability::builtin::health::LIVE_PATH);
         if probe {
             answer(router, watch, request);
         } else {

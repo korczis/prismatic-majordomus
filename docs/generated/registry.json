@@ -31158,7 +31158,7 @@
       "module": "health",
       "kind": "query",
       "title": "Liveness",
-      "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+      "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered, the checkout it serves (by identity, not path), whether it still holds that checkout's lease and a digest of that lease's token. No filesystem traversal, no index build, no network — this is what a hosting platform polls and what the lease probe asks, and it must cost nothing to say.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -31191,12 +31191,31 @@
                 "null"
               ],
               "description": "Whether that commit's tree carried uncommitted changes when this executable was built;\n`null` when the build did not know."
+            },
+            "repository_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Which checkout this process serves, without saying where it is: the value\n`crate::repository::identity` gives for its root, the one the index document answers\nunder the same name. A lease probe compares it before anything else (I2700)."
+            },
+            "leaseholder": {
+              "type": "boolean",
+              "description": "Whether this process is still its checkout's server: false once another process took\nits lease over. The index document's `leaseholder`, answered here without the index."
+            },
+            "lease": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A digest of the token of the lease this process published (`crate::lease::token_digest`),\nnever the token itself; absent in a process that holds no lease. A probe that read a\nlease whose token digests otherwise is not talking to that lease's holder (I2700)."
             }
           },
           "required": [
             "alive",
             "version",
-            "commit"
+            "commit",
+            "leaseholder"
           ],
           "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.",
           "title": "Liveness"

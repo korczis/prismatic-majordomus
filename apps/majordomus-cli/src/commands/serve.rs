@@ -576,6 +576,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
         // wedged owner. The patience is the declared busy grace, and never more than what
         // is left of `wait` — a `wait` of zero, the shell prompt's, stays a single probe.
         let owner = file.document().map_or(0, |d| d.pid);
+        let token = file.document().map(|d| d.token.clone()).unwrap_or_default();
         let patience = if started {
             Duration::ZERO
         } else {
@@ -586,7 +587,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
         let (standing, reason) = standing_of(
             &file,
             lease::file_age(&path),
-            |url| lease::probe_patiently(url, repo.root(), owner, patience),
+            |url| lease::probe_holder_patiently(url, repo.root(), &token, owner, patience),
             crate::VERSION,
         );
         let doc = file.document().cloned();
@@ -889,7 +890,7 @@ fn stop(repo: &Repository, wait: Duration) -> Result<u8> {
         )?;
         return Ok(10);
     };
-    if !lease::probe(&url, repo.root()) {
+    if !lease::probe_holder(&url, repo.root(), &doc.token) {
         say(
             &mut out,
             format!(

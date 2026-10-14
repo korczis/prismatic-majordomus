@@ -594,10 +594,12 @@ impl Router {
             }
         }
         // a page of the UI is drawn from the generation there is and never waits for the next
-        // one; every other request waits for the generation its caller saw
+        // one; neither does liveness, which the lease probe asks and which reads nothing the
+        // index holds (I2700); every other request waits for the generation its caller saw
         let page = req.method == "GET"
             && (req.path == crate::ui::PREFIX
-                || req.path.starts_with(&format!("{}/", crate::ui::PREFIX)));
+                || req.path.starts_with(&format!("{}/", crate::ui::PREFIX))
+                || req.path == crate::capability::builtin::health::LIVE_PATH);
         let held = if page {
             self.resolution_without_waiting()
         } else {

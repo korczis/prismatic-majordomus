@@ -208,7 +208,25 @@ pub struct Liveness {
     /// Whether that commit's tree carried uncommitted changes when this executable was built;
     /// `null` when the build did not know.
     pub dirty: Option<bool>,
+    /// Which checkout this process serves, without saying where it is: the value
+    /// `crate::repository::identity` gives for its root, the one the index document answers
+    /// under the same name. A lease probe compares it before anything else (I2700).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository_id: Option<String>,
+    /// Whether this process is still its checkout's server: false once another process took
+    /// its lease over. The index document's `leaseholder`, answered here without the index.
+    pub leaseholder: bool,
+    /// A digest of the token of the lease this process published ([`crate::lease::token_digest`]),
+    /// never the token itself; absent in a process that holds no lease. A probe that read a
+    /// lease whose token digests otherwise is not talking to that lease's holder (I2700).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lease: Option<String>,
 }
+
+/// The route `health.live` answers on. A constant because the router answers it without
+/// waiting for the next generation of the index, and the lease probe asks it by name: the
+/// three must not drift into two paths (I2700).
+pub const LIVE_PATH: &str = "/api/v1/live";
 
 /// The answer to "can this process serve traffic": the local initialisation a request
 /// would need, and nothing beyond this process. A readiness check that grew a dependency
@@ -246,14 +264,20 @@ pub struct Readiness {
     pub reasons: Vec<String>,
 }
 
-/// Liveness. No filesystem, no index traversal, no network: two fields this process can
-/// answer with while doing anything else.
-fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
+/// Liveness. No filesystem, no index traversal, no network: fields this process can answer
+/// with while doing anything else. The checkout's identity is a digest of the root the index
+/// already names, and the lease is the one this process published and holds in memory.
+fn liveness(ctx: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
     Ok(Liveness {
         alive: true,
         version: crate::VERSION.into(),
         commit: crate::COMMIT.into(),
         dirty: crate::DIRTY,
+        repository_id: Some(crate::repository::identity(std::path::Path::new(
+            &ctx.index.repository.root,
+        ))),
+        leaseholder: !crate::lease::was_lost(),
+        lease: crate::lease::held().map(|d| crate::lease::token_digest(&d.token)),
     })
 }
 
@@ -796,11 +820,11 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "health.live",
                 title: "Liveness",
-                description: "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+                description: "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered, the checkout it serves (by identity, not path), whether it still holds that checkout's lease and a digest of that lease's token. No filesystem traversal, no index build, no network — this is what a hosting platform polls and what the lease probe asks, and it must cost nothing to say.",
                 input: Empty,
                 output: Liveness,
                 stability: Stability::BehaviorallyVerified,
-                exposure: Exposure { mcp: None, http: get("/api/v1/live"), cli: None },
+                exposure: Exposure { mcp: None, http: get(LIVE_PATH), cli: None },
                 tags: ["health", "deployment"],
                 handler: liveness,
             },
@@ -934,7 +958,19 @@ mod tests {
         .expect("a synthetic repository");
         let a = liveness(&small.context().expect("a context"), Empty {}).expect("alive");
         let b = liveness(&large.context().expect("a context"), Empty {}).expect("alive");
-        assert_eq!(a, b);
+        // the two are different checkouts, and say so; everything else is the same answer
+        assert_ne!(a.repository_id, b.repository_id);
+        assert!(a.repository_id.is_some());
+        assert_eq!(
+            Liveness {
+                repository_id: None,
+                ..a.clone()
+            },
+            Liveness {
+                repository_id: None,
+                ..b
+            }
+        );
         assert!(a.alive);
         assert_eq!(a.version, crate::VERSION);
         assert_eq!(a.commit, crate::COMMIT);

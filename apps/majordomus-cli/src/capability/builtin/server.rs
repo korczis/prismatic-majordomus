@@ -491,10 +491,13 @@ pub fn standing_at(
     // this process's own lease is answered from memory: a probe would be a request to
     // itself, queued behind the very request asking (lease::is_own)
     let own = read.document().is_some_and(lease::is_own);
+    // the token of the lease read, so that another process of this checkout answering at
+    // the address is not taken for this lease's holder (I2700)
+    let token = read.document().map(|d| d.token.clone()).unwrap_or_default();
     let (standing, reason) = standing_of(
         &read,
         lease::file_age(&file),
-        |url| own || lease::probe(url, worktree),
+        |url| own || lease::probe_holder(url, worktree, &token),
         crate::VERSION,
     );
     (standing, reason, read)

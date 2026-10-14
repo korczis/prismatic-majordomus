@@ -129,13 +129,16 @@ lease no longer carries its token:
 | | |
 |---|---|
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
-| the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
+| the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see. It asks them of `GET /api/v1/live`, the cheapest route a server has, which the router answers without waiting for the next generation of the index; that answer carries `repository_id`, `leaseholder` and `lease`, a digest of the token of the lease the answerer holds (SHA-256, 32 hex characters), never the token. A caller that read the lease — the election, `serve ensure`, `serve stop`, `server.status` — compares that digest with its own lease's, and a process holding another lease of the checkout is not its holder (I2700) |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
 | its open sessions are handed on | they are answered for the declared busy grace (`server.busy_grace_seconds`), so a request in flight and the ones behind it finish where they started; after it, each session is closed and answered 404, the client's bridge opens a new one, is refused 409 `lease_lost` and elects the current server; with no session left the superseded process ends (I2127) |
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
-server taken for dead is taken over, which is how one checkout comes to have two.
+server taken for dead is taken over, which is how one checkout comes to have two. The same
+holds one step later: a server whose liveness answer names no checkout, or that has no
+liveness route, is asked `GET /` as before, and one that names no lease digest is not
+refused for the digest it did not send.
 
 This was measured before it was written: on 2026-09-10 this repository had two servers, one
 lease, and a session whose environment carried the older address read a peer board with one
@@ -334,7 +337,7 @@ when the repository is opened: Both `mcp` and `serve` read it before their first
 | `bind_grace_seconds` | how long a lease naming no URL yet is left alone — a server writes its lease before it can serve, so a fresh lease without a URL is a *starting* owner, not a dead one |
 | `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
 | `busy_grace_seconds` | how long a live owner that does not answer is waited on, and asked again, before its lease is taken over. The election gives a busy owner this long, and so does `serve ensure` before it starts anything: a probe that times out against a live process is not a dead server, but one that stays silent this long is wedged and replaced. A server that `ensure` started after waiting out this grace is told which lease it judged, so its election does not wait on it a second time |
-| `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /`, is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
+| `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /api/v1/live` (and `GET /`, which an older probe asks), is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
 
 Until 2026-09-15 all of them were compiled constants in `apps/majordomus-cli/src/lease.rs`:
 unchangeable without a rebuild, stated nowhere a reader would look, and invisible to every

@@ -820,8 +820,11 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
     if let Some(reason) = superseded(&doc) {
         return (Found::Stale(reason), seen);
     }
+    // the lease's own token, so that a process holding another lease of this checkout is
+    // not taken for this one's holder (I2700); an older lease without one is judged as before
+    let token = Some(doc.token.as_str()).filter(|t| !t.is_empty());
     let found = match doc.url.as_deref() {
-        Some(url) => match ask(url, root, timings().probe_timeout) {
+        Some(url) => match ask_live(url, root, token, timings().probe_timeout) {
             // an older release answering is replaced, not joined: its sessions move on to the
             // new server once it sees its lease taken (I2127), and nobody is served
             // yesterday's code because the installer put today's at another path (I2163)
@@ -1245,8 +1248,56 @@ pub fn lost_for() -> Option<Duration> {
 /// A server too old to answer the question is accepted. It cannot be told from a current
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
+///
+/// This asks without a lease in hand. A caller that read the lease names its token through
+/// [`probe_holder`], which also refuses a process holding another lease of the checkout.
 pub fn probe(url: &str, root: &Path) -> bool {
-    matches!(ask(url, root, timings().probe_timeout), Answer::Ours(_))
+    matches!(
+        ask_live(url, root, None, timings().probe_timeout),
+        Answer::Ours(_)
+    )
+}
+
+/// [`probe`], for a caller that read the lease: the answerer must also hold *that* lease.
+///
+/// Two processes of one checkout answer every other question alike — a server whose lease
+/// was taken over keeps serving the peers it had, and a second server started beside the
+/// first holds a lease of its own. The lease token tells them apart, and is never sent:
+/// the liveness route answers a digest of the token it holds ([`token_digest`]), and an
+/// answer whose digest is another's is not the holder of this lease (I2700). An answer with
+/// no digest at all is a server older than the question and is accepted, as [`probe`]
+/// accepts one that cannot say whether it holds the lease.
+///
+/// ```
+/// use majordomus_cli::lease::probe_holder;
+/// // nothing listens on port 1 of the loopback address
+/// assert!(!probe_holder("http://127.0.0.1:1", std::path::Path::new("/r"), "t"));
+/// ```
+pub fn probe_holder(url: &str, root: &Path, token: &str) -> bool {
+    // an empty token is a lease from before tokens, and names nothing to compare
+    let token = Some(token).filter(|t| !t.is_empty());
+    matches!(
+        ask_live(url, root, token, timings().probe_timeout),
+        Answer::Ours(_)
+    )
+}
+
+/// What the liveness route answers instead of a lease token: its SHA-256, hexadecimal and
+/// cut to 32 characters, the width [`crate::repository::identity`] uses. The token is a
+/// lock's name — whoever holds it may remove the lease file — so the route that anyone who
+/// can reach the socket may ask carries only what compares, never what opens.
+///
+/// ```
+/// use majordomus_cli::lease::token_digest;
+/// let d = token_digest("a-token");
+/// assert_eq!(d.len(), 32);
+/// assert_eq!(d, token_digest("a-token"), "one token, one digest");
+/// assert_ne!(d, token_digest("another"));
+/// assert!(!d.contains("a-token"));
+/// ```
+pub fn token_digest(token: &str) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(token.as_bytes()))[..32].to_string()
 }
 
 /// [`probe`], keeping what the server answered: its index document when it answers as the
@@ -1280,16 +1331,15 @@ enum Answer {
 }
 
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
-/// said no apart from one that said nothing in time.
+/// said no apart from one that said nothing in time. This is the index route: what
+/// [`probe_reply`] hands back to a caller that wants the surfaces the server lists.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
     match bridge::request(url, "GET", "/", &[], None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
             // without telling every caller where the checkout sits
-            let ours = v["name"] == "majordomus"
-                && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
-                && v[LEASEHOLDER_KEY] != Value::Bool(false);
+            let ours = v["name"] == "majordomus" && judged_ours(&v, root, None);
             if ours {
                 Answer::Ours(v)
             } else {
@@ -1297,15 +1347,84 @@ fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
             }
         }
         Ok(_) => Answer::NotOurs,
-        Err(e)
-            if matches!(
-                e.kind(),
-                std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
-            ) =>
-        {
-            Answer::Silent
+        Err(e) => unanswered(&e),
+    }
+}
+
+/// The probe's questions asked of the liveness route ([`crate::capability::builtin::health::LIVE_PATH`]),
+/// which answers without the index — the cheapest route a server has, where `GET /` is the
+/// dearest — and which carries the digest of the lease token the answerer holds (I2700).
+///
+/// A server older than the route's lease fields answers it without `repository_id`, or not
+/// at all; that server is asked the index instead, as every probe asked before, so an
+/// upgrade never makes a live older server look dead.
+fn ask_live(url: &str, root: &Path, token: Option<&str>, timeout: Duration) -> Answer {
+    let path = crate::capability::builtin::health::LIVE_PATH;
+    match bridge::request(url, "GET", path, &[], None, timeout) {
+        Ok(reply) if reply.status == 200 => {
+            let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
+            // not the liveness answer of a server that names its checkout: an older server,
+            // or something that answers every path alike, and the index decides as before
+            if v["alive"] != Value::Bool(true) || v.get("repository_id").is_none() {
+                return ask(url, root, timeout);
+            }
+            if judged_ours(&v, root, token) {
+                Answer::Ours(v)
+            } else {
+                Answer::NotOurs
+            }
         }
-        Err(_) => Answer::NotOurs,
+        // no such route: a server from before it existed, asked the old way
+        Ok(reply) if reply.status == 404 => ask(url, root, timeout),
+        // every request handler busy: a server that is there and has not answered, which
+        // is what silence means to the election, never a refusal (I2156)
+        Ok(reply) if reply.status == 503 => Answer::Silent,
+        Ok(_) => Answer::NotOurs,
+        Err(e) => unanswered(&e),
+    }
+}
+
+/// Does an answer — the index document or the liveness answer, which carry the same names —
+/// come from this checkout's leaseholder? The checkout by identity, the lease not lost, and,
+/// when the caller read a lease and the answerer names the digest of the one it holds, the
+/// same lease. An answer that names no digest says nothing about which lease it holds and is
+/// not refused for it.
+///
+/// ```
+/// use majordomus_cli::lease::{judged_ours, token_digest, LEASEHOLDER_KEY};
+/// let root = std::path::Path::new("/r");
+/// let id = majordomus_cli::repository::identity(root);
+/// let answer = |lease: serde_json::Value| serde_json::json!({
+///     "repository_id": id, LEASEHOLDER_KEY: true, "lease": lease,
+/// });
+/// assert!(judged_ours(&answer(token_digest("mine").into()), root, Some("mine")));
+/// assert!(!judged_ours(&answer(token_digest("theirs").into()), root, Some("mine")));
+/// assert!(judged_ours(&answer(serde_json::Value::Null), root, Some("mine")), "too old to say");
+/// assert!(judged_ours(&answer(token_digest("theirs").into()), root, None), "no lease read");
+/// let lost = serde_json::json!({"repository_id": id, LEASEHOLDER_KEY: false});
+/// assert!(!judged_ours(&lost, root, None));
+/// ```
+pub fn judged_ours(answer: &Value, root: &Path, token: Option<&str>) -> bool {
+    let checkout = answer["repository_id"].as_str()
+        == Some(crate::repository::identity(root).as_str())
+        && answer[LEASEHOLDER_KEY] != Value::Bool(false);
+    let lease = match (token, answer["lease"].as_str()) {
+        (Some(token), Some(digest)) => digest == token_digest(token),
+        _ => true,
+    };
+    checkout && lease
+}
+
+/// A request that failed: silence when the connection was made and nothing came back in
+/// time — which a busy server looks like — and not this checkout's server otherwise.
+fn unanswered(e: &std::io::Error) -> Answer {
+    if matches!(
+        e.kind(),
+        std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
+    ) {
+        Answer::Silent
+    } else {
+        Answer::NotOurs
     }
 }
 
@@ -1352,13 +1471,37 @@ pub(crate) fn alive(pid: u32) -> bool {
 /// assert!(t0.elapsed() < Duration::from_secs(5));
 /// ```
 pub fn probe_patiently(url: &str, root: &Path, pid: u32, patience: Duration) -> bool {
-    if probe(url, root) {
+    patiently(|| probe(url, root), pid, patience)
+}
+
+/// [`probe_patiently`] for a caller that read the lease: each attempt is [`probe_holder`], so
+/// a process holding another lease of the checkout is never waited into being the holder.
+///
+/// ```
+/// use majordomus_cli::lease::probe_holder_patiently;
+/// use std::time::Duration;
+/// let nowhere = std::path::Path::new("/nowhere");
+/// assert!(!probe_holder_patiently("http://127.0.0.1:1", nowhere, "t", 0, Duration::from_secs(10)));
+/// ```
+pub fn probe_holder_patiently(
+    url: &str,
+    root: &Path,
+    token: &str,
+    pid: u32,
+    patience: Duration,
+) -> bool {
+    patiently(|| probe_holder(url, root, token), pid, patience)
+}
+
+/// One attempt, then one a second while `pid` lives and `patience` lasts.
+fn patiently(attempt: impl Fn() -> bool, pid: u32, patience: Duration) -> bool {
+    if attempt() {
         return true;
     }
     let deadline = Instant::now() + patience;
     while alive(pid) && Instant::now() < deadline {
         std::thread::sleep(Duration::from_secs(1));
-        if probe(url, root) {
+        if attempt() {
             return true;
         }
     }

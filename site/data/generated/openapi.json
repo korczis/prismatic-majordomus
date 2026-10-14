@@ -29714,6 +29714,27 @@
           "refs": [],
           "required": false,
           "type": "boolean | null"
+        },
+        {
+          "description": "Which checkout this process serves, without saying where it is: the value\n`crate::repository::identity` gives for its root, the one the index document answers\nunder the same name. A lease probe compares it before anything else (I2700).",
+          "name": "repository_id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this process is still its checkout's server: false once another process took\nits lease over. The index document's `leaseholder`, answered here without the index.",
+          "name": "leaseholder",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "A digest of the token of the lease this process published (`crate::lease::token_digest`),\nnever the token itself; absent in a process that holds no lease. A probe that read a\nlease whose token digests otherwise is not talking to that lease's holder (I2700).",
+          "name": "lease",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -61464,7 +61485,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/live\"",
-          "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+          "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered, the checkout it serves (by identity, not path), whether it still holds that checkout's lease and a digest of that lease's token. No filesystem traversal, no index build, no network — this is what a hosting platform polls and what the lease probe asks, and it must cost nothing to say.",
           "home": "health",
           "id": "health.live",
           "kind": "query",
