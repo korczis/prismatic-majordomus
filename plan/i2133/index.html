@@ -157,12 +157,9 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p1 · implementation profile · runs alone</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/runtime-trust/" class="text-fg-brand underline">runtime-trust — A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I2133</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Bound the discovery channel, every reply a runtime reads and the candidates it accepts; answer a refused registration with its refusal alone; and give every link retry a floor and jitter.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The provider channel is unbounded (apps/majordomus-cli/src/mesh/manager.rs:425 channel()) and feeds one thread that runs an Ed25519 verify per datagram, with no per-source rate and no drop counter (threat T3). Rendezvous and link replies to the dialer are read with an unbounded read_to_end (apps/majordomus-cli/src/mcp/bridge.rs:84-85) under a per-read timeout only, so a slow trickle holds the worker and the per-runtime round lock (apps/majordomus-cli/src/mesh/cooperation.rs:2383-2387) (T4), and the candidate count received is unbounded. docs/MESH.md:341 lists &#39;messages (900 KiB)&#39; as a flood bound, which holds only for what the answerer receives (apps/majordomus-cli/src/mesh/cooperation.rs:1769-1779, 2010-2020) and the dialer sends (apps/majordomus-cli/src/mesh/link.rs:883-888). mesh.register answers its own envelope and up to 32 candidates even when the caller&#39;s envelope is refused (apps/majordomus-cli/src/mesh/manager.rs:623-636), and the candidates include untrusted nodes of any repository (apps/majordomus-cli/src/mesh/registry.rs:342-357) (T2, T13). An UnknownLink answer is retried with zero delay (apps/majordomus-cli/src/mesh/cooperation.rs:2592-2595), so a peer that welcomes and then refuses sync drives a busy loop, and the link backoff has no jitter (apps/majordomus-cli/src/mesh/cooperation.rs:2611-2614). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T2, T3, T4 and T13, drift 5.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Providers send through a bounded queue (OBSERVATION_QUEUE, 1024) whose drops are counted as overflow in mesh.status refusals; a refused registration is answered with the refusal alone, and an admitted one with this node and the trusted nodes of the caller&#39;s own repositories (MeshRegistry::candidates_for; the unfiltered candidates is gone); an answerer that keeps answering unknown_link is retried no faster than a heartbeat after the first immediate retry. The deferred part, the dialer&#39;s reply and candidate bounds, jitter on the link backoff and a test of the unknown_link retry rate, is I2704.</p>
@@ -175,7 +172,7 @@
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2704/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2704</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i2704/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2704</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate</span></a></li>
   </ul>
 
@@ -190,17 +187,22 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">discovery_flood_bounded_test</li><li class="font-mono text-heading break-words">refused_registration_learns_nothing_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">discovery_flood_bounded_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh discovery_flood_bounded_test</td><td class="px-4 py-2 text-body">test result: ok. 8 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">2ca25bb</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">refused_registration_learns_nothing_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh a_registration_learns_only_the_trusted_nodes_of_its_own_repository</td><td class="px-4 py-2 text-body">test result: ok. 8 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">2ca25bb</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T12:15:55Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T12:16:35Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/.ai/repo/project/issues/I2133.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2133.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2133</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/4ec504616c6dea8c64f75221c7eb97ed835819b8/.ai/repo/project/issues/I2133.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2133.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2133</code>.</p>
 </div>
 
 </div>
@@ -250,9 +252,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4ec504616c6dea8c64f75221c7eb97ed835819b8/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4ec504616c6dea8c64f75221c7eb97ed835819b8/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4ec504616c6dea8c64f75221c7eb97ed835819b8/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -260,7 +262,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d" class="font-mono underline">2ca25bb</a> · inputs <span class="font-mono">bd65364a82bd</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4ec504616c6dea8c64f75221c7eb97ed835819b8" class="font-mono underline">4ec5046</a> · inputs <span class="font-mono">2cd98ea4f526</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

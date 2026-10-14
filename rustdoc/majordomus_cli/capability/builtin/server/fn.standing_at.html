@@ -7,8 +7,8 @@ of <code>worktree</code> under <code>local_half</code>, how old that file is, on
 names, against this executable’s version. Every surface that asks where a server stands
 asks through here, so that <code>server.status</code> and the <code>server</code> check of <code>health.report</code>
 cannot drift into two answers.</p>
-<p>Costs one small file read, and one HTTP round trip bounded by
-<a href="../../../lease/constant.PROBE_TIMEOUT.html" title="constant majordomus_cli::lease::PROBE_TIMEOUT"><code>crate::lease::PROBE_TIMEOUT</code></a> when the lease names an address. Nothing is cached: the
+<p>Costs one small file read, and one HTTP round trip bounded by the declared probe timeout
+(<a href="../../../lease/fn.timings.html" title="fn majordomus_cli::lease::timings"><code>crate::lease::timings</code></a>) when the lease names an address. Nothing is cached: the
 file is written by other processes.</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::builtin::server::{local_half, standing_at, ServerStanding};

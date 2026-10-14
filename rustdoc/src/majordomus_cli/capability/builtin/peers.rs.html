@@ -159,7 +159,7 @@
 <a href=#159 id=159 data-nosnippet>159</a>        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{path}?checkouts=this"</span>),
 <a href=#160 id=160 data-nosnippet>160</a>        <span class="kw-2">&amp;</span>[],
 <a href=#161 id=161 data-nosnippet>161</a>        <span class="prelude-val">None</span>,
-<a href=#162 id=162 data-nosnippet>162</a>        lease::PROBE_TIMEOUT,
+<a href=#162 id=162 data-nosnippet>162</a>        lease::timings().probe_timeout,
 <a href=#163 id=163 data-nosnippet>163</a>    )
 <a href=#164 id=164 data-nosnippet>164</a>    .map_err(|e| <span class="macro">format!</span>(<span class="string">"{url} did not answer ({e})"</span>))<span class="question-mark">?</span>;
 <a href=#165 id=165 data-nosnippet>165</a>    <span class="kw">if </span>reply.status != <span class="number">200 </span>{

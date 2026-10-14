@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["HEARTBEAT","MAX_CONNECTIONS","MAX_REPLAY","PATH"],"enum":["Scope","StreamMessage"],"fn":["accept","open_connections"],"struct":["Accepted","Withheld"]};
+window.SIDEBAR_ITEMS = {"constant":["HEARTBEAT","LOOK","MAX_CONNECTIONS","MAX_REPLAY","PATH"],"enum":["Scope","StreamMessage"],"fn":["accept","open_connections"],"struct":["Accepted","Withheld"]};
