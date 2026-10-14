@@ -714,6 +714,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:observatory.events",
+      "path": "/evidence/capabilities/observatory-events/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:observatory.replay",
       "path": "/evidence/capabilities/observatory-replay/"
     },
@@ -5317,6 +5322,16 @@
       "kind": "capability",
       "id": "observatory.capture",
       "page": "/evidence/capabilities/observatory-capture/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.events": {
+      "kind": "capability",
+      "id": "observatory.events",
+      "page": "/evidence/capabilities/observatory-events/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -20275,6 +20290,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_observatory_events": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_events",
+      "alias_of": "capability:observatory.events",
+      "programs": [],
+      "members": [
+        "capability:observatory.events"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_observatory_replay": {
       "kind": "mcp",
       "id": "majordomus_observatory_replay",
@@ -27338,6 +27365,7 @@
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
+    "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
     "crate:properties",

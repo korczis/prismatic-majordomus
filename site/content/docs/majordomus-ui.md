@@ -347,9 +347,16 @@ of health. An event of the mesh is projected as its identity (stream and sequenc
 its node, its logical time and its wall time, and never as its body.
 
 The status word says how the page was read:
-- `LIVE`: read again within 40 seconds; the script asks for its own page every 15 seconds and
-  backs off to 120 when the server does not answer;
-- `STALE`: not read again within that bound;
+- `LIVE`: read again within 90 seconds. The script asks for its own page every 60 seconds, and
+  between those readings follows the mesh journal from a cursor every 3 seconds through
+  `observatory.events`, which answers only the events above the cursor, projected exactly as
+  the scene projects them. An event delivered twice is one mark, the river holds at most 200,
+  and both readers back off to 120 seconds when the server does not answer;
+- `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
+  runtime's journal, or one that restarted); the page was read again at once;
+- `STALE`: not read again within the bound;
+- `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
+  recorded;
 - `SNAPSHOT`: the public site, which reads nothing again and names its revision.
 
 Without JavaScript the same projection is a table: one row per scene, with its state in words
@@ -514,7 +521,7 @@ probe refuses a published first screen with an undecided figure, and
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
 - The Observatory's replay on the public site is as old as the last capture that was
-  committed; nothing captures one on a schedule. It learns of a change by asking for its page again, not from a pushed
-  stream with a cursor (I2679). Its screenshots at 1080p and 4K, its measured frame rates and
+  committed; nothing captures one on a schedule. Between readings of its page it follows the
+  journal by asking for the events above its cursor; nothing is pushed to it. Its screenshots at 1080p and 4K, its measured frame rates and
   its soak as a kiosk are I2680; until then no figure about its performance is stated.
 {% endraw %}

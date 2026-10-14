@@ -131,6 +131,7 @@
     "op-obligations-closure": "docs/api/obligations/",
     "op-obligations-vocabulary": "docs/api/obligations/",
     "op-observatory-capture": "docs/api/observatory/",
+    "op-observatory-events": "docs/api/observatory/",
     "op-observatory-replay": "docs/api/observatory/",
     "op-pack-plan": "docs/api/pack/",
     "op-pack-verify": "docs/api/pack/",
@@ -763,6 +764,7 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservatoryEvents": "docs/api/observatory/",
     "schema-ObservatoryRecording": "docs/api/observatory/",
     "schema-ObservatoryReplay": "docs/api/observatory/",
     "schema-ObservedClassification": "docs/api/integration/",
@@ -1217,8 +1219,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 193,
-    "schemas": 964,
+    "operations": 194,
+    "schemas": 965,
     "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1441,6 +1443,7 @@
     "obligations.closure": "obligations",
     "obligations.vocabulary": "obligations",
     "observatory.capture": "observatory",
+    "observatory.events": "observatory",
     "observatory.replay": "observatory",
     "pack.plan": "pack",
     "pack.verify": "pack",
@@ -2077,6 +2080,7 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservatoryEvents": "observatory",
     "ObservatoryRecording": "observatory",
     "ObservatoryReplay": "observatory",
     "ObservedClassification": "integration",
@@ -18966,6 +18970,7 @@
         "obligations.vocabulary",
         "obligations.closure",
         "observatory.capture",
+        "observatory.events",
         "observatory.replay",
         "pack.plan",
         "pack.verify",
@@ -34256,7 +34261,57 @@
       "variants": []
     },
     {
-      "description": "The mesh scenes of one process at one moment, fit for publication.",
+      "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryEvents",
+      "properties": [
+        {
+          "description": "Whether a mesh runs in this process; without one there is no journal to follow.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The cursor that was asked, when one was.",
+          "name": "after",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired.",
+          "name": "cursor",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection.",
+          "name": "expired",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "array of any"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.events"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```",
       "home": "observatory",
       "is_enum": false,
       "name": "ObservatoryRecording",
@@ -34310,7 +34365,7 @@
       "variants": []
     },
     {
-      "description": "The recording the repository carries, or that it carries none.",
+      "description": "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```",
       "home": "observatory",
       "is_enum": false,
       "name": "ObservatoryReplay",
@@ -42298,7 +42353,7 @@
       "variants": []
     },
     {
-      "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.",
+      "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```",
       "home": "observatory",
       "is_enum": false,
       "name": "RecordingManifest",
@@ -42336,7 +42391,7 @@
       "variants": []
     },
     {
-      "description": "The events a recording holds, from first to last.",
+      "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```",
       "home": "observatory",
       "is_enum": false,
       "name": "RecordingWindow",
@@ -65472,6 +65527,85 @@
           "result_schema": "ObservatoryRecording",
           "stability": "behaviorally_verified",
           "summary": "Observatory capture"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/events?after=0&limit=50\"",
+          "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+          "home": "observatory",
+          "id": "observatory.events",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_events",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The cursor: only events whose logical clock is above it. Absent is the newest page.",
+              "examples": [
+                {
+                  "case": "after a cursor",
+                  "value": "0"
+                }
+              ],
+              "name": "after",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "At most this many (default 200, at most 1000).",
+              "examples": [
+                {
+                  "case": "after a cursor",
+                  "value": "50"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/observatory/events",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory events: the result.",
+              "schema": "ObservatoryEvents",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryEvents",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory events"
         },
         {
           "benchmark": "required",

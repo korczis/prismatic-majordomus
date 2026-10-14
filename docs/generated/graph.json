@@ -1276,6 +1276,15 @@
         "status": "query"
       },
       {
+        "id": "capability:observatory.events",
+        "kind": "capability",
+        "label": "observatory.events",
+        "summary": "Observatory events",
+        "route": "/cockpit/capabilities/observatory.events",
+        "source": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:observatory.replay",
         "kind": "capability",
         "label": "observatory.replay",
@@ -59090,6 +59099,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:observatory.events",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:observatory.events",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:observatory.events",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:observatory.replay",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -86876,6 +86900,11 @@
       },
       {
         "source": "module:observatory",
+        "target": "capability:observatory.events",
+        "kind": "composes"
+      },
+      {
+        "source": "module:observatory",
         "target": "capability:observatory.replay",
         "kind": "composes"
       },
@@ -87196,8 +87225,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2773,
-      "edges": 6082,
+      "nodes": 2774,
+      "edges": 6086,
       "acyclic": false,
       "truncated": false
     }

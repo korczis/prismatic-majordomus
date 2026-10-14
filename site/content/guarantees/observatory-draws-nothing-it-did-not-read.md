@@ -59,7 +59,8 @@ coloured from its model is the script's, and no test reads pixels. The unit test
 module hold the projection itself, including that an event's body is never projected.
 
 It does not prove frame rate, a 4K composition or that a kiosk survives a day; those are
-I2680. It does not prove a live stream: the display reads its page again (I2679).
+I2680. The cursor the display follows between readings (`observatory.events`) is proven by the
+mesh cooperation test, not by this case.
 
 ## Why it exists
 

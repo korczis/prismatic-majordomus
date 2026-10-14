@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.24.1"
   },
-  "fingerprint": "8b4baef2513934349133c9c1111bc96e41b1c8d8f389c25d17e4dbf2473882e8",
+  "fingerprint": "7a0d081b98c9face5799c7617e5eaf163d7c108291a08b10fc2022668b73de6b",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 124,
+        "capabilities": 125,
         "moments": 38
       },
       "evidence": {
@@ -9263,6 +9263,14 @@
               "route": "GET /api/v1/observatory/capture"
             },
             {
+              "id": "observatory.events",
+              "title": "Observatory events",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_observatory_events",
+              "route": "GET /api/v1/observatory/events"
+            },
+            {
               "id": "observatory.replay",
               "title": "Observatory replay",
               "kind": "query",
@@ -9943,10 +9951,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 54,
-        "mcp_tools": 49,
+        "capabilities": 55,
+        "mcp_tools": 50,
         "mcp_resources": 7,
-        "http_routes": 53,
+        "http_routes": 54,
         "cli_paths": 14,
         "commands": 0,
         "objects": 0,
@@ -17802,13 +17810,13 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2356,
-    "builtin": 198,
+    "capabilities": 2357,
+    "builtin": 199,
     "declarative": 2158,
     "modules": 57,
-    "mcp_tools": 189,
+    "mcp_tools": 190,
     "mcp_resources": 2213,
-    "http_routes": 193,
+    "http_routes": 194,
     "cli_commands": 204,
     "shell_commands": 30,
     "kinds": 34,

@@ -8303,6 +8303,80 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_observatory_capture
+  "/api/v1/observatory/events":
+    get:
+      operationId: observatory.events
+      summary: Observatory events
+      description: "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page."
+      tags:
+        - observatory
+      parameters:
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "The cursor: only events whose logical clock is above it. Absent is the newest page."
+          examples:
+            "after a cursor":
+              value: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "At most this many (default 200, at most 1000)."
+          examples:
+            "after a cursor":
+              value: 50
+      responses:
+        "200":
+          description: "Observatory events: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryEvents"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.events
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_events
   "/api/v1/observatory/replay":
     get:
       operationId: observatory.replay
@@ -30204,6 +30278,37 @@ components:
         - reason
         - at
       description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
+    ObservatoryEvents:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: Whether a mesh runs in this process; without one there is no journal to follow.
+        after:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The cursor that was asked, when one was."
+        cursor:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+        expired:
+          type: boolean
+          description: "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+        events:
+          type: array
+          items: true
+          description: "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+      required:
+        - active
+        - cursor
+        - expired
+        - events
+      description: "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```"
     ObservatoryRecording:
       type: object
       properties:
@@ -30230,7 +30335,7 @@ components:
         - recorded_at
         - scenes
         - manifest
-      description: "The mesh scenes of one process at one moment, fit for publication."
+      description: "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
     ObservatoryReplay:
       type: object
       properties:
@@ -30248,7 +30353,7 @@ components:
       required:
         - present
         - path
-      description: "The recording the repository carries, or that it carries none."
+      description: "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```"
     ObservedClassification:
       type: object
       properties:
@@ -34735,7 +34840,7 @@ components:
       required:
         - sources
         - removed
-      description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason."
+      description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
     RecordingWindow:
       type: object
       properties:
@@ -34774,7 +34879,7 @@ components:
           description: The largest logical clock.
       required:
         - events
-      description: "The events a recording holds, from first to last."
+      description: "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
     Records:
       type: object
       properties:

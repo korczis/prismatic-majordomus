@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.24.1
 coverage:
   - scope: direct
-    required: 198
-    covered: 168
+    required: 199
+    covered: 169
     missing: 0
     waived: 30
     inapplicable: 0
   - scope: http
-    required: 193
-    covered: 168
+    required: 194
+    covered: 169
     missing: 0
     waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 189
-    covered: 164
+    required: 190
+    covered: 165
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 594
-    covered: 514
+    required: 597
+    covered: 517
     missing: 0
     waived: 80
     inapplicable: 0
@@ -1258,6 +1258,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: observatory.events
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - newest
+      - after a cursor
   - id: observatory.replay
     module: observatory
     kind: query

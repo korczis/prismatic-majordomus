@@ -118,7 +118,8 @@ Not delivered, and recorded as issues rather than drawn as if they were:
 
 - a recording captured on a schedule: the replay on the public site is the last capture
   someone committed (I2678 delivered the replay itself);
-- a pushed stream with a cursor in place of polling the page (I2679);
+- a pushed stream: since I2679 the display follows the journal from a cursor through
+  `observatory.events` between readings of its page, and nothing is pushed to it;
 - the evidence the owner's specification asks for at its gates: screenshots at 1080p and
   4K, frame rates measured on named hardware, a soak of the kiosk, the disconnect and
   recovery drills (I2680).

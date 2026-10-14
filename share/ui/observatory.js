@@ -15,9 +15,14 @@
 (function () {
   'use strict';
 
-  const POLL_MS = 15000;
+  // The page is read again every POLL_MS for every scene; the journal's events are followed
+  // between those readings from a cursor every STREAM_MS, through observatory.events.
+  const POLL_MS = 60000;
+  const STREAM_MS = 3000;
+  // The events the river holds at most, newest first: the server's bound on one scene.
+  const HELD = 200;
   const POLL_MAX_MS = 120000;
-  const LIVE_WITHIN_MS = 40000;
+  const LIVE_WITHIN_MS = 90000;
   const FADE_S = 1.2;
   const MANUAL_HOLD_S = 300;
   const TRACE = 24;
@@ -511,6 +516,7 @@
           const next = fresh && read(fresh.dataset.observatory);
           if (!next) throw new Error('no projection');
           ingest(next, false);
+          syncCursor();
           readAt = Date.now();
           failures = 0;
         } catch (e) {
@@ -524,6 +530,61 @@
       timer = setTimeout(poll, wait + Math.random() * 1000);
     }
     if (!snapshot) timer = setTimeout(poll, POLL_MS);
+
+    // ------------------------------------------------------------ following the journal
+    // Between readings of the page, the river follows the journal from its cursor: only the
+    // events above it come back, each by its identity, so one delivered twice is one mark.
+    // A cursor the journal never reached (another runtime, a restart) is expired: the page is
+    // read again at once, and the status says the display resynchronised.
+    let cursor = null;
+    let resyncedAt = 0;
+    let streamTimer = null;
+    let streamController = null;
+    let streamFailures = 0;
+    const river = () => data.scenes.find((s) => s.id === 'activity');
+    function syncCursor() {
+      const r = river();
+      cursor = r && r.available && !r.replay && r.model && typeof r.model.lamport === 'number' ? r.model.lamport : null;
+    }
+    syncCursor();
+    async function follow() {
+      streamTimer = null;
+      const r = river();
+      if (cursor !== null && r && r.available && !r.replay && document.visibilityState === 'visible') {
+        streamController = new AbortController();
+        const give = setTimeout(() => streamController.abort(), STREAM_MS * 3);
+        try {
+          const response = await fetch(`/api/v1/observatory/events?after=${cursor}&limit=${HELD}`, {
+            headers: { Accept: 'application/json' },
+            signal: streamController.signal,
+          });
+          if (!response.ok) throw new Error(String(response.status));
+          const page = await response.json();
+          if (page.expired) {
+            resyncedAt = Date.now();
+            if (timer) clearTimeout(timer);
+            await poll();
+          } else {
+            const fresh = (page.events || []).filter((e) => !seen.has(e.id));
+            for (const e of fresh) { seen.add(e.id); born.set(e.id, performance.now()); }
+            if (fresh.length) {
+              r.model.events = [...fresh, ...(r.model.events || [])].slice(0, HELD);
+            }
+            if (typeof page.cursor === 'number') { cursor = page.cursor; r.model.lamport = page.cursor; }
+            readAt = Date.now();
+          }
+          streamFailures = 0;
+        } catch (e) {
+          streamFailures += 1;
+        } finally {
+          clearTimeout(give);
+          streamController = null;
+        }
+      }
+      const wait = Math.min(STREAM_MS * 2 ** Math.min(streamFailures, 5), POLL_MAX_MS);
+      streamTimer = setTimeout(follow, wait + Math.random() * 500);
+    }
+    if (!snapshot) streamTimer = setTimeout(follow, STREAM_MS);
 
     // ------------------------------------------------------------ the frame
     let width = 0;
@@ -602,7 +663,8 @@
       // the words: set only when they change
       const age = Date.now() - readAt;
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
-      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      const resynced = Date.now() - resyncedAt < 10000;
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       const when = String(data.observed_at).replace('T', ' ');
       const recordedAt = scene.replay ? String(scene.replay.recorded_at).replace('T', ' ') : '';
       const text = [
@@ -641,6 +703,8 @@
       dispose() {
         if (timer) clearTimeout(timer);
         if (controller) controller.abort();
+        if (streamTimer) clearTimeout(streamTimer);
+        if (streamController) streamController.abort();
         if (frame !== null) { cancelAnimationFrame(frame); clearTimeout(frame); }
         observer.disconnect();
         document.removeEventListener('keydown', onKey);

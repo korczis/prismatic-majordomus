@@ -423,6 +423,30 @@ fn tail(id: &str) -> String {
     plain[plain.len().saturating_sub(12)..].iter().collect()
 }
 
+/// The marks of a page of `mesh.events`, newest first and at most [`BOUND`]: an event is a mark
+/// by its identity (stream and sequence), its kind, its node, its logical clock and its time,
+/// and never its body. One that states no sequence has no identity and is not drawn under an
+/// invented one. The scene and `observatory.events` both project through this, so a mark the
+/// stream delivers is the mark the page would have drawn.
+pub fn event_marks(listed: &[Value]) -> Vec<Value> {
+    listed
+        .iter()
+        .rev()
+        .take(BOUND)
+        .filter_map(|e| {
+            let stream = word(e, "stream");
+            let seq = e.get("seq").and_then(Value::as_u64)?;
+            Some(serde_json::json!({
+                "id": format!("{stream}:{seq}"),
+                "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
+                "node": short(&stream),
+                "lamport": e.get("lamport").and_then(Value::as_u64),
+                "at": e.get("at").and_then(Value::as_u64),
+            }))
+        })
+        .collect()
+}
+
 /// The model one scene draws, or why there is nothing true to draw.
 fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Value, String> {
     match id {
@@ -470,25 +494,7 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
             if let Some(reason) = inactive(events, EVENTS.capability) {
                 return Err(reason);
             }
-            let listed = items(events, "/events");
-            let marks: Vec<Value> = listed
-                .iter()
-                .rev()
-                .take(BOUND)
-                // an event is a mark by its identity, stream and sequence; one that states no
-                // sequence has none and is not drawn under an invented one
-                .filter_map(|e| {
-                    let stream = word(e, "stream");
-                    let seq = e.get("seq").and_then(Value::as_u64)?;
-                    Some(serde_json::json!({
-                        "id": format!("{stream}:{seq}"),
-                        "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
-                        "node": short(&stream),
-                        "lamport": e.get("lamport").and_then(Value::as_u64),
-                        "at": e.get("at").and_then(Value::as_u64),
-                    }))
-                })
-                .collect();
+            let marks = event_marks(items(events, "/events"));
             Ok(serde_json::json!({
                 "events": marks,
                 "lamport": events.get("lamport").and_then(Value::as_u64),

@@ -6,27 +6,27 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "6bd007f79daeba956f5c0625aa4efa1c340aaec6502c7347aa2e6d161ac0b657",
+    "fingerprint": "9d8fae0da23d8a713d7ec406124f1c59fc8e4583f1a2d1cf35d6e3f8c8ddd8c8",
     "summary": {
-      "total": 2356,
-      "builtin": 198,
+      "total": 2357,
+      "builtin": 199,
       "declarative": 2158,
       "by_kind": {
         "command": 30,
-        "query": 168,
+        "query": 169,
         "resource": 2158
       },
       "by_stability": {
-        "behaviorally_verified": 138,
+        "behaviorally_verified": 139,
         "experimental": 51,
         "implemented": 2167
       },
-      "mcp_tools": 189,
+      "mcp_tools": 190,
       "mcp_resources": 2213,
-      "http_routes": 193,
+      "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
-      "benchmark_required": 168,
+      "benchmark_required": 169,
       "benchmark_waived": 30,
       "cached": 54
     },
@@ -53893,7 +53893,7 @@
               "scenes",
               "manifest"
             ],
-            "description": "The mesh scenes of one process at one moment, fit for publication.",
+            "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```",
             "title": "ObservatoryRecording",
             "$defs": {
               "RecordingManifest": {
@@ -53929,7 +53929,7 @@
                   "sources",
                   "removed"
                 ],
-                "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason."
+                "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
               },
               "RecordingWindow": {
                 "type": "object",
@@ -53980,7 +53980,7 @@
                 "required": [
                   "events"
                 ],
-                "description": "The events a recording holds, from first to last."
+                "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
               }
             }
           }
@@ -53996,6 +53996,119 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/observatory/capture"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "observatory",
+          "mesh",
+          "ui"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+      },
+      {
+        "id": "observatory.events",
+        "module": "observatory",
+        "kind": "query",
+        "title": "Observatory events",
+        "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+        "input": {
+          "name": "ObservatoryEventsInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The cursor: only events whose logical clock is above it. Absent is the newest page."
+              },
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "At most this many (default 200, at most 1000)."
+              }
+            },
+            "description": "The input of `observatory.events`: a cursor and a page size.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEventsInput;\nlet q: ObservatoryEventsInput = serde_json::from_value(serde_json::json!({ \"after\": 42 })).unwrap();\nassert_eq!((q.after, q.limit), (Some(42), None));\nassert!(serde_json::from_value::<ObservatoryEventsInput>(serde_json::json!({ \"since\": 1 })).is_err());\n```",
+            "title": "ObservatoryEventsInput"
+          }
+        },
+        "output": {
+          "name": "ObservatoryEvents",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Whether a mesh runs in this process; without one there is no journal to follow."
+              },
+              "after": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The cursor that was asked, when one was."
+              },
+              "cursor": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+              },
+              "expired": {
+                "type": "boolean",
+                "description": "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+              },
+              "events": {
+                "type": "array",
+                "items": true,
+                "description": "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+              }
+            },
+            "required": [
+              "active",
+              "cursor",
+              "expired",
+              "events"
+            ],
+            "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
+            "title": "ObservatoryEvents"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::observatory"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_observatory_events"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/observatory/events"
           }
         },
         "availability": "runtime",
@@ -54063,7 +54176,7 @@
               "present",
               "path"
             ],
-            "description": "The recording the repository carries, or that it carries none.",
+            "description": "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```",
             "title": "ObservatoryReplay",
             "$defs": {
               "ObservatoryRecording": {
@@ -54100,7 +54213,7 @@
                   "scenes",
                   "manifest"
                 ],
-                "description": "The mesh scenes of one process at one moment, fit for publication."
+                "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
               },
               "RecordingManifest": {
                 "type": "object",
@@ -54135,7 +54248,7 @@
                   "sources",
                   "removed"
                 ],
-                "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason."
+                "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
               },
               "RecordingWindow": {
                 "type": "object",
@@ -54186,7 +54299,7 @@
                 "required": [
                   "events"
                 ],
-                "description": "The events a recording holds, from first to last."
+                "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
               }
             }
           }
@@ -81267,9 +81380,10 @@
         "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "observatory.capture",
+          "observatory.events",
           "observatory.replay"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
@@ -81731,7 +81845,7 @@
     ]
   },
   "index": {
-    "fingerprint": "dd90ed05ee870cc4633ad8da4691783582dbafb57bdc9430de6547824a0b6006",
+    "fingerprint": "b0c66d8fd080e47404a4ee77feb562de205cddfd794d1d486559f6e0d75b7af5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83521,7 +83635,7 @@
         "path": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8548,
+        "bytes": 8645,
         "tags": [
           "ui",
           "observatory",
@@ -87701,7 +87815,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 31413
+        "bytes": 32010
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -89375,7 +89489,7 @@
         "title": "The Observatory draws nothing it did not read",
         "path": "docs/claims/observatory-draws-nothing-it-did-not-read.md",
         "source_class": "claim_page",
-        "bytes": 3332
+        "bytes": 3386
       },
       {
         "uri": "majordomus://document/docs/claims/open-question-gate.md",
@@ -90594,7 +90708,7 @@
         "path": ".ai/repo/features/observatory.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3154,
+        "bytes": 3161,
         "tags": [
           "ui",
           "interface",
@@ -139288,6 +139402,23 @@
         "output": "ObservatoryRecording"
       },
       {
+        "name": "majordomus_observatory_events",
+        "id": "observatory.events",
+        "title": "Observatory events",
+        "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ObservatoryEventsInput",
+        "output": "ObservatoryEvents"
+      },
+      {
         "name": "majordomus_observatory_replay",
         "id": "observatory.replay",
         "title": "Observatory replay",
@@ -141517,6 +141648,12 @@
         "method": "GET",
         "path": "/api/v1/observatory/capture",
         "id": "observatory.capture",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/observatory/events",
+        "id": "observatory.events",
         "kind": "query"
       },
       {
@@ -146255,6 +146392,64 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/observatory/capture"
+      },
+      {
+        "key": "observatory.events|direct|newest",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "newest",
+        "cached": false
+      },
+      {
+        "key": "observatory.events|direct|after a cursor",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "after a cursor",
+        "cached": false
+      },
+      {
+        "key": "observatory.events|mcp|newest",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "newest",
+        "cached": false,
+        "tool": "majordomus_observatory_events"
+      },
+      {
+        "key": "observatory.events|mcp|after a cursor",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "after a cursor",
+        "cached": false,
+        "tool": "majordomus_observatory_events"
+      },
+      {
+        "key": "observatory.events|http|newest",
+        "kind": "capability",
+        "transport": "http",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "newest",
+        "cached": false,
+        "route": "GET /api/v1/observatory/events"
+      },
+      {
+        "key": "observatory.events|http|after a cursor",
+        "kind": "capability",
+        "transport": "http",
+        "id": "observatory.events",
+        "module": "observatory",
+        "case": "after a cursor",
+        "cached": false,
+        "route": "GET /api/v1/observatory/events"
       },
       {
         "key": "observatory.replay|direct|default",
@@ -151930,6 +152125,27 @@
           "cases": 1
         },
         {
+          "subject": "observatory.events",
+          "module": "observatory",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "observatory.events",
+          "module": "observatory",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "observatory.events",
+          "module": "observatory",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "observatory.replay",
           "module": "observatory",
           "transport": "direct",
@@ -153357,22 +153573,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 198,
-          "covered": 168,
+          "required": 199,
+          "covered": 169,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
         },
         "http": {
-          "required": 193,
-          "covered": 168,
+          "required": 194,
+          "covered": 169,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 189,
-          "covered": 164,
+          "required": 190,
+          "covered": 165,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -153385,8 +153601,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 594,
-          "covered": 514,
+          "required": 597,
+          "covered": 517,
           "missing": 0,
           "waived": 80,
           "inapplicable": 0

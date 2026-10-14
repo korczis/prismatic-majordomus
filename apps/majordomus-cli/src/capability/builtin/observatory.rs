@@ -15,6 +15,31 @@
 //! its identity: machines are `machine 1`, `machine 2` in the order the mesh listed them,
 //! runtimes and sessions are ordinals, and an event keeps only its kind, its logical clock and
 //! its time. What remains is the shape of the cooperation, which is what the scene draws.
+//!
+//! The lifecycle, from capture to replay: a process that runs the mesh projects its scenes,
+//! the projection is redacted with a manifest, the recording is committed, and a process that
+//! runs none reads it back.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::observatory::{redact, replay_at, RECORDING, RECORDING_SCHEMA};
+//! use serde_json::json;
+//! let live = [("mesh".to_string(), json!({
+//!     "machines": [{ "id": "641bdb94dae9f622", "label": "641bdb94", "local": true, "runtimes": [] }],
+//!     "known": 1, "refused": 0,
+//! }))].into_iter().collect();
+//! let scenes = redact(&live);
+//! let dir = tempfile::tempdir().unwrap();
+//! assert!(!replay_at(dir.path()).unwrap().present, "nothing recorded yet");
+//! let recording = json!({
+//!     "schema": RECORDING_SCHEMA, "recorded_at": "2026-10-14T05:00:00Z", "scenes": scenes,
+//!     "manifest": { "sources": ["mesh.peers"], "removed": ["identities"] },
+//! });
+//! let path = dir.path().join(RECORDING);
+//! std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+//! std::fs::write(&path, recording.to_string()).unwrap();
+//! let replayed = replay_at(dir.path()).unwrap().recording.unwrap();
+//! assert_eq!(replayed.scenes["mesh"]["machines"][0]["label"], "machine 1");
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -23,6 +48,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
@@ -40,6 +66,15 @@ pub const RECORDING_SCHEMA: &str = "observatory-recording/v1";
 pub const RECORDED: &[&str] = &["mesh", "activity", "coop"];
 
 /// The mesh scenes of one process at one moment, fit for publication.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::ObservatoryRecording;
+/// let r: ObservatoryRecording = serde_json::from_value(serde_json::json!({
+///     "schema": "observatory-recording/v1", "recorded_at": "2026-10-14T05:00:00Z", "scenes": {},
+///     "manifest": { "sources": [], "removed": [] },
+/// })).unwrap();
+/// assert!(r.scenes.is_empty() && r.revision.is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ObservatoryRecording {
     /// [`RECORDING_SCHEMA`].
@@ -58,6 +93,14 @@ pub struct ObservatoryRecording {
 
 /// What a recording is a record of: the capabilities read, the window of events it holds,
 /// and what was removed from what they answered, with the reason.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::RecordingManifest;
+/// let m: RecordingManifest = serde_json::from_value(serde_json::json!({
+///     "sources": ["mesh.events"], "removed": ["event bodies"],
+/// })).unwrap();
+/// assert!(m.window.is_none(), "a recording that holds no event has no window");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct RecordingManifest {
     /// The capabilities whose answers the recorded scenes were projected from.
@@ -71,6 +114,12 @@ pub struct RecordingManifest {
 }
 
 /// The events a recording holds, from first to last.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::RecordingWindow;
+/// let w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };
+/// assert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, "a minute of the journal");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct RecordingWindow {
     /// How many events.
@@ -130,6 +179,14 @@ fn manifest(scenes: &BTreeMap<String, Value>) -> RecordingManifest {
 }
 
 /// The recording the repository carries, or that it carries none.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};
+/// let dir = tempfile::tempdir().unwrap();
+/// let none: ObservatoryReplay = replay_at(dir.path()).unwrap();
+/// assert!(!none.present && none.recording.is_none());
+/// assert_eq!(none.path, RECORDING);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ObservatoryReplay {
     /// Whether the repository carries a recording.
@@ -277,6 +334,15 @@ fn capture(ctx: &Context, _: Empty) -> Result<ObservatoryRecording, CapabilityEr
 
 /// The recording at [`RECORDING`] under `root`. Absent is `present: false`; a file that is
 /// there and cannot be read or is not a recording is an error, never an empty answer.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::{replay_at, RECORDING};
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = dir.path().join(RECORDING);
+/// std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+/// std::fs::write(&path, "{}").unwrap();
+/// assert!(replay_at(dir.path()).is_err(), "a file that is not a recording is refused");
+/// ```
 pub fn replay_at(root: &Path) -> Result<ObservatoryReplay, CapabilityError> {
     let path = root.join(RECORDING);
     let text = match std::fs::read_to_string(&path) {
@@ -342,11 +408,131 @@ pub fn replay_at(root: &Path) -> Result<ObservatoryReplay, CapabilityError> {
     })
 }
 
+/// The input of `observatory.events`: a cursor and a page size.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::ObservatoryEventsInput;
+/// let q: ObservatoryEventsInput = serde_json::from_value(serde_json::json!({ "after": 42 })).unwrap();
+/// assert_eq!((q.after, q.limit), (Some(42), None));
+/// assert!(serde_json::from_value::<ObservatoryEventsInput>(serde_json::json!({ "since": 1 })).is_err());
+/// ```
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ObservatoryEventsInput {
+    /// The cursor: only events whose logical clock is above it. Absent is the newest page.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub after: Option<u64>,
+    /// At most this many (default 200, at most 1000).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+}
+
+impl BenchmarkCases for ObservatoryEventsInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("newest", ObservatoryEventsInput::default()),
+            NamedCase::new(
+                "after a cursor",
+                ObservatoryEventsInput {
+                    after: Some(0),
+                    limit: Some(50),
+                },
+            ),
+        ]
+    }
+}
+
+/// The Observatory's events above a cursor, as the activity scene draws them.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::ObservatoryEvents;
+/// let e: ObservatoryEvents = serde_json::from_value(serde_json::json!({
+///     "active": true, "after": 9, "cursor": 12, "expired": false, "events": [{ "id": "s:3" }],
+/// })).unwrap();
+/// assert!(e.cursor > e.after.unwrap(), "the next request resumes past what was read");
+/// ```
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct ObservatoryEvents {
+    /// Whether a mesh runs in this process; without one there is no journal to follow.
+    pub active: bool,
+    /// The cursor that was asked, when one was.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub after: Option<u64>,
+    /// The cursor to ask next: the logical clock of the newest event read, or the journal's
+    /// newest clock when the cursor had expired.
+    pub cursor: u64,
+    /// The cursor names a clock this journal never reached (another runtime's journal, or one
+    /// that restarted): nothing above it can be read, and the reader takes a fresh projection.
+    pub expired: bool,
+    /// The events above the cursor, newest first, as marks: identity, kind, node, logical
+    /// clock and time, never a body.
+    pub events: Vec<Value>,
+}
+
+fn events(
+    ctx: &Context,
+    input: ObservatoryEventsInput,
+) -> Result<ObservatoryEvents, CapabilityError> {
+    let limit = input.limit.unwrap_or(200).clamp(1, 1000);
+    let newest = ctx.execute(
+        "mesh.events",
+        serde_json::json!({ "newest": true, "limit": limit }),
+    )?;
+    let active = newest.get("active").and_then(Value::as_bool) == Some(true);
+    let head = newest.get("lamport").and_then(Value::as_u64).unwrap_or(0);
+    let list = |v: &Value| {
+        v.get("events")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+    };
+    let Some(after) = input.after else {
+        return Ok(ObservatoryEvents {
+            active,
+            after: None,
+            cursor: head,
+            expired: false,
+            events: crate::ui::observatory::event_marks(&list(&newest)),
+        });
+    };
+    if !active || after > head {
+        return Ok(ObservatoryEvents {
+            active,
+            after: Some(after),
+            cursor: head,
+            expired: active,
+            events: Vec::new(),
+        });
+    }
+    let page = ctx.execute(
+        "mesh.events",
+        serde_json::json!({ "after": after, "limit": limit }),
+    )?;
+    Ok(ObservatoryEvents {
+        active,
+        after: Some(after),
+        cursor: page.get("lamport").and_then(Value::as_u64).unwrap_or(after),
+        expired: false,
+        events: crate::ui::observatory::event_marks(&list(&page)),
+    })
+}
+
 fn replay(ctx: &Context, _: Empty) -> Result<ObservatoryReplay, CapabilityError> {
     replay_at(Path::new(&ctx.index.repository.root))
 }
 
-/// The module.
+/// The `observatory` module: three read-only capabilities, none cached, because each is read
+/// to learn what is true now: the capture of this process's mesh, the recording the
+/// repository carries, and the journal's events above a cursor.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::observatory::module;
+/// use majordomus_cli::capability::Effect;
+/// let m = module();
+/// let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+/// assert_eq!(ids, ["observatory.capture", "observatory.replay", "observatory.events"]);
+/// assert!(m.capabilities.iter().all(|e| e.capability.execution.effect == Effect::Read));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "observatory",
@@ -375,6 +561,17 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_observatory_replay"), http: get("/api/v1/observatory/replay"), cli: None },
                 tags: ["observatory", "mesh", "ui"],
                 handler: replay,
+            },
+            capability! {
+                id: "observatory.events",
+                title: "Observatory events",
+                description: "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+                input: ObservatoryEventsInput,
+                output: ObservatoryEvents,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: mcp("majordomus_observatory_events"), http: get("/api/v1/observatory/events"), cli: None },
+                tags: ["observatory", "mesh", "ui"],
+                handler: events,
             },
         ],
     }
