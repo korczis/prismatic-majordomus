@@ -32,7 +32,7 @@ sed 's/^\(  checkpoint_interval_default: [^ #]*\).*$/\1   # a changed comment/' 
 grep -q '^  checkpoint_interval_default: [^ ]*   # a changed comment$' .ai/repo/policy.yaml \
   || { echo "    the fixture edit did not apply"; grep -n checkpoint_interval_default .ai/repo/policy.yaml; exit 1; }
 printf '\n  # a comment in a profile\n' >> "$profile"
-git diff --quiet -- .ai/repo/policy.yaml "$profile" && { echo "    the policy and the profile were not edited"; exit 1; }
+git --no-pager diff --quiet -- .ai/repo/policy.yaml "$profile" && { echo "    the policy and the profile were not edited"; exit 1; }
 
 expect_exit 0 "$MJ" update --dry-run
 expect_grep '^unchanged AGENTS\.md$'
