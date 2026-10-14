@@ -27,4 +27,15 @@ validation:
 evidence_required:
   - "slow_client_released_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T08:02:05Z
+started_at: 2026-10-14T08:01:59Z
+started_event: sha256:c39db5829aafa89a616be854979492b72e2b06f13c8e23467d7ec79fd5ada949
+completed_at: 2026-10-14T08:02:05Z
+completed_event: sha256:22ad8e1a91b0d7a9a6b22c2fc0ab8d42c1a9c1b71e2d44e679eebe054f3e9afb
+evidence:
+  - covers: slow_client_released_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test http_slow_client slow_client_released_test"
+    result: "test result: ok. 1 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:03Z

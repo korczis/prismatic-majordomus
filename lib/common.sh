@@ -655,13 +655,33 @@ mj_has()   { command -v "$1" >/dev/null 2>&1; }
 
 # policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
 # error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+#
+# Each file is hashed in its normal form (mj_yaml_normal), not as bytes: a comment or a
+# blank line changes no setting, so it must not move the stamp and regenerate every
+# bootstrap (I1991). The executable computes the same form (policy::normal_form), and the
+# two are held equal by apps/majordomus-cli/tests/providers_projection.rs.
 mj_policy_cat() {
   local pf
-  cat "$MJ_POLICY_FILE"
+  mj_yaml_normal < "$MJ_POLICY_FILE"
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
-    if [ -f "$pf" ]; then cat "$pf"; fi
+    if [ -f "$pf" ]; then mj_yaml_normal < "$pf"; fi
   done
   return 0
+}
+# The normal form of a file in the layer's YAML subset, stdin to stdout: trailing spaces,
+# tabs and carriage returns dropped; blank lines and whole-line comments dropped; a
+# trailing comment (a `#` after a space or tab) dropped from a line that holds no quote,
+# since in a quoted scalar ` #` may be text. Indentation, order and every value are kept,
+# so two files with one normal form are one setting. The subset refuses block scalars, so
+# no `#` line is ever content. Every line ends in a newline.
+mj_yaml_normal() {
+  awk -v sq="'" -v dq='"' '
+    { sub(/[ \t\r]+$/, "") }
+    /^[ \t]*$/ || /^[ \t]*#/ { next }
+    index($0, sq) == 0 && index($0, dq) == 0 && match($0, /[ \t]#/) {
+      $0 = substr($0, 1, RSTART - 1); sub(/[ \t]+$/, "")
+    }
+    { print }'
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes

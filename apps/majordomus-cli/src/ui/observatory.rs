@@ -30,7 +30,7 @@ use crate::cockpit::html::el;
 
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
-use super::view::{hero, link, panel, table, technical};
+use super::view::{hero, link, panel, table};
 
 /// The Observatory's route.
 pub const ROUTE: &str = "/ui/observatory";
@@ -58,11 +58,25 @@ const VERSION: Source = Source::of("release.version");
 const HEALTH: Source = Source::of("health.report");
 const ECONOMICS: Source = Source::of("economics.runs");
 const REPOSITORY: Source = Source::of("repository.info");
+const REPLAY: Source = Source::of("observatory.replay");
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
-    PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY,
+    PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY, REPLAY,
 ];
+
+/// Where a scene's model came from when it is a replay: the recording the repository
+/// carries, and when that was recorded.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ReplayStanding {
+    /// When the recorded process read the scene.
+    pub recorded_at: String,
+    /// The commit that process stood at, when it said.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
+    /// The capabilities the recording names as read, from its manifest.
+    pub sources: Vec<String>,
+}
 
 /// How many marks one scene carries at most: a wall display is read from metres away, and
 /// a projection is bounded whatever the repository holds.
@@ -175,7 +189,9 @@ pub const SCENES: &[Scene] = &[
     },
 ];
 
-/// One source as the Observatory read it.
+/// One source as the Observatory read it. It carries no link: the page's own source lines
+/// link each capability's technical view, and a link inside this document would be a second
+/// copy of one that a publication has to lead somewhere (case 2982).
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SourceStanding {
     /// The capability asked.
@@ -187,8 +203,6 @@ pub struct SourceStanding {
     pub reason: Option<String>,
     /// How long the executor took, in milliseconds.
     pub took_ms: u64,
-    /// The technical view of the capability, where every other way to ask it is listed.
-    pub href: String,
 }
 
 /// One scene as projected: the descriptor, whether it can be drawn, and the model it draws.
@@ -215,6 +229,10 @@ pub struct SceneProjection {
     pub reason: Option<String>,
     /// What the scene draws; `null` when it is unavailable.
     pub model: Value,
+    /// Present when the model is the repository's recording and not this process's reading:
+    /// a scene of the mesh, drawn where no mesh runs, and labelled a replay.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replay: Option<ReplayStanding>,
 }
 
 /// The whole projection: what the page carries and the script draws.
@@ -261,19 +279,28 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
             },
             reason: a.value.as_ref().err().cloned(),
             took_ms: a.took.as_millis() as u64,
-            href: technical(a.source.capability),
         })
         .collect::<Vec<_>>();
     let scenes = SCENES
         .iter()
         .map(|scene| {
-            let (model, reason) = match unanswered(scene, answers) {
+            let (mut model, mut reason) = match unanswered(scene, answers) {
                 Some(reason) => (None, Some(reason)),
                 None => match model(scene.id, answers, &sources) {
                     Ok(model) => (Some(model), None),
                     Err(reason) => (None, Some(reason)),
                 },
             };
+            // a scene of the mesh in a process that runs none may draw the recording the
+            // repository carries, as a replay; a source that failed is not "no mesh here"
+            let mut replay = None;
+            if model.is_none() && no_mesh_here(scene, answers) {
+                if let Some((recorded, standing)) = recorded(scene.id, answers) {
+                    model = Some(recorded);
+                    reason = None;
+                    replay = Some(standing);
+                }
+            }
             SceneProjection {
                 id: scene.id,
                 label: scene.label,
@@ -285,6 +312,7 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
                 available: model.is_some(),
                 reason,
                 model: model.unwrap_or(Value::Null),
+                replay,
             }
         })
         .collect();
@@ -339,6 +367,40 @@ fn word(value: &Value, key: &str) -> String {
 }
 
 /// A source that says it is not running here: its own reason, or the plain fact.
+/// Whether every source the scene requires answered, and one of them answered that no mesh
+/// runs in this process: the one case a recording may stand in for.
+fn no_mesh_here(scene: &Scene, answers: &Answers) -> bool {
+    crate::capability::builtin::observatory::RECORDED.contains(&scene.id)
+        && scene.requires.iter().all(|s| {
+            answers.get(s).is_some_and(|a| {
+                a.value
+                    .as_ref()
+                    .is_ok_and(|v| v.get("active") == Some(&Value::Bool(false)))
+            })
+        })
+}
+
+/// The repository's recording of one scene, with when it was recorded.
+fn recorded(id: &str, answers: &Answers) -> Option<(Value, ReplayStanding)> {
+    let replay = answers.get(&REPLAY)?.value.as_ref().ok()?;
+    let recording = replay.get("recording")?;
+    let model = recording.get("scenes")?.get(id)?.clone();
+    let standing = ReplayStanding {
+        recorded_at: recording.get("recorded_at")?.as_str()?.to_string(),
+        revision: recording
+            .get("revision")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        sources: recording
+            .pointer("/manifest/sources")?
+            .as_array()?
+            .iter()
+            .filter_map(|v| v.as_str().map(str::to_string))
+            .collect(),
+    };
+    Some((model, standing))
+}
+
 fn inactive(value: &Value, capability: &str) -> Option<String> {
     (value.get("active").and_then(Value::as_bool) != Some(true)).then(|| {
         match value.get("reason").and_then(Value::as_str) {
@@ -359,6 +421,30 @@ fn short(id: &str) -> String {
 fn tail(id: &str) -> String {
     let plain: Vec<char> = id.chars().filter(char::is_ascii_alphanumeric).collect();
     plain[plain.len().saturating_sub(12)..].iter().collect()
+}
+
+/// The marks of a page of `mesh.events`, newest first and at most [`BOUND`]: an event is a mark
+/// by its identity (stream and sequence), its kind, its node, its logical clock and its time,
+/// and never its body. One that states no sequence has no identity and is not drawn under an
+/// invented one. The scene and `observatory.events` both project through this, so a mark the
+/// stream delivers is the mark the page would have drawn.
+pub fn event_marks(listed: &[Value]) -> Vec<Value> {
+    listed
+        .iter()
+        .rev()
+        .take(BOUND)
+        .filter_map(|e| {
+            let stream = word(e, "stream");
+            let seq = e.get("seq").and_then(Value::as_u64)?;
+            Some(serde_json::json!({
+                "id": format!("{stream}:{seq}"),
+                "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
+                "node": short(&stream),
+                "lamport": e.get("lamport").and_then(Value::as_u64),
+                "at": e.get("at").and_then(Value::as_u64),
+            }))
+        })
+        .collect()
 }
 
 /// The model one scene draws, or why there is nothing true to draw.
@@ -408,25 +494,7 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
             if let Some(reason) = inactive(events, EVENTS.capability) {
                 return Err(reason);
             }
-            let listed = items(events, "/events");
-            let marks: Vec<Value> = listed
-                .iter()
-                .rev()
-                .take(BOUND)
-                // an event is a mark by its identity, stream and sequence; one that states no
-                // sequence has none and is not drawn under an invented one
-                .filter_map(|e| {
-                    let stream = word(e, "stream");
-                    let seq = e.get("seq").and_then(Value::as_u64)?;
-                    Some(serde_json::json!({
-                        "id": format!("{stream}:{seq}"),
-                        "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
-                        "node": short(&stream),
-                        "lamport": e.get("lamport").and_then(Value::as_u64),
-                        "at": e.get("at").and_then(Value::as_u64),
-                    }))
-                })
-                .collect();
+            let marks = event_marks(items(events, "/events"));
             Ok(serde_json::json!({
                 "events": marks,
                 "lamport": events.get("lamport").and_then(Value::as_u64),
@@ -767,6 +835,43 @@ mod tests {
         );
     }
 
+    /// Where no mesh runs, a scene of the mesh draws the repository's recording and says it
+    /// is a replay; where the source failed, or a mesh runs, the recording is not used.
+    #[test]
+    fn a_recording_stands_in_only_where_no_mesh_runs_and_says_so() {
+        let quiet =
+            serde_json::json!({ "active": false, "reason": "no shared server", "machines": [] });
+        let recording = serde_json::json!({ "present": true, "path": "x", "recording": {
+            "schema": "observatory-recording/v1", "recorded_at": "2026-10-14T05:00:00Z", "revision": "abc",
+            "scenes": { "mesh": { "machines": [{ "id": "m1", "label": "machine 1", "runtimes": [] }], "known": 1, "refused": 0 } },
+            "manifest": { "sources": ["mesh.peers"], "removed": ["identities"] },
+        }});
+        let p = project_from(
+            &all(&[(PEERS, Ok(quiet.clone())), (REPLAY, Ok(recording.clone()))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        let mesh = scene(&p, "mesh");
+        assert!(mesh.available && mesh.reason.is_none());
+        assert_eq!(mesh.model["machines"][0]["label"], "machine 1");
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.recorded_at.as_str()),
+            Some("2026-10-14T05:00:00Z")
+        );
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.sources.clone()),
+            Some(vec!["mesh.peers".to_string()])
+        );
+        // a scene the recording does not carry stays unavailable, with its source's reason
+        assert!(!scene(&p, "activity").available && scene(&p, "activity").replay.is_none());
+        // a source that failed is not "no mesh here"
+        let failed = project_from(
+            &all(&[(PEERS, Err("refused".into())), (REPLAY, Ok(recording))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        assert!(!scene(&failed, "mesh").available);
+        assert!(scene(&failed, "mesh").replay.is_none());
+    }
+
     /// What a source answered is what the scene draws: machines with their runtimes'
     /// liveness, events as kind, stream and clock, and nothing of an event's body.
     #[test]
@@ -880,5 +985,8 @@ mod tests {
         for s in SOURCES {
             assert!(html.contains(s.capability), "{} is not named", s.capability);
         }
+        // the document holds no link into another surface; the source lines below it do
+        let carried = serde_json::to_string(&p).unwrap();
+        assert!(!carried.contains("/cockpit"), "{carried}");
     }
 }

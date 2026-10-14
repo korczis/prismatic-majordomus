@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.24.1
+# Generator: majordomus-cli 0.26.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.24.1
+generator: majordomus-cli 0.26.0
 coverage:
   - scope: direct
-    required: 196
-    covered: 166
+    required: 199
+    covered: 169
     missing: 0
     waived: 30
     inapplicable: 0
   - scope: http
-    required: 191
-    covered: 166
+    required: 194
+    covered: 169
     missing: 0
     waived: 25
     inapplicable: 0
   - scope: mcp
-    required: 187
-    covered: 162
+    required: 190
+    covered: 165
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 588
-    covered: 508
+    required: 597
+    covered: 517
     missing: 0
     waived: 80
     inapplicable: 0
@@ -1244,6 +1244,34 @@ capabilities:
     module: obligations
     kind: query
     cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: observatory.capture
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: observatory.events
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - newest
+      - after a cursor
+  - id: observatory.replay
+    module: observatory
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered

@@ -347,21 +347,49 @@ of health. An event of the mesh is projected as its identity (stream and sequenc
 its node, its logical time and its wall time, and never as its body.
 
 The status word says how the page was read:
-- `LIVE`: read again within 40 seconds; the script asks for its own page every 15 seconds and
-  backs off to 120 when the server does not answer;
-- `STALE`: not read again within that bound;
+- `LIVE`: read again within 90 seconds. The script asks for its own page every 60 seconds, and
+  between those readings follows the mesh journal from a cursor every 3 seconds through
+  `observatory.events`, which answers only the events above the cursor, projected exactly as
+  the scene projects them. An event delivered twice is one mark, the river holds at most 200,
+  and both readers back off to 120 seconds when the server does not answer;
+- `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
+  runtime's journal, or one that restarted); the page was read again at once;
+- `STALE`: not read again within the bound;
+- `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
+  recorded;
 - `SNAPSHOT`: the public site, which reads nothing again and names its revision.
 
 Without JavaScript the same projection is a table: one row per scene, with its state in words
 (`available`, `decorative` or `unavailable`), its meaning or its reason, what it requires and
 the link to its rows.
 
-A reader's choice of a scene holds for five minutes, then the rotation resumes. Nothing on the
-screen starts work or writes a record.
+A reader's choice of a scene holds for five minutes, then the rotation resumes. New events of
+the journal interrupt the rotation for the river once the scene shown has had 12 seconds, and
+at most once every 120 seconds, so a busy journal cannot hold the display; a reader's choice is
+never interrupted. A scene whose
+renderer throws is quarantined for the rest of the display's life: the rotation skips it, the
+others go on, and the scene says `QUARANTINED` with what failed when a reader asks for it.
+Nothing on the screen starts work or writes a record.
 
-On the public site the process that takes the snapshot runs no mesh, so `mesh`, `activity` and
-`coop` are unavailable there and say so, and `tokens` is unavailable while no run is recorded.
-What that leaves open is in [What it does not do yet](#what-it-does-not-do-yet).
+The display's own state is readable for an inspector or an evidence run: the section's
+`observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
+and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
+gates is taken through it by `scripts/lib/ui-observatory.mjs`.
+
+On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
+and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
+read by `observatory.replay`), and the status says `REPLAY` with the time it was recorded and
+`not live`. A scene the recording does not carry is unavailable and says why; a recording that
+cannot be read is a failed source, never a scene. `tokens` is unavailable while no run is
+recorded.
+
+The recording is the answer of `observatory.capture` on a server that runs the mesh, saved as
+it came and committed. It names nothing by its identity: machines are `machine 1`, `machine 2`
+in the order the mesh listed them, runtimes and sessions are ordinals, and an event keeps its
+kind, its logical clock and its time. Its manifest names the capabilities it was read from,
+the window of events it holds (first and last time and logical clock) and what was removed
+and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
+time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
 
 ## Without JavaScript
 
@@ -481,6 +509,15 @@ it left out; one that is missing, names an older commit or does not say what end
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
 `test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
+The first screen leads only with figures the reader of a snapshot can decide. That process is
+no server, so `health.report` says `unknown` for the attached clients and the mesh runtime and
+therefore for the whole report. The Dashboard's health figure is the report's `repository`
+verdict instead: the worst of the dimensions that describe the repository and not the process
+serving it. The Health panel below it still lists every dimension with its own word. Where no
+mesh runtime is active the mesh figure reads `Mesh active: no` and counts no machines. The
+probe refuses a published first screen with an undecided figure, and
+`test/cases/1092_the_ui_snapshot_holds_every_screen.sh` holds the snapshot to the same.
+
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
@@ -493,9 +530,9 @@ reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
   forge observation (`integration.timings`); there is no history of runs yet, so no trend is
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
-- The Observatory draws what the process serving it can read. On the public site that leaves
-  the three scenes of the mesh unavailable; a replay of genuinely recorded events, labelled as
-  a replay, is I2678. It learns of a change by asking for its page again, not from a pushed
-  stream with a cursor (I2679). Its screenshots at 1080p and 4K, its measured frame rates and
-  its soak as a kiosk are I2680; until then no figure about its performance is stated.
+- The Observatory's replay on the public site is as old as the last capture that was
+  committed; nothing captures one on a schedule. Between readings of its page it follows the
+  journal by asking for the events above its cursor; nothing is pushed to it. Its gates and
+  the measurements behind them are in `.ai/repo/benchmarks/observatory/manifest.json`; a
+  frame rate there is headless Chromium's on the machine it names, not a panel's.
 {% endraw %}

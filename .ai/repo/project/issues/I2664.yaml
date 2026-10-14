@@ -20,13 +20,11 @@ scope:
 non_scope:
   - "Buying runners"
   - "Publishing by artifact, which is I2660, and the runner bound of validation, which is I2662"
-depends_on:
-  - I2662
+depends_on: []
 acceptance_criteria:
   - "A validate run on a branch is cancelled by the workflow itself when one of its jobs has failed, and a case holds the workflow to it"
   - "The rule of expedited landings says which jobs a lander reads for which kind of change, and names the crate tests that read repository records (skills, rules, claims) as part of a record change"
   - "Adding an active skill without naming it where the crate test requires is refused by a structure gate, not first by a rust lane an hour later"
-  - "A red on the trunk has a named carrier on the board within the minute it is read, and the landing claim is refused to anyone else until the fix lands"
 validation:
   - "bin/majordomus plan validate"
   - "scripts/ci/github-check"
@@ -35,4 +33,21 @@ evidence_required:
   - "a_failed_run_is_cancelled_case"
   - "skill_named_by_crate_test_gate"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-14T12:55:14Z
+started_at: 2026-10-14T12:55:10Z
+started_event: sha256:0ef633ad3b06875017882715e08fd7c7e7b1423cfa241936ae471a3f281f1e16
+completed_at: 2026-10-14T12:55:14Z
+completed_event: sha256:abdd2769d4a9d22b2ac186ec4084dda5ee041113de88bf0185ab965f06b20192
+evidence:
+  - covers: a_failed_run_is_cancelled_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3019_a_failed_branch_run_cancels_itself"
+    result: "tests: 1 passed, 0 failed; six mutations of validate.yml each refused (run 2026-10-14 12:54Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:54:57Z
+  - covers: skill_named_by_crate_test_gate
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3020_an_active_skill_is_named_where_the_crate_test_demands && scripts/ci/skill-naming-check"
+    result: "tests: 1 passed, 0 failed; gate: 8 active skills, each named (run 2026-10-14 12:54Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:54:59Z

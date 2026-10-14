@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.24.1
+# Generator: majordomus-cli 0.26.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.24.1"
+  version: "0.26.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -93,6 +93,8 @@ tags:
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
   - name: obligations
     description: "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
+  - name: observatory
+    description: "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay."
   - name: pack
     description: "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
   - name: peers
@@ -8249,6 +8251,184 @@ paths:
         resource:
           uri: majordomus://obligations/closure
           name: obligation-closure
+  "/api/v1/observatory/capture":
+    get:
+      operationId: observatory.capture
+      summary: Observatory capture
+      description: "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it."
+      tags:
+        - observatory
+      parameters: []
+      responses:
+        "200":
+          description: "Observatory capture: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryRecording"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.capture
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_capture
+  "/api/v1/observatory/events":
+    get:
+      operationId: observatory.events
+      summary: Observatory events
+      description: "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page."
+      tags:
+        - observatory
+      parameters:
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "The cursor: only events whose logical clock is above it. Absent is the newest page."
+          examples:
+            "after a cursor":
+              value: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "At most this many (default 200, at most 1000)."
+          examples:
+            "after a cursor":
+              value: 50
+      responses:
+        "200":
+          description: "Observatory events: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryEvents"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.events
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_events
+  "/api/v1/observatory/replay":
+    get:
+      operationId: observatory.replay
+      summary: Observatory replay
+      description: "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error."
+      tags:
+        - observatory
+      parameters: []
+      responses:
+        "200":
+          description: "Observatory replay: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObservatoryReplay"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: observatory.replay
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::observatory
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_observatory_replay
   "/api/v1/pack/plan":
     get:
       operationId: pack.plan
@@ -10252,7 +10432,7 @@ paths:
     get:
       operationId: reasoning.check
       summary: Check that reasoning stays provider-independent
-      description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites."
+      description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted."
       tags:
         - reasoning
       parameters: []
@@ -24394,6 +24574,9 @@ components:
         status:
           "$ref": "#/components/schemas/HealthStatus"
           description: "The worst check's status."
+        repository:
+          "$ref": "#/components/schemas/HealthStatus"
+          description: "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
         tallies:
           type: object
           additionalProperties:
@@ -24413,6 +24596,7 @@ components:
           description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
       required:
         - status
+        - repository
         - tallies
         - checks
       description: The health of what this process serves.
@@ -30094,6 +30278,82 @@ components:
         - reason
         - at
       description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
+    ObservatoryEvents:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: Whether a mesh runs in this process; without one there is no journal to follow.
+        after:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The cursor that was asked, when one was."
+        cursor:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+        expired:
+          type: boolean
+          description: "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+        events:
+          type: array
+          items: true
+          description: "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+      required:
+        - active
+        - cursor
+        - expired
+        - events
+      description: "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```"
+    ObservatoryRecording:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`RECORDING_SCHEMA`."
+        recorded_at:
+          type: string
+          description: When the scenes were read.
+        revision:
+          type:
+            - string
+            - "null"
+          description: "The commit the recording process stood at, short; absent when it could not say."
+        scenes:
+          type: object
+          additionalProperties: true
+          description: "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+        manifest:
+          "$ref": "#/components/schemas/RecordingManifest"
+          description: "What the recording is a record of, and what it leaves out."
+      required:
+        - schema
+        - recorded_at
+        - scenes
+        - manifest
+      description: "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+    ObservatoryReplay:
+      type: object
+      properties:
+        present:
+          type: boolean
+          description: Whether the repository carries a recording.
+        path:
+          type: string
+          description: The file it is read from.
+        recording:
+          anyOf:
+            - "$ref": "#/components/schemas/ObservatoryRecording"
+            - type: "null"
+          description: The recording.
+      required:
+        - present
+        - path
+      description: "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```"
     ObservedClassification:
       type: object
       properties:
@@ -34559,6 +34819,67 @@ components:
         - spelling
         - writer
       description: "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+    RecordingManifest:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            type: string
+          description: The capabilities whose answers the recorded scenes were projected from.
+        window:
+          anyOf:
+            - "$ref": "#/components/schemas/RecordingWindow"
+            - type: "null"
+          description: "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+        removed:
+          type: array
+          items:
+            type: string
+          description: "Every kind of thing removed before publication, and why."
+      required:
+        - sources
+        - removed
+      description: "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+    RecordingWindow:
+      type: object
+      properties:
+        events:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many events.
+        from_at:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The earliest event's time, in seconds since the epoch."
+        to_at:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The latest event's time, in seconds since the epoch."
+        from_lamport:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The smallest logical clock.
+        to_lamport:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: The largest logical clock.
+      required:
+        - events
+      description: "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
     Records:
       type: object
       properties:
@@ -34678,9 +34999,12 @@ components:
           const: external
           description: "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit."
         - type: string
+          const: historical
+          description: "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+        - type: string
           const: missing
           description: "Nothing answers to it. A dangling reference is the integrity validator's finding."
-      description: "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+      description: "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
     Refusal:
       type: object
       properties:
@@ -42215,7 +42539,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.24.1
+  generator: majordomus-cli 0.26.0
   infrastructure:
     - id: home
       path: /
@@ -42264,4 +42588,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.24.1
+x-majordomus-generator: majordomus-cli 0.26.0

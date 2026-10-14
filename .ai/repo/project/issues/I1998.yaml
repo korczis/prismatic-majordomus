@@ -24,4 +24,15 @@ validation:
 evidence_required:
   - "unsupervised_exit_code_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-14T11:15:00Z
+started_at: 2026-10-14T11:14:53Z
+started_event: sha256:89876d6be3b736ad609b21fd0263c41743253c4d1307bdb588d55220a63dd16e
+completed_at: 2026-10-14T11:15:00Z
+completed_event: sha256:37161dbb41fec0455be4e028313c3934091d2ce2b6f863f42b66c883c065dfdb
+evidence:
+  - covers: unsupervised_exit_code_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3015_an_unsupervised_repository_exits_12_from_both_tools"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 11:14Z on master 981ad2c3ac plus this change)"
+    commit: 981ad2c3ac0fbfc56c739529c604ac95992283bc
+    recorded_at: 2026-10-14T11:14:58Z

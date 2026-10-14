@@ -15,11 +15,21 @@
 (function () {
   'use strict';
 
-  const POLL_MS = 15000;
+  // The page is read again every POLL_MS for every scene; the journal's events are followed
+  // between those readings from a cursor every STREAM_MS, through observatory.events.
+  const POLL_MS = 60000;
+  const STREAM_MS = 3000;
+  // The events the river holds at most, newest first: the server's bound on one scene.
+  const HELD = 200;
   const POLL_MAX_MS = 120000;
-  const LIVE_WITHIN_MS = 40000;
+  const LIVE_WITHIN_MS = 90000;
   const FADE_S = 1.2;
   const MANUAL_HOLD_S = 300;
+  // New events of the journal interrupt the rotation for the river, but only after the scene
+  // shown has had MIN_DWELL_S, and at most once per INTERRUPT_COOLDOWN_S, so a busy journal
+  // cannot hold the display on one scene. A reader's choice is never interrupted.
+  const MIN_DWELL_S = 12;
+  const INTERRUPT_COOLDOWN_S = 120;
   const TRACE = 24;
   const SEEN = 4000;
 
@@ -108,9 +118,10 @@
           c.fill();
           c.globalAlpha = 1;
         });
-        label(c, box, `${machine.label}${local ? ' · this machine' : ''}`, x, y + r + box.u * 2.6, 0.62);
+        label(c, box, `${machine.label}${local ? (m.replayed ? ' · where it was recorded' : ' · this machine') : ''}`, x, y + r + box.u * 2.6, 0.62);
       });
-      return `${m.known} machine(s) · ${live} of ${runtimes} runtime(s) live · ${m.refused} refused link(s)`;
+      const tense = m.replayed ? 'were live when recorded' : 'live';
+      return `${m.known} machine(s) · ${live} of ${runtimes} runtime(s) ${tense} · ${m.refused} refused link(s)`;
     },
 
     activity(c, box, m, t, moving, born) {
@@ -425,7 +436,12 @@
     let since = performance.now();
     let auto = kiosk || query.get('auto') !== '0';
     let held = 0;
-    const eligible = () => data.scenes.map((s, i) => (s.available ? i : -1)).filter((i) => i >= 0);
+    // A scene whose renderer threw is quarantined for the rest of this display's life: the
+    // rotation skips it, the others go on, and the scene says why when a reader asks for it.
+    const quarantined = new Map(); // scene id -> what it threw
+    const eligible = () => data.scenes
+      .map((s, i) => (s.available && !quarantined.has(s.id) ? i : -1))
+      .filter((i) => i >= 0);
     function select(index, reason) {
       if (index === current && reason !== 'start') return;
       previous = current;
@@ -510,6 +526,7 @@
           const next = fresh && read(fresh.dataset.observatory);
           if (!next) throw new Error('no projection');
           ingest(next, false);
+          syncCursor();
           readAt = Date.now();
           failures = 0;
         } catch (e) {
@@ -523,6 +540,64 @@
       timer = setTimeout(poll, wait + Math.random() * 1000);
     }
     if (!snapshot) timer = setTimeout(poll, POLL_MS);
+
+    // ------------------------------------------------------------ following the journal
+    // Between readings of the page, the river follows the journal from its cursor: only the
+    // events above it come back, each by its identity, so one delivered twice is one mark.
+    // A cursor the journal never reached (another runtime, a restart) is expired: the page is
+    // read again at once, and the status says the display resynchronised.
+    let cursor = null;
+    let resyncedAt = 0;
+    let interrupt = null; // new events not yet shown: { events }
+    let interruptedAt = -Infinity;
+    let streamTimer = null;
+    let streamController = null;
+    let streamFailures = 0;
+    const river = () => data.scenes.find((s) => s.id === 'activity');
+    function syncCursor() {
+      const r = river();
+      cursor = r && r.available && !r.replay && r.model && typeof r.model.lamport === 'number' ? r.model.lamport : null;
+    }
+    syncCursor();
+    async function follow() {
+      streamTimer = null;
+      const r = river();
+      if (cursor !== null && r && r.available && !r.replay && document.visibilityState === 'visible') {
+        streamController = new AbortController();
+        const give = setTimeout(() => streamController.abort(), STREAM_MS * 3);
+        try {
+          const response = await fetch(`/api/v1/observatory/events?after=${cursor}&limit=${HELD}`, {
+            headers: { Accept: 'application/json' },
+            signal: streamController.signal,
+          });
+          if (!response.ok) throw new Error(String(response.status));
+          const page = await response.json();
+          if (page.expired) {
+            resyncedAt = Date.now();
+            if (timer) clearTimeout(timer);
+            await poll();
+          } else {
+            const fresh = (page.events || []).filter((e) => !seen.has(e.id));
+            for (const e of fresh) { seen.add(e.id); born.set(e.id, performance.now()); }
+            if (fresh.length) {
+              r.model.events = [...fresh, ...(r.model.events || [])].slice(0, HELD);
+              interrupt = { events: (interrupt ? interrupt.events : 0) + fresh.length };
+            }
+            if (typeof page.cursor === 'number') { cursor = page.cursor; r.model.lamport = page.cursor; }
+            readAt = Date.now();
+          }
+          streamFailures = 0;
+        } catch (e) {
+          streamFailures += 1;
+        } finally {
+          clearTimeout(give);
+          streamController = null;
+        }
+      }
+      const wait = Math.min(STREAM_MS * 2 ** Math.min(streamFailures, 5), POLL_MAX_MS);
+      streamTimer = setTimeout(follow, wait + Math.random() * 500);
+    }
+    if (!snapshot) streamTimer = setTimeout(follow, STREAM_MS);
 
     // ------------------------------------------------------------ the frame
     let width = 0;
@@ -559,8 +634,16 @@
 
       if (auto && (!held || (now - held) / 1000 > MANUAL_HOLD_S)) {
         held = 0;
+        const river_ = data.scenes.findIndex((s) => s.id === 'activity');
+        if (interrupt && current === river_) interrupt = null;
+        if (interrupt && river_ >= 0 && !quarantined.has('activity')
+            && (now - since) / 1000 >= MIN_DWELL_S && (now - interruptedAt) / 1000 >= INTERRUPT_COOLDOWN_S) {
+          interruptedAt = now;
+          select(river_, `interrupt: ${interrupt.events} new event(s)`);
+          interrupt = null;
+        }
         const scene = data.scenes[current];
-        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available) step(1, 'rotation');
+        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available || quarantined.has(scene.id)) step(1, 'rotation');
       }
 
       const u = Math.min(width, height) / 44;
@@ -587,8 +670,21 @@
       let line = '';
       c.save();
       c.globalAlpha = still ? 1 : fade;
-      if (scene.available && draw[scene.id]) {
-        line = draw[scene.id](c, box, scene.model, t, moving, born);
+      if (quarantined.has(scene.id)) {
+        label(c, box, 'QUARANTINED', box.cx, box.cy - u * 1.2, 1.5);
+        label(c, box, `its renderer failed: ${quarantined.get(scene.id)}`, box.cx, box.cy + u * 1.2, 0.7);
+        line = 'nothing is drawn: this scene\'s renderer failed, and the others go on';
+      } else if (scene.available && draw[scene.id]) {
+        // a replayed model says so to the scene that draws it, and its marks are not news
+        const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
+        try {
+          line = draw[scene.id](c, box, model, t, moving, scene.replay ? new Map() : born);
+        } catch (e) {
+          quarantined.set(scene.id, String((e && e.message) || e).slice(0, 120));
+          trace.push({ at: new Date().toISOString(), scene: scene.id, reason: 'quarantined' });
+          if (trace.length > TRACE) trace.shift();
+          line = '';
+        }
       } else {
         label(c, box, 'UNAVAILABLE', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, scene.reason || 'this display has no renderer for the scene', box.cx, box.cy + u * 1.2, 0.7);
@@ -598,11 +694,15 @@
 
       // the words: set only when they change
       const age = Date.now() - readAt;
-      const word = snapshot ? 'SNAPSHOT' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // a replayed scene is a replay whatever the page is: it shows when it was recorded
+      const resynced = Date.now() - resyncedAt < 10000;
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       const when = String(data.observed_at).replace('T', ' ');
+      const recordedAt = scene.replay ? String(scene.replay.recorded_at).replace('T', ' ') : '';
       const text = [
         word,
-        snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
+        scene.replay ? `recorded ${recordedAt}${scene.replay.revision ? ` at ${scene.replay.revision}` : ''} · not live`
+          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
         `${String(current + 1).padStart(2, '0')} / ${String(data.scenes.length).padStart(2, '0')}  ${scene.label.toUpperCase()}`,
         line,
         auto && !held ? 'auto' : 'held',
@@ -632,9 +732,16 @@
 
     return {
       trace: () => trace.slice(),
+      // the projection the display is drawing now, and the scenes it quarantined: what an
+      // inspector or an evidence run reads, never a second model
+      data: () => data,
+      quarantined: () => Object.fromEntries(quarantined),
+      policy: { min_dwell_seconds: MIN_DWELL_S, interrupt_cooldown_seconds: INTERRUPT_COOLDOWN_S, manual_hold_seconds: MANUAL_HOLD_S },
       dispose() {
         if (timer) clearTimeout(timer);
         if (controller) controller.abort();
+        if (streamTimer) clearTimeout(streamTimer);
+        if (streamController) streamController.abort();
         if (frame !== null) { cancelAnimationFrame(frame); clearTimeout(frame); }
         observer.disconnect();
         document.removeEventListener('keydown', onKey);
