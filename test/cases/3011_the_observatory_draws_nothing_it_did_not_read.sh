@@ -123,8 +123,11 @@ serve_down; SRV=""
 S="$PWD/target/web/ui-snapshot"
 "$RB" web report ui-snapshot --limit 40 >/dev/null 2> err.txt \
   || { echo "    the snapshot was not written:"; tail -5 err.txt | sed 's/^/    | /'; exit 1; }
-SP="$(find "$S" -path '*observatory*' -name '*.html' | LC_ALL=C sort | head -1)"
+# the page is found by its path inside the snapshot: a temporary directory whose own name
+# holds the word would otherwise make every page of the snapshot match
+SP="$(cd "$S" && find . -path '*observatory*' -name '*.html' | LC_ALL=C sort | head -1)"
 [ -n "$SP" ] || { echo "    the snapshot holds no observatory page"; exit 1; }
+SP="$S/${SP#./}"
 projection "$SP" snap.json || exit 1
 held "$SP" snap.json "the snapshot's observatory" || exit 1
 [ -n "$(find "$S" -name 'observatory.js' | head -1)" ] || { echo "    the snapshot does not hold observatory.js"; exit 1; }
