@@ -41,13 +41,14 @@ grep -qF 'branch="release/record-${{ needs.plan.outputs.tag }}"' "$RL" \
 propose="$(line_of "$RL" 'gh pr create --base')"
 [ -n "$propose" ] && [ "$ask" -gt "$propose" ] \
   || { echo "    the verdict is asked for before the record is proposed (line $ask, proposal at ${propose:-none})"; exit 1; }
-step="$(line_of "$RL" "- name: ask for the record's verdict, because its pull request starts none")"
+step="$(line_of "$RL" "- name: ask for the record's verdict, as the newest check on its head")"
 [ -n "$step" ] || { echo "    the step that asks for the record's verdict is gone or renamed"; exit 1; }
 sed -n "$((step + 1)),$((step + 2))p" "$RL" | grep -qF "if: steps.record.outputs.record_pr != ''" \
   || { echo "    the verdict is asked for whether or not a record was proposed"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a request that cannot start
-body="$(sed -n "${step},$((step + 14))p" "$RL")"
+# the whole step, up to the next one: the request waits and may ask twice (I2717, case 3038)
+body="$(awk -v s="$step" 'NR == s {print; next} NR > s && /^      - (name|uses):/ {exit} NR > s' "$RL")"
 printf '%s\n' "$body" | grep -qF 'if gh workflow run validate.yml' \
   || { echo "    the request is not guarded: a dispatch that cannot start would fail the job"; exit 1; }
 printf '%s\n' "$body" | grep -qF '::warning::could not start validate' \

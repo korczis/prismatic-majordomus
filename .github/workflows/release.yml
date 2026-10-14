@@ -352,17 +352,49 @@ jobs:
       #
       # A dispatch that cannot be started is said, with the remedy, and does not fail the
       # job: the release is published either way, and smoke must still run to say so.
-      - name: ask for the record's verdict, because its pull request starts none
+      #
+      # The verdict has to be the newest check on the head, not merely a check on it (I2717).
+      # GitHub now does record a `pull_request` run for the proposal, `action_required`, under
+      # the same app as the dispatch, and a pull request shows only the newest check suite of
+      # each app. v0.26.0's dispatch (19:07:23Z) concluded `ci` success on the record's head
+      # and was hidden two seconds later by that run (19:07:25Z): the rollup was empty, the
+      # required `ci` read as missing and #1147 stayed BLOCKED until a person merged it by
+      # hand. So the dispatch waits, bounded, until the pull request's own run exists, and
+      # once it is started looks again: a run of the pull request newer than the dispatch is
+      # answered with one more dispatch, which is then the newest.
+      - name: ask for the record's verdict, as the newest check on its head
         if: steps.record.outputs.record_pr != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           branch="release/record-${{ needs.plan.outputs.tag }}"
-          if gh workflow run validate.yml --ref "$branch" -f plan=change; then
-            echo "validate requested on $branch, planned as the change it is"
-          else
-            echo "::warning::could not start validate on $branch; the record's pull request has no check until somebody closes and reopens it, or runs: gh workflow run validate.yml --ref $branch -f plan=change"
+          head="$(git rev-parse HEAD)"
+          tries="${VERDICT_WAIT_TRIES:-24}"; pause="${VERDICT_WAIT_SECONDS:-5}"
+          # runs of validate on the record's head for one event, newest first, as "<createdAt>"
+          runs_of() {
+            gh run list --workflow validate.yml --branch "$branch" --event "$1" --limit 20 \
+              --json headSha,createdAt --jq "[.[] | select(.headSha == \"$head\") | .createdAt] | sort | reverse | .[]" \
+              2>/dev/null || true
+          }
+          dispatch() {
+            if gh workflow run validate.yml --ref "$branch" -f plan=change; then return 0; fi
+            echo "::warning::could not start validate on $branch; the record's pull request has no check until somebody runs: gh workflow run validate.yml --ref $branch -f plan=change"
+            return 1
+          }
+          i=0
+          while [ "$i" -lt "$tries" ] && [ -z "$(runs_of pull_request)" ]; do sleep "$pause"; i=$((i + 1)); done
+          [ -n "$(runs_of pull_request)" ] \
+            || echo "::notice::no pull_request run of $branch appeared within $((tries * pause))s; dispatching anyway"
+          dispatch || exit 0
+          i=0
+          while [ "$i" -lt "$tries" ] && [ -z "$(runs_of workflow_dispatch)" ]; do sleep "$pause"; i=$((i + 1)); done
+          dispatched="$(runs_of workflow_dispatch | head -n 1)"
+          proposed="$(runs_of pull_request | head -n 1)"
+          if [ -n "$dispatched" ] && [ -n "$proposed" ] && [ "$proposed" \> "$dispatched" ]; then
+            echo "::notice::the pull request's run ($proposed) is newer than the dispatch ($dispatched) and would hide its verdict; dispatching once more"
+            dispatch || exit 0
           fi
+          echo "validate requested on $branch, planned as the change it is; its ci is the newest check on $head"
 
       # The step without which none of the above reaches a user.
       #
