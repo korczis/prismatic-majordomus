@@ -1,8 +1,18 @@
-{#- Flowbite v4 navbar (components/navbar) with dropdown groups (components/dropdowns). Five
-    top-level intents and one call to action; on mobile every group is a labelled flat list
-    inside the collapsed menu, so nothing depends on hover.
+{#- The bar: the site's top-level questions, each a menu of the few pages its group puts in
+    the bar (site/data/nav.toml, `bar = true`), and one call to action. A group's menu is ONE
+    list, rendered once: beneath its toggle on a wide screen, and inline under it — an
+    accordion — inside the collapsed menu on a narrow one. site/nav.js opens and closes it at
+    every width, so nothing depends on hover. Each menu ends with a link to its group in the
+    footer's site map, which carries every item of the declaration; until 2026-10 the bar
+    carried all of them itself, twice.
 
-    `Get started` is rendered as a button beside GitHub rather than as a sixth group, because
+    An item that names a `surface` leads to the published copy of that surface when this
+    build's publication holds one (build.json `snapshots`: the publication model's
+    deploy.snapshots, with the topology's mount), and says so; otherwise to its `href`, the
+    page that says what the surface is and how to open it. No mount is written here or in
+    the declaration.
+
+    `Get started` is rendered as a button beside GitHub rather than as another group, because
     it is an action and not a question a visitor arrives with. It sits outside the collapsing
     menu on desktop so a decided reader never has to open anything, and inside it at the end
     on mobile, where the bar has no room for a second button. -#}
@@ -33,12 +43,24 @@
 
          No fallback to project.version when there is no release. A repository with nothing
          released shows no badge, because the alternative is to state a version that does not
-         exist, which is the defect this replaces. #}
-      {% if project.release %}
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ project.release }}</span>
+         exist, which is the defect this replaces.
+
+         And it is the release that was PUBLISHED, not only the one recorded on master: `offered`
+         (base.html, derived by scripts/site-build) is the newer of the two, so the badge moves
+         when the release does rather than when its record's pull request lands. #}
+      {% if offered %}
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="{{ offered.version }}">v{{ offered.version }}</span>
       {% endif %}
     </a>
     <div class="flex items-center gap-2 md:order-2">
+      {#- The site's search, at every width and on every page: the dialog it opens is
+          partials/site-search.html, included once by the base layout. Rendered `hidden` and
+          revealed by site/search.js, so it is never a button that does nothing. -#}
+      <button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+        <span class="sr-only lg:not-sr-only">Search</span>
+        <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
       {% include "partials/theme-toggle.html" %}
       <a href="{{ project.repository_url }}" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
       {%- if nav.cta %}
@@ -64,16 +86,15 @@
         {% if items | length == 0 %}
         <li><a href="{{ get_url(path=g.href, trailing_slash=true) }}" class="block rounded px-3 py-2 {% if active %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %}"{% if active %} aria-current="page"{% endif %}>{{ g.label }}</a></li>
         {% else %}
+        {% set shown = [i for i in items if i.bar or false] %}
         <li class="md:relative">
-          {# desktop: dropdown trigger; mobile: the group label is a plain heading and its items are listed flat #}
-          <button id="nav-{{ loop.index }}" data-dropdown-toggle="nav-menu-{{ loop.index }}" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 {% if active %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %} focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">{{ g.label }}<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
-          <div id="nav-menu-{{ loop.index }}" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
-            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-{{ loop.index }}">
-              {% for i in items %}<li><a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading{% if cp == i.href %} text-fg-brand{% endif %}">{{ i.label }}</a></li>{% endfor %}
+          <button id="nav-{{ loop.index }}" data-dropdown-toggle="nav-menu-{{ loop.index }}" type="button" aria-controls="nav-menu-{{ loop.index }}" class="flex w-full items-center justify-between rounded px-3 py-2 {% if active %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %} focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">{{ g.label }}<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-{{ loop.index }}" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-{{ loop.index }}">
+              {% for i in shown %}{% set held = [s for s in build.snapshots if s.id == i.surface] if build and build.snapshots and i.surface else [] %}<li>{% if held | length %}<a href="{{ config.base_url | trim_end(pat="/") }}{{ held[0].mount }}/" data-nav-snapshot="{{ held[0].id }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">{{ i.label }} <span class="text-xs text-body-subtle">&middot; snapshot</span></a>{% else %}<a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2{% if cp == i.href %} text-fg-brand{% endif %}"{% if cp == i.href %} aria-current="page"{% endif %}>{{ i.label }}</a>{% endif %}</li>{% endfor %}
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-{{ loop.index }}" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All {{ items | length }} pages in the site map &darr;</a></li>
             </ul>
           </div>
-          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">{{ g.label }}</p>
-          <ul class="md:hidden">{% for i in items %}<li><a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="block rounded px-3 py-2 {% if cp == i.href %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary{% endif %}"{% if cp == i.href %} aria-current="page"{% endif %}>{{ i.label }}</a></li>{% endfor %}</ul>
         </li>
         {% endif %}
         {% endfor %}

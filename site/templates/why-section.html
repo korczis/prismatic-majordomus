@@ -281,7 +281,7 @@
                 "commands": m.commands, "capabilities": m.capabilities} for m in public ],
   "areas": catalogue.facets.areas,
   "audiences": catalogue.facets.audiences
-} | json_encode() | safe }}</script>
+} | json_encode() | replace(from="</", to="<\\/") | safe }}</script>
 <script>
 function whyDiagnosis() {
   const data = JSON.parse(document.getElementById('why-data').textContent);

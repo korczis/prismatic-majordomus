@@ -73,6 +73,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |
 | `/cockpit/design` | the design system as this executable carries it: every role with its light and dark value, the statuses, the type scale, the layout values and the theme contract | `design.system`, `design.tokens` |
 | `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
+| `/cockpit/monitor` | everything that happens around the repository as one live list, newest first: mesh sessions, claims, handovers and reviews, the executor's outcomes and GitHub's pull requests and runs, with what names the reader (`?for=`) first, the noise folded away counted, and every source's state (ADR 0133) | `monitor.stream` |
 | `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
@@ -80,6 +81,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
 | `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
+| `/cockpit/trains` | the trains of stacked pull requests, drawn as an interactive graph in the manner of the Neo4j Browser (master as the anchor, links coloured by disposition, `STACKED_ON` / `DEPENDS_ON` arrows, a property panel, filters, search, fit and zoom, keyboard navigation) and listed as one table per train that needs no JavaScript; polls its route once a minute (ADR 0138) | `integration.trains` |
 | `/cockpit/reasoning` | the optional advisors, and the open task's uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
 | `/cockpit/economics` | token economics, measured | `economics.summary` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
@@ -126,10 +128,13 @@ are read a page at a time and entered by their parts:
 - **A link never loses a filter and never keeps a page number.** Paging carries every
   filter with it; picking a part starts that part at its first page.
 
-A **detail** page pages nothing. A graph's nodes and edges, and the artifact manifest, are
-listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
-has only them, and a reader checking whether a path is in the manifest must be able to
-find it with the browser's own search.
+A **graph** page pages its two tables the same way, each by a parameter of its own:
+`?nodes=` for the node table and `?edges=` for the edge table, fifty rows a page, so paging
+one table never moves the other and a link carries both positions. Every node and every
+edge is still on some page as text, and the pager reaches each of those pages by its links
+alone, with no script; the reason is under "Why the tables under a graph are paged" below.
+The **artifact manifest** pages nothing: it is listed whole, because a reader checking
+whether a path is in it must be able to find it with the browser's own search.
 
 ## The one page that is about this machine
 
@@ -138,6 +143,39 @@ Every other page is about the repository: the same answer in any clone, and safe
 handover, the blockers of this checkout — and those records name this disk. That is the
 reason the Cockpit is bound to the loopback interface and the reason this page has no
 counterpart on the website (ADR 0014).
+
+## On the public site: a snapshot
+
+The published site carries the Cockpit at `/cockpit/` as a **snapshot** (ADR 0147): the
+Cockpit's own pages, read once at the published commit and written as files, by the exporter
+that publishes the UI (ADR 0141).
+
+<!-- majordomus:unrun it reads the whole Cockpit of this repository in-process; the ui-snapshot job of the pages workflow runs it, and cases 2981 and 2982 run it against a fixture -->
+```bash
+majordomus web report cockpit-snapshot
+```
+
+It writes into `target/web/cockpit-snapshot`. In order it reads every static route, then
+every Cockpit page the UI's snapshot wanted to link to, then, one page per family in turn,
+what those link to, until `--limit` pages or `--budget-seconds`. What differs from the
+Cockpit a process serves:
+
+| In the Cockpit | In the snapshot |
+|---|---|
+| a link to another page of the Cockpit | a relative link to that page's file |
+| a link to a page past the bound, a search, a form, a runner | the snapshot's page about the live Cockpit, carrying the path the link meant |
+| a link into the UI | that page of the UI's snapshot when it holds it, the live page when it does not |
+| the scripts: the runner, the palette, the live executions, the polling panels | none: no page carries a script, and every page is complete without one |
+| `/cockpit/continuity` | not in the snapshot, and no link reaches it: it is the one page about a machine |
+
+Every page says that it is a snapshot, with the commit, the time and the executable that
+read it. A page that is about a machine and not withheld (peers, worktrees, health) shows the
+runner that rendered it. For the Cockpit of your own checkout, run `majordomus serve`.
+
+The directory declares itself (`surface.json`) as the surface `cockpit-snapshot`, mounted at
+`/cockpit`, `published-only`. `snapshot.json` beside it lists every page written and every
+page left to the live Cockpit. `test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh`
+holds it.
 
 It is also the page that has to answer two different readers, and it says which is which.
 
@@ -333,25 +371,33 @@ Nothing here is a colour, a size or a count written in JavaScript, and `scripts/
 reads `share/cockpit/graph.js` like every other first-party surface — it used to exempt the
 file by path, which is what let a hue computed in a script stand for a year.
 
-### Why the tables under it still page nothing
+### Why the tables under a graph are paged
 
-A graph page lists every node and every edge. For `composed` that is 4,729 table rows and
-about 420 kB of text in one response, and the obvious reaction is to page it. It is not
-paged, deliberately.
+A graph page lists every node and every edge, fifty rows at a time. The node table is paged
+by `?nodes=` and the edge table by `?edges=`; each keeps its own position in the URL, a
+number past the end is the last page, and the control under each table says which rows it
+shows.
 
 The tables are not a convenience beside the drawing; they *are* the page. The drawing needs
 JavaScript, a 400 kB library and a canvas, and the page says so in its own prose: "everything
 it shows is in the lists below, which is what a reader without JavaScript, a crawler and a
-screen reader get". Page them and that sentence stops being true — the drawing would show
-1452 nodes while the text showed a hundred, and the reader with no JavaScript would be the
-only one who could not see the whole graph. The listing pages elsewhere in the Cockpit
-(`/cockpit/objects`, `/cockpit/capabilities`) page because they are *views over* a
-collection, and a view may show a slice. A graph page is the rendering of one object.
+screen reader get". That sentence used to be the reason the tables were listed whole. It
+stopped being affordable: whole, `composed` was one document of more than a megabyte and
+thousands of table rows — a page nobody could scroll or search, and one no accessibility
+engine finished reading within its visit deadline. A document that size was not readable by
+the person the contract was written for either.
 
-The bulk format already exists and is linked from the page: `/api/v1/graph?id=<id>`. A reader
-who wants the graph as data takes that; a reader who wants it as a page gets all of it. The
-cost is one 420 kB response of static text, which is smaller than the drawing library the
-same page loads to show the same data.
+Paging keeps the sentence true because nothing is taken away. Every node and every edge is on
+exactly one page of its table, as text, and the pager is plain links: the first page, the
+last, the neighbours of the one shown and the previous and next, so a reader with no
+JavaScript reaches every page by following them, and a crawler does the same. The drawing is
+unchanged and still shows the whole graph; it reads the bulk format, not the tables.
+`apps/majordomus-cli/tests/cockpit.rs` walks the registry graph's tables page by page and
+through the pager's own links and requires every node and edge to turn up, and the page sweep
+there renders `/cockpit/graphs/composed`, the largest of them.
+
+The bulk format is linked from the page: `/api/v1/graph?id=<id>`. A reader who wants the
+whole graph in one response, to search or to process, takes that.
 
 `test/cases/190_graph_drawing.sh` runs `choose()` and `measure()` over synthetic shapes
 without a browser; `scripts/lib/cockpit-probe.mjs` asks the running renderer, through
@@ -462,6 +508,15 @@ and `share/schemas/` are where it keeps its kinds. They are read from disk, once
 served from memory with the digest of their bytes in the URL — so a changed file is a
 changed URL, and a versioned asset is answered `immutable` for a year.
 
+Only the exact version a page emits is immutable; any other `v` (empty, a prefix, a stale
+one) and no `v` at all are answered `no-cache`. Every answer carries the digest as its
+`ETag`, and an `If-None-Match` that still holds is a `304 Not Modified` with no body. Every
+asset URL a page loads carries its digest: a script module's relative imports are rewritten,
+when it is read, to the digested URLs of what they import, so a module's digest covers its
+imports and every importer names one URL; the libraries the scripts load at run time get
+theirs from the page body's `data-vendor` (`cockpit::VENDOR`); the favicon is digested like
+the stylesheet. A warm navigation therefore fetches only the page.
+
 ```sh
 scripts/cockpit-assets            # compile the stylesheet, vendor the pinned libraries
 scripts/cockpit-assets --check    # fail if the committed stylesheet differs from its source
@@ -531,7 +586,8 @@ disposable repository:
 - the runner form is generated from the input schema,
 - a graph page lists every node and edge before any library loads,
 - the health page shows the verdicts the engines reach,
-- assets are immutable by digest and no traversal escapes the directory,
+- assets are immutable by their exact digest, every URL a page emits carries one, a
+  revalidation that holds is a 304, and no traversal escapes the directory,
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,

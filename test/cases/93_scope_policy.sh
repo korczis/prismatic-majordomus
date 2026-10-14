@@ -26,7 +26,10 @@ sed -i.bak 's/^    doctor_ms: .*$/    doctor_ms: 600000/; s/^    watch_ms: .*$/ 
 "$MJ" update >/dev/null
 [ -f .ai/repo/scope.yaml ] || { echo "    init seeded no .ai/repo/scope.yaml"; exit 1; }
 grep -q '^  scope: repo/scope.yaml$' .ai/manifest.yaml || { echo "    the seeded manifest names no scope section"; exit 1; }
-cmp -s .ai/repo/scope.yaml "$ROOT/share/skeleton/ai/repo/scope.yaml" || { echo "    the seeded scope is not the distribution's default"; exit 1; }
+# this fixture has no stack marker at its root, so the seed is the distribution's default
+# without its stack blocks (case 3016 covers the stacks)
+sed '/^  # stack: /,/^  # end stack: /d' "$ROOT/share/skeleton/ai/repo/scope.yaml" > "$S/scope.expected"
+cmp -s .ai/repo/scope.yaml "$S/scope.expected" || { echo "    the seeded scope is not the distribution's default less its stack blocks"; diff "$S/scope.expected" .ai/repo/scope.yaml; exit 1; }
 git add -A >/dev/null && git commit -qm install
 hooks_on()  { printf '#!/usr/bin/env bash\n%s doctor\n' "$MJ" > .git/hooks/pre-commit; printf '#!/usr/bin/env bash\n%s finish --check\n' "$MJ" > .git/hooks/pre-push; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; }
 hooks_off() { rm -f .git/hooks/pre-commit .git/hooks/pre-push; }

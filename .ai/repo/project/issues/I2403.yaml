@@ -1,0 +1,26 @@
+id: I2403
+milestone: everything-is-followed-in-one-stream
+title: "Pull requests, checks and deploys reach the stream when GitHub is reachable"
+slug: monitor-github
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add a GitHub source (pull requests opened, merged and closed, required check verdicts, deploy and release workflow outcomes) through the existing pull-request reader, cached and time-bounded."
+why: "Merges, red checks and deploys are what a worker waits for most, and today it polls gh itself."
+current_state: "GitHub is read only by prs."
+desired_state: "The monitor carries GitHub signals within a budget and reports the source absent with its reason when gh is missing or unreachable."
+scope:
+  - "apps/majordomus-cli/src/monitor"
+  - "test/cases/1052_an_absent_source_is_reported.sh"
+depends_on: 
+  - "I2400"
+acceptance_criteria:
+  - "A merged pull request appears once as a signal"
+  - "An absent gh is a source state with a reason, never an empty answer"
+  - "No network in tests: a fixture drives the reader"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1052"
+evidence_required:
+  - "monitor_github_source"
+created_at: 2026-10-10
+updated_at: 2026-10-10

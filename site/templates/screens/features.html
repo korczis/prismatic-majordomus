@@ -121,7 +121,7 @@
       {%- set_global shown = shown + 1 -%}
     {%- endfor %}{% endfor -%}
     <div class="mt-4">
-    {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "docs/cockpit/", "icon": "home", "current": true}, {"title": "Capabilities", "href": base ~ "registry/capabilities/", "icon": "puzzle"}, {"title": "Commands", "href": base ~ "commands/", "icon": "terminal"}, {"title": "Objects", "href": base ~ "registry/", "icon": "database"}, {"title": "Graphs", "href": base ~ "docs/api/graph/", "icon": "nodes"}, {"title": "Health", "href": base ~ "docs/api/health/", "icon": "activity"}]}> %}
+    {% <window title="Cockpit" brand={project.short_name} foot={("v" ~ offered.version if offered else "")} nav={[{"title": "Overview", "href": base ~ "docs/cockpit/", "icon": "home", "current": true}, {"title": "Capabilities", "href": base ~ "registry/capabilities/", "icon": "puzzle"}, {"title": "Commands", "href": base ~ "commands/", "icon": "terminal"}, {"title": "Objects", "href": base ~ "registry/", "icon": "database"}, {"title": "Graphs", "href": base ~ "docs/api/graph/", "icon": "nodes"}, {"title": "Health", "href": base ~ "docs/api/health/", "icon": "activity"}]}> %}
       <p class="mj-point-title">Repository overview</p>
       <div class="mt-3">{{ <kpis items={[{"title": "Rules", "value": kinds.rule, "icon": "shield", "tone": "blue"}, {"title": "Decisions", "value": kinds.adr, "icon": "book", "tone": "violet"}, {"title": "Skills", "value": kinds.skill, "icon": "box", "tone": "green"}, {"title": "Tests", "value": kinds.test, "icon": "check-circle", "tone": "orange"}]} /> }}</div>
       <div class="mt-4 grid gap-4 lg:grid-cols-2">

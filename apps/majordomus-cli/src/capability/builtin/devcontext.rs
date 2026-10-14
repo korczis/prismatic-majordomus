@@ -315,7 +315,9 @@ mod tests {
                     "{} expires by time; the cache key already carries the index fingerprint",
                     e.capability.id
                 ),
-                CachePolicy::Disabled => {}
+                CachePolicy::Disabled
+                | CachePolicy::Generation { .. }
+                | CachePolicy::Checkout { .. } => {}
             }
         }
     }

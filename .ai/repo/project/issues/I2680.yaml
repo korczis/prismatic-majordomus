@@ -1,0 +1,40 @@
+id: I2680
+milestone: development-runtime
+title: "The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills"
+slug: the-observatory-gates-are-closed-with-evidence
+priority: p2
+profile: verification
+parallel_safe: true
+objective: "Close each acceptance gate of the owner's Observatory specification with a command, its result, its environment and a path to the evidence, or record it as not run."
+why: "The specification of 2026-10-14 names eight gates, G0 to G7, and says that PASS, FAIL, BLOCKED and NOT RUN are different words and that a checked box cannot stand in for an execution. Case 3011 covers the data contract; nothing yet covers what the display looks like, how fast it draws or how it survives a night."
+current_state: "Held by case 3011: the routes, the scene inventory, the projection, unavailable scenes with their reasons, the rows without script, the snapshot. Not run: screenshots at 1080p and 4K, frame rates on named hardware, reduced motion, a soak of the kiosk, the drills for a lost server, an expired reading and a failed scene. No figure about the display's performance is stated anywhere."
+desired_state: "A tracked manifest names the revision, the routes and, for each gate, its verdict with the command, the environment and the evidence path. The browser checks that can run in CI run there; the ones that need hardware are run on named hardware and recorded with it."
+scope:
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2680.yaml"
+non_scope:
+  - "Stating a frame rate, a memory figure or an uptime that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "Each of G0 to G7 has a verdict of PASS, FAIL, BLOCKED or NOT RUN with its command, environment and evidence path"
+  - "Screenshots of an available scene at 1920x1080 and 3840x2160 are evidence of a named revision"
+  - "The display honours reduced motion, and a browser check proves it"
+  - "A kiosk left running for a stated number of hours has its memory read at the start and at the end, on named hardware"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_gate_manifest"
+created_at: 2026-10-14
+updated_at: 2026-10-14T12:31:43Z
+started_at: 2026-10-14T12:31:23Z
+started_event: sha256:8e2b8743d02ee9aa701dd8c228c9bd94e102ad871a654e14b0c176c329bda02e
+completed_at: 2026-10-14T12:31:43Z
+completed_event: sha256:9306ea3105a363ffa243a8221821caec48e024e0dc460c2c26fbce801b43e800
+evidence:
+  - covers: observatory_gate_manifest
+    type: artifact
+    command: "node scripts/lib/ui-observatory.mjs --origin https://majordomus.dev --out .ai/repo/benchmarks/observatory/production"
+    result: "G0-G7 PASS, each with command, environment and evidence path (production 6f28de9207 and a live server, Apple M5 Pro, headless chromium 141)"
+    artifact: ".ai/repo/benchmarks/observatory/manifest.json"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:31:32Z

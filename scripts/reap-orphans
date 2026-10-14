@@ -518,6 +518,63 @@ reap_targets() {
   done <<EOF
 $(worktrees)
 EOF
+
+  # The intermediates every worktree shares. .cargo/config.toml names one build directory
+  # for the dependencies of all of them (ADR 0139), so it belongs to no worktree: the
+  # per-worktree predicates above cannot classify it, and it grows for as long as dependency
+  # versions change. It is measured here, bounded by a cap, and reduced as a whole when
+  # nobody is building. It is regenerable: removing it costs each worktree one dependency
+  # rebuild and cannot cost a byte of authored source.
+  #
+  # Which directory is read from the checkout's own declaration, and nowhere else: a
+  # sweep that guessed a default under $HOME would act on a machine it was only asked to
+  # measure, and a fixture with no declaration must find nothing to reclaim. Only an
+  # absolute path is acted on, after the one template cargo documents is expanded; a
+  # template this sweep does not know is not guessed at.
+  local shared cfg cap_kb
+  shared=""; cfg="$ROOT/.cargo/config.toml"
+  if [ -f "$cfg" ]; then
+    shared="$(sed -n 's/^[[:space:]]*build-dir[[:space:]]*=[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$cfg" | head -n 1)"
+    shared="${shared//\{cargo-cache-home\}/${CARGO_HOME:-$HOME/.cargo}}"
+    case "$shared" in /*) ;; *) shared="" ;; esac
+  fi
+  [ -z "${MAJORDOMUS_SHARED_BUILD_DIR:-}" ] || shared="$MAJORDOMUS_SHARED_BUILD_DIR"
+  cap_kb=$(( ${MAJORDOMUS_SHARED_BUILD_CAP_MB:-6144} * 1024 ))
+  if [ -n "$shared" ] && [ -d "$shared" ]; then
+    size="$(size_kb "$shared")"
+    if [ -z "$size" ]; then
+      row "$shared" "?" "skip — its size could not be read"
+      unreadable=$((unreadable + 1))
+    elif ! is_cargo_target "$shared"; then
+      row "$shared" "$(human "$size")" "skip — carries no mark of cargo's: not provably a build directory"
+      unreadable=$((unreadable + 1))
+    elif [ "$size" -le "$cap_kb" ]; then
+      row "$shared" "$(human "$size")" "keep — shared by every worktree, within its $(human "$cap_kb") bound"
+      tgt_kept=$((tgt_kept + 1))
+    elif grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
+      row "$shared" "$(human "$size")" "keep — over its bound, but a cargo or rustc process is running"
+      tgt_kept=$((tgt_kept + 1))
+    else
+      tgt_found=$((tgt_found + 1))
+      if [ "$RECLAIM" -eq 0 ]; then
+        row "$shared" "$(human "$size")" "would reclaim — shared, over its $(human "$cap_kb") bound, nobody building"
+        tgt_freed=$((tgt_freed + size))
+      else
+        # as for a worktree: ask the machine again, not the scan
+        liveness_snapshot || die "liveness stopped being measurable mid-sweep: nothing further is reclaimed"
+        if grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
+          row "$shared" "$(human "$size")" "skip — a build started since the scan"
+          tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1))
+        elif target="$shared"; rm -rf "$target"; then
+          row "$shared" "$(human "$size")" "reclaimed"
+          tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + size))
+        else
+          row "$shared" "$(human "$size")" "FAILED to remove"
+          unreadable=$((unreadable + 1)); tgt_found=$((tgt_found - 1))
+        fi
+      fi
+    fi
+  fi
 }
 
 # ------------------------------------------------------------------------------- report

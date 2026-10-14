@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 43
+weight = 45
 [extra]
 source = "docs/USE_CASES.md"
 +++
@@ -142,9 +142,11 @@ committed evidence, reproduced by CI.
 
 `mode: live` is the other one. A live scenario asks its questions of the repository the
 command was invoked in. It names no setup, because it prepares nothing, and it may run
-only commands `share/commands.yaml` declares `class: read-only` — `usecase validate`
-refuses anything else, so a live scenario cannot change the thing it is asking about
-however it is written. Mutation stays with `start`, `check` and `finish`, which supervise
+only argument vectors `share/commands.yaml` declares read-only — the command's `class`,
+refined by the `effects` the registry declares per subcommand and per flag, so `knowledge
+edges` is admitted and `check --checkpoint` is not. `usecase validate` refuses anything
+else, so a live scenario cannot change the thing it is asking about however it is
+written. Mutation stays with `start`, `check` and `finish`, which supervise
 it.
 
 A live scenario may also carry a step that runs nothing:

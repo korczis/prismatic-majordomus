@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 63
+weight = 70
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -32,7 +32,7 @@ being maintained separately from the repository that backs it.
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
-| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 80-line budget | `site/data/marketing.toml` | yes |
 | navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
 | product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/<id>.md` | yes |
@@ -607,6 +607,75 @@ kind, `/openapi.json` and `/build.json`. Run the same command by hand against an
 commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
 against a served fixture.
 
+### The UI a deploy publishes
+
+The site carries `majordomus ui` at `/ui/` as a snapshot read at the published commit (ADR
+0141, `docs/MAJORDOMUS_UI.md`). The workflow's `ui-snapshot` job builds the executable from
+that commit and runs `majordomus web report ui-snapshot`; it runs beside the `rustdoc` job,
+and the deploy job waits for both. After `scripts/pages check` and before the push, the deploy
+job places the snapshot at the mount its own `surface.json` declares. It refuses a snapshot
+that is absent, one read at another commit, and a mount the site itself already built.
+
+The Cockpit is published the same way at `/cockpit/` (ADR 0147). The same job runs
+`majordomus web report cockpit-snapshot` after the UI's, because the Cockpit's snapshot reads
+first what the UI's links to and then leads those links to its own pages; both directories
+are uploaded once that step is over. The deploy job places every snapshot the model declares
+at the mount the topology gives it, and after the push
+`scripts/pages verify-ui --surface cockpit` asks the public site for it.
+
+The snapshot is a generated surface, known only where its producer ran, so it is not in the
+committed topology and `scripts/site-build` does not compose it: a local build of the site has
+no `/ui/` unless that step is repeated by hand. The site's checks do not judge its pages.
+
+That a publication holds it is declared once, in `.ai/repo/ci/pages.yaml` under
+`deploy.snapshots`: the served surface it is a snapshot of, where the producer writes it, the
+producer, and the attribute its pages state their commit with. The mount is the topology's
+mount of that surface, and `scripts/pages snapshots` prints the resolved rows. Three readers
+hold a publication to that entry (`project.the-published-ui-is-the-trunks`):
+
+- `scripts/site-deploy` refuses a site whose tree has no snapshot at the mount, one read at
+  another commit than `HEAD`, or one that declares another mount, and says how to place it.
+  A deploy from a terminal therefore cannot publish the site without `/ui/`.
+  `--release-metadata` changes two files of what is already served and is not asked.
+- `scripts/pages verify-ui` asks the public site, once it serves the deployed commit:
+  `/ui/surface.json` names that commit, the landing page's banner states it, `/ui/snapshot.json`
+  records it and says what ended the reading, and every page the record lists answers 200. It
+  prints how many pages it asked for, how many `--max-pages` left unasked, how many the
+  snapshot itself left out and what stopped it. Exit 10 is a UI that is missing, another
+  commit's or not whole; 12 is a site that never answered. The deploy's `the UI it publishes`
+  step runs it and is not `continue-on-error`.
+- The `pages-live` gate asks the same probe of the published commit (section 2c of
+  `scripts/ci/pages-check`), so the live `/ui/` is held to the trunk within the window the
+  site is.
+
+`test/cases/2983_the_published_ui_is_the_trunks.sh` holds all three against a served fixture.
+
+### The release the site offers
+
+Which release is the latest is one fact with three public surfaces: the homepage (the navbar
+badge, the hero and the trust strip's `data-release`), `/releases/latest.json`, which the
+installer resolves, and the newest GitHub release. A release reaches them in that order — GitHub,
+then `latest.json` from the release's publish job (`scripts/site-deploy --release-metadata`,
+ADR 0131), then the pages from the build of master that job asks for — and the record that
+archives it lands later still, through its own pull request.
+
+So the pages do not read the record. `scripts/site-build` derives the release the site offers as
+the newer of the record's projection (`site/data/registry/distribution.json`) and the
+`releases/latest.json` that `origin/gh-pages` serves, read from git and named in `build.json`
+(`release.source`, `release.published_from`); `base.html` sets `offered` from it and every page
+reads `offered`. When the published release is the newer, the build serves its two documents, so
+the metadata beside the pages names what they offer. `scripts/site-build --release` prints the
+derivation alone.
+
+It is checked three times: `scripts/site-check` (section 17b) refuses a build whose homepage,
+`/build.json` and `/releases/latest.json` disagree, or whose two committed projections of the latest release do;
+the deploy's `the release it offers` step runs `scripts/pages release-live` once the site serves
+the new commit; and `scripts/ci/pages-check` asks the same probe as section 5 of `pages-live`, on
+the schedule and at `finish`. A disagreement younger than `deploy.release_window`
+(`.ai/repo/ci/pages.yaml`) after GitHub's release is a publication in flight; older, or a site
+offering a version GitHub has not published, is a failure. The rule is
+`project.the-site-offers-the-release-it-published`.
+
 ### When a deploy does not happen
 
 Publication is two steps owned by two parties, and either can be missing while everything
@@ -634,7 +703,8 @@ it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue ob
 2026-09-10), the live site serves what `gh-pages` published, and GitHub's own build of that
 branch did not error. A section of its own asks a fifth: the reference at `/rustdoc/` is
 whole and was built from the commit the site serves, by the same `scripts/pages verify-rustdoc`
-the deploy runs. The trigger paths it uses to decide whether a publication is *owed* are
+the deploy runs. Another asks the same of the UI's snapshot at `/ui/`, by
+`scripts/pages verify-ui`. The trigger paths it uses to decide whether a publication is *owed* are
 `scripts/pages paths` — the same list that is the workflow's own `paths:` — so a commit that
 cannot change the site does not owe a deploy.
 

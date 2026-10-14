@@ -20,6 +20,28 @@
 //! Errors are never cached. Commands are never cached, and the registry refuses a
 //! descriptor that asks for it, so that is a build-time refusal rather than a runtime one.
 //!
+//! Two policies narrow the key further, for answers the registry fingerprint cannot see
+//! move. [`CachePolicy::Generation`] adds the context's [`Context::reading`]: an answer
+//! read off the index, including the git state it was read at, is kept for as long as that
+//! reading is the one asked. [`CachePolicy::Checkout`] adds that and the fingerprint of the
+//! checkout, taken again on every call (`capability::checkout`): HEAD, the staging index,
+//! the refs, and every changed or untracked path of the work tree with its size and
+//! modification time. A checkout git cannot fingerprint is not cached.
+//!
+//! # One handler per key at a time
+//!
+//! Concurrent calls that miss on the same key do not each run the handler: the first runs
+//! it, the others wait for it and are answered from what it stored. A screen that asks the
+//! same source from two panels at once, or two browsers that open one page together, pay
+//! for one computation. A handler that fails stores nothing, so a caller that waited on it
+//! runs the handler itself.
+//!
+//! # Switching it off
+//!
+//! `MAJORDOMUS_CAPABILITY_CACHE=off` in a process's environment makes every call run its
+//! handler and store nothing, whatever the capability's policy: the way to settle a doubt
+//! about a cached answer by asking without the cache (`project.cache-is-invisible`).
+//!
 //! # Invisibility
 //!
 //! A cached answer is byte-identical to a computed one; nothing in a response says which it
@@ -40,7 +62,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use serde_json::Value;
@@ -60,6 +82,10 @@ pub struct CapabilityExecutor {
     invocations: AtomicU64,
     /// How many calls of a capability that writes the repository have succeeded here.
     writes: AtomicU64,
+    /// The latest reading of every source a page has asked for, kept current off the path
+    /// of the request (`capability::readings`). Beside the cache and not in it: the cache
+    /// holds answers, and a reading says how old it is.
+    pub(crate) readings: super::readings::Readings,
 }
 
 #[derive(Debug, Default)]
@@ -67,6 +93,8 @@ struct Cache {
     entries: HashMap<CacheKey, CacheEntry>,
     /// Insertion order per capability, for eviction.
     order: HashMap<String, VecDeque<CacheKey>>,
+    /// The keys whose handler is running now, each with the lock its waiters queue on.
+    flights: HashMap<CacheKey, Arc<Mutex<()>>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -74,6 +102,24 @@ struct CacheKey {
     id: String,
     input: String,
     fingerprint: String,
+    /// What the policy adds to the registry fingerprint: empty for
+    /// [`CachePolicy::Process`], the context's reading for [`CachePolicy::Generation`], and
+    /// the reading with the checkout's fingerprint for [`CachePolicy::Checkout`].
+    state: String,
+}
+
+/// The environment switch that turns the capability cache off for a process.
+pub const SWITCH: &str = "MAJORDOMUS_CAPABILITY_CACHE";
+
+/// Whether this process was told to run every capability without its cache: `SWITCH`
+/// set to `off`.
+///
+/// ```
+/// use majordomus_cli::capability::executor::{bypassed, SWITCH};
+/// assert_eq!(bypassed(), std::env::var_os(SWITCH).is_some_and(|v| v == "off"));
+/// ```
+pub fn bypassed() -> bool {
+    std::env::var_os(SWITCH).is_some_and(|v| v == "off")
 }
 
 #[derive(Debug)]
@@ -122,33 +168,100 @@ impl CapabilityExecutor {
     ) -> Result<Value, CapabilityError> {
         Counters::bump(&COUNTERS.executions);
         let policy = policy.ok_or_else(|| CapabilityError::NotFound(format!("capability {id}")))?;
-        let key = match policy {
-            CachePolicy::Disabled => None,
-            CachePolicy::Process { .. } => Some(CacheKey {
-                id: id.to_string(),
-                input: canonical_json(&input),
-                fingerprint: ctx.registry.fingerprint().to_string(),
-            }),
+        let policy = if bypassed() {
+            CachePolicy::Disabled
+        } else {
+            policy
         };
-        if let (Some(key), CachePolicy::Process { ttl_seconds, .. }) = (&key, policy) {
-            let _guard = perf::phase(Phase::CacheLookup);
+        let Some(key) = key_of(ctx, id, &input, policy) else {
+            return self.invoke(ctx, id, input);
+        };
+        let ttl = policy.ttl_seconds();
+        if let Some(value) = self.lookup(&key, ttl) {
+            return Ok(value);
+        }
+        // a miss: take the key's flight, so that one handler runs for it at a time, and look
+        // again once it is ours — a caller that waited is answered by the one it waited for
+        let flight = {
             let mut cache = lock(&self.cache);
-            let fresh = cache.entries.get(key).map(|e| {
-                ttl_seconds.is_none_or(|ttl| e.stored.elapsed() < Duration::from_secs(ttl))
-            });
-            match fresh {
-                Some(true) => {
-                    Counters::bump(&COUNTERS.cache_hits);
-                    return Ok(cache.entries[key].value.clone());
-                }
-                Some(false) => {
-                    cache.entries.remove(key);
+            Arc::clone(cache.flights.entry(key.clone()).or_default())
+        };
+        let _flight = flight.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(value) = self.peek(&key, ttl) {
+            return Ok(value);
+        }
+        let value = self.invoke(ctx, id, input);
+        let mut cache = lock(&self.cache);
+        if cache
+            .flights
+            .get(&key)
+            .is_some_and(|f| Arc::ptr_eq(f, &flight))
+        {
+            cache.flights.remove(&key);
+        }
+        let value = value?;
+        let max_entries = policy.max_entries().unwrap_or(1);
+        let Cache { entries, order, .. } = &mut *cache;
+        let order = order.entry(key.id.clone()).or_default();
+        if !entries.contains_key(&key) {
+            order.push_back(key.clone());
+            while order.len() > max_entries {
+                if let Some(old) = order.pop_front() {
+                    entries.remove(&old);
                     Counters::bump(&COUNTERS.cache_evictions);
-                    Counters::bump(&COUNTERS.cache_misses);
                 }
-                None => Counters::bump(&COUNTERS.cache_misses),
             }
         }
+        entries.insert(
+            key,
+            CacheEntry {
+                value: value.clone(),
+                stored: Instant::now(),
+            },
+        );
+        Ok(value)
+    }
+
+    /// The stored answer for `key` when it is still fresh, counted as a hit or a miss.
+    fn lookup(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Value> {
+        let _guard = perf::phase(Phase::CacheLookup);
+        let mut cache = lock(&self.cache);
+        let fresh = cache
+            .entries
+            .get(key)
+            .map(|e| ttl.is_none_or(|ttl| e.stored.elapsed() < Duration::from_secs(ttl)));
+        match fresh {
+            Some(true) => {
+                Counters::bump(&COUNTERS.cache_hits);
+                return cache.entries.get(key).map(|e| e.value.clone());
+            }
+            Some(false) => {
+                cache.entries.remove(key);
+                Counters::bump(&COUNTERS.cache_evictions);
+                Counters::bump(&COUNTERS.cache_misses);
+            }
+            None => Counters::bump(&COUNTERS.cache_misses),
+        }
+        None
+    }
+
+    /// The stored answer for `key` once its flight is ours: what the handler a caller waited
+    /// for stored. Counted as a hit, since no handler runs for it.
+    fn peek(&self, key: &CacheKey, ttl: Option<u64>) -> Option<Value> {
+        let cache = lock(&self.cache);
+        let value = cache
+            .entries
+            .get(key)
+            .filter(|e| ttl.is_none_or(|ttl| e.stored.elapsed() < Duration::from_secs(ttl)))
+            .map(|e| e.value.clone());
+        if value.is_some() {
+            Counters::bump(&COUNTERS.cache_hits);
+        }
+        value
+    }
+
+    /// Run the handler: counted, timed, and its writes noted.
+    fn invoke(&self, ctx: &Context, id: &str, input: Value) -> Result<Value, CapabilityError> {
         Counters::bump(&COUNTERS.handler_invocations);
         self.invocations.fetch_add(1, Ordering::Relaxed);
         let value = {
@@ -164,28 +277,14 @@ impl CapabilityExecutor {
         {
             self.writes.fetch_add(1, Ordering::SeqCst);
         }
-        if let (Some(key), CachePolicy::Process { max_entries, .. }) = (key, policy) {
-            let mut cache = lock(&self.cache);
-            let Cache { entries, order } = &mut *cache;
-            let order = order.entry(key.id.clone()).or_default();
-            if !entries.contains_key(&key) {
-                order.push_back(key.clone());
-                while order.len() > max_entries {
-                    if let Some(old) = order.pop_front() {
-                        entries.remove(&old);
-                        Counters::bump(&COUNTERS.cache_evictions);
-                    }
-                }
-            }
-            entries.insert(
-                key,
-                CacheEntry {
-                    value: value.clone(),
-                    stored: Instant::now(),
-                },
-            );
-        }
         Ok(value)
+    }
+
+    /// Count one repository mutation, as a successful mutating call does: what a test of a
+    /// reader of [`Executor::writes`] needs without a layer that a mutation can succeed on.
+    #[cfg(test)]
+    pub(crate) fn count_write(&self) {
+        self.writes.fetch_add(1, Ordering::SeqCst);
     }
 
     /// How many calls of a capability whose effect is a repository mutation have succeeded
@@ -223,12 +322,75 @@ impl CapabilityExecutor {
         self.invocations.load(Ordering::Relaxed)
     }
 
+    /// The answer this executor holds for `id` asked with `input` in the repository `ctx`
+    /// reads, when its cache has one that is still fresh, and `None` otherwise. No handler
+    /// runs, nothing is stored, and a miss is not counted: it is how the latest reading of a
+    /// source learns that the answer for a moved repository is already at hand
+    /// (`capability::readings`).
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use serde_json::json;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let describe = json!({ "id": "plan.status" });
+    /// // nothing is held before the capability was asked, and asking this way runs nothing
+    /// assert_eq!(ctx.executor.cached(&ctx, "capabilities.describe", &describe), None);
+    /// assert_eq!(ctx.executor.handler_invocations(), 0);
+    /// // once it was asked, what it answered is at hand
+    /// let answer = ctx.execute("capabilities.describe", describe.clone()).unwrap();
+    /// assert_eq!(ctx.executor.cached(&ctx, "capabilities.describe", &describe), Some(answer));
+    /// // a capability that does not exist holds nothing
+    /// assert_eq!(ctx.executor.cached(&ctx, "no.such.capability", &json!({})), None);
+    /// ```
+    pub fn cached(&self, ctx: &Context, id: &str, input: &Value) -> Option<Value> {
+        if bypassed() {
+            return None;
+        }
+        let policy = ctx.registry.get(id).map(|c| c.cache)?;
+        let key = key_of(ctx, id, input, policy)?;
+        self.peek(&key, policy.ttl_seconds())
+    }
+
+    /// How many sources this executor remembers the latest reading of
+    /// (`capability::readings`).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::executor::CapabilityExecutor;
+    /// assert_eq!(CapabilityExecutor::new().readings_remembered(), 0);
+    /// ```
+    pub fn readings_remembered(&self) -> usize {
+        self.readings.remembered()
+    }
+
     /// Drop every cached entry.
     pub fn clear(&self) {
         let mut cache = lock(&self.cache);
         cache.entries.clear();
         cache.order.clear();
     }
+}
+
+/// The key a call is kept under, or `None` when its policy keeps nothing — or keeps it per
+/// checkout and the checkout has no fingerprint.
+fn key_of(ctx: &Context, id: &str, input: &Value, policy: CachePolicy) -> Option<CacheKey> {
+    let state = match policy {
+        CachePolicy::Disabled => return None,
+        CachePolicy::Process { .. } => String::new(),
+        CachePolicy::Generation { .. } => format!("reading {}", ctx.reading),
+        CachePolicy::Checkout { .. } => {
+            let root = std::path::Path::new(&ctx.index.repository.root);
+            let checkout = super::checkout::fingerprint(root)?;
+            format!("reading {} checkout {checkout}", ctx.reading)
+        }
+    };
+    Some(CacheKey {
+        id: id.to_string(),
+        input: canonical_json(input),
+        fingerprint: ctx.registry.fingerprint().to_string(),
+        state,
+    })
 }
 
 fn lock(m: &Mutex<Cache>) -> std::sync::MutexGuard<'_, Cache> {

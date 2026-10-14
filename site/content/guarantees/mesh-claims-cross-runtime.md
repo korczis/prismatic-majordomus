@@ -1,7 +1,7 @@
 +++
 title = "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere"
 description = "A session on machine A claims apps/majordomus-cli exclusively. A session on machine B"
-weight = 217
+weight = 220
 [extra]
 claim_id = "mesh-claims-cross-runtime"
 status = "guaranteed"
@@ -36,7 +36,7 @@ rising.
 
 ```
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'
-majordomus mesh state                      # every claim with held/conflicted/expired
+majordomus mesh state --full               # every claim with held/conflicted/expired
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation
 ```

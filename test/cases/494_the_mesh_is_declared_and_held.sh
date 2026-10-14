@@ -67,6 +67,8 @@ start_event() {
 }
 declare_mesh() {
   mkdir -p .ai/repo/mesh
+  # the key quoted: a hex string must never read as a number
+  allow='[]'; [ -z "${2:-}" ] || allow="[\"$2\"]"
   cat > .ai/repo/mesh/majordomus.yaml <<YAML
 schema: mesh/v1
 kind: mesh-declaration
@@ -76,6 +78,7 @@ multicast:
   enabled: false
 trust:
   policy: deny_unknown
+  allow: $allow
 YAML
   git add .ai/repo/mesh/majordomus.yaml && git commit -qm "mesh enabled: $1"
 }
@@ -88,8 +91,26 @@ printf '%s\n' "$out" | grep -q '^Shared server: ready http://' \
 [ -z "$(briefing_line)" ] || { echo "    a Mesh line with no declaration:"; printf '%s\n' "$out"; exit 1; }
 "$RB" serve stop --repo "$T" >/dev/null 2>&1
 
-# --- enabled, and the server activated it: the briefing says so, in the block naming the server
+# --- enabled, and this machine's key is not listed: the mesh stays closed (no announcement, no
+# dial), the briefing says CLOSED with the key, and the doctor fails trust and names the remedy
 declare_mesh true
+out="$(start_event 1)" || { echo "    the start shim failed"; cat "$T/err"; exit 1; }
+[ -f "$STATE/majordomus/node.json" ] || { echo "    the server did not create the identity under XDG_STATE_HOME"; exit 1; }
+key="$("$RB" mesh identity --repo "$T" --format json | jq -r '[.. | .public_key? // empty][0]')"
+[ "${#key}" = 64 ] || { echo "    no public key from mesh identity: '$key'"; exit 1; }
+printf '%s\n' "$out" | grep -A1 '^Shared server: ready http://' | grep -q "^Mesh: CLOSED — this machine's key $key is not in trust.allow" \
+  || { echo "    an unlisted machine's closed mesh is not named with its key:"; printf '%s\n' "$out"; cat "$T/err"; exit 1; }
+expect_exit 10 "$RB" mesh doctor --repo "$T"
+expect_grep "^FAIL  trust        this machine's key $key is not among the 0 allowed"
+expect_grep '^ok    runtime      closed: '
+"$RB" mesh status --repo "$T" --format json > "$T/closed.json" 2>/dev/null || true
+jq -e '.active == false' "$T/closed.json" >/dev/null \
+  || { echo "    a closed mesh reports itself active:"; cat "$T/closed.json"; exit 1; }
+"$RB" serve stop --repo "$T" >/dev/null 2>&1
+
+# --- enabled, the key listed, and the server activated it: the briefing says so, in the block
+# naming the server
+declare_mesh true "$key"
 out="$(start_event 1)" || { echo "    the start shim failed"; cat "$T/err"; exit 1; }
 printf '%s\n' "$out" | grep -A1 '^Shared server: ready http://' | grep -q '^Mesh: active — ' \
   || { echo "    an active mesh is not named under the server line:"; printf '%s\n' "$out"; cat "$T/err"; exit 1; }

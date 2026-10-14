@@ -40,8 +40,16 @@
 #   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
 #               apart from it, the figure a recorded run supports, or `unknown` when the evidence
 #               is not available; and it never says a test proves it while fewer are supported
-#   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
-#               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
+#   interfaces  the working interfaces the homepage lists are the data's, both ways: the stable
+#               features the web topology gives an `interface` surface, in the features' order,
+#               then the product model's other surfaces — and an interface is linked as
+#               published exactly when a publication holds it: the topology gives its mount to
+#               a surface a publication carries, or the build names a snapshot of that surface
+#               (build.json `snapshots`, the publication model's); one only a running process
+#               answers states its mount and links no copy
+#   weight      the homepage's own HTML, the scripts and stylesheets it loads from this site, and
+#               any graph data it carries inline, weigh no more than site/data/homepage.toml's
+#               [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
 #               <meta name="robots" content="noindex"> and is absent from sitemap.xml; every
 #               other page has no noindex it did not ask for in its own front matter and is
@@ -270,7 +278,11 @@ if os.path.exists(build_path):
         build = json.load(f)
 cat_path = os.path.join(root, "site", "data", "generated", "catalogue.json")
 catalogue = load_json("site/data/generated/catalogue.json") if os.path.exists(cat_path) else {}
-latest = dist.get("latest") or {}
+# The release card reads the release this build offers, which scripts/site-build derives into
+# build.json from the newest record and from what gh-pages already serves; the record's own
+# `latest` in distribution.json is one of its inputs and no longer what the page states
+# (project.the-site-offers-the-release-it-published).
+latest = build.get("release") or {}
 commit = build.get("commit") or ""
 expect = {
     "release": [latest.get("version")] if latest.get("version") else ["unknown"],
@@ -455,14 +467,78 @@ else:
     else:
         ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
 
+# ---------------------------------------------------------------- interfaces
+# The working interfaces are the data's, both ways. Which ones a person opens is the web
+# topology's answer (a public surface of category `interface` that names a feature), which of
+# those are shown is the product model's (the feature is stable), and the rest of the list is
+# the product model's surfaces. Where each runs is the data's too: a link to a published
+# copy is rendered exactly when a publication holds one — a surface a publication carries has
+# that mount, or the build names a snapshot of that surface (build.json `snapshots`, written
+# by scripts/site-build from the publication model, ADR 0141) — so a page cannot send a
+# visitor to an address only a running process answers, and cannot keep describing a surface
+# as local once it is published.
+web_path = os.path.join(root, "site", "data", "generated", "web.json")
+rendered_faces = re.findall(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)
+model_surfaces = product.get("surfaces") or []
+if not os.path.exists(web_path):
+    if rendered_faces or model_surfaces:
+        bad("interfaces", "site/data/generated/web.json is missing; where an interface runs cannot be held to the topology (regenerate: scripts/generate-site-data)")
+    else:
+        ok("interfaces", "the product model names no interface and the homepage lists none")
+else:
+    with open(web_path) as f:
+        web_surfaces = json.load(f).get("surfaces") or []
+    snap_path = os.path.join(root, "site", "data", "build.json")
+    snapshots = []
+    if os.path.exists(snap_path):
+        with open(snap_path) as f:
+            snapshots = json.load(f).get("snapshots") or []
+    by_feature = {}
+    for w in web_surfaces:
+        if w.get("category") == "interface" and w.get("feature"):
+            by_feature.setdefault(w["feature"], w)
+    faces = sorted((f for f in product.get("features", []) if f.get("status") == "stable" and f.get("id") in by_feature),
+                   key=lambda f: f.get("weight") or 0)
+    want = [f["id"] for f in faces] + [s["id"] for s in model_surfaces if s.get("id") not in by_feature]
+    problems = []
+    if rendered_faces != want:
+        problems.append(f"the homepage lists the interfaces [{', '.join(rendered_faces)}] and the data gives [{', '.join(want)}]")
+    starts = [(m.start(), m.group(1)) for m in re.finditer(r'<li\b[^>]*\bdata-interface="([^"]+)"', home)]
+    for i, (pos, fid) in enumerate(starts):
+        if fid not in by_feature:
+            continue
+        end = starts[i + 1][0] if i + 1 < len(starts) else home.find("</ul>", pos)
+        entry = home[pos:end if end != -1 else len(home)]
+        mount = by_feature[fid].get("mount") or ""
+        carried = [p.get("id") for p in web_surfaces if p.get("mount") == mount and p.get("visibility") == "public"
+                   and p.get("availability") in ("both", "published-only")]
+        carried += [f"a snapshot of {s.get('id')}" for s in snapshots if s.get("id") == by_feature[fid].get("id")]
+        linked = f'data-published="{fid}"' in entry
+        if linked and not carried:
+            problems.append(f"{fid} is linked as published at {mount}, and no publication holds it: the topology gives that mount to no published surface and the build names no snapshot of it")
+        if carried and not linked:
+            problems.append(f"the publication holds {carried[0]} at {mount}, and the homepage still describes {fid} as running only locally")
+        if linked and not re.search(r'<a\b[^>]*\bhref="[^"]*' + re.escape(mount) + r'/"[^>]*\bdata-published="' + re.escape(fid) + '"', entry):
+            problems.append(f"{fid} is linked as published, and the link does not lead to its mount {mount}/")
+        if mount not in html.unescape(re.sub(r"<[^>]+>", " ", entry)).split():
+            problems.append(f"{fid} is served by a process at {mount}, and its entry does not state that mount")
+    for pr in problems:
+        bad("interfaces", pr)
+    if not problems:
+        n_pub = sum(1 for _, fid in starts if f'data-published="{fid}"' in home)
+        ok("interfaces", f"the homepage lists the {len(want)} interface(s) the data gives, in its order ({len(faces)} a person opens, {n_pub} of them held by the publication and linked as a snapshot; each states the mount a local server answers at)")
+
 # ---------------------------------------------------------------- weight
-# Only what this page decides: the same-origin scripts and stylesheets it links, and graph data
-# inlined as JSON. The HTML itself is not budgeted here — its size follows the recorded runs the
-# page replays, which are evidence, not decoration.
+# What this page decides: its own HTML, the same-origin scripts and stylesheets it links, and
+# graph data inlined as JSON. The HTML was left unbudgeted until 2026-10-12, on the reasoning
+# that its size follows the recorded runs the page replays; it reached 243,477 bytes, most of
+# it a navigation rendered three times and transcripts that other pages already carried.
 limit = budget.get("assets_bytes")
 json_limit = budget.get("inline_json_bytes")
-if not isinstance(limit, int) or not isinstance(json_limit, int):
-    bad("weight", "site/data/homepage.toml declares no [budget] assets_bytes and inline_json_bytes; the homepage's weight is unbounded")
+html_limit = budget.get("html_bytes")
+html_size = len(home.encode())
+if not isinstance(limit, int) or not isinstance(json_limit, int) or not isinstance(html_limit, int):
+    bad("weight", "site/data/homepage.toml declares no [budget] html_bytes, assets_bytes and inline_json_bytes; the homepage's weight is unbounded")
 else:
     sm = os.path.join(pub, "sitemap.xml")
     first_loc = re.search(r"<loc>(https?://[^/<]+)", open(sm).read()) if os.path.exists(sm) else None
@@ -486,8 +562,10 @@ else:
         bad("weight", f"the homepage loads {total} bytes of scripts and stylesheets from this site, over the declared {limit} (heaviest: {heaviest})")
     if inline > json_limit:
         bad("weight", f"the homepage carries {inline} bytes of inline JSON, over the declared {json_limit}; publish the data and fetch it")
-    if not missing_assets and total <= limit and inline <= json_limit:
-        ok("weight", f"the homepage loads {total} of {limit} bytes of scripts and stylesheets ({len(counted)} file(s); heaviest: {heaviest}) and {inline} of {json_limit} bytes of inline JSON")
+    if html_size > html_limit:
+        bad("weight", f"the homepage is {html_size} bytes of HTML, over the declared {html_limit}; link the page that carries the detail instead of inlining it")
+    if not missing_assets and total <= limit and inline <= json_limit and html_size <= html_limit:
+        ok("weight", f"the homepage is {html_size} of {html_limit} bytes of HTML, and loads {total} of {limit} bytes of scripts and stylesheets ({len(counted)} file(s); heaviest: {heaviest}) and {inline} of {json_limit} bytes of inline JSON")
 
 # ---------------------------------------------------------------- indexing
 sm_path = os.path.join(pub, "sitemap.xml")
