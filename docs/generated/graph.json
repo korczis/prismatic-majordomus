@@ -35267,6 +35267,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I2664",
+        "kind": "issue",
+        "label": "I2664",
+        "summary": "A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared",
+        "route": "/cockpit/objects/issue/i2664",
+        "source": ".ai/repo/project/issues/I2664.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A validate run on a branch is cancelled by the workflow itself when one of its jobs has failed, and a case holds the workflow to it",
+            "The rule of expedited landings says which jobs a lander reads for which kind of change, and names the crate tests that read repository records (skills, rules, claims) as part of a record change",
+            "Adding an active skill without naming it where the crate test requires is refused by a structure gate, not first by a rust lane an hour later",
+            "A red on the trunk has a named carrier on the board within the minute it is read, and the landing claim is refused to anyone else until the fix lands"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2662"
+          ],
+          "evidence_required": [
+            "a_failed_run_is_cancelled_case",
+            "skill_named_by_crate_test_gate"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Buying runners",
+            "Publishing by artifact, which is I2660, and the runner bound of validation, which is I2662"
+          ],
+          "objective": "Make the time from a red to its fix the thing the pipeline is built for: a run stops spending runners the moment it cannot be green, and the trunk's red has one carrier at once.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci-plan",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "docs/INTEGRATION.md",
+            "docs/CI.md",
+            ".ai/repo/project/issues/I2664.yaml"
+          ],
+          "slug": "a-failed-run-ends-at-its-first-red",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/github-check",
+            "scripts/ci-plan --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2685",
         "kind": "issue",
         "label": "I2685",
@@ -77388,6 +77437,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2664",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2664",
+        "target": "majordomus://issue/I2662",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2664",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2685",
         "target": "kind:issue",
         "kind": "is_a"
@@ -87009,8 +87073,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2764,
-      "edges": 6073,
+      "nodes": 2765,
+      "edges": 6076,
       "acyclic": false,
       "truncated": false
     }
