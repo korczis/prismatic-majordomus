@@ -51,6 +51,8 @@
     const hex = t ? tone(t) : token('--mj-muted', '#889');
     return alpha === undefined ? hex : withAlpha(hex, alpha);
   }
+  // Code-unit order, never the reader's locale: the same list is the same order everywhere.
+  const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
   const ORDER = ['gated', 'reviewed', 'not_run', 'stale', 'unproven', 'no_test'];
   const rank = (w) => {
     const i = ORDER.indexOf(w);
@@ -170,13 +172,13 @@
   const grouped = (obj) =>
     Object.entries(obj || {})
       .filter(([, n]) => typeof n === 'number')
-      .sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0]));
+      .sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1] || byCode(a[0], b[0]));
 
   // ---------------------------------------------------------------- the scenes
   // 1. Proof Lattice: one cell per rule, grouped by what the proof report decided.
   registry.scenes.proof = scene('proof', (p, f) => {
     const { box, model: m, t, moving } = f;
-    const rules = [...(m.rules || [])].sort((a, b) => rank(a.state) - rank(b.state) || a.id.localeCompare(b.id));
+    const rules = [...(m.rules || [])].sort((a, b) => rank(a.state) - rank(b.state) || byCode(a.id, b.id));
     const left = box.w * 0.05;
     const top = box.h * 0.17;
     const area = { w: box.w * 0.6, h: box.h * 0.66 };
@@ -223,7 +225,7 @@
   // 2. Claim Ledger: one bar per kind of claim, split by what the evidence says of it.
   registry.scenes.claims = scene('claims', (p, f) => {
     const { box, model: m } = f;
-    const groups = [...(m.groups || [])].sort((a, b) => b.total - a.total || a.status.localeCompare(b.status));
+    const groups = [...(m.groups || [])].sort((a, b) => b.total - a.total || byCode(a.status, b.status));
     const most = Math.max(1, ...groups.map((g) => g.total));
     const left = box.w * 0.2;
     const width = box.w * 0.62;
@@ -433,7 +435,7 @@
   // 6. Registry Treemap: what the repository is made of, one tile per module of the registry.
   registry.scenes.registry = scene('registry', (p, f) => {
     const { box, model: m } = f;
-    const mods = [...(m.modules || [])].sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
+    const mods = [...(m.modules || [])].sort((a, b) => b.count - a.count || byCode(a.module, b.module));
     const most = Math.max(1, ...mods.map((x) => x.count));
     const area = { x: box.w * 0.04, y: box.h * 0.16, w: box.w * 0.62, h: box.h * 0.68 };
     // slice and dice: split the sorted list into two halves of near-equal weight along the
@@ -498,7 +500,7 @@
   // 7. Milestone Ladder: one rung per milestone, split by its issues' recorded status.
   registry.scenes.ladder = scene('ladder', (p, f) => {
     const { box, model: m } = f;
-    const list = [...(m.milestones || [])].sort((a, b) => a.id.localeCompare(b.id));
+    const list = [...(m.milestones || [])].sort((a, b) => byCode(a.id, b.id));
     const columns = list.length > 18 ? 2 : 1;
     const perColumn = Math.ceil(list.length / columns);
     const most = Math.max(1, ...list.map((x) => x.total || 0));
@@ -516,7 +518,7 @@
       const bw = colW * 0.46;
       let cx = bx;
       const by = ms.by_status || {};
-      Object.keys(by).sort((a, b) => (b === 'DONE') - (a === 'DONE') || a.localeCompare(b)).forEach((word) => {
+      Object.keys(by).sort((a, b) => (b === 'DONE') - (a === 'DONE') || byCode(a, b)).forEach((word) => {
         const n = by[word];
         if (!n) return;
         totals[word] = (totals[word] || 0) + n;
