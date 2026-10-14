@@ -179,11 +179,15 @@ impl Session {
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
         let (http_host, _) = crate::cli::local_http_host(args.http_host.as_deref());
+        // the port this checkout asks for on every start, unless one was given (I2702)
+        let http_port = args.http_port.unwrap_or_else(|| {
+            crate::cli::checkout_port(std::path::Path::new(&ctx.index.repository.root))
+        });
         let shared = SharedServer::start(
             Arc::clone(&live),
             crate::VERSION,
             &http_host,
-            args.http_port,
+            http_port,
             true,
             None,
             lease,

@@ -71,7 +71,13 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(&repo, *port, *idle, Duration::from_secs(*wait), *format),
+        }) => ensure(
+            &repo,
+            port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+            *idle,
+            Duration::from_secs(*wait),
+            *format,
+        ),
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -110,7 +116,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (
             crate::cli::local_http_host(args.host.as_deref()).0,
-            args.port,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing

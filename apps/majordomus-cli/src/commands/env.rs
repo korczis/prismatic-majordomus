@@ -27,7 +27,7 @@ use std::io::Write;
 use std::time::Duration;
 
 use crate::app::App;
-use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS, DEFAULT_PORT};
+use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS};
 use crate::environment::preflight;
 use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
@@ -711,7 +711,7 @@ fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: 
     }
     let c = match crate::commands::serve::converge(
         repository,
-        DEFAULT_PORT,
+        crate::cli::checkout_port(repository.root()),
         DEFAULT_IDLE_SECONDS,
         wait,
     ) {

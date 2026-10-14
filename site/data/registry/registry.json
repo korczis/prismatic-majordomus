@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "37f101a643f12d61ce1b442b81ccd1fcf2b0b62fa82520fc6c5cb2f03839e0c2",
+    "fingerprint": "083601691692cbb463fc283298149744f2d490bbf916690fd90787a009bdd931",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7b8e43156bdc6d6153bca5eaf226440af1a9dd090661e7baa471caf67d1725da",
+    "fingerprint": "2a747e3f2bc759a0717fd5acd08fa398f0ddf43d7f5f273d1a287eddd07cc6fc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87839,7 +87839,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 66066
+        "bytes": 66574
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -105813,15 +105813,13 @@
             "name": "http_port",
             "long": "http-port",
             "positional": false,
-            "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+            "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           }
         ],
         "examples": [
@@ -105953,15 +105951,13 @@
             "name": "port",
             "long": "port",
             "positional": false,
-            "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+            "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           },
           {
             "name": "fallback",
@@ -106170,15 +106166,13 @@
                 "name": "port",
                 "long": "port",
                 "positional": false,
-                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
                 "value_name": "PORT",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "8741"
-                ]
+                "defaults": []
               },
               {
                 "name": "idle",

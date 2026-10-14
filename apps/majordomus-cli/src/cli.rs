@@ -3806,14 +3806,59 @@ pub struct McpArgs {
     #[arg(long, value_name = "HOST")]
     pub http_host: Option<String>,
 
-    /// Port the shared server binds when this process starts it; when it is taken, a free
-    /// port is used instead and the URL is logged on stderr either way
-    #[arg(long, default_value_t = DEFAULT_PORT, value_name = "PORT")]
-    pub http_port: u16,
+    /// Port the shared server binds when this process starts it; without it, the port this
+    /// checkout derives (8741 for the primary checkout). When it is taken, a free port is
+    /// used instead and the URL is logged on stderr either way
+    #[arg(long, value_name = "PORT")]
+    pub http_port: Option<u16>,
 }
 
-/// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
+/// The port of the HTTP projection a repository's primary checkout asks for: `serve`, and the
+/// shared server `mcp` starts. A linked worktree asks for one of its own ([`checkout_port`]).
 pub const DEFAULT_PORT: u16 = 8741;
+
+/// The first port a linked worktree may derive, and how many there are: the block right
+/// above [`DEFAULT_PORT`], so a worktree's address reads as a sibling of its repository's.
+const LINKED_PORT_BASE: u16 = DEFAULT_PORT + 1;
+const LINKED_PORT_SPAN: u16 = 999;
+
+/// The port this checkout's server asks for first, the same on every start (I2702).
+///
+/// The primary checkout asks for [`DEFAULT_PORT`]. A linked worktree asks for a port derived
+/// from its own identity ([`crate::repository::identity`]) within the block above it, so
+/// that two checkouts of one repository ask for different ports and neither depends on which
+/// started first. A port that is taken is still replaced by a free one and both are logged
+/// (`http::server::bind_or_fallback`); the derivation decides what is asked, not what is had.
+/// A checkout git cannot describe is treated as primary.
+///
+/// ```
+/// use majordomus_cli::cli::{checkout_port, linked_port, DEFAULT_PORT};
+/// let dir = tempfile::tempdir().unwrap();
+/// // not a git checkout at all: the documented default
+/// assert_eq!(checkout_port(dir.path()), DEFAULT_PORT);
+/// // a linked worktree's port is a function of its identity alone
+/// let a = linked_port("0123456789abcdef0123456789abcdef");
+/// assert_eq!(a, linked_port("0123456789abcdef0123456789abcdef"));
+/// assert_ne!(a, linked_port("fedcba9876543210fedcba9876543210"));
+/// assert!(a > DEFAULT_PORT && a < DEFAULT_PORT + 1000);
+/// ```
+pub fn checkout_port(root: &std::path::Path) -> u16 {
+    match crate::repository::git_identity(root) {
+        Some(git) if git.linked => linked_port(&crate::repository::identity(root)),
+        _ => DEFAULT_PORT,
+    }
+}
+
+/// The port a linked worktree with this identity asks for: the identity's leading 32 bits,
+/// reduced into the block above [`DEFAULT_PORT`].
+pub fn linked_port(identity: &str) -> u16 {
+    let lead = identity
+        .get(..8)
+        .and_then(|h| u32::from_str_radix(h, 16).ok())
+        .unwrap_or(0);
+    // the remainder is below LINKED_PORT_SPAN, which fits a u16
+    LINKED_PORT_BASE + u16::try_from(lead % u32::from(LINKED_PORT_SPAN)).unwrap_or(0)
+}
 
 /// The interface a local server binds when nothing says otherwise.
 pub const LOOPBACK_HOST: &str = "127.0.0.1";
@@ -3917,9 +3962,10 @@ pub struct ServeArgs {
     #[arg(long, value_name = "HOST")]
     pub host: Option<String>,
 
-    /// Port to bind; 0 picks a free one and the address is logged on stderr
-    #[arg(long, default_value_t = DEFAULT_PORT)]
-    pub port: u16,
+    /// Port to bind; without it, the port this checkout derives (8741 for the primary
+    /// checkout); 0 picks a free one and the address is logged on stderr
+    #[arg(long)]
+    pub port: Option<u16>,
 
     /// When the port is taken, bind a free one instead and log both; without this a taken port is an error
     #[arg(long)]
@@ -3986,9 +4032,10 @@ pub enum ServeCommand {
     },
     /// Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands
     Ensure {
-        /// The port the started server asks for first; a taken one is replaced by a free one
-        #[arg(long, default_value_t = DEFAULT_PORT)]
-        port: u16,
+        /// The port the started server asks for first, without it the one this checkout
+        /// derives (8741 for the primary checkout); a taken one is replaced by a free one
+        #[arg(long)]
+        port: Option<u16>,
         /// The started server stops when no peer has been attached for this many seconds
         #[arg(long, value_name = "SECONDS", default_value_t = DEFAULT_IDLE_SECONDS)]
         idle: u64,

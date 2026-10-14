@@ -718,6 +718,53 @@ fn an_idle_server_ends_by_itself() {
     assert!(out.starts_with("standing   absent"), "{out}");
 }
 
+/// The port in a server's URL.
+fn port_of(url: &str) -> u16 {
+    url.rsplit(':')
+        .next()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or_else(|| panic!("no port in {url}"))
+}
+
+/// I2702: a linked worktree's server asks for the port its checkout derives, so two
+/// consecutive starts bind the same address, and two worktrees of one repository ask for
+/// different ones — while the primary checkout keeps the documented default.
+#[test]
+fn stable_port_per_checkout_test() {
+    let f = Fixture::new();
+    // the layer is in HEAD, so that each worktree checks it out
+    f.git(&["add", "-A"]);
+    f.git(&["commit", "-q", "--allow-empty", "-m", "the layer"]);
+    let parent = f.root().parent().unwrap().to_path_buf();
+    let a = parent.join("worktree-a");
+    let b = parent.join("worktree-b");
+    for (dir, branch) in [(&a, "a"), (&b, "b")] {
+        f.git(&["worktree", "add", "-q", "-b", branch, dir.to_str().unwrap()]);
+    }
+    let derived = |dir: &Path| {
+        let repo = majordomus_cli::Repository::discover(dir).expect("a checkout");
+        majordomus_cli::cli::checkout_port(repo.root())
+    };
+    assert_eq!(derived(&f.root()), majordomus_cli::cli::DEFAULT_PORT);
+    let (pa, pb) = (derived(&a), derived(&b));
+    assert_ne!(pa, pb, "two checkouts of one repository ask for one port");
+    assert_ne!(pa, majordomus_cli::cli::DEFAULT_PORT);
+
+    let mut seen = Vec::new();
+    for _ in 0..2 {
+        let (code, v, err) = ensure(&a, &["--idle", "120"]);
+        assert_eq!(code, 0, "{v}\n{err}");
+        seen.push(port_of(v["url"].as_str().unwrap()));
+        let (code, out, _) = mj(&a, &["serve", "stop"]);
+        assert_eq!(code, 0, "{out}");
+    }
+    assert_eq!(seen[0], seen[1], "a restart moved the address: {seen:?}");
+    assert_eq!(seen[0], pa, "the server did not ask for its checkout's port first");
+    for dir in [&a, &b] {
+        f.git(&["worktree", "remove", "--force", dir.to_str().unwrap()]);
+    }
+}
+
 #[test]
 fn ensure_takes_a_free_port_when_the_one_it_asks_for_is_taken() {
     let f = Fixture::new();
