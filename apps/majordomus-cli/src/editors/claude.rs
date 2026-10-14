@@ -130,8 +130,21 @@ pub(crate) fn name_findings(
         .collect()
 }
 
+/// The workflow skills Claude Code is given a pointer to: every skill of the layer with a
+/// name both products accept, except one whose name a command already has.
+pub(crate) fn workflow_skills<'a>(
+    commands: &[CommandRef],
+    skills: &'a [super::SkillRef],
+) -> Vec<&'a super::SkillRef> {
+    skills
+        .iter()
+        .filter(|s| super::is_skill_name(&s.id))
+        .filter(|s| !commands.iter().any(|c| c.alias == s.id))
+        .collect()
+}
+
 /// What Claude Code does with each capability here.
-pub fn adapter(commands: &[CommandRef]) -> EditorAdapter {
+pub fn adapter(commands: &[CommandRef], skills: &[super::SkillRef]) -> EditorAdapter {
     EditorAdapter {
         id: ID.into(),
         title: "Claude Code".into(),
@@ -143,6 +156,16 @@ pub fn adapter(commands: &[CommandRef]) -> EditorAdapter {
                 artifacts: commands.iter().map(|c| skill_path(&c.alias)).collect(),
                 evidence: "code.claude.com/docs/en/skills".into(),
                 note: "One skill per capability that declares an alias: /<alias> <text> calls the capability once with the text in its declared field. A capability that changes something is invoked by a person only. Every other capability is reached by its MCP tool, which needs no file.".into(),
+            },
+            EditorCapability {
+                id: "skills".into(),
+                support: EditorSupport::Supported,
+                artifacts: workflow_skills(commands, skills)
+                    .iter()
+                    .map(|s| skill_path(&s.id))
+                    .collect(),
+                evidence: "code.claude.com/docs/en/skills".into(),
+                note: "One pointer per workflow skill of the layer, so that /<id> reaches the definition under .ai/repo/skills/; Claude Code reads .claude/skills/ and not .agents/skills/. A skill whose name a command has is not written twice.".into(),
             },
             EditorCapability {
                 id: "instructions".into(),
@@ -227,6 +250,36 @@ mod tests {
         assert_eq!(said.chars().count(), DESCRIPTION_BUDGET);
     }
 
+    fn workflow(id: &str) -> super::super::SkillRef {
+        super::super::SkillRef {
+            id: id.into(),
+            title: format!("The {id} skill"),
+            description: "d".into(),
+            path: format!(".ai/repo/skills/{id}/SKILL.md"),
+            sha256: String::new(),
+        }
+    }
+
+    #[test]
+    fn a_workflow_skill_is_reachable_by_its_name_unless_a_command_has_it() {
+        let skills = [
+            workflow("evolve"),
+            workflow("intent"),
+            workflow("Not A Name"),
+        ];
+        let given = workflow_skills(&[command(true)], &skills);
+        assert_eq!(
+            given.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(),
+            ["evolve"],
+            "the command keeps `intent`, and a name the product refuses is not written"
+        );
+        let a = adapter(&[command(true)], &skills);
+        let listed = a.capabilities.iter().find(|c| c.id == "skills").unwrap();
+        assert_eq!(listed.artifacts, [".claude/skills/evolve/SKILL.md"]);
+        let commands = a.capabilities.iter().find(|c| c.id == "commands").unwrap();
+        assert_eq!(commands.artifacts, [".claude/skills/intent/SKILL.md"]);
+    }
+
     #[test]
     fn a_command_named_as_a_workflow_skill_is_a_finding() {
         let skill = super::super::SkillRef {
@@ -240,7 +293,7 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].code, "command-shares-a-skill-name");
         assert!(name_findings(&[command(true)], &[]).is_empty());
-        let a = adapter(&[command(true)]);
+        let a = adapter(&[command(true)], &[]);
         assert_eq!(a.id, "claude-code");
         assert_eq!(
             a.capabilities[0].artifacts,

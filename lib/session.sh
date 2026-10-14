@@ -179,7 +179,7 @@ mj_cmd_session() {
   local sub="${1:-status}"
   case "$sub" in
     --help|-h|help) mj_session_usage; return 0 ;;
-    start|status|close|list|show|latest|context) shift || true ;;
+    start|status|close|list|show|latest|context|archive) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "session: unknown subcommand '$sub' (see: majordomus session --help)" ;;
   esac
   mj_require_installed
@@ -191,6 +191,7 @@ mj_cmd_session() {
     show)   mj_session_show "$@" ;;
     latest) mj_session_latest "$@" ;;
     context) mj_session_context_cmd "$@" ;;
+    archive) mj_session_archive "$@" ;;
   esac
 }
 
@@ -206,6 +207,7 @@ usage: majordomus session <subcommand> [options]
   show <session-id> [--json]              one closed record, whole                 (read-only)
   latest [--path] [--json]                the newest that resolves here            (read-only)
   context [<session-id>] [--path]         the working context of an episode, now   (read-only)
+  archive [--dry-run]                     move the oldest records over the cap into archive/
 
   One open session per provider session, not one per worktree: a second window of the same
   provider gets an episode of its own, and start refuses (15) only while YOUR episode is
@@ -226,6 +228,13 @@ usage: majordomus session <subcommand> [options]
   checkpoints, decisions and questions, taken from the ledger lines stamped with its own
   session id. It is derived on every read and cached nowhere, so it cannot be stale.
   --path prints the opening snapshot's path instead, which is what this printed before.
+
+  archive moves the oldest closed records beyond session.retention_max_files into the
+  section's archive/ directory, and it is the only thing that does: nothing archives in the
+  background. It never deletes, it refuses (15) when the policy's session.archive is not
+  true, and it refuses before moving anything when a record of the same name is already
+  archived. --dry-run names what would move and moves nothing. An archived record leaves
+  list, show, the index and the site; it stays in the tree, and git still has it.
 
   A provider hook opens and closes the episode where one is wired (majordomus capture
   install). --if-open and --if-none are what make that safe to run on every event: a
@@ -1057,6 +1066,68 @@ mj_session_show_file() {
   mj_record_body "$f"
 }
 
+# ---------------------------------------------------------------- archive
+# The names of the section's own records, oldest first. The name opens with the closing
+# timestamp and is the same on every clone, which is why it is the order here as it is the
+# published order (see mj_session_keys). The section's contract is not a record, and what
+# was archived is not the section's any more.
+mj_session_record_names() {
+  local dir f; dir="$(mj_session_store)"
+  [ -d "$dir" ] || return 0
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | LC_ALL=C sort); do
+    mj_is_context_doc "$f" && continue
+    basename "$f"
+  done
+}
+mj_session_archive_dir() { printf '%s/archive' "$(mj_session_store)"; }
+
+# majordomus session archive [--dry-run]
+# The retention the policy asks for, applied when a person asks and at no other time.
+# `history --rotate` is the precedent: over the cap, the oldest move aside; nothing is
+# deleted; an archive that already holds the name is refused before anything is written.
+mj_session_archive() {
+  local a dry=0
+  for a in "$@"; do case "$a" in
+    --dry-run) dry=1 ;;
+    --help|-h) mj_session_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "session archive: unknown option $a" ;;
+  esac; done
+  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  local cap enabled dir dest names have over name moved=0
+  cap="$(mj_pol_req session.retention_max_files)" || mj_die "$MJ_EX_CONTRACT" "session archive: no cap to archive against"
+  enabled="$(mj_pol session.archive)"
+  dir="$(mj_session_store)"; dest="$(mj_session_archive_dir)"
+  names="$(mj_session_record_names)"
+  have=0; [ -n "$names" ] && have="$(printf '%s\n' "$names" | wc -l | tr -d ' ')"
+  if [ "$have" -le "$cap" ]; then
+    printf 'nothing to archive: %s record(s), cap %s\n' "$have" "$cap"; return 0
+  fi
+  over=$((have - cap))
+  names="$(printf '%s\n' "$names" | head -n "$over")"
+  if [ "$dry" = 1 ]; then
+    printf 'would archive %s of %s record(s) to %s/, %s kept:\n' "$over" "$have" "$(mj_rel "$dest")" "$cap"
+    printf '%s\n' "$names" | sed 's/^/  /'
+    return 0
+  fi
+  [ "$enabled" = true ] \
+    || mj_die "$MJ_EX_REFUSED" "session archive: $have record(s) over cap $cap, and the policy's session.archive is '${enabled:-absent}', not true; nothing moved"
+  # Every refusal comes before the first move: a run that archived half and then met a
+  # name already there would leave the section in a state no single command describes.
+  for name in $names; do
+    [ -e "$dest/$name" ] \
+      && mj_die "$MJ_EX_REFUSED" "session archive: $(mj_rel "$dest")/$name already exists; nothing moved"
+  done
+  mkdir -p "$dest" || mj_die "$MJ_EX_INTERNAL" "could not create $(mj_rel "$dest")"
+  for name in $names; do
+    mv -n "$dir/$name" "$dest/$name" && [ ! -e "$dir/$name" ] && [ -f "$dest/$name" ] \
+      || mj_die "$MJ_EX_INTERNAL" "could not move $name to $(mj_rel "$dest")/ ($moved moved before it)"
+    moved=$((moved + 1))
+  done
+  mj_ledger_append session.archived "\"archived\":$moved,\"kept\":$cap,\"archive\":\"$(mj_json_esc "$(mj_rel "$dest")")\""
+  printf 'archived: %s record(s) to %s/, %s kept\n' "$moved" "$(mj_rel "$dest")" "$cap"
+  printf 'next: git add -A %s && majordomus derive\n' "$(mj_rel "$dir")"
+}
+
 # ---------------------------------------------------------------- the doctrine
 # majordomus.session-records: a closed episode is a shared object with a closed field set,
 # carrying what the repository can prove and nothing about the machine that ran it.
@@ -1064,7 +1135,8 @@ mj_session_show_file() {
 # The Rust index refuses an unknown key when it builds; this is the same contract read from
 # the shell, so `doctor` answers for the section without a toolchain present.
 mj_validate_session_records() {
-  local dir f fm flat n=0 bad=0 ids="" id absolute
+  local dir f fm flat n=0 bad=0 ids="" id absolute missing missing_n missing_first my_worktree ref
+  my_worktree="$(mj_worktree_id)"
   dir="$(mj_session_store)"
   [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0      # a layer with no sessions section owes nothing
   [ -d "$dir" ] || return 0
@@ -1105,6 +1177,24 @@ mj_validate_session_records() {
       mj_doctrine_fail session "$(basename "$f")" "carries an absolute path in: ${absolute% }" "grep -n ': /' $(mj_rel "$f")"
       bad=1
     }
+    # A record names the checkpoints and handovers its episode wrote, and those live in the
+    # checkout-local half of the layer. So "is what it names still there" has an answer
+    # only in the working copy that wrote the record: everywhere else the path was never
+    # there to be missing. Asked here, of this working copy's own records, a reference that
+    # resolves to nothing is reported with both names — as a warning, because the record
+    # is immutable and the finding is about what this checkout no longer has.
+    if [ "$(mj_yget "$flat" worktree_id)" = "$my_worktree" ]; then
+      missing=""; missing_n=0
+      for ref in $(awk -F= '$1 ~ /^(checkpoints|handovers)\.[0-9]+$/ { print $2 }' "$flat"); do
+        [ -e "$MJ_ROOT/$ref" ] && continue
+        missing_n=$((missing_n + 1))
+        [ "$missing_n" = 1 ] && missing_first="$ref"
+        [ "$missing_n" -le 3 ] && missing="$missing $ref"
+      done
+      [ "$missing_n" -gt 0 ] && mj_warn session "$(basename "$f")" \
+        "names $missing_n record(s) this checkout no longer has:${missing}$( [ "$missing_n" -gt 3 ] && printf ' …' )" \
+        "ls $missing_first"
+    fi
     id="$(mj_yget "$flat" session_id)"
     case " $ids " in
       *" $id "*) mj_doctrine_fail session "$id" "two records claim this identity" "grep -rln 'session_id: $id' $(mj_rel "$dir")"; bad=1 ;;

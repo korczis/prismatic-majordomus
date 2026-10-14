@@ -247,7 +247,7 @@ echo "    without the executable nothing is read, applied or judged"
 # --- 9. the first reading: clean, owed, or not taken
 expect_exit 0 step owed MAJORDOMUS_BIN="$BIN" SYNC_RC=0
 [ "$(calls)" = "github-sync --check;" ] || fail "the first reading called: $(calls)"
-grep -qx 'owed=no' "$OUT" || fail "a clean reading (exit 0) did not say owed=no: $(cat "$OUT")"
+grep -qx 'owed=no' "$OUT" || fail "a clean reading (exit status 0) did not say owed=no: $(cat "$OUT")"
 expect_exit 0 step owed MAJORDOMUS_BIN="$BIN" SYNC_RC=11
 grep -qx 'owed=yes' "$OUT" || fail "drift (exit 11) did not say owed=yes: $(cat "$OUT")"
 expect_grep 'DRIFT  behind    issue I0001' || fail "the reading does not show what is owed"

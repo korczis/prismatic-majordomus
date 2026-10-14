@@ -30,4 +30,6 @@ evidence_required:
   - budget_recorded
 risk: "A single machine's measurement is not a guarantee on another host. The high-water mark needs headroom, and the headroom needs to be stated."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-14
+cancelled: true
+completion: "Cancelled 2026-10-14 on master e28daccd9b: the 256 MB limit it measures against is a Fly Machine size, and nothing reads the object's resources any more. The owner disconnected Fly.io on 2026-10-12; this repository deploys release binaries, the GHCR image and GitHub Pages (commit 9af3fa65a4 removed fly.toml)."

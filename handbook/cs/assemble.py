@@ -103,7 +103,7 @@ PARTS = [
     ("Úvod", [
         ("uvod", "Co je Majordomus"), ("problemy", "Problémy a root causes"), ("hodnoceni", "Sebehodnocení týmu"),
         ("stavba", "Celá stavba"), ("graf", "Stavba z grafu repozitáře"), ("stav", "Šest druhů stavu"),
-        ("projekce", "Jeden fakt, mnoho rozhraní"), ("kudy", "Kudy číst"), ("nasazeni", "Nasazení krok za krokem"), ("osobni", "Osobní režim (BYOD)"),
+        ("projekce", "Jeden fakt, mnoho rozhraní"), ("mj-way", "MJ way"), ("kudy", "Kudy číst"), ("nasazeni", "Nasazení krok za krokem"), ("osobni", "Osobní režim (BYOD)"),
         ("mapa-prirucky", "Mapa příručky")]),
     ("Harness: vstup do session", [
         ("h-co-je", "Co je harness"), ("h-proc", "Proč nestačí provider"),
@@ -154,7 +154,8 @@ SEE = {
     "stavba": ["graf", "projekce", "stav", "p-mapa"],
     "graf": ["stavba", "toky", "citarna", "pruzkumnik", "x-registry"],
     "stav": ["p-mapa", "p-pamet", "h-server"],
-    "projekce": ["h-bootstrap", "h-git", "h-server"],
+    "projekce": ["mj-way", "h-bootstrap", "h-git", "h-server"],
+    "mj-way": ["projekce", "h-vynuceni", "h-finish", "koordinace", "x-lessons"],
     "h-co-je": ["stavba", "h-proc"],
     "h-proc": ["problemy", "h-prenos"],
     "h-mapa": ["h-git", "h-ci", "h-finish", "koordinace"],
@@ -400,13 +401,27 @@ page = (template.replace("/*BASE_CSS*/", css)
         .replace("/*EXTRAS_JS*/", read(os.path.join(HERE, "extras.js")) + "\n" + read(os.path.join(HERE, "extras2.js")) + "\n" + read(os.path.join(HERE, "extras3.js")) + "\n" + read(os.path.join(HERE, "extras4.js")) + "\n" + read(os.path.join(HERE, "extras5.js")) + "\n" + read(os.path.join(HERE, "extras6.js")) + "\n" + read(os.path.join(HERE, "extras7.js")) + "\n" + read(os.path.join(HERE, "extras8.js")) + "\n" + read(os.path.join(HERE, "extras9.js")) + "\n" + read(os.path.join(HERE, "extras10.js")) + "\n" + read(os.path.join(HERE, "extras11.js")) + "\n" + read(os.path.join(HERE, "extras12.js")) + "\n" + read(os.path.join(HERE, "extras13.js")) + "\n" + read(os.path.join(HERE, "extras14.js"))))
 page = link_sources(page).replace("@@THEME_CLASS@@", THEME_CLASS)
 # every number a caption states is a fact of the data the page embeds, never typed
+# and so are the day and the version the page says it describes: the commit the corpus was
+# read at, and the version the crate manifest declares there (ADR 0085)
+import subprocess
+_root = os.environ.get("HANDBOOK_ROOT") or os.path.dirname(os.path.dirname(HERE))
+_day = subprocess.run(["git", "-C", _root, "log", "-1", "--format=%cs", "HEAD"],
+                      capture_output=True, text=True, check=True).stdout.strip().split("-")
+AS_OF = "%d. %d. %s" % (int(_day[2]), int(_day[1]), _day[0])
+_manifest = re.search(r'^version\s*=\s*"([^"]+)"', read(os.path.join(_root, "apps", "majordomus-cli", "Cargo.toml")), re.M)
+if not _manifest:
+    sys.exit("apps/majordomus-cli/Cargo.toml declares no version")
+VERSION = _manifest.group(1)
 _ex = json.loads(read(os.path.join(GEN, "explorer-data.json")))
 _ci = json.loads(CORPUS_INDEX)
 FACTS = {"adrs": len(_ex["adrs"]), "rules": len(_ex["rules"]), "caps": len(_ex["caps"]), "claims": len(_ex["claims"]),
          "ucs": len(_ex["ucs"]), "gates": len(gates_json["gates"]), "classes": len(gates_json["classes"]),
          "blocking": sum(1 for r in _ex["rules"] if r.get("c") == "blocking"),
          "advisory": sum(1 for r in _ex["rules"] if r.get("c") == "advisory"),
-         "docs": len(_ci["docs"]), "commit": _ci["commit"]}
+         "docs": len(_ci["docs"]), "commit": _ci["commit"],
+         "modules": len({c["m"] for c in _ex["caps"]}),
+         "tested": sum(1 for c in _ex["claims"] if c.get("t")),
+         "asof": AS_OF, "version": VERSION}
 for k, v in FACTS.items():
     page = page.replace("%%" + k + "%%", str(v))
 left = sorted(set(re.findall(r"%%[a-z]+%%", page)))

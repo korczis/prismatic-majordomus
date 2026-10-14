@@ -29,7 +29,9 @@
 #   5. Every published tag has a release record. A tag without one is a release that was
 #      published to the world and never reached the layer every projection is composed from,
 #      which is what a failure in the publish job looks like from the outside: nothing red,
-#      and an installer that goes on serving the previous version.
+#      and an installer that goes on serving the previous version. A tag whose record is
+#      proposed — a fresh release/record-<tag> branch carries it — is pending, not missing,
+#      so the window between a tag and its record's merge turns no unrelated head red.
 #
 #   scripts/ci/release-check                report every finding, exit 10 on any
 #   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
@@ -178,6 +180,39 @@ recorded_tag() {
   grep -l "^tag: *$1 *\$" .ai/repo/releases/*.yaml >/dev/null 2>&1
 }
 
+# A record that is proposed and has not landed yet (I2054). The publish job pushes the record
+# to release/record-<tag> and opens its pull request from there; that pull request then needs
+# a full run of its own before it can merge, about two hours. Refusing every head in that
+# window turned each tag into a stopped queue: on 2026-10-08 (v0.17.0) four pull requests went
+# red on this one finding, and on 2026-10-14 every branch did between the v0.25.0 tag (13:15Z)
+# and its record's merge (14:17Z), none of them about releases.
+#
+# The proposal is read from git, never from the forge: the structure job checks out with
+# fetch-depth 0, which fetches every branch as refs/remotes/origin/*, so the record's branch is
+# already here and asking GitHub for open pull requests would make a structure gate depend on
+# the network and a token. A branch only counts when its tip carries the record itself, and
+# only while that tip is younger than the grace (MJ_RELEASE_RECORD_GRACE_HOURS, default 24): a
+# record branch left behind by a closed pull request must not excuse the tag for ever, so once
+# the window has passed the tag is missing again and every head says so. What still fails at
+# once: a tag with no record and no branch proposing one — the v0.7.0 state, where the publish
+# job could not open the pull request at all.
+RECORD_GRACE_HOURS="${MJ_RELEASE_RECORD_GRACE_HOURS:-24}"
+case "$RECORD_GRACE_HOURS" in ''|*[!0-9]*)
+  echo "release-check: MJ_RELEASE_RECORD_GRACE_HOURS must be a whole number of hours, not '$RECORD_GRACE_HOURS'" >&2
+  exit 12 ;;
+esac
+now_epoch="$(date -u +%s)"
+# prints "<ref> <age in hours>" for the freshest branch that proposes the tag's record
+proposed_record() {
+  git for-each-ref --sort=-committerdate --format='%(refname) %(committerdate:unix)' \
+    "refs/heads/release/record-$1" "refs/remotes/*/release/record-$1" 2>/dev/null |
+    while read -r ref when; do
+      git cat-file -e "$ref:.ai/repo/releases/$1.yaml" 2>/dev/null || continue
+      printf '%s %s\n' "${ref#refs/}" "$(( (now_epoch - when) / 3600 ))"
+      break
+    done
+}
+
 if ! command -v git >/dev/null 2>&1 || ! git rev-parse --git-dir >/dev/null 2>&1; then
   # Never quietly: a measurement that could not be taken is reported, because a gate that
   # skips is indistinguishable from a gate that passed — project.never-reported-is-not-green.
@@ -204,6 +239,7 @@ else
   else
     missing=0
     excused=0
+    pending=0
     for t in $tags; do
       if recorded_tag "$t"; then continue; fi
       if printf '%s\n' "$excused_list" | grep -qx "$t"; then
@@ -211,16 +247,35 @@ else
         excused=$((excused+1))
         continue
       fi
+      proposal="$(proposed_record "$t")"
+      if [ -n "$proposal" ]; then
+        pref="${proposal% *}"
+        page="${proposal##* }"
+        if [ "$page" -lt "$RECORD_GRACE_HOURS" ]; then
+          printf 'pending %s is published and its record is proposed on %s (%sh old, grace %sh) and not yet on this head; nothing for this head to do — the record lands with its own pull request\n' \
+            "$t" "$pref" "$page" "$RECORD_GRACE_HOURS"
+          pending=$((pending+1))
+          continue
+        fi
+        missing=$((missing+1))
+        fail "$t is published and its record has waited on $pref for ${page}h, longer than the ${RECORD_GRACE_HOURS}h grace, without landing; merge its pull request, or close it and write the record again with scripts/release-record"
+        continue
+      fi
       missing=$((missing+1))
-      fail "$t is published and the layer holds no release record for it (.ai/repo/releases/$t.yaml is missing); the site's releases/latest.json, the installation guide and every baseline are composed from the records, so this release is invisible to them and the advertised installer still installs the previous one — scripts/release-record writes it"
+      fail "$t is published and the layer holds no release record for it (.ai/repo/releases/$t.yaml is missing) and no release/record-$t branch proposes one; the site's releases/latest.json, the installation guide and every baseline are composed from the records, so this release is invisible to them and the advertised installer still installs the previous one — scripts/release-record writes it"
     done
-    # Said as it is: a tree carrying excused tags has not been proved clean, and a summary
-    # that read "every published tag has a record" over a baseline would be the quiet pass
-    # this check exists to remove.
-    if [ "$missing" = 0 ] && [ "$excused" = 0 ]; then
+    # Said as it is: a tree carrying excused or pending tags has not been proved clean, and a
+    # summary that read "every published tag has a record" over a baseline or a proposal would
+    # be the quiet pass this check exists to remove.
+    if [ "$missing" = 0 ] && [ "$excused" = 0 ] && [ "$pending" = 0 ]; then
       ok "every published tag this checkout carries has a release record"
     elif [ "$missing" = 0 ]; then
-      ok "every published tag has a release record except the $excused recorded as debt in $RECORD_BASELINE"
+      except=""
+      [ "$excused" = 0 ] || except="the $excused recorded as debt in $RECORD_BASELINE"
+      if [ "$pending" != 0 ]; then
+        except="${except:+$except and }the $pending whose record is proposed and not yet landed"
+      fi
+      ok "every published tag has a release record except $except"
     fi
     for e in $excused_list; do
       if recorded_tag "$e" || ! printf '%s\n' "$tags" | grep -qx "$e"; then
@@ -231,6 +286,10 @@ else
 fi
 
 if [ "$findings" -eq 0 ]; then
+  if [ "${pending:-0}" -gt 0 ]; then
+    printf 'release-check: the release is a projection — authored once, the tool prints it, no kept changelog, every published tag recorded or its record proposed (%s pending)\n' "$pending"
+    exit 0
+  fi
   printf 'release-check: the release is a projection — authored once, the tool prints it, no kept changelog, every published tag recorded\n'
   exit 0
 fi
