@@ -31519,6 +31519,8 @@
             "The command is a projection of the registry's capability: no board logic is written a second time for the command line",
             "With no server running it reports that no board could be asked and does not exit 0"
           ],
+          "completed_at": "2026-10-13T11:04:59Z",
+          "completed_event": "sha256:51c52e92d07852f493efb65d4924389e966ee4649be63441a88db77eefc2d392",
           "created_at": "2026-10-08",
           "evidence_required": [
             "cli_peers_lists_an_mcp_peer_case",
@@ -31536,11 +31538,15 @@
             "test/cases"
           ],
           "slug": "the-peer-board-can-be-read-from-the-command-line",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-13T09:56:20Z",
+          "started_event": "sha256:1403e0d64fd40b84f69925da613c4b2d24d6e35dba7cc276326b09710f758c0d",
+          "updated_at": "2026-10-13T11:04:59Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-13T11:04:40Z",
+          "verified_event": "sha256:8cdf5c9aecd81e5a2c1d09b36ef5963756d24e040d4ba69ff5244b6ee97b4115"
         }
       },
       {
@@ -41588,29 +41594,6 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.25.0"
-        }
-      },
-      {
-        "id": "majordomus://release-record/v0.26.0",
-        "kind": "release-record",
-        "label": "v0.26.0",
-        "summary": "v0.26.0",
-        "route": "/cockpit/objects/release-record/v0-26-0",
-        "source": ".ai/repo/releases/v0.26.0.yaml",
-        "facts": {
-          "channel": "stable",
-          "commit": "ff3829709616e638596315d6ca42be64b570b74f",
-          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.26.0",
-          "published_at": "2026-10-14T18:58:57Z",
-          "required_targets": [
-            "macos-aarch64",
-            "macos-x86_64",
-            "linux-x86_64-gnu",
-            "linux-x86_64-musl",
-            "linux-aarch64-gnu",
-            "linux-aarch64-musl"
-          ],
-          "tag": "v0.26.0"
         }
       },
       {
@@ -52926,6 +52909,13 @@
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "kind": "test",
+        "label": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "route": "/cockpit/objects/test/test-cases-2993-the-peer-board-is-read-from-the-command-line-sh",
+        "source": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -59925,6 +59915,11 @@
       {
         "source": "capability:peers.announce",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:peers.list",
+        "target": "projection:cli",
         "kind": "projects"
       },
       {
@@ -79158,11 +79153,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://release-record/v0.26.0",
-        "target": "kind:release-record",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -82789,6 +82779,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88185,7 +88180,7 @@
     ],
     "metadata": {
       "nodes": 2796,
-      "edges": 6129,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }

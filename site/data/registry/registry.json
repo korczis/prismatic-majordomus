@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "37f101a643f12d61ce1b442b81ccd1fcf2b0b62fa82520fc6c5cb2f03839e0c2",
+    "fingerprint": "794c3bf6ab49c41d276afd645c77cc20273f2fcf3729389e8b8cd5a636c7beab",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -24,7 +24,7 @@
       "mcp_tools": 190,
       "mcp_resources": 2235,
       "http_routes": 194,
-      "cli_commands": 107,
+      "cli_commands": 108,
       "modules": 91,
       "benchmark_required": 169,
       "benchmark_waived": 30,
@@ -55617,6 +55617,11 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/peers"
+          },
+          "cli": {
+            "path": [
+              "peers"
+            ]
           }
         },
         "availability": "runtime",
@@ -81589,7 +81594,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 25,
         "capability_ids": []
       },
       {
@@ -81760,7 +81765,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81850,7 +81855,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7b8e43156bdc6d6153bca5eaf226440af1a9dd090661e7baa471caf67d1725da",
+    "fingerprint": "dc9cdc364d46732c76ad6e8b757a6ab09d0c6bcbf2159ba23fabbdb0e9c81f07",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81898,13 +81903,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 26,
+      "release-record": 25,
       "rule": 179,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -87785,7 +87790,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 14184
+        "bytes": 14079
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -87839,7 +87844,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 66066
+        "bytes": 67033
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -87920,7 +87925,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134640
+        "bytes": 132127
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94230,7 +94235,7 @@
         "path": ".ai/repo/project/issues/I1997.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2517
+        "bytes": 4135
       },
       {
         "uri": "majordomus://issue/I1998",
@@ -96729,16 +96734,6 @@
         "identity": "v0.25.0",
         "title": "v0.25.0",
         "path": ".ai/repo/releases/v0.25.0.yaml",
-        "section": "releases",
-        "source_class": "release",
-        "bytes": 2442
-      },
-      {
-        "uri": "majordomus://release-record/v0.26.0",
-        "kind": "release-record",
-        "identity": "v0.26.0",
-        "title": "v0.26.0",
-        "path": ".ai/repo/releases/v0.26.0.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -102247,6 +102242,14 @@
         "bytes": 8281
       },
       {
+        "uri": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "kind": "test",
+        "identity": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "path": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "source_class": "case",
+        "bytes": 8036
+      },
+      {
         "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -105535,7 +105538,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 26
+      "objects": 25
     },
     {
       "name": "rule",
@@ -105601,7 +105604,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",
@@ -137448,6 +137451,139 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "peers"
+        ],
+        "route": "/docs/cli/peers/",
+        "executable": true,
+        "usage": "majordomus peers [OPTIONS]",
+        "about": "Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "checkouts",
+            "long": "checkouts",
+            "positional": false,
+            "help": "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and asks no other server",
+            "value_name": "CHECKOUTS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "repository",
+                "help": "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask"
+              },
+              {
+                "name": "this",
+                "help": "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one"
+              }
+            ],
+            "defaults": [
+              "repository"
+            ]
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "peers-no-board",
+            "title": "Who else is working here, and what it says when nobody can be asked",
+            "description": "The board of every checkout of the repository: each peer, the worktree it is attached to, whether it is still attached and the paths it claimed, from the same capability the MCP tool majordomus_peers projects. A board is a server's memory, so in a repository where no server answers for any checkout there is none to read: the command prints the checkouts it covered, says on stderr that no board could be asked, and exits 12 rather than reporting an empty board as if it had read one.",
+            "argv": [
+              "peers"
+            ],
+            "command": "majordomus peers",
+            "setup": [],
+            "expectation": "exits 12"
+          }
+        ],
+        "subcommands": []
       }
     ]
   },
