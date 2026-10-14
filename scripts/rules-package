@@ -2,19 +2,28 @@
 # rules-package — maintain the standard rule package the distribution ships.
 #
 #   scripts/rules-package check    every file under share/standard/majordomus/rules/ is listed
-#                                  in the manifest with its current hash (exit 10 otherwise)
-#   scripts/rules-package write    regenerate the manifest from the rule files, with the
-#                                  executable's version as source_revision
+#                                  in the manifest with its current hash, and source_revision
+#                                  is the release this tree produces (exit 10 otherwise)
+#   scripts/rules-package write    regenerate the manifest from the rule files, stamped with
+#                                  the release this tree produces as source_revision
 #
 # The manifest is what a repository's vendored copy is compared against, so it is written
 # here, by the maintainer of the package, and never by a command that runs in a managed
 # repository: the distribution is read-only wherever it is installed. A rule file edited
-# without rewriting the manifest fails `check`, which the test suite runs.
+# without rewriting the manifest fails `check`, which the test suite runs; scripts/derive
+# rewrites it, so a version bump followed by the derive restamps it.
+#
+# source_revision is the label an adopter reads in `rules vendor status` to tell one package
+# from another (I1986). It is the version authored in the crate manifest, asked of
+# scripts/release-version — the one shell reader of it — and not what bin/majordomus prints:
+# that is share/version.txt, a projection, and during a bump it still names the previous
+# release until the derive catches up — and nothing ran the writer at a release at all. The
+# tag v0.23.0 shipped a package labelled 0.6.0, and v0.24.1 and v0.25.0 one labelled 0.23.0,
+# so packages with different rules were indistinguishable to the adopter who vendored them.
 set -eu
 set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-# the executable's version, as the tool itself prints it: authored once in the crate
-# manifest and read by bin/majordomus from its projection, never parsed out of a file here
+# the executable's version, as the tool itself prints it: lib/common.sh reads MJ_VERSION
 MJ_VERSION="$(env -u MAJORDOMUS_SHARE "$ROOT/bin/majordomus" version)"; MJ_VERSION="${MJ_VERSION#majordomus }"
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
@@ -23,13 +32,27 @@ export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/rules.sh
 . "$ROOT/lib/rules.sh"
 PKG="$ROOT/share/standard/majordomus"
+# the release this tree produces: authored once, in the crate manifest. A tree that carries no
+# crate — a fixture built from the distribution, as case 11's is — has only the projection,
+# and that is what it is stamped with.
+if [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ]; then
+  RELEASE="$("$ROOT/scripts/release-version")" || {
+    printf 'rules-package: the version this tree declares could not be read (scripts/release-version)\n' >&2; exit 12; }
+else
+  RELEASE="$MJ_VERSION"
+fi
 case "${1:-}" in
   check)
     probs="$(mj_rules_manifest_check "$PKG" || true)"
+    stamped="$(sed -n 's/^source_revision: *//p' "$PKG/manifest.yaml" 2>/dev/null | head -n 1)"
+    if [ -n "$stamped" ] && [ "$stamped" != "$RELEASE" ]; then
+      probs="${probs:+$probs
+}source_revision is $stamped and this tree produces $RELEASE; an adopter vendoring this package would read the wrong release"
+    fi
     if [ -n "$probs" ]; then printf 'rules-package: %s\n' "$probs" >&2; printf 'rules-package: run scripts/rules-package write\n' >&2; exit 10; fi
     printf 'rules-package: manifest matches %s rule file(s) (%s)\n' "$(ls "$PKG"/rules/*.md | wc -l | tr -d ' ')" "$(mj_rules_manifest_rev "$PKG")" ;;
   write)
-    LC_ALL=C mj_rules_manifest_write "$PKG" "$MJ_VERSION"
+    LC_ALL=C mj_rules_manifest_write "$PKG" "$RELEASE"
     printf 'rules-package: wrote %s (%s)\n' "${PKG#"$ROOT"/}/manifest.yaml" "$(mj_rules_manifest_rev "$PKG")" ;;
   *) printf 'usage: scripts/rules-package check|write\n' >&2; exit 2 ;;
 esac

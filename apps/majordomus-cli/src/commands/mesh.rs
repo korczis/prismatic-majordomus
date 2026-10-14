@@ -85,6 +85,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             if let Some(limit) = a.limit {
                 pairs.push(format!("limit={limit}"));
             }
+            if a.newest {
+                pairs.push("newest=true".to_string());
+            }
             if !pairs.is_empty() {
                 target = format!("{target}?{}", pairs.join("&"));
             }

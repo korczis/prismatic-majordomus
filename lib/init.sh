@@ -74,7 +74,7 @@ H
     mj_personal_cover "$ai_rel/" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"
   fi
 
-  MJ_INIT_CREATED=""
+  MJ_INIT_CREATED="" MJ_INIT_SCOPE_NOTE=""
   # the protocol and the registry, then every tracked section
   mj_init_file "$skel/ai/README.md" "$MJ_AI_DIR/README.md"
   mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
@@ -85,9 +85,9 @@ H
   if [ "$personal" = 1 ] && [ "$seeds_policy" = 1 ]; then mj_init_personal_projections; fi
   # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
   # the section seeds the file and says the manifest must name it
-  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
+  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
   else
-    mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
+    mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
     printf 'note: %s names no scope section; add `scope: repo/scope.yaml` under sections: so that the file applies\n' "$(mj_rel "$MJ_AI_MANIFEST")" >&2
   fi
   mj_init_tree "$skel/profiles" "$MJ_PROFILES_DIR" '*.yaml'
@@ -159,6 +159,7 @@ H
   if [ -n "$MJ_INIT_CREATED" ]; then
     printf 'created%s\n' "$MJ_INIT_CREATED" | tr ' ' '\n' | sed '1!s/^/  /'
   else printf 'nothing to add; .ai/ already carries every file the skeleton seeds\n'; fi
+  [ -z "$MJ_INIT_SCOPE_NOTE" ] || printf '%s\n' "$MJ_INIT_SCOPE_NOTE"
   if [ "$personal" = 1 ]; then
     # The claim is checked where it is made: an init that says "personal" and changed what
     # the repository shows has not done what it said, and that is a failure, not a note.
@@ -300,6 +301,31 @@ mj_init_file() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
   MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")"
+}
+# Seed the scope from the skeleton, keeping a `# stack: <name> (<marker>)` ... `# end stack:
+# <name>` block only when <marker> is at the repository's root: an adopter's scope names
+# what its tree holds, not this repository's Elixir and Rust paths (I1989). What was found
+# is said in MJ_INIT_SCOPE_NOTE, which the caller prints. Never overwrites.
+mj_init_scope() {
+  local src="$1" dst="$2" name marker keep=' ' found='' known=''
+  [ -f "$src" ] || mj_die "$MJ_EX_INTERNAL" "skeleton file missing: $src"
+  [ -e "$dst" ] && return 0
+  while read -r name marker; do
+    marker="${marker#(}"; marker="${marker%)}"
+    known="$known${known:+, }$marker"
+    if [ -e "$MJ_ROOT/$marker" ]; then keep="$keep$name "; found="$found${found:+, }$name ($marker)"; fi
+  done < <(sed -n 's/^[[:space:]]*# stack: \([a-z0-9_-]*\) (\(.*\))[[:space:]]*$/\1 (\2)/p' "$src")
+  mkdir -p "$(dirname "$dst")"
+  awk -v keep="$keep" '
+    /^[ \t]*# stack: /     { skip = (index(keep, " " $3 " ") == 0); if (!skip) print; next }
+    /^[ \t]*# end stack: / { if (!skip) print; skip = 0; next }
+    !skip' "$src" > "$dst"
+  MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")"
+  if [ -n "$found" ]; then
+    MJ_INIT_SCOPE_NOTE="scope: seeded for the stack found at the root: $found; edit $(mj_rel "$dst") for what else the tree holds"
+  else
+    MJ_INIT_SCOPE_NOTE="scope: no stack recognised at the root (looked for ${known:-nothing}); seeded only the entries every repository shares; add your own to $(mj_rel "$dst")"
+  fi
 }
 # copy every matching file of a skeleton directory into place, one by one, never overwriting
 mj_init_tree() {

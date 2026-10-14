@@ -188,6 +188,15 @@
         "push_record_on_end": {
           "type": "boolean",
           "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many closed session records the sessions section holds before `doctor` and `watch` report it over its cap. The count is the section's own records; the ones `majordomus session archive` moved under its archive directory are not counted, and nothing is ever deleted to get under the cap."
+        },
+        "archive": {
+          "type": "boolean",
+          "description": "Whether `majordomus session archive` may move the oldest records beyond `retention_max_files` into the section's archive directory. Archiving happens only when that command is run; false makes it refuse and write nothing."
         }
       }
     },

@@ -216,6 +216,37 @@ pub fn run(
     refs: &References,
     loaded: &Loaded,
 ) -> Vec<ReasoningFinding> {
+    run_checks(root, catalogue, refs, loaded, CHECKS)
+}
+
+/// Run the named `checks` over the repository at `root`, in the order of [`CHECKS`]; a
+/// name that is not one of them is ignored. [`run`] is this with every check, and
+/// [`applicable`] says which a repository is held to.
+///
+/// ```
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+/// use majordomus_cli::reasoning::check::run_checks;
+/// use majordomus_cli::reasoning::store::Store;
+///
+/// let root = tempfile::tempdir().unwrap();
+/// std::fs::write(root.path().join("README.md"), "Consensus guarantees correctness.\n").unwrap();
+/// let catalogue = AdvisorCatalogue {
+///     forbidden_claims: vec!["consensus guarantees correctness".into()],
+///     ..Default::default()
+/// };
+/// let loaded = Store::at(root.path()).load();
+/// let refs = References::default();
+/// assert_eq!(run_checks(root.path(), &catalogue, &refs, &loaded, &["claims"]).len(), 1);
+/// assert!(run_checks(root.path(), &catalogue, &refs, &loaded, &["catalogue", "records"]).is_empty());
+/// ```
+pub fn run_checks(
+    root: &Path,
+    catalogue: &AdvisorCatalogue,
+    refs: &References,
+    loaded: &Loaded,
+    checks: &[&str],
+) -> Vec<ReasoningFinding> {
+    let on = |c: &str| checks.contains(&c);
     let mut out = Vec::new();
     let mut push = |check: &str, subject: String, message: String| {
         out.push(ReasoningFinding {
@@ -225,11 +256,13 @@ pub fn run(
         })
     };
 
-    for d in catalogue.diagnostics(refs) {
-        push("catalogue", "share/advisors.yaml".into(), d);
+    if on("catalogue") {
+        for d in catalogue.diagnostics(refs) {
+            push("catalogue", "share/advisors.yaml".into(), d);
+        }
     }
 
-    if root.join(ADAPTER_DIR).is_dir() {
+    if on("adapters") && root.join(ADAPTER_DIR).is_dir() {
         let mut adapters: Vec<&str> = catalogue
             .advisors
             .iter()
@@ -251,7 +284,7 @@ pub fn run(
     }
 
     let names = catalogue_names(catalogue);
-    for rel in INDEPENDENT_SOURCES {
+    for rel in INDEPENDENT_SOURCES.iter().filter(|_| on("coupling")) {
         for file in files_under(root, rel, &["rs", "mjs"]) {
             let Ok(text) = std::fs::read_to_string(&file) else {
                 continue;
@@ -272,8 +305,11 @@ pub fn run(
         .iter()
         .filter_map(|v| v.credential_env.as_deref())
         .collect();
-    let mut ci_files = files_under(root, ".github/workflows", &["yml", "yaml"]);
-    ci_files.extend(files_under(root, ".ai/repo/ci/gates.yaml", &["yaml"]));
+    let mut ci_files = Vec::new();
+    if on("ci") {
+        ci_files.extend(files_under(root, ".github/workflows", &["yml", "yaml"]));
+        ci_files.extend(files_under(root, ".ai/repo/ci/gates.yaml", &["yaml"]));
+    }
     for file in ci_files {
         let Ok(text) = std::fs::read_to_string(&file) else {
             continue;
@@ -304,10 +340,13 @@ pub fn run(
         phrases.push(format!("requires {t}"));
         phrases.push(format!("{t} is required"));
     }
-    let mut docs = files_under(root, "docs", &["md"]);
-    docs.extend(files_under(root, "site/content", &["md"]));
-    docs.extend(files_under(root, ".ai/repo", &["md"]));
-    docs.push(root.join("README.md"));
+    let mut docs = Vec::new();
+    if on("claims") {
+        docs.extend(files_under(root, "docs", &["md"]));
+        docs.extend(files_under(root, "site/content", &["md"]));
+        docs.extend(files_under(root, ".ai/repo", &["md"]));
+        docs.push(root.join("README.md"));
+    }
     for file in docs {
         let Ok(text) = std::fs::read_to_string(&file) else {
             continue;
@@ -327,14 +366,19 @@ pub fn run(
         }
     }
 
-    for u in &loaded.unreadable {
+    let (unreadable, records) = if on("records") {
+        (&loaded.unreadable[..], &loaded.records[..])
+    } else {
+        (&[][..], &[][..])
+    };
+    for u in unreadable {
         push(
             "records",
             u.clone(),
             "a reasoning record that does not parse".into(),
         );
     }
-    for r in &loaded.records {
+    for r in records {
         match &r.body {
             ReasoningBody::Consultation(c) => {
                 let known = catalogue.get(&c.advisor).is_some() || c.advisor.starts_with("peer:");
@@ -416,9 +460,81 @@ pub const CHECKS: &[&str] = &[
     "records",
 ];
 
+/// The rule whose executable half `ci` and `claims` are: what Majordomus's own CI and
+/// documents may say about advisors. A repository that does not declare it is an adopter,
+/// and an adopter's workflows and documents are its product, not its use of the
+/// reasoning layer (I1996).
+pub const REPOSITORY_RULE: &str = "project.advisors-are-optional";
+
+/// The checks that judge a repository's own workflows and documents rather than the
+/// reasoning layer it adopted; they apply only where [`REPOSITORY_RULE`] is declared.
+pub const REPOSITORY_CHECKS: &[&str] = &["ci", "claims"];
+
+/// The checks a repository declaring the rules `rule_ids` is held to, in [`CHECKS`] order:
+/// every check where [`REPOSITORY_RULE`] is among them, and only what an adopter adopted
+/// (its catalogue, adapters, coupling and records) where it is not.
+///
+/// ```
+/// use majordomus_cli::reasoning::check::{applicable, CHECKS};
+///
+/// assert_eq!(applicable(["project.advisors-are-optional"]), CHECKS);
+/// assert_eq!(
+///     applicable(["majordomus.some-other-rule"]),
+///     ["catalogue", "adapters", "coupling", "records"]
+/// );
+/// ```
+pub fn applicable<'a>(rule_ids: impl IntoIterator<Item = &'a str>) -> Vec<&'static str> {
+    let own = rule_ids.into_iter().any(|id| id == REPOSITORY_RULE);
+    CHECKS
+        .iter()
+        .copied()
+        .filter(|c| own || !REPOSITORY_CHECKS.contains(c))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_adopter_is_not_held_to_this_repositorys_ci_and_claims() {
+        assert_eq!(applicable(["project.advisors-are-optional", "x"]), CHECKS);
+        let adopter = applicable(std::iter::empty());
+        assert_eq!(adopter, ["catalogue", "adapters", "coupling", "records"]);
+
+        let root = tempfile::tempdir().unwrap();
+        let wf = root.path().join(".github/workflows");
+        std::fs::create_dir_all(&wf).unwrap();
+        std::fs::write(wf.join("ci.yml"), "env:\n  K: ${{ secrets.ACME_KEY }}\n").unwrap();
+        std::fs::write(root.path().join("README.md"), "This requires Alpha.\n").unwrap();
+        let catalogue: AdvisorCatalogue = crate::metadata::yaml::parse_into(
+            "version: 1\nadvisors:\n  - id: alpha\n    title: Alpha\n    transport: cli\n    adapter: alpha-cli\n    executable: alpha\n    capabilities: [code_review]\n",
+        )
+        .unwrap();
+        let refs = References {
+            providers: Vec::new(),
+            models: crate::metadata::yaml::parse_into(
+                "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    credential_env: ACME_KEY\nmodels: []\n",
+            )
+            .unwrap(),
+        };
+        let loaded = super::super::store::Store::at(root.path()).load();
+        // the catalogue of this fixture draws findings of its own; what is measured here is
+        // which families reach the repository's workflow and document
+        let families = |found: Vec<ReasoningFinding>| -> Vec<String> {
+            found
+                .into_iter()
+                .filter(|f| REPOSITORY_CHECKS.contains(&f.check.as_str()))
+                .map(|f| format!("{} {}", f.check, f.subject))
+                .collect()
+        };
+        assert_eq!(
+            families(run(root.path(), &catalogue, &refs, &loaded)),
+            ["ci .github/workflows/ci.yml", "claims README.md"]
+        );
+        let held = run_checks(root.path(), &catalogue, &refs, &loaded, &adopter);
+        assert_eq!(families(held), Vec::<String>::new());
+    }
 
     #[test]
     fn a_literal_is_a_name_and_a_word_inside_prose_is_not() {

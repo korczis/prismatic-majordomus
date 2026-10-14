@@ -67,6 +67,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
+pub mod observatory;
 pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
@@ -230,7 +231,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         integration,
         convergence,
         trace,
-        product
+        product,
+        observatory
     ]
 }
 

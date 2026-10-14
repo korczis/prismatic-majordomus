@@ -4,7 +4,7 @@ description = "Pull-request integration: every open pull request classified agai
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 84
+weight = 85
 [extra]
 route = "/docs/cli/prs/"
 command = "majordomus prs"

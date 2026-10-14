@@ -1,7 +1,7 @@
 +++
 title = "No new nouns"
 description = "No new nouns"
-weight = 127
+weight = 129
 [extra]
 kind = "rule"
 slug = "project-no-new-nouns-1"

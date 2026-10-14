@@ -13,11 +13,12 @@ source = ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md"
 
 ## Rationale
 
-Between 2026-09-05 and 2026-09-11 this repository wrote no checkpoint and no handover. Every
-health check passed throughout. They passed honestly: `retention` counted the files and found
-them under their caps, `layout` found the directories present, and `resolver` found a record
-and reported its divergence label as `advanced`. A store that nothing writes to is perfectly
-reachable, perfectly well-formed and perfectly under its retention cap.
+Between 2026-09-05 and 2026-09-11 the Majordomus repository, where this rule was written, wrote
+no checkpoint and no handover. Every health check passed throughout. They passed honestly:
+`retention` counted the files and found them under their caps, `layout` found the directories
+present, and `resolver` found a record and reported its divergence label as `advanced`. A store
+that nothing writes to is perfectly reachable, perfectly well-formed and perfectly under its
+retention cap.
 
 Reachability is the wrong question. The question is whether the thing is still running, and
 it can only be answered by comparing two facts that no single check owned: that episodes were
