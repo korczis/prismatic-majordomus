@@ -160,7 +160,10 @@ pub struct GateModel {
     pub version: u32,
     /// Every gate, in declaration order.
     pub gates: Vec<GateDecl>,
-    /// Every path class, in declaration order.
+    /// Every path class, in declaration order. Absent is empty: a model of gates and no
+    /// class is a model, whose plans select the `always` gates and in which every changed
+    /// path is unclassified.
+    #[serde(default)]
     pub classes: Vec<GateClass>,
 }
 
@@ -626,6 +629,37 @@ classes:
         assert_eq!(p.mode, GatePlanMode::Affected, "the class covers the path");
         assert!(p.selects("lint"));
         assert!(!p.selects("build") && !p.selects("site"));
+    }
+
+    /// A model that declares gates and no `classes` at all — the first model an adopting
+    /// repository writes. It used to be refused as `missing field `classes``, and the
+    /// report then counted no gates. The absence is the empty list, and the rules above say
+    /// the rest without a rule of their own: nothing changed plans what always runs, and a
+    /// changed path is in no class, so it is unclassified and escalates as any such path does.
+    #[test]
+    fn a_model_without_classes_is_a_model_that_plans_what_always_runs() {
+        let text = MODEL.split("classes:").next().expect("the gates half");
+        assert!(!text.contains("classes"), "the fixture declares no classes");
+        let m: GateModel = yaml::parse_into(text).expect("a model without classes parses");
+        assert_eq!(m.gates.len(), 6, "every gate is counted");
+        assert!(m.classes.is_empty());
+
+        // no class is not every gate: an empty change plans the always gate and nothing else
+        let p = plan(&m, &[], false);
+        assert_eq!(p.mode, GatePlanMode::Affected);
+        assert_eq!(p.selected.keys().collect::<Vec<_>>(), ["lint"]);
+        assert!(p.excluded.contains_key("build"), "and says why the rest is out");
+
+        // a changed path falls in no class: unclassified, named, escalated like any other
+        let p = plan(&m, &["apps/x.rs".into()], false);
+        assert_eq!(p.unclassified, ["apps/x.rs"]);
+        assert!(p.classes.is_empty());
+        assert_eq!(p.mode, GatePlanMode::Full);
+        assert!(p.reason.contains("in no class of the model: apps/x.rs"));
+
+        // and a gate no class names has no path that can invalidate its evidence
+        assert_eq!(m.inputs_of("lint"), vec!["*".to_string()]);
+        assert!(m.inputs_of("build").is_empty());
     }
 
     #[test]
