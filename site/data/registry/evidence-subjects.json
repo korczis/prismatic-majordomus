@@ -709,6 +709,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:observatory.capture",
+      "path": "/evidence/capabilities/observatory-capture/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.replay",
+      "path": "/evidence/capabilities/observatory-replay/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:pack.plan",
       "path": "/evidence/capabilities/pack-plan/"
     },
@@ -5297,6 +5307,26 @@
       "kind": "capability",
       "id": "obligations.vocabulary",
       "page": "/evidence/capabilities/obligations-vocabulary/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.capture": {
+      "kind": "capability",
+      "id": "observatory.capture",
+      "page": "/evidence/capabilities/observatory-capture/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.replay": {
+      "kind": "capability",
+      "id": "observatory.replay",
+      "page": "/evidence/capabilities/observatory-replay/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -20228,6 +20258,30 @@
       "programs": [],
       "members": [
         "capability:obligations.vocabulary"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_capture": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_capture",
+      "alias_of": "capability:observatory.capture",
+      "programs": [],
+      "members": [
+        "capability:observatory.capture"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_replay": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_replay",
+      "alias_of": "capability:observatory.replay",
+      "programs": [],
+      "members": [
+        "capability:observatory.replay"
       ],
       "routes": [],
       "mechanisms": [],

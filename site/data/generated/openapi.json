@@ -130,6 +130,8 @@
     "op-objects-verify": "docs/api/objects/",
     "op-obligations-closure": "docs/api/obligations/",
     "op-obligations-vocabulary": "docs/api/obligations/",
+    "op-observatory-capture": "docs/api/observatory/",
+    "op-observatory-replay": "docs/api/observatory/",
     "op-pack-plan": "docs/api/pack/",
     "op-pack-verify": "docs/api/pack/",
     "op-peers-announce": "docs/api/peers/",
@@ -761,6 +763,8 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservatoryRecording": "docs/api/observatory/",
+    "schema-ObservatoryReplay": "docs/api/observatory/",
     "schema-ObservedClassification": "docs/api/integration/",
     "schema-ObservedDeployment": "docs/api/deploy/",
     "schema-ObservedDeployments": "docs/api/deploy/",
@@ -893,6 +897,8 @@
     "schema-RecordInput": "docs/api/continuity/",
     "schema-RecordView": "docs/api/continuity/",
     "schema-RecordedSpelling": "docs/api/session-domain/",
+    "schema-RecordingManifest": "docs/api/observatory/",
+    "schema-RecordingWindow": "docs/api/observatory/",
     "schema-Records": "docs/api/continuity/",
     "schema-RecoverOrphansInput": "docs/api/recover/",
     "schema-RecoverOrphansResult": "docs/api/recover/",
@@ -1187,6 +1193,7 @@
     "tag-monitor": "docs/api/monitor/",
     "tag-objects": "docs/api/objects/",
     "tag-obligations": "docs/api/obligations/",
+    "tag-observatory": "docs/api/observatory/",
     "tag-pack": "docs/api/pack/",
     "tag-peers": "docs/api/peers/",
     "tag-perf": "docs/api/perf/",
@@ -1210,9 +1217,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 191,
-    "schemas": 960,
-    "tags": 56
+    "operations": 193,
+    "schemas": 964,
+    "tags": 57
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1433,6 +1440,8 @@
     "objects.verify": "objects",
     "obligations.closure": "obligations",
     "obligations.vocabulary": "obligations",
+    "observatory.capture": "observatory",
+    "observatory.replay": "observatory",
     "pack.plan": "pack",
     "pack.verify": "pack",
     "peers.announce": "peers",
@@ -2068,6 +2077,8 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservatoryRecording": "observatory",
+    "ObservatoryReplay": "observatory",
     "ObservedClassification": "integration",
     "ObservedDeployment": "deploy",
     "ObservedDeployments": "deploy",
@@ -2200,6 +2211,8 @@
     "RecordInput": "continuity",
     "RecordView": "continuity",
     "RecordedSpelling": "session-domain",
+    "RecordingManifest": "observatory",
+    "RecordingWindow": "observatory",
     "Records": "continuity",
     "RecoverOrphansInput": "recover",
     "RecoverOrphansResult": "recover",
@@ -18952,6 +18965,8 @@
         "objects.verify",
         "obligations.vocabulary",
         "obligations.closure",
+        "observatory.capture",
+        "observatory.replay",
         "pack.plan",
         "pack.verify",
         "peers.list",
@@ -34241,6 +34256,98 @@
       "variants": []
     },
     {
+      "description": "The mesh scenes of one process at one moment, fit for publication.",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryRecording",
+      "properties": [
+        {
+          "description": "`RECORDING_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the scenes were read.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the recording process stood at, short; absent when it could not say.",
+          "name": "revision",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty.",
+          "name": "scenes",
+          "refs": [],
+          "required": true,
+          "type": "object"
+        },
+        {
+          "description": "What the recording is a record of, and what it leaves out.",
+          "name": "manifest",
+          "refs": [
+            "RecordingManifest"
+          ],
+          "required": true,
+          "type": "RecordingManifest"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.capture"
+      ],
+      "used_by_schemas": [
+        "ObservatoryReplay"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The recording the repository carries, or that it carries none.",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "ObservatoryReplay",
+      "properties": [
+        {
+          "description": "Whether the repository carries a recording.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The file it is read from.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The recording.",
+          "name": "recording",
+          "refs": [
+            "ObservatoryRecording"
+          ],
+          "required": false,
+          "type": "ObservatoryRecording | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "observatory.replay"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One open pull request as the cycle classified it.",
       "home": "integration",
       "is_enum": false,
@@ -42186,6 +42293,94 @@
       "used_by": [],
       "used_by_schemas": [
         "IdentityFacet"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "RecordingManifest",
+      "properties": [
+        {
+          "description": "The capabilities whose answers the recorded scenes were projected from.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none.",
+          "name": "window",
+          "refs": [
+            "RecordingWindow"
+          ],
+          "required": false,
+          "type": "RecordingWindow | null"
+        },
+        {
+          "description": "Every kind of thing removed before publication, and why.",
+          "name": "removed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObservatoryRecording"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The events a recording holds, from first to last.",
+      "home": "observatory",
+      "is_enum": false,
+      "name": "RecordingWindow",
+      "properties": [
+        {
+          "description": "How many events.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The earliest event's time, in seconds since the epoch.",
+          "name": "from_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The latest event's time, in seconds since the epoch.",
+          "name": "to_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The smallest logical clock.",
+          "name": "from_lamport",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The largest logical clock.",
+          "name": "to_lamport",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RecordingManifest"
       ],
       "values": [],
       "variants": []
@@ -65219,6 +65414,121 @@
         }
       ],
       "slug": "obligations"
+    },
+    {
+      "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
+      "name": "observatory",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/capture\"",
+          "description": "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it.",
+          "home": "observatory",
+          "id": "observatory.capture",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_capture",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/observatory/capture",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory capture: the result.",
+              "schema": "ObservatoryRecording",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryRecording",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory capture"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/observatory/replay\"",
+          "description": "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error.",
+          "home": "observatory",
+          "id": "observatory.replay",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_observatory_replay",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/observatory/replay",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::observatory",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Observatory replay: the result.",
+              "schema": "ObservatoryReplay",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObservatoryReplay",
+          "stability": "behaviorally_verified",
+          "summary": "Observatory replay"
+        }
+      ],
+      "slug": "observatory"
     },
     {
       "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds.",

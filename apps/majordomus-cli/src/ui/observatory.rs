@@ -58,11 +58,25 @@ const VERSION: Source = Source::of("release.version");
 const HEALTH: Source = Source::of("health.report");
 const ECONOMICS: Source = Source::of("economics.runs");
 const REPOSITORY: Source = Source::of("repository.info");
+const REPLAY: Source = Source::of("observatory.replay");
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
-    PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY,
+    PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY, REPLAY,
 ];
+
+/// Where a scene's model came from when it is a replay: the recording the repository
+/// carries, and when that was recorded.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ReplayStanding {
+    /// When the recorded process read the scene.
+    pub recorded_at: String,
+    /// The commit that process stood at, when it said.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
+    /// The capabilities the recording names as read, from its manifest.
+    pub sources: Vec<String>,
+}
 
 /// How many marks one scene carries at most: a wall display is read from metres away, and
 /// a projection is bounded whatever the repository holds.
@@ -215,6 +229,10 @@ pub struct SceneProjection {
     pub reason: Option<String>,
     /// What the scene draws; `null` when it is unavailable.
     pub model: Value,
+    /// Present when the model is the repository's recording and not this process's reading:
+    /// a scene of the mesh, drawn where no mesh runs, and labelled a replay.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replay: Option<ReplayStanding>,
 }
 
 /// The whole projection: what the page carries and the script draws.
@@ -266,13 +284,23 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
     let scenes = SCENES
         .iter()
         .map(|scene| {
-            let (model, reason) = match unanswered(scene, answers) {
+            let (mut model, mut reason) = match unanswered(scene, answers) {
                 Some(reason) => (None, Some(reason)),
                 None => match model(scene.id, answers, &sources) {
                     Ok(model) => (Some(model), None),
                     Err(reason) => (None, Some(reason)),
                 },
             };
+            // a scene of the mesh in a process that runs none may draw the recording the
+            // repository carries, as a replay; a source that failed is not "no mesh here"
+            let mut replay = None;
+            if model.is_none() && no_mesh_here(scene, answers) {
+                if let Some((recorded, standing)) = recorded(scene.id, answers) {
+                    model = Some(recorded);
+                    reason = None;
+                    replay = Some(standing);
+                }
+            }
             SceneProjection {
                 id: scene.id,
                 label: scene.label,
@@ -284,6 +312,7 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
                 available: model.is_some(),
                 reason,
                 model: model.unwrap_or(Value::Null),
+                replay,
             }
         })
         .collect();
@@ -338,6 +367,40 @@ fn word(value: &Value, key: &str) -> String {
 }
 
 /// A source that says it is not running here: its own reason, or the plain fact.
+/// Whether every source the scene requires answered, and one of them answered that no mesh
+/// runs in this process: the one case a recording may stand in for.
+fn no_mesh_here(scene: &Scene, answers: &Answers) -> bool {
+    crate::capability::builtin::observatory::RECORDED.contains(&scene.id)
+        && scene.requires.iter().all(|s| {
+            answers.get(s).is_some_and(|a| {
+                a.value
+                    .as_ref()
+                    .is_ok_and(|v| v.get("active") == Some(&Value::Bool(false)))
+            })
+        })
+}
+
+/// The repository's recording of one scene, with when it was recorded.
+fn recorded(id: &str, answers: &Answers) -> Option<(Value, ReplayStanding)> {
+    let replay = answers.get(&REPLAY)?.value.as_ref().ok()?;
+    let recording = replay.get("recording")?;
+    let model = recording.get("scenes")?.get(id)?.clone();
+    let standing = ReplayStanding {
+        recorded_at: recording.get("recorded_at")?.as_str()?.to_string(),
+        revision: recording
+            .get("revision")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        sources: recording
+            .pointer("/manifest/sources")?
+            .as_array()?
+            .iter()
+            .filter_map(|v| v.as_str().map(str::to_string))
+            .collect(),
+    };
+    Some((model, standing))
+}
+
 fn inactive(value: &Value, capability: &str) -> Option<String> {
     (value.get("active").and_then(Value::as_bool) != Some(true)).then(|| {
         match value.get("reason").and_then(Value::as_str) {
@@ -764,6 +827,43 @@ mod tests {
             (failed.state, failed.reason.as_deref()),
             ("failed", Some("refused"))
         );
+    }
+
+    /// Where no mesh runs, a scene of the mesh draws the repository's recording and says it
+    /// is a replay; where the source failed, or a mesh runs, the recording is not used.
+    #[test]
+    fn a_recording_stands_in_only_where_no_mesh_runs_and_says_so() {
+        let quiet =
+            serde_json::json!({ "active": false, "reason": "no shared server", "machines": [] });
+        let recording = serde_json::json!({ "present": true, "path": "x", "recording": {
+            "schema": "observatory-recording/v1", "recorded_at": "2026-10-14T05:00:00Z", "revision": "abc",
+            "scenes": { "mesh": { "machines": [{ "id": "m1", "label": "machine 1", "runtimes": [] }], "known": 1, "refused": 0 } },
+            "manifest": { "sources": ["mesh.peers"], "removed": ["identities"] },
+        }});
+        let p = project_from(
+            &all(&[(PEERS, Ok(quiet.clone())), (REPLAY, Ok(recording.clone()))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        let mesh = scene(&p, "mesh");
+        assert!(mesh.available && mesh.reason.is_none());
+        assert_eq!(mesh.model["machines"][0]["label"], "machine 1");
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.recorded_at.as_str()),
+            Some("2026-10-14T05:00:00Z")
+        );
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.sources.clone()),
+            Some(vec!["mesh.peers".to_string()])
+        );
+        // a scene the recording does not carry stays unavailable, with its source's reason
+        assert!(!scene(&p, "activity").available && scene(&p, "activity").replay.is_none());
+        // a source that failed is not "no mesh here"
+        let failed = project_from(
+            &all(&[(PEERS, Err("refused".into())), (REPLAY, Ok(recording))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        assert!(!scene(&failed, "mesh").available);
+        assert!(scene(&failed, "mesh").replay.is_none());
     }
 
     /// What a source answered is what the scene draws: machines with their runtimes'

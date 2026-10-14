@@ -45,6 +45,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
+| `observatory` | Observatory | behaviorally_verified | 2 | [`modules/observatory.md`](modules/observatory.md) |
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
@@ -203,6 +204,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `objects.verify` | `objects` | query | behaviorally_verified | `majordomus_verify_objects` | — | `GET /api/v1/objects/verify` | — | — | required |
 | `obligations.closure` | `obligations` | query | behaviorally_verified | `majordomus_obligation_closure` | `majordomus://obligations/closure` | `GET /api/v1/obligations/closure` | — | process, 2 entries, 2s | required |
 | `obligations.vocabulary` | `obligations` | query | behaviorally_verified | `majordomus_obligations` | `majordomus://obligations` | `GET /api/v1/obligations` | — | process, 2 entries | required |
+| `observatory.capture` | `observatory` | query | behaviorally_verified | `majordomus_observatory_capture` | — | `GET /api/v1/observatory/capture` | — | — | required |
+| `observatory.replay` | `observatory` | query | behaviorally_verified | `majordomus_observatory_replay` | — | `GET /api/v1/observatory/replay` | — | — | required |
 | `pack.plan` | `pack` | query | behaviorally_verified | `majordomus_pack_plan` | — | `GET /api/v1/pack/plan` | `majordomus pack plan` | — | required |
 | `pack.verify` | `pack` | query | behaviorally_verified | `majordomus_pack_verify` | — | `GET /api/v1/pack/verify` | `majordomus pack verify` | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |

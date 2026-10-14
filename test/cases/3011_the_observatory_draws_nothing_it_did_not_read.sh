@@ -17,6 +17,8 @@
 #   without script    one row per scene, with its state in words
 #   the snapshot      holds the page and the script it loads
 #   every name        the two names the server redirects are pages of the snapshot that lead on
+#   a recording       where no mesh runs, a mesh scene replays the recording the repository
+#                     carries and says so; a broken recording is a failed source, never drawn
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
@@ -145,3 +147,37 @@ for pair in "screensaver kiosk" "obsrvatory observatory"; do
   jq -e --arg n "/ui/$old" --arg f "$old/index.html" '.redirects[$n] == $f' "$S/snapshot.json" >/dev/null \
     || { echo "    snapshot.json does not record the page for /ui/$old"; exit 1; }
 done
+
+# ---------------------------------------------------------------- a recording
+# Where no mesh runs, a scene of the mesh draws the recording the repository carries, says it
+# is a replay and when it was recorded, and a scene the recording does not carry stays
+# unavailable. The recording here is a test fixture; a repository's real one is captured by
+# observatory.capture from a server that runs the mesh.
+mkdir -p .ai/repo/observatory
+cat > .ai/repo/observatory/recording.json <<'JSON'
+{"schema": "observatory-recording/v1", "recorded_at": "2026-10-14T05:00:00Z", "revision": "abc123",
+ "scenes": {"mesh": {"known": 1, "refused": 0,
+   "machines": [{"id": "m1", "label": "machine 1", "local": true,
+                 "runtimes": [{"id": "m1-r1", "liveness": "live", "this": true, "sessions": 1}]}]}},
+ "manifest": {"sources": ["mesh.peers"], "removed": ["identities, replaced by ordinals"]}}
+JSON
+"$RB" web report ui-snapshot --limit 40 >/dev/null 2> err.txt \
+  || { echo "    the snapshot with a recording was not written:"; tail -5 err.txt | sed 's/^/    | /'; exit 1; }
+projection "$SP" rec.json || exit 1
+jq -e '.scenes[] | select(.id == "mesh") | .available and .model.machines[0].label == "machine 1"
+    and .replay.recorded_at == "2026-10-14T05:00:00Z" and .replay.revision == "abc123"
+    and .replay.sources == ["mesh.peers"]' rec.json >/dev/null \
+  || { echo "    the mesh scene does not replay the recording, labelled with when it was recorded:"; jq -c '.scenes[] | select(.id == "mesh")' rec.json; exit 1; }
+for id in activity coop; do
+  jq -e --arg id "$id" '.scenes[] | select(.id == $id) | (.available | not) and (.replay == null)' rec.json >/dev/null \
+    || { echo "    scene $id is drawn although the recording does not carry it"; exit 1; }
+done
+jq -e '[.scenes[] | select(.id != "mesh") | .replay] | all(. == null)' rec.json >/dev/null \
+  || { echo "    a scene other than the recorded one says it is a replay"; exit 1; }
+# a file that is not a recording is an error the page states, never a scene drawn from it
+printf 'not a recording\n' > .ai/repo/observatory/recording.json
+"$RB" web report ui-snapshot --limit 40 >/dev/null 2> err.txt || { echo "    the snapshot failed on a broken recording"; exit 1; }
+projection "$SP" broken.json || exit 1
+jq -e '(.sources[] | select(.capability == "observatory.replay") | .state == "failed" and (.reason | length > 0))
+    and (.scenes[] | select(.id == "mesh") | .available | not)' broken.json >/dev/null \
+  || { echo "    a broken recording was not reported as a failed source, or was drawn"; jq -c '.sources[] | select(.capability == "observatory.replay")' broken.json; exit 1; }

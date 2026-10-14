@@ -359,9 +359,20 @@ the link to its rows.
 A reader's choice of a scene holds for five minutes, then the rotation resumes. Nothing on the
 screen starts work or writes a record.
 
-On the public site the process that takes the snapshot runs no mesh, so `mesh`, `activity` and
-`coop` are unavailable there and say so, and `tokens` is unavailable while no run is recorded.
-What that leaves open is in [What it does not do yet](#what-it-does-not-do-yet).
+On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
+and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
+read by `observatory.replay`), and the status says `REPLAY` with the time it was recorded and
+`not live`. A scene the recording does not carry is unavailable and says why; a recording that
+cannot be read is a failed source, never a scene. `tokens` is unavailable while no run is
+recorded.
+
+The recording is the answer of `observatory.capture` on a server that runs the mesh, saved as
+it came and committed. It names nothing by its identity: machines are `machine 1`, `machine 2`
+in the order the mesh listed them, runtimes and sessions are ordinals, and an event keeps its
+kind, its logical clock and its time. Its manifest names the capabilities it was read from,
+the window of events it holds (first and last time and logical clock) and what was removed
+and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
+time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
 
 ## Without JavaScript
 
@@ -502,9 +513,8 @@ probe refuses a published first screen with an undecided figure, and
   forge observation (`integration.timings`); there is no history of runs yet, so no trend is
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
-- The Observatory draws what the process serving it can read. On the public site that leaves
-  the three scenes of the mesh unavailable; a replay of genuinely recorded events, labelled as
-  a replay, is I2678. It learns of a change by asking for its page again, not from a pushed
+- The Observatory's replay on the public site is as old as the last capture that was
+  committed; nothing captures one on a schedule. It learns of a change by asking for its page again, not from a pushed
   stream with a cursor (I2679). Its screenshots at 1080p and 4K, its measured frame rates and
   its soak as a kiosk are I2680; until then no figure about its performance is stated.
 {% endraw %}

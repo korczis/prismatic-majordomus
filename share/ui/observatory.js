@@ -108,9 +108,10 @@
           c.fill();
           c.globalAlpha = 1;
         });
-        label(c, box, `${machine.label}${local ? ' · this machine' : ''}`, x, y + r + box.u * 2.6, 0.62);
+        label(c, box, `${machine.label}${local ? (m.replayed ? ' · where it was recorded' : ' · this machine') : ''}`, x, y + r + box.u * 2.6, 0.62);
       });
-      return `${m.known} machine(s) · ${live} of ${runtimes} runtime(s) live · ${m.refused} refused link(s)`;
+      const tense = m.replayed ? 'were live when recorded' : 'live';
+      return `${m.known} machine(s) · ${live} of ${runtimes} runtime(s) ${tense} · ${m.refused} refused link(s)`;
     },
 
     activity(c, box, m, t, moving, born) {
@@ -588,7 +589,9 @@
       c.save();
       c.globalAlpha = still ? 1 : fade;
       if (scene.available && draw[scene.id]) {
-        line = draw[scene.id](c, box, scene.model, t, moving, born);
+        // a replayed model says so to the scene that draws it, and its marks are not news
+        const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
+        line = draw[scene.id](c, box, model, t, moving, scene.replay ? new Map() : born);
       } else {
         label(c, box, 'UNAVAILABLE', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, scene.reason || 'this display has no renderer for the scene', box.cx, box.cy + u * 1.2, 0.7);
@@ -598,11 +601,14 @@
 
       // the words: set only when they change
       const age = Date.now() - readAt;
-      const word = snapshot ? 'SNAPSHOT' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // a replayed scene is a replay whatever the page is: it shows when it was recorded
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       const when = String(data.observed_at).replace('T', ' ');
+      const recordedAt = scene.replay ? String(scene.replay.recorded_at).replace('T', ' ') : '';
       const text = [
         word,
-        snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
+        scene.replay ? `recorded ${recordedAt}${scene.replay.revision ? ` at ${scene.replay.revision}` : ''} · not live`
+          : snapshot ? `read once at ${data.revision || 'an unknown commit'} · ${when}` : `read ${when}${word === 'STALE' ? ` · ${Math.round(age / 1000)} s ago, the server is not answering` : ''}`,
         `${String(current + 1).padStart(2, '0')} / ${String(data.scenes.length).padStart(2, '0')}  ${scene.label.toUpperCase()}`,
         line,
         auto && !held ? 'auto' : 'held',
