@@ -470,8 +470,8 @@ pub fn local_half(root: &Path) -> String {
 /// asks through here, so that `server.status` and the `server` check of `health.report`
 /// cannot drift into two answers.
 ///
-/// Costs one small file read, and one HTTP round trip bounded by
-/// [`crate::lease::PROBE_TIMEOUT`] when the lease names an address. Nothing is cached: the
+/// Costs one small file read, and one HTTP round trip bounded by the declared probe timeout
+/// ([`crate::lease::timings`]) when the lease names an address. Nothing is cached: the
 /// file is written by other processes.
 ///
 /// ```
@@ -511,8 +511,9 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
         .as_ref()?
         .path
         .clone();
-    let reply =
-        crate::mcp::bridge::request(url, "GET", &path, &[], None, lease::PROBE_TIMEOUT).ok()?;
+    // the probe timeout the policy declares, as the election reads it (I2129)
+    let timeout = lease::timings().probe_timeout;
+    let reply = crate::mcp::bridge::request(url, "GET", &path, &[], None, timeout).ok()?;
     if reply.status != 200 {
         return None;
     }

@@ -4,7 +4,7 @@ description = "The operational moments this tool answers: the catalogue, one mom
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 30
+weight = 31
 [extra]
 route = "/docs/cli/why/"
 command = "majordomus why"

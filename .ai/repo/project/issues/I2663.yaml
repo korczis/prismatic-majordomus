@@ -1,0 +1,35 @@
+id: I2663
+milestone: M004
+title: "The published UI is not read from nothing on every deployment"
+slug: the-ui-snapshot-is-not-read-from-nothing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop paying a quarter of an hour per deployment for a snapshot whose inputs did not change."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13 in the ui-snapshot job of two pages runs: reading the UI once took 749 and 974 s, the Cockpit 127 and 164 s, building the executable 106 and 126 s, the checkout 85 and 103 s. On the first run after a version bump the setup-rust step alone was still running after eleven minutes; whether that is a cache keyed by a file the bump changes is not yet verified. A second landing's run waits for the whole of the first."
+desired_state: "The snapshot is produced from a key over what it reads; a deployment whose key matches reuses the previous snapshot and says so, and a full read is bounded by the UI's own budgets. The executable the job needs comes from a cache a version line does not invalidate, or from the build another job of the same run already made. What each step cost is recorded per run."
+scope:
+  - ".github/workflows/pages.yml"
+  - ".github/actions/setup-rust"
+  - "apps/majordomus-cli/src/web/report"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - ".ai/repo/project/issues/I2663.yaml"
+non_scope:
+  - "What the screens show"
+  - "The latency budget of a served screen, which is I2489"
+depends_on:
+  - I2489
+acceptance_criteria:
+  - "A deployment that changed nothing the UI reads reuses the snapshot and its page states the commit it was read at"
+  - "A full snapshot of this repository is within a declared number of seconds on a hosted runner, and the run fails its budget otherwise"
+  - "The first deployment after a version bump builds the executable no slower than the one before it, with the cause of today's eleven minutes named"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2983_the_published_ui_is_the_trunks"
+evidence_required:
+  - "snapshot_seconds_before_and_after"
+  - "setup_rust_after_a_bump_explained"
+created_at: 2026-10-13
+updated_at: 2026-10-13

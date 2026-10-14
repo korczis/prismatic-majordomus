@@ -45,4 +45,36 @@ evidence_required:
   - "no_screen_waits_case_1096"
   - "ui_latency_before_after"
 created_at: 2026-10-12
-updated_at: 2026-10-12
+updated_at: 2026-10-13T12:47:30Z
+started_at: 2026-10-13T12:45:05Z
+started_event: sha256:d44362e179b066d87d723c88b76e490bb5ccfd60485a9613729796404af12293
+verified_at: 2026-10-13T12:45:29Z
+verified_event: sha256:922c5dee82fd3592d95d4d05e0e97a167d923dc7832078b0f8dab7ca9bfeae50
+completed_at: 2026-10-13T12:47:30Z
+completed_event: sha256:d227f7fbb5c4d7115d02ac791744512ab168677190d6bc39983c5ab0f76eec7c
+evidence:
+  - covers: readings_executor_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+    result: "test result: ok. 17 passed; 0 failed, on a tree equal to master 3442ce68c5; six of them are the readings tests: pending, at once, stale on a move, failure and panic, bounded workers and priority"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:46:12Z
+  - covers: ui_standing_unit_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::source && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+    result: "ui::source 8 passed, ui::view 17 passed, 0 failed, on a tree equal to master 3442ce68c5: a source line says a reading's age and whether it predates the change"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:46:37Z
+  - covers: no_screen_waits_case_1096
+    type: test
+    command: "bash test/run.sh 1096_no_screen_waits_for_a_source"
+    result: "ok 1096_no_screen_waits_for_a_source, on a tree equal to master 3442ce68c5: no file under src/ui calls execute, and a served screen after a commit says it is catching up and then shows the new commit"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:46:54Z
+  - covers: ui_latency_before_after
+    type: manual
+    command: "curl timings against release builds serving one clone, base c66f49e406 against the change (pull request 1041)"
+    result: "warm, every screen: 0.12-0.92 s before, 2-12 ms after; first request after a commit: roadmap, evidence and governance 1.2-4.2 s before, 55-140 ms after on a Linux host; /ui 1.2-1.55 s before, 3-162 ms after on a Mac at load 21, slowest single sample 330 ms. Measured on 2026-10-12, not repeated on 3442ce68c5; the Cockpit still computes on the request and is not part of this"
+    artifact: "https://github.com/korczis/prismatic-majordomus/pull/1041"
+    commit: 3442ce68c56cb360117df24da8268006aa9814c7
+    recorded_at: 2026-10-13T12:47:12Z

@@ -48,8 +48,10 @@ pub(crate) mod governance;
 pub(crate) mod icons;
 pub(crate) mod intent;
 pub(crate) mod issues;
+pub(crate) mod knowledge;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
+pub(crate) mod observatory;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
@@ -180,6 +182,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which claims hold, which are stale or untested, and why.",
     },
     Screen {
+        route: knowledge::ROUTE,
+        title: "Knowledge",
+        icon: "sparkles",
+        answers: "What the work left for review, and whether the deriver is still writing.",
+    },
+    Screen {
         route: docs::ROUTE,
         title: "Documentation",
         icon: "book",
@@ -190,6 +198,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Governance",
         icon: "shield-check",
         answers: "Which rules bind this repository and how each is proven.",
+    },
+    Screen {
+        route: observatory::ROUTE,
+        title: "Observatory",
+        icon: "eye",
+        answers: "What the repository and its mesh are doing, drawn as rotating scenes for a wall display.",
     },
 ];
 
@@ -295,6 +309,24 @@ impl Ui {
         let ctx = reading.ctx;
         let fragment = req.query.iter().any(|(k, _)| k == FRAGMENT);
         let path = req.path.trim_end_matches('/');
+        // an earlier or mistyped name leads to the route it meant, query kept
+        if let Some((_, target)) = observatory::REDIRECTS.iter().find(|(old, _)| *old == path) {
+            let query = req
+                .query
+                .iter()
+                .map(|(k, v)| format!("{k}={v}"))
+                .collect::<Vec<_>>()
+                .join("&");
+            let to = match query.is_empty() {
+                true => target.to_string(),
+                false => format!("{target}?{query}"),
+            };
+            return Response::new(308, "text/plain; charset=utf-8", format!("{to}\n"))
+                .with_header("Location", to);
+        }
+        // the kiosk is the Observatory's screen under a second name, never a second screen
+        let kiosk = path == observatory::KIOSK;
+        let path = if kiosk { observatory::ROUTE } else { path };
         let mut screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
@@ -308,7 +340,11 @@ impl Ui {
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
             docs::ROUTE => docs::screen(&ctx),
             evidence::ROUTE => evidence::screen(&ctx, &req.query),
+            knowledge::ROUTE => knowledge::screen(&ctx),
             governance::ROUTE => governance::screen(&ctx, &req.query),
+            observatory::ROUTE => {
+                observatory::screen(&ctx, &req.query, &self.assets.url(observatory::LIB), kiosk)
+            }
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
             prs::PANEL => prs::panel_view(&ctx, &req.query),
@@ -411,6 +447,41 @@ mod tests {
         );
     }
 
+    /// The Observatory has one screen and three more names: the kiosk is the same screen told
+    /// to run unattended, its earlier name redirects to it, and the misspelling to the screen,
+    /// each with its query kept.
+    #[test]
+    fn the_observatory_is_one_screen_under_its_names() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ui = Ui::new(repo.context().expect("a context"), "0.0.0-test", None);
+        let get = |target: &str| ui.handle(&Request::parse_target("GET", target, Vec::new()));
+        let text = |r: &Response| r.body.text().into_owned();
+        let screen = get(observatory::ROUTE);
+        assert_eq!(screen.status, 200);
+        assert!(text(&screen).contains("data-observatory-mode=\"screen\""));
+        let kiosk = get(observatory::KIOSK);
+        assert_eq!(kiosk.status, 200);
+        assert!(text(&kiosk).contains("data-observatory-mode=\"kiosk\""));
+        for (old, target) in observatory::REDIRECTS {
+            let r = get(&format!("{old}?scene=delivery"));
+            assert_eq!(r.status, 308, "{old}");
+            let to = r
+                .headers
+                .iter()
+                .find(|(k, _)| k == "Location")
+                .map(|(_, v)| v.clone());
+            assert_eq!(to, Some(format!("{target}?scene=delivery")), "{old}");
+        }
+        assert_eq!(
+            observatory::REDIRECTS,
+            &[
+                ("/ui/screensaver", "/ui/kiosk"),
+                ("/ui/obsrvatory", "/ui/observatory")
+            ]
+        );
+    }
+
     /// The UI answers in-process exactly as it does over a socket: every screen and panel as
     /// a page with one heading, a fragment without the frame, an asset by its digest, a
     /// route it does not serve as a page that says so, and anything but GET refused.
@@ -509,6 +580,7 @@ mod tests {
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
+            (knowledge::ROUTE, knowledge::screen(&ctx)),
         ] {
             let html = view.main.render();
             assert_eq!(view.status, 200, "{route}");

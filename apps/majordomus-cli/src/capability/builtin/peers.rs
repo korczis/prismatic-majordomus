@@ -159,7 +159,7 @@ pub(crate) fn board_of(ctx: &Context, url: &str) -> Result<Vec<Peer>, String> {
         &format!("{path}?checkouts=this"),
         &[],
         None,
-        lease::PROBE_TIMEOUT,
+        lease::timings().probe_timeout,
     )
     .map_err(|e| format!("{url} did not answer ({e})"))?;
     if reply.status != 200 {

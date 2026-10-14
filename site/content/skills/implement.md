@@ -1,7 +1,7 @@
 +++
 title = "Implement a change"
 description = "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope."
-weight = 3
+weight = 4
 [extra]
 id = "implement"
 status = "active"
