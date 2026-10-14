@@ -35,8 +35,9 @@ done < nav.txt
 pages="$(jq -r '.pages | length' "$S/snapshot.json")"
 [ "$pages" -le 60 ] && [ "$pages" -ge "$(wc -l < nav.txt | tr -d ' ')" ] \
   || { echo "    the snapshot records $pages page(s) for a bound of 60 and $(wc -l < nav.txt | tr -d ' ') screen(s)"; exit 1; }
-[ "$(find "$S" -name index.html | wc -l | tr -d ' ')" = "$(( pages + 1 ))" ] \
-  || { echo "    the files are not the pages the snapshot records and its one page about the live UI"; exit 1; }
+redirects="$(jq -r '.redirects | length' "$S/snapshot.json")"
+[ "$(find "$S" -name index.html | wc -l | tr -d ' ')" = "$(( pages + 1 + redirects ))" ] \
+  || { echo "    the files are not the pages the snapshot records, its one page about the live UI and the pages for the names it redirects"; exit 1; }
 
 # ---------------------------------------------------------------- what it is
 for f in $(jq -r '.pages[]' "$S/snapshot.json"); do
@@ -55,6 +56,20 @@ jq -e '[.surfaces[] | select(.mount == "/ui")] | map(.id) | sort == ["ui", "ui-s
   || { echo "    /ui is not held by the UI for a process and by its snapshot for a publication:"; jq -c '[.surfaces[] | select(.mount == "/ui") | {id, availability}]' web.json | sed 's/^/    | /'; exit 1; }
 "$RB" web validate > validate.txt 2>&1 \
   || { echo "    the topology refuses the snapshot beside the UI:"; sed 's/^/    | /' validate.txt; exit 1; }
+
+# ---------------------------------------------------------------- a face
+# The process that reads a snapshot is no server: it holds no board and runs no mesh. The
+# figures the dashboard leads with are still decided, every one, and none counts a zero for
+# what nobody asked.
+if grep -oE 'class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | grep -q .; then
+  echo "    the snapshot's dashboard leads with a figure nothing decided:"
+  grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | sed 's/^/    | /'
+  exit 1
+fi
+grep -q 'title="read from health.report /repository"' "$S/index.html" \
+  || { echo "    the dashboard's health figure is not the repository's verdict"; exit 1; }
+grep -q 'class="mj-ui-kpi-label">Mesh machines<' "$S/index.html" \
+  && { echo "    the dashboard counts mesh machines in a process that runs no mesh"; exit 1; }
 
 # ---------------------------------------------------------------- one reading
 "$RB" web report ui-snapshot --limit 3 >/dev/null 2>&1 || { echo "    a second run failed"; exit 1; }

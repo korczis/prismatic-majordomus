@@ -3284,6 +3284,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "file",
+        "label": "observatory.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/observatory.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/ui/source.rs",
         "kind": "file",
         "label": "source.rs",
@@ -4193,6 +4201,14 @@
         "label": "lifecycle-observed.v1.md",
         "summary": "named by the layer; not an object of this index",
         "source": "share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "external": true
+      },
+      {
+        "id": "file:share/ui/observatory.js",
+        "kind": "file",
+        "label": "observatory.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/ui/observatory.js",
         "external": true
       },
       {
@@ -7236,6 +7252,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0158",
+        "kind": "adr",
+        "label": "adr-0158",
+        "summary": "The Observatory is one screen of the UI, and it draws only what was observed",
+        "route": "/cockpit/objects/adr/adr-0158",
+        "source": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
+            "file:.ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
+            "file:.ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+            "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+            "file:docs/MAJORDOMUS_UI.md",
+            "file:apps/majordomus-cli/src/ui/observatory.rs",
+            "file:share/ui/observatory.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "evidence",
+            "mesh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10260,6 +10304,21 @@
           "responsibility": "finish",
           "source": "docs/CLI.md",
           "test": "test/cases/103_obligations.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "kind": "claim",
+        "label": "observatory-draws-nothing-it-did-not-read",
+        "summary": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw; a scene without that carries no model and states the source's reason, on a server and in the published snapshot alike",
+        "route": "/cockpit/objects/claim/observatory-draws-nothing-it-did-not-read",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+          "responsibility": "none",
+          "source": "docs/MAJORDOMUS_UI.md",
+          "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
         }
       },
       {
@@ -15819,6 +15878,14 @@
         "source": "docs/claims/obligation-establishment.md"
       },
       {
+        "id": "majordomus://document/docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "kind": "document",
+        "label": "docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "summary": "The Observatory draws nothing it did not read",
+        "route": "/cockpit/objects/document/docs-claims-observatory-draws-nothing-it-did-not-read-md",
+        "source": "docs/claims/observatory-draws-nothing-it-did-not-read.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/open-question-gate.md",
         "kind": "document",
         "label": "docs/claims/open-question-gate.md",
@@ -17886,6 +17953,59 @@
           ],
           "use_cases": [],
           "weight": 46
+        }
+      },
+      {
+        "id": "majordomus://feature/observatory",
+        "kind": "feature",
+        "label": "observatory",
+        "summary": "The Observatory: the repository and its mesh, drawn for a wall",
+        "route": "/cockpit/objects/feature/observatory",
+        "source": ".ai/repo/features/observatory.md",
+        "status": "stable",
+        "facts": {
+          "adrs": [
+            "adr-0158"
+          ],
+          "areas": [
+            "observability"
+          ],
+          "claims": [
+            "observatory-draws-nothing-it-did-not-read"
+          ],
+          "docs": [
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "domain": "surfaces",
+          "featured": true,
+          "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+          "modules": [
+            "mesh",
+            "plan",
+            "distribution",
+            "release",
+            "health",
+            "economics",
+            "repository"
+          ],
+          "related": [
+            "ui",
+            "cockpit"
+          ],
+          "rules": [
+            "project.ui-derived-state",
+            "project.interfaces-are-projections"
+          ],
+          "short_title": "Observatory",
+          "tags": [
+            "ui",
+            "interface",
+            "mesh"
+          ],
+          "web": [
+            "ui"
+          ],
+          "weight": 94
         }
       },
       {
@@ -35281,6 +35401,165 @@
         }
       },
       {
+        "id": "majordomus://issue/I2678",
+        "kind": "issue",
+        "label": "I2678",
+        "summary": "The public Observatory replays events that were recorded, and says it is a replay",
+        "route": "/cockpit/objects/issue/i2678",
+        "source": ".ai/repo/project/issues/I2678.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The public snapshot draws the mesh scenes only from a capture whose manifest it names, under a label that says replay, with the original times",
+            "A capture with an event whose source record is absent is refused, and the refusal names the event",
+            "Without a capture the three scenes are unavailable, as case 3011 holds today"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "recorded_replay_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Synthetic events of any kind outside a test harness",
+            "Publishing intents, paths or message bodies of the mesh: an event stays its identity, kind, node and times"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory.js",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2678.yaml"
+          ],
+          "slug": "the-public-observatory-replays-what-was-recorded",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2679",
+        "kind": "issue",
+        "label": "I2679",
+        "summary": "The Observatory follows a stream with a cursor instead of asking for its page again",
+        "route": "/cockpit/objects/issue/i2679",
+        "source": ".ai/repo/project/issues/I2679.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An event appended to the mesh journal reaches the display without a reading of the whole page, and a case proves it through a real server",
+            "After a disconnect the display resumes from its cursor; with an expired cursor it takes a fresh projection and its status word says so",
+            "The same event delivered twice draws one mark, and the number of events the script holds has a declared bound"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "observatory_stream_resume_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A new stream protocol, event store or message broker",
+            "The public snapshot, which reads nothing again"
+          ],
+          "objective": "Make a change on the mesh reach the display when it happens, and make a gap in what was received something the display knows and says.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory.js",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2679.yaml"
+          ],
+          "slug": "the-observatory-follows-a-stream-with-a-cursor",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2680",
+        "kind": "issue",
+        "label": "I2680",
+        "summary": "The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills",
+        "route": "/cockpit/objects/issue/i2680",
+        "source": ".ai/repo/project/issues/I2680.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of G0 to G7 has a verdict of PASS, FAIL, BLOCKED or NOT RUN with its command, environment and evidence path",
+            "Screenshots of an available scene at 1920x1080 and 3840x2160 are evidence of a named revision",
+            "The display honours reduced motion, and a browser check proves it",
+            "A kiosk left running for a stated number of hours has its memory read at the start and at the end, on named hardware"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "observatory_gate_manifest"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate, a memory figure or an uptime that was not measured"
+          ],
+          "objective": "Close each acceptance gate of the owner's Observatory specification with a command, its result, its environment and a path to the evidence, or record it as not run.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "verification",
+          "scope": [
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/project/issues/I2680.yaml"
+          ],
+          "slug": "the-observatory-gates-are-closed-with-evidence",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2694",
+        "kind": "issue",
+        "label": "I2694",
+        "summary": "A promoted note resolves in every checkout, not only where it was promoted",
+        "route": "/cockpit/objects/issue/i2694",
+        "source": ".ai/repo/project/issues/I2694.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A note promoted in one clone passes `majordomus knowledge check` in a second clone that has only what git carries",
+            "Promoting a candidate of an episode that is still open is refused and names `majordomus session close`",
+            "The evolve skill's procedure says when the episode is closed"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "promoted_note_resolves_in_a_second_clone_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Tracking the ledger or the task store"
+          ],
+          "objective": "Make `majordomus knowledge promote` produce a record that `knowledge check` accepts in a fresh clone and in CI, so that the evolve skill's procedure can be followed to its end.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "lib/knowledge.sh",
+            ".ai/repo/skills/evolve/SKILL.md",
+            ".ai/repo/project/issues/I2694.yaml"
+          ],
+          "slug": "a-promoted-note-resolves-in-every-checkout",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus knowledge check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -40579,6 +40858,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.23.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.24.1",
+        "kind": "release-record",
+        "label": "v0.24.1",
+        "summary": "v0.24.1",
+        "route": "/cockpit/objects/release-record/v0-24-1",
+        "source": ".ai/repo/releases/v0.24.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.24.1",
+          "published_at": "2026-10-14T05:43:31Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.24.1"
         }
       },
       {
@@ -51934,6 +52236,13 @@
         "label": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "route": "/cockpit/objects/test/test-cases-300-a-pipeline-cannot-hide-a-failure-sh",
         "source": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "test",
+        "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "route": "/cockpit/objects/test/test-cases-3011-the-observatory-draws-nothing-it-did-not-read-sh",
+        "source": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
       },
       {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -64051,6 +64360,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0158",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "file:share/ui/observatory.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://rule/project.no-screen-waits-for-a-source@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://rule/project.the-published-ui-is-the-trunks@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -67293,6 +67647,26 @@
       {
         "source": "majordomus://claim/obligation-establishment",
         "target": "majordomus://test/test/cases/103_obligations.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "kind": "tested_by"
       },
       {
@@ -70936,6 +71310,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/open-question-gate.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -71507,6 +71886,11 @@
       },
       {
         "source": "majordomus://feature/models",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/observatory",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -77136,6 +77520,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2678",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2678",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2679",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2679",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2680",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2680",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2694",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2694",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -77712,6 +78136,11 @@
       },
       {
         "source": "majordomus://release-record/v0.23.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.24.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -81372,6 +81801,11 @@
       },
       {
         "source": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86672,8 +87106,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2757,
-      "edges": 6048,
+      "nodes": 2769,
+      "edges": 6073,
       "acyclic": false,
       "truncated": false
     }

@@ -58,6 +58,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`: eight scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -250,6 +251,70 @@ Cytoscape, loaded only by a screen that has a graph, draws them:
 The table of the same edges stays beneath the graph, and it is what a reader without
 JavaScript, or without the library, reads. Only nodes that take part in an edge are drawn.
 
+## The Observatory
+
+The other screens are rows for a person who came to decide something. The Observatory is the
+same facts as a picture, for a display nobody is sitting at (ADR 0158). It is one screen and it
+adds no capability:
+
+| Route | What it is |
+|---|---|
+| `/ui/observatory` | the screen, inside the application's frame |
+| `/ui/kiosk` | the same screen, projection and script, filling the window over the frame, for a display left running |
+| `/ui/screensaver` | a permanent redirect to `/ui/kiosk`, its better name |
+| `/ui/obsrvatory` | a permanent redirect to `/ui/observatory` |
+
+The scenes are one list, `SCENES` in `apps/majordomus-cli/src/ui/observatory.rs`. Each
+declares its label, the capabilities it requires, what its marks mean, the screen that shows
+the same facts as rows, how long it stays, and its character:
+- a **semantic** scene binds marks to records: a machine, an event, a milestone, a release;
+- an **ambient** scene is decoration, is labelled as decoration, and stands for no fact.
+
+| Scene | Label | Requires | Its rows |
+|---|---|---|---|
+| `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
+| `activity` | Event River | `mesh.events` | Mesh |
+| `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
+| `tokens` | Token Spectrum | `economics.runs` | Evidence |
+| `heartbeat` | System Pulse | `health.report` | Dashboard |
+| `delivery` | Delivery Tree | `distribution.releases` | CI/CD & Releases |
+| `coop` | Cooperation Choreography | `mesh.state` | Mesh |
+| `ambient` | Ambient Intelligence | nothing: it is decoration | Dashboard |
+
+The table is a reading aid; the list in the module is what the page, the script and case 3011
+read, and the page prints each scene's own `requires`.
+
+The page carries its whole projection as one document, `observatory/v1`, in the
+`data-observatory` attribute of its section: when it was observed, the revision, every source
+asked with the state it answered in (`answered` or `failed`, with the reason and the time
+taken), and every scene with its model. The rule of the screen is in that document:
+
+| A scene's sources | The scene |
+|---|---|
+| answered, with something to draw | `available`, with a model |
+| answered with nothing to draw, or could not answer | unavailable: no model, the source's own reason, and the script does not rotate to it |
+
+A scene is never drawn empty, never drawn with stand-in marks and never replaced by a picture
+of health. An event of the mesh is projected as its identity (stream and sequence), its kind,
+its node, its logical time and its wall time, and never as its body.
+
+The status word says how the page was read:
+- `LIVE`: read again within 40 seconds; the script asks for its own page every 15 seconds and
+  backs off to 120 when the server does not answer;
+- `STALE`: not read again within that bound;
+- `SNAPSHOT`: the public site, which reads nothing again and names its revision.
+
+Without JavaScript the same projection is a table: one row per scene, with its state in words
+(`available`, `decorative` or `unavailable`), its meaning or its reason, what it requires and
+the link to its rows.
+
+A reader's choice of a scene holds for five minutes, then the rotation resumes. Nothing on the
+screen starts work or writes a record.
+
+On the public site the process that takes the snapshot runs no mesh, so `mesh`, `activity` and
+`coop` are unavailable there and say so, and `tokens` is unavailable while no run is recorded.
+What that leaves open is in [What it does not do yet](#what-it-does-not-do-yet).
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
@@ -358,6 +423,15 @@ it left out; one that is missing, names an older commit or does not say what end
 reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
 `test/cases/2983_the_published_ui_is_the_trunks.sh` holds them.
 
+The first screen leads only with figures the reader of a snapshot can decide. That process is
+no server, so `health.report` says `unknown` for the attached clients and the mesh runtime and
+therefore for the whole report. The Dashboard's health figure is the report's `repository`
+verdict instead: the worst of the dimensions that describe the repository and not the process
+serving it. The Health panel below it still lists every dimension with its own word. Where no
+mesh runtime is active the mesh figure reads `Mesh active: no` and counts no machines. The
+probe refuses a published first screen with an undecided figure, and
+`test/cases/1092_the_ui_snapshot_holds_every_screen.sh` holds the snapshot to the same.
+
 ## What it does not do yet
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
@@ -370,3 +444,8 @@ reading fails. `docs/GITHUB_PAGES_ARCHITECTURE.md` has the details and
   forge observation (`integration.timings`); there is no history of runs yet, so no trend is
   drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
+- The Observatory draws what the process serving it can read. On the public site that leaves
+  the three scenes of the mesh unavailable; a replay of genuinely recorded events, labelled as
+  a replay, is I2678. It learns of a change by asking for its page again, not from a pushed
+  stream with a cursor (I2679). Its screenshots at 1080p and 4K, its measured frame rates and
+  its soak as a kiosk are I2680; until then no figure about its performance is stated.

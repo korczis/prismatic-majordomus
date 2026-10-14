@@ -1799,6 +1799,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:observatory-draws-nothing-it-did-not-read",
+      "path": "/evidence/claims/observatory-draws-nothing-it-did-not-read/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:open-question-gate",
       "path": "/evidence/claims/open-question-gate/"
     },
@@ -3506,6 +3511,11 @@
       "kind": "feature",
       "subject": "feature:models",
       "path": "/evidence/features/models/"
+    },
+    {
+      "kind": "feature",
+      "subject": "feature:observatory",
+      "path": "/evidence/features/observatory/"
     },
     {
       "kind": "feature",
@@ -9564,6 +9574,29 @@
             "docs/CLI.md",
             "lib/evidence.sh",
             "test/cases/103_obligations.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:observatory-draws-nothing-it-did-not-read": {
+      "kind": "claim",
+      "id": "observatory-draws-nothing-it-did-not-read",
+      "status": "guaranteed",
+      "page": "/evidence/claims/observatory-draws-nothing-it-did-not-read/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3011_the_observatory_draws_nothing_it_did_not_read",
+          "path": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MAJORDOMUS_UI.md",
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
           ]
         }
       ],
@@ -18548,6 +18581,21 @@
         "claim:models-no-secret-fields",
         "claim:models-one-declaration",
         "claim:models-routing-explains-itself"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "feature:observatory": {
+      "kind": "feature",
+      "id": "observatory",
+      "status": "stable",
+      "page": "/evidence/features/observatory/",
+      "programs": [],
+      "members": [
+        "claim:observatory-draws-nothing-it-did-not-read",
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state"
       ],
       "routes": [],
       "mechanisms": [],
