@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 104,
+      "count": 105,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 179,
+      "count": 180,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 104
+      "count": 105
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 348
+      "count": 352
     },
     {
       "kind": "knowledge",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 179
+      "count": 180
     },
     {
       "kind": "scope",
@@ -2776,7 +2776,15 @@
       ],
       "source": ".ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2843,6 +2851,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
           "external": false
         }
       ]
@@ -8093,6 +8108,60 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0156",
+      "identity": "adr-0156",
+      "slug": "adr-0156",
+      "cockpit": "/cockpit/objects/adr/adr-0156",
+      "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+      "status": "proposed",
+      "tags": [
+        "coordination",
+        "mesh",
+        "governance",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0156-a-session-joins-the-cluster-before-it-works.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0043",
+          "kind": "adr",
+          "route": "/adrs/adr-0043/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-session-joins-the-cluster-before-it-works@1",
+          "kind": "rule",
+          "route": "/rules/project-a-session-joins-the-cluster-before-it-works-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -11263,6 +11332,31 @@
           "label": "adr-0103",
           "kind": "adr",
           "route": "/adrs/adr-0103/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
+      "identity": "project.a-session-joins-the-cluster-before-it-works@1",
+      "slug": "project-a-session-joins-the-cluster-before-it-works-1",
+      "cockpit": "/cockpit/objects/rule/project-a-session-joins-the-cluster-before-it-works-1",
+      "title": "A session is current, attached, announced and useful before it changes anything",
+      "status": "active",
+      "tags": [
+        "coordination",
+        "mesh",
+        "process"
+      ],
+      "source": ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
+      "references": [],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
           "external": false
         }
       ]
@@ -16745,6 +16839,13 @@
           "label": "adr-0053",
           "kind": "adr",
           "route": "/adrs/adr-0053/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0156",
+          "kind": "adr",
+          "route": "/adrs/adr-0156/",
           "external": false
         },
         {
