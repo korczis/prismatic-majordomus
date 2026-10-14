@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["ADAPTER_DIR","CHECKS","INDEPENDENT_SOURCES"],"fn":["catalogue_names","literals_naming","run"],"struct":["ReasoningFinding"]};
+window.SIDEBAR_ITEMS = {"constant":["ADAPTER_DIR","CHECKS","INDEPENDENT_SOURCES","REPOSITORY_CHECKS","REPOSITORY_RULE"],"fn":["applicable","catalogue_names","literals_naming","run","run_checks"],"struct":["ReasoningFinding"]};

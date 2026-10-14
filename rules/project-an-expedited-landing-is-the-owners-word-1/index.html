@@ -224,7 +224,24 @@ locally, the merge is committed, and only then is the branch derived. The merge 
 whole structure job (<code>scripts/ci/run-plan --job structure</code>), the library tests, the
 rustdoc build when the crate changed, and every case the change touches, with skips
 refused. The lander says which commit each ran on. A gate that did not run is named as
-not run. A red is not landed.</li>
+not run. A red is not landed.
+<strong>What a change owes beyond that is read from what it touches</strong>, and <code>scripts/ci-plan --files &lt;list&gt;</code> names the gates it selects:
+<ul>
+<li>code of the crate (<code>apps/majordomus-cli/**</code>): the crate's tests in all three lanes of the
+rust job, not the library alone;</li>
+<li>a record a crate test reads — a skill, a rule, a claim, a capability, the quality
+baseline, an intent, milestone or issue: the crate tests that open this repository
+itself — <code>tests/skills.rs</code> (it names every active skill), <code>tests/quality.rs</code> (the
+quality baseline), <code>tests/mcp_prose.rs</code>, <code>tests/mcp_conformance.rs</code>, <code>tests/redaction.rs</code>
+— and the <code>intent-check</code> gate (<code>majordomus intent validate</code>) for a plan record; a record
+change is a crate change for them although no Rust moved, and they run only in the rust
+lanes, which the structure job is not;</li>
+<li>a workflow or a script under <code>scripts/ci/</code>: the whole structure job and every case that
+names the file (<code>grep -rl &lt;name&gt; test/cases</code>);</li>
+<li>the site, the UI or the Cockpit: the site job's build and probe, and every case that
+names them.</li>
+</ul>
+</li>
 <li><strong>The integration executor never passes <code>--admin</code>.</strong> <code>majordomus prs</code> merges only what
 the branch protection allows. This rule governs a lander's own act and changes nothing in
 that code.</li>
@@ -235,7 +252,9 @@ confirms the commit production serves (<code>scripts/pages verify</code>), as
 closed, when its head is no longer the head of its branch, or when another run of the
 same workflow already judges the same commit. A lander cancels its own branch's run after
 its merge. These are never cancelled: the trunk's only run of a commit, a deployment in
-flight, a release run, and another session's run on a head that is still current.</li>
+flight, a release run, and another session's run on a head that is still current.
+A branch's run that has failed a job can no longer be green, and the validation workflow
+cancels it itself from the failed job's last step; the trunk's run is left to finish.</li>
 <li><strong>A red on the trunk has one carrier.</strong> The integrator names it. Everyone else builds
 nothing for that red until the carrier yields or its stated time passes.</li>
 <li><strong>Between a tag and its record nothing else lands.</strong> The release workflow proposes the
@@ -254,7 +273,13 @@ before it publishes.</li>
 release workflow publishes without asking <code>scripts/ci/release-verdict</code>, when that script
 accepts a commit whose check is missing, pending or failed, when a landing on the trunk
 could cancel the trunk's run in flight or a deployment in flight, when the integration code
-names <code>--admin</code>, or when the documented merge command loses its pin to the judged head.</p>
+names <code>--admin</code>, or when the documented merge command loses its pin to the judged head.
+<code>test/cases/3019_a_failed_branch_run_cancels_itself.sh</code> fails when a gate job of the
+validation workflow does not end a failed pull request's run as its last step, or could end
+a run of the trunk, the schedule or a dispatch. The omission of 2026-10-13 — an active skill
+that <code>tests/skills.rs</code> and case 391 do not name — is refused in the structure job by the
+<code>skill-naming</code> gate (<code>scripts/ci/skill-naming-check</code>), and
+<code>test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh</code> proves it refuses.</p>
 <p>Clauses 1, 2, 4, 8 and 9 are acts of a session and are decided by the record: the landing
 claim on the mesh, the gates named in the pull request, and the board. A landing whose pull
 request names no judged commit is a finding of review.</p>
@@ -273,7 +298,7 @@ to never cancelling the deploy in flight.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md">.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md">.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">project.an-expedited-landing-is-the-owners-word@1</dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 break-all font-mono text-heading">MCP resource <code>majordomus://rule/project.an-expedited-landing-is-the-owners-word@1</code> · <code>majordomus entity show rule/project-an-expedited-landing-is-the-owners-word-1</code> · <code>GET /api/v1/entity?uri=majordomus://rule/project.an-expedited-landing-is-the-owners-word@1</code></dd>
       <dt class="text-body-subtle">in the Cockpit</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/rule/project-an-expedited-landing-is-the-owners-word-1</dd>
@@ -330,9 +355,9 @@ to never cancelling the deploy in flight.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -340,7 +365,7 @@ to never cancelling the deploy in flight.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0dff496d1c312ce4a8d37ac5d6667b522beb4905" class="font-mono underline">0dff496</a> · inputs <span class="font-mono">7d8403f317f3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2d226f0836e91723cd45744f9e955bedcb161429" class="font-mono underline">2d226f0</a> · inputs <span class="font-mono">b07ebe8ee7a1</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

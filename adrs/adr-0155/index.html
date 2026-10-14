@@ -172,6 +172,8 @@
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-integration-follows-the-current-master-3/">project.integration-follows-the-current-master@3</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-land-and-publish-1/">project.land-and-publish@1</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh</span><span class="text-xs text-body-subtle"> (test)</span></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">test/cases/3019_a_failed_branch_run_cancels_itself.sh</span><span class="text-xs text-body-subtle"> (test)</span></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh</span><span class="text-xs text-body-subtle"> (test)</span></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">test/cases/362_a_release_follows_the_ci_verdict.sh</span><span class="text-xs text-body-subtle"> (test)</span></li>
         </ul>
       </div>
@@ -226,12 +228,23 @@ landing claim, merges the current master into the branch, commits the merge, der
 runs the whole structure job, the library tests, the rustdoc build when the crate changed
 and the cases the change touches. It names the commit each ran on and names what did not
 run. The merge is pinned: <code>gh pr merge --admin --merge --match-head-commit &lt;head&gt;</code>.</p>
+<p><strong>What the lander reads follows what the change touches</strong> (amended 2026-10-14, I2664). A
+record a crate test reads — a skill, a rule, a claim, the quality baseline, a plan record —
+is a crate change for the tests that open the repository itself (<code>tests/skills.rs</code>,
+<code>tests/quality.rs</code> and their siblings) and for the <code>intent-check</code> gate, although no Rust
+moved, and those run only in the rust lanes. On 2026-10-13 an active skill named by neither
+<code>tests/skills.rs</code> nor case 391 was landed with the structure job green and turned the
+trunk's rust lane red an hour later; the structure job now refuses that omission itself (gate
+<code>skill-naming</code>), and the rule's clause 4 lists what each kind of change owes.</p>
 <p><strong>Every landing is a deployment and is verified as one</strong>, as <code>project.land-and-publish</code>
 already requires of any merge.</p>
 <p><strong>A run nobody will read is cancelled.</strong> Stale means: the pull request is merged or closed,
 the head is no longer the branch's head, or another run of the same workflow judges the same
 commit. The trunk's only run of a commit, a deployment in flight, a release run and another
-session's run on a current head are not stale and are not cancelled.</p>
+session's run on a current head are not stale and are not cancelled.
+A branch's run that has failed a job cannot be green, and the validation workflow cancels it
+from the failed job's last step; the trunk's run, the schedule's and a dispatch's are left to
+finish (I2664, case 3019).</p>
 <p><strong>A red on the trunk has one carrier</strong>, named by the integrator.</p>
 <p><strong>Between a tag and its record nothing else lands.</strong> The record pull request carries files
 derived against the master of that minute, and it is merged first.</p>
@@ -273,7 +286,7 @@ it and <code>project.integration-follows-the-current-master</code> stands alone 
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md">.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md">.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">adr-0155</dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 break-all font-mono text-heading">MCP resource <code>majordomus://adr/adr-0155</code> · <code>majordomus entity show adr/adr-0155</code> · <code>GET /api/v1/entity?uri=majordomus://adr/adr-0155</code></dd>
       <dt class="text-body-subtle">in the Cockpit</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/adr/adr-0155</dd>
@@ -330,9 +343,9 @@ it and <code>project.integration-follows-the-current-master</code> stands alone 
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/0dff496d1c312ce4a8d37ac5d6667b522beb4905/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2d226f0836e91723cd45744f9e955bedcb161429/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -340,7 +353,7 @@ it and <code>project.integration-follows-the-current-master</code> stands alone 
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0dff496d1c312ce4a8d37ac5d6667b522beb4905" class="font-mono underline">0dff496</a> · inputs <span class="font-mono">7d8403f317f3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.25.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2d226f0836e91723cd45744f9e955bedcb161429" class="font-mono underline">2d226f0</a> · inputs <span class="font-mono">b07ebe8ee7a1</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
