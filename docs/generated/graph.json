@@ -21861,6 +21861,8 @@
             "A stale index is reported as stale by every read command, and none of them rebuilds it",
             "The existing search command's output and exit codes are unchanged, proved by its own case still passing"
           ],
+          "completed_at": "2026-10-14T20:18:28Z",
+          "completed_event": "sha256:2ac642e9b5b38cd41d1d1ee356b600f917385c4886d01b8b21917fdeff1d0dc8",
           "created_at": "2026-09-04",
           "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
           "depends_on": [
@@ -21886,11 +21888,15 @@
             "test/cases"
           ],
           "slug": "knowledge-query",
-          "updated_at": "2026-09-04",
+          "started_at": "2026-10-14T20:17:07Z",
+          "started_event": "sha256:206123f199756074b223279273edf04bcc1f39706649179f8390c51ea2bfb5ce",
+          "updated_at": "2026-10-14T20:18:28Z",
           "validation": [
             "bash test/run.sh 69_knowledge_query",
             "bash test/run.sh 24_prompt_search"
-          ]
+          ],
+          "verified_at": "2026-10-14T20:18:06Z",
+          "verified_event": "sha256:426a9b753236b1baa453d1250cf24140efddae8ec920d7ac6ac131619352a914"
         }
       },
       {
@@ -53058,6 +53064,13 @@
         "source": "test/cases/302_the_topology_rule_has_one_source.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "kind": "test",
+        "label": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "route": "/cockpit/objects/test/test-cases-3037-a-knowledge-lookup-explains-its-order-sh",
+        "source": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
         "kind": "test",
         "label": "test/cases/303_one_source_serves_two_mounts.sh",
@@ -82889,6 +82902,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88208,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }
