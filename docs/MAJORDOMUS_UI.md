@@ -58,7 +58,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`: eight scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`: thirteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -279,10 +279,25 @@ the same facts as rows, how long it stays, and its character:
 | `heartbeat` | System Pulse | `health.report` | Dashboard |
 | `delivery` | Delivery Tree | `distribution.releases` | CI/CD & Releases |
 | `coop` | Cooperation Choreography | `mesh.state` | Mesh |
+| `proof` | Proof Lattice | `rules.report` | Governance |
+| `claims` | Claim Ledger | `evidence.report` | Evidence |
+| `surface` | Surface Atlas | `quality.report` | Capabilities |
+| `waves` | Wave Front | `plan.waves` | Roadmap |
+| `matrix` | Release Matrix | `distribution.status` | CI/CD & Releases |
 | `ambient` | Ambient Intelligence | nothing: it is decoration | Dashboard |
 
 The table is a reading aid; the list in the module is what the page, the script and case 3011
 read, and the page prints each scene's own `requires`.
+
+The last five (`proof` to `matrix`, ADR 0160) read what the repository proves and need no
+mesh, so they are drawn on the public site too. They are counted, never estimated: a mark is a
+rule, a kind of claim, a measured count, a wave or a check, and where a source reports more
+items than a display holds the scene groups them and says how many it drew. They are drawn with
+p5 in instance mode onto a surface of their own that the director composes onto its stage, from
+`share/ui/observatory-kiosk.js`; p5 is the pinned library `scripts/cockpit-assets` copies into
+`share/ui/vendor/`, is not committed, and is loaded only when one of these scenes is shown. A
+checkout built without it says "p5 is not built here" on the stage and keeps the same facts in the
+table below it.
 
 The page carries its whole projection as one document, `observatory/v1`, in the
 `data-observatory` attribute of its section: when it was observed, the revision, every source

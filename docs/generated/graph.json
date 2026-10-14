@@ -4204,6 +4204,14 @@
         "external": true
       },
       {
+        "id": "file:share/ui/observatory-kiosk.js",
+        "kind": "file",
+        "label": "observatory-kiosk.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/ui/observatory-kiosk.js",
+        "external": true
+      },
+      {
         "id": "file:share/ui/observatory.js",
         "kind": "file",
         "label": "observatory.js",
@@ -7276,6 +7284,34 @@
             "observatory",
             "evidence",
             "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0160",
+        "kind": "adr",
+        "label": "adr-0160",
+        "summary": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+        "route": "/cockpit/objects/adr/adr-0160",
+        "source": ".ai/repo/adrs/0160-the-kiosk-draws-what-the-repository-proves.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
+            "test:test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+            "file:apps/majordomus-cli/src/ui/observatory.rs",
+            "file:share/ui/observatory-kiosk.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "evidence",
+            "p5"
           ]
         }
       },
@@ -35560,6 +35596,165 @@
         }
       },
       {
+        "id": "majordomus://issue/I2695",
+        "kind": "issue",
+        "label": "I2695",
+        "summary": "The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them",
+        "route": "/cockpit/objects/issue/i2695",
+        "source": ".ai/repo/project/issues/I2695.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The five scenes are in SCENES with the capability each requires",
+            "A scene whose source holds nothing is unavailable with the source reason",
+            "Unit tests hold the models on constructed answers, including empty ones"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory.js",
+            "share/ui/observatory-kiosk.js"
+          ],
+          "slug": "ui-observatory-proof-scenes",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Five scenes of ADR 0160 are in the Observatory inventory, each a function of one capability answer, counted and never estimated."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2696",
+        "kind": "issue",
+        "label": "I2696",
+        "summary": "p5 is a built, optional asset of the UI and the page says where it is",
+        "route": "/cockpit/objects/issue/i2696",
+        "source": ".ai/repo/project/issues/I2696.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "share/ui/vendor/p5.min.js is built and not committed",
+            "The page carries data-p5-lib",
+            "Without the library the stage says p5 is not built here and the rows hold the facts"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/cockpit-assets",
+            "share/ui/observatory-kiosk.js"
+          ],
+          "slug": "ui-p5-is-a-built-optional-asset",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "scripts/cockpit-assets copies the pinned p5 into share/ui/vendor, the screen names it, and a checkout without it says so on the stage."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2697",
+        "kind": "issue",
+        "label": "I2697",
+        "summary": "The public snapshot carries the p5 library, or says which scenes it cannot draw",
+        "route": "/cockpit/objects/issue/i2697",
+        "source": ".ai/repo/project/issues/I2697.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The snapshot lists vendor/p5.min.js among its assets",
+            "The snapshot status word is SNAPSHOT on every new scene"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-build",
+            "apps/majordomus-cli/src/ui/mod.rs"
+          ],
+          "slug": "ui-snapshot-carries-p5",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "A published UI snapshot (ADR 0141) must serve vendor/p5.min.js beside the scenes script, or the kiosk there draws the new scenes as unavailable."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2698",
+        "kind": "issue",
+        "label": "I2698",
+        "summary": "The new scenes have screenshot evidence at 1080p and 4K on a named revision",
+        "route": "/cockpit/objects/issue/i2698",
+        "source": ".ai/repo/project/issues/I2698.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A screenshot of each of the five scenes at 1920x1080 is evidence of a named revision",
+            "A screenshot of each at 3840x2160 is evidence of the same revision",
+            "The display with reduced motion is drawn still"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
+          "depends_on": [],
+          "desired_state": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
+          "evidence_required": [
+            "observatory_proof_scenes"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Stating a frame rate or a figure that was not measured"
+          ],
+          "objective": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "verification",
+          "scope": [
+            ".ai/repo/project/issues/I2698.yaml"
+          ],
+          "slug": "ui-proof-scenes-have-screenshots",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The scenes are drawn in a browser; only a screenshot proves they are drawn legibly at wall size."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -52245,6 +52440,13 @@
         "source": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "kind": "test",
+        "label": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "route": "/cockpit/objects/test/test-cases-3014-the-kiosk-draws-what-the-repository-proves-sh",
+        "source": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
         "kind": "test",
         "label": "test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -64402,6 +64604,51 @@
       {
         "source": "majordomus://adr/adr-0158",
         "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "file:share/ui/observatory-kiosk.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0160",
+        "target": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
         "kind": "put_in_force"
       },
       {
@@ -77560,6 +77807,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2695",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2695",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2696",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2696",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2697",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2697",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2698",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2698",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81806,6 +82093,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87106,8 +87398,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2769,
-      "edges": 6073,
+      "nodes": 2776,
+      "edges": 6091,
       "acyclic": false,
       "truncated": false
     }

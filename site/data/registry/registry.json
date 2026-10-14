@@ -6,23 +6,23 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "67200500657bdf7de1c13e03586c82b2bf1d1b28dacc8e27759bb24609ab77d3",
+    "fingerprint": "458e0d4f92bdc4b7e0d7c105a973e27961f84a495ceebf137569b3099141931b",
     "summary": {
-      "total": 2353,
+      "total": 2359,
       "builtin": 196,
-      "declarative": 2157,
+      "declarative": 2163,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2157
+        "resource": 2163
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2166
+        "implemented": 2172
       },
       "mcp_tools": 187,
-      "mcp_resources": 2212,
+      "mcp_resources": 2218,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80078,7 +80078,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -80688,7 +80688,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 352,
+        "capabilities": 356,
         "capability_ids": []
       },
       {
@@ -81240,7 +81240,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 472,
+        "capabilities": 473,
         "capability_ids": []
       },
       {
@@ -81330,7 +81330,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d45fa5447559d0eacfd25ec669f859df50d2466a2ea9b85d2e1b121dd25b3562",
+    "fingerprint": "ecbb7a78825f0961326253b7aadbc9a1c1a4e4533a523dcf5364c4e11227264a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81353,7 +81353,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 105,
+      "adr": 106,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81370,7 +81370,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 352,
+      "issue": 356,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81384,7 +81384,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 472,
+      "test": 473,
       "use-case": 49,
       "workspace": 1
     },
@@ -83126,6 +83126,23 @@
           "observatory",
           "evidence",
           "mesh"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0160",
+        "kind": "adr",
+        "identity": "adr-0160",
+        "title": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+        "description": "The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it",
+        "path": ".ai/repo/adrs/0160-the-kiosk-draws-what-the-repository-proves.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6917,
+        "tags": [
+          "ui",
+          "observatory",
+          "evidence",
+          "p5"
         ]
       },
       {
@@ -87290,7 +87307,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 30561
+        "bytes": 31732
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87380,7 +87397,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 240553
+        "bytes": 243188
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94694,6 +94711,50 @@
         "bytes": 2438
       },
       {
+        "uri": "majordomus://issue/I2695",
+        "kind": "issue",
+        "identity": "I2695",
+        "title": "The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them",
+        "description": "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw.",
+        "path": ".ai/repo/project/issues/I2695.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1376
+      },
+      {
+        "uri": "majordomus://issue/I2696",
+        "kind": "issue",
+        "identity": "I2696",
+        "title": "p5 is a built, optional asset of the UI and the page says where it is",
+        "description": "A p5 scene is drawn when the library is served and is an honest statement when it is not.",
+        "path": ".ai/repo/project/issues/I2696.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1160
+      },
+      {
+        "uri": "majordomus://issue/I2697",
+        "kind": "issue",
+        "identity": "I2697",
+        "title": "The public snapshot carries the p5 library, or says which scenes it cannot draw",
+        "description": "The kiosk on the public site draws the proof scenes with p5, from the one reading taken at the published commit.",
+        "path": ".ai/repo/project/issues/I2697.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1154
+      },
+      {
+        "uri": "majordomus://issue/I2698",
+        "kind": "issue",
+        "identity": "I2698",
+        "title": "The new scenes have screenshot evidence at 1080p and 4K on a named revision",
+        "description": "A manifest names the revision and holds a screenshot of each new scene at 1920x1080 and 3840x2160.",
+        "path": ".ai/repo/project/issues/I2698.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1154
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101630,7 +101691,15 @@
         "identity": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "path": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "source_class": "case",
-        "bytes": 9603
+        "bytes": 9664
+      },
+      {
+        "uri": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "kind": "test",
+        "identity": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "path": "test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
+        "source_class": "case",
+        "bytes": 6296
       },
       {
         "uri": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -104544,7 +104613,7 @@
       "identity": [
         "id"
       ],
-      "objects": 105
+      "objects": 106
     },
     {
       "name": "application",
@@ -104707,7 +104776,7 @@
       "identity": [
         "id"
       ],
-      "objects": 352
+      "objects": 356
     },
     {
       "name": "knowledge",
@@ -104859,7 +104928,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 472
+      "objects": 473
     },
     {
       "name": "use-case",

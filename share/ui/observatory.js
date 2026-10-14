@@ -379,6 +379,17 @@
       document.documentElement.classList.add(document.body.dataset.themeClass || 'dark');
     }
 
+    // the scenes of ADR 0160 are another file's: it registers them here, so this one is
+    // not edited for each. A scene it has not registered yet is drawn as unavailable.
+    const companion = holder.dataset.observatoryCompanion;
+    if (companion && !registry.companion) {
+      registry.companion = true;
+      const tag = document.createElement('script');
+      tag.src = companion;
+      tag.async = true;
+      document.head.append(tag);
+    }
+
     const note = holder.querySelector('.mj-obs-noscript');
     if (note) note.remove();
     canvas.hidden = false;
@@ -587,8 +598,10 @@
       let line = '';
       c.save();
       c.globalAlpha = still ? 1 : fade;
-      if (scene.available && draw[scene.id]) {
-        line = draw[scene.id](c, box, scene.model, t, moving, born);
+      // a scene is the director's own, or one a companion script registered (ADR 0160)
+      const painter = draw[scene.id] || registry.scenes[scene.id];
+      if (scene.available && painter) {
+        line = painter(c, box, scene.model, t, moving, born);
       } else {
         label(c, box, 'UNAVAILABLE', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, scene.reason || 'this display has no renderer for the scene', box.cx, box.cy + u * 1.2, 0.7);
@@ -654,5 +667,13 @@
     }
   }
 
-  window.mjObservatory = { mount };
+  // What a companion script needs to draw in this display's own look: the stylesheet's
+  // tokens, the tone of a state word, a stable place from an identity, the text label.
+  const registry = {
+    mount,
+    scenes: {},
+    companion: false,
+    kit: { token, tone, colour, withAlpha, unit, label, TAU },
+  };
+  window.mjObservatory = registry;
 })();
