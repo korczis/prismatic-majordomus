@@ -17,6 +17,7 @@ SOURCES = {
     "stavba": "doc:docs/HOW_IT_WORKS.md doc:docs/SURFACES.md feature:interfaces module:graph",
     "stav": "doc:docs/CONCEPTS.md doc:docs/SCHEMAS.md module:objects",
     "projekce": "doc:docs/CAPABILITIES.md doc:docs/SURFACES.md feature:declare-once feature:interfaces module:capabilities adr:0002 adr:0004",
+    "mj-way": "doc:docs/DOCTRINE.md doc:docs/CAPABILITIES.md doc:docs/DELIVERY.md doc:docs/HANDBOOK.md feature:declare-once feature:doctrine feature:finish-contract adr:0004 rule:project.derived-files-regenerated rule:project.rule-is-a-doctrine rule:project.no-claim-without-test rule:project.work-is-claimed-before-it-is-built rule:project.worktree-topology rule:project.land-and-publish rule:project.the-handbook-is-built-from-the-tree",
     "nasazeni": "doc:docs/ADOPTION.md doc:docs/ADOPTION_FIRST_RUN.md doc:docs/INSTALL.md feature:install command:init command:update command:doctor",
     "osobni": "doc:docs/PERSONAL_MODE.md doc:docs/ADOPTION.md feature:install command:init command:update command:doctor",
     # Harness

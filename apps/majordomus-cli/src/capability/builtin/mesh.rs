@@ -723,6 +723,12 @@ pub struct MeshEventsInput {
     /// At most this many (default 100, at most 1000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
+    /// The newest `limit` events above `after` instead of the first ones: what a reader who
+    /// wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
+    /// then the newest stamp the journal holds, so resuming after it reads only what comes
+    /// next. Without it the journal is read forward from `after`, a page at a time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub newest: Option<bool>,
 }
 
 impl BenchmarkCases for MeshEventsInput {
@@ -732,6 +738,7 @@ impl BenchmarkCases for MeshEventsInput {
             MeshEventsInput {
                 after: None,
                 limit: Some(100),
+                newest: None,
             },
         )]
     }
@@ -763,7 +770,16 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
     let after = input.after.unwrap_or(0);
-    let events = c.journal().events_after(after, limit);
+    let events = if input.newest == Some(true) {
+        // the whole tail above `after`, in order, and then its end: the journal is in memory
+        // and bounded by its own retention, so this is a walk and not a second index
+        let mut all = c.journal().events_after(after, usize::MAX);
+        let from = all.len().saturating_sub(limit);
+        all.drain(..from);
+        all
+    } else {
+        c.journal().events_after(after, limit)
+    };
     Ok(EventList {
         active: true,
         count: events.len(),

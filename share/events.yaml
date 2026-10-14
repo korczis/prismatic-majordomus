@@ -97,6 +97,14 @@ events:
     public: true
     note: The ledger's own maintenance, recorded in the ledger. Nothing is deleted; the archive path is part of the record so the rotation can be followed.
 
+  - id: session.archived
+    title: Session records archived
+    summary: Closed session records beyond the retention cap were moved into the section's archive directory.
+    emitted_by: session
+    requires: [archived, kept, archive]
+    public: true
+    note: Written only when `majordomus session archive` moved something. Nothing is deleted; the archive directory is part of the record so the move can be followed.
+
   - id: plan_start
     title: Issue started
     summary: Execution of one issue in the project model began.

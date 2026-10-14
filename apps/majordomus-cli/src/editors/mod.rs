@@ -573,7 +573,7 @@ pub fn plan(
     let mut diagnostics = env.diagnostics.clone();
     let mut artifacts: Vec<(Artifact, Vec<String>, Vec<String>)> = Vec::new();
 
-    // .agents/ sorts before .claude/, and the commands are by alias: path order holds
+    // .agents/ sorts before .claude/, and what is written under .claude/ is keyed by path
 
     for skill in &env.skills {
         match skill_artifact(skill, version) {
@@ -585,13 +585,33 @@ pub fn plan(
             Err(d) => diagnostics.push(*d),
         }
     }
+    // Claude Code discovers skills under .claude/skills/ alone: every workflow skill is
+    // written there too, beside the commands, so that /<id> reaches the layer's own
+    // definition. A command that has the same name keeps it (and is a finding below).
+    // keyed by path, so that what is written under .claude/ comes out in path order
+    let mut for_claude: std::collections::BTreeMap<String, (Artifact, Vec<String>, Vec<String>)> =
+        std::collections::BTreeMap::new();
     for c in &commands {
-        artifacts.push((
-            claude::command_artifact(c, version),
-            vec![claude::ID.into()],
-            vec![format!("capability:{}", c.capability)],
-        ));
+        let a = claude::command_artifact(c, version);
+        for_claude.insert(
+            a.path.clone(),
+            (
+                a,
+                vec![claude::ID.to_string()],
+                vec![format!("capability:{}", c.capability)],
+            ),
+        );
     }
+    for skill in claude::workflow_skills(&commands, &env.skills) {
+        // a name both products refuse was already reported by the loop above
+        if let Ok(a) = skill_artifact_in(claude::SKILLS_DIR, skill, version) {
+            for_claude.insert(
+                a.path.clone(),
+                (a, vec![claude::ID.to_string()], vec![skill.path.clone()]),
+            );
+        }
+    }
+    artifacts.extend(for_claude.into_values());
     if let Some(a) = zed::tasks_artifact(&env, version) {
         let sources = env
             .inputs
@@ -602,7 +622,8 @@ pub fn plan(
         artifacts.push((a, vec!["zed".into()], sources));
     }
     // in path order by construction: every skill (canonical by identity) under
-    // .agents/, every command (by alias) under .claude/, then the task list under .zed/
+    // .agents/, every command and workflow skill (by path) under .claude/, then the task
+    // list under .zed/
 
     diagnostics.extend(description_findings(&env.skills));
     diagnostics.extend(claude::name_findings(&commands, &env.skills));
@@ -630,7 +651,7 @@ pub fn plan(
         .collect();
     let adapters = vec![
         antigravity::adapter(&env),
-        claude::adapter(&commands),
+        claude::adapter(&commands, &env.skills),
         zed::adapter(&env),
     ];
     Plan {
@@ -721,7 +742,19 @@ const DESCRIPTION_BUDGET: usize = 1024;
 /// `description` — the banner, and a pointer to the one definition. The procedure itself is
 /// never copied: it lives in the canonical file, which the agent is told to read.
 pub fn skill_artifact(skill: &SkillRef, version: &str) -> Result<Artifact, Box<EditorDiagnostic>> {
-    let path = format!("{SKILLS_DIR}/{}/SKILL.md", skill.id);
+    skill_artifact_in(SKILLS_DIR, skill, version)
+}
+
+/// The same projection under another directory a product discovers skills in: Claude Code
+/// reads `.claude/skills/` and not `.agents/skills/`, so a workflow skill is reachable there
+/// by its name only when its pointer is written there too. One definition, one text; the
+/// directory is the only thing that differs.
+pub fn skill_artifact_in(
+    dir: &str,
+    skill: &SkillRef,
+    version: &str,
+) -> Result<Artifact, Box<EditorDiagnostic>> {
+    let path = format!("{dir}/{}/SKILL.md", skill.id);
     if !is_skill_name(&skill.id) {
         return Err(Box::new(EditorDiagnostic {
             severity: Severity::Warning,
@@ -751,7 +784,7 @@ pub fn skill_artifact(skill: &SkillRef, version: &str) -> Result<Artifact, Box<E
          # {title}\n\n\
          This skill is defined once, in [`{src}`]({up}{src}). Read that file and follow it: it is \
          the procedure, its inputs and what it must produce. This file only makes the skill \
-         discoverable to agents that load `{SKILLS_DIR}/`, and says nothing the definition does \
+         discoverable to agents that load `{dir}/`, and says nothing the definition does \
          not.\n\n\
          The same definition is served as `majordomus skills explain {name}` and as the MCP \
          resource `majordomus://skill/{name}`.\n",
@@ -948,6 +981,30 @@ mod tests {
             path: format!(".ai/repo/skills/{id}/SKILL.md"),
             sha256: sha256_hex(id),
         }
+    }
+
+    #[test]
+    fn the_same_skill_is_written_where_claude_code_looks() {
+        let s = skill("evolve", "Turn what was observed into what is enforced.");
+        let shared = skill_artifact(&s, "0.0.0").unwrap();
+        let claude = skill_artifact_in(claude::SKILLS_DIR, &s, "0.0.0").unwrap();
+        assert_eq!(claude.path, ".claude/skills/evolve/SKILL.md");
+        assert!(claude
+            .content
+            .starts_with("---\nname: evolve\ndescription: "));
+        // one definition: the pointer leads to the same file from the same depth
+        assert!(claude
+            .content
+            .contains("(../../../.ai/repo/skills/evolve/SKILL.md)"));
+        assert!(claude
+            .content
+            .contains("agents that load `.claude/skills/`"));
+        // and differs from the shared projection in the directory it names alone
+        assert_eq!(
+            claude.content.replace(".claude/skills/", ".agents/skills/"),
+            shared.content
+        );
+        assert_eq!(claude.source, shared.source);
     }
 
     #[test]

@@ -13,11 +13,11 @@ source = ".ai/repo/rules/vendor/majordomus/rules/retention-caps.v1.md"
 
 ## Rationale
 
-The ledger and the handover directory stay under the caps the policy sets, so durable state does not grow without bound.
+The ledger, the handovers, the checkpoints and the session records stay under the caps the policy sets, so durable state does not grow without bound.
 
 ## Required behaviour
 
-The ledger, the handovers and the checkpoints stay under the caps the policy sets.
+The ledger, the handovers, the checkpoints and the session records stay under the caps the policy sets, and a cap is met by moving records aside, never by deleting one.
 
 ## Failure behaviour
 

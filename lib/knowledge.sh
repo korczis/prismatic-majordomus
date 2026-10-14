@@ -1342,7 +1342,7 @@ mj_knowledge_reject_cmd() {
 #                                            records:  <relpath> per file judged
 mj_knowledge_check_files() {
   local tmp="$1"; shift
-  mkdir -p "$tmp/flat"; : > "$tmp/findings"; : > "$tmp/records"; : > "$tmp/map"
+  mkdir -p "$tmp/flat"; : > "$tmp/findings"; : > "$tmp/records"; : > "$tmp/map"; : > "$tmp/historical"
   [ $# -gt 0 ] || return 0
   local f n=0 t0
   for f in "$@"; do n=$((n + 1)); printf '%s\t%s\n' "$n" "$(mj_rel "$f")" >> "$tmp/map"; printf '%s\n' "$(mj_rel "$f")" >> "$tmp/records"; done
@@ -1447,12 +1447,14 @@ mj_knowledge_check_files() {
   sed -n 's/^R\t//p' "$tmp/shape" > "$tmp/refs"
   if [ -s "$tmp/refs" ]; then
     cut -f2 "$tmp/refs" | LC_ALL=C sort -u | mj_knowledge_resolve_refs > "$tmp/resolved"
-    awk -F'\t' 'FILENAME == res { st[$1] = $2; next }
+    # a historical reference resolves, and is named apart: <record> <reference> <field>
+    awk -F'\t' -v hist="$tmp/historical" 'FILENAME == res { st[$1] = $2; next }
       { r = st[$2]
         if (r == "ok") next
+        if (r == "historical") { printf "%s\t%s\t%s\n", $1, $2, $3 > hist; next }
         if (r == "refused") printf "%s\treference\t%s names `%s`, and `none` is not an identity: a decision recorded outside a task names the episode only\n", $1, $3, $2
         else if (r == "unknown") printf "%s\treference\t%s names `%s`, whose kind nothing in this layer resolves\n", $1, $3, $2
-        else printf "%s\treference\t%s names `%s`, which resolves to nothing: not a record, not a ledger object, not a commit, not a tracked file\n", $1, $3, $2 }' \
+        else printf "%s\treference\t%s names `%s`, which resolves to nothing: not a record, not a ledger object, not a commit, not a tracked file, not a file in this history\n", $1, $3, $2 }' \
       res="$tmp/resolved" "$tmp/resolved" "$tmp/refs" >> "$tmp/findings"
   fi
   mj_phase_end knowledge:check-resolve "$t0"
@@ -1460,10 +1462,46 @@ mj_knowledge_check_files() {
   return 0
 }
 
-# Distinct typed references on stdin, one per line; prints `ref<TAB>ok|missing|refused|unknown`.
+# A file reference the tree no longer holds, found in git history (I1987). A record's
+# provenance is a statement about when it was written, and deleting the file it cites later
+# does not make the citation false: OSCILLA's 5467193 removed tests/engine.cjs and
+# tests/smoke.cjs, two notes cited them, and `knowledge check` failed with no remedy but
+# rewriting the evidence. Two forms resolve here:
+#
+#   file:<path>@<commit>   pinned: the path at that commit (7 to 40 hex digits), and only there
+#   file:<path>            the path at the newest commit reachable from HEAD that touched it
+#
+# Prints `<commit>:<path>`, the blob that answers (`git show` reads it), and returns 1 when
+# no commit of this history ever held the path — a reference to a file that never existed
+# still resolves to nothing. Literal pathspecs: `file:*.md` names one path, not a glob. A
+# shallow clone that lacks the commit cannot vouch for it and answers missing, as it does for
+# a `commit:` reference.
+mj_knowledge_file_in_history() {
+  local ident="$1" path commit last
+  case "$ident" in
+    *@*)
+      path="${ident%@*}"; commit="${ident##*@}"
+      if [ -n "$path" ] && printf '%s' "$commit" | grep -Eqx '[0-9a-f]{7,40}'; then
+        mj_git cat-file -e "$commit:$path" 2>/dev/null || return 1
+        printf '%s:%s\n' "$commit" "$path"; return 0
+      fi ;;
+  esac
+  case "$ident" in ''|/*|..|../*|*/..|*/../*) return 1 ;; esac
+  last="$(mj_git --literal-pathspecs rev-list -1 HEAD -- "$ident" 2>/dev/null)" || return 1
+  [ -n "$last" ] || return 1
+  # the newest commit that touched it either still holds it or is the one that deleted it
+  if mj_git cat-file -e "$last:$ident" 2>/dev/null; then printf '%s:%s\n' "$last" "$ident"
+  else printf '%s^:%s\n' "$last" "$ident"; fi
+}
+
+# Distinct typed references on stdin, one per line; prints
+# `ref<TAB>ok|historical|missing|refused|unknown`. `historical` is a file or test the tree no
+# longer holds and git history does (mj_knowledge_file_in_history): it resolves, and the check
+# names it rather than passing it in silence.
 # The batches: one pass over the ledger for every episode and task named, one
 # `git cat-file --batch-check` for every commit, one listing of ids for the rules, the
-# decisions and the project model; a file is a stat.
+# decisions and the project model; a file is a stat, and a git lookup only when the stat
+# finds nothing.
 mj_knowledge_resolve_refs() {
   local tmp led; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.krr.XXXXXX")"; led="$(mj_knowledge_ledger)"
   LC_ALL=C sort -u > "$tmp/refs"
@@ -1497,7 +1535,9 @@ mj_knowledge_resolve_refs() {
   while IFS= read -r ref; do
     kind="${ref%%:*}"; ident="${ref#*:}"; st=missing
     case "$kind" in
-      file|test) [ -e "$MJ_ROOT/$ident" ] && st=ok ;;
+      file|test)
+        if [ -e "$MJ_ROOT/$ident" ]; then st=ok
+        elif mj_knowledge_file_in_history "$ident" >/dev/null; then st=historical; fi ;;
       knowledge) { [ -f "$cdir/$ident.md" ] || [ -f "$kdir/$ident.md" ]; } && st=ok ;;
       session|commit|rule|adr|issue) grep -Fxq "$kind$MJ_TAB$ident" "$tmp/have" && st=ok ;;
       task|decision) if [ "$ident" = none ]; then st=refused; else grep -Fxq "task$MJ_TAB$ident" "$tmp/have" && st=ok; fi ;;
@@ -1509,9 +1549,10 @@ mj_knowledge_resolve_refs() {
   return 0
 }
 
-# One reference: 0 when it resolves, 1 otherwise.
+# One reference: 0 when it resolves, in the tree or in its history; 1 otherwise.
 mj_knowledge_ref_resolves() {
-  [ "$(printf '%s\n' "$1" | mj_knowledge_resolve_refs | cut -f2)" = ok ]
+  case "$(printf '%s\n' "$1" | mj_knowledge_resolve_refs | cut -f2)" in ok|historical) return 0 ;; esac
+  return 1
 }
 
 # The records the check covers: every Markdown file under candidates/ and curated/ that
@@ -1563,6 +1604,15 @@ mj_knowledge_check_cmd() {
       [ "$first" = 1 ] || printf ','; first=0
       printf '{"path":"%s","code":"%s","message":"%s"}' "$(mj_json_esc "$rel")" "$code" "$(mj_json_esc "$msg")"
     done < "$tmp/findings"
+    # the references that resolved through git history alone, so a reader sees which
+    # provenance outlived its file
+    printf '],"historical":['; first=1
+    local ref field
+    while IFS="$MJ_TAB" read -r rel ref field; do
+      [ -n "$rel" ] || continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"path":"%s","reference":"%s","field":"%s"}' "$(mj_json_esc "$rel")" "$(mj_json_esc "$ref")" "$(mj_json_esc "$field")"
+    done < "$tmp/historical"
     printf ']}\n'
   else
     while IFS= read -r f; do
@@ -1572,7 +1622,13 @@ mj_knowledge_check_cmd() {
           mj_fail knowledge "$rel" "$msg" "majordomus knowledge check"
         done
       else
-        mj_ok knowledge "$f" "valid against knowledge/v1; every reference resolves"
+        local hist
+        hist="$(awk -F'\t' -v f="$f" '$1 == f { printf "%s%s", (n++ ? ", " : ""), $2 }' "$tmp/historical")"
+        if [ -n "$hist" ]; then
+          mj_ok knowledge "$f" "valid against knowledge/v1; every reference resolves, historical (deleted from the tree, held by git history): $hist"
+        else
+          mj_ok knowledge "$f" "valid against knowledge/v1; every reference resolves"
+        fi
       fi
     done < "$tmp/records"
     printf 'knowledge check: %s record(s), %s failing\n' "$n" "$failing"
