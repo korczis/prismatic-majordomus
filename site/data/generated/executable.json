@@ -3552,6 +3552,23 @@
       "tests": [],
       "title": "The whole topology",
       "tool": "majordomus_worktrees"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-uncommitted",
+      "claims": [],
+      "cli": "majordomus worktree uncommitted",
+      "id": "worktree.uncommitted",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-uncommitted/",
+      "slug": "worktree-uncommitted",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Uncommitted work in the linked worktrees, and what holds it",
+      "tool": "majordomus_worktree_uncommitted"
     }
   ],
   "claims": {
@@ -4190,7 +4207,7 @@
     ]
   },
   "counts": {
-    "capabilities": 199,
+    "capabilities": 200,
     "claims": 93,
     "modules": 57
   },
@@ -5840,6 +5857,11 @@
           "id": "worktree.topology",
           "route": "/registry/capabilities/worktree-topology/",
           "slug": "worktree-topology"
+        },
+        {
+          "id": "worktree.uncommitted",
+          "route": "/registry/capabilities/worktree-uncommitted/",
+          "slug": "worktree-uncommitted"
         }
       ],
       "claims": [],

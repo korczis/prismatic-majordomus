@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.26.0"
   },
-  "fingerprint": "c434598500ff190cfad90fa61a0ce87d7f1dac241c6ce74c5598d63a28a4ef67",
+  "fingerprint": "9b63b568ce8b513e760d7ed1cf890be6eb2f5fd1e583caa2380593f2607a92e9",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 69,
+        "capabilities": 70,
         "moments": 17
       },
       "evidence": {
@@ -4733,6 +4733,15 @@
               "resource": "majordomus://worktrees",
               "route": "GET /api/v1/worktrees",
               "cli": "majordomus worktree topology"
+            },
+            {
+              "id": "worktree.uncommitted",
+              "title": "Uncommitted work in the linked worktrees, and what holds it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_uncommitted",
+              "route": "GET /api/v1/worktrees/uncommitted",
+              "cli": "majordomus worktree uncommitted"
             }
           ]
         },
@@ -5065,11 +5074,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 14,
-        "mcp_tools": 14,
+        "capabilities": 15,
+        "mcp_tools": 15,
         "mcp_resources": 2,
-        "http_routes": 14,
-        "cli_paths": 10,
+        "http_routes": 15,
+        "cli_paths": 11,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5199,6 +5208,15 @@
               "resource": "majordomus://worktrees",
               "route": "GET /api/v1/worktrees",
               "cli": "majordomus worktree topology"
+            },
+            {
+              "id": "worktree.uncommitted",
+              "title": "Uncommitted work in the linked worktrees, and what holds it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_uncommitted",
+              "route": "GET /api/v1/worktrees/uncommitted",
+              "cli": "majordomus worktree uncommitted"
             }
           ]
         }
@@ -5302,11 +5320,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -17810,17 +17828,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2378,
-    "builtin": 199,
-    "declarative": 2179,
+    "capabilities": 2380,
+    "builtin": 200,
+    "declarative": 2180,
     "modules": 57,
-    "mcp_tools": 190,
-    "mcp_resources": 2234,
-    "http_routes": 194,
-    "cli_commands": 204,
+    "mcp_tools": 191,
+    "mcp_resources": 2235,
+    "http_routes": 195,
+    "cli_commands": 205,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2179,
+    "objects": 2180,
     "by_kind": {
       "adr": 105,
       "application": 5,
@@ -17853,7 +17871,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },

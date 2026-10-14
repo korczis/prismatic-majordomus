@@ -101,9 +101,9 @@ flowchart TD
 
 Business logic exists once, in `apps/majordomus-cli/src/worktree/`. Every surface is an
 adapter that renders or projects what the service answered; none derives a path, decides a
-standing or judges whether a move is safe. The four read-only questions are capabilities
+standing or judges whether a move is safe. The five read-only questions are capabilities
 of the registry (`worktree.topology`, `worktree.status`, `worktree.inspect`,
-`worktree.migration_plan`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
+`worktree.migration_plan`, `worktree.uncommitted`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
 the Cockpit and the generated reference without any of those carrying a route or a schema
 of their own. Creating, migrating, repairing and removing are command-line operations of
 the same service. A capability that writes the repository must declare the effect
@@ -180,6 +180,7 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+majordomus worktree uncommitted                # uncommitted work in linked worktrees, and what holds it
 ```
 
 <!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
@@ -206,6 +207,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -227,7 +229,7 @@ Shell completion of the branch arguments reads the live set rather than a list:
 ```bash
 # zsh
 _mj_wt_branches() { compadd -- ${(f)"$(majordomus worktree branches 2>/dev/null)"} }
-compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
+compdef '_arguments "1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup uncommitted branches)" "2:branch:_mj_wt_branches"' majordomus-worktree
 ```
 
 ## Lifecycle
@@ -441,6 +443,52 @@ which stay. It includes the combination the refusals exist for: a branch merged 
 trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
+
+## Uncommitted work nobody holds
+
+A branch whose commits reach no remote is named by `doctor` (`clone unpushed`). Work that
+reached no commit at all was not: on 2026-10-07 the supersession-trust half of the
+integration safety fixes sat as 45 uncommitted files in the worktree of a session that had
+ended, and on 2026-10-08 the completion doctrine sat as 21 staged files in another. Both
+were found because somebody happened to read those directories, and pushed as
+`rescue/...` branches; the same evening the data volume had 125 MiB free (I1995).
+
+`majordomus worktree uncommitted` (`worktree.uncommitted`, `majordomus_worktree_uncommitted`,
+`GET /api/v1/worktrees/uncommitted`) lists every linked worktree whose index or working tree
+holds changes — staged, unstaged, untracked and conflicted paths counted together — with:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| field | what it is |
+|---|---|
+| `paths`, `work` | how many paths, and the counts `worktree status` gives |
+| `oldest_change`, `age` | the earliest modification time among the changed paths; for a path that no longer exists (a deletion) the index file's time stands in |
+| `task` | the active task recorded there: `.ai/local/state/current.yaml` with outcome `active`, the record `start` writes and `finish` closes |
+| `episodes` | the open episodes there (`.ai/local/state/sessions-open/`), each with its last sign of life and whether it is stranded |
+| `process_inside` | a process has its working directory inside, by the `lsof` reading `cleanup --remove` refuses on |
+| `standing` | `held` when the task, an episode that is not stranded or a process holds it; otherwise `abandoned` when the oldest change is older than the threshold (or its age cannot be read), else `recent` |
+| `remedy` | the command that would commit the work there and push it to `rescue/<branch>-<YYYYMMDD>`; suggested, never run |
+
+</div>
+
+
+The threshold is the policy's `session.stranded_after`, the silence after which an episode's
+client is taken to be gone. It answers both questions asked here — does an open episode
+still hold the work, and has work that nothing holds waited long enough to be abandoned — so
+there is no second number to drift from it; `--older-than` names another for one reading.
+A policy that declares none judges nothing abandoned and says so.
+
+`majordomus doctor` renders the reading: one `WARN clone <path>` per abandoned worktree with
+its count and its age, and the rescue command as the remedy; held and recent work is
+counted in one `OK`. The reading takes one `git status` per linked worktree, about 15 s over
+three hundred of them, so `.githooks/pre-commit` runs doctor as
+`MAJORDOMUS_DOCTOR_CONTEXT=commit bin/majordomus doctor`: in that context, the only one doctor
+accepts, the reading is left out and an `INFO clone uncommitted` line says so and names
+`majordomus worktree uncommitted`. Neither the reading nor doctor writes anything: every `git status`
+runs under `GIT_OPTIONAL_LOCKS=0`, so no index is refreshed, and another worktree's
+`.ai/local/` is read, never written. `test/cases/3025_abandoned_work_in_a_worktree_is_named.sh`
+plants an abandoned worktree, a held one and a recent one, and holds `git status` of every
+worktree byte-identical across the reading, the MCP tool and doctor.
 
 ## A build behind another worktree's lock
 

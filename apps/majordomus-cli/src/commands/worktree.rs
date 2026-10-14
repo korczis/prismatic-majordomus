@@ -20,8 +20,8 @@ use crate::cli::{OutputFormat, WorktreeArgs, WorktreeCommand};
 use crate::error::{Error, Result};
 use crate::worktree::{
     migrate, BranchState, CreateRequest, Detail, DirtyState, MigrationAction, MigrationOptions,
-    MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport, StepOutcome,
-    TopologyDiagnostic, WorktreeService, WorktreeState, EXIT_REFUSED,
+    MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport, StepOutcome, Threshold,
+    TopologyDiagnostic, WorkStanding, WorktreeService, WorktreeState, EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -86,6 +86,15 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             remove(&svc()?, &selector, force, format, &mut out)
         }
         Some(WorktreeCommand::Cleanup { remove }) => cleanup(&svc()?, format, remove, &mut out),
+        Some(WorktreeCommand::Uncommitted { older_than }) => {
+            let threshold = Threshold::declared_at(&start, older_than.as_deref()).map_err(|r| {
+                Error::Refused {
+                    code: crate::cli::EXIT_USAGE,
+                    reason: format!("worktree uncommitted: {r}"),
+                }
+            })?;
+            uncommitted(&svc()?, &threshold, format, &mut out)
+        }
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -564,25 +573,73 @@ fn cleanup(
     Ok(0)
 }
 
-/// Is anything working inside this directory right now?
-///
-/// `lsof -a -d cwd` asks the kernel which processes have their working directory there, which
-/// is the only reading that is true at the moment it is taken. The mtime of a worktree is not:
-/// two of the four swept on 2026-09-15 looked untouched since the 12th and had live processes
-/// inside them. A missing `lsof` is not "nothing is running" — it is not knowing, and the
-/// caller refuses on `None` rather than removing.
+/// `worktree uncommitted`: the reading, one block per worktree, abandoned first. Exit 0
+/// whatever it finds: it is a reading, and `doctor` is what warns.
+fn uncommitted(
+    svc: &WorktreeService,
+    threshold: &Threshold,
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let r = svc.uncommitted(threshold).map_err(refuse)?;
+    if format == OutputFormat::Json {
+        json(out, &r)?;
+        return Ok(0);
+    }
+    let against = match (&threshold.declared, threshold.seconds) {
+        (Some(d), Some(_)) => format!("{d} ({})", threshold.source),
+        _ => "no threshold".into(),
+    };
+    w(
+        out,
+        format!("uncommitted work in linked worktrees, judged against {against}:"),
+    )?;
+    for e in &r.worktrees {
+        w(
+            out,
+            format!(
+                "  {:<9} {}  {}  {} path(s) ({}), oldest changed {} ago",
+                e.standing.as_str(),
+                e.label,
+                e.path,
+                e.paths,
+                e.work.summary(),
+                e.age.as_deref().unwrap_or("an unknown time")
+            ),
+        )?;
+        if e.held_by.is_empty() {
+            w(
+                out,
+                "            held by nothing: no active task, open episode or process",
+            )?;
+        } else {
+            w(out, format!("            held by {}", e.held_by.join(", ")))?;
+        }
+        if e.standing == WorkStanding::Abandoned {
+            w(out, format!("            preserve: {}", e.remedy))?;
+        }
+    }
+    for f in &r.findings {
+        w(out, format!("  note: {f}"))?;
+    }
+    let t = &r.tallies;
+    w(
+        out,
+        format!(
+            "worktree uncommitted: {} linked worktree(s) read, {} with uncommitted work — {} abandoned, {} recent, {} held; nothing was changed",
+            t.measured, t.uncommitted, t.abandoned, t.recent, t.held
+        ),
+    )?;
+    Ok(0)
+}
+
+/// Is anything working inside this directory right now? The service's one reading of it
+/// ([`crate::worktree::state::processes_inside`]); a missing `lsof` is not "nothing is
+/// running" — it is not knowing, and the caller refuses on `None` rather than removing.
 fn occupied(path: &str) -> Option<bool> {
-    let real = std::fs::canonicalize(path).ok()?;
-    let real = real.to_string_lossy().to_string();
-    let out = std::process::Command::new("lsof")
-        .args(["-a", "-d", "cwd", "-Fn"])
-        .output()
-        .ok()?;
-    let text = String::from_utf8_lossy(&out.stdout);
-    Some(text.lines().any(|l| {
-        l.strip_prefix('n')
-            .is_some_and(|p| p == real || p.starts_with(&format!("{real}/")))
-    }))
+    crate::worktree::state::processes_inside(&[std::path::Path::new(path)])?
+        .first()
+        .copied()
 }
 
 /// Remove the worktrees the listing offers, each re-measured immediately before it goes.

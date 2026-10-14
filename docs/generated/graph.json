@@ -1861,6 +1861,15 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.uncommitted",
+        "kind": "capability",
+        "label": "worktree.uncommitted",
+        "summary": "Uncommitted work in the linked worktrees, and what holds it",
+        "route": "/cockpit/capabilities/worktree.uncommitted",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
         "id": "command:adr",
         "kind": "command",
         "label": "adr",
@@ -31440,6 +31449,8 @@
             "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
             "The reading writes nothing: `git status` of every worktree is the same before and after it"
           ],
+          "completed_at": "2026-10-14T17:17:04Z",
+          "completed_event": "sha256:f16e26b2e313440cea006371c32e3c6b786d4177989d5b5748d127c810fc0f1d",
           "created_at": "2026-10-08",
           "evidence_required": [
             "abandoned_index_named_case",
@@ -31456,7 +31467,9 @@
             "test/cases"
           ],
           "slug": "uncommitted-work-in-a-worktree-is-named",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T17:16:55Z",
+          "started_event": "sha256:d7ae87a85d350c67030156194ad7b0b61a83d7fb2ab60ab98ad2afc23553f56a",
+          "updated_at": "2026-10-14T17:17:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -53022,6 +53035,13 @@
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-3025-abandoned-work-in-a-worktree-is-named-sh",
+        "source": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "kind": "test",
         "label": "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -60961,6 +60981,26 @@
       },
       {
         "source": "capability:worktree.topology",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -82850,6 +82890,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88153,11 +88198,16 @@
         "source": "module:worktree",
         "target": "capability:worktree.topology",
         "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.uncommitted",
+        "kind": "composes"
       }
     ],
     "metadata": {
-      "nodes": 2795,
-      "edges": 6128,
+      "nodes": 2797,
+      "edges": 6134,
       "acyclic": false,
       "truncated": false
     }

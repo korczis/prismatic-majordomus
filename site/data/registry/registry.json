@@ -6,27 +6,27 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "a562a72bd5a4ebb3d897b18fcbdddf2e8a76b18673dc64afa0d957471d02520c",
+    "fingerprint": "a5073130fa4b2c7167aa5f53ea493556f2f3e149c9e623a74471607d913f31a1",
     "summary": {
-      "total": 2378,
-      "builtin": 199,
-      "declarative": 2179,
+      "total": 2380,
+      "builtin": 200,
+      "declarative": 2180,
       "by_kind": {
         "command": 30,
-        "query": 169,
-        "resource": 2179
+        "query": 170,
+        "resource": 2180
       },
       "by_stability": {
-        "behaviorally_verified": 139,
+        "behaviorally_verified": 140,
         "experimental": 51,
-        "implemented": 2188
+        "implemented": 2189
       },
-      "mcp_tools": 190,
-      "mcp_resources": 2234,
-      "http_routes": 194,
-      "cli_commands": 107,
+      "mcp_tools": 191,
+      "mcp_resources": 2235,
+      "http_routes": 195,
+      "cli_commands": 108,
       "modules": 91,
-      "benchmark_required": 169,
+      "benchmark_required": 170,
       "benchmark_waived": 30,
       "cached": 54
     },
@@ -80571,6 +80571,388 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "kind": "query",
+        "title": "Uncommitted work in the linked worktrees, and what holds it",
+        "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+        "input": {
+          "name": "UncommittedInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "older_than": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work."
+              }
+            },
+            "description": "What to judge uncommitted work against.",
+            "title": "UncommittedInput"
+          }
+        },
+        "output": {
+          "name": "UncommittedReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`UNCOMMITTED_SCHEMA`."
+              },
+              "observed_at": {
+                "type": "string",
+                "description": "When the reading was taken, RFC 3339 in UTC."
+              },
+              "threshold": {
+                "$ref": "#/$defs/Threshold",
+                "description": "The threshold it was judged against."
+              },
+              "worktrees": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/UncommittedWorktree"
+                },
+                "description": "Every linked work tree with uncommitted work, abandoned first, then oldest first."
+              },
+              "tallies": {
+                "$ref": "#/$defs/UncommittedTallies",
+                "description": "The counts."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read or judged, in words."
+              }
+            },
+            "required": [
+              "schema",
+              "observed_at",
+              "threshold",
+              "worktrees",
+              "tallies",
+              "findings"
+            ],
+            "description": "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```",
+            "title": "UncommittedReport",
+            "$defs": {
+              "Threshold": {
+                "type": "object",
+                "properties": {
+                  "declared": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The value as written (`12h`). Absent when nothing declares one."
+                  },
+                  "seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The same value, in seconds."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`."
+                  }
+                },
+                "required": [
+                  "source"
+                ],
+                "description": "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```"
+              },
+              "UncommittedWorktree": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Absolute, as git holds it."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out there. Absent when detached."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The branch, or `detached/<short commit>`."
+                  },
+                  "work": {
+                    "$ref": "#/$defs/DirtyState",
+                    "description": "The counts, as `worktree status` gives them."
+                  },
+                  "paths": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Every changed path: staged, unstaged, untracked and conflicted together."
+                  },
+                  "oldest_change": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since then."
+                  },
+                  "age": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The same, for a person (`3d`, `5h`, `40m`)."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The active task recorded there."
+                  },
+                  "episodes": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OpenEpisode"
+                    },
+                    "description": "The episodes open there."
+                  },
+                  "process_inside": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "A process has its working directory inside it. Absent when that could not be read."
+                  },
+                  "held_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What holds it, in words; empty when nothing does."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/WorkStanding",
+                    "description": "The verdict."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that would put this work on a remote ref. Suggested, never run."
+                  }
+                },
+                "required": [
+                  "path",
+                  "label",
+                  "work",
+                  "paths",
+                  "episodes",
+                  "held_by",
+                  "standing",
+                  "remedy"
+                ],
+                "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
+              },
+              "DirtyState": {
+                "type": "object",
+                "properties": {
+                  "staged": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with a change in the index."
+                  },
+                  "unstaged": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with a change in the work tree that is not in the index."
+                  },
+                  "untracked": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Untracked, not ignored, files."
+                  },
+                  "conflicted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with an unresolved merge conflict."
+                  },
+                  "clean": {
+                    "type": "boolean",
+                    "description": "Nothing above is non-zero."
+                  },
+                  "in_progress": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+                  }
+                },
+                "required": [
+                  "staged",
+                  "unstaged",
+                  "untracked",
+                  "conflicted",
+                  "clean"
+                ],
+                "description": "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+              },
+              "OpenEpisode": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The episode."
+                  },
+                  "last_sign_of_life": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its newest sign of life, RFC 3339 in UTC."
+                  },
+                  "stranded": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "description": "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```"
+              },
+              "WorkStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "A task, an episode or a process holds it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "recent",
+                    "description": "Nothing holds it, and it is younger than the threshold."
+                  },
+                  {
+                    "type": "string",
+                    "const": "abandoned",
+                    "description": "Nothing holds it, and it is older than the threshold — or its age cannot be read."
+                  }
+                ],
+                "description": "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```"
+              },
+              "UncommittedTallies": {
+                "type": "object",
+                "properties": {
+                  "measured": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Linked work trees whose status was read."
+                  },
+                  "uncommitted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, the ones holding uncommitted work: every entry of the listing."
+                  },
+                  "held": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by a task, an episode or a process."
+                  },
+                  "recent": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by nothing, younger than the threshold."
+                  },
+                  "abandoned": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by nothing, older than the threshold."
+                  }
+                },
+                "required": [
+                  "measured",
+                  "uncommitted",
+                  "held",
+                  "recent",
+                  "abandoned"
+                ],
+                "description": "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_uncommitted"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees/uncommitted"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "uncommitted"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "continuity",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ],
     "modules": [
@@ -81760,7 +82142,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81838,19 +82220,20 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "worktree.inspect",
           "worktree.migration_plan",
           "worktree.status",
-          "worktree.topology"
+          "worktree.topology",
+          "worktree.uncommitted"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ]
   },
   "index": {
-    "fingerprint": "94022cd3a3ad9106fb500c5a33852e0dc7a460b96f11a27d27474893d1a17eaf",
+    "fingerprint": "d54e8eec84bb90e08ff557ab8de1b79e409fe19ddac0a6df18156bea406ff04f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81904,7 +82287,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -87920,7 +88303,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134640
+        "bytes": 132209
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -88100,7 +88483,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 29290
+        "bytes": 32897
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -91051,7 +91434,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 86775
+        "bytes": 90546
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -94208,7 +94591,7 @@
         "path": ".ai/repo/project/issues/I1995.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 4281
       },
       {
         "uri": "majordomus://issue/I1996",
@@ -102373,6 +102756,14 @@
         "bytes": 5317
       },
       {
+        "uri": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "kind": "test",
+        "identity": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "path": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "source_class": "case",
+        "bytes": 12568
+      },
+      {
         "uri": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "kind": "test",
         "identity": "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -105591,7 +105982,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",
@@ -117623,6 +118014,130 @@
                 "command": "majordomus worktree cleanup",
                 "setup": [],
                 "expectation": "exits 0; prints cleanup-eligible"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "uncommitted"
+            ],
+            "route": "/docs/cli/worktree/uncommitted/",
+            "executable": true,
+            "usage": "majordomus worktree uncommitted [OPTIONS]",
+            "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+            "args": [
+              {
+                "name": "older_than",
+                "long": "older-than",
+                "positional": false,
+                "help": "Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)",
+                "value_name": "DURATION",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-uncommitted-none",
+                "title": "Work no commit carries, and whether anything holds it",
+                "description": "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+                "argv": [
+                  "worktree",
+                  "uncommitted"
+                ],
+                "command": "majordomus worktree uncommitted",
+                "setup": [],
+                "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed"
               }
             ],
             "subcommands": []
@@ -140678,6 +141193,23 @@
         },
         "input": "Empty",
         "output": "RepositoryTopology"
+      },
+      {
+        "name": "majordomus_worktree_uncommitted",
+        "id": "worktree.uncommitted",
+        "title": "Uncommitted work in the linked worktrees, and what holds it",
+        "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "UncommittedInput",
+        "output": "UncommittedReport"
       }
     ],
     "resources": [
@@ -142233,6 +142765,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees",
         "id": "worktree.topology",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees/uncommitted",
+        "id": "worktree.uncommitted",
         "kind": "query"
       }
     ],
@@ -149153,6 +149691,64 @@
         "route": "GET /api/v1/worktrees"
       },
       {
+        "key": "worktree.uncommitted|direct|policy-threshold",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false
+      },
+      {
+        "key": "worktree.uncommitted|direct|one-hour",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false
+      },
+      {
+        "key": "worktree.uncommitted|mcp|policy-threshold",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false,
+        "tool": "majordomus_worktree_uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|mcp|one-hour",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false,
+        "tool": "majordomus_worktree_uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|http|policy-threshold",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|http|one-hour",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/uncommitted"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -153680,6 +154276,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "system.mcp.process_cold",
           "module": "system",
           "transport": "mcp",
@@ -153780,22 +154397,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 199,
-          "covered": 169,
+          "required": 200,
+          "covered": 170,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
         },
         "http": {
-          "required": 194,
-          "covered": 169,
+          "required": 195,
+          "covered": 170,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 190,
-          "covered": 165,
+          "required": 191,
+          "covered": 166,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -153808,8 +154425,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 597,
-          "covered": 517,
+          "required": 600,
+          "covered": 520,
           "missing": 0,
           "waived": 80,
           "inapplicable": 0

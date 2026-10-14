@@ -1038,6 +1038,11 @@
       "path": "/evidence/capabilities/worktree-topology/"
     },
     {
+      "kind": "capability",
+      "subject": "capability:worktree.uncommitted",
+      "path": "/evidence/capabilities/worktree-uncommitted/"
+    },
+    {
       "kind": "claim",
       "subject": "claim:a-candidate-is-routed-by-what-it-is-about",
       "path": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/"
@@ -3421,6 +3426,11 @@
       "kind": "command",
       "subject": "command:worktree topology",
       "path": "/evidence/commands/worktree-topology/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree uncommitted",
+      "path": "/evidence/commands/worktree-uncommitted/"
     },
     {
       "kind": "command",
@@ -6075,6 +6085,18 @@
       "programs": [],
       "members": [
         "command:worktree topology"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.uncommitted": {
+      "kind": "capability",
+      "id": "worktree.uncommitted",
+      "page": "/evidence/capabilities/worktree-uncommitted/",
+      "programs": [],
+      "members": [
+        "command:worktree uncommitted"
       ],
       "routes": [],
       "mechanisms": [],
@@ -18158,6 +18180,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:worktree uncommitted": {
+      "kind": "command",
+      "id": "worktree uncommitted",
+      "page": "/evidence/commands/worktree-uncommitted/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:worktree validate": {
       "kind": "command",
       "id": "worktree validate",
@@ -21173,6 +21214,18 @@
       "programs": [],
       "members": [
         "capability:worktree.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_worktree_uncommitted": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_uncommitted",
+      "alias_of": "capability:worktree.uncommitted",
+      "programs": [],
+      "members": [
+        "capability:worktree.uncommitted"
       ],
       "routes": [],
       "mechanisms": [],
@@ -27521,6 +27574,7 @@
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:3021_a_tag_does_not_freeze_the_queue",
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
+    "suite:3025_abandoned_work_in_a_worktree_is_named",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
     "suite:305_a_command_is_claimed_or_classified",

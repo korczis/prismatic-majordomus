@@ -1,7 +1,7 @@
 +++
 title = "majordomus offload hosts"
 description = "The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0"
-weight = 98
+weight = 99
 [extra]
 route = "/docs/cli/offload/hosts/"
 command = "majordomus offload hosts"

@@ -322,6 +322,39 @@ pub struct SessionPolicy {
     /// mod reads the interval from that answer rather than from this file.
     #[serde(default)]
     pub brief_interval_minutes: Option<u64>,
+    /// `session.stranded_after:` — how long an open episode may be silent before its client
+    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
+    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
+    /// episode silent this long holds no work, and uncommitted work untouched this long
+    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
+    /// its own, because a second copy of the number is the drift the policy exists to stop.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::SessionPolicy;
+    /// let declared: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
+    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
+    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
+    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
+    /// // that would take the rest of the policy down with it
+    /// let bare: SessionPolicy =
+    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
+    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
+    /// ```
+    #[serde(default, deserialize_with = "scalar_text")]
+    pub stranded_after: Option<String>,
+}
+
+/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
+/// string and `3600` as a number, and both are the same kind of value to a duration.
+fn scalar_text<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<Option<String>, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(s) => Some(s),
+        serde_json::Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    })
 }
 
 impl Default for SessionPolicy {
@@ -332,6 +365,7 @@ impl Default for SessionPolicy {
             knowledge_on_end: true,
             knowledge_on_compact: true,
             brief_interval_minutes: None,
+            stranded_after: None,
         }
     }
 }
