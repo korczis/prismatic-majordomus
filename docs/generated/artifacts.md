@@ -221,7 +221,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `a738fb0fc0bbd0fa` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `8be07e9c371d8253` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `d69f70e98f54f3fe` |
-| `docs/generated/graph.json` | `graph` | json | 3283853 | `be99f563987c47ab` |
+| `docs/generated/graph.json` | `graph` | json | 3296998 | `755404f76aef8a12` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `8e1168a303cf5a0e` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `0db7987d9a50d6a5` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `bb79ad5d9cf5b7f8` |
@@ -344,9 +344,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `0a36bd51287524af` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `f7ab31437db1ca67` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 776375 | `f87f4669af0435f7` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 96179 | `641e76eb06c82626` |
-| `site/data/registry/product.json` | `site-product` | json | 701835 | `1cac39a5963077f3` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6714693 | `59ff460ea2da1377` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 96179 | `2258892372363da6` |
+| `site/data/registry/product.json` | `site-product` | json | 701835 | `1a4137988ba5ce86` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6718166 | `f5ec7d0b26b4e517` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `6776fe4fd3318db7` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `c9a23543c81995b8` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `2c37f64cc10aeff0` |
