@@ -35352,6 +35352,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2589",
+        "kind": "issue",
+        "label": "I2589",
+        "summary": "init projects into a region where a hand-written target already exists, and update says append",
+        "route": "/cockpit/objects/issue/i2589",
+        "source": ".ai/repo/project/issues/I2589.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a repository with an existing CLAUDE.md writes a policy whose projection for it is `mode: region` and says so",
+            "`update --dry-run` prints `append-region` for a file that exists and has no region",
+            "After update the bytes outside the markers are unchanged"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "lib/init.sh:82 copies share/skeleton/policy.yaml verbatim; lib/update.sh:101 prints `create` whenever no region is present; the REFUSE text of file mode never mentions region mode.",
+          "depends_on": [],
+          "desired_state": "init writes `mode: region` for an existing unstamped target and lists those targets; update plans `append-region <target>`; the refusal of a whole-file overwrite names region mode.",
+          "evidence_required": [
+            "init_region_for_existing_target_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "lib/update.sh",
+            "share/skeleton/policy.yaml",
+            "docs/ADOPTION.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "init-projects-into-a-region-over-a-hand-written-target",
+          "started_at": "2026-10-13T11:29:48Z",
+          "started_event": "sha256:f9f76d8a4c268843b5d65037eb7cfe99558180b19e93ad3ff2a1e5b7764e79bc",
+          "updated_at": "2026-10-13T11:29:48Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -36615,6 +36658,44 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "label": "a-second-adopter-is-served",
+        "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "route": "/cockpit/objects/milestone/a-second-adopter-is-served",
+        "source": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "findings_recorded"
+          ],
+          "non_scope": [
+            "The adopting repository itself: it is the evidence, read only",
+            "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 116,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-second-adopter-is-served",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/derive-check"
           ]
         }
       },
@@ -52930,6 +53011,13 @@
         "label": "test/cases/2985_session_records_are_capped_and_archived.sh",
         "route": "/cockpit/objects/test/test-cases-2985-session-records-are-capped-and-archived-sh",
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "kind": "test",
+        "label": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "route": "/cockpit/objects/test/test-cases-2997-init-projects-into-a-region-over-a-hand-written-target-sh",
+        "source": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh"
       },
       {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -78314,6 +78402,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2589",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2589",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -78620,6 +78718,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-second-adopter-is-served",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -82795,6 +82898,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88298,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2799,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }

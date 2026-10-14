@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "d7dedc227fa6757acc0715ff9e7774bfb637a6db7e7830dd1013907cc82dbf21",
     "summary": {
-      "total": 2379,
+      "total": 2382,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2183,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2183
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2192
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2238,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 363,
         "capability_ids": []
       },
       {
@@ -81305,7 +81305,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "0a4ecb5de22184789b26ffbe574d279d7b0a1becfa610f0e1e24eeacf803fe2e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,10 +81890,10 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 363,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 35,
+      "milestone": 36,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81904,7 +81904,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -87515,7 +87515,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 136362
+        "bytes": 137454
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -87920,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131889
+        "bytes": 134946
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -89666,7 +89666,7 @@
         "title": "Provider instruction files are generated from the one policy, deterministically",
         "path": "docs/claims/projection-generation.md",
         "source_class": "claim_page",
-        "bytes": 1972
+        "bytes": 2378
       },
       {
         "uri": "majordomus://document/docs/claims/prompt-asset.md",
@@ -91107,7 +91107,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 16237
+        "bytes": 18813
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -91299,7 +91299,7 @@
         "identity": "lib/update.sh",
         "path": "lib/update.sh",
         "source_class": "library",
-        "bytes": 13116
+        "bytes": 13809
       },
       {
         "uri": "majordomus://implementation/lib/usecase.sh",
@@ -95124,6 +95124,17 @@
         "bytes": 6346
       },
       {
+        "uri": "majordomus://issue/I2589",
+        "kind": "issue",
+        "identity": "I2589",
+        "title": "init projects into a region where a hand-written target already exists, and update says append",
+        "description": "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file.",
+        "path": ".ai/repo/project/issues/I2589.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1981
+      },
+      {
         "uri": "majordomus://issue/I2652",
         "kind": "issue",
         "identity": "I2652",
@@ -95470,6 +95481,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "identity": "a-second-adopter-is-served",
+        "title": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "description": "Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected.",
+        "path": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 1589
       },
       {
         "uri": "majordomus://milestone/a-session-leaves-what-it-observed",
@@ -102247,6 +102269,14 @@
         "bytes": 8281
       },
       {
+        "uri": "majordomus://test/test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "kind": "test",
+        "identity": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "path": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "source_class": "case",
+        "bytes": 7348
+      },
+      {
         "uri": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
         "kind": "test",
         "identity": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -105449,7 +105479,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 363
     },
     {
       "name": "knowledge",
@@ -105479,7 +105509,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "moment",
@@ -105601,7 +105631,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",
