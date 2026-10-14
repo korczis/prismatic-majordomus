@@ -413,15 +413,18 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                 .iter()
                 .rev()
                 .take(BOUND)
-                .map(|e| {
+                // an event is a mark by its identity, stream and sequence; one that states no
+                // sequence has none and is not drawn under an invented one
+                .filter_map(|e| {
                     let stream = word(e, "stream");
-                    serde_json::json!({
-                        "id": format!("{stream}:{}", e.get("seq").and_then(Value::as_u64).unwrap_or(0)),
+                    let seq = e.get("seq").and_then(Value::as_u64)?;
+                    Some(serde_json::json!({
+                        "id": format!("{stream}:{seq}"),
                         "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
                         "node": short(&stream),
                         "lamport": e.get("lamport").and_then(Value::as_u64),
                         "at": e.get("at").and_then(Value::as_u64),
-                    })
+                    }))
                 })
                 .collect();
             Ok(serde_json::json!({
@@ -802,6 +805,21 @@ mod tests {
         );
         let river = &scene(&p, "activity").model;
         assert_eq!(river["lamport"], 9);
+        // an event that states no sequence has no identity, and is no mark
+        let unnumbered = serde_json::json!({
+            "active": true, "lamport": 3,
+            "events": [{ "stream": "aa11-01", "lamport": 3, "body": { "kind": "claim" } }],
+        });
+        let q = project_from(
+            &all(&[(EVENTS, Ok(unnumbered))]),
+            "2026-10-14T00:00:00Z".into(),
+        );
+        assert_eq!(
+            scene(&q, "activity").model["events"]
+                .as_array()
+                .map(Vec::len),
+            Some(0)
+        );
         // newest first, each with a stable identity
         assert_eq!(river["events"][0]["id"], "aa11-01:2");
         assert_eq!(river["events"][1]["kind"], "session_opened");

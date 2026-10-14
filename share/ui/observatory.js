@@ -36,7 +36,8 @@
       probe.fillStyle = v;
       probe.fillRect(0, 0, 1, 1);
       const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
-      if (a !== 0) out = `rgb(${r},${g},${b})`;
+      const hex = (n) => n.toString(16).padStart(2, '0');
+      if (a !== 0) out = `#${hex(r)}${hex(g)}${hex(b)}`;
     }
     tokenCache.set(name, out);
     return out;
@@ -53,8 +54,11 @@
     const t = TONES[word];
     return t ? tone(t) : token('--mj-muted', '#889');
   }
-  function withAlpha(rgb, a) {
-    return rgb.startsWith('rgb(') ? rgb.replace('rgb(', 'rgba(').replace(')', `,${a})`) : rgb;
+  // A token's colour at an opacity: the same colour with its alpha channel written after it.
+  // A colour that did not resolve to six digits is left as it is.
+  function withAlpha(colour_, a) {
+    if (colour_.length !== 7) return colour_;
+    return `${colour_}${Math.round(Math.max(0, Math.min(1, a)) * 255).toString(16).padStart(2, '0')}`;
   }
   // A stable number in [0, 1) from a string: where a mark sits is a function of its identity.
   function unit(text, salt) {
@@ -565,9 +569,8 @@
         x: 0, y: 0, w: width, h: height, cx: width / 2, cy: height / 2, u,
         font: getComputedStyle(document.body).getPropertyValue('--font-mono').trim() || 'ui-monospace, monospace',
       };
+      // the stage's background is the stylesheet's; the canvas is cleared to show it
       c.clearRect(0, 0, width, height);
-      c.fillStyle = token('--mj-bg', '#070a12');
-      c.fillRect(0, 0, width, height);
       // decoration: dust that drifts whatever the sources say
       c.fillStyle = token('--mj-muted', '#778');
       const count = light ? 20 : dust.length;
