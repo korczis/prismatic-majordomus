@@ -29151,6 +29151,8 @@
             "The page a reader receives is not a single document of this size, or docs/COCKPIT.md states the size at which the contract changes and why",
             "/cockpit/graphs/composed is rendered by the page sweep that covers the other pages"
           ],
+          "completed_at": "2026-10-14T11:14:49Z",
+          "completed_event": "sha256:1dd19b3c819fe46117f64445e9ad1a14a56c0c89bfa21e56a6fed8cd8d04d8b9",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -29171,7 +29173,9 @@
             "apps/majordomus-cli/tests"
           ],
           "slug": "composed-graph-is-unreadable",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T11:14:41Z",
+          "started_event": "sha256:a39fd51ac1e67b03c2cdbee8ffce524dee64196c89f18869a5fb99dde1761182",
+          "updated_at": "2026-10-14T11:14:49Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit",
             "bash test/run.sh"
@@ -31525,6 +31529,8 @@
             "init, version and help in the same repository exit 0",
             "The shell tool and the Rust executable exit with the same code for the same missing layer"
           ],
+          "completed_at": "2026-10-14T11:15:00Z",
+          "completed_event": "sha256:37161dbb41fec0455be4e028313c3934091d2ce2b6f863f42b66c883c065dfdb",
           "created_at": "2026-10-08",
           "current_state": "The shell tool's read-only commands print the missing-manifest line and exit 0 outside a supervised repository.",
           "desired_state": "Outside a supervised repository every command that reports on the layer exits 12 with the line it prints today. Commands whose purpose is to work there — init, version, help — are unchanged.",
@@ -31542,7 +31548,9 @@
             "test/cases"
           ],
           "slug": "a-health-command-in-an-unsupervised-repository-does-not-exit-0",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T11:14:53Z",
+          "started_event": "sha256:89876d6be3b736ad609b21fd0263c41743253c4d1307bdb588d55220a63dd16e",
+          "updated_at": "2026-10-14T11:15:00Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -32227,6 +32235,8 @@
           "acceptance_criteria": [
             "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged"
           ],
+          "completed_at": "2026-10-14T12:16:23Z",
+          "completed_event": "sha256:031bf9da1a2a39216e00eefb61c8b26bda62c6620f08dacad9c547d8e9bfaa21",
           "created_at": "2026-10-09",
           "current_state": "apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.",
           "depends_on": [],
@@ -32247,7 +32257,9 @@
             "docs/MCP.md"
           ],
           "slug": "a-busy-server-is-not-taken-over",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:15:43Z",
+          "started_event": "sha256:54cde9fdc580dac31b26870c4d900574d22879f70e960e03f0f5898885d8b5a2",
+          "updated_at": "2026-10-14T12:16:23Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_busy --test mcp_shared"
@@ -32354,6 +32366,8 @@
             "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve",
             "No reader of a lease timing names a compiled constant directly"
           ],
+          "completed_at": "2026-10-14T12:16:27Z",
+          "completed_event": "sha256:4aebdce39765e7379117de73f94ae678fd42e880eb17be33c74a7659c9f31017",
           "created_at": "2026-10-09",
           "current_state": "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values.",
           "depends_on": [],
@@ -32379,7 +32393,9 @@
             "docs/MCP.md"
           ],
           "slug": "declared-lease-timings-are-used",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:15:47Z",
+          "started_event": "sha256:688f03bba5556ebf86c837623fc276287feb7e215ba328a01fd94fc581ed5845",
+          "updated_at": "2026-10-14T12:16:27Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_declared",
@@ -32398,6 +32414,8 @@
           "acceptance_criteria": [
             "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing"
           ],
+          "completed_at": "2026-10-14T12:16:31Z",
+          "completed_event": "sha256:cf3febfce3dff0f70fcf578ee07d9be349e5f3f7df429224e436df80229c7a49",
           "created_at": "2026-10-09",
           "current_state": "A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.",
           "depends_on": [],
@@ -32423,7 +32441,9 @@
             "docs/COCKPIT.md"
           ],
           "slug": "ui-use-keeps-the-server-and-its-address",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:15:51Z",
+          "started_event": "sha256:519bffc8c7526c1932149404a7c5b596e7088c07560d3fdd02910353edce7322",
+          "updated_at": "2026-10-14T12:16:31Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
@@ -32482,6 +32502,8 @@
             "Datagrams beyond the channel bound are dropped and counted in mesh status, and the process's memory stays bounded under a flood test",
             "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository"
           ],
+          "completed_at": "2026-10-14T12:16:35Z",
+          "completed_event": "sha256:99db356e0c760b964cb55258d28e17e112f5223df0afdc607949f69677de5949",
           "created_at": "2026-10-09",
           "current_state": "Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not.",
           "depends_on": [],
@@ -32504,7 +32526,9 @@
             "docs/MESH.md"
           ],
           "slug": "mesh-inputs-are-bounded",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:15:55Z",
+          "started_event": "sha256:c8b781f832fa4cd8c0e672a6a755ce001ab4aa08de4193e9ef11b9d1ca9d3cfe",
+          "updated_at": "2026-10-14T12:16:35Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh",
@@ -32924,6 +32948,8 @@
             "A degraded index is reported on /api/v1/ready with its reason, and docs/MCP.md says whether that is ready",
             "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled"
           ],
+          "completed_at": "2026-10-14T12:16:39Z",
+          "completed_event": "sha256:bb19d09909f1ade9f4874d96d655a00d114a6e32eaebfd5a0334e0b137b05b1b",
           "created_at": "2026-10-09",
           "current_state": "A server that lost its lease, or serves a degraded index, answers /api/v1/ready with ready true.",
           "depends_on": [],
@@ -32946,7 +32972,9 @@
             "docs/MCP.md"
           ],
           "slug": "ready-means-ready",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:15:59Z",
+          "started_event": "sha256:ca0d2512ef65b460f103b0b1618f8eb4ec5784846aaa6ef01c35e79cba5a1048",
+          "updated_at": "2026-10-14T12:16:39Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test health_server --test lease_lost"
@@ -32966,6 +32994,8 @@
             "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
             "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
           ],
+          "completed_at": "2026-10-14T12:16:43Z",
+          "completed_event": "sha256:ed04c55aa239b76beb4756dd1824df51cd5459c59f8b82e5ec0ec16238c41105",
           "created_at": "2026-10-09",
           "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
           "depends_on": [],
@@ -32988,7 +33018,9 @@
             "test/cases"
           ],
           "slug": "no-credential-leaves-the-runtime",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-14T12:16:03Z",
+          "started_event": "sha256:2c393dd7d7d9ab07c0bbc89f2677db2ec05c5ba9247f3d580356124e28b1204c",
+          "updated_at": "2026-10-14T12:16:43Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test redaction",
@@ -52812,6 +52844,13 @@
         "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "route": "/cockpit/objects/test/test-cases-3011-the-observatory-draws-nothing-it-did-not-read-sh",
         "source": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "kind": "test",
+        "label": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "route": "/cockpit/objects/test/test-cases-3015-an-unsupervised-repository-exits-12-from-both-tools-sh",
+        "source": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh"
       },
       {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -82574,6 +82613,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -87885,8 +87929,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2784,
-      "edges": 6114,
+      "nodes": 2785,
+      "edges": 6115,
       "acyclic": false,
       "truncated": false
     }
