@@ -7309,6 +7309,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0162",
+        "kind": "adr",
+        "label": "adr-0162",
+        "summary": "The board and the know-how peers share are pushed to the kiosk over one WebSocket, as the mesh converges, and drawn only from what the mesh recorded",
+        "route": "/cockpit/objects/adr/adr-0162",
+        "source": ".ai/repo/adrs/0162-the-board-is-pushed-over-one-websocket.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:apps/majordomus-cli/src/http/ws.rs",
+            "file:apps/majordomus-cli/src/http/events.rs",
+            "file:apps/majordomus-cli/src/ui/observatory.rs",
+            "file:share/ui/observatory.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "mesh",
+            "websocket"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -65264,6 +65291,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0162",
+        "target": "file:apps/majordomus-cli/src/http/events.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "file:apps/majordomus-cli/src/http/ws.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "file:share/ui/observatory.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0162",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -88190,8 +88257,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6137,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,89 @@
+---
+schema: adr/v1
+id: adr-0162
+kind: adr
+title: The board and the know-how peers share are pushed to the kiosk over one WebSocket, as the mesh converges, and drawn only from what the mesh recorded
+status: proposed
+date: 2026-10-14
+tags:
+  - ui
+  - observatory
+  - mesh
+  - websocket
+related:
+  - file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md
+  - file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md
+  - file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md
+  - file:apps/majordomus-cli/src/http/ws.rs
+  - file:apps/majordomus-cli/src/http/events.rs
+  - file:apps/majordomus-cli/src/ui/observatory.rs
+  - file:share/ui/observatory.js
+provenance:
+  origin: authored
+---
+
+# 162. The board and the know-how peers share are pushed to the kiosk over one WebSocket, as the mesh converges, and drawn only from what the mesh recorded
+
+## Context
+
+`/ui/kiosk/` shows the Observatory (ADR 0158, the kiosk scenes of #1124). Its mesh scenes are read by a
+page that polls `mesh.state` and then follows the journal by cursor over `fetch`
+(`/api/v1/observatory/events?after=`). Three things the owner asked for are missing:
+
+- a **board** (a notice board, *nástěnka*): who works where, on what, holding which claim,
+  waiting for which review, with which handover untaken — the picture the peers keep
+  describing to one another in sessions and review notes;
+- the **know-how the peers share**: what a review answered, what a handover's next action
+  says, which knowledge candidates and records exist, each attributed to the runtime and
+  branch that wrote it;
+- both **in real time**, without a person pressing reload and without a poll that is
+  seconds behind a mesh that has already converged.
+
+The repository already has a hand-written, one-way WebSocket (`http/ws.rs`, used by
+`/events` for executions) with an origin check, a bounded frame, a heartbeat and a hang-up
+look. It has no channel for the mesh.
+
+## Decision
+
+1. **One channel, `GET /api/v1/observatory/stream`, upgraded to a WebSocket.** It is
+   one-way like `/events`: the subscription is the request target (`after=<lamport>`), the
+   server ignores what the client sends. Frames are JSON text: `hello` (the cursor and the
+   transport), `board` (the whole board, sent on connect and whenever the cooperation
+   journal's Lamport stamp advances), `events` (the journal events above the cursor, by
+   identity) and `heartbeat`. A frame above `ws::MAX_FRAME_BYTES` is named, not sent.
+2. **It is a projection, not a store.** The board is `mesh.state` (full) projected once
+   (ADR 0044: gathered, not shared); the know-how is `mesh.state` reviews and handovers
+   plus `knowledge.status` and `knowledge.candidates`. No capability gains a write path,
+   and no record is kept by the stream.
+3. **Two scenes in the one inventory of ADR 0158**, drawn from the same frames as rows on
+   `/ui/mesh`:
+
+   | scene | reads | a mark is |
+   |---|---|---|
+   | `board`, Board | `mesh.state` | a card is one session, placed under its machine, with the claims it holds and the reviews and handovers it asked for |
+   | `knowhow`, Shared Know-how | `mesh.state`, `knowledge.candidates` | a note is one answer, handover next action or knowledge candidate, labelled by its runtime and branch |
+
+   A source that holds nothing makes the scene unavailable with the source's reason; an
+   expired review or claim is drawn expired, never as open.
+4. **The page prefers the socket and says which transport it uses.** Where it cannot open
+   (the public site, a snapshot, a proxy that refuses the upgrade) the cursor poll of ADR
+   0158 stays, and the status line reads `poll`, not `live`. A dropped socket reconnects from
+   its last cursor with backoff; a cursor the journal never reached resynchronises the page.
+5. **Automatic means no configuration.** Any runtime with the mesh active serves the
+   channel; events replicated from linked runtimes advance the stamp and are pushed like
+   local ones. No token, no list of peers, no new document kind.
+6. **Bounds.** At most the connection limit of `/events`, a board of at most
+   `observatory::BOUND` cards, a heartbeat on quiet, and the same origin check.
+
+## Consequences
+
+- The kiosk shows one more motion of the mesh than it did: a peer's claim or answer
+  appears when the journal has it, not when the next poll reads it.
+- One more long-lived connection per display; counted with `/events`.
+- The transport is hand-written (ADR of `ws.rs`); a client that needs to send something
+  still uses the HTTP API.
+
+## Not decided here
+
+- Writing to the board from the page. The board is announced through `majordomus_announce`
+  and `mesh session`; a form would be a second write path.

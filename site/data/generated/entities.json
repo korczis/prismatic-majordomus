@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -2843,6 +2843,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0162",
+          "kind": "adr",
+          "route": "/adrs/adr-0162/",
           "external": false
         }
       ]
@@ -7597,6 +7604,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0158/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0162",
+          "kind": "adr",
+          "route": "/adrs/adr-0162/",
+          "external": false
         }
       ]
     },
@@ -8184,6 +8198,82 @@
           "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0162",
+          "kind": "adr",
+          "route": "/adrs/adr-0162/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0162",
+      "identity": "adr-0162",
+      "slug": "adr-0162",
+      "cockpit": "/cockpit/objects/adr/adr-0162",
+      "title": "The board and the know-how peers share are pushed to the kiosk over one WebSocket, as the mesh converges, and drawn only from what the mesh recorded",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "observatory",
+        "mesh",
+        "websocket"
+      ],
+      "source": ".ai/repo/adrs/0162-the-board-is-pushed-over-one-websocket.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/events.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/ws.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/observatory.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/ui/observatory.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
           "external": false
         }
       ],
