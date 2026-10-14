@@ -54,6 +54,18 @@ shows: it triggers directly on a master push whose paths can change the site and
 soon as the bytes are proved, without waiting for gates that cannot change a published byte.
 Neither repeats the other's work.
 
+A third decides what GitHub's issues and milestones show. `.github/workflows/github.yml` runs
+on every push to master, with no path filter: it builds the executable, asks
+`scripts/github-sync --check` what GitHub does not show yet, runs `scripts/github-sync --apply`
+when something is owed and the checkout is still the tip of master, and then runs
+`scripts/ci/github-check`, the same `github-projection` gate validate runs. It holds
+`issues: write` and `contents: read`, one run at a time and never cancelled, and every step
+refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`, the rule is
+`project.the-projection-is-applied-at-landing`, and
+`test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
+runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
+how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
+
 ## The model: what can affect what
 
 `.ai/repo/ci/gates.yaml` is the one place the dependency map lives. It declares the gates
@@ -81,7 +93,11 @@ Two execution classes, both evidence-driven:
 - **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
   manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
   workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
-  model does not know.
+  model does not know. The pipeline's own data files under `.ai/repo/ci/` — the shard
+  durations, the case-number and GitHub-drift ratchets, the recorded baseline, the
+  directory's README — are not the pipeline: the `ci` class names each one in `except`, one
+  path at a time, and the `ci-data` class plans the gates that read it. A file that appears
+  under `.ai/repo/ci/` without being named still escalates.
 
 A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
 only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
@@ -136,7 +152,8 @@ person runs:
 
 ```bash
 scripts/ci/run-plan --job structure --plan plan.json   # one job's gates of a written plan, as CI runs them
-scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
+scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases;
+                                      # shellcheck in batches over MJ_LINT_JOBS workers (the CPUs)
 scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
@@ -294,6 +311,16 @@ intermediate commit, and an older tree can never land after a newer one. Cancell
 flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
 site stood 34 commits behind master for three hours.
 
+A pull request's run ends at its first red. Once one job has failed the run cannot be green,
+and the jobs still going hold runners the trunk's run and the deployments wait for: on
+2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
+step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
+cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
+still run, because they run `always()`, and report the run red. A push to master, the schedule
+and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
+its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
+rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
 ### The three ways a deploy fails, and who reports each
 
 A deploy that does not put the intended commit in front of a reader has failed, and until
@@ -437,6 +464,60 @@ back through the GitHub API and writes `.ai/repo/ci/baseline.json`: per run, per
 per step, with the commit, the runner, the event and whether the caches hit, so a later
 regression has a table to be compared with. The budgets are those measurements; a budget
 written here would be stale the day after.
+
+## The critical path, measured on 2026-10-10
+
+`.ai/repo/ci/baseline-2026-10-10.json` holds the last 60 `validate` runs before the V4
+delivery work, written by `scripts/ci-baseline --runs 60 --workflow validate`. It is the
+evidence later changes are compared with, and nothing reads it to plan a run.
+
+| Measure | Value |
+|---|---|
+| a pull request's verdict, when green | p50 104 min, p95 148 min (10 runs) |
+| a push to master, when green | p50 95 min (5 runs) |
+| pull-request runs that ended green | 10 of 49: 20 failed, 19 were cancelled |
+| runner time spent on runs that did not end green | 15624 of 22210 job-minutes, 70 % |
+| runner time of one green pull-request run | p50 399, p95 497 job-minutes |
+
+The jobs that set the wall clock, as medians of the green runs, with their queue time at
+the 95th percentile:
+
+| Job | Run p50 | Run p95 | Queue p95 |
+|---|---|---|---|
+| suite-shard (1) | 68 min | 86 min | 48 min |
+| suite-shard (2) | 68 min | 69 min | 58 min |
+| suite-shard (4) | 55 min | 71 min | 62 min |
+| suite-shard (3) | 50 min | 65 min | 73 min |
+| ui | 48 min | 50 min | 43 min |
+| site | 35 min | 40 min | 50 min |
+| interactions | 35 min | 36 min | 103 min |
+| coverage | 30 min | 34 min | 59 min |
+| structure | 28 min | 33 min | 35 min |
+| rust (3) | 28 min | 32 min | 75 min |
+
+Inside the jobs, the longest single steps of one run (38078789620) were the browser probe of
+the site (1360 s) and `rust-check` in rust (3) (1726 s).
+
+Why the runs that failed failed, by the gate or case each failing job named:
+
+| Cause | Where it failed | Count |
+|---|---|---|
+| a published tag whose record was not on master yet | `release-check` in structure | 11 of 16 structure failures |
+| the same, seen by the suite | case 103 in the suite shards | 26 |
+| changed lines without a test | coverage | 10 |
+| version and generated projections | rust (3) | 7 |
+
+The release window is the largest single cause, and `release-check` stays strict by the
+owner's decision: the remedy is a record that reaches master within minutes of its tag
+(ADR 0131). Coverage, the version surface and generated projections are gates that answer
+in minutes on a workstation, and in CI they answered after 30 to 100 minutes.
+
+The figures are reproduced from the file:
+
+```bash
+jq '[.runs[] | select(.event == "pull_request")] | group_by(.conclusion) | map({(.[0].conclusion): length}) | add' .ai/repo/ci/baseline-2026-10-10.json
+jq '[.runs[] | select(.conclusion != "success") | .jobs[].seconds // 0] | add / 60 | floor' .ai/repo/ci/baseline-2026-10-10.json
+```
 
 ## Reproducing CI locally
 

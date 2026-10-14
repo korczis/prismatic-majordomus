@@ -223,3 +223,182 @@ fn the_check_and_the_status_read_the_lease_through_one_function() {
         .unwrap()
         .starts_with(standing.as_str()));
 }
+
+#[test]
+fn the_mesh_is_a_dimension_of_health_and_unknown_where_no_server_decided_it() {
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let report = app
+        .context
+        .execute("health.report", serde_json::json!({}))
+        .expect("health.report answers");
+    let mesh = report["checks"]
+        .as_array()
+        .expect("checks")
+        .iter()
+        .find(|c| c["id"] == "mesh")
+        .cloned()
+        .expect("a mesh check (I2157)");
+    // a command-line process activates no mesh: unknown, never a guessed ok
+    assert_eq!(mesh["status"], serde_json::json!("unknown"), "{mesh}");
+}
+
+/// A committed declaration that enables the mesh, with every socket-opening transport off.
+const MESH_ENABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+
+/// [`MESH_ENABLED`] as the value a server activates its mesh from.
+fn declared() -> majordomus_cli::mesh::MeshConfig {
+    serde_json::from_value(json!({
+        "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
+        "multicast": { "enabled": false }, "trust": { "policy": "tofu" },
+    }))
+    .expect("a declaration")
+}
+
+/// A discovery provider whose start succeeds or fails as the test says, and whose status
+/// says the same: a transport the mesh doctor can count as running or failed without a
+/// socket being opened.
+struct Transport {
+    fails: bool,
+}
+
+impl majordomus_cli::mesh::MeshProvider for Transport {
+    fn id(&self) -> &'static str {
+        "stand_in"
+    }
+
+    fn start(
+        &mut self,
+        _: &majordomus_cli::mesh::ProviderContext,
+    ) -> Result<(), majordomus_cli::mesh::MeshError> {
+        if self.fails {
+            Err(majordomus_cli::mesh::MeshError::Provider(
+                "cannot bind: address in use".into(),
+            ))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn status(&self) -> majordomus_cli::mesh::ProviderStatus {
+        use majordomus_cli::mesh::provider::MeshProviderState;
+        majordomus_cli::mesh::ProviderStatus {
+            id: "stand_in".into(),
+            state: if self.fails {
+                MeshProviderState::Failed
+            } else {
+                MeshProviderState::Running
+            },
+            detail: self.fails.then(|| "cannot bind: address in use".into()),
+            sent: 0,
+            received: 0,
+        }
+    }
+}
+
+/// A fixture whose committed declaration enables the mesh, loaded, with its mesh activated
+/// from that declaration the way a server activates it, and one transport attached.
+fn activated(f: &Fixture, transport: Transport) -> majordomus_cli::app::App {
+    f.write(".ai/repo/mesh/majordomus.yaml", MESH_ENABLED);
+    f.commit("the mesh declaration");
+    let app = common::load_app(f);
+    app.context
+        .mesh
+        .activate_as(
+            &declared(),
+            std::sync::Arc::new(majordomus_cli::mesh::NodeIdentity::ephemeral().unwrap()),
+            "0000000000000001",
+            vec![],
+            vec![],
+            majordomus_cli::VERSION,
+        )
+        .expect("the mesh activates");
+    let _ = app.context.mesh.attach(Box::new(transport));
+    assert!(app.context.mesh.status().active);
+    app
+}
+
+/// With the mesh enabled and running, the health report's mesh dimension is the mesh
+/// doctor's verdict on it: ok, decided by the doctor's runtime check, and saying what runs.
+#[test]
+fn an_enabled_mesh_that_runs_is_a_healthy_dimension_as_the_doctor_says() {
+    let f = Fixture::new();
+    let app = activated(&f, Transport { fails: false });
+    let status = app.context.mesh.status();
+    let verdict =
+        majordomus_cli::mesh::doctor::runtime_verdict(Some(Ok(declared())), Some(&status));
+    assert!(verdict.ok, "the doctor passes a running mesh: {verdict:?}");
+
+    let report = app
+        .context
+        .execute("health.report", json!({}))
+        .expect("health.report answers");
+    let mesh = check(&report, "mesh");
+    assert_eq!(mesh["status"], "ok", "{mesh}");
+    assert_eq!(
+        mesh["detail"],
+        json!(verdict.detail),
+        "the dimension says what the doctor says"
+    );
+    let detail = mesh["detail"].as_str().unwrap();
+    assert!(
+        detail.starts_with("active as ") && detail.contains("1 of 1 provider(s) running"),
+        "{detail}"
+    );
+    assert_eq!(
+        mesh["decided_by"],
+        "mesh doctor's runtime check, over this server's mesh.status"
+    );
+    assert!(
+        mesh.get("findings").is_none(),
+        "a healthy mesh explains nothing: {mesh}"
+    );
+    app.context.mesh.stop();
+}
+
+/// With the mesh enabled and active but every transport it runs failed, the doctor fails it,
+/// and so does the health report's mesh dimension — naming the failed transport and carrying
+/// the doctor's remedy — and the report as a whole is no better than that failure.
+#[test]
+fn an_enabled_mesh_whose_every_transport_failed_fails_the_dimension_as_the_doctor_does() {
+    let f = Fixture::new();
+    let app = activated(&f, Transport { fails: true });
+    let status = app.context.mesh.status();
+    let verdict =
+        majordomus_cli::mesh::doctor::runtime_verdict(Some(Ok(declared())), Some(&status));
+    assert!(
+        !verdict.ok,
+        "the doctor fails a mesh that hears nothing: {verdict:?}"
+    );
+
+    let report = app
+        .context
+        .execute("health.report", json!({}))
+        .expect("health.report answers");
+    let mesh = check(&report, "mesh");
+    assert_eq!(mesh["status"], "fail", "{mesh}");
+    assert_eq!(mesh["detail"], json!(verdict.detail), "{mesh}");
+    let detail = mesh["detail"].as_str().unwrap();
+    assert!(
+        detail.contains("0 of 1 provider(s) running")
+            && detail.contains("failed: stand_in (cannot bind: address in use)"),
+        "the failed transport is named: {detail}"
+    );
+    let findings = mesh["findings"]
+        .as_array()
+        .unwrap_or_else(|| panic!("a failed mesh carries the remedy: {mesh}"));
+    assert_eq!(
+        findings,
+        &verdict
+            .remediation
+            .iter()
+            .map(|r| json!(r))
+            .collect::<Vec<_>>(),
+        "the remedy is the doctor's"
+    );
+    assert!(
+        rank(&report["status"]) >= rank(&json!("fail")),
+        "the report is at least as bad as its failed mesh: {report}"
+    );
+    app.context.mesh.stop();
+}

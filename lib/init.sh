@@ -3,7 +3,10 @@
 #
 # It seeds the tracked context (the protocol, the manifest, the policy, the profiles, the
 # reusable prompts, the vendored Majordomus rule baseline, the knowledge declarations, the
-# workflows) and the ignore boundary for the checkout-local half. It installs nothing: the
+# workflows) and the ignore boundary for the checkout-local half — or, with --personal, the
+# same layer kept as one person's own: covered in git's own exclude file, with a check that
+# nothing the repository shares was changed; --shared later hands such a layer to the team
+# (ADR 0145). It installs nothing: the
 # tool stays wherever it was run from, no shell file is touched, and .majordomus/ is never
 # created, because that path is only ever an optional installation of the tool itself.
 # Everything it writes under .ai/repo/ belongs to the repository from that moment; a newer
@@ -12,16 +15,28 @@
 . "$MJ_LIB_DIR/rules.sh"
 
 mj_cmd_init() {
-  local extend=0 a
+  local extend=0 personal=0 shared=0 a
   for a in "$@"; do case "$a" in
     --extend) extend=1 ;;
+    --personal) personal=1 ;;
+    --shared) shared=1; extend=1 ;;
     --help|-h) cat <<H
-usage: majordomus init [--extend]
+usage: majordomus init [--extend] [--personal | --shared]
   creates .ai/ in this repository from the tool's skeleton: the protocol and manifest,
   the tracked context under .ai/repo/ (policy, profiles, prompts, the vendored rule
   baseline, knowledge declarations, workflows, skills, adrs) and the ignore boundary
   for .ai/local/, where this checkout's own state lives
   --extend   add what is missing to an existing .ai/ and overwrite nothing
+  --personal a layer of your own in a repository other people share: nothing shared is
+             changed. No line is added to .gitignore; .ai/ is covered in git's own
+             exclude file (info/exclude of the git directory, which git never commits,
+             pushes or clones), and init fails (10) unless 'git status' reads the same
+             after it as before. Later writers (update, capture install) cover what they
+             write the same way and leave a file the project tracks alone. An --extend of
+             a personal layer stays personal without the flag
+  --shared   hand a personal layer to the team: remove the cover, add the two .gitignore
+             lines a plain init adds, and print what is now the repository's to commit.
+             Nothing is committed for you
   refuses (15) when .ai/ already exists without --extend, and when project data still
   lives under .majordomus/ (run: majordomus migrate)
   installs nothing: not the tool, not a hook, not a shell file; doctor names the hooks
@@ -38,8 +53,28 @@ H
     ai) [ "$extend" = 1 ] || mj_die "$MJ_EX_REFUSED" ".ai/ already exists in $MJ_ROOT (use --extend to add what is missing; nothing is overwritten)" ;;
     *) [ ! -e "$MJ_AI_DIR" ] || [ "$extend" = 1 ] || mj_die "$MJ_EX_REFUSED" "$(mj_rel "$MJ_AI_DIR")/ exists but carries no manifest; move it aside, or use --extend to seed the missing files" ;;
   esac
+  [ "$personal" = 1 ] && [ "$shared" = 1 ] && mj_die "$MJ_EX_USAGE" "init: --personal and --shared are two answers to one question"
+  if [ "$shared" = 1 ]; then
+    # only a personal layer can be shared: a layer the repository already tracks is shared
+    mj_personal_active || mj_die "$MJ_EX_REFUSED" "this layer is not personal, so there is nothing to share ($(mj_rel "$MJ_AI_DIR")/ is not covered in $(mj_personal_exclude_file))"
+    MJ_INIT_UNCOVERED="$(mj_personal_uncover)" || mj_die "$MJ_EX_INTERNAL" "cannot rewrite $(mj_personal_exclude_file)"
+  elif mj_personal_active; then
+    # what this layer already is: an --extend of a personal layer must not start writing
+    # .gitignore because the flag was not repeated
+    personal=1
+  fi
+  local ai_rel before=''; ai_rel="$(mj_rel "$MJ_AI_DIR")"
+  if [ "$personal" = 1 ]; then
+    # a layer the repository tracks is already shared: its history holds it, and covering
+    # it now would hide nothing and confuse everything
+    [ -z "$(mj_git ls-files -- "$ai_rel" 2>/dev/null | head -n 1)" ] \
+      || mj_die "$MJ_EX_REFUSED" "$ai_rel/ is tracked in $MJ_ROOT, so it is already shared; a personal layer is one git has never been given (git ls-files $ai_rel)"
+    # what the repository shows before anything is written: the measure the result is held to
+    before="$(mj_git status --porcelain --untracked-files=all 2>/dev/null)"
+    mj_personal_cover "$ai_rel/" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"
+  fi
 
-  MJ_INIT_CREATED=""
+  MJ_INIT_CREATED="" MJ_INIT_SCOPE_NOTE=""
   # the protocol and the registry, then every tracked section
   mj_init_file "$skel/ai/README.md" "$MJ_AI_DIR/README.md"
   mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
@@ -47,9 +82,9 @@ H
   mj_init_file "$skel/policy.yaml" "$MJ_POLICY_FILE"
   # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
   # the section seeds the file and says the manifest must name it
-  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
+  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
   else
-    mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
+    mj_init_scope "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
     printf 'note: %s names no scope section; add `scope: repo/scope.yaml` under sections: so that the file applies\n' "$(mj_rel "$MJ_AI_MANIFEST")" >&2
   fi
   mj_init_tree "$skel/profiles" "$MJ_PROFILES_DIR" '*.yaml'
@@ -113,12 +148,37 @@ H
   chmod 700 "$MJ_AI_LOCAL_DIR/prompts" 2>/dev/null || true
   [ -f "$MJ_STATE_DIR/decisions.md" ]      || cp "$skel/templates/decisions.md" "$MJ_STATE_DIR/decisions.md"
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
-  mj_init_gitignore
+  if [ "$personal" = 1 ]; then
+    MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_personal_exclude_file):/$ai_rel/"
+  else mj_init_gitignore; fi
 
   local rel; rel="${MJ_SELF:-$(cd "$MJ_BIN_DIR" && pwd)/majordomus}"
   if [ -n "$MJ_INIT_CREATED" ]; then
     printf 'created%s\n' "$MJ_INIT_CREATED" | tr ' ' '\n' | sed '1!s/^/  /'
   else printf 'nothing to add; .ai/ already carries every file the skeleton seeds\n'; fi
+  [ -z "$MJ_INIT_SCOPE_NOTE" ] || printf '%s\n' "$MJ_INIT_SCOPE_NOTE"
+  if [ "$personal" = 1 ]; then
+    # The claim is checked where it is made: an init that says "personal" and changed what
+    # the repository shows has not done what it said, and that is a failure, not a note.
+    local after; after="$(mj_git status --porcelain --untracked-files=all 2>/dev/null)"
+    if [ "$before" != "$after" ]; then
+      mj_fail personal "$ai_rel/" "git status changed; a personal init leaves what the repository shares as it found it" "git status --porcelain --untracked-files=all"
+      printf '%s\n' "$after" | grep -vxF -f <(printf '%s\n' "$before") | sed 's/^/  now shown: /' >&2
+      exit "$MJ_EX_CONTRACT"
+    fi
+    mj_personal_verify plain || exit "$MJ_EX_CONTRACT"
+    printf 'personal: this layer is yours; nothing the repository shares was changed. The cover is %s\n' "$(mj_personal_exclude_file)"
+    printf 'personal: it stays on this machine. To propose it to the team: majordomus init --extend --shared\n'
+  fi
+  if [ "$shared" = 1 ]; then
+    printf "shared: the cover is removed; these paths are now the repository's to commit, when you choose to:\n"
+    printf '%s\n' "$MJ_INIT_UNCOVERED" | sed -e '/^kept /d' -e '/\.mj-tmp$/d' -e 's|^/||' -e 's/^/  git add /' -e '/^  git add $/d'
+    printf '  git add .gitignore\n'
+    # a file that is one person's by its own name stays covered, and the policy still
+    # projects into it: the team's projection is theirs to name before the first commit
+    printf '%s\n' "$MJ_INIT_UNCOVERED" | sed -n 's|^kept /\(.*\)$|shared: \1 stays yours and stays covered; point that projection at the file the team reads before you commit the policy|p'
+    printf "shared: %s stays this checkout's own, as in every layer\n" "$(mj_rel "$MJ_AI_LOCAL_DIR")/"
+  fi
   cat <<OUT
 local state: $(mj_rel "$MJ_STATE_DIR")/ (ignored by git; this checkout's own)
 next: majordomus update      # generate the provider instruction files named in the policy
@@ -137,6 +197,31 @@ mj_init_file() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
   MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")"
+}
+# Seed the scope from the skeleton, keeping a `# stack: <name> (<marker>)` ... `# end stack:
+# <name>` block only when <marker> is at the repository's root: an adopter's scope names
+# what its tree holds, not this repository's Elixir and Rust paths (I1989). What was found
+# is said in MJ_INIT_SCOPE_NOTE, which the caller prints. Never overwrites.
+mj_init_scope() {
+  local src="$1" dst="$2" name marker keep=' ' found='' known=''
+  [ -f "$src" ] || mj_die "$MJ_EX_INTERNAL" "skeleton file missing: $src"
+  [ -e "$dst" ] && return 0
+  while read -r name marker; do
+    marker="${marker#(}"; marker="${marker%)}"
+    known="$known${known:+, }$marker"
+    if [ -e "$MJ_ROOT/$marker" ]; then keep="$keep$name "; found="$found${found:+, }$name ($marker)"; fi
+  done < <(sed -n 's/^[[:space:]]*# stack: \([a-z0-9_-]*\) (\(.*\))[[:space:]]*$/\1 (\2)/p' "$src")
+  mkdir -p "$(dirname "$dst")"
+  awk -v keep="$keep" '
+    /^[ \t]*# stack: /     { skip = (index(keep, " " $3 " ") == 0); if (!skip) print; next }
+    /^[ \t]*# end stack: / { if (!skip) print; skip = 0; next }
+    !skip' "$src" > "$dst"
+  MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")"
+  if [ -n "$found" ]; then
+    MJ_INIT_SCOPE_NOTE="scope: seeded for the stack found at the root: $found; edit $(mj_rel "$dst") for what else the tree holds"
+  else
+    MJ_INIT_SCOPE_NOTE="scope: no stack recognised at the root (looked for ${known:-nothing}); seeded only the entries every repository shares; add your own to $(mj_rel "$dst")"
+  fi
 }
 # copy every matching file of a skeleton directory into place, one by one, never overwriting
 mj_init_tree() {

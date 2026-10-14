@@ -1,7 +1,7 @@
 +++
 title = "A milestone will be closed on GitHub only once the intents it realises are satisfied"
 description = "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
-weight = 119
+weight = 121
 [extra]
 claim_id = "intent-closes-github-milestones"
 status = "planned"

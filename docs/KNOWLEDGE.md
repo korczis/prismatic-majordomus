@@ -32,6 +32,17 @@ one line, with:
 | `provenance.derived_from` | `session:`, `decision:`, `task:`, `commit:`, `issue:`, `file:`, `test:` | the evidence, as typed references that resolve |
 | `relations` | `relates_to`, `documents`, `supports`, `contradicts`, `supersedes`, `depends_on` | what it stands in relation to, never what it restates |
 
+A record's provenance outlives the files it cites (I1987). A `file:` or `test:` reference
+the tree no longer holds resolves through git history — the newest commit reachable from
+`HEAD` that touched the path, which still holds it or deleted it — and `file:<path>@<commit>`
+pins it to one commit. `knowledge check` names such a reference as historical rather than
+passing it in silence (`--json` lists them under `historical`), and `knowledge record` resolves
+it as `historical` with the blob that answers, `<commit>:<path>`, as its target; the shell
+check (`mj_knowledge_file_in_history`) and the Rust resolver (`file_in_history`) answer alike.
+A path no commit of this history ever held still resolves to nothing, and so does a pin at a
+commit that did not hold it. A shallow clone that lacks the commit cannot vouch for it, as for
+a `commit:` reference. `test/cases/3023` deletes a cited file and commits the deletion.
+
 A record is never a summary of a conversation and never quotes a prompt or a turn; the check
 that keeps `project.never-store-transcripts` applies to its title, its description and its
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
@@ -47,7 +58,7 @@ every kind, and both carry a `README.md` contract.
 ## What is derived, from what
 
 The evidence is the ledger lines the episode stamped and the commits it made. The mapping is
-this table and the deriver implements exactly this table.
+this table and the deriver implements exactly this table; ADR 0118 added its observation row.
 
 | evidence | record | class | epistemics | derived_from |
 |---|---|---|---|---|
@@ -55,6 +66,7 @@ this table and the deriver implements exactly this table.
 | `question.resolved` | the answer, stating the question it answers | `fact` | `observed` | `session:<episode>`, `task:<task-id>` |
 | `task.finished` with outcome `blocked`, `failed` or `no_match` | the outcome and the first line of the task note's `# Reason` | `lesson` | `inferred` | `session:<episode>`, `task:<task-id>` |
 | `task.finished` with outcome `completed` and a `verify` command | the verification that passed | `fact` | `observed` | `session:<episode>`, `task:<task-id>` |
+| `observation.recorded` (ADR 0118) | the statement, with `about` set to the subject and `route` derived from it | `lesson` | `observed` | `session:<episode>`, `task:<task-id>` when one was active, and each evidence reference that resolves now (a commit, a tracked file or test) |
 | commits of the episode touching `.ai/repo/rules/` or `.ai/repo/adrs/` | no record; each record of the episode gains `commit:<sha>` in `derived_from` and `relates_to file:<path>` in `relations` | — | — | — |
 
 Every derived decision is a `convention`. Reading the wording to decide whether a decision
@@ -73,6 +85,32 @@ inside a decision neither cuts the record short nor changes its identity. A line
 carries a transcript marker yields no record; it is reported as skipped rather than written
 for the integrity check to refuse. No network, no model, no `eval`
 (`project.no-network-no-eval`).
+
+## What a session observed
+
+A worker records friction it met with `majordomus knowledge observe --kind <kind> --subject
+<ref> [--evidence <ref>]... "<statement>"` (ADR 0118). The kinds are `friction`,
+`workaround`, `defect`, `drift` and `repetition`; the subject is a repository path or
+`capability:`, `rule:`, `command:`, `gate:` with an identifier; evidence references are
+`file:`, `test:`, `commit:`, `issue:` or `claim:`. The command writes one
+`observation.recorded` line and judges nothing; malformed input is refused with exit 2 and
+nothing is written.
+
+**Where an observation routes.** In this order: a `command:`, `capability:` or
+`rule:majordomus.*` subject, a path under the vendored rules, or a path under the tool's own
+`share/` only when that directory lies inside the repository, routes `platform`; another
+`rule:` or a `gate:` routes `enforcement`; a path the scope declares generated or
+`.gitattributes` marks `merge=derived` routes `generator`; a path under `docs/` routes
+`documentation`; anything else routes `project`. The words are never read, and the route
+decides nothing: promotion and rejection stay acts. In a repository that adopted the tool,
+`share/` is the project's own and routes `project`.
+
+**Recurrence is read.** Every observation candidate is its own episode's file, so two
+episodes, worktrees or machines never write one name and a merge adds files without a
+conflict. `knowledge candidates` groups the candidates and rejected records about one subject,
+with the episodes behind them — the same answer from the shell and from
+`knowledge_base.candidates`. An episode that observed nothing writes no candidate and still
+appends `knowledge.derived` with `written: 0`: evaluated, nothing found.
 
 ## The two moments
 
@@ -184,7 +222,7 @@ The Rust executable serves the read side: `bin/majordomus-cli knowledge candidat
 capability declared once in `apps/majordomus-cli/src/capability/builtin/knowledge_base.rs`
 and served identically over HTTP, OpenAPI, MCP, the cockpit's catalogue and the benchmark
 inventory (`CAPABILITIES.md`). `record` resolves every reference the record names to an
-object of the index, an external fact of the ledger or git, or missing; `status` reports the
+object of the index, an external fact of the ledger or git, a historical file, or missing; `status` reports the
 last derivation, the newest close, the freshness against the policy and the stopped-writer
 judgement. It writes nothing and reports absence as absence.
 

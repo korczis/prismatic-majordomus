@@ -916,7 +916,9 @@ pub fn classify(
         (Some(s), _) => s.authored.clone(),
         (
             None,
-            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+            RelationToMaster::UpToDate { authored, .. }
+            | RelationToMaster::CarriesMaster { authored, .. }
+            | RelationToMaster::Behind { authored, .. },
         ) => authored.clone(),
         (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
         _ => queue.authored.get(&pr.number).cloned().unwrap_or_default(),
@@ -1425,7 +1427,9 @@ pub fn classify(
                         paths.join(", ")
                     )),
                 ),
-                RelationToMaster::UpToDate { .. } | RelationToMaster::Behind { .. } => None,
+                RelationToMaster::UpToDate { .. }
+                | RelationToMaster::CarriesMaster { .. }
+                | RelationToMaster::Behind { .. } => None,
             },
         ),
         (
@@ -1539,7 +1543,21 @@ pub fn classify(
         (
             IntegrationGate::Freshness,
             match relation {
-                RelationToMaster::UpToDate { .. } => None,
+                RelationToMaster::UpToDate {
+                    owes_version: Some(version),
+                    ..
+                } => fails(
+                    PullRequestDisposition::NeedsRefresh,
+                    vec![ReasonCode::VersionUnallocated {
+                        version: version.clone(),
+                    }],
+                    Some(format!(
+                        "the executor's refresh writes {version}, the version this landing takes; CI runs again"
+                    )),
+                ),
+                // what the checks judged on the head is what master becomes, whether the
+                // head holds master's commits or lacks only merges that brought it nothing
+                RelationToMaster::UpToDate { .. } | RelationToMaster::CarriesMaster { .. } => None,
                 RelationToMaster::Behind { behind, .. } if pr.cross_repository => fails(
                     PullRequestDisposition::NeedsRepair,
                     vec![
@@ -1624,7 +1642,11 @@ pub fn classify(
     }
     let (disposition, next) = decided.unwrap_or_else(|| {
         reasons = vec![
-            ReasonCode::ContainsMaster,
+            if matches!(relation, RelationToMaster::CarriesMaster { .. }) {
+                ReasonCode::CarriesMaster
+            } else {
+                ReasonCode::ContainsMaster
+            },
             if checks == RequiredCheckState::Skipped {
                 ReasonCode::RequiredChecksSkipped
             } else {
@@ -1778,6 +1800,7 @@ pub fn relation_word(r: &RelationToMaster) -> &'static str {
         RelationToMaster::PatchIdsUpstream { .. } => "patch_ids_upstream",
         RelationToMaster::DerivedOnly { .. } => "derived_only",
         RelationToMaster::UpToDate { .. } => "up_to_date",
+        RelationToMaster::CarriesMaster { .. } => "carries_master",
         RelationToMaster::Behind { .. } => "behind",
         RelationToMaster::Conflicting { .. } => "conflicting",
         RelationToMaster::Unknown { .. } => "unknown",
@@ -1794,9 +1817,13 @@ fn relation_detail(r: &RelationToMaster) -> String {
         RelationToMaster::DerivedOnly { paths } => {
             format!("only {} derived path(s) would change", paths.len())
         }
-        RelationToMaster::UpToDate { authored } => {
+        RelationToMaster::UpToDate { authored, .. } => {
             format!("contains master; {} authored path(s)", authored.len())
         }
+        RelationToMaster::CarriesMaster { behind, authored } => format!(
+            "{behind} master merge commit(s) behind, and merging it yields its own tree; {} authored path(s)",
+            authored.len()
+        ),
         RelationToMaster::Behind { behind, authored } => format!(
             "{behind} master commit(s) behind; merges cleanly; {} authored path(s)",
             authored.len()
@@ -1859,6 +1886,7 @@ mod decision_branches {
     fn up_to_date() -> RelationToMaster {
         RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
+            owes_version: None,
         }
     }
 
@@ -2358,6 +2386,52 @@ mod decision_branches {
             a.reasons
         );
     }
+
+    /// A head that holds master but not the version its landing allocates is not ready:
+    /// it needs the executor's refresh, which writes that number, and the reason names it.
+    #[test]
+    fn a_head_that_owes_its_allocated_version_needs_a_refresh() {
+        let p = pr(serde_json::json!({
+            "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}]
+        }));
+        let owes = RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+            owes_version: Some("0.4.0".into()),
+        };
+        let no_review = ReviewPolicy {
+            approvals: 0,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        let a = classify(
+            &p,
+            &owes,
+            "m",
+            "t",
+            &policy(Some(no_review), &[]),
+            &context(),
+        );
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::NeedsRefresh,
+            "{:?}",
+            a.reasons
+        );
+        assert!(
+            a.reasons.contains(&ReasonCode::VersionUnallocated {
+                version: "0.4.0".into()
+            }),
+            "{:?}",
+            a.reasons
+        );
+        assert!(
+            a.next_action
+                .as_deref()
+                .is_some_and(|n| n.contains("writes 0.4.0")),
+            "{:?}",
+            a.next_action
+        );
+    }
 }
 
 #[cfg(test)]
@@ -2408,6 +2482,7 @@ mod dependency_resolution {
     fn decided(ctx: &QueueContext) -> PullRequestAssessment {
         let relation = RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
+            owes_version: None,
         };
         classify(&pr("Depends on #7"), &relation, "m", "t", &policy(), ctx)
     }
@@ -2475,6 +2550,7 @@ mod dependency_resolution {
         ctx.heads.insert("fix/7".into(), 7);
         let relation = RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
+            owes_version: None,
         };
         let a = classify(&p, &relation, "m", "t", &policy(), &ctx);
         assert_eq!(a.dependencies.len(), 1, "{:?}", a.dependencies);

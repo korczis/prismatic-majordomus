@@ -1,7 +1,7 @@
 +++
 title = "Pack the sources for a ChatGPT project"
 description = "Turn a committed tree into token-bounded Markdown shards that a ChatGPT project's file search indexes, verified to carry no binary, worktree, link, build output, projection or leaked value, and hand them over with the commit they were cut from."
-weight = 4
+weight = 5
 [extra]
 id = "pack-for-chatgpt"
 status = "active"

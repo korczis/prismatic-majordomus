@@ -1,0 +1,43 @@
+# The machines this repository's derive is offloaded to (I2398, docs/OFFLOAD.md).
+#
+# A derive costs about ten minutes on an idle machine and up to an hour on the shared
+# MacBook under load, and every session needs one before it can commit. `majordomus offload
+# derive <worktree>` sends the worktree to one of the hosts below as a git bundle, waits its
+# turn in the host's FIFO queue, derives in a build directory of its own and stages what the
+# derive changed; nothing is committed or pushed.
+#
+# A host is chosen when it answers and has at least `min_free_gib` free under its home: of
+# those, the one with the fewest derives running or waiting, a tie going to the host listed
+# first. The queue's paths are the ones ~/dev/.derive-offload-v2.sh used, so waiters of both
+# kinds see each other while sessions move over.
+#
+# The addresses are tailnet addresses (docs/MESH.md lists the machines). Nothing secret
+# belongs here: an identity file is named, never carried.
+schema: derive-offload/v1
+kind: derive-offload
+id: derive
+description: The cluster machines that derive a branch for a session, and the limits each must meet.
+base: origin/master
+min_free_gib: 10
+queue:
+  directory: /tmp/offload-queue
+  lock: /tmp/offload-derive.lock
+  poll_seconds: 5
+  wait_max_seconds: 14400
+remote:
+  checkout: dev/prismatic-majordomus
+  worktrees: dev/prismatic-majordomus-wt
+  target: .cache/majordomus-offload-target
+  spool: /tmp
+  derive: scripts/derive
+hosts:
+  # lundra (25c9758f): x86_64 Linux, 8 cores, 15 GB; derives on the platform CI judges on.
+  # Measured 2026-10-10 on PR #855: 699 s, build included.
+  - id: lundra
+    address: korczis@100.65.22.118
+    description: x86_64 Linux, 8 cores, 15 GB
+  # the second MacBook Pro (5d81b5c9): M4 Pro, 12 cores, 24 GB; its key is the cluster's own.
+  - id: macbook-2
+    address: korczis@100.108.237.68
+    identity_file: ~/.ssh/cluster_ed25519
+    description: M4 Pro, 12 cores, 24 GB

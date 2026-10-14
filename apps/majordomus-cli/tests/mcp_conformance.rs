@@ -32,7 +32,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-use common::{Fixture, BIN};
+use common::Fixture;
 use majordomus_cli::capability::{
     BenchmarkPolicy, CapabilityKind, CaseContext, Effect, HttpMethod, WaiverReason,
 };
@@ -91,13 +91,12 @@ fn exchange_raw(
     env: &[(&str, &str)],
     input: Vec<u8>,
 ) -> Exchange {
-    let mut command = Command::new(BIN);
+    let mut command = common::majordomus();
     command
         .args(args)
         .current_dir(cwd)
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .env("MAJORDOMUS_LOG", "info")
-        .env_remove("MAJORDOMUS_ROOT")
         // per-user state (the mesh's node identity) lives beside the fixture and is removed
         // with it: no test here reads or writes the developer's own
         .env("XDG_STATE_HOME", state_home(f))
@@ -933,11 +932,9 @@ fn no_secret_in_the_environment_or_the_repository_reaches_a_client() {
 /// The shell tool, as a repository runs it from this checkout.
 fn shell(f: &Fixture, args: &[&str], stdin: &str) -> (Option<i32>, String, String) {
     let tool = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../bin/majordomus");
-    let mut child = Command::new(tool)
+    let mut child = common::without_session_environment(&mut Command::new(tool))
         .args(args)
         .current_dir(f.root())
-        .env_remove("MAJORDOMUS_ROOT")
-        .env_remove("MAJORDOMUS_SHARE")
         .env("XDG_STATE_HOME", state_home(f))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -1491,7 +1488,7 @@ fn the_command_line_http_and_mcp_answer_one_read_alike() {
 
     // `majordomus run`, one process per read: (exit code, stdout, stderr)
     let run = |id: &str, input: &Value| {
-        let out = Command::new(BIN)
+        let out = common::majordomus()
             .args([
                 "run",
                 id,
@@ -1503,7 +1500,6 @@ fn the_command_line_http_and_mcp_answer_one_read_alike() {
             ])
             .current_dir(f.root())
             .env("MAJORDOMUS_SHARE", common::dist_share())
-            .env_remove("MAJORDOMUS_ROOT")
             .env("XDG_STATE_HOME", &state)
             .stdin(Stdio::null())
             .output()

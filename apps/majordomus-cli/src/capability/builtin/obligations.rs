@@ -477,6 +477,40 @@ pub fn listing_hash(listing: &str) -> String {
 /// taken over, or `None` when the token declares none — which is the empty string in the
 /// ledger and is compared as such.
 pub(crate) fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usize)> {
+    inputs_hash_with(root, specs, &mut FileHashes::default())
+}
+
+/// The digest of each file one reading of the tree has already hashed, by its path.
+///
+/// One completion report takes a hash per gate, and the gates of a real model overlap: this
+/// repository's 74 gates select about 60,000 files between them out of 5,000 tracked, so
+/// hashing per gate opened and digested every file about twelve times — 925 MB of SHA-256
+/// per call, most of what `gates.completion` cost. A file's bytes are not expected to change
+/// between two gates of one report, so each is read once and its digest reused; a file that
+/// could not be read is remembered as such and skipped by every gate, as a fresh read would.
+#[derive(Debug, Default)]
+pub(crate) struct FileHashes(std::collections::HashMap<String, Option<String>>);
+
+impl FileHashes {
+    fn digest(&mut self, root: &Path, file: &str) -> Option<&str> {
+        self.0
+            .entry(file.to_string())
+            .or_insert_with(|| {
+                std::fs::read(root.join(file))
+                    .ok()
+                    .map(|bytes| crate::policy::sha256_bytes_hex(&bytes))
+            })
+            .as_deref()
+    }
+}
+
+/// [`inputs_hash`], reusing the digests `cache` already holds: the same answer, with each
+/// file read once however many callers select it within one reading of the tree.
+pub(crate) fn inputs_hash_with(
+    root: &Path,
+    specs: &[String],
+    cache: &mut FileHashes,
+) -> Option<(String, usize)> {
     if specs.is_empty() {
         return None;
     }
@@ -489,12 +523,12 @@ pub(crate) fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usiz
     }
     let mut listing = String::new();
     for file in &files {
-        let Ok(bytes) = std::fs::read(root.join(file)) else {
+        let Some(digest) = cache.digest(root, file) else {
             continue;
         };
         listing.push_str(file);
         listing.push(' ');
-        listing.push_str(&crate::policy::sha256_bytes_hex(&bytes));
+        listing.push_str(digest);
         listing.push('\n');
     }
     Some((listing_hash(&listing), files.len()))
@@ -1064,5 +1098,64 @@ mod tests {
         assert_eq!(found.len(), 1, "another task's evidence is another task's");
         assert_eq!(found["tests"].inputs_hash, "new");
         assert_eq!(found["tests"].head, "b");
+    }
+
+    /// One reading of the tree shares its file digests between callers, and the sharing is
+    /// invisible in the answer: every overlapping selection hashes exactly as it would alone,
+    /// a tracked file the tree no longer holds is skipped by each of them alike, and a file
+    /// is digested once however many selections name it.
+    #[test]
+    fn a_shared_digest_cache_answers_what_a_fresh_read_answers() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["init", "-q", "."]);
+        for (path, body) in [
+            ("lib/a.sh", "a"),
+            ("lib/b.sh", "b"),
+            ("docs/x.md", "x"),
+            ("gone.txt", "g"),
+        ] {
+            std::fs::create_dir_all(root.join(path).parent().unwrap()).unwrap();
+            std::fs::write(root.join(path), body).unwrap();
+        }
+        git(&["add", "-A"]);
+        // tracked, then removed from the working tree: skipped, never an error
+        std::fs::remove_file(root.join("gone.txt")).unwrap();
+
+        let selections: Vec<Vec<String>> = vec![
+            vec!["lib/**".into()],
+            vec!["lib/**".into(), "docs/**".into()],
+            vec!["docs/**".into(), "gone.txt".into()],
+            vec!["nowhere/**".into()],
+            Vec::new(),
+        ];
+        let mut cache = FileHashes::default();
+        for specs in &selections {
+            assert_eq!(
+                inputs_hash_with(root, specs, &mut cache),
+                inputs_hash(root, specs),
+                "a shared cache changed the hash of {specs:?}"
+            );
+        }
+        // lib/a.sh, lib/b.sh, docs/x.md read, gone.txt remembered as unreadable: four
+        // entries, however many of the selections above named each of them
+        assert_eq!(
+            cache.0.len(),
+            4,
+            "each file is digested once: {:?}",
+            cache.0
+        );
+        assert_eq!(cache.0["gone.txt"], None);
     }
 }

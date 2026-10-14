@@ -122,7 +122,11 @@ echo "    health.live and health.ready declare commit as a required output field
 # --- 3. the image build is handed the commit
 grep -q '^ARG MAJORDOMUS_BUILD_COMMIT=unknown$' "$ROOT/deploy/Dockerfile" \
   || { echo "    deploy/Dockerfile does not pass MAJORDOMUS_BUILD_COMMIT to the builder"; exit 1; }
-awk '/^ARG MAJORDOMUS_BUILD_COMMIT/{a=NR} /^RUN cargo build/{r=NR} END{exit !(a && r && a < r)}' \
+# Inside the stage that compiles the package: the dependencies compile in an earlier stage on
+# purpose without the commit (a new commit must not invalidate them), so the first cargo build
+# of the file is not the one that reads it, and that build's RUN carries a cache mount, so its
+# cargo command is a continuation line rather than the start of a RUN.
+awk '/ AS build$/{b=1; next} b && /^FROM /{b=0} b && /^ARG MAJORDOMUS_BUILD_COMMIT/{a=NR} b && /cargo build/ && !r{r=NR} END{exit !(a && r && a < r)}' \
   "$ROOT/deploy/Dockerfile" \
   || { echo "    the build argument is declared after the build that should read it"; exit 1; }
 echo "    the image projection passes MAJORDOMUS_BUILD_COMMIT into the build"
