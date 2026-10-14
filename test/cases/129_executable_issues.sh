@@ -28,6 +28,18 @@ S="$(mktemp -d "${TMPDIR:-/tmp}/mj129.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 task()      { "$RB" devtask issue "$1" --no-git --format json 2>"$S/err" || { sed 's/^/    | /' "$S/err"; return 1; }; }
 task_git()  { "$RB" devtask issue "$1" --format json 2>"$S/err" || { sed 's/^/    | /' "$S/err"; return 1; }; }
 graph()     { "$RB" devtask milestone "$1" --format json 2>"$S/err" || { sed 's/^/    | /' "$S/err"; return 1; }; }
+# `plan.status` as an MCP client receives it: the capability has no command of its own in
+# the executable, and the tool call is the projection case 99 reads too.
+plan_status() {
+  {
+    printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case129","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_plan_status","arguments":{}}}\n'
+  } | "$RB" mcp 2>"$S/err" > "$S/frames" || { sed 's/^/    | /' "$S/err"; return 1; }
+  tail -n 1 "$S/frames" | jq -e '.result.isError == false' >/dev/null \
+    || { printf '    plan.status returned an error frame: %s\n' "$(tail -n 1 "$S/frames")"; return 1; }
+  tail -n 1 "$S/frames" | jq '.result.structuredContent'
+}
 
 # jq -e, with the failing document shown. A bare `jq -e ... >/dev/null || exit 1` under
 # `set -e` reports nothing at all, which is the silent-failure shape this repository has
@@ -143,15 +155,41 @@ holds "the GitHub half is claimed"           "$S/I0001.json" \
   '.synchronisation.writable == false and .synchronisation.state.provenance == "unknown" and .synchronisation.external_id.provenance == "unknown"'
 holds "the adapter is not named"             "$S/I0001.json" \
   '(.synchronisation.adapter | test("github-sync")) and (.synchronisation.state.reason | test("github-sync"))'
-# The repository the projection targets comes from the plan's header. In THIS repository
-# that header is empty — `.ai/repo/knowledge/sources.yaml` declares no source class for
-# `.ai/repo/project/project.yaml`, so the `project` kind has no objects at all — while the
-# fixture built by `"$MJ" init` above does discover it. The assertion is therefore about the
-# invariant and not about which of the two happens here: the field is explicit with a value,
-# or unknown with a reason, and never a bare empty string that reads as authored.
-holds "the target repository is neither authored nor honestly unknown" "$S/I0001.json" \
-  '(.synchronisation.repository.provenance == "explicit" and (.synchronisation.repository.value | length > 0))
-   or (.synchronisation.repository.provenance == "unknown" and (.synchronisation.repository | has("value") | not) and (.synchronisation.repository.reason | length > 0))'
+# The repository the projection targets comes from the plan's header, and the header is an
+# object like every other: `.ai/repo/project/project.yaml` is read because the source class
+# `project` of `.ai/repo/knowledge/sources.yaml` names its path. The skeleton declares that
+# class, so the fixture `"$MJ" init` built above discovers the file `pj_init` wrote, and the
+# three declared fields are reported as authored (I2599: until the class existed the header
+# was three empty strings in every repository, this one included).
+holds "the target repository is not the one project.yaml declares" "$S/I0001.json" \
+  '.synchronisation.repository.provenance == "explicit" and .synchronisation.repository.value == "example/fixture"'
+plan_status > "$S/status.json" || exit 1
+holds "plan.status does not report the header project.yaml declares" "$S/status.json" \
+  '.project.name == "Fixture" and .project.repository == "example/fixture" and .project.default_branch == "master"'
+holds "a header that was read is called unknown" "$S/status.json" '.project | has("unknown") | not'
+
+# A layer written before the class existed keeps its own sources.yaml: `init --extend`
+# overwrites nothing. There the header is unknown and says why — the file is there and no
+# class names it — and names the class to declare. Never three empty strings, which read as
+# a project.yaml that declares nothing.
+cp .ai/repo/knowledge/sources.yaml "$S/sources.with"
+awk '/^  - id: project$/ { drop = 1 } drop && /^ *$/ { drop = 0 } !drop' "$S/sources.with" > .ai/repo/knowledge/sources.yaml
+! grep -q '^  - id: project$' .ai/repo/knowledge/sources.yaml || { echo "    the fixture still declares the project class"; exit 1; }
+git add -A >/dev/null
+plan_status > "$S/status.without.json" || exit 1
+holds "an unread header is reported as empty strings" "$S/status.without.json" \
+  '.project | (has("name") or has("repository") or has("default_branch")) | not'
+holds "an unread header does not say it is unknown, or why" "$S/status.without.json" \
+  '.project.unknown.file == ".ai/repo/project/project.yaml" and .project.unknown.file_present == true
+   and .project.unknown.missing_source_class == "project"
+   and (.project.unknown.reason | test("no source class"))
+   and (.project.unknown.remedy | test("kind: project")) and (.project.unknown.remedy | test("sources.yaml"))'
+holds "the active milestone was lost with the header" "$S/status.without.json" '.project.active_milestone == "M000"'
+task I0001 > "$S/I0001.without.json" || exit 1
+holds "the target repository is claimed without a header" "$S/I0001.without.json" \
+  '.synchronisation.repository.provenance == "unknown" and (.synchronisation.repository | has("value") | not)
+   and (.synchronisation.repository.reason | test("no source class"))'
+cat "$S/sources.with" > .ai/repo/knowledge/sources.yaml; git add -A >/dev/null
 
 # ---------------------------------------------------------------- git state, and its absence
 holds "git was consulted without being asked" "$S/I0001.json" '.execution.git_consulted == false'

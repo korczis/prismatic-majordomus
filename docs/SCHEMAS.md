@@ -464,6 +464,30 @@ Nothing derived is stored here. There is no `active_milestone` field: the active
 is the lowest-ordered one that is `ACTIVE`, or failing that the lowest-ordered one that is
 not finished, computed on every read.
 
+The two programs reach this file differently. The shell tool (`majordomus plan`) reads it
+by path. The executable reads it as an object of kind `project`, and a file is an object
+only when a source class names its path, so `.ai/repo/knowledge/sources.yaml` declares:
+
+```yaml
+  - id: project
+    kind: project
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/project.yaml'
+    required: false
+```
+
+`majordomus init` seeds that class. A layer whose `sources.yaml` was written before the
+skeleton declared it keeps its own file — `init --extend` overwrites nothing, and no
+command compares a layer's classes with the skeleton's — so the class is added there by
+hand. Until it is, the executable's plan report (`plan.status`, `/api/v1/plan/status`)
+omits `name`, `repository` and `default_branch` from `project` and carries
+`project.unknown` instead: the `reason`, the `file` and whether it is present
+(`file_present`), the `missing_source_class` (`project`) and the `remedy`, which is the
+declaration above. `project.active_milestone` is derived from the milestones and issues
+and is answered either way. A `devtask` reports the projection's target repository as
+`unknown` with the same reason. Three empty strings are never an answer: they would say
+the file declares nothing, about a file nobody read.
+
 ---
 
 ## `.ai/repo/project/milestones/<ID>.yaml`

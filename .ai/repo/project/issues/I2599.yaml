@@ -1,0 +1,31 @@
+id: I2599
+milestone: a-second-adopter-is-served
+title: "plan status reports the project header"
+slug: plan-status-reports-the-project-header
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the executable's plan report carry the name, repository and default branch that project.yaml declares."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G15); read again on master e506c041a4. `/api/v1/plan/status` answered three empty strings although project.yaml declares all three. It is empty in this repository too."
+current_state: "apps/majordomus-cli/src/plan.rs:587-606 fills the header from an index object of kind `project`, and no source class of that kind exists in the skeleton or here; apps/majordomus-cli/src/devtask/task.rs:593-600 says so in a comment."
+desired_state: "The skeleton and this repository declare the class, an existing layer is told to add it, and an unreadable header is reported as unknown with its reason."
+scope:
+  - "share/skeleton/ai/repo/knowledge/sources.yaml"
+  - ".ai/repo/knowledge/sources.yaml"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "docs/SCHEMAS.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "plan.status in a freshly initialised fixture with a project.yaml reports its three fields"
+  - "A layer without the class reports the header as unknown and names the missing class"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "plan_status_header_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13T12:14:12Z
+started_at: 2026-10-13T12:14:12Z
+started_event: sha256:8017fb9141686e299371b25beddb72a9cd93d588d174fe96ef63537bf78e9033

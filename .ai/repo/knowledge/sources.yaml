@@ -96,6 +96,16 @@ sources:
     pathspec: ':(glob).ai/repo/project/critiques/*.yaml'
     required: false
 
+  # The plan's header: the project's name, its repository and its default branch. Declared
+  # because a file is an object only when a class names its path: without this class
+  # `project/project.yaml` sat beside the milestones and issues, the shell tool read it, and
+  # the executable's plan reported no name, no repository and no default branch (I2599).
+  - id: project
+    kind: project
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/project.yaml'
+    required: false
+
   - id: milestone
     kind: milestone
     discovery: vcs
