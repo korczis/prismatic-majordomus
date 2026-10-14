@@ -35,4 +35,21 @@ evidence_required:
   - "pending_class_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:02:42Z
+started_at: 2026-10-14T08:02:34Z
+started_event: sha256:d5e1fdc6d85cf76670e7721504355c923e343b601a87357d6e5ac65571a6f21b
+completed_at: 2026-10-14T08:02:42Z
+completed_event: sha256:7452aa6520699a3fe275e3929cdc3760ce835d794d43f5a42d039d595ac5f9ba
+evidence:
+  - covers: pending_class_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1038_a_head_is_judged_against_what_it_changes"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:38Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1038_a_head_is_judged_against_what_it_changes"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:40Z

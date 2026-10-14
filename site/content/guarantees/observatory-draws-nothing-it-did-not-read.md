@@ -1,5 +1,5 @@
 +++
-title = "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw; a scene without that carries no model and states the source's reason, on a server and in the published snapshot alike"
+title = "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike"
 description = "The Observatory (/ui/observatory, and /ui/kiosk as its unattended preset) draws the"
 weight = 198
 [extra]
@@ -16,7 +16,9 @@ repository and its mesh as rotating scenes. Every scene is declared once, with t
 capabilities it requires. A scene is available only when those capabilities answered with
 something to draw; otherwise it carries no model, states the source's own reason, and the
 rotation does not show it. A process that runs no mesh, which is what reads the published
-snapshot, has no mesh scene to show and says so.
+snapshot, has no live mesh scene to show: there a scene of the mesh draws the recording the
+repository carries and says it is a replay, and without a recording it says it is
+unavailable.
 
 ## How it works
 
@@ -34,7 +36,10 @@ over a freshly initialised repository and on `majordomus web report ui-snapshot`
   reason;
 - an available scene has a model, an unavailable one has none and has a reason, and no
   available semantic scene requires a source that failed;
-- the three scenes of the mesh are unavailable where no mesh runs;
+- the three scenes of the mesh are unavailable where no mesh runs and no recording is
+  carried; with a recording, the recorded scene is available, says `replay` with the time it
+  was recorded, and the scenes it does not carry stay unavailable; a recording that is not one
+  is a failed source and is never drawn;
 - `/ui/screensaver` redirects to `/ui/kiosk` and `/ui/obsrvatory` to `/ui/observatory`;
 - the snapshot holds the page and its script.
 
@@ -54,7 +59,8 @@ coloured from its model is the script's, and no test reads pixels. The unit test
 module hold the projection itself, including that an event's body is never projected.
 
 It does not prove frame rate, a 4K composition or that a kiosk survives a day; those are
-I2680. It does not prove a live stream: the display reads its page again (I2679).
+I2680. The cursor the display follows between readings (`observatory.events`) is proven by the
+mesh cooperation test, not by this case.
 
 ## Why it exists
 

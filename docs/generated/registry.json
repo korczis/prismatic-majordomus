@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.24.1",
+  "generator": "majordomus-cli 0.25.0",
   "modules": [
     {
       "id": "artifacts",
@@ -290,6 +290,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 2
+    },
+    {
+      "id": "observatory",
+      "title": "Observatory",
+      "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 3
     },
     {
       "id": "pack",
@@ -54263,6 +54271,502 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs"
+    },
+    {
+      "id": "observatory.capture",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory capture",
+      "description": "The mesh scenes of the Observatory as this process has them live, fit for publication: machines, runtimes, sessions and events by ordinal, an event by its kind, logical clock and time only. Writes nothing; committing the answer to .ai/repo/observatory/recording.json is what publishes it.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservatoryRecording",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "`RECORDING_SCHEMA`."
+            },
+            "recorded_at": {
+              "type": "string",
+              "description": "When the scenes were read."
+            },
+            "revision": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The commit the recording process stood at, short; absent when it could not say."
+            },
+            "scenes": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+            },
+            "manifest": {
+              "$ref": "#/$defs/RecordingManifest",
+              "description": "What the recording is a record of, and what it leaves out."
+            }
+          },
+          "required": [
+            "schema",
+            "recorded_at",
+            "scenes",
+            "manifest"
+          ],
+          "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```",
+          "title": "ObservatoryRecording",
+          "$defs": {
+            "RecordingManifest": {
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities whose answers the recorded scenes were projected from."
+                },
+                "window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/RecordingWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+                },
+                "removed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every kind of thing removed before publication, and why."
+                }
+              },
+              "required": [
+                "sources",
+                "removed"
+              ],
+              "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+            },
+            "RecordingWindow": {
+              "type": "object",
+              "properties": {
+                "events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many events."
+                },
+                "from_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The earliest event's time, in seconds since the epoch."
+                },
+                "to_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The latest event's time, in seconds since the epoch."
+                },
+                "from_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The smallest logical clock."
+                },
+                "to_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The largest logical clock."
+                }
+              },
+              "required": [
+                "events"
+              ],
+              "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_capture"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/capture"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+    },
+    {
+      "id": "observatory.events",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory events",
+      "description": "The events of the mesh journal above a cursor, as the Observatory's activity scene draws them: identity, kind, node, logical clock and time, newest first, at most a page. The answer's cursor is the next request's `after`; a cursor this journal never reached is expired, and the reader takes a fresh projection. Without a cursor, the newest page.",
+      "input": {
+        "name": "ObservatoryEventsInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor: only events whose logical clock is above it. Absent is the newest page."
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "At most this many (default 200, at most 1000)."
+            }
+          },
+          "description": "The input of `observatory.events`: a cursor and a page size.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEventsInput;\nlet q: ObservatoryEventsInput = serde_json::from_value(serde_json::json!({ \"after\": 42 })).unwrap();\nassert_eq!((q.after, q.limit), (Some(42), None));\nassert!(serde_json::from_value::<ObservatoryEventsInput>(serde_json::json!({ \"since\": 1 })).is_err());\n```",
+          "title": "ObservatoryEventsInput"
+        }
+      },
+      "output": {
+        "name": "ObservatoryEvents",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether a mesh runs in this process; without one there is no journal to follow."
+            },
+            "after": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor that was asked, when one was."
+            },
+            "cursor": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The cursor to ask next: the logical clock of the newest event read, or the journal's\nnewest clock when the cursor had expired."
+            },
+            "expired": {
+              "type": "boolean",
+              "description": "The cursor names a clock this journal never reached (another runtime's journal, or one\nthat restarted): nothing above it can be read, and the reader takes a fresh projection."
+            },
+            "events": {
+              "type": "array",
+              "items": true,
+              "description": "The events above the cursor, newest first, as marks: identity, kind, node, logical\nclock and time, never a body."
+            }
+          },
+          "required": [
+            "active",
+            "cursor",
+            "expired",
+            "events"
+          ],
+          "description": "The Observatory's events above a cursor, as the activity scene draws them.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryEvents;\nlet e: ObservatoryEvents = serde_json::from_value(serde_json::json!({\n    \"active\": true, \"after\": 9, \"cursor\": 12, \"expired\": false, \"events\": [{ \"id\": \"s:3\" }],\n})).unwrap();\nassert!(e.cursor > e.after.unwrap(), \"the next request resumes past what was read\");\n```",
+          "title": "ObservatoryEvents"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_events"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/events"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
+    },
+    {
+      "id": "observatory.replay",
+      "module": "observatory",
+      "kind": "query",
+      "title": "Observatory replay",
+      "description": "The recording of the mesh scenes the repository carries at .ai/repo/observatory/recording.json, which the Observatory draws, labelled as a replay, where no mesh runs. Absent is present: false; a file that cannot be read is an error.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ObservatoryReplay",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "present": {
+              "type": "boolean",
+              "description": "Whether the repository carries a recording."
+            },
+            "path": {
+              "type": "string",
+              "description": "The file it is read from."
+            },
+            "recording": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ObservatoryRecording"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The recording."
+            }
+          },
+          "required": [
+            "present",
+            "path"
+          ],
+          "description": "The recording the repository carries, or that it carries none.\n\n```\nuse majordomus_cli::capability::builtin::observatory::{replay_at, ObservatoryReplay, RECORDING};\nlet dir = tempfile::tempdir().unwrap();\nlet none: ObservatoryReplay = replay_at(dir.path()).unwrap();\nassert!(!none.present && none.recording.is_none());\nassert_eq!(none.path, RECORDING);\n```",
+          "title": "ObservatoryReplay",
+          "$defs": {
+            "ObservatoryRecording": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "description": "`RECORDING_SCHEMA`."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When the scenes were read."
+                },
+                "revision": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit the recording process stood at, short; absent when it could not say."
+                },
+                "scenes": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Each recorded scene's model, by scene id; a scene the process had nothing live for is\nabsent, never empty."
+                },
+                "manifest": {
+                  "$ref": "#/$defs/RecordingManifest",
+                  "description": "What the recording is a record of, and what it leaves out."
+                }
+              },
+              "required": [
+                "schema",
+                "recorded_at",
+                "scenes",
+                "manifest"
+              ],
+              "description": "The mesh scenes of one process at one moment, fit for publication.\n\n```\nuse majordomus_cli::capability::builtin::observatory::ObservatoryRecording;\nlet r: ObservatoryRecording = serde_json::from_value(serde_json::json!({\n    \"schema\": \"observatory-recording/v1\", \"recorded_at\": \"2026-10-14T05:00:00Z\", \"scenes\": {},\n    \"manifest\": { \"sources\": [], \"removed\": [] },\n})).unwrap();\nassert!(r.scenes.is_empty() && r.revision.is_none());\n```"
+            },
+            "RecordingManifest": {
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities whose answers the recorded scenes were projected from."
+                },
+                "window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/RecordingWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The first and last event the recording holds, by time and by logical clock; absent\nwhen it holds none."
+                },
+                "removed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every kind of thing removed before publication, and why."
+                }
+              },
+              "required": [
+                "sources",
+                "removed"
+              ],
+              "description": "What a recording is a record of: the capabilities read, the window of events it holds,\nand what was removed from what they answered, with the reason.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingManifest;\nlet m: RecordingManifest = serde_json::from_value(serde_json::json!({\n    \"sources\": [\"mesh.events\"], \"removed\": [\"event bodies\"],\n})).unwrap();\nassert!(m.window.is_none(), \"a recording that holds no event has no window\");\n```"
+            },
+            "RecordingWindow": {
+              "type": "object",
+              "properties": {
+                "events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many events."
+                },
+                "from_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The earliest event's time, in seconds since the epoch."
+                },
+                "to_at": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The latest event's time, in seconds since the epoch."
+                },
+                "from_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The smallest logical clock."
+                },
+                "to_lamport": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The largest logical clock."
+                }
+              },
+              "required": [
+                "events"
+              ],
+              "description": "The events a recording holds, from first to last.\n\n```\nuse majordomus_cli::capability::builtin::observatory::RecordingWindow;\nlet w = RecordingWindow { events: 2, from_at: Some(100), to_at: Some(160), from_lamport: Some(9), to_lamport: Some(10) };\nassert_eq!(w.to_at.unwrap() - w.from_at.unwrap(), 60, \"a minute of the journal\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::observatory"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_observatory_replay"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/observatory/replay"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "observatory",
+        "mesh",
+        "ui"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs"
     },
     {
       "id": "pack.plan",
