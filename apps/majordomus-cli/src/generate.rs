@@ -1489,7 +1489,7 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     }
     // whole: the site's entity pages and its catalogue counts are read off this document,
     // and a prefix of the repository would drop what sorts past MAX_NODES without a word
-    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
+    let graph = committed_graph(crate::graph::composed_complete(&ctx.registry, &ctx.index))?;
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -1507,6 +1507,14 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
         });
     }
     Ok(rendered)
+}
+
+/// The composed graph as it may be committed: a graph that stopped at a bound is refused
+/// with the count it held and the bound, and nothing is written, as an unresolved relation
+/// is refused before it. The composition has no bound today; this is what keeps one that
+/// comes back from committing a prefix that still reads as whole (I1966).
+fn committed_graph(graph: crate::graph::Graph) -> Result<crate::graph::Graph> {
+    crate::graph::whole(graph).map_err(|reason| Error::Refused { code: 10, reason })
 }
 
 /// The schema of the composed graph, generated from the types that define it rather than
@@ -3216,6 +3224,43 @@ mod tests {
                 "{content}"
             );
         }
+    }
+
+    #[test]
+    fn a_composed_graph_that_stopped_at_a_bound_is_refused_and_not_committed() {
+        use crate::graph::{Builder, Node};
+        let thing = |id: &str| Node {
+            id: id.into(),
+            kind: "thing".into(),
+            label: id.into(),
+            summary: None,
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+            facts: Default::default(),
+        };
+        let mut b = Builder::new("composed", "Everything", "two things, room for one", "test")
+            .node_kind("thing", "a thing")
+            .limit(1);
+        b.node(thing("a"));
+        b.node(thing("b"));
+        let err = committed_graph(b.finish()).expect_err("a prefix is not committed");
+        assert_eq!(err.exit_code(), 10);
+        let message = err.to_string();
+        assert!(message.contains("stopped at 1 nodes"), "{message}");
+        assert!(
+            message.contains(&crate::graph::MAX_NODES.to_string()),
+            "{message}"
+        );
+
+        let mut whole = Builder::new("composed", "Everything", "one thing", "test")
+            .node_kind("thing", "a thing");
+        whole.node(thing("a"));
+        assert!(
+            committed_graph(whole.finish()).is_ok(),
+            "a graph that stopped nowhere is committed"
+        );
     }
 
     #[test]

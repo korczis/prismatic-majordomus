@@ -30829,6 +30829,8 @@
         "route": "/cockpit/objects/issue/i1966",
         "source": ".ai/repo/project/issues/I1966.yaml",
         "facts": {
+          "completed_at": "2026-10-14T20:15:20Z",
+          "completed_event": "sha256:b051d92f6ce5f09fb9f9df76971131b4bb26078facbd07fdd7747f8ea105b07e",
           "created_at": "2026-10-03",
           "evidence_required": [
             "composed_graph_complete_or_refused",
@@ -30853,12 +30855,16 @@
             "docs/generated/graph.schema.json"
           ],
           "slug": "the-composed-graph-is-whole-or-refused",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T20:13:37Z",
+          "started_event": "sha256:14eb8aad8a17b9492d66e2d147eb73cacccd1a43cabf846bbd4a999067020140",
+          "updated_at": "2026-10-14T20:15:20Z",
           "validation": [
             "bash test/run.sh 390_unresolved_relation_refuses_generation",
             "cargo test --lib graph::",
             "scripts/derive-check"
-          ]
+          ],
+          "verified_at": "2026-10-14T20:14:49Z",
+          "verified_event": "sha256:7b5a2478d2cd007c299e0c1b7e71c69de0bb13ec91159fe484a152aab0e4ddbe"
         }
       },
       {
