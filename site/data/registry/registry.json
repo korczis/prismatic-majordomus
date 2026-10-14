@@ -6,7 +6,7 @@
     "version": "0.24.1"
   },
   "registry": {
-    "fingerprint": "2eb8fcbb7c3687c71b210400d1cf9673a05eabbc3f4a0b27bd4460f0c9b75ffc",
+    "fingerprint": "61329bf44b9f988ab3e7503ef3b359b36f4ea6b5e2e8ce4c0799bb6f97ecf397",
     "summary": {
       "total": 2351,
       "builtin": 196,
@@ -30965,6 +30965,10 @@
                 "$ref": "#/$defs/HealthStatus",
                 "description": "The worst check's status."
               },
+              "repository": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "The worst status among the dimensions that describe the repository at this commit:\nevery check but the ones in `PROCESS_DIMENSIONS`. A process that is no server —\nthe command line, or the reader of a published snapshot (ADR 0141) — cannot decide\nwho is attached or what the mesh runtime did, and says `unknown` for them; this is\nthe verdict that is the same whichever process read the repository, and it is what a\npublication shows first."
+              },
               "tallies": {
                 "type": "object",
                 "additionalProperties": {
@@ -30991,6 +30995,7 @@
             },
             "required": [
               "status",
+              "repository",
               "tallies",
               "checks"
             ],
@@ -81325,7 +81330,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2d066abd66fba32f257d7469e95649024c6a205897110a8ecd72db552f07c10d",
+    "fingerprint": "33f14a8182085b4302a056547cfce032020bbb280ee4d34abfc02cf051cfcec7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87285,7 +87290,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 29844
+        "bytes": 30561
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -98693,7 +98698,7 @@
         "path": ".ai/repo/rules/project/the-published-ui-is-the-trunks.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8486,
+        "bytes": 9381,
         "tags": [
           "ui",
           "publication",
@@ -100700,7 +100705,7 @@
         "identity": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "path": "test/cases/1092_the_ui_snapshot_holds_every_screen.sh",
         "source_class": "case",
-        "bytes": 4703
+        "bytes": 5694
       },
       {
         "uri": "majordomus://test/test/cases/1093_the_ui_snapshot_links_nothing_absent.sh",
@@ -101532,7 +101537,7 @@
         "identity": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "path": "test/cases/2983_the_published_ui_is_the_trunks.sh",
         "source_class": "case",
-        "bytes": 20904
+        "bytes": 21589
       },
       {
         "uri": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
