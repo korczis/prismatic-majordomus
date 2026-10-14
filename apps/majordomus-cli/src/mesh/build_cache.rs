@@ -15,6 +15,17 @@
 //!
 //! It reads no network and no clock: the age of an offer and a measured round trip come in
 //! with it, so a test is a table.
+//!
+//! # Example
+//!
+//! ```
+//! use majordomus_cli::mesh::build_cache::{select, Policy};
+//!
+//! // no node offers a cache: the answer is "none", and it says the build goes on
+//! let answer = select(&[], &Policy::default());
+//! assert!(answer.chosen.is_none());
+//! assert!(answer.reason.contains("local level alone"));
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,6 +34,14 @@ use serde::{Deserialize, Serialize};
 pub const PROTOCOL_S3: &str = "s3";
 
 /// How far an offer's endpoint is meant to be reached, nearest first.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Scope;
+/// // nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh
+/// assert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -37,6 +56,14 @@ pub enum Scope {
 }
 
 /// How the offering node's own probe judges the store.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Health;
+/// // only a healthy store is used; an unknown one is never promoted
+/// assert_ne!(Health::Unknown, Health::Healthy);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Health {
@@ -51,6 +78,20 @@ pub enum Health {
 }
 
 /// One node's offer. Carries no credential and no secret of any kind.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{Health, Offer, Scope};
+/// let offer = Offer {
+///     node: "n1".into(), protocol: "s3".into(), provider: "minio".into(),
+///     scope: Scope::Lan, endpoint: "http://192.168.100.30:9000".into(),
+///     bucket: "majordomus-build-cache".into(), priority: 0, headroom_gib: Some(200),
+///     health: Health::Healthy, age_seconds: 3, rtt_ms: None,
+/// };
+/// assert_eq!(offer.node, "n1");
+/// assert!(!serde_json::to_string(&offer).unwrap().contains("secret"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Offer {
     /// The offering node's id: the last tie-break, so ordering is total.
@@ -80,6 +121,15 @@ pub struct Offer {
 }
 
 /// What a client accepts. Read from policy, never hard-coded at a call site.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Policy;
+/// let policy = Policy::default();
+/// assert_eq!(policy.protocols, ["s3"]);
+/// assert!(policy.max_age_seconds > 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Policy {
     /// Protocols a client speaks; an offer of another protocol is passed over.
@@ -106,6 +156,15 @@ impl Default for Policy {
 }
 
 /// An offer that was not chosen, and the rule that said no.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};
+/// let answer = select(&[], &Policy::default());
+/// let passed: Vec<PassedOver> = answer.passed_over;
+/// assert!(passed.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PassedOver {
     /// The offer's node.
@@ -114,7 +173,22 @@ pub struct PassedOver {
     pub why: String,
 }
 
+impl crate::order::Ordered for PassedOver {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.node, &self.why)
+    }
+}
+
 /// The answer of [`select`]: the choice with its reason, and everything passed over.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{select, Policy, Selection};
+/// let answer: Selection = select(&[], &Policy::default());
+/// assert!(answer.chosen.is_none());
+/// assert!(answer.reason.contains("local level alone"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Selection {
     /// The chosen offer, or none.
@@ -181,6 +255,21 @@ fn rank(
 }
 
 /// Choose among `offers` under `policy`. Pure: no clock, no network, any order.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{Health, Offer, Scope};
+/// let offer = Offer {
+///     node: "n1".into(), protocol: "s3".into(), provider: "minio".into(),
+///     scope: Scope::Lan, endpoint: "http://192.168.100.30:9000".into(),
+///     bucket: "majordomus-build-cache".into(), priority: 0, headroom_gib: Some(200),
+///     health: Health::Healthy, age_seconds: 3, rtt_ms: None,
+/// };
+/// use majordomus_cli::mesh::build_cache::{select, Policy};
+/// let answer = select(&[offer], &Policy::default());
+/// assert_eq!(answer.chosen.unwrap().node, "n1");
+/// ```
 pub fn select(offers: &[Offer], policy: &Policy) -> Selection {
     let mut usable: Vec<&Offer> = Vec::new();
     let mut passed: Vec<PassedOver> = Vec::new();
@@ -193,15 +282,24 @@ pub fn select(offers: &[Offer], policy: &Policy) -> Selection {
             None => usable.push(o),
         }
     }
-    usable.sort_by(|a, b| rank(a).cmp(&rank(b)));
-    let chosen = usable.first().map(|o| (*o).clone());
-    for o in usable.iter().skip(1) {
-        passed.push(PassedOver {
-            node: o.node.clone(),
-            why: "usable, ranked lower: scope, then priority, headroom, round trip, node id".into(),
-        });
+    // The best offer is the minimum of the rank; the rest are listed in the canonical
+    // order of what was passed over, so no second ordering lives here.
+    let best = usable
+        .iter()
+        .enumerate()
+        .min_by(|(_, a), (_, b)| rank(a).cmp(&rank(b)))
+        .map(|(i, _)| i);
+    let chosen = best.map(|i| usable[i].clone());
+    for (i, o) in usable.iter().enumerate() {
+        if Some(i) != best {
+            passed.push(PassedOver {
+                node: o.node.clone(),
+                why: "usable, ranked lower: scope, then priority, headroom, round trip, node id"
+                    .into(),
+            });
+        }
     }
-    passed.sort_by(|a, b| a.node.cmp(&b.node));
+    crate::order::canonical(&mut passed);
     let reason = match (&chosen, offers.len()) {
         (Some(c), _) => format!(
             "{} ({}, {} scope, priority {}) is the best of {} usable offer(s) of {}",
@@ -241,6 +339,17 @@ pub const PROBE_BUDGET: Duration = Duration::from_millis(500);
 /// What the node says about the store it serves. Read from a file outside the repository
 /// (the provisioning writes it), never from a tracked one: an endpoint is a fact about a
 /// running node, not a property of the project (ADR 0157).
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{LocalProvider, Scope};
+/// let p: LocalProvider = serde_json::from_str(
+///     r#"{"provider":"minio","scope":"lan","endpoint":"http://192.168.100.30:9000","bucket":"b"}"#,
+/// ).unwrap();
+/// assert_eq!(p.scope, Scope::Lan);
+/// assert_eq!(p.ready_path, "/minio/health/ready");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LocalProvider {
     /// What serves the store (`minio`, ...).
@@ -271,6 +380,16 @@ fn default_ready_path() -> String {
 /// `budget`. Only an IP-literal endpoint is probed. A refusal or a non-success answer is
 /// `Unhealthy`; a probe that ran out of time or could not be made is `Unknown`, never
 /// `Healthy` and never a verdict it did not earn.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{probe_health, Health};
+/// use std::time::Duration;
+/// // a name is never resolved: only an IP literal is probed
+/// let h = probe_health("http://example.invalid:9000", "/ready", Duration::from_millis(50));
+/// assert_eq!(h, Health::Unknown);
+/// ```
 pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Health {
     let authority = endpoint
         .strip_prefix("http://")
@@ -315,6 +434,14 @@ pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Healt
 }
 
 /// Free space on the filesystem holding `path`, in whole GiB, when it can be read.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::headroom_gib;
+/// assert!(headroom_gib(std::path::Path::new("/")).is_some());
+/// assert!(headroom_gib(std::path::Path::new("/no/such/path/here")).is_none());
+/// ```
 pub fn headroom_gib(path: &Path) -> Option<u64> {
     use std::os::unix::ffi::OsStrExt;
     let c = std::ffi::CString::new(path.as_os_str().as_bytes()).ok()?;
@@ -336,6 +463,20 @@ pub fn headroom_gib(path: &Path) -> Option<u64> {
 
 /// This node's offer, from what it declares and what its own probes answer now. `rtt_ms`
 /// is the asking node's to measure, so a node's own offer carries none.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{local_offer, Health, LocalProvider, Scope};
+/// use std::time::Duration;
+/// let cfg = LocalProvider {
+///     provider: "minio".into(), scope: Scope::Host, endpoint: "not-an-address".into(),
+///     bucket: "b".into(), priority: 0, data_path: None, ready_path: "/ready".into(),
+/// };
+/// let offer = local_offer(&cfg, "n1", Duration::from_millis(50));
+/// assert_eq!(offer.health, Health::Unknown);
+/// assert_eq!(offer.rtt_ms, None);
+/// ```
 pub fn local_offer(cfg: &LocalProvider, node: &str, budget: Duration) -> Offer {
     Offer {
         node: node.to_string(),
@@ -358,6 +499,14 @@ pub fn local_offer(cfg: &LocalProvider, node: &str, budget: Duration) -> Offer {
 /// (`~/.config/majordomus/build-cache.json`): the store it serves itself, if any, and the
 /// offers of providers it was told about until discovery finds them. It holds endpoints and
 /// no credential: a client key lives in its own 0600 file, never here (ADR 0157).
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::NodeFile;
+/// let file: NodeFile = serde_json::from_str("{}").unwrap();
+/// assert!(file.provider.is_none() && file.known.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct NodeFile {
@@ -370,6 +519,17 @@ pub struct NodeFile {
 }
 
 /// A provider this node was told about.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{KnownProvider, NodeFile};
+/// let file: NodeFile = serde_json::from_str(
+///     r#"{"known":[{"node":"n2","offer":{"provider":"minio","scope":"mesh","endpoint":"http://100.92.246.32:9000","bucket":"b"}}]}"#,
+/// ).unwrap();
+/// let known: &KnownProvider = &file.known[0];
+/// assert_eq!(known.node, "n2");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct KnownProvider {
@@ -380,6 +540,14 @@ pub struct KnownProvider {
 }
 
 /// Why a node file could not be read, in words a person can act on.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{read_node_file, FileError};
+/// let err = read_node_file(std::path::Path::new("/no/such/build-cache.json")).unwrap_err();
+/// assert_eq!(err, FileError::Absent);
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileError {
     /// The file does not exist: a node that offers and knows nothing, which is normal.
@@ -390,6 +558,14 @@ pub enum FileError {
 
 /// Read the node file at `path`. An absent file is [`FileError::Absent`], and the caller
 /// treats it as an empty [`NodeFile`].
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{read_node_file, FileError};
+/// let err = read_node_file(std::path::Path::new("/no/such/build-cache.json")).unwrap_err();
+/// assert!(matches!(err, FileError::Absent));
+/// ```
 pub fn read_node_file(path: &Path) -> Result<NodeFile, FileError> {
     match std::fs::read_to_string(path) {
         Ok(text) => serde_json::from_str(&text).map_err(|e| {
@@ -406,6 +582,15 @@ pub fn read_node_file(path: &Path) -> Result<NodeFile, FileError> {
 /// Every offer this node can state now: its own store, then each known provider, each
 /// probed from here with `budget`. A known provider's round trip is the probe's own
 /// measure, so it can be ranked against the others.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::{offers_of, NodeFile};
+/// use std::time::Duration;
+/// // a node that offers and knows nothing states no offer
+/// assert!(offers_of(&NodeFile::default(), "n1", Duration::from_millis(50)).is_empty());
+/// ```
 pub fn offers_of(file: &NodeFile, own_node: &str, budget: Duration) -> Vec<Offer> {
     let mut out = Vec::new();
     if let Some(p) = &file.provider {
