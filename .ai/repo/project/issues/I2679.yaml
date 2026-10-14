@@ -1,0 +1,31 @@
+id: I2679
+milestone: development-runtime
+title: "The Observatory follows a stream with a cursor instead of asking for its page again"
+slug: the-observatory-follows-a-stream-with-a-cursor
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a change on the mesh reach the display when it happens, and make a gap in what was received something the display knows and says."
+why: "The Observatory learns of a change by asking for its own page every 15 seconds. That is honest and coarse: an event is seen up to 15 seconds late, events between two readings are seen only as a difference, and a missed reading is indistinguishable from a quiet mesh. The owner's specification asks for reconnect, deduplication, cursor recovery and bounded queues."
+current_state: "share/ui/observatory.js polls its page with ?fragment every 15 seconds and backs off to 120. The server already keeps a live-event stream for executions with a cursor per execution, and the mesh journal is ordered by stream and sequence."
+desired_state: "The display follows the server's existing event stream from a cursor, resumes from it after a disconnect, takes a fresh projection when the cursor has expired and says that it did, drops a duplicate by its identity, and holds a bounded number of events. No new transport is introduced."
+scope:
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "share/ui/observatory.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2679.yaml"
+non_scope:
+  - "A new stream protocol, event store or message broker"
+  - "The public snapshot, which reads nothing again"
+depends_on: []
+acceptance_criteria:
+  - "An event appended to the mesh journal reaches the display without a reading of the whole page, and a case proves it through a real server"
+  - "After a disconnect the display resumes from its cursor; with an expired cursor it takes a fresh projection and its status word says so"
+  - "The same event delivered twice draws one mark, and the number of events the script holds has a declared bound"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+evidence_required:
+  - "observatory_stream_resume_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14

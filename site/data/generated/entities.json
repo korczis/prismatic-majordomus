@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 104,
+      "count": 105,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 104
+      "count": 105
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 348
+      "count": 351
     },
     {
       "kind": "knowledge",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 471
+      "count": 472
     },
     {
       "kind": "use-case",
@@ -7590,7 +7590,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8085,6 +8093,81 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/362_a_release_follows_the_ci_verdict.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0158",
+      "identity": "adr-0158",
+      "slug": "adr-0158",
+      "cockpit": "/cockpit/objects/adr/adr-0158",
+      "title": "The Observatory is one screen of the UI, and it draws only what was observed",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "observatory",
+        "evidence",
+        "mesh"
+      ],
+      "source": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/observatory.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/ui/observatory.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-screen-waits-for-a-source@1",
+          "kind": "rule",
+          "route": "/rules/project-no-screen-waits-for-a-source-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -14882,7 +14965,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -16183,6 +16274,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0141/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
         }
       ]
     },
@@ -16490,6 +16588,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
           "external": false
         },
         {

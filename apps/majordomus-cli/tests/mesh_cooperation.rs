@@ -622,6 +622,15 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
     for s in [&sa, &sb, &sc] {
         let events = s.get("/api/v1/mesh/events?limit=1000").1;
         assert_eq!(events["count"], json!(4), "{events}");
+        // The journal as it stands now: `newest` answers its last events, in the same order,
+        // and names the newest stamp, where the default page answers its first ones.
+        let newest = s.get("/api/v1/mesh/events?limit=2&newest=true").1;
+        assert_eq!(newest["count"], json!(2), "{newest}");
+        assert_eq!(newest["events"][0], events["events"][2], "{newest}");
+        assert_eq!(newest["events"][1], events["events"][3], "{newest}");
+        assert_eq!(newest["lamport"], events["lamport"], "{newest}");
+        let first = s.get("/api/v1/mesh/events?limit=2").1;
+        assert_eq!(first["events"][0], events["events"][0], "{first}");
     }
     // Quiet rounds carry nothing further: replication stopped rather than looping.
     let served = |s: &Served| {
