@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.25.0"
+    "version": "0.26.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -12243,6 +12243,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
+          "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14810,6 +14816,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
+          "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
           "category": "e2e"
@@ -14890,6 +14908,12 @@
           "via": "behaviour",
           "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
           "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -16502,6 +16526,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:67_rule_dag",
           "path": "test/cases/67_rule_dag.sh",
           "category": "e2e"
@@ -16534,6 +16564,12 @@
           "via": "negative",
           "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
           "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -16906,6 +16942,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -16980,6 +17022,12 @@
           "via": "negative",
           "test": "suite:281_published_order_is_tracked",
           "path": "test/cases/281_published_order_is_tracked.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -22823,6 +22871,26 @@
         },
         {
           "via": "rule",
+          "test": "suite:3019_a_failed_branch_run_cancels_itself",
+          "path": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3020_an_active_skill_is_named_where_the_crate_test_demands",
+          "path": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:362_a_release_follows_the_ci_verdict",
           "path": "test/cases/362_a_release_follows_the_ci_verdict.sh",
           "category": "e2e",
@@ -27448,7 +27516,12 @@
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
     "suite:3014_the_kiosk_draws_what_the_repository_proves",
+    "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
+    "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",
+    "suite:3018_a_comment_in_the_policy_moves_no_bootstrap",
     "suite:301_the_mesh_stays_one_subsystem",
+    "suite:3021_a_tag_does_not_freeze_the_queue",
+    "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
     "suite:305_a_command_is_claimed_or_classified",

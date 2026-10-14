@@ -332,8 +332,18 @@ Without JavaScript the same projection is a table: one row per scene, with its s
 (`available`, `decorative` or `unavailable`), its meaning or its reason, what it requires and
 the link to its rows.
 
-A reader's choice of a scene holds for five minutes, then the rotation resumes. Nothing on the
-screen starts work or writes a record.
+A reader's choice of a scene holds for five minutes, then the rotation resumes. New events of
+the journal interrupt the rotation for the river once the scene shown has had 12 seconds, and
+at most once every 120 seconds, so a busy journal cannot hold the display; a reader's choice is
+never interrupted. A scene whose
+renderer throws is quarantined for the rest of the display's life: the rotation skips it, the
+others go on, and the scene says `QUARANTINED` with what failed when a reader asks for it.
+Nothing on the screen starts work or writes a record.
+
+The display's own state is readable for an inspector or an evidence run: the section's
+`observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
+and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
+gates is taken through it by `scripts/lib/ui-observatory.mjs`.
 
 On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
 and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,
@@ -481,5 +491,6 @@ probe refuses a published first screen with an undecided figure, and
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
 - The Observatory's replay on the public site is as old as the last capture that was
   committed; nothing captures one on a schedule. Between readings of its page it follows the
-  journal by asking for the events above its cursor; nothing is pushed to it. Its screenshots at 1080p and 4K, its measured frame rates and
-  its soak as a kiosk are I2680; until then no figure about its performance is stated.
+  journal by asking for the events above its cursor; nothing is pushed to it. Its gates and
+  the measurements behind them are in `.ai/repo/benchmarks/observatory/manifest.json`; a
+  frame rate there is headless Chromium's on the machine it names, not a panel's.

@@ -25,4 +25,16 @@ validation:
 evidence_required:
   - "observatory_gate_manifest"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-14T12:31:43Z
+started_at: 2026-10-14T12:31:23Z
+started_event: sha256:8e2b8743d02ee9aa701dd8c228c9bd94e102ad871a654e14b0c176c329bda02e
+completed_at: 2026-10-14T12:31:43Z
+completed_event: sha256:9306ea3105a363ffa243a8221821caec48e024e0dc460c2c26fbce801b43e800
+evidence:
+  - covers: observatory_gate_manifest
+    type: artifact
+    command: "node scripts/lib/ui-observatory.mjs --origin https://majordomus.dev --out .ai/repo/benchmarks/observatory/production"
+    result: "G0-G7 PASS, each with command, environment and evidence path (production 6f28de9207 and a live server, Apple M5 Pro, headless chromium 141)"
+    artifact: ".ai/repo/benchmarks/observatory/manifest.json"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:31:32Z

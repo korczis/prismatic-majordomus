@@ -1,9 +1,584 @@
 {
   "schema": "majordomus/changelog/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.25.0",
-  "current": "0.25.0",
+  "generator": "majordomus-cli 0.26.0",
+  "current": "0.26.0",
   "sections": [
+    {
+      "version": "0.25.0",
+      "tag": "v0.25.0",
+      "date": "2026-10-14T13:52:14Z",
+      "commit": "ac203c34dfc06785b082a463f057cd85bbe5d85b",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.25.0",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.24.1...v0.25.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.25.0",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "feat",
+          "heading": "Added",
+          "rank": 0,
+          "changes": [
+            {
+              "kind": "feat",
+              "scope": "ui",
+              "subject": "the Observatory follows the journal from a cursor, and every new tool is called",
+              "breaking": false,
+              "commit": "bb844110b",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/bb844110b",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2679",
+                  "title": "The Observatory follows a stream with a cursor instead of asking for its page again",
+                  "route": "/plan/i2679/"
+                }
+              ]
+            },
+            {
+              "kind": "feat",
+              "scope": "ui",
+              "subject": "the published Observatory replays a recording of the real mesh, and says it is a replay",
+              "breaking": false,
+              "commit": "f58b8a1c6",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f58b8a1c6",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2678",
+                  "title": "The public Observatory replays events that were recorded, and says it is a replay",
+                  "route": "/plan/i2678/"
+                }
+              ]
+            },
+            {
+              "kind": "feat",
+              "scope": "editors",
+              "subject": "Claude Code reaches every workflow skill by its name, and evolve says what it learned",
+              "breaking": false,
+              "commit": "9709eea84",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9709eea84",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2694",
+                  "title": "A promoted note resolves in every checkout, not only where it was promoted",
+                  "route": "/plan/i2694/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2664",
+                  "title": "A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared",
+                  "route": "/plan/i2664/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "plan",
+              "subject": "I1900 is ready again until the intent it serves has a critique",
+              "breaking": false,
+              "commit": "f044ae642",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f044ae642",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1900",
+                  "title": "An intent is a typed record whose stage and satisfaction are derived",
+                  "route": "/plan/i1900/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "plan",
+              "subject": "an open issue scopes the test directory, not a case it has not written yet",
+              "breaking": false,
+              "commit": "70b4e540c",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/70b4e540c",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1988",
+                  "title": "A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands",
+                  "route": "/plan/i1988/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1965",
+                  "title": "The entry preflight reads the one verdict",
+                  "route": "/plan/i1965/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "docs",
+          "heading": "Documentation",
+          "rank": 4,
+          "changes": [
+            {
+              "kind": "docs",
+              "scope": "handbook",
+              "subject": "the Czech handbook says what the MJ way is, and states no figure by hand",
+              "breaking": false,
+              "commit": "e217df9d6",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e217df9d6"
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "plan",
+              "subject": "the deployment milestone is the GHCR image, and eight Fly-only issues are cancelled",
+              "breaking": false,
+              "commit": "3b787430c",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3b787430c",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I0913",
+                  "title": "The provider configuration is generated, and the cheap profile is declared",
+                  "route": "/plan/i0913/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0914",
+                  "title": "One deployment core, one command, and a dry run that mutates nothing",
+                  "route": "/plan/i0914/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0915",
+                  "title": "Deployment joins the diagnostics that already exist",
+                  "route": "/plan/i0915/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0917",
+                  "title": "A bad deployment can be undone deterministically",
+                  "route": "/plan/i0917/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0918",
+                  "title": "The bootstrap credential is used once and belongs to nothing",
+                  "route": "/plan/i0918/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0922",
+                  "title": "The memory hypothesis is tested, not asserted",
+                  "route": "/plan/i0922/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0929",
+                  "title": "Production deploys from CI with a token scoped to one application",
+                  "route": "/plan/i0929/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0931",
+                  "title": "The application exists, one machine runs it, and the URL answers",
+                  "route": "/plan/i0931/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0903",
+                  "title": "Deployment reads are declared once and projected everywhere",
+                  "route": "/plan/i0903/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0904",
+                  "title": "The listen address is one fact with two projections",
+                  "route": "/plan/i0904/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0906",
+                  "title": "Termination is graceful and proved against the real container",
+                  "route": "/plan/i0906/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0908",
+                  "title": "A hosted process has no repository, and says so instead of failing",
+                  "route": "/plan/i0908/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0910",
+                  "title": "The release profile is chosen by measurement, not by folklore",
+                  "route": "/plan/i0910/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0911",
+                  "title": "A source change does not rebuild the world, and the context stays small",
+                  "route": "/plan/i0911/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0916",
+                  "title": "The smoke suite is derived from the route registry, never written twice",
+                  "route": "/plan/i0916/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0919",
+                  "title": "Nothing secret and nothing local leaves in the image",
+                  "route": "/plan/i0919/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0920",
+                  "title": "The image's dependencies are known and its advisories are policy",
+                  "route": "/plan/i0920/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0921",
+                  "title": "Size is measured first and budgeted second",
+                  "route": "/plan/i0921/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0923",
+                  "title": "Cold start and endpoint cost are benchmark targets like everything else",
+                  "route": "/plan/i0923/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0925",
+                  "title": "Every deployment rule is a check that runs",
+                  "route": "/plan/i0925/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0926",
+                  "title": "The deployment documentation is generated and reachable",
+                  "route": "/plan/i0926/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0930",
+                  "title": "The real image runs under the real limits before anything is deployed",
+                  "route": "/plan/i0930/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0907",
+                  "title": "The running process says what it is, from an allowlist",
+                  "route": "/plan/i0907/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0912",
+                  "title": "The image serves the site the canonical pipeline produced",
+                  "route": "/plan/i0912/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0932",
+                  "title": "The milestone is accepted on its evidence",
+                  "route": "/plan/i0932/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0905",
+                  "title": "Liveness and readiness are registered capabilities, not router hacks",
+                  "route": "/plan/i0905/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0909",
+                  "title": "The production image is a generated projection of the build specification",
+                  "route": "/plan/i0909/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0927",
+                  "title": "The cockpit shows the deployment from the same data",
+                  "route": "/plan/i0927/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0928",
+                  "title": "A pull request cannot merge a deployment that would not work",
+                  "route": "/plan/i0928/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "0.25.0, for the Observatory's three new capabilities",
+              "breaking": false,
+              "commit": "2b9f58e93",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/2b9f58e93"
+            },
+            {
+              "kind": "chore",
+              "scope": "plan",
+              "subject": "26 issues master already delivers are done with their evidence, and I0924 is cancelled",
+              "breaking": false,
+              "commit": "f29cb6ac2",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f29cb6ac2",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I0924",
+                  "title": "The decision is recorded where architecture decisions are recorded",
+                  "route": "/plan/i0924/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0902",
+                  "title": "The deployment object becomes typed Rust that refuses nonsense",
+                  "route": "/plan/i0902/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1503",
+                  "title": "A closed session is not closed a second time under the same identity",
+                  "route": "/plan/i1503/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1508",
+                  "title": "The navigation is derived from the dispatcher, not kept beside it",
+                  "route": "/plan/i1508/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1511",
+                  "title": "The documentation surface answers in a checkout that has not built the site",
+                  "route": "/plan/i1511/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1900",
+                  "title": "An intent is a typed record whose stage and satisfaction are derived",
+                  "route": "/plan/i1900/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1949",
+                  "title": "CI evidence is recorded clean, and its report is the tracked ledger's verdict",
+                  "route": "/plan/i1949/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1981",
+                  "title": "A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv",
+                  "route": "/plan/i1981/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1992",
+                  "title": "A rebuild that fails consumes no change: the next request retries it",
+                  "route": "/plan/i1992/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2073",
+                  "title": "A worker records an observation in one command",
+                  "route": "/plan/i2073/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2139",
+                  "title": "A sync message stays under the link bound whatever the marks weigh",
+                  "route": "/plan/i2139/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2145",
+                  "title": "A tool call that may have run is never sent a second time",
+                  "route": "/plan/i2145/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2156",
+                  "title": "A slow or silent HTTP client cannot hold a server worker",
+                  "route": "/plan/i2156/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2162",
+                  "title": "A released archive, installed, serves a foreign repository over the shared server in CI",
+                  "route": "/plan/i2162/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2165",
+                  "title": "A released archive carries a provenance attestation the installer can check",
+                  "route": "/plan/i2165/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2296",
+                  "title": "The executor reopens a record pull request no run was started for",
+                  "route": "/plan/i2296/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2298",
+                  "title": "A pull request stacked on one that landed merges on the verdict its head already has",
+                  "route": "/plan/i2298/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2300",
+                  "title": "A head is judged against what it changes, not against GitHub's live state",
+                  "route": "/plan/i2300/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2303",
+                  "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+                  "route": "/plan/i2303/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2396",
+                  "title": "The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed",
+                  "route": "/plan/i2396/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2398",
+                  "title": "A derive offloaded to another machine waits its turn in a declared queue",
+                  "route": "/plan/i2398/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2399",
+                  "title": "Every session briefs itself on an interval, without being asked",
+                  "route": "/plan/i2399/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2400",
+                  "title": "A signal model and a fold join every source the server already records",
+                  "route": "/plan/i2400/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2416",
+                  "title": "The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red",
+                  "route": "/plan/i2416/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2464",
+                  "title": "A path that holds a space is one path to the scope doctrine",
+                  "route": "/plan/i2464/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2481",
+                  "title": "The UI links every entity it names, and says none where a source has no value",
+                  "route": "/plan/i2481/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2491",
+                  "title": "A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team",
+                  "route": "/plan/i2491/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2147",
+                  "title": "The MCP transports bound what they read and follow the Streamable HTTP rules they claim",
+                  "route": "/plan/i2147/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2652",
+                  "title": "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on",
+                  "route": "/plan/i2652/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2123",
+                  "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+                  "route": "/plan/i2123/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2124",
+                  "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+                  "route": "/plan/i2124/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2417",
+                  "title": "The landing page is a click-through story: an editorial hero and an evidence chain a visitor steps through",
+                  "route": "/plan/i2417/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.24.1 and the metadata it publishes",
+              "breaking": false,
+              "commit": "b8f6f3ec3",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b8f6f3ec3"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v0.25.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "315a5f7824e6a8f0aafc07d32769c949db8791600b8795d866ebe932f6f9aa1a"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v0.25.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "c4de17255b7846a3fe7ddc8668d6299d7d1f1a7eea1cb301ec2b320dd6ff9ff6"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v0.25.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "edb3a128a163b90a22da3fe1135a861ef4cdf54478edf46465211198c583dd4c"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v0.25.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "34416d74a83dbd3c2dad18f8493cf433b5e885f4218db4bc5ca29e953b9b6dae"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v0.25.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "1c34018c1250660d6580f71c6ef9036e994f07485969f5ad45a744f5f0267c30"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v0.25.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "9185d67e2b07d159aa3140dd69480021b5e7d8aa2cfc82c1a8107f783b24fa66"
+        }
+      ]
+    },
     {
       "version": "0.24.1",
       "tag": "v0.24.1",

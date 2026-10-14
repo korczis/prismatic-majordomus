@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.25.0"
+    "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "93b7452e1cb900170befb9da14c0bf432669e603dce34a7f7352ac32e4ddb46a",
+    "fingerprint": "680a431d22d26359f2ff86f449c9cff36854aebf88d45e5e555856d0bb51774d",
     "summary": {
-      "total": 2363,
+      "total": 2384,
       "builtin": 199,
-      "declarative": 2164,
+      "declarative": 2185,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2164
+        "resource": 2185
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2173
+        "implemented": 2194
       },
       "mcp_tools": 190,
-      "mcp_resources": 2219,
+      "mcp_resources": 2240,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -42032,11 +42032,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "historical",
+                    "description": "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+                  },
+                  {
+                    "type": "string",
                     "const": "missing",
                     "description": "Nothing answers to it. A dangling reference is the integrity validator's finding."
                   }
                 ],
-                "description": "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+                "description": "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
               },
               "ResolvedRelation": {
                 "type": "object",
@@ -62384,7 +62389,7 @@
         "module": "reasoning",
         "kind": "query",
         "title": "Check that reasoning stays provider-independent",
-        "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+        "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -80704,7 +80709,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 38,
+        "capabilities": 39,
         "capability_ids": []
       },
       {
@@ -81184,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 356,
+        "capabilities": 366,
         "capability_ids": []
       },
       {
@@ -81584,7 +81589,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 24,
+        "capabilities": 25,
         "capability_ids": []
       },
       {
@@ -81755,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 473,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81845,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eb0afea2b2f86975c8d78e407b26ecb8e4b279bf610c23d675a76a471fb4cb4e",
+    "fingerprint": "6aa729171fc08c4b4241f084e337bd41f8b4fcc6b2a44927d86af777f7342278",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81874,7 +81879,7 @@
       "audience": 8,
       "claim": 246,
       "command": 31,
-      "context": 38,
+      "context": 39,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,
@@ -81885,7 +81890,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 356,
+      "issue": 366,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81893,13 +81898,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 24,
+      "release-record": 25,
       "rule": 179,
       "scope": 1,
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 473,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -83618,7 +83623,7 @@
         "path": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7460,
+        "bytes": 8528,
         "tags": [
           "integration",
           "governance",
@@ -83635,7 +83640,7 @@
         "path": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8645,
+        "bytes": 8667,
         "tags": [
           "ui",
           "observatory",
@@ -86811,6 +86816,16 @@
         "bytes": 1571
       },
       {
+        "uri": "majordomus://context/ai.repo.benchmarks.observatory",
+        "kind": "context",
+        "identity": "ai.repo.benchmarks.observatory",
+        "title": "Observatory evidence",
+        "description": "The gates of the Observatory (G0 to G7) with their verdicts, and the browser measurements behind them, each naming its revision, command and machine.",
+        "path": ".ai/repo/benchmarks/observatory/README.md",
+        "source_class": "context",
+        "bytes": 2109
+      },
+      {
         "uri": "majordomus://context/ai.repo.benchmarks.pages",
         "kind": "context",
         "identity": "ai.repo.benchmarks.pages",
@@ -87508,7 +87523,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 34086
+        "bytes": 34901
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -87526,7 +87541,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 50142
+        "bytes": 51026
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -87634,7 +87649,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 31690
+        "bytes": 33390
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -87643,7 +87658,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 23724
+        "bytes": 24229
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -87787,7 +87802,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 13974
+        "bytes": 14079
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -87796,7 +87811,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 69214
+        "bytes": 69934
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -87814,7 +87829,7 @@
         "title": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
         "path": "docs/KNOWLEDGE.md",
         "source_class": "document",
-        "bytes": 21012
+        "bytes": 21957
       },
       {
         "uri": "majordomus://document/docs/LAUNCH.md",
@@ -87832,7 +87847,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 33332
+        "bytes": 34125
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -87922,7 +87937,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170911
+        "bytes": 137013
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87967,7 +87982,7 @@
         "title": "Reasoning",
         "path": "docs/REASONING.md",
         "source_class": "document",
-        "bytes": 13784
+        "bytes": 14104
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -87976,7 +87991,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 41219
+        "bytes": 41705
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -88012,7 +88027,7 @@
         "title": "The repository scope",
         "path": "docs/SCOPE.md",
         "source_class": "document",
-        "bytes": 7612
+        "bytes": 7826
       },
       {
         "uri": "majordomus://document/docs/SHELL.md",
@@ -89506,7 +89521,7 @@
         "title": "The Observatory draws nothing it did not read",
         "path": "docs/claims/observatory-draws-nothing-it-did-not-read.md",
         "source_class": "claim_page",
-        "bytes": 3386
+        "bytes": 3494
       },
       {
         "uri": "majordomus://document/docs/claims/open-question-gate.md",
@@ -90725,7 +90740,7 @@
         "path": ".ai/repo/features/observatory.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3161,
+        "bytes": 3458,
         "tags": [
           "ui",
           "interface",
@@ -91005,7 +91020,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 98315
+        "bytes": 99448
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -91053,7 +91068,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 86242
+        "bytes": 86775
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -91109,7 +91124,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 14644
+        "bytes": 16237
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -91149,7 +91164,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 97867
+        "bytes": 101109
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -91309,7 +91324,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 70717
+        "bytes": 70777
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -93693,7 +93708,7 @@
         "path": ".ai/repo/project/issues/I1509.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3414
+        "bytes": 4462
       },
       {
         "uri": "majordomus://issue/I1510",
@@ -94133,7 +94148,7 @@
         "path": ".ai/repo/project/issues/I1986.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1799
+        "bytes": 2890
       },
       {
         "uri": "majordomus://issue/I1987",
@@ -94144,7 +94159,7 @@
         "path": ".ai/repo/project/issues/I1987.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1308
+        "bytes": 2119
       },
       {
         "uri": "majordomus://issue/I1988",
@@ -94166,7 +94181,7 @@
         "path": ".ai/repo/project/issues/I1989.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1199
+        "bytes": 1881
       },
       {
         "uri": "majordomus://issue/I1990",
@@ -94188,7 +94203,7 @@
         "path": ".ai/repo/project/issues/I1991.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1159
+        "bytes": 2093
       },
       {
         "uri": "majordomus://issue/I1992",
@@ -94221,7 +94236,7 @@
         "path": ".ai/repo/project/issues/I1996.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2950
+        "bytes": 4019
       },
       {
         "uri": "majordomus://issue/I1997",
@@ -94243,7 +94258,7 @@
         "path": ".ai/repo/project/issues/I1998.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1842
+        "bytes": 2469
       },
       {
         "uri": "majordomus://issue/I1999",
@@ -94320,7 +94335,7 @@
         "path": ".ai/repo/project/issues/I2054.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2458
+        "bytes": 3136
       },
       {
         "uri": "majordomus://issue/I2059",
@@ -94419,7 +94434,7 @@
         "path": ".ai/repo/project/issues/I2126.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3029
+        "bytes": 3427
       },
       {
         "uri": "majordomus://issue/I2127",
@@ -94452,7 +94467,7 @@
         "path": ".ai/repo/project/issues/I2129.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3955
       },
       {
         "uri": "majordomus://issue/I2131",
@@ -94463,7 +94478,7 @@
         "path": ".ai/repo/project/issues/I2131.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3204
+        "bytes": 3656
       },
       {
         "uri": "majordomus://issue/I2132",
@@ -94474,7 +94489,7 @@
         "path": ".ai/repo/project/issues/I2132.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3030
+        "bytes": 2829
       },
       {
         "uri": "majordomus://issue/I2133",
@@ -94485,7 +94500,7 @@
         "path": ".ai/repo/project/issues/I2133.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3858
+        "bytes": 4644
       },
       {
         "uri": "majordomus://issue/I2134",
@@ -94496,7 +94511,7 @@
         "path": ".ai/repo/project/issues/I2134.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2938
+        "bytes": 2749
       },
       {
         "uri": "majordomus://issue/I2135",
@@ -94518,7 +94533,7 @@
         "path": ".ai/repo/project/issues/I2137.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3430
+        "bytes": 4879
       },
       {
         "uri": "majordomus://issue/I2139",
@@ -94595,7 +94610,7 @@
         "path": ".ai/repo/project/issues/I2157.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3215
+        "bytes": 4224
       },
       {
         "uri": "majordomus://issue/I2161",
@@ -94606,7 +94621,7 @@
         "path": ".ai/repo/project/issues/I2161.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3307
+        "bytes": 3821
       },
       {
         "uri": "majordomus://issue/I2162",
@@ -95189,7 +95204,7 @@
         "path": ".ai/repo/project/issues/I2664.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3355
+        "bytes": 4263
       },
       {
         "uri": "majordomus://issue/I2678",
@@ -95200,7 +95215,7 @@
         "path": ".ai/repo/project/issues/I2678.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2300
+        "bytes": 3131
       },
       {
         "uri": "majordomus://issue/I2679",
@@ -95211,7 +95226,7 @@
         "path": ".ai/repo/project/issues/I2679.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2258
+        "bytes": 3183
       },
       {
         "uri": "majordomus://issue/I2680",
@@ -95222,7 +95237,7 @@
         "path": ".ai/repo/project/issues/I2680.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2211
+        "bytes": 2971
       },
       {
         "uri": "majordomus://issue/I2694",
@@ -95278,6 +95293,116 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1154
+      },
+      {
+        "uri": "majordomus://issue/I2700",
+        "kind": "issue",
+        "identity": "I2700",
+        "title": "A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder",
+        "description": "Point the lease probe at a liveness route that answers without resolving the index and carries the repository id, the leaseholder and a digest of the lease token, and judge a process whose digest differs from the lease's not the leaseholder.",
+        "path": ".ai/repo/project/issues/I2700.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2806
+      },
+      {
+        "uri": "majordomus://issue/I2701",
+        "kind": "issue",
+        "identity": "I2701",
+        "title": "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration",
+        "description": "Declare the server's idle timeout under policy.yaml server: beside the lease timings, validate it by the policy schema, and make every server that starts stop after the declared time unless serve --idle says otherwise.",
+        "path": ".ai/repo/project/issues/I2701.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2714
+      },
+      {
+        "uri": "majordomus://issue/I2702",
+        "kind": "issue",
+        "identity": "I2702",
+        "title": "A checkout keeps one address across restarts, because its server binds a port derived from the checkout",
+        "description": "Bind a port derived from the repository and worktree identity before falling back to a free one, so that a Streamable HTTP client configuration or a bookmarked UI names an address that survives a restart.",
+        "path": ".ai/repo/project/issues/I2702.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2713
+      },
+      {
+        "uri": "majordomus://issue/I2703",
+        "kind": "issue",
+        "identity": "I2703",
+        "title": "The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order",
+        "description": "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test.",
+        "path": ".ai/repo/project/issues/I2703.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2760
+      },
+      {
+        "uri": "majordomus://issue/I2704",
+        "kind": "issue",
+        "identity": "I2704",
+        "title": "A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate",
+        "description": "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test.",
+        "path": ".ai/repo/project/issues/I2704.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3228
+      },
+      {
+        "uri": "majordomus://issue/I2705",
+        "kind": "issue",
+        "identity": "I2705",
+        "title": "A node key can be rotated, peers follow the new key, and the old key is refused",
+        "description": "Offer a node key rotation that peers which trusted the old key can follow to the new one, after which the old key's hello is refused, and purge a withdrawn key's events from the running journal without waiting for a restart.",
+        "path": ".ai/repo/project/issues/I2705.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3327
+      },
+      {
+        "uri": "majordomus://issue/I2706",
+        "kind": "issue",
+        "identity": "I2706",
+        "title": "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size",
+        "description": "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads.",
+        "path": ".ai/repo/project/issues/I2706.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2613
+      },
+      {
+        "uri": "majordomus://issue/I2707",
+        "kind": "issue",
+        "identity": "I2707",
+        "title": "majordomus doctor reports a stale server, or says plainly that it checks governance only",
+        "description": "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone.",
+        "path": ".ai/repo/project/issues/I2707.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1937
+      },
+      {
+        "uri": "majordomus://issue/I2708",
+        "kind": "issue",
+        "identity": "I2708",
+        "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows",
+        "description": "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor.",
+        "path": ".ai/repo/project/issues/I2708.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2967
+      },
+      {
+        "uri": "majordomus://issue/I2709",
+        "kind": "issue",
+        "identity": "I2709",
+        "title": "A red on the trunk has one named carrier, and nobody else may land until it is paid",
+        "description": "Make the trunk's red the first thing every lander knows about and the one thing that may land: a carrier is named on the board within the minute the red is read, and the landing claim is refused to anyone else until the fix is on master.",
+        "path": ".ai/repo/project/issues/I2709.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2234
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -96660,6 +96785,16 @@
         "bytes": 2442
       },
       {
+        "uri": "majordomus://release-record/v0.25.0",
+        "kind": "release-record",
+        "identity": "v0.25.0",
+        "title": "v0.25.0",
+        "path": ".ai/repo/releases/v0.25.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
         "uri": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "identity": "v0.3.1",
@@ -96728,7 +96863,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/adr-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3384,
+        "bytes": 3423,
         "tags": [
           "adrs",
           "records"
@@ -96863,7 +96998,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/completion-gates.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6004,
+        "bytes": 6050,
         "tags": [
           "tasks",
           "evidence",
@@ -97162,7 +97297,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3931,
+        "bytes": 3971,
         "tags": [
           "sessions",
           "continuity",
@@ -97207,7 +97342,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4941,
+        "bytes": 4985,
         "tags": [
           "tasks",
           "evidence",
@@ -97325,7 +97460,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/prompt-continuity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7098,
+        "bytes": 7138,
         "tags": [
           "prompts",
           "continuity",
@@ -97356,7 +97491,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6611,
+        "bytes": 6702,
         "tags": [
           "tasks",
           "completion",
@@ -97388,7 +97523,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/record-changed-files.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5181,
+        "bytes": 5233,
         "tags": [
           "records",
           "session",
@@ -97448,7 +97583,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/schema-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4146,
+        "bytes": 4217,
         "tags": [
           "schema",
           "rules",
@@ -97899,7 +98034,7 @@
         "path": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8705,
+        "bytes": 10646,
         "tags": [
           "process",
           "integration",
@@ -101544,7 +101679,7 @@
         "identity": "test/cases/130_context_compiler.sh",
         "path": "test/cases/130_context_compiler.sh",
         "source_class": "case",
-        "bytes": 20384
+        "bytes": 20672
       },
       {
         "uri": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
@@ -102227,12 +102362,84 @@
         "bytes": 8409
       },
       {
+        "uri": "majordomus://test/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "kind": "test",
+        "identity": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+        "source_class": "case",
+        "bytes": 3049
+      },
+      {
+        "uri": "majordomus://test/test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "kind": "test",
+        "identity": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "path": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "source_class": "case",
+        "bytes": 4204
+      },
+      {
+        "uri": "majordomus://test/test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "kind": "test",
+        "identity": "test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "path": "test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "source_class": "case",
+        "bytes": 4136
+      },
+      {
+        "uri": "majordomus://test/test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "kind": "test",
+        "identity": "test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "path": "test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "source_class": "case",
+        "bytes": 3612
+      },
+      {
+        "uri": "majordomus://test/test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "kind": "test",
+        "identity": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "path": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "source_class": "case",
+        "bytes": 8595
+      },
+      {
         "uri": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
         "kind": "test",
         "identity": "test/cases/301_the_mesh_stays_one_subsystem.sh",
         "path": "test/cases/301_the_mesh_stays_one_subsystem.sh",
         "source_class": "case",
         "bytes": 8469
+      },
+      {
+        "uri": "majordomus://test/test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+        "kind": "test",
+        "identity": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+        "path": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+        "source_class": "case",
+        "bytes": 5089
+      },
+      {
+        "uri": "majordomus://test/test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "kind": "test",
+        "identity": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "path": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "source_class": "case",
+        "bytes": 7179
+      },
+      {
+        "uri": "majordomus://test/test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "kind": "test",
+        "identity": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "path": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "source_class": "case",
+        "bytes": 5850
+      },
+      {
+        "uri": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "kind": "test",
+        "identity": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "source_class": "case",
+        "bytes": 5317
       },
       {
         "uri": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -102640,7 +102847,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 13989
+        "bytes": 14333
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -104280,7 +104487,7 @@
         "identity": "test/cases/93_scope_policy.sh",
         "path": "test/cases/93_scope_policy.sh",
         "source_class": "case",
-        "bytes": 9728
+        "bytes": 10026
       },
       {
         "uri": "majordomus://test/test/cases/93_workspace_kind.sh",
@@ -104536,7 +104743,7 @@
         "identity": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
         "path": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
         "source_class": "case",
-        "bytes": 5633
+        "bytes": 6009
       },
       {
         "uri": "majordomus://test/test/cases/999_a_parser_that_cannot_run_is_not_a_verdict.sh",
@@ -105198,7 +105405,7 @@
       "identity": [
         "id"
       ],
-      "objects": 38
+      "objects": 39
     },
     {
       "name": "critique",
@@ -105301,7 +105508,7 @@
       "identity": [
         "id"
       ],
-      "objects": 356
+      "objects": 366
     },
     {
       "name": "knowledge",
@@ -105387,7 +105594,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 24
+      "objects": 25
     },
     {
       "name": "rule",
@@ -105453,7 +105660,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 473
+      "objects": 482
     },
     {
       "name": "use-case",
@@ -139899,7 +140106,7 @@
         "name": "majordomus_reasoning_check",
         "id": "reasoning.check",
         "title": "Check that reasoning stays provider-independent",
-        "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+        "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

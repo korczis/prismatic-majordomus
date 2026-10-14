@@ -29,4 +29,21 @@ evidence_required:
   - "discovery_flood_bounded_test"
   - "refused_registration_learns_nothing_test"
 created_at: 2026-10-09
-updated_at: 2026-10-14
+updated_at: 2026-10-14T12:16:35Z
+started_at: 2026-10-14T12:15:55Z
+started_event: sha256:c8b781f832fa4cd8c0e672a6a755ce001ab4aa08de4193e9ef11b9d1ca9d3cfe
+completed_at: 2026-10-14T12:16:35Z
+completed_event: sha256:99db356e0c760b964cb55258d28e17e112f5223df0afdc607949f69677de5949
+evidence:
+  - covers: discovery_flood_bounded_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh discovery_flood_bounded_test"
+    result: "test result: ok. 8 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:13Z
+  - covers: refused_registration_learns_nothing_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh a_registration_learns_only_the_trusted_nodes_of_its_own_repository"
+    result: "test result: ok. 8 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:15Z

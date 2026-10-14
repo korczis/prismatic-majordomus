@@ -142,10 +142,13 @@ are read a page at a time and entered by their parts:
 - **A link never loses a filter and never keeps a page number.** Paging carries every
   filter with it; picking a part starts that part at its first page.
 
-A **detail** page pages nothing. A graph's nodes and edges, and the artifact manifest, are
-listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
-has only them, and a reader checking whether a path is in the manifest must be able to
-find it with the browser's own search.
+A **graph** page pages its two tables the same way, each by a parameter of its own:
+`?nodes=` for the node table and `?edges=` for the edge table, fifty rows a page, so paging
+one table never moves the other and a link carries both positions. Every node and every
+edge is still on some page as text, and the pager reaches each of those pages by its links
+alone, with no script; the reason is under "Why the tables under a graph are paged" below.
+The **artifact manifest** pages nothing: it is listed whole, because a reader checking
+whether a path is in it must be able to find it with the browser's own search.
 
 ## The one page that is about this machine
 
@@ -402,25 +405,33 @@ Nothing here is a colour, a size or a count written in JavaScript, and `scripts/
 reads `share/cockpit/graph.js` like every other first-party surface — it used to exempt the
 file by path, which is what let a hue computed in a script stand for a year.
 
-### Why the tables under it still page nothing
+### Why the tables under a graph are paged
 
-A graph page lists every node and every edge. For `composed` that is 4,729 table rows and
-about 420 kB of text in one response, and the obvious reaction is to page it. It is not
-paged, deliberately.
+A graph page lists every node and every edge, fifty rows at a time. The node table is paged
+by `?nodes=` and the edge table by `?edges=`; each keeps its own position in the URL, a
+number past the end is the last page, and the control under each table says which rows it
+shows.
 
 The tables are not a convenience beside the drawing; they *are* the page. The drawing needs
 JavaScript, a 400 kB library and a canvas, and the page says so in its own prose: "everything
 it shows is in the lists below, which is what a reader without JavaScript, a crawler and a
-screen reader get". Page them and that sentence stops being true — the drawing would show
-1452 nodes while the text showed a hundred, and the reader with no JavaScript would be the
-only one who could not see the whole graph. The listing pages elsewhere in the Cockpit
-(`/cockpit/objects`, `/cockpit/capabilities`) page because they are *views over* a
-collection, and a view may show a slice. A graph page is the rendering of one object.
+screen reader get". That sentence used to be the reason the tables were listed whole. It
+stopped being affordable: whole, `composed` was one document of more than a megabyte and
+thousands of table rows — a page nobody could scroll or search, and one no accessibility
+engine finished reading within its visit deadline. A document that size was not readable by
+the person the contract was written for either.
 
-The bulk format already exists and is linked from the page: `/api/v1/graph?id=<id>`. A reader
-who wants the graph as data takes that; a reader who wants it as a page gets all of it. The
-cost is one 420 kB response of static text, which is smaller than the drawing library the
-same page loads to show the same data.
+Paging keeps the sentence true because nothing is taken away. Every node and every edge is on
+exactly one page of its table, as text, and the pager is plain links: the first page, the
+last, the neighbours of the one shown and the previous and next, so a reader with no
+JavaScript reaches every page by following them, and a crawler does the same. The drawing is
+unchanged and still shows the whole graph; it reads the bulk format, not the tables.
+`apps/majordomus-cli/tests/cockpit.rs` walks the registry graph's tables page by page and
+through the pager's own links and requires every node and edge to turn up, and the page sweep
+there renders `/cockpit/graphs/composed`, the largest of them.
+
+The bulk format is linked from the page: `/api/v1/graph?id=<id>`. A reader who wants the
+whole graph in one response, to search or to process, takes that.
 
 `test/cases/190_graph_drawing.sh` runs `choose()` and `measure()` over synthetic shapes
 without a browser; `scripts/lib/cockpit-probe.mjs` asks the running renderer, through
