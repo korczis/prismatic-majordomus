@@ -342,8 +342,35 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
         if let Some(r) = v["reason"].as_str() {
             w(out, format!("            {r}"))?;
         }
+        if let Some(line) = share_line(&v["lease"]["share"]) {
+            w(out, line)?;
+        }
     }
     Ok(())
+}
+
+/// The line that says which share a server serves and whether it is that server's own: its
+/// standing, version, whether it holds `ui/`, the directory and how it was found, then the
+/// reason on a line of its own when it is skewed. Nothing when the lease names no share.
+fn share_line(share: &Value) -> Option<String> {
+    let path = share["path"].as_str()?;
+    let mut line = format!(
+        "            share {}  version {}  ui {}  {path}",
+        share["standing"].as_str().unwrap_or("?"),
+        share["version"].as_str().unwrap_or("none"),
+        if share["ui_present"] == true {
+            "present"
+        } else {
+            "absent"
+        },
+    );
+    if let Some(origin) = share["origin"].as_str() {
+        line.push_str(&format!(" ({origin})"));
+    }
+    if let Some(reason) = share["reason"].as_str() {
+        line.push_str(&format!("\n              {reason}"));
+    }
+    Some(line)
 }
 
 fn pretty(v: &Value) -> String {
@@ -1024,6 +1051,29 @@ mod tests {
     use super::*;
 
     const YOUNG: Duration = Duration::ZERO;
+
+    /// `serve status` names the share a server serves, says when it is skewed and why, and
+    /// says nothing about a share a lease does not name.
+    #[test]
+    fn a_status_line_names_the_share_and_its_skew() {
+        assert_eq!(share_line(&Value::Null), None);
+        let skewed = share_line(&json!({
+            "path": "/s", "origin": "repository", "version": "0.21.0",
+            "ui_present": false, "standing": "skewed", "reason": "the share at /s is old",
+        }))
+        .unwrap();
+        assert!(skewed.contains("share skewed  version 0.21.0  ui absent  /s (repository)"));
+        assert!(
+            skewed.ends_with("\n              the share at /s is old"),
+            "{skewed}"
+        );
+        let own = share_line(&json!({
+            "path": "/s", "version": "0.26.0", "ui_present": true, "standing": "current",
+        }))
+        .unwrap();
+        assert!(own.contains("share current  version 0.26.0  ui present  /s"));
+        assert!(!own.contains('\n'), "a current share takes one line");
+    }
 
     #[test]
     fn a_claim_naming_a_live_process_is_a_start_in_progress() {

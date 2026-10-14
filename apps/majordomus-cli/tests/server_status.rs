@@ -27,6 +27,7 @@ fn the_standing_is_decided_from_the_lease_the_probe_and_the_version() {
         started_at: "2026-09-10T00:00:00Z".into(),
         executable: None,
         version: version.map(str::to_string),
+        share: None,
     };
     let young = Duration::ZERO;
     let old = Duration::from_secs(3600);

@@ -68,6 +68,7 @@ use crate::capability::model::{
 use crate::capability::module::ModuleDescriptor;
 use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, VersionVerdict};
 use crate::repository::{self, GitIdentity, Repository};
+use crate::share::ServedShare;
 use crate::{capability, module};
 
 use super::get;
@@ -226,10 +227,12 @@ pub struct Desired {
 /// ```
 /// use majordomus_cli::capability::builtin::server::LeaseView;
 /// let view = LeaseView { pid: 7, url: Some("http://127.0.0.1:8741".into()),
-///     started_at: "2026-09-10T00:00:00Z".into(), executable: None, version: Some("1.0.0".into()) };
+///     started_at: "2026-09-10T00:00:00Z".into(), executable: None, version: Some("1.0.0".into()),
+///     share: None };
 /// let v = serde_json::to_value(&view).unwrap();
 /// assert_eq!(v["pid"], 7);
 /// assert!(v.get("token").is_none() && v.get("root").is_none());
+/// assert!(v.get("share").is_none(), "a lease that names no share is read without one");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LeaseView {
@@ -249,16 +252,45 @@ pub struct LeaseView {
     /// The executable's version; absent for a server too old to have written one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// The share directory the server serves, measured now against `version`: the version
+    /// it states, whether it holds `ui/`, and `skewed` with the reason when either differs
+    /// from what the server's executable needs. Absent when the lease names no share — a
+    /// server older than this field, or one that has not located its share yet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub share: Option<ServedShare>,
 }
 
 impl LeaseView {
-    fn of(d: &LeaseDocument) -> Self {
+    /// The view of a lease, with the share it names measured at the moment of reading.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::server::LeaseView;
+    /// use majordomus_cli::lease::{LeaseDocument, SCHEMA};
+    /// use majordomus_cli::share::{ShareLocation, ShareStanding};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join("version.txt"), "version=0.21.0\n").unwrap();
+    /// let doc = LeaseDocument { schema: SCHEMA.into(), pid: 1, token: "t".into(), root: "/r".into(),
+    ///     url: None, started_at: String::new(), executable: None, version: Some("0.26.0".into()),
+    ///     share: Some(ShareLocation { path: dir.path().into(), origin: "MAJORDOMUS_SHARE".into() }) };
+    /// let share = LeaseView::of(&doc).share.unwrap();
+    /// assert_eq!(share.standing, ShareStanding::Skewed);
+    /// assert_eq!(share.version.as_deref(), Some("0.21.0"));
+    /// assert!(!share.ui_present);
+    /// ```
+    pub fn of(d: &LeaseDocument) -> Self {
         LeaseView {
             pid: d.pid,
             url: d.url.clone(),
             started_at: d.started_at.clone(),
             executable: d.executable.clone(),
             version: d.version.clone(),
+            share: d.share.as_ref().map(|s| {
+                ServedShare::inspect(
+                    &s.path,
+                    Some(&s.origin),
+                    d.version.as_deref().unwrap_or("unknown"),
+                )
+            }),
         }
     }
 }
@@ -355,7 +387,7 @@ pub struct ServerStatus {
 /// let lease = |url: Option<&str>, version: Option<&str>| LeaseDocument {
 ///     schema: SCHEMA.into(), pid: 1, token: "t".into(), root: "/r".into(),
 ///     url: url.map(str::to_string), started_at: "2026-09-10T00:00:00Z".into(),
-///     executable: None, version: version.map(str::to_string),
+///     executable: None, version: version.map(str::to_string), share: None,
 /// };
 /// // still binding, then abandoned
 /// assert_eq!(standing_of(&LeaseFile::Document(lease(None, None)), young, never, "1.0.0").0, ServerStanding::Starting);
@@ -637,7 +669,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or has no `ui/`, the state in which every `/ui/assets/` file answers 404 and the UI is unstyled or blank. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
                 input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,
@@ -675,6 +707,7 @@ mod tests {
             started_at: "2026-09-10T00:00:00Z".into(),
             executable: None,
             version: Some("1.0.0-rc.1".into()),
+            share: None,
         };
         let (standing, reason) =
             standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");

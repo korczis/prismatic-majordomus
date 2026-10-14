@@ -118,6 +118,17 @@ through the same reading, and it carries the server's `version` beside the execu
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
 
+The lease also names the share directory the server located (`share`: its path and how it
+was found), and the status measures that directory on every reading against the server's
+`version`: the version its `version.txt` states, whether it holds `ui/`, and a share
+standing of `current` or `skewed` with the reason. A server of one release over the share of
+another — the installed executable over a stale checkout's `share/`, through
+`MAJORDOMUS_SHARE` — answers every `/ui/assets/` file with 404 and still reads `ready`; the
+share standing is what says why its UI is unstyled or blank (case 3041). `serve status`
+prints it under each server as `share skewed  version 0.21.0  ui absent  <path> (<origin>)`,
+and the server's log says it once when it starts. It is a report: which share a server
+picks, and whether a skewed one is replaced, are not decided by it.
+
 ### The server that is no longer the one
 
 A lease can be taken over while the process that held it is still running and still healthy
