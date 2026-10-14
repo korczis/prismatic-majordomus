@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.24.1"
+    "version": "0.25.0"
   },
-  "fingerprint": "6f7a19f6e5e59570fcf6ff668d395b3fc2745fc67c6487a164718f15d13724c6",
+  "fingerprint": "7a0d081b98c9face5799c7617e5eaf163d7c108291a08b10fc2022668b73de6b",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,8 +13,8 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 56,
-    "modules_covered": 44,
+    "modules": 57,
+    "modules_covered": 45,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 31,
@@ -3093,7 +3093,7 @@
         },
         {
           "id": "observatory-draws-nothing-it-did-not-read",
-          "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw; a scene without that carries no model and states the source's reason, on a server and in the published snapshot alike",
+          "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
           "status": "guaranteed",
           "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
         },
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 122,
+        "capabilities": 125,
         "moments": 38
       },
       "evidence": {
@@ -9199,6 +9199,7 @@
       ],
       "audiences": [],
       "modules": [
+        "observatory",
         "mesh",
         "plan",
         "distribution",
@@ -9246,6 +9247,39 @@
         "docs": true
       },
       "module_refs": [
+        {
+          "id": "observatory",
+          "title": "Observatory",
+          "description": "What the Observatory may carry to a place where no mesh runs: the mesh scenes this process has live, pseudonymized for publication, and the recording the repository carries, which the published Observatory replays and labels as a replay.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+          "capabilities": [
+            {
+              "id": "observatory.capture",
+              "title": "Observatory capture",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_observatory_capture",
+              "route": "GET /api/v1/observatory/capture"
+            },
+            {
+              "id": "observatory.events",
+              "title": "Observatory events",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_observatory_events",
+              "route": "GET /api/v1/observatory/events"
+            },
+            {
+              "id": "observatory.replay",
+              "title": "Observatory replay",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_observatory_replay",
+              "route": "GET /api/v1/observatory/replay"
+            }
+          ]
+        },
         {
           "id": "mesh",
           "title": "Mesh",
@@ -9778,7 +9812,7 @@
       "claim_refs": [
         {
           "id": "observatory-draws-nothing-it-did-not-read",
-          "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw; a scene without that carries no model and states the source's reason, on a server and in the published snapshot alike",
+          "claim": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw, or, for a scene of the mesh where no mesh runs, when the repository carries a recording of it, which it labels a replay; a scene without either carries no model and states the source's reason, on a server and in the published snapshot alike",
           "status": "guaranteed",
           "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
         }
@@ -9917,10 +9951,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 52,
-        "mcp_tools": 47,
+        "capabilities": 55,
+        "mcp_tools": 50,
         "mcp_resources": 7,
-        "http_routes": 51,
+        "http_routes": 54,
         "cli_paths": 14,
         "commands": 0,
         "objects": 0,
@@ -9937,7 +9971,7 @@
           "guaranteed": 1
         },
         "modules": {
-          "behaviorally_verified": 5,
+          "behaviorally_verified": 6,
           "experimental": 1,
           "implemented": 1
         }
@@ -13190,7 +13224,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 37
+          "objects": 38
         },
         {
           "name": "scope",
@@ -13479,11 +13513,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 42,
+        "mcp_resources": 43,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 38,
+        "objects": 39,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -16286,6 +16320,13 @@
         ]
       },
       {
+        "id": "observatory",
+        "title": "Observatory",
+        "features": [
+          "observatory"
+        ]
+      },
+      {
         "id": "pack",
         "title": "Source pack",
         "features": []
@@ -16701,7 +16742,7 @@
       },
       {
         "id": "context",
-        "title": "context (37)",
+        "title": "context (38)",
         "features": [
           "context"
         ]
@@ -17769,17 +17810,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2353,
-    "builtin": 196,
-    "declarative": 2157,
-    "modules": 56,
-    "mcp_tools": 187,
-    "mcp_resources": 2212,
-    "http_routes": 191,
+    "capabilities": 2357,
+    "builtin": 199,
+    "declarative": 2158,
+    "modules": 57,
+    "mcp_tools": 190,
+    "mcp_resources": 2213,
+    "http_routes": 194,
     "cli_commands": 204,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2157,
+    "objects": 2158,
     "by_kind": {
       "adr": 105,
       "application": 5,
@@ -17787,7 +17828,7 @@
       "audience": 8,
       "claim": 246,
       "command": 31,
-      "context": 37,
+      "context": 38,
       "critique": 3,
       "deployment": 1,
       "derive-offload": 1,

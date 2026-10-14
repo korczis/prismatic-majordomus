@@ -4,7 +4,7 @@ description: "An evidence-driven review of the actual state of the repository, o
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/repo-review/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.24.1 -->
+     Generator: majordomus-cli 0.25.0 -->
 
 # Repository review
 
