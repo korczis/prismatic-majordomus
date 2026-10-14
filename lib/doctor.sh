@@ -200,8 +200,42 @@ mj_validate_wiring() {
             *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" \
                  "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
           esac ;;
+        toolchain)
+          # A gate whose script builds the executable cannot be wired by a file: the thing it
+          # needs is on the machine, and nothing in git says so. `scripts/derive` (and with it
+          # `majordomus prs repair --apply`, the pre-commit derived-current gate and the
+          # integration executor) builds the Rust executable, and on a machine with no cargo
+          # it fails late — after the merge, after the lock — with `env: cargo: No such file`.
+          # On 2026-10-10 nine repairs were refused that way on one clone while the other
+          # two machines of the mesh held the toolchain. The target names the file that pins
+          # the channel, so the toolchain doctor asks for is the toolchain CI uses.
+          local tfile="$MJ_ROOT/$target" tchan tcargo tver
+          tchan="$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$tfile" 2>/dev/null | head -1)"
+          tcargo="$(command -v cargo 2>/dev/null || true)"
+          [ -z "$tcargo" ] && [ -x "$HOME/.cargo/bin/cargo" ] && tcargo="$HOME/.cargo/bin/cargo"
+          if [ ! -f "$tfile" ]; then
+            mj_doctrine_fail wiring "$name" "toolchain file $target does not exist" "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")"
+          elif [ -z "$tchan" ]; then
+            mj_doctrine_fail wiring "$name" "$target pins no channel, so the toolchain this machine builds with is nobody's decision" "grep -n channel $target"
+          elif [ -z "$tcargo" ]; then
+            mj_doctrine_fail wiring "$name" "cargo is not installed on this machine, so $prog cannot build the executable and every derive and \`prs repair --apply\` here fails" \
+              "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal"
+          else
+            # rustup keeps the pinned channel as its own installation; asking it is the only
+            # answer that does not trigger an install as a side effect of the question.
+            local trustup; trustup="$(dirname "$tcargo")/rustup"; [ -x "$trustup" ] || trustup="$(command -v rustup 2>/dev/null || true)"
+            if [ -n "$trustup" ]; then
+              if "$trustup" toolchain list 2>/dev/null | grep -q "^${tchan}\b"; then
+                mj_doctrine_ok wiring "$name" "pinned toolchain $tchan installed ($tcargo)"
+              else mj_doctrine_fail wiring "$name" "cargo is present but the pinned toolchain $tchan is not installed, and a derive here would fetch it mid-merge" "rustup toolchain install $tchan"; fi
+            else
+              tver="$("$tcargo" --version 2>/dev/null | awk '{print $2}')"
+              if [ "$tver" = "$tchan" ]; then mj_doctrine_ok wiring "$name" "cargo $tver is the pinned $tchan ($tcargo)"
+              else mj_doctrine_fail wiring "$name" "cargo is $tver and $target pins $tchan; without rustup the pin cannot be fetched" "install rust $tchan"; fi
+            fi
+          fi ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" \
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | git-config:<key> | ci:<path> | provider-hook:<provider>[:session] | toolchain:<file> | manual)" \
              "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
       esac
     fi
@@ -256,8 +290,18 @@ mj_validate_projection() {
 # names .ai/README.md, and no generated target carries what the layer is for. A rule that
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
+#
+# Both questions are asked of the generated content only: the whole file in file mode, the
+# region in region mode. The host document around a region is the repository's own, written
+# by people before or beside the layer; it may carry rule bullets and a rules section, and no
+# edit of the policy could remove them, so a finding there could never be fixed by what
+# doctor tells the reader to run. The pointer is read from the same span for the same reason
+# turned round: the region is what a worker is promised, and a host that happens to name
+# .ai/README.md does not stand in for a region that lost it. Absent or malformed markers are
+# the projection doctrine's finding and nothing is judged here.
 mj_validate_bootstrap() {
-  local j=0 tgt mode bad=0
+  local j=0 tgt mode bad=0 owned region
+  region="$(mktemp "${TMPDIR:-/tmp}/mj.bs.XXXXXX")"
   if mj_personal_active; then
     # The chain starts at the project's README, and a personal layer changes nothing the
     # project shares: the README is the repository's, the layer is one person's. The agent
@@ -271,13 +315,19 @@ mj_validate_bootstrap() {
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    owned="$MJ_ROOT/$tgt"
+    if [ "$mode" = region ]; then
+      mj_region_extract "$MJ_ROOT/$tgt" > "$region" 2>/dev/null || continue   # projection_integrity reports the markers
+      owned="$region"
+    fi
+    if ! grep -q '\.ai/README\.md' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
+  rm -f "$region"
   [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
 }

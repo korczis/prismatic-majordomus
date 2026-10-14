@@ -518,6 +518,16 @@ no fallback in the packer: an archive packed differently from the one that was a
 not the archive anything verified. `test/cases/87b_release_archive_shape.sh` reproduces that
 packer with a `tar` shim and proves the guard stops it.
 
+A release archive also carries the browser libraries its pages load. `cytoscape`, `three`
+and `p5` are built by `scripts/cockpit-assets` from `node_modules` and are not committed, and
+the packer copies `share/` as it stands. Releases `v0.22.0` and `v0.23.0` were built without
+that step, so an installation answered `/ui/assets/vendor/cytoscape.min.js` with a 404 and
+drew no graph. The release build now runs `npm ci` and `scripts/cockpit-assets` before it
+packs, and verifies with `scripts/release-verify --browser-assets`, which refuses an archive
+missing any of the six files. The flag is the release's: a checkout that never ran the asset
+build still packs and verifies without it, which the installer's tests rely on. The same case
+holds both halves.
+
 Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
 (`SOURCE_DATE_EPOCH`, a pinned toolchain version, no absolute paths in debug info), and the
 toolchain here is `stable` rather than a pin. What is guaranteed is that two people

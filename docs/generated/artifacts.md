@@ -193,7 +193,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.agents/skills/pack-for-review/SKILL.md` | `editors/skill` | markdown | 975 | `61256f254973d875` |
 | `.agents/skills/repo-review/SKILL.md` | `editors/skill` | markdown | 852 | `6a8f99dbd3e11bd0` |
 | `.agents/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 996 | `dc3ef238fb486cdb` |
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `26771b15943f263b` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `9ee7975f18b1a143` |
 | `.claude/skills/assess-before-deleting/SKILL.md` | `editors/skill` | markdown | 964 | `9e5ed312b0570642` |
 | `.claude/skills/deploy-site/SKILL.md` | `editors/skill` | markdown | 865 | `98bf326e2feff4cf` |
 | `.claude/skills/evolve/SKILL.md` | `editors/skill` | markdown | 864 | `5f7bf124a523cdad` |
@@ -205,8 +205,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.claude/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 996 | `3a8b1fbb436d3919` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
 | `.zed/tasks.json` | `editors/zed-tasks` | json | 5505 | `cea42b850f7fc52a` |
-| `AGENTS.md` | `providers/agents` | markdown | 7992 | `57c15767fa81e623` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 7281 | `6dc9f812861b655a` |
+| `AGENTS.md` | `providers/agents` | markdown | 7992 | `6e3dbf1b4ef6a503` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 7281 | `27fb1f8de9c7eb6f` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 904 | `aa48c069472e09ad` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `6c38b6998f79337f` |
 | `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9027 | `7419b3de3a9b5998` |
@@ -233,7 +233,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `1b36e8b245585be6` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `203065d4371e8937` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `cb8f392ec1bc8499` |
-| `docs/generated/graph.json` | `graph` | json | 3345157 | `04a0f9b679b8221f` |
+| `docs/generated/graph.json` | `graph` | json | 3349351 | `783d817e7a7309bd` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `3be7b604dfd67284` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `05aef7bdfb4db121` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `25aaada5d15aaaa8` |
@@ -356,10 +356,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `1352fbae838b723b` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `3f68ed17decc529c` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `6fee17f193d8d732` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 783480 | `e5ea4ccf8bd3ddfe` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `97f9c1458280710a` |
-| `site/data/registry/product.json` | `site-product` | json | 737286 | `85ada73788df6b01` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6764233 | `b973f3c831b0aa57` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 784868 | `035233e999adfd7f` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 98705 | `3ebb76d0d92d6fb2` |
+| `site/data/registry/product.json` | `site-product` | json | 737286 | `c3b92bc2d6bee637` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6766020 | `fd468b3195d73c00` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `9693904a8c466e33` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `532982b657422540` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `aa48c069472e09ad` |

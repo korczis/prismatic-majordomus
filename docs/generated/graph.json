@@ -6762,6 +6762,23 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0121",
+        "kind": "adr",
+        "label": "adr-0121",
+        "summary": "An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model",
+        "route": "/cockpit/objects/adr/adr-0121",
+        "source": ".ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "tags": [
+            "artifact-ingestion",
+            "mesh-pack",
+            "prompt-pack"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0123",
         "kind": "adr",
         "label": "adr-0123",
@@ -35351,6 +35368,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2588",
+        "kind": "issue",
+        "label": "I2588",
+        "summary": "A region projection's host document is not judged as a bootstrap",
+        "route": "/cockpit/objects/issue/i2588",
+        "source": ".ai/repo/project/issues/I2588.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A region-mode target whose host text carries bold bullets and a rules heading outside the markers passes bootstrap",
+            "The same text inside the markers is still refused",
+            "A whole-file target is judged as before"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "lib/doctor.sh:276 greps the whole target for rule bullets and rule headings whatever its mode; the neighbouring reference and budget checks already read the region through mj_region_extract.",
+          "depends_on": [],
+          "desired_state": "In region mode the corpus check and the layer-pointer check run over the extracted region.",
+          "evidence_required": [
+            "region_host_is_not_judged_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-region-host-is-not-judged-as-a-bootstrap",
+          "started_at": "2026-10-13T11:17:46Z",
+          "started_event": "sha256:6d908b8b69c389d6d3f08dfc28f2074f781bfcede344b10179a154269121d41b",
+          "updated_at": "2026-10-13T18:08:39Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "verified_at": "2026-10-13T18:08:39Z",
+          "verified_event": "sha256:2cd596e1ab969ded4db025f444e5e45ed1ac355cd98b1f270b00ee60792b9b81"
+        }
+      },
+      {
         "id": "majordomus://issue/I2601",
         "kind": "issue",
         "label": "I2601",
@@ -51964,6 +52023,13 @@
         "source": "test/cases/102_completion_shell.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "kind": "test",
+        "label": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "route": "/cockpit/objects/test/test-cases-1030-a-derive-machine-has-the-pinned-toolchain-sh",
+        "source": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "kind": "test",
         "label": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
@@ -53012,6 +53078,13 @@
         "label": "test/cases/2985_session_records_are_capped_and_archived.sh",
         "route": "/cockpit/objects/test/test-cases-2985-session-records-are-capped-and-archived-sh",
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+        "kind": "test",
+        "label": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+        "route": "/cockpit/objects/test/test-cases-2988-a-scope-admits-what-its-derive-wrote-sh",
+        "source": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh"
       },
       {
         "id": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
@@ -64491,6 +64564,11 @@
         "source": "majordomus://adr/adr-0118",
         "target": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
         "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "kind:adr",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://adr/adr-0123",
@@ -78403,6 +78481,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2588",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2588",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2601",
         "target": "kind:issue",
         "kind": "is_a"
@@ -82153,6 +82241,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82899,6 +82992,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88299,8 +88397,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2799,
-      "edges": 6133,
+      "nodes": 2803,
+      "edges": 6138,
       "acyclic": false,
       "truncated": false
     }

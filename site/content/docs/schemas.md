@@ -160,6 +160,9 @@ never reported as drift.
 
 `wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
+`git-config:<key>` (a key the clone's own git configuration must set to a value naming the tool),
+`toolchain:<file>` (the pinned Rust toolchain the file names is installed on this machine, so
+`scripts/derive` and `prs repair --apply` can build),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
