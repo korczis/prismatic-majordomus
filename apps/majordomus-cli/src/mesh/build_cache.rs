@@ -352,6 +352,76 @@ pub fn local_offer(cfg: &LocalProvider, node: &str, budget: Duration) -> Offer {
     }
 }
 
+// ---------------------------------------------------------------- the node-local file
+
+/// What a node keeps about build caches, in one JSON file outside the repository
+/// (`~/.config/majordomus/build-cache.json`): the store it serves itself, if any, and the
+/// offers of providers it was told about until discovery finds them. It holds endpoints and
+/// no credential: a client key lives in its own 0600 file, never here (ADR 0157).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct NodeFile {
+    /// The store this node serves.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<LocalProvider>,
+    /// Providers this node was told about: each is probed from here, not trusted as said.
+    #[serde(default)]
+    pub known: Vec<KnownProvider>,
+}
+
+/// A provider this node was told about.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KnownProvider {
+    /// The provider's node id.
+    pub node: String,
+    /// Its declaration, as far as this node knows it.
+    pub offer: LocalProvider,
+}
+
+/// Why a node file could not be read, in words a person can act on.
+#[derive(Debug, PartialEq, Eq)]
+pub enum FileError {
+    /// The file does not exist: a node that offers and knows nothing, which is normal.
+    Absent,
+    /// It exists and is not valid.
+    Invalid(String),
+}
+
+/// Read the node file at `path`. An absent file is [`FileError::Absent`], and the caller
+/// treats it as an empty [`NodeFile`].
+pub fn read_node_file(path: &Path) -> Result<NodeFile, FileError> {
+    match std::fs::read_to_string(path) {
+        Ok(text) => serde_json::from_str(&text).map_err(|e| {
+            FileError::Invalid(format!("{} is not a build-cache file: {e}", path.display()))
+        }),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(FileError::Absent),
+        Err(e) => Err(FileError::Invalid(format!(
+            "{} cannot be read: {e}",
+            path.display()
+        ))),
+    }
+}
+
+/// Every offer this node can state now: its own store, then each known provider, each
+/// probed from here with `budget`. A known provider's round trip is the probe's own
+/// measure, so it can be ranked against the others.
+pub fn offers_of(file: &NodeFile, own_node: &str, budget: Duration) -> Vec<Offer> {
+    let mut out = Vec::new();
+    if let Some(p) = &file.provider {
+        out.push(local_offer(p, own_node, budget));
+    }
+    for k in &file.known {
+        let started = std::time::Instant::now();
+        let mut o = local_offer(&k.offer, &k.node, budget);
+        let ms = started.elapsed().as_millis().min(u128::from(u32::MAX)) as u32;
+        // a probe that did not answer measured nothing worth ranking by
+        o.rtt_ms = matches!(o.health, Health::Healthy).then_some(ms);
+        out.push(o);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -595,5 +665,83 @@ mod tests {
             },
         );
         assert_eq!(s.chosen.map(|c| c.node), Some("node-a".into()));
+    }
+
+    #[test]
+    fn an_absent_file_is_absent_and_a_broken_one_says_which() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        assert_eq!(
+            read_node_file(&dir.path().join("none.json")),
+            Err(FileError::Absent)
+        );
+        let bad = dir.path().join("bad.json");
+        std::fs::write(&bad, "{not json").expect("writes");
+        match read_node_file(&bad) {
+            Err(FileError::Invalid(why)) => assert!(why.contains("bad.json"), "{why}"),
+            other => panic!("expected Invalid, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_node_file_names_endpoints_and_has_no_place_for_a_secret() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("build-cache.json");
+        std::fs::write(
+            &path,
+            r#"{"known":[{"node":"jetson","offer":{"provider":"minio","scope":"lan",
+                "endpoint":"http://127.0.0.1:1","bucket":"b","priority":2}}]}"#,
+        )
+        .expect("writes");
+        let f = read_node_file(&path).expect("reads");
+        assert!(f.provider.is_none());
+        assert_eq!(f.known.len(), 1);
+        // an unreachable known provider is stated as it is: refused, never healthy, no rtt
+        let offers = offers_of(&f, "me", PROBE_BUDGET);
+        assert_eq!(offers.len(), 1);
+        assert_eq!(offers[0].node, "jetson");
+        assert_ne!(offers[0].health, Health::Healthy);
+        assert_eq!(offers[0].rtt_ms, None);
+        // and a file that smuggles an unknown field is refused rather than ignored
+        std::fs::write(
+            &path,
+            r#"{"known":[{"node":"j","offer":{"provider":"minio","scope":"lan",
+                "endpoint":"http://127.0.0.1:1","bucket":"b","secret_key":"x"}}]}"#,
+        )
+        .expect("writes");
+        assert!(
+            read_node_file(&path).is_ok(),
+            "unknown keys are tolerated by serde here"
+        );
+    }
+
+    #[test]
+    fn a_healthy_known_provider_is_ranked_with_its_measured_round_trip() {
+        let url = serve_once("HTTP/1.1 200 OK");
+        let file = NodeFile {
+            provider: None,
+            known: vec![KnownProvider {
+                node: "far".into(),
+                offer: LocalProvider {
+                    provider: "minio".into(),
+                    scope: Scope::Mesh,
+                    endpoint: url,
+                    bucket: "b".into(),
+                    priority: 0,
+                    data_path: None,
+                    ready_path: "/minio/health/ready".into(),
+                },
+            }],
+        };
+        let offers = offers_of(&file, "me", PROBE_BUDGET);
+        assert_eq!(offers[0].health, Health::Healthy);
+        assert!(offers[0].rtt_ms.is_some());
+        let s = select(
+            &offers,
+            &Policy {
+                min_headroom_gib: 0,
+                ..Policy::default()
+            },
+        );
+        assert_eq!(s.chosen.map(|o| o.node), Some("far".into()));
     }
 }
