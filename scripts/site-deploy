@@ -150,7 +150,9 @@ if [ "$SKIP_BUILD" != 1 ]; then
   step "derived data is in sync"; scripts/generate-site-data --check
   if command -v cargo >/dev/null 2>&1; then
     step "generated projections are in sync"
-    RUSTFLAGS='' cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- generate --check 2>/dev/null
+    # shellcheck source=../lib/rust_bin.sh
+    . "$ROOT/lib/rust_bin.sh"
+    RUSTFLAGS='' mj_cargo_bounded "$ROOT" run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- generate --check 2>/dev/null
   else
     echo "     (cargo absent: the Rust generate --check is CI's; the site check below still runs)"
   fi

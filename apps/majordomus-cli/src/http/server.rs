@@ -352,6 +352,9 @@ fn upgrade(
     };
     // a live channel is never closed by the read deadline: it waits by design
     watch.live(request.remote_addr());
+    // and it ends when its client hangs up, not at its next write: an open channel keeps the
+    // server in use, so a closed one must stop counting within the idle timer's tick (I2131)
+    let hung_up = watch.hung_up(request.remote_addr());
     let key = accepted.accept.clone();
     let response = HttpResponse::empty(101).with_header(
         Header::from_bytes("Sec-WebSocket-Accept", key.as_bytes())
@@ -362,7 +365,7 @@ fn upgrade(
         .name("events".into())
         .spawn(move || {
             OPEN_CHANNELS.fetch_add(1, Ordering::Relaxed);
-            accepted.serve(Box::new(socket));
+            accepted.serve_until(Box::new(socket), hung_up);
             OPEN_CHANNELS.fetch_sub(1, Ordering::Relaxed);
             note_request();
         });

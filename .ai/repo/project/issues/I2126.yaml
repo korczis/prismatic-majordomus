@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Make the lease probe reach a server whose HTTP workers are all running tool calls, and make it prove it reached the leaseholder, so that a client deciding whether the owner is alive is never answered by a full worker pool or by another process."
 why: "The probe a client sends before taking over is GET / (apps/majordomus-cli/src/lease.rs:896-925), served by the same four workers (apps/majordomus-cli/src/http/server.rs:23) that run each tools/call synchronously. Four tool calls that outlast the probe timeout plus the busy grace (about 12 s, apps/majordomus-cli/src/lease.rs:43-62, 555-568) make a healthy server look wedged, and the next client to start takes its lease. is_own (apps/majordomus-cli/src/lease.rs:429) fixes only a server probing itself. GET / is also the most expensive route: it resolves the index and every surface, while /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs:691,702) and the probe does not use them. The probe compares name, repository_id and leaseholder (apps/majordomus-cli/src/lease.rs:902-905) but not the lease token, pid or started_at, and GET / does not expose them. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 3 and the fencing row."
 current_state: "apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token."
-desired_state: "The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. Not done here: a cheap liveness probe route that carries a digest of the lease token and the check that refuses a server whose token differs."
+desired_state: "The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. The deferred part, a liveness probe route carrying a digest of the lease token and the check that refuses a server whose token differs, is I2700."
 scope:
   - "apps/majordomus-cli/src/lease.rs"
   - "apps/majordomus-cli/src/http/server.rs"
@@ -20,13 +20,21 @@ scope:
 depends_on: []
 acceptance_criteria:
   - "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged"
-  - "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token"
-  - "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
 validation:
   - "bin/majordomus plan validate"
   - "cargo test --test lease_busy --test mcp_shared"
 evidence_required:
   - "busy_pool_is_not_taken_over_test"
-  - "probe_compares_the_token_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T12:16:23Z
+started_at: 2026-10-14T12:15:43Z
+started_event: sha256:54cde9fdc580dac31b26870c4d900574d22879f70e960e03f0f5898885d8b5a2
+completed_at: 2026-10-14T12:16:23Z
+completed_event: sha256:031bf9da1a2a39216e00eefb61c8b26bda62c6620f08dacad9c547d8e9bfaa21
+evidence:
+  - covers: busy_pool_is_not_taken_over_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test http_busy_probe busy_pool_is_not_taken_over_test"
+    result: "test result: ok. 2 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:07Z

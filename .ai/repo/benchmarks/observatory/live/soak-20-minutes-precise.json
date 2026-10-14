@@ -1,0 +1,75 @@
+{
+  "schema": "observatory-evidence/v1",
+  "origin": "http://127.0.0.1:8747",
+  "measured_at": "2026-10-14T08:49:21Z",
+  "environment": {
+    "machine": "Apple M5 Pro x18, 64 GiB",
+    "os": "Darwin 25.5.0 arm64",
+    "browser": "chromium 141.0.7390.37",
+    "headless": true,
+    "precise_memory": true
+  },
+  "revision": "bb844110bdd6",
+  "status_word": "LIVE · read 2026-10-14 08:49:24Z",
+  "checks": {
+    "screenshot-1080p": {
+      "verdict": "PASS",
+      "file": "target/web/observatory-evidence/live-precise/kiosk-1080p.png",
+      "viewport": "1920x1080",
+      "status": "LIVE · read 2026-10-14 08:49:21Z",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) live · 1 refused link(s)",
+      "script_errors": []
+    },
+    "screenshot-4k": {
+      "verdict": "PASS",
+      "file": "target/web/observatory-evidence/live-precise/kiosk-4k.png",
+      "viewport": "3840x2160",
+      "status": "LIVE · read 2026-10-14 08:49:24Z",
+      "scene": "01 / 08  MESH COSMOS",
+      "fact": "5 machine(s) · 8 of 19 runtime(s) live · 1 refused link(s)",
+      "script_errors": []
+    },
+    "frames-1080p": {
+      "verdict": "PASS",
+      "frames_per_second": 60,
+      "window_seconds": 10,
+      "note": "headless chromium paints without a display; this is the display loop's rate on the machine named, not a panel's"
+    },
+    "reduced-motion": {
+      "verdict": "PASS",
+      "reduced_frame_unchanged_over_400ms": true,
+      "default_frame_changed_over_400ms": true
+    },
+    "event-reaches-the-display": {
+      "verdict": "PASS",
+      "newest_in_journal": {
+        "kind": "session_opened",
+        "lamport": 115359,
+        "at": 1791966533
+      },
+      "newest_in_display": {
+        "kind": "session_opened",
+        "lamport": 115359,
+        "at": 1791966533
+      },
+      "same_identity": true,
+      "events_held": 200
+    },
+    "soak": {
+      "verdict": "PASS",
+      "minutes": 20,
+      "start": {
+        "heap_bytes": 2436652,
+        "dom_nodes": 426
+      },
+      "end": {
+        "heap_bytes": 2867076,
+        "dom_nodes": 426
+      },
+      "heap_growth_ratio": 1.18,
+      "samples": 21,
+      "script_errors": []
+    }
+  }
+}

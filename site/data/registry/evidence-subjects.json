@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.24.0"
+    "version": "0.26.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -706,6 +706,21 @@
       "kind": "capability",
       "subject": "capability:obligations.vocabulary",
       "path": "/evidence/capabilities/obligations-vocabulary/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.capture",
+      "path": "/evidence/capabilities/observatory-capture/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.events",
+      "path": "/evidence/capabilities/observatory-events/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.replay",
+      "path": "/evidence/capabilities/observatory-replay/"
     },
     {
       "kind": "capability",
@@ -1796,6 +1811,11 @@
       "kind": "claim",
       "subject": "claim:obligation-establishment",
       "path": "/evidence/claims/obligation-establishment/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:observatory-draws-nothing-it-did-not-read",
+      "path": "/evidence/claims/observatory-draws-nothing-it-did-not-read/"
     },
     {
       "kind": "claim",
@@ -3506,6 +3526,11 @@
       "kind": "feature",
       "subject": "feature:models",
       "path": "/evidence/features/models/"
+    },
+    {
+      "kind": "feature",
+      "subject": "feature:observatory",
+      "path": "/evidence/features/observatory/"
     },
     {
       "kind": "feature",
@@ -5287,6 +5312,36 @@
       "kind": "capability",
       "id": "obligations.vocabulary",
       "page": "/evidence/capabilities/obligations-vocabulary/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.capture": {
+      "kind": "capability",
+      "id": "observatory.capture",
+      "page": "/evidence/capabilities/observatory-capture/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.events": {
+      "kind": "capability",
+      "id": "observatory.events",
+      "page": "/evidence/capabilities/observatory-events/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.replay": {
+      "kind": "capability",
+      "id": "observatory.replay",
+      "page": "/evidence/capabilities/observatory-replay/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -9570,6 +9625,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:observatory-draws-nothing-it-did-not-read": {
+      "kind": "claim",
+      "id": "observatory-draws-nothing-it-did-not-read",
+      "status": "guaranteed",
+      "page": "/evidence/claims/observatory-draws-nothing-it-did-not-read/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3011_the_observatory_draws_nothing_it_did_not_read",
+          "path": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MAJORDOMUS_UI.md",
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:open-question-gate": {
       "kind": "claim",
       "id": "open-question-gate",
@@ -12165,6 +12243,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
+          "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -14726,6 +14810,24 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3004_evolve_is_a_procedure_of_existing_commands",
+          "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
+          "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
           "category": "e2e"
@@ -14806,6 +14908,12 @@
           "via": "behaviour",
           "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
           "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -16418,6 +16526,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:67_rule_dag",
           "path": "test/cases/67_rule_dag.sh",
           "category": "e2e"
@@ -16450,6 +16564,12 @@
           "via": "negative",
           "test": "suite:2984_a_handbook_edition_is_built_from_the_tree",
           "path": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -16822,6 +16942,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -16896,6 +17022,12 @@
           "via": "negative",
           "test": "suite:281_published_order_is_tracked",
           "path": "test/cases/281_published_order_is_tracked.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
           "category": "e2e"
         },
         {
@@ -18547,6 +18679,21 @@
       "mechanisms": [],
       "findings": []
     },
+    "feature:observatory": {
+      "kind": "feature",
+      "id": "observatory",
+      "status": "stable",
+      "page": "/evidence/features/observatory/",
+      "programs": [],
+      "members": [
+        "claim:observatory-draws-nothing-it-did-not-read",
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "feature:planning": {
       "kind": "feature",
       "id": "planning",
@@ -20174,6 +20321,42 @@
       "programs": [],
       "members": [
         "capability:obligations.vocabulary"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_capture": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_capture",
+      "alias_of": "capability:observatory.capture",
+      "programs": [],
+      "members": [
+        "capability:observatory.capture"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_events": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_events",
+      "alias_of": "capability:observatory.events",
+      "programs": [],
+      "members": [
+        "capability:observatory.events"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_replay": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_replay",
+      "alias_of": "capability:observatory.replay",
+      "programs": [],
+      "members": [
+        "capability:observatory.replay"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22249,6 +22432,37 @@
       ],
       "findings": []
     },
+    "rule:project.a-build-never-waits-in-silence-on-anothers-lock": {
+      "kind": "rule",
+      "id": "project.a-build-never-waits-in-silence-on-anothers-lock",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:122_liveness_gate",
+          "path": "test/cases/122_liveness_gate.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/122_liveness_gate.sh",
+            ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3002_a_build_never_waits_in_silence",
+          "path": "test/cases/3002_a_build_never_waits_in_silence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3002_a_build_never_waits_in_silence.sh",
+            ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-closing-question-is-answered-by-measurement": {
       "kind": "rule",
       "id": "project.a-closing-question-is-answered-by-measurement",
@@ -22652,6 +22866,26 @@
           "category": "e2e",
           "inputs": [
             "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3019_a_failed_branch_run_cancels_itself",
+          "path": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3020_an_active_skill_is_named_where_the_crate_test_demands",
+          "path": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
             ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md"
           ]
         },
@@ -27199,6 +27433,7 @@
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
+    "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
     "crate:properties",
@@ -27280,7 +27515,12 @@
     "suite:2982_two_snapshots_link_what_the_other_holds",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
+    "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
+    "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",
+    "suite:3018_a_comment_in_the_policy_moves_no_bootstrap",
     "suite:301_the_mesh_stays_one_subsystem",
+    "suite:3021_a_tag_does_not_freeze_the_queue",
+    "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
     "suite:305_a_command_is_claimed_or_classified",
