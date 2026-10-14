@@ -32208,16 +32208,13 @@
         "source": ".ai/repo/project/issues/I2126.yaml",
         "facts": {
           "acceptance_criteria": [
-            "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged",
-            "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token",
-            "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+            "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged"
           ],
           "created_at": "2026-10-09",
           "current_state": "apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.",
           "depends_on": [],
           "evidence_required": [
-            "busy_pool_is_not_taken_over_test",
-            "probe_compares_the_token_test"
+            "busy_pool_is_not_taken_over_test"
           ],
           "milestone": "runtime-lifecycle",
           "parallel_safe": false,
@@ -32233,7 +32230,7 @@
             "docs/MCP.md"
           ],
           "slug": "a-busy-server-is-not-taken-over",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_busy --test mcp_shared"
@@ -32338,8 +32335,7 @@
         "facts": {
           "acceptance_criteria": [
             "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve",
-            "No reader of a lease timing names a compiled constant directly",
-            "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
+            "No reader of a lease timing names a compiled constant directly"
           ],
           "created_at": "2026-10-09",
           "current_state": "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values.",
@@ -32366,7 +32362,7 @@
             "docs/MCP.md"
           ],
           "slug": "declared-lease-timings-are-used",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test lease_declared",
@@ -32383,17 +32379,13 @@
         "source": ".ai/repo/project/issues/I2131.yaml",
         "facts": {
           "acceptance_criteria": [
-            "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing",
-            "Two consecutive starts of one checkout's server bind the same port when it is free",
-            "Two checkouts of one repository derive different ports",
-            "docs/MCP.md describes the derived port and the fallback"
+            "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing"
           ],
           "created_at": "2026-10-09",
           "current_state": "A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.",
           "depends_on": [],
           "evidence_required": [
-            "ui_use_keeps_server_alive_test",
-            "stable_port_per_checkout_test"
+            "ui_use_keeps_server_alive_test"
           ],
           "milestone": "runtime-lifecycle",
           "non_scope": [
@@ -32414,7 +32406,7 @@
             "docs/COCKPIT.md"
           ],
           "slug": "ui-use-keeps-the-server-and-its-address",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
@@ -32432,8 +32424,7 @@
         "facts": {
           "acceptance_criteria": [
             "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
-            "A hello replayed to A after A restarts cannot displace an established link",
-            "The rule's check order and the code's check order are the same, and a test names the order"
+            "A hello replayed to A after A restarts cannot displace an established link"
           ],
           "created_at": "2026-10-09",
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
@@ -32454,7 +32445,7 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
@@ -32472,16 +32463,13 @@
         "facts": {
           "acceptance_criteria": [
             "Datagrams beyond the channel bound are dropped and counted in mesh status, and the process's memory stays bounded under a flood test",
-            "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors",
-            "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository",
-            "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat"
+            "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository"
           ],
           "created_at": "2026-10-09",
           "current_state": "Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not.",
           "depends_on": [],
           "evidence_required": [
             "discovery_flood_bounded_test",
-            "reply_bound_test",
             "refused_registration_learns_nothing_test"
           ],
           "milestone": "runtime-trust",
@@ -32499,7 +32487,7 @@
             "docs/MESH.md"
           ],
           "slug": "mesh-inputs-are-bounded",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh",
@@ -32517,7 +32505,6 @@
         "facts": {
           "acceptance_criteria": [
             "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart",
-            "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
             "Under a permissive umask the node key file is never readable by group or others"
           ],
           "created_at": "2026-10-09",
@@ -32525,7 +32512,6 @@
           "depends_on": [],
           "evidence_required": [
             "revocation_without_restart_test",
-            "key_rotation_test",
             "key_file_created_private_test"
           ],
           "milestone": "runtime-trust",
@@ -32543,7 +32529,7 @@
             "docs/MESH.md"
           ],
           "slug": "trust-can-be-revoked-and-keys-rotated",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
@@ -32606,10 +32592,12 @@
         "facts": {
           "acceptance_criteria": [
             "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload",
-            "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable",
+            "A failed write on a read-only or full file system in a test is counted and reported by mesh doctor",
             "A kill during compaction leaves the old or the new journal, never a mix",
             "The journal file is created with owner-only permissions"
           ],
+          "completed_at": "2026-10-14T10:03:17Z",
+          "completed_event": "sha256:0cac383c5b04aa5eb3b0d5eb9d79f9c35296e23524f8f02f8037b392c27cb6d1",
           "created_at": "2026-10-09",
           "current_state": "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload.",
           "depends_on": [],
@@ -32632,7 +32620,9 @@
             "docs/MESH.md"
           ],
           "slug": "the-journal-is-durable",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T10:03:06Z",
+          "started_event": "sha256:c7ef70028feeb623542cc88baa9356219c8fb68f64b7163fef0604e1f26baaa2",
+          "updated_at": "2026-10-14T10:03:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::journal",
@@ -32915,8 +32905,7 @@
           "acceptance_criteria": [
             "A server that lost its lease answers /api/v1/ready with ready false and the reason lease_lost",
             "A degraded index is reported on /api/v1/ready with its reason, and docs/MCP.md says whether that is ready",
-            "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled",
-            "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+            "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled"
           ],
           "created_at": "2026-10-09",
           "current_state": "A server that lost its lease, or serves a degraded index, answers /api/v1/ready with ready true.",
@@ -32940,7 +32929,7 @@
             "docs/MCP.md"
           ],
           "slug": "ready-means-ready",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test health_server --test lease_lost"
@@ -32958,15 +32947,13 @@
           "acceptance_criteria": [
             "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log",
             "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
-            "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
             "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
           ],
           "created_at": "2026-10-09",
           "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
           "depends_on": [],
           "evidence_required": [
-            "credential_never_echoed_test",
-            "eventbody_allowlist_case"
+            "credential_never_echoed_test"
           ],
           "milestone": "architecture-is-enforced",
           "parallel_safe": false,
@@ -32984,11 +32971,11 @@
             "test/cases"
           ],
           "slug": "no-credential-leaves-the-runtime",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test redaction",
-            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+            "cargo test --test no_answer_carries_a_credential"
           ]
         }
       },
@@ -35715,6 +35702,404 @@
           "validation": [
             "bin/majordomus plan validate",
             "bin/majordomus knowledge check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2700",
+        "kind": "issue",
+        "label": "I2700",
+        "summary": "A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder",
+        "route": "/cockpit/objects/issue/i2700",
+        "source": ".ai/repo/project/issues/I2700.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token",
+            "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2126"
+          ],
+          "evidence_required": [
+            "probe_compares_the_token_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "non_scope": [
+            "How requests are handed to handler threads and MAX_HANDLERS, which I2126 delivered"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/tests/lease_busy.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "the-lease-probe-compares-the-token",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test lease_busy --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2701",
+        "kind": "issue",
+        "label": "I2701",
+        "summary": "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration",
+        "route": "/cockpit/objects/issue/i2701",
+        "source": ".ai/repo/project/issues/I2701.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it",
+            "A server started without --idle under a declared idle timeout of a few seconds stops after the declared time, not after 900 s"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2129"
+          ],
+          "evidence_required": [
+            "idle_timeout_declared_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "non_scope": [
+            "The lease timings the elections read, which I2129 delivered"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/serve_lifecycle.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "the-idle-timeout-is-declared",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2702",
+        "kind": "issue",
+        "label": "I2702",
+        "summary": "A checkout keeps one address across restarts, because its server binds a port derived from the checkout",
+        "route": "/cockpit/objects/issue/i2702",
+        "source": ".ai/repo/project/issues/I2702.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two consecutive starts of one checkout's server bind the same port when it is free",
+            "Two checkouts of one repository derive different ports",
+            "docs/MCP.md describes the derived port and the fallback"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2131"
+          ],
+          "evidence_required": [
+            "stable_port_per_checkout_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "non_scope": [
+            "The idle timer and what counts as use, which I2131 delivered",
+            "A majordomus ui command, which ADR 0135 decided and I2484 plans"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/tests/serve_lifecycle.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "a-checkout-keeps-one-address",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2703",
+        "kind": "issue",
+        "label": "I2703",
+        "summary": "The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order",
+        "route": "/cockpit/objects/issue/i2703",
+        "source": ".ai/repo/project/issues/I2703.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The rule's check order and the code's check order are the same, and a test names the order"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2132"
+          ],
+          "evidence_required": [
+            "hello_check_order_test"
+          ],
+          "milestone": "runtime-trust",
+          "non_scope": [
+            "The recipient field of a hello and the misaddressed refusal, which I2132 delivered"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project",
+            "scripts/ci/mesh-check",
+            "test/cases/301_the_mesh_stays_one_subsystem.sh",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "the-rule-states-the-hello-check-order",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::cooperation",
+            "scripts/ci/mesh-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2704",
+        "kind": "issue",
+        "label": "I2704",
+        "summary": "A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate",
+        "route": "/cockpit/objects/issue/i2704",
+        "source": ".ai/repo/project/issues/I2704.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors",
+            "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat",
+            "Two runtimes whose links to one peer fail together do not retry it at the same instant: the link backoff carries a bounded jitter"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2133"
+          ],
+          "evidence_required": [
+            "reply_bound_test",
+            "unknown_link_retry_rate_test"
+          ],
+          "milestone": "runtime-trust",
+          "non_scope": [
+            "The bounded discovery queue and the registration answer, which I2133 delivered",
+            "The general MAX_REPLY_BYTES bound of bridge::request, which is I2147's"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/rendezvous.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-replies-are-bounded-for-the-dialer",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2705",
+        "kind": "issue",
+        "label": "I2705",
+        "summary": "A node key can be rotated, peers follow the new key, and the old key is refused",
+        "route": "/cockpit/objects/issue/i2705",
+        "source": ".ai/repo/project/issues/I2705.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
+            "A key withdrawn from trust.allow on a running runtime has its events dropped from the running journal at the reload that withdrew it, with no restart"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2134"
+          ],
+          "evidence_required": [
+            "key_rotation_test"
+          ],
+          "milestone": "runtime-trust",
+          "non_scope": [
+            "Ending a withdrawn key's links without a restart, which I2134 delivered",
+            "Creating the key file owner-only from its first byte, which session prismatic-majordomus-6e is fixing on its own branch under I2134",
+            "The journal reload applying the trust in force, which is I2124's"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/trust.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-node-key-can-be-rotated",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh_cooperation",
+            "cargo test --lib mesh::identity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2706",
+        "kind": "issue",
+        "label": "I2706",
+        "summary": "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size",
+        "route": "/cockpit/objects/issue/i2706",
+        "source": ".ai/repo/project/issues/I2706.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A failed write on a read-only or full file system in a test leaves its event not acknowledged as durable to the caller that appended it",
+            "A journal larger than the reload bound is reloaded up to the bound, and the part left unread is counted and reported by mesh doctor"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2137"
+          ],
+          "evidence_required": [
+            "failed_append_not_acknowledged_test",
+            "reload_size_bound_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Synced appends, the write-failure and unreadable-line tallies, atomic compaction and owner-only creation, which I2137 delivered"
+          ],
+          "objective": "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "a-lost-append-is-not-acknowledged",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::journal"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2707",
+        "kind": "issue",
+        "label": "I2707",
+        "summary": "majordomus doctor reports a stale server, or says plainly that it checks governance only",
+        "route": "/cockpit/objects/issue/i2707",
+        "source": ".ai/repo/project/issues/I2707.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2157"
+          ],
+          "evidence_required": [
+            "doctor_states_its_reach_case"
+          ],
+          "milestone": "failure-is-visible",
+          "non_scope": [
+            "Readiness and the health.report mesh check, which I2157 delivered"
+          ],
+          "objective": "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "share/commands.yaml",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "doctor-says-what-it-checks",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2708",
+        "kind": "issue",
+        "label": "I2708",
+        "summary": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows",
+        "route": "/cockpit/objects/issue/i2708",
+        "source": ".ai/repo/project/issues/I2708.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
+            "A credential-shaped value in any tracing field is absent from server.log",
+            "A review whose subject or verdict carries a credential shape is redacted or refused before it is signed into the journal"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2161"
+          ],
+          "evidence_required": [
+            "eventbody_allowlist_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Error bodies, MCP errors, logged request fields and handover bodies, which I2161 delivered",
+            "Wiring the evidence publication to redaction::public_text, which is I1955's"
+          ],
+          "objective": "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/mesh-check",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "test/cases"
+          ],
+          "slug": "mesh-event-fields-are-listed",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/mesh-check",
+            "cargo test --test redaction"
           ]
         }
       },
@@ -77782,6 +78167,141 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2700",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2700",
+        "target": "majordomus://issue/I2126",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2700",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2701",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2701",
+        "target": "majordomus://issue/I2129",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2701",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2702",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2702",
+        "target": "majordomus://issue/I2131",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2702",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2703",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2703",
+        "target": "majordomus://issue/I2132",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2703",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2704",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2704",
+        "target": "majordomus://issue/I2133",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2704",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2705",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2705",
+        "target": "majordomus://issue/I2134",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2705",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2706",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2706",
+        "target": "majordomus://issue/I2137",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2706",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2707",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2707",
+        "target": "majordomus://issue/I2157",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2707",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2708",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2708",
+        "target": "majordomus://issue/I2161",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2708",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -87343,8 +87863,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2774,
-      "edges": 6086,
+      "nodes": 2783,
+      "edges": 6113,
       "acyclic": false,
       "truncated": false
     }

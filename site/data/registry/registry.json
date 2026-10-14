@@ -6,23 +6,23 @@
     "version": "0.25.0"
   },
   "registry": {
-    "fingerprint": "b90dabb75f4f1906afe7db4ff526febbdb4b98162bd2008ef0e1992e816b95f8",
+    "fingerprint": "b47164bd9bf82c559612fcc49eedf65cd685a50432b24a8ea314fe22291e5b10",
     "summary": {
-      "total": 2357,
+      "total": 2366,
       "builtin": 199,
-      "declarative": 2158,
+      "declarative": 2167,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2158
+        "resource": 2167
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2167
+        "implemented": 2176
       },
       "mcp_tools": 190,
-      "mcp_resources": 2213,
+      "mcp_resources": 2222,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81184,7 +81184,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 352,
+        "capabilities": 361,
         "capability_ids": []
       },
       {
@@ -81845,7 +81845,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e447ce6866a41cdf8401508437c9a96321fa2b74fecc7acb752a32f6d9a675cb",
+    "fingerprint": "25aab350a858a6db0ea39cf24518db2756887daea41f572fe93c678a2cebaeb7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81885,7 +81885,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 352,
+      "issue": 361,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -87905,7 +87905,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 168015
+        "bytes": 166798
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94402,7 +94402,7 @@
         "path": ".ai/repo/project/issues/I2126.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3029
+        "bytes": 2743
       },
       {
         "uri": "majordomus://issue/I2127",
@@ -94435,7 +94435,7 @@
         "path": ".ai/repo/project/issues/I2129.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3209
       },
       {
         "uri": "majordomus://issue/I2131",
@@ -94446,7 +94446,7 @@
         "path": ".ai/repo/project/issues/I2131.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3204
+        "bytes": 2921
       },
       {
         "uri": "majordomus://issue/I2132",
@@ -94457,7 +94457,7 @@
         "path": ".ai/repo/project/issues/I2132.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3030
+        "bytes": 2829
       },
       {
         "uri": "majordomus://issue/I2133",
@@ -94468,7 +94468,7 @@
         "path": ".ai/repo/project/issues/I2133.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3858
+        "bytes": 3528
       },
       {
         "uri": "majordomus://issue/I2134",
@@ -94479,7 +94479,7 @@
         "path": ".ai/repo/project/issues/I2134.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2938
+        "bytes": 2749
       },
       {
         "uri": "majordomus://issue/I2135",
@@ -94501,7 +94501,7 @@
         "path": ".ai/repo/project/issues/I2137.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3430
+        "bytes": 4879
       },
       {
         "uri": "majordomus://issue/I2139",
@@ -94578,7 +94578,7 @@
         "path": ".ai/repo/project/issues/I2157.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3215
+        "bytes": 2997
       },
       {
         "uri": "majordomus://issue/I2161",
@@ -94589,7 +94589,7 @@
         "path": ".ai/repo/project/issues/I2161.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3307
+        "bytes": 3066
       },
       {
         "uri": "majordomus://issue/I2162",
@@ -95217,6 +95217,105 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2438
+      },
+      {
+        "uri": "majordomus://issue/I2700",
+        "kind": "issue",
+        "identity": "I2700",
+        "title": "A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder",
+        "description": "Point the lease probe at a liveness route that answers without resolving the index and carries the repository id, the leaseholder and a digest of the lease token, and judge a process whose digest differs from the lease's not the leaseholder.",
+        "path": ".ai/repo/project/issues/I2700.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2806
+      },
+      {
+        "uri": "majordomus://issue/I2701",
+        "kind": "issue",
+        "identity": "I2701",
+        "title": "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration",
+        "description": "Declare the server's idle timeout under policy.yaml server: beside the lease timings, validate it by the policy schema, and make every server that starts stop after the declared time unless serve --idle says otherwise.",
+        "path": ".ai/repo/project/issues/I2701.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2714
+      },
+      {
+        "uri": "majordomus://issue/I2702",
+        "kind": "issue",
+        "identity": "I2702",
+        "title": "A checkout keeps one address across restarts, because its server binds a port derived from the checkout",
+        "description": "Bind a port derived from the repository and worktree identity before falling back to a free one, so that a Streamable HTTP client configuration or a bookmarked UI names an address that survives a restart.",
+        "path": ".ai/repo/project/issues/I2702.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2713
+      },
+      {
+        "uri": "majordomus://issue/I2703",
+        "kind": "issue",
+        "identity": "I2703",
+        "title": "The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order",
+        "description": "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test.",
+        "path": ".ai/repo/project/issues/I2703.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2760
+      },
+      {
+        "uri": "majordomus://issue/I2704",
+        "kind": "issue",
+        "identity": "I2704",
+        "title": "A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate",
+        "description": "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test.",
+        "path": ".ai/repo/project/issues/I2704.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3228
+      },
+      {
+        "uri": "majordomus://issue/I2705",
+        "kind": "issue",
+        "identity": "I2705",
+        "title": "A node key can be rotated, peers follow the new key, and the old key is refused",
+        "description": "Offer a node key rotation that peers which trusted the old key can follow to the new one, after which the old key's hello is refused, and purge a withdrawn key's events from the running journal without waiting for a restart.",
+        "path": ".ai/repo/project/issues/I2705.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3327
+      },
+      {
+        "uri": "majordomus://issue/I2706",
+        "kind": "issue",
+        "identity": "I2706",
+        "title": "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size",
+        "description": "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads.",
+        "path": ".ai/repo/project/issues/I2706.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2613
+      },
+      {
+        "uri": "majordomus://issue/I2707",
+        "kind": "issue",
+        "identity": "I2707",
+        "title": "majordomus doctor reports a stale server, or says plainly that it checks governance only",
+        "description": "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone.",
+        "path": ".ai/repo/project/issues/I2707.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1937
+      },
+      {
+        "uri": "majordomus://issue/I2708",
+        "kind": "issue",
+        "identity": "I2708",
+        "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows",
+        "description": "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor.",
+        "path": ".ai/repo/project/issues/I2708.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2967
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -105232,7 +105331,7 @@
       "identity": [
         "id"
       ],
-      "objects": 352
+      "objects": 361
     },
     {
       "name": "knowledge",
