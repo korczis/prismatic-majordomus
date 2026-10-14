@@ -32,6 +32,17 @@ one line, with:
 | `provenance.derived_from` | `session:`, `decision:`, `task:`, `commit:`, `issue:`, `file:`, `test:` | the evidence, as typed references that resolve |
 | `relations` | `relates_to`, `documents`, `supports`, `contradicts`, `supersedes`, `depends_on` | what it stands in relation to, never what it restates |
 
+A record's provenance outlives the files it cites (I1987). A `file:` or `test:` reference
+the tree no longer holds resolves through git history — the newest commit reachable from
+`HEAD` that touched the path, which still holds it or deleted it — and `file:<path>@<commit>`
+pins it to one commit. `knowledge check` names such a reference as historical rather than
+passing it in silence (`--json` lists them under `historical`), and `knowledge record` resolves
+it as `historical` with the blob that answers, `<commit>:<path>`, as its target; the shell
+check (`mj_knowledge_file_in_history`) and the Rust resolver (`file_in_history`) answer alike.
+A path no commit of this history ever held still resolves to nothing, and so does a pin at a
+commit that did not hold it. A shallow clone that lacks the commit cannot vouch for it, as for
+a `commit:` reference. `test/cases/3023` deletes a cited file and commits the deletion.
+
 A record is never a summary of a conversation and never quotes a prompt or a turn; the check
 that keeps `project.never-store-transcripts` applies to its title, its description and its
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
@@ -211,7 +222,7 @@ The Rust executable serves the read side: `bin/majordomus-cli knowledge candidat
 capability declared once in `apps/majordomus-cli/src/capability/builtin/knowledge_base.rs`
 and served identically over HTTP, OpenAPI, MCP, the cockpit's catalogue and the benchmark
 inventory (`CAPABILITIES.md`). `record` resolves every reference the record names to an
-object of the index, an external fact of the ledger or git, or missing; `status` reports the
+object of the index, an external fact of the ledger or git, a historical file, or missing; `status` reports the
 last derivation, the newest close, the freshness against the policy and the stopped-writer
 judgement. It writes nothing and reports absence as absence.
 

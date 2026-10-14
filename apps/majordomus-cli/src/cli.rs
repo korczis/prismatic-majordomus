@@ -821,6 +821,13 @@ pub struct MeshPeerArgs {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
 /// assert_eq!((events.after, events.limit), (None, None));
+/// assert!(!events.newest);
+///
+/// // the journal as it stands now: its newest events
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--newest"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert!(events.newest);
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
@@ -829,6 +836,9 @@ pub struct MeshEventsArgs {
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
+    /// The newest events instead of the first ones after `--after`
+    #[arg(long)]
+    pub newest: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -3212,6 +3222,18 @@ pub enum ReportCommand {
         limit: usize,
         /// The most seconds to spend on the pages the screens link to; the screens and
         /// panels are written whatever they cost
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
+        budget_seconds: u64,
+    },
+    /// The Cockpit itself, read once at this commit and written as static pages a
+    /// publication carries at /cockpit (ADR 0147)
+    CockpitSnapshot {
+        /// The most pages to write: every static route first, then the pages the UI's
+        /// snapshot links to, then what those link to
+        #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_LIMIT)]
+        limit: usize,
+        /// The most seconds to spend on the pages the static routes link to; the routes
+        /// themselves are written whatever they cost
         #[arg(long, default_value_t = crate::web::report::snapshot::DEFAULT_BUDGET_SECONDS)]
         budget_seconds: u64,
     },
@@ -5908,6 +5930,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["web", "report", "ui-snapshot", "--limit", "20"],
             setup: &[],
             expect: Expect::StdoutContains(&["web report", "ui-snapshot"]),
+        }],
+    },
+    CommandExamples {
+        command: "web report cockpit-snapshot",
+        examples: &[ExampleDoc {
+            id: "web-report-cockpit-snapshot",
+            title: "Read the Cockpit once and write it as the pages a publication carries at /cockpit",
+            description: "Asks the Cockpit in-process for every static route except the one page about this machine, then for the pages the UI's snapshot links to, then, one page per family in turn until `--limit` pages or `--budget-seconds` are reached, for the pages those link to, and writes each as a file under target/web/cockpit-snapshot. Links between them are relative; a link into the UI leads to the UI's snapshot when that holds the page; a form, a query or a page past the bound leads to the snapshot's page about the live Cockpit; no page carries a script, because the Cockpit's scripts talk to a process; and every page is stamped with the commit, the time and the executable that read it.",
+            argv: &["web", "report", "cockpit-snapshot", "--limit", "12"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web report", "cockpit-snapshot"]),
         }],
     },
     CommandExamples {
