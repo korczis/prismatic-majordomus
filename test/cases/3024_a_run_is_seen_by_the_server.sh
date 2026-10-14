@@ -43,7 +43,7 @@ NOT_VISIBLE='no server is serving this repository, so this execution is visible 
 
 # ---------------------------------------------------------------- 2. a server, polled in flight
 serve_up "$S/out.txt" "$S/err.txt" || exit 1
-get() { curl -s "$U$1"; }
+get() { curl -s -m 30 "$U$1"; }
 
 # six steps of half a second: three seconds in flight
 "$RB" run executions.demonstrate --repo "$PWD" --input '{"steps":6,"delay_ms":500}' --format json \
@@ -89,7 +89,7 @@ jq -e '[.events[].type] as $t | ($t[0] == "execution.created") and ($t | index("
 jq -e '[.events[].sequence] as $s | $s == [range(1; ($s | length) + 1)]' "$S/history.json" >/dev/null \
   || { echo "    the reported sequences are not dense:"; jq -c '[.events[].sequence]' "$S/history.json"; exit 1; }
 # and the Cockpit says who ran it
-curl -s -H 'Accept: text/html' "$U/cockpit/executions/$SEEN" > "$S/page.html"
+curl -s -m 30 -H 'Accept: text/html' "$U/cockpit/executions/$SEEN" > "$S/page.html"
 grep -q "process $(jq -r .actor.pid "$S/after.json")" "$S/page.html" \
   || { echo "    the Cockpit page does not name the process that ran it"; exit 1; }
 
@@ -104,7 +104,7 @@ until [ -n "$LONG" ]; do
   i=$((i+1)); [ "$i" -lt 100 ] || { echo "    the long run was never listed"; exit 1; }
   sleep 0.1
 done
-curl -s -X POST -H 'Content-Type: application/json' -d "{\"id\":\"$LONG\"}" "$U/api/v1/executions/cancel" > "$S/cancel.json"
+curl -s -m 30 -X POST -H 'Content-Type: application/json' -d "{\"id\":\"$LONG\"}" "$U/api/v1/executions/cancel" > "$S/cancel.json"
 [ "$(jq -r .outcome "$S/cancel.json")" = requested ] \
   || { echo "    the server did not take the stop:"; cat "$S/cancel.json"; exit 1; }
 rc=0; wait "$RUN" || rc=$?; RUN=""

@@ -118,6 +118,25 @@ pub enum CancelOutcome {
 }
 
 /// What an execution is when it is created: everything about it that does not move.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// let id = ExecutionId::fresh();
+/// store.adopt(id.clone(), seed(), 4242).unwrap();
+/// let held = store.get(&id).unwrap();
+/// assert_eq!(held.capability, "executions.demonstrate");
+/// assert_eq!((held.state, held.actor.pid), (ExecutionState::Queued, Some(4242)));
+/// ```
 #[derive(Debug, Clone)]
 pub struct Seed<'a> {
     /// The capability's canonical id.
@@ -151,6 +170,26 @@ pub const REPORT_HEARTBEAT: Duration = Duration::from_secs(2);
 pub const REPORT_SILENCE: Duration = Duration::from_secs(30);
 
 /// The outcome of one report from the process that runs an execution.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// let id = ExecutionId::fresh();
+/// store.adopt(id.clone(), seed(), 4242).unwrap();
+/// // the reporter's own sequence: 1 is its `created`, already held here
+/// use majordomus_cli::execution::ReportOutcome;
+/// let outcome: ReportOutcome = store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+/// assert_eq!((outcome.applied, outcome.through, outcome.cancel_requested), (1, 2, false));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReportOutcome {
     /// How many of the reported events were applied here.
@@ -164,6 +203,29 @@ pub struct ReportOutcome {
 }
 
 /// Why an execution was not adopted from a report.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// use majordomus_cli::execution::{ActorKind, AdoptError};
+/// let own = ExecutionId::fresh();
+/// let mut mine = seed();
+/// mine.actor = Actor::of(ActorKind::Http);
+/// store.create(
+///     own.clone(), mine.capability, mine.title, mine.input, mine.cancellable, mine.actor,
+///     mine.repository,
+/// );
+/// assert_eq!(store.adopt(own.clone(), seed(), 4242), Err(AdoptError::Own(own)));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum AdoptError {
     /// The id names an execution this process runs itself; a report cannot write into it.
@@ -269,6 +331,25 @@ impl ExecutionStore {
     /// [`Self::report`]. Adopting an id already held as a reported execution changes
     /// nothing, so a reporter may send its description with every report. An id this
     /// process runs itself is refused.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap(); // again: nothing changes
+    /// assert!(store.is_reported(&id));
+    /// assert_eq!(store.get(&id).unwrap().event_count, 1, "one `created` event");
+    /// ```
     pub fn adopt(&self, id: ExecutionId, seed: Seed<'_>, pid: u32) -> Result<(), AdoptError> {
         {
             let inner = self.lock();
@@ -301,6 +382,31 @@ impl ExecutionStore {
     /// is to resume. An event this store's state machine refuses is passed over rather than
     /// believed, as one from a handler of this process would be. `None` when the id is not
     /// a reported execution of this store.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// let started = store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+    /// assert_eq!((started.applied, started.through), (1, 2));
+    /// // sent twice: nothing more is applied
+    /// assert_eq!(store.report(&id, vec![(2, EventPayload::Started)]).unwrap().applied, 0);
+    /// // after a gap: nothing is applied, and the answer says where to resume
+    /// let done = EventPayload::Completed { output: serde_json::json!(1) };
+    /// assert_eq!(store.report(&id, vec![(4, done)]).unwrap().through, 2);
+    /// assert_eq!(store.get(&id).unwrap().state, ExecutionState::Running);
+    /// assert!(store.report(&ExecutionId::fresh(), Vec::new()).is_none(), "not a reported one");
+    /// ```
     pub fn report(
         &self,
         id: &ExecutionId,
@@ -355,6 +461,30 @@ impl ExecutionStore {
     /// Fail every reported execution that is not finished and has not been heard from for
     /// longer than `silence`, and answer which. The process that ran it was killed or lost
     /// its way to this one; what it did afterwards is unknown here, which the error says.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// use std::time::Duration;
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+    /// assert!(store.abandon_silent(Duration::from_secs(30)).is_empty(), "heard just now");
+    /// std::thread::sleep(Duration::from_millis(20));
+    /// assert_eq!(store.abandon_silent(Duration::from_millis(5)), vec![id.clone()]);
+    /// let failed = store.get(&id).unwrap();
+    /// assert_eq!(failed.state, ExecutionState::Failed);
+    /// assert_eq!(failed.error.unwrap().code, "unavailable");
+    /// ```
     pub fn abandon_silent(&self, silence: Duration) -> Vec<ExecutionId> {
         let mut published = Vec::new();
         let abandoned = {
@@ -397,6 +527,24 @@ impl ExecutionStore {
     }
 
     /// Is this an execution another process runs and reports here?
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let reported = ExecutionId::fresh();
+    /// store.adopt(reported.clone(), seed(), 4242).unwrap();
+    /// assert!(store.is_reported(&reported));
+    /// assert!(!store.is_reported(&ExecutionId::fresh()), "nothing is held under that id");
+    /// ```
     pub fn is_reported(&self, id: &ExecutionId) -> bool {
         self.lock()
             .records
