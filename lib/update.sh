@@ -24,6 +24,8 @@ usage: majordomus update [--dry-run] [--diff <target>] [--force]
   --dry-run   print what would change, write nothing
   --diff T    show the diff between the current file T and its regenerated form
   --force     overwrite a target whose content matches neither its own stamp nor the new output
+  a mode: file target that exists without a stamp was written by somebody: it is refused
+  (15), and the refusal names mode: region as the way to keep it
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "update: unknown option $1" ;;
@@ -102,6 +104,11 @@ H
     elif [ -f "$MJ_ROOT/$tgt" ] && [ "$(mj_sha256 "$MJ_ROOT/$tgt")" = "$(mj_sha256 "$out")" ]; then plan="$plan unchanged:$tgt"
     elif [ -n "$want_c" ] && [ "${have_c:0:16}" = "${want_c:0:16}" ]; then plan="$plan update:$tgt"
     elif [ "$force" = 1 ]; then plan="$plan update:$tgt"
+    elif [ -z "$want_c" ] && [ "$mode" = file ]; then
+      # a whole file somebody wrote: --force is the answer that loses it, so the declaration
+      # that keeps it is named first
+      mj_finding REFUSE projection "$tgt" "carries no generation stamp; it was not written by update (hand-written?); to keep it, set \`mode: region\` for this projection in $(mj_rel "$MJ_POLICY_FILE") and update appends a marked region, leaving the rest alone; to replace it, use --diff $tgt, then --force" "majordomus update --diff $tgt"
+      refuse=1
     elif [ -z "$want_c" ]; then
       mj_finding REFUSE projection "$tgt" "carries no generation stamp; it was not written by update (hand-written?); use --diff $tgt, then --force" "majordomus update --diff $tgt"
       refuse=1

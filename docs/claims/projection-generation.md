@@ -17,7 +17,7 @@ majordomus update && sha256sum CLAUDE.md   # identical hash; output says "unchan
 
 ## What it does not cover
 
-`majordomus update` projects a deliberately narrow subset of the policy — the budget, the profile table, state locations, the finish contract, the identity-fields rule — and lists what is not projected. It does not merge an existing hand-written instruction file; you decide what moves into the body on first use.
+`majordomus update` projects a deliberately narrow subset of the policy — the budget, the profile table, state locations, the finish contract, the identity-fields rule — and lists what is not projected. It does not merge an existing hand-written instruction file; you decide what moves into the body on first use. It does not overwrite one either: `majordomus init` gives a projection whose target already exists without a generation stamp `mode: region`, so `update` appends a marked region to that file and keeps the rest, and a whole-file projection that still meets such a file is refused with `mode: region` named as the way to keep it (`test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh`).
 
 ## Why it exists
 
