@@ -12191,7 +12191,6 @@
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -29429,6 +29428,8 @@
             "scripts/generate-site-data refuses a challenge that does not pass, refuses nothing, does not end accepted, leans on a claim that is not guaranteed, or whose README transcript is not a recorded step",
             "finish prints one blocking doctrine per line"
           ],
+          "completed_at": "2026-10-11T04:40:59Z",
+          "completed_event": "sha256:66d5cfb1bc95a74eebef6bfc226c91d06a4340ad5a22a8453a471ff3854f4ef5",
           "created_at": "2026-09-15",
           "depends_on": [],
           "evidence_required": [
@@ -29460,13 +29461,17 @@
             ".github/workflows/pages.yml"
           ],
           "slug": "the-challenge-is-one-recorded-run",
-          "updated_at": "2026-09-30",
+          "started_at": "2026-10-11T04:18:57Z",
+          "started_event": "sha256:9bfb39d8d44f5e3d24d0018fcdda3fb684212666a42a3c47116eb8341fd05cdd",
+          "updated_at": "2026-10-11T04:40:59Z",
           "validation": [
             "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
             "bash test/run.sh 103_obligations",
             "scripts/generate-site-data --check",
             "scripts/site-check"
-          ]
+          ],
+          "verified_at": "2026-10-11T04:40:44Z",
+          "verified_event": "sha256:35b76a1925bdd703d2fdf0186dd0caaca452c84965a9af1b2f7ede749f19d732"
         }
       },
       {
@@ -35346,6 +35351,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2601",
+        "kind": "issue",
+        "label": "I2601",
+        "summary": "majordomus evidence reaches record, stamp and show",
+        "route": "/cockpit/objects/issue/i2601",
+        "source": ".ai/repo/project/issues/I2601.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus evidence show`, `record --help` and `stamp --help` answer through the launcher",
+            "`majordomus evidence --covers` behaves as before",
+            "The documented-command check runs the EVIDENCE.md lines it names"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "bin/majordomus:162 routes `evidence` to lib/evidence.sh, which parses options only and dies on the word `record`.",
+          "depends_on": [],
+          "desired_state": "The shell command hands the subcommands the executable owns to it, keeps --covers and --gate, and its help lists both.",
+          "evidence_required": [
+            "evidence_subcommands_through_launcher_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Make the documented `majordomus evidence record|stamp|show` work from the launcher.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/evidence.sh",
+            "bin/majordomus",
+            "share/commands.yaml",
+            "docs/EVIDENCE.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "majordomus-evidence-reaches-its-subcommands",
+          "started_at": "2026-10-13T11:36:41Z",
+          "started_event": "sha256:f6548a9a76dd197f58827bb78a2f525a918ae153a84a0d3a56716c34724b7506",
+          "updated_at": "2026-10-13T17:54:58Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "verified_at": "2026-10-13T17:54:58Z",
+          "verified_event": "sha256:49a8e6426351f50e05d4fe095ed08a09530cdb99b24c4347eda656cfc4ba3d54"
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -36613,6 +36663,44 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "label": "a-second-adopter-is-served",
+        "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "route": "/cockpit/objects/milestone/a-second-adopter-is-served",
+        "source": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "findings_recorded"
+          ],
+          "non_scope": [
+            "The adopting repository itself: it is the evidence, read only",
+            "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 116,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-second-adopter-is-served",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/a-session-leaves-what-it-observed",
         "kind": "milestone",
         "label": "a-session-leaves-what-it-observed",
@@ -37617,7 +37705,7 @@
             ".github/workflows/pages.yml"
           ],
           "slug": "public-proof",
-          "updated_at": "2026-09-15",
+          "updated_at": "2026-10-11T05:02:14Z",
           "validation": [
             "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
             "bash test/run.sh 103_obligations",
@@ -41588,6 +41676,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.25.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.26.0",
+        "kind": "release-record",
+        "label": "v0.26.0",
+        "summary": "v0.26.0",
+        "route": "/cockpit/objects/release-record/v0-26-0",
+        "source": ".ai/repo/releases/v0.26.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "ff3829709616e638596315d6ca42be64b570b74f",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.26.0",
+          "published_at": "2026-10-14T18:58:57Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.26.0"
         }
       },
       {
@@ -52901,6 +53012,13 @@
         "label": "test/cases/2985_session_records_are_capped_and_archived.sh",
         "route": "/cockpit/objects/test/test-cases-2985-session-records-are-capped-and-archived-sh",
         "source": "test/cases/2985_session_records_are_capped_and_archived.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
+        "kind": "test",
+        "label": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
+        "route": "/cockpit/objects/test/test-cases-2998-evidence-reaches-the-subcommands-the-executable-owns-sh",
+        "source": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh"
       },
       {
         "id": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
@@ -78285,6 +78403,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2601",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2601",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -78591,6 +78719,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-second-adopter-is-served",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -79131,6 +79264,11 @@
       },
       {
         "source": "majordomus://release-record/v0.25.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.26.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -82761,6 +82899,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2985_session_records_are_capped_and_archived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88156,8 +88299,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2795,
-      "edges": 6128,
+      "nodes": 2799,
+      "edges": 6133,
       "acyclic": false,
       "truncated": false
     }

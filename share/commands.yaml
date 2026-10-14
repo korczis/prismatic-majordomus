@@ -322,11 +322,19 @@ commands:
     requires_installed: true
     requires_task: required
     json: true
-    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]"
+    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json] | majordomus evidence <show|claim|proves|record|stamp> [options]"
     reads: [share/obligations.yaml, .ai/repo/ci/gates.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 12, 13, 15]
+    effects:
+      - subcommand: show
+        class: read-only
+      - subcommand: claim
+        class: read-only
+      - subcommand: proves
+        class: read-only
     demo: obligation-evidence
+    note: "Every argument the shell command takes is an option, so a word in the first position is never its own: show, claim, proves, record and stamp are subcommands of the Rust executable, which holds the ledger of what ran (docs/EVIDENCE.md), and the launcher hands them to it with every argument unchanged. Which words those are is read from the executable's declaration, never listed in the launcher. They need no active task, their exit codes are the executable's, and what each reads and writes is on its own page under /docs/cli/evidence/."
 
   - id: skills
     title: skills
