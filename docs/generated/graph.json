@@ -41786,6 +41786,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.26.0",
+        "kind": "release-record",
+        "label": "v0.26.0",
+        "summary": "v0.26.0",
+        "route": "/cockpit/objects/release-record/v0-26-0",
+        "source": ".ai/repo/releases/v0.26.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "ff3829709616e638596315d6ca42be64b570b74f",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.26.0",
+          "published_at": "2026-10-14T18:58:57Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.26.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -53222,6 +53245,13 @@
         "label": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
         "route": "/cockpit/objects/test/test-cases-3023-a-knowledge-record-outlives-the-file-it-cites-sh",
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3026_the_observatory_answers_a_click.sh",
+        "kind": "test",
+        "label": "test/cases/3026_the_observatory_answers_a_click.sh",
+        "route": "/cockpit/objects/test/test-cases-3026-the-observatory-answers-a-click-sh",
+        "source": "test/cases/3026_the_observatory_answers_a_click.sh"
       },
       {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -79422,6 +79452,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.26.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -83138,6 +83173,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3026_the_observatory_answers_a_click.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88448,8 +88488,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2802,
-      "edges": 6146,
+      "nodes": 2804,
+      "edges": 6148,
       "acyclic": false,
       "truncated": false
     }

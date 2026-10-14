@@ -4,8 +4,8 @@
 schema: majordomus/design-system/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`"
 generator: majordomus-cli 0.26.0
-fingerprint: 944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540
-design: 944a896b2646
+fingerprint: ed6ac88f9b5b1551c3cbd137c60937445b3d7df2944b845fbdee8e679b866601
+design: ed6ac88f9b5b
 source: share/design/tokens.yaml
 projections:
   - share/design/theme.css
@@ -20,7 +20,7 @@ projections:
   - docs/generated/design.md
 counts:
   font: 2
-  role: 22
+  role: 30
   status: 5
   state: 105
   tone: 6
@@ -654,6 +654,214 @@ tokens:
           reference: fuchsia-400
           css: "oklch(74% 0.238 322.16)"
           literal: "oklch(74% 0.238 322.16)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-instance
+    kind: role
+    about: "the Observatory's colour for an instance - a machine, a runtime, a checkout"
+    css:
+      - "--mj-obs-instance"
+    parts:
+      - part: fg
+        css: "--mj-obs-instance"
+        light:
+          reference: blue-600
+          css: "oklch(54.6% 0.245 262.881)"
+          literal: "oklch(54.6% 0.245 262.881)"
+        dark:
+          reference: blue-400
+          css: "oklch(70.7% 0.165 254.624)"
+          literal: "oklch(70.7% 0.165 254.624)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-peer
+    kind: role
+    about: "the Observatory's colour for a peer - a session of the mesh, a worker, a claim it holds"
+    css:
+      - "--mj-obs-peer"
+    parts:
+      - part: fg
+        css: "--mj-obs-peer"
+        light:
+          reference: violet-600
+          css: "oklch(54.1% 0.281 293.009)"
+          literal: "oklch(54.1% 0.281 293.009)"
+        dark:
+          reference: violet-400
+          css: "oklch(70.2% 0.183 293.541)"
+          literal: "oklch(70.2% 0.183 293.541)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-task
+    kind: role
+    about: "the Observatory's colour for a task - an execution, a recorded run"
+    css:
+      - "--mj-obs-task"
+    parts:
+      - part: fg
+        css: "--mj-obs-task"
+        light:
+          reference: orange-600
+          css: "oklch(64.6% 0.222 41.116)"
+          literal: "oklch(64.6% 0.222 41.116)"
+        dark:
+          reference: orange-400
+          css: "oklch(75% 0.183 55.934)"
+          literal: "oklch(75% 0.183 55.934)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-issue
+    kind: role
+    about: "the Observatory's colour for issues and the claims the documents make"
+    css:
+      - "--mj-obs-issue"
+    parts:
+      - part: fg
+        css: "--mj-obs-issue"
+        light:
+          reference: rose-600
+          css: "oklch(58.6% 0.253 17.585)"
+          literal: "oklch(58.6% 0.253 17.585)"
+        dark:
+          reference: rose-400
+          css: "oklch(71.2% 0.194 13.428)"
+          literal: "oklch(71.2% 0.194 13.428)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-milestone
+    kind: role
+    about: "the Observatory's colour for a milestone of the plan"
+    css:
+      - "--mj-obs-milestone"
+    parts:
+      - part: fg
+        css: "--mj-obs-milestone"
+        light:
+          reference: emerald-600
+          css: "oklch(59.6% 0.145 163.225)"
+          literal: "oklch(59.6% 0.145 163.225)"
+        dark:
+          reference: emerald-400
+          css: "oklch(76.5% 0.177 163.223)"
+          literal: "oklch(76.5% 0.177 163.223)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-state
+    kind: role
+    about: "the Observatory's colour for a state that is read - a health dimension, a check, a rule, a source"
+    css:
+      - "--mj-obs-state"
+    parts:
+      - part: fg
+        css: "--mj-obs-state"
+        light:
+          reference: fuchsia-600
+          css: "oklch(59.1% 0.293 322.896)"
+          literal: "oklch(59.1% 0.293 322.896)"
+        dark:
+          reference: fuchsia-400
+          css: "oklch(74% 0.238 322.16)"
+          literal: "oklch(74% 0.238 322.16)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-event
+    kind: role
+    about: "the Observatory's colour for an event of the mesh journal"
+    css:
+      - "--mj-obs-event"
+    parts:
+      - part: fg
+        css: "--mj-obs-event"
+        light:
+          reference: cyan-600
+          css: "oklch(60.9% 0.126 221.723)"
+          literal: "oklch(60.9% 0.126 221.723)"
+        dark:
+          reference: cyan-400
+          css: "oklch(78.9% 0.154 211.53)"
+          literal: "oklch(78.9% 0.154 211.53)"
+    projections:
+      - share/design/theme.css
+      - share/design/surface.css
+      - share/design/status.css
+      - apps/majordomus-cli/src/web/tokens.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: obs-release
+    kind: role
+    about: "the Observatory's colour for what is delivered - a release, a declared version, a module, a surface"
+    css:
+      - "--mj-obs-release"
+    parts:
+      - part: fg
+        css: "--mj-obs-release"
+        light:
+          reference: lime-600
+          css: "oklch(64.8% 0.2 131.684)"
+          literal: "oklch(64.8% 0.2 131.684)"
+        dark:
+          reference: lime-400
+          css: "oklch(84.1% 0.238 128.85)"
+          literal: "oklch(84.1% 0.238 128.85)"
     projections:
       - share/design/theme.css
       - share/design/surface.css
@@ -3887,6 +4095,38 @@ declaration:
       about: the eighth colour of the categorical series
       light: fuchsia-600
       dark: fuchsia-400
+    obs-instance:
+      about: "the Observatory's colour for an instance - a machine, a runtime, a checkout"
+      light: blue-600
+      dark: blue-400
+    obs-peer:
+      about: "the Observatory's colour for a peer - a session of the mesh, a worker, a claim it holds"
+      light: violet-600
+      dark: violet-400
+    obs-task:
+      about: "the Observatory's colour for a task - an execution, a recorded run"
+      light: orange-600
+      dark: orange-400
+    obs-issue:
+      about: "the Observatory's colour for issues and the claims the documents make"
+      light: rose-600
+      dark: rose-400
+    obs-milestone:
+      about: "the Observatory's colour for a milestone of the plan"
+      light: emerald-600
+      dark: emerald-400
+    obs-state:
+      about: "the Observatory's colour for a state that is read - a health dimension, a check, a rule, a source"
+      light: fuchsia-600
+      dark: fuchsia-400
+    obs-event:
+      about: "the Observatory's colour for an event of the mesh journal"
+      light: cyan-600
+      dark: cyan-400
+    obs-release:
+      about: "the Observatory's colour for what is delivered - a release, a declared version, a module, a surface"
+      light: lime-600
+      dark: lime-400
   status:
     roles:
       ok:

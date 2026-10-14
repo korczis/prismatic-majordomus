@@ -245,6 +245,45 @@ roles:
     light: fuchsia-600
     dark: fuchsia-400
 
+  # The Observatory's kinds. A mark a reader points at is one record of one kind, and the
+  # ring around it and the detail it opens wear the kind's colour, so a peer never reads as a
+  # milestone across a hall. A kind's colour is identity and never a verdict: a state keeps
+  # the status colour it is filed under. share/ui/observatory.js files each mark kind under
+  # one of these and reads `--mj-obs-<kind>`; it never picks a value. The steps are the
+  # categorical series' (600 light, 400 dark), so each reads on the page in both themes.
+  obs-instance:
+    about: the Observatory's colour for an instance - a machine, a runtime, a checkout
+    light: blue-600
+    dark: blue-400
+  obs-peer:
+    about: the Observatory's colour for a peer - a session of the mesh, a worker, a claim it holds
+    light: violet-600
+    dark: violet-400
+  obs-task:
+    about: the Observatory's colour for a task - an execution, a recorded run
+    light: orange-600
+    dark: orange-400
+  obs-issue:
+    about: the Observatory's colour for issues and the claims the documents make
+    light: rose-600
+    dark: rose-400
+  obs-milestone:
+    about: the Observatory's colour for a milestone of the plan
+    light: emerald-600
+    dark: emerald-400
+  obs-state:
+    about: the Observatory's colour for a state that is read - a health dimension, a check, a rule, a source
+    light: fuchsia-600
+    dark: fuchsia-400
+  obs-event:
+    about: the Observatory's colour for an event of the mesh journal
+    light: cyan-600
+    dark: cyan-400
+  obs-release:
+    about: the Observatory's colour for what is delivered - a release, a declared version, a module, a surface
+    light: lime-600
+    dark: lime-400
+
 # Status semantics. Five meanings, each with a text colour, a ground and a border per
 # theme; and the vocabulary — every state word any surface renders — filed under the
 # meaning it carries. A word is coloured by the meaning it is filed under and by nothing
