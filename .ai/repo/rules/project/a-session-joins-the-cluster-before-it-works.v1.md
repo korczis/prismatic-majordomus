@@ -11,7 +11,7 @@ depends_on: []
 tags: [coordination, mesh, process]
 
 x-majordomus:
-  reviewed_because: no command derives the four facts yet; ADR 0156 proposes the capability that does, and test/cases/3004_a_session_joins_the_cluster.sh becomes this rule's decision when it lands, with this declaration falling away and the class raised to blocking
+  reviewed_because: no command derives the four facts yet; ADR 0156 proposes the capability that does, and test/cases/3010_a_session_joins_the_cluster.sh becomes this rule's decision when it lands, with this declaration falling away and the class raised to blocking
 ---
 
 # Rationale
@@ -47,5 +47,5 @@ it was in `CLAUDE.md` and was read. See ADR 0156 for the account and the decisio
 Advisory until the capability that derives the four facts lands (ADR 0156). Then this rule
 is raised to `blocking` as version 2, `start`, `check`, `finish` and the commit and push
 hooks refuse a change from a session that is not announced or is behind the trunk by more
-than the policy's bound, and `test/cases/3004_a_session_joins_the_cluster.sh` proves the
+than the policy's bound, and `test/cases/3010_a_session_joins_the_cluster.sh` proves the
 refusals and the unreachable-remote case.

@@ -12,7 +12,7 @@ desired_state: "One read capability, declared once with capability! under apps/m
 scope:
   - "apps/majordomus-cli/src/capability/builtin/"
   - "apps/majordomus-cli/src/mesh/"
-  - "test/cases/3004_a_session_joins_the_cluster.sh"
+  - "test/cases/3010_a_session_joins_the_cluster.sh"
   - ".ai/repo/policy.yaml"
 non_scope:
   - "Refusing anything: that is I2661"
@@ -27,7 +27,7 @@ acceptance_criteria:
 validation:
   - "bin/majordomus plan validate"
   - "majordomus generate --check"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3004_a_session_joins_the_cluster"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
 evidence_required:
   - "join_state_unit_tests"
   - "join_state_case_3004"

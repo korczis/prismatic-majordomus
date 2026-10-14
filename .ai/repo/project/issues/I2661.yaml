@@ -15,7 +15,7 @@ scope:
   - "lib/doctor.sh"
   - ".githooks/"
   - ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v2.md"
-  - "test/cases/3004_a_session_joins_the_cluster.sh"
+  - "test/cases/3010_a_session_joins_the_cluster.sh"
 non_scope:
   - "Deriving the facts: that is I2660"
   - "A refusal of reads, of context, of mesh or of doctor"
@@ -29,7 +29,7 @@ acceptance_criteria:
 validation:
   - "bin/majordomus plan validate"
   - "majordomus rules list"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3004_a_session_joins_the_cluster"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
 evidence_required:
   - "join_refusal_case_3004"
   - "rule_v2_blocking"

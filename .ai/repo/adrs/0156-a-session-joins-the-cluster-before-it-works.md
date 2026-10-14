@@ -103,7 +103,7 @@ compiles.
 
 ## Verification
 
-`test/cases/3004_a_session_joins_the_cluster.sh` proves, in a fixture with a bare origin,
+`test/cases/3010_a_session_joins_the_cluster.sh` proves, in a fixture with a bare origin,
 that a checkout behind its trunk is reported behind, that an unreachable remote is
 `unverified` and not `current`, that an unannounced session is refused by `check` naming
 the repairing command and a read is not, and that a worker with no claim is shown the open

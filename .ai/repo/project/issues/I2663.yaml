@@ -13,7 +13,7 @@ scope:
   - ".claude/hooks/"
   - "apps/majordomus-cli/src/capability/builtin/"
   - ".ai/repo/providers/"
-  - "test/cases/3004_a_session_joins_the_cluster.sh"
+  - "test/cases/3010_a_session_joins_the_cluster.sh"
 non_scope:
   - "Making the MCP server connect: that is the runtime lifecycle milestone's"
 depends_on:
@@ -23,7 +23,7 @@ acceptance_criteria:
   - "A worker with no claim is shown the open asks to all and the command that answers one"
 validation:
   - "bin/majordomus plan validate"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3004_a_session_joins_the_cluster"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
 evidence_required:
   - "cli_fallback_announced"
   - "open_ask_shown"
