@@ -165,6 +165,42 @@ pub struct KnowledgeCandidate {
     pub freshness_reason: String,
     /// Where the wait was read from.
     pub age_source: AgeSource,
+    /// What the observation it was derived from is about (ADR 0118); empty for a record
+    /// derived from anything else.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
+    /// Which owner should look first, derived from `about`'s structure; empty without one.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub route: String,
+}
+
+/// The records under one subject: every candidate awaiting review and every rejected one,
+/// with the episodes behind them (ADR 0118). Recurrence is read here, never written: each
+/// record stays one episode's own file, and a group is how several of them read as one thing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;
+/// let g: KnowledgeGroup = serde_json::from_str(
+///     r#"{"about":"lib/a.sh","route":"project","candidates":["e1-a","e2-b"],"episodes":["e1","e2"]}"#,
+/// ).unwrap();
+/// assert_eq!(g.episodes.len(), 2, "two episodes observed it");
+/// assert!(g.rejected.is_empty(), "and nobody rejected it");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KnowledgeGroup {
+    /// The subject, as written.
+    pub about: String,
+    /// The route of its records.
+    pub route: String,
+    /// The candidates awaiting review, by id.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub candidates: Vec<String>,
+    /// The records rejected and kept, by id.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rejected: Vec<String>,
+    /// The episodes behind all of them, each once, in order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub episodes: Vec<String>,
 }
 
 /// The queue orders by id, which the deriver makes total: the episode, then a digest of the
@@ -198,6 +234,10 @@ pub struct KnowledgeCandidates {
     /// Every candidate, in canonical order of id.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub candidates: Vec<KnowledgeCandidate>,
+    /// The candidates and rejected records derived from observations, grouped by what they
+    /// are about, in order of subject.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<KnowledgeGroup>,
     /// `knowledge.candidates_max_files`, when the policy declares it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cap: Option<usize>,
@@ -255,9 +295,11 @@ impl BenchmarkCases for KnowledgeRecordInput {
 
 /// How a typed reference resolved.
 ///
-/// Three words and no fourth: a reference names an object of the index, or something only
-/// the ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a
-/// commit or a task is exactly as real as a rule — it says which reader answered.
+/// Four words and no fifth: a reference names an object of the index, or something only
+/// the ledger and git can vouch for, or a file the tree no longer holds and git history
+/// does, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as
+/// real as a rule — it says which reader answered; `historical` resolves as well, and is
+/// named apart so a reader sees which provenance outlived its file (I1987).
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;
@@ -275,6 +317,10 @@ pub enum ReferenceResolution {
     Object,
     /// Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit.
     External,
+    /// A `file:` or `test:` the tree no longer holds and git history does: cited before the
+    /// file was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that
+    /// answers, `<commit>:<path>`, which `git show` reads.
+    Historical,
     /// Nothing answers to it. A dangling reference is the integrity validator's finding.
     Missing,
 }
@@ -291,6 +337,7 @@ impl ReferenceResolution {
         match self {
             ReferenceResolution::Object => "object",
             ReferenceResolution::External => "external",
+            ReferenceResolution::Historical => "historical",
             ReferenceResolution::Missing => "missing",
         }
     }
@@ -681,6 +728,44 @@ fn candidate_objects(ctx: &Context) -> Vec<&Object> {
         .collect()
 }
 
+/// Every record under the candidates class that says what it is about, awaiting review or
+/// rejected, grouped by that subject: one pass over the index, ordered by subject and by id.
+fn groups_of(ctx: &Context) -> Vec<KnowledgeGroup> {
+    let mut by: BTreeMap<String, KnowledgeGroup> = BTreeMap::new();
+    // Keyed by identity rather than collected and sorted: the map is ordered by construction,
+    // and `order-check` counts every sort site in the crate against a baseline.
+    let records: BTreeMap<&str, &Object> = ctx
+        .index
+        .objects
+        .iter()
+        .filter(|o| o.kind == KIND && o.provenance.source_class == CANDIDATES_CLASS)
+        .filter(|o| !field(o, "about").is_empty())
+        .map(|o| (o.identity.as_str(), o))
+        .collect();
+    for o in records.into_values() {
+        let about = field(o, "about");
+        let group = by.entry(about.clone()).or_insert_with(|| KnowledgeGroup {
+            about,
+            route: field(o, "route"),
+            candidates: Vec::new(),
+            rejected: Vec::new(),
+            episodes: Vec::new(),
+        });
+        match field(o, "status").as_str() {
+            "candidate" => group.candidates.push(o.identity.clone()),
+            "superseded" => group.rejected.push(o.identity.clone()),
+            _ => continue,
+        }
+        let episode = episode_of(&derived_from_of(o));
+        if !episode.is_empty() && !group.episodes.contains(&episode) {
+            group.episodes.push(episode);
+        }
+    }
+    by.into_values()
+        .filter(|g| !(g.candidates.is_empty() && g.rejected.is_empty()))
+        .collect()
+}
+
 /// The candidates of this checkout, judged. Shared by `candidates` and `status`, which
 /// count the same queue; one derivation so the two cannot disagree about its size.
 fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidates {
@@ -739,10 +824,13 @@ fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidat
                 age_minutes,
                 freshness_reason,
                 age_source,
+                about: field(o, "about"),
+                route: field(o, "route"),
             }
         })
         .collect();
     crate::order::canonical(&mut candidates);
+    let groups = groups_of(ctx);
 
     let total = candidates.len();
     let on_this_branch = candidates
@@ -784,6 +872,7 @@ fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidat
         unattributed,
         branch,
         candidates,
+        groups,
         cap,
         over_cap,
         findings,
@@ -810,7 +899,7 @@ fn resolve(
     events: &[Value],
     reference: &str,
 ) -> (ReferenceResolution, Option<String>, String) {
-    use ReferenceResolution::{External, Missing, Object};
+    use ReferenceResolution::{External, Historical, Missing, Object};
     let Some((prefix, value)) = reference.split_once(':') else {
         return (
             Missing,
@@ -909,7 +998,14 @@ fn resolve(
             if crate::policy::is_safe_relative(value) && root.join(value).exists() {
                 return (External, Some(value.to_string()), String::new());
             }
-            (Missing, None, format!("no such path in the tree: {value}"))
+            if let Some(blob) = file_in_history(root, value) {
+                return (Historical, Some(blob), String::new());
+            }
+            (
+                Missing,
+                None,
+                format!("no such path in the tree or in its history: {value}"),
+            )
         }
         "knowledge" | "rule" | "adr" | "issue" => match by_kind(prefix) {
             Some(uri) => (Object, Some(uri), String::new()),
@@ -924,6 +1020,55 @@ fn resolve(
             None,
             format!("`{other}:` is not a reference prefix the knowledge schema admits"),
         ),
+    }
+}
+
+/// A `file:` or `test:` reference the tree no longer holds, found in git history: the blob
+/// that answers, as `<commit>:<path>`, or `None` when no commit of this history held the
+/// path.
+///
+/// The shell check asks the same question in `mj_knowledge_file_in_history`
+/// (lib/knowledge.sh), and the two must agree (I1987). A record's provenance says what it was
+/// derived from when it was written; deleting the file later does not make that false, and
+/// OSCILLA's 5467193 failed `knowledge check` on exactly that. Two forms:
+///
+/// - `<path>@<commit>`, with 7 to 40 hex digits: the path at that commit, and only there;
+/// - `<path>`: the newest commit reachable from HEAD that touched it, which either still
+///   holds it or deleted it — then the parent does.
+///
+/// Literal pathspecs, so `file:*.md` names one path rather than a glob. A shallow clone that
+/// lacks the commit answers `None`, as it does for a `commit:` reference.
+fn file_in_history(root: &Path, value: &str) -> Option<String> {
+    let git = |args: &[&str]| {
+        crate::git::read_only(root)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+    };
+    if let Some((path, commit)) = value.rsplit_once('@') {
+        let hex = (7..=40).contains(&commit.len())
+            && commit
+                .bytes()
+                .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+        if !path.is_empty() && hex {
+            let blob = format!("{commit}:{path}");
+            return git(&["cat-file", "-e", &blob]).map(|_| blob);
+        }
+    }
+    if !crate::policy::is_safe_relative(value) {
+        return None;
+    }
+    let out = git(&["--literal-pathspecs", "rev-list", "-1", "HEAD", "--", value])?;
+    let last = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if last.is_empty() {
+        return None;
+    }
+    let held = format!("{last}:{value}");
+    if git(&["cat-file", "-e", &held]).is_some() {
+        Some(held)
+    } else {
+        Some(format!("{last}^:{value}"))
     }
 }
 
@@ -1464,6 +1609,7 @@ mod tests {
         for r in [
             ReferenceResolution::Object,
             ReferenceResolution::External,
+            ReferenceResolution::Historical,
             ReferenceResolution::Missing,
         ] {
             assert_eq!(
@@ -1684,6 +1830,76 @@ mod tests {
         }
     }
 
+    /// A file the tree no longer holds resolves through git history, as historical: at the
+    /// newest commit that touched it, or at a commit the reference pins. A path no commit
+    /// ever held, a pin at a commit that did not hold it, and a glob still resolve to nothing
+    /// (I1987: OSCILLA's notes cited tests/engine.cjs after its V2 removed it).
+    #[test]
+    fn a_deleted_file_resolves_through_history_and_one_that_never_existed_does_not() {
+        use ReferenceResolution::{Historical, Missing};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        // an identity and no hooks of the machine's: the CI runner has none, a laptop may
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(["-c", "user.name=t", "-c", "user.email=t@example.com"])
+                .args([
+                    "-c",
+                    "commit.gpgsign=false",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                ])
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        std::fs::create_dir_all(root.join("tests")).unwrap();
+        std::fs::write(root.join("tests/engine.cjs"), "the engine\n").unwrap();
+        git(&["add", "tests/engine.cjs"]);
+        git(&["commit", "-q", "-m", "an engine"]);
+        let added = git(&["rev-parse", "--short=10", "HEAD"]);
+        git(&["rm", "-q", "tests/engine.cjs"]);
+        git(&["commit", "-q", "-m", "V2 removes it"]);
+        let removed = git(&["rev-parse", "HEAD"]);
+        assert!(!root.join("tests/engine.cjs").exists());
+
+        let ctx = context_with(&repo, vec![]);
+        let resolve = |reference: &str| resolve(&ctx, &root, &[], reference);
+
+        let (got, at, why) = resolve("file:tests/engine.cjs");
+        assert_eq!(got, Historical, "{why}");
+        assert!(got.resolves(), "a historical reference resolves");
+        assert_eq!(at, Some(format!("{removed}^:tests/engine.cjs")));
+        let pinned = format!("file:tests/engine.cjs@{added}");
+        let (got, at, why) = resolve(&pinned);
+        assert_eq!(got, Historical, "{pinned}: {why}");
+        assert_eq!(at, Some(format!("{added}:tests/engine.cjs")));
+        let short = &removed[..10];
+        for (reference, reason) in [
+            ("file:tests/smoke.cjs".to_string(), "never existed"),
+            (
+                format!("file:tests/engine.cjs@{short}"),
+                "pinned where it was already gone",
+            ),
+            ("test:tests/*.cjs".to_string(), "a glob is one literal path"),
+            ("file:../engine.cjs".to_string(), "outside the repository"),
+        ] {
+            let (got, at, why) = resolve(&reference);
+            assert_eq!(got, Missing, "{reference} ({reason})");
+            assert_eq!(at, None, "{reference}");
+            assert!(why.contains("no such path"), "{reference}: {why}");
+        }
+    }
+
     /// A record whose every reference answers is resolved, its relations included; one
     /// whose relation dangles is not, even when everything it was derived from answers.
     #[test]
@@ -1802,6 +2018,65 @@ mod tests {
     /// added it, else at its own date, and a candidate with none of the three has no age.
     /// One whose episode this checkout does not know is unattributed, and a queue longer
     /// than the policy's cap is a finding; the list is in the canonical order.
+    #[test]
+    /// ADR 0118: records derived from observations are grouped by what they are about —
+    /// candidates and rejected records alike, each episode once, in order of subject — and a
+    /// record that says nothing about what it is about, or is verified, belongs to no group.
+    fn observations_are_grouped_by_what_they_are_about() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let dir = ".ai/repo/knowledge/candidates";
+        let record = |id: &str, status: &str, about: &str, episode: &str| {
+            let mut meta = json!({ "status": status, "class": "lesson",
+                                   "provenance": { "derived_from": [format!("session:{episode}")] } });
+            if !about.is_empty() {
+                meta["about"] = json!(about);
+                meta["route"] = json!("project");
+            }
+            let mut o = object(KIND, id, &format!("{dir}/{id}.md"), meta);
+            o.provenance.source_class = CANDIDATES_CLASS.into();
+            o
+        };
+        let ctx = context_with(
+            &repo,
+            vec![
+                record("e2-b", "candidate", "lib/a.sh", "e2"),
+                record("e1-a", "superseded", "lib/a.sh", "e1"),
+                record("e3-c", "candidate", "lib/a.sh", "e2"),
+                record("e1-d", "candidate", "docs/x.md", "e1"),
+                record("e1-e", "candidate", "", "e1"),
+                record("e1-f", "verified", "zzz", "e1"),
+            ],
+        );
+        let q = candidates_of(&ctx, &[], NOW);
+        let groups: Vec<(&str, usize, usize, usize)> = q
+            .groups
+            .iter()
+            .map(|g| {
+                (
+                    g.about.as_str(),
+                    g.candidates.len(),
+                    g.rejected.len(),
+                    g.episodes.len(),
+                )
+            })
+            .collect();
+        assert_eq!(groups, [("docs/x.md", 1, 0, 1), ("lib/a.sh", 2, 1, 2)]);
+        let a = &q.groups[1];
+        assert_eq!(a.rejected, ["e1-a"], "the rejection stays in the group");
+        assert_eq!(a.episodes, ["e1", "e2"], "each episode once, in order");
+        assert_eq!(a.route, "project");
+        let carried = q.candidates.iter().find(|c| c.id == "e2-b").unwrap();
+        assert_eq!(
+            (carried.about.as_str(), carried.route.as_str()),
+            ("lib/a.sh", "project")
+        );
+        let plain = q.candidates.iter().find(|c| c.id == "e1-e").unwrap();
+        assert!(
+            plain.about.is_empty() && plain.route.is_empty(),
+            "nothing said, nothing carried"
+        );
+    }
+
     #[test]
     fn a_candidate_is_aged_from_the_best_evidence_there_is_and_the_queue_is_held_to_its_cap() {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();

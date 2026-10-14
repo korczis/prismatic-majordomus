@@ -1,0 +1,26 @@
+id: I2404
+milestone: everything-is-followed-in-one-stream
+title: "The Cockpit shows the stream live"
+slug: monitor-cockpit
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add /cockpit/monitor: the live feed polling the HTTP projection with its cursor, source filters, for-you pinned, the suppressed count, linked from the home and mesh pages."
+why: "The owner follows the repository in a browser as often as in a terminal; the Cockpit has no page that shows what is happening now."
+current_state: "No page."
+desired_state: "/cockpit/monitor renders the first page server-side and appends new signals live."
+scope:
+  - "apps/majordomus-cli/src/cockpit"
+  - "test/cases/1053_the_cockpit_follows_the_stream.sh"
+depends_on: 
+  - "I2401"
+acceptance_criteria:
+  - "The page renders with the first page of signals and a cursor"
+  - "The home page and the mesh page link it"
+  - "It works at phone width"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1053"
+evidence_required:
+  - "cockpit_monitor_page"
+created_at: 2026-10-10
+updated_at: 2026-10-10

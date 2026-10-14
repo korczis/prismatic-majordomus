@@ -1,0 +1,37 @@
+id: I2660
+milestone: M004
+title: "The site is published as an artifact by the job that built it, so a ready site waits for no second workflow"
+slug: pages-is-published-by-our-own-job
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Remove the second queue from a publication: the job that built and checked the site hands it to GitHub Pages itself, and one publisher writes everything the site serves."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13: Pages is build_type legacy from the gh-pages branch, so after our push GitHub runs its own 'pages build and deployment' workflow of three jobs in the same runner pool. Run 38458452794: build ran 77 s, and its deploy job, 19 s of work, was created at 19:57:22Z and started at 20:44:25Z, 47 minutes later. The release workflow also writes to gh-pages (releases, the installer), so the branch has two writers."
+desired_state: "The deploy job uploads the built site as a Pages artifact and deploys it in the same run; nothing waits for a workflow this repository does not start. Whatever the release workflow publishes reaches the site through that one publisher. The time from a merge to /build.json naming its commit is measured on every run and its bound is declared in .ai/repo/ci/pages.yaml."
+scope:
+  - ".github/workflows/pages.yml"
+  - ".github/workflows/release.yml"
+  - "scripts/site-deploy"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/PAGES_STATUS.md"
+  - ".ai/repo/project/issues/I2660.yaml"
+non_scope:
+  - "What the site contains"
+  - "The runner pool's size, which is the account's"
+acceptance_criteria:
+  - "A publication needs no workflow other than the one that built it; the repository's Pages source is the workflow, and the change of that setting is recorded with who made it"
+  - "The releases directory and the installer are served after a deployment exactly as before it, proven by the publication probes"
+  - "The merge-to-served time of three consecutive deployments is recorded, and none waits for a runner after the site was built"
+  - "A hand deploy from a terminal still has one path and says what it cannot do"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/pages verify --smoke"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2983_the_published_ui_is_the_trunks 489_rustdoc_deploy"
+evidence_required:
+  - "three_deployments_merge_to_served_seconds"
+  - "publication_probes_after_the_switch"
+created_at: 2026-10-13
+updated_at: 2026-10-13

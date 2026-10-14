@@ -364,6 +364,121 @@ mj_rust_space_check() {
   return 1
 }
 
+# How long a build may wait for another build's lock before it stops waiting, in seconds.
+#
+#   MAJORDOMUS_BUILD_LOCK_WAIT  seconds a build may stand behind another build's lock on the
+#                               build directory before it builds in its own (default below);
+#                               0 never waits: it builds in its own at the first sign.
+#
+# Measured, not chosen: on 2026-10-13 a commit hook's `cargo build --quiet` stood behind the
+# lock of the shared build directory (ADR 0139) for 14 minutes at 0% CPU with no child and
+# no line of output, while nineteen cargo processes of other worktrees took their turns. A
+# build of this crate that finds its dependencies compiled takes under a minute, so a minute
+# behind a lock is already longer than the work.
+MJ_BUILD_LOCK_WAIT_DEFAULT=60
+
+# mj_cargo_private_dir <tree-root>
+#
+# The build directory that is this tree's alone, under cargo's home like the shared one, so
+# that it is one path whatever the tree's depth. Named by the tree's root, which is what
+# makes two worktrees two directories.
+mj_cargo_private_dir() {
+  printf '%s/build-private/%s\n' "${CARGO_HOME:-$HOME/.cargo}" \
+    "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
+}
+
+# mj_cargo_bounded <tree-root> <cargo arguments...>
+#
+# Run cargo, and never wait in silence behind another build's lock
+# (project.a-build-never-waits-in-silence-on-anothers-lock, ADR 0139's amendment).
+#
+# The worktrees of this repository share one build directory, and cargo takes one exclusive
+# lock on it, so two builds at once are one build and one wait. Cargo says so — "Blocking
+# waiting for file lock on build directory" — but only as a status line, which `--quiet`
+# removes, and every caller here passed `--quiet`. So the wait had no bound, no message and
+# no way out, which is the three things project.every-wait-is-bounded asks of a wait.
+#
+# What this does instead:
+#   - it runs cargo without `--quiet` and keeps cargo's stderr in a file, so the status line
+#     exists to be read; on success nothing of it is printed (the caller asked for quiet), on
+#     failure all of it is;
+#   - while the last thing cargo said is that it is blocked, it counts; at the bound it says
+#     who else is building, stops that cargo, and runs the same build in this tree's own
+#     build directory (mj_cargo_private_dir), after the disk floor has been asked;
+#   - a build that is already in a directory of its own (CARGO_BUILD_BUILD_DIR set by the
+#     caller) and is still blocked at the bound has no second place to go: it stops with
+#     exit 75 and says what holds it, rather than wait for ever.
+#
+# Exit status: cargo's own; 12 when the disk floor refuses the private build; 75 when the
+# bound was reached with nowhere left to build.
+mj_cargo_bounded() {
+  mj_cb_root="$1"; shift
+  mj_cb_wait="${MAJORDOMUS_BUILD_LOCK_WAIT:-$MJ_BUILD_LOCK_WAIT_DEFAULT}"
+  case "$mj_cb_wait" in ''|*[!0-9]*) mj_cb_wait="$MJ_BUILD_LOCK_WAIT_DEFAULT" ;; esac
+  # the caller's --quiet is honoured by this function, not by cargo: see above
+  mj_cb_quiet=0
+  for mj_cb_arg in "$@"; do
+    shift
+    case "$mj_cb_arg" in --quiet|-q) mj_cb_quiet=1 ;; *) set -- "$@" "$mj_cb_arg" ;; esac
+  done
+  mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
+  mj_cb_private=0
+  [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1
+  while :; do
+    : > "$mj_cb_log"
+    command cargo "$@" 2>"$mj_cb_log" &
+    mj_cb_pid=$!
+    # a caller that did not ask for quiet sees cargo's lines as they are written, not at the
+    # end: a test run of ten minutes that says nothing reads as a hang
+    mj_cb_tail=""
+    if [ "$mj_cb_quiet" = 0 ]; then
+      tail -f "$mj_cb_log" >&2 2>/dev/null &
+      mj_cb_tail=$!
+    fi
+    mj_cb_blocked=0
+    mj_cb_gave_up=0
+    while kill -0 "$mj_cb_pid" 2>/dev/null; do
+      if tail -n 1 "$mj_cb_log" 2>/dev/null | grep -q 'waiting for file lock on'; then
+        if [ "$mj_cb_blocked" -ge "$mj_cb_wait" ]; then mj_cb_gave_up=1; break; fi
+        mj_cb_blocked=$((mj_cb_blocked + 1))
+      else
+        mj_cb_blocked=0
+      fi
+      sleep 1
+    done
+    if [ "$mj_cb_gave_up" = 0 ]; then
+      mj_cb_rc=0
+      wait "$mj_cb_pid" || mj_cb_rc=$?
+      if [ -n "$mj_cb_tail" ]; then
+        sleep 1; kill "$mj_cb_tail" 2>/dev/null || true; wait "$mj_cb_tail" 2>/dev/null || true
+      elif [ "$mj_cb_rc" != 0 ]; then
+        cat "$mj_cb_log" >&2
+      fi
+      rm -f "$mj_cb_log"
+      return "$mj_cb_rc"
+    fi
+    # the bound: say what was observed, stop waiting, and go where no other tree builds
+    kill "$mj_cb_pid" 2>/dev/null || true
+    wait "$mj_cb_pid" 2>/dev/null || true
+    if [ -n "$mj_cb_tail" ]; then kill "$mj_cb_tail" 2>/dev/null || true; wait "$mj_cb_tail" 2>/dev/null || true; fi
+    mj_cb_others="$(pgrep -x cargo 2>/dev/null | grep -v "^$mj_cb_pid\$" | head -n 5 | tr '\n' ' ' || true)"
+    printf 'majordomus: this build waited %ss behind another build'"'"'s lock on its build directory (cargo: "Blocking waiting for file lock"); other cargo processes: %s\n' \
+      "$mj_cb_blocked" "${mj_cb_others:-none found}" >&2
+    if [ "$mj_cb_private" = 1 ]; then
+      printf 'majordomus: the build directory is already this tree'"'"'s own (%s), so there is nowhere else to build; stopping instead of waiting. Find the holder: pgrep -lf cargo\n' \
+        "${CARGO_BUILD_BUILD_DIR:-unset}" >&2
+      rm -f "$mj_cb_log"
+      return 75
+    fi
+    mj_rust_space_check "$mj_cb_root" "a build in this tree's own build directory" || { rm -f "$mj_cb_log"; return 12; }
+    CARGO_BUILD_BUILD_DIR="$(mj_cargo_private_dir "$mj_cb_root")"
+    export CARGO_BUILD_BUILD_DIR
+    mj_cb_private=1
+    printf 'majordomus: building in this tree'"'"'s own build directory instead: %s (a cold one compiles every dependency once)\n' \
+      "$CARGO_BUILD_BUILD_DIR" >&2
+  done
+}
+
 # The reasoning report of the open task (ADR 0098), as `majordomus reasoning status
 # --report` renders it: the decisions with who reviewed them, what is unresolved, and the
 # degradation on the way. One renderer, the executable's, so that `context`, a derived
@@ -395,6 +510,29 @@ mj_rust_reasoning_report() {
 # Never a build, as for the peer board. Prints the line or nothing; always returns 0.
 #
 # mj_rust_prs_brief <repository-root> [<tool-root>]
+# mj_rust_monitor_brief <root> [home] — what happened around this repository in the last
+# hour, for a briefing (ADR 0133): one summary line, then at most five signals that name the
+# reader ($MAJORDOMUS_MONITOR_FOR) and five that ask for attention, newest first. Local
+# sources only (the mesh and the executor's trail): the start of a session is no place to
+# wait on the network. Prints nothing when there is no executable, no server or no jq — a
+# briefing degrades to silence, never to an error.
+mj_rust_monitor_brief() {
+  mj_mb_root="$1"
+  command -v jq >/dev/null 2>&1 || return 0
+  mj_mb_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_mb_bin" ] || return 0
+  mj_mb_share="$(mj_rust_share "${2:-$1}")"
+  mj_mb_out="$( ( [ -z "$mj_mb_share" ] || export MAJORDOMUS_SHARE="$mj_mb_share"
+    "$mj_mb_bin" monitor --repo "$mj_mb_root" --since 1h --limit 200 --sources mesh,executor --format json ) 2>/dev/null)" || return 0
+  printf '%s' "$mj_mb_out" | jq -r '
+    select(.signals != null)
+    | "\(.signals | length) signal(s) in the last hour, \(.for_you) for you, \(.suppressed) folded away as noise — majordomus monitor --follow streams it",
+      ([.signals[] | select(.for_you)] | reverse | .[0:5][] | "  for you    " + .summary),
+      ([.signals[] | select((.for_you | not) and .severity != "info")] | reverse | .[0:5][] | "  " + .severity + "  " + .summary)
+  ' 2>/dev/null || true
+  return 0
+}
+
 mj_rust_prs_brief() {
   mj_pb_root="$1"
   mj_pb_bin="$(mj_rust_bin "${2:-$1}")"

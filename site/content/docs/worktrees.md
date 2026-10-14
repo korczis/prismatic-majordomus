@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 55
+weight = 59
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -180,6 +180,10 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+```
+
+<!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
+```bash
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
 ```
 
@@ -437,4 +441,30 @@ which stay. It includes the combination the refusals exist for: a branch merged 
 trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
+
+## A build behind another worktree's lock
+
+The worktrees share one build directory (ADR 0139), and cargo locks a build directory for
+as long as a build uses it, so two builds at once are one build and one wait. Every build
+this repository's tooling starts goes through `mj_cargo_bounded` (`lib/rust_bin.sh`):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| what happens | what a worker sees |
+|---|---|
+| nobody else is building | the build runs in the shared directory, as before |
+| another worktree holds the lock | after `MAJORDOMUS_BUILD_LOCK_WAIT` seconds (default 60) one line says how long it waited and which cargo processes exist, and the build runs again in this tree's own directory under `~/.cargo/build-private/` |
+| the lock came free before the bound | nothing: the build went on in the shared directory |
+| the build is already in its own directory and is still blocked | exit 75 with the reason, instead of a wait |
+| the disk floor refuses a private build | exit 12 with the floor's own message |
+
+</div>
+
+
+A private directory compiles every dependency once, so its first build is the slow one.
+`MAJORDOMUS_BUILD_LOCK_WAIT=0` never waits; an exported `CARGO_BUILD_BUILD_DIR` is taken as
+the tree's own directory and is never replaced. The rule is
+`project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
+a tracked script that calls cargo any other way, and
+`test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
 {% endraw %}

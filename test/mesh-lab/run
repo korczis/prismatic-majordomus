@@ -98,7 +98,7 @@ wait_for() {
 }
 
 connected_count() { api "$1" /api/v1/mesh/cooperation | jq -e --argjson n "$2" '[.peers[] | select(.state == "connected")] | length == $n'; }
-digest_of() { api "$1" /api/v1/mesh/state | jq -r '.state.digest'; }
+digest_of() { api "$1" "/api/v1/mesh/state?view=full" | jq -r '.state.digest'; }
 same_digest() { local d; d="$(digest_of "$1")"; for n in "${@:2}"; do [ "$(digest_of "$n")" = "$d" ] || return 1; done; }
 
 # ------------------------------------------------------------------ build
@@ -187,14 +187,14 @@ else fail repository_isolation "x formed a link, or a hello across repositories 
 # 4. A claim on a is held on c; b's conflicting exclusive claim is refused.
 claim="$(post_json a /api/v1/mesh/claims '{"session":"lab-a","scope":["apps/majordomus-cli"],"issue":"#184","intent":"lab claim"}' | jq -r '.key')"
 [ -n "$claim" ] && [ "$claim" != null ] || fail cross_node_claim "node a could not claim"
-if ms="$(wait_for 15 "c sees the claim" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'")"; then
+if ms="$(wait_for 15 "c sees the claim" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state?view=full | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'")"; then
   pass cross_node_claim "a's claim was held on c ${ms}ms after it was written"
 else fail cross_node_claim "c never saw a's claim"; fi
 # Admission refuses what the admitting runtime has already heard, so b is asked only once
 # a's claim has reached b. Waiting on c alone left b whatever slack remained — 57ms on a
 # contended runner, where b had received one of a's two events and so had nothing to
 # conflict with. Eventual delivery is the design; this scenario is about the refusal.
-wait_for 15 "b sees the claim" bash -c "docker exec $P-b curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'" >/dev/null \
+wait_for 15 "b sees the claim" bash -c "docker exec $P-b curl -fsS http://127.0.0.1:8741/api/v1/mesh/state?view=full | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'" >/dev/null \
   || fail claim_conflict "b never saw a's claim, so there was nothing for it to conflict with"
 code="$(post_status b /api/v1/mesh/claims '{"session":"lab-b","scope":["apps"]}')"
 [ "$code" = 422 ] && pass claim_conflict "b's overlapping exclusive claim was refused with 422 claim_conflict" \
@@ -203,7 +203,7 @@ code="$(post_status b /api/v1/mesh/claims '{"session":"lab-b","scope":["apps"]}'
 # 5. A handover published on a is consumed on c into c's own checkout.
 docker exec "$P-a" bash -c 'mkdir -p /work/repo/.ai/local/state/handovers && printf -- "---\nschema_version: 1\ncreated_at: 2026-09-15T12:00:00Z\ntask_id: t-lab\nprofile: implementation\nowner: \"lab\"\nrepository_id: /work/repo/.git\nworktree: /work/repo\nbranch: feature/lab\nhead: 0123456789abcdef0123456789abcdef01234567\nworking_tree: clean\nchanged_files:\n---\n\n# Objective\nlab\n\n# Current State\nhalf\n\n# Next Action\nconsume on c\n" > /work/repo/.ai/local/state/handovers/20260915T120000Z--feature-lab--0123456--00000000000000ab.md'
 handover="$(post_json a /api/v1/mesh/handovers '{"issue":"#184"}' | jq -r '.key')"
-wait_for 15 "c holds the handover" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg h '$handover' '[.state.handovers[] | select(.id == \$h)] | length == 1'" >/dev/null \
+wait_for 15 "c holds the handover" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state?view=full | jq -e --arg h '$handover' '[.state.handovers[] | select(.id == \$h)] | length == 1'" >/dev/null \
   || fail cross_node_handover "c never received the handover"
 path="$(post_json c /api/v1/mesh/handovers/consume "{\"handover\":\"$handover\",\"session\":\"lab-c\"}" | jq -r '.path')"
 if docker exec "$P-c" grep -q "consume on c" "/work/repo/$path"; then
@@ -224,8 +224,8 @@ post_json a /api/v1/mesh/claims '{"session":"lab-a2","scope":["site"]}' >/dev/nu
 post_json c /api/v1/mesh/claims '{"session":"lab-c2","scope":["site/content"]}' >/dev/null
 docker network connect "$NET" "$P-c"
 if wait_for 40 "healed" bash -c "$(declare -f api digest_of same_digest); P=$P; same_digest a b c" >/dev/null; then
-  winners="$(api a /api/v1/mesh/state | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "held")] | length')"
-  losers="$(api a /api/v1/mesh/state | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "conflicted")] | length')"
+  winners="$(api a "/api/v1/mesh/state?view=full" | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "held")] | length')"
+  losers="$(api a "/api/v1/mesh/state?view=full" | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "conflicted")] | length')"
   if [ "$winners" = 1 ] && [ "$losers" = 1 ]; then
     pass network_partition "c expired on a after ${ms}ms; after healing the three digests agree with 1 held and 1 conflicted claim on site"
   else fail network_partition "after healing: $winners held and $losers conflicted claims on site"; fi

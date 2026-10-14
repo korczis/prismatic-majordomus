@@ -106,6 +106,21 @@
           "items": {
             "$ref": "#/$defs/Relation"
           }
+        },
+        "about": {
+          "description": "What an observation is about, as the worker wrote its subject: a repository path, or `capability:`, `rule:`, `command:`, `gate:` with an identifier. Never resolved as a reference, so a path renamed or deleted since leaves the record valid. Present on the candidates derived from `observation.recorded`; `knowledge candidates` groups by it, so the same thing observed in several episodes reads as one group (ADR 0118).",
+          "type": "string",
+          "pattern": "^((capability|rule|command|gate):[A-Za-z0-9][A-Za-z0-9._/@-]*|[A-Za-z0-9._][A-Za-z0-9._/-]*)$"
+        },
+        "route": {
+          "description": "Which owner should look first, derived from `about`'s structure and never from the wording (ADR 0118). It decides nothing.",
+          "enum": [
+            "platform",
+            "enforcement",
+            "generator",
+            "documentation",
+            "project"
+          ]
         }
       }
     },
@@ -124,7 +139,7 @@
           ]
         },
         "derived_from": {
-          "description": "Typed references to the evidence: `decision:<task-id>`, `session:<id>`, `task:<task-id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`, `test:<repository-relative path>`. A file or test reference must resolve in the tree; a decision, session, task or commit reference resolves against the ledger, the session records and git, which `majordomus knowledge check` and `knowledge_base.record` do. A decision and a question carry no identity of their own in the ledger, so the task they were recorded under is the reference; `none` is not a task.",
+          "description": "Typed references to the evidence: `decision:<task-id>`, `session:<id>`, `task:<task-id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`, `test:<repository-relative path>`, optionally pinned as `file:<path>@<commit>`. A file or test reference resolves in the tree, or in git history once the file is deleted; a decision, session, task or commit reference resolves against the ledger, the session records and git, which `majordomus knowledge check` and `knowledge_base.record` do. A decision and a question carry no identity of their own in the ledger, so the task they were recorded under is the reference; `none` is not a task.",
           "type": "array",
           "items": {
             "type": "string",
@@ -194,5 +209,5 @@
     }
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.20.0"
+  "x-majordomus-generator": "majordomus-cli 0.26.0"
 }

@@ -46,7 +46,7 @@ case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version, not '$
 mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
 if [ ! -x "$mj" ]; then
   command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
-  RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
+  RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
 fi
 names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
   || die "the distribution model does not publish '$target'" 10
@@ -59,7 +59,7 @@ binary="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/$target/rele
 if [ "$build" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   command -v cargo >/dev/null 2>&1 || die "cargo is needed to build $target (or pass --no-build / MAJORDOMUS_BIN)"
   printf 'release-package: building %s (release)\n' "$target" >&2
-  RUSTFLAGS='' cargo build --release --locked --target "$target" --manifest-path "$CRATE/Cargo.toml" 1>&2
+  RUSTFLAGS='' mj_cargo_bounded "$ROOT" build --release --locked --target "$target" --manifest-path "$CRATE/Cargo.toml" 1>&2
 fi
 [ -x "$binary" ] || die "no executable for $target at $binary"
 

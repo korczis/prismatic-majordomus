@@ -86,13 +86,17 @@ pub enum CapabilityError {
     #[error("internal: {0}")]
     /// The handler itself failed; never the caller's fault.
     Internal(String),
+    #[error("forbidden: {0}")]
+    /// The caller may not run this from where it is: a request from another host for a
+    /// capability that changes something and does not authenticate its input (ADR 0126).
+    Forbidden(String),
 }
 
 impl CapabilityError {
     /// The category as one word, the same on every transport: the `error.code` of an HTTP
     /// answer and the `_meta.majordomus.error.code` of an MCP tool result that is an error.
     /// A caller branches on this and reads the message; it never has to parse the message
-    /// to learn which of the four happened.
+    /// to learn which of the five happened.
     ///
     /// ```
     /// use majordomus_cli::capability::CapabilityError;
@@ -100,6 +104,7 @@ impl CapabilityError {
     /// assert_eq!(CapabilityError::NotFound("x".into()).code(), "not_found");
     /// assert_eq!(CapabilityError::Refused("x".into()).code(), "refused");
     /// assert_eq!(CapabilityError::Internal("x".into()).code(), "internal");
+    /// assert_eq!(CapabilityError::Forbidden("x".into()).code(), "forbidden");
     /// ```
     pub fn code(&self) -> &'static str {
         match self {
@@ -107,7 +112,27 @@ impl CapabilityError {
             CapabilityError::NotFound(_) => "not_found",
             CapabilityError::Refused(_) => "refused",
             CapabilityError::Internal(_) => "internal",
+            CapabilityError::Forbidden(_) => "forbidden",
         }
+    }
+
+    /// The refusal a caller on another host meets when it asks for a capability that
+    /// changes something and does not authenticate its input. One sentence on every
+    /// transport, so the HTTP route and the MCP tool refuse alike.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityError;
+    /// let e = CapabilityError::remote("plan.transition");
+    /// assert_eq!(e.code(), "forbidden");
+    /// assert!(e.to_string().contains("plan.transition"));
+    /// ```
+    pub fn remote(id: &str) -> Self {
+        CapabilityError::Forbidden(format!(
+            "'{id}' changes something, and this request came from another host: a caller \
+             beyond loopback reads and changes nothing, because this server cannot tell who \
+             it is (ADR 0126). Run it on this machine, or reach this server through a tunnel \
+             that ends on loopback"
+        ))
     }
 }
 
@@ -166,7 +191,17 @@ pub struct Context {
     /// activates it from the repository's mesh declaration; the capabilities of the
     /// `mesh` module are its projections.
     pub mesh: Arc<crate::mesh::MeshRuntime>,
+    /// Which reading of the repository this is: a number no other [`Context::new`] of this
+    /// process was given, shared by every view of it ([`Context::for_caller`],
+    /// [`Context::reporting`], [`Context::with_web`]). A reload is a new reading. It is what
+    /// a [`crate::capability::CachePolicy::Generation`] entry is kept under, because the
+    /// registry fingerprint covers what is declared and not the git state an index was read
+    /// at.
+    pub reading: u64,
 }
+
+/// The number the next [`Context::new`] takes as its [`Context::reading`].
+static READINGS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl Context {
     /// A context over an index and a registry, with an empty board, a fresh executor and
@@ -197,6 +232,7 @@ impl Context {
             caller: None,
             web,
             mesh: Arc::new(crate::mesh::MeshRuntime::new()),
+            reading: READINGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
         }
     }
 
@@ -284,6 +320,7 @@ impl Context {
             caller: self.caller.clone(),
             web: Arc::clone(&self.web),
             mesh: Arc::clone(&self.mesh),
+            reading: self.reading,
         }
     }
 
@@ -298,6 +335,28 @@ impl Context {
     /// being handed a remembered answer are not the same request.
     pub fn execute_observed(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
         self.executor.execute_uncached(self, id, input)
+    }
+
+    /// The latest reading of a capability, at once, with how old it is: what a page shows.
+    ///
+    /// Never an answer: see [`crate::capability::readings`] for what it is instead, and
+    /// what it costs.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::readings::Freshness;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let reading = ctx.read("plan.status", serde_json::json!({}));
+    /// // a first reading is waited for, so it holds what `execute` answers, and says how it
+    /// // stands: read just now, in the repository as it is
+    /// assert_eq!(reading.value.ok(), ctx.execute("plan.status", serde_json::json!({})).ok());
+    /// assert_eq!(reading.freshness, Freshness::Current);
+    /// assert!(reading.age.is_some());
+    /// ```
+    pub fn read(&self, id: &str, input: Value) -> super::readings::Latest {
+        super::readings::read(self, id, input, super::readings::Patience::of_process())
     }
 }
 
@@ -441,6 +500,66 @@ impl Executable {
         self.capability.execution = self.capability.execution.writes_repository();
         self
     }
+
+    /// Declare the short name a person invokes this by from an agent's prompt, and the
+    /// input field the text typed after it fills. See [`crate::capability::SkillExposure`];
+    /// the registry refuses a name that is malformed, reserved or taken, and an argument
+    /// the input does not have.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In { text: String }
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out {}
+    /// fn say(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out {}) }
+    /// let e = capability! {
+    ///     id: "demo.say", kind: CapabilityKind::Command, title: "Say", description: "Says.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: say,
+    /// }.skill("say", "text");
+    /// let skill = e.capability.skill.unwrap();
+    /// assert_eq!((skill.alias.as_str(), skill.argument.as_str()), ("say", "text"));
+    /// ```
+    pub fn skill(mut self, alias: &str, argument: &str) -> Self {
+        self.capability.skill = Some(crate::capability::SkillExposure {
+            alias: alias.into(),
+            argument: argument.into(),
+        });
+        self
+    }
+
+    /// Declare that the input is a signed message the handler verifies before it changes
+    /// anything, so a caller on another host is admitted by its key rather than refused by
+    /// its address. See [`crate::capability::ExecutionPolicy::authenticates_its_input`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Effect, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct Signed {}
+    /// impl BenchmarkCases for Signed {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", Signed {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn hello(_: &Context, _: Signed) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+    /// let e = capability! {
+    ///     id: "demo.hello", kind: CapabilityKind::Command, title: "Hello", description: "Verifies a signed hello.",
+    ///     input: Signed, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: hello,
+    /// }.authenticates_its_input();
+    /// assert!(e.capability.execution.signed_input && e.capability.execution.admits_remote());
+    /// assert_eq!(e.capability.execution.effect, Effect::ProcessState);
+    /// ```
+    pub fn authenticates_its_input(mut self) -> Self {
+        self.capability.execution = self.capability.execution.authenticates_its_input();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is
@@ -521,6 +640,7 @@ macro_rules! capability {
                 benchmark: $benchmark,
                 cache: $cache,
                 execution: $crate::capability::ExecutionPolicy::classify(kind),
+                skill: None,
             },
             handler: $crate::capability::handler::handler::<$input, $output, _>($handler),
             cases: <$input as $crate::capability::BenchmarkCases>::benchmark_cases_json,
