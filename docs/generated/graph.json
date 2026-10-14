@@ -32894,6 +32894,8 @@
             "A GET whose Host header names another domain is refused before its handler runs",
             "A site data value containing a closing script tag renders as text in each template that embeds JSON"
           ],
+          "completed_at": "2026-10-14T22:17:04Z",
+          "completed_event": "sha256:2e92cbb3cfc543a3de8802185c5363c7d6fb0b64b3a54b0e84a31dd05e2cd963",
           "created_at": "2026-10-09",
           "current_state": "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped.",
           "depends_on": [],
@@ -32920,12 +32922,16 @@
             "docs/MCP.md"
           ],
           "slug": "pages-beside-writers-are-hardened",
-          "updated_at": "2026-10-09",
+          "started_at": "2026-10-14T22:16:25Z",
+          "started_event": "sha256:f93f4e0c3c662cb786d7a4e1c33f850cfe6fd4a3bac94314e6c91294bc236834",
+          "updated_at": "2026-10-14T22:17:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test http_host --test http_serve",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-14T22:16:45Z",
+          "verified_event": "sha256:e6dd0292f147d0d8a2fe8cb2bb44af5a8233efcd995c817402dfaf55486deff6"
         }
       },
       {
@@ -53063,6 +53069,13 @@
         "label": "test/cases/303_one_source_serves_two_mounts.sh",
         "route": "/cockpit/objects/test/test-cases-303-one-source-serves-two-mounts-sh",
         "source": "test/cases/303_one_source_serves_two_mounts.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3043_site_json_cannot_close_its_script.sh",
+        "kind": "test",
+        "label": "test/cases/3043_site_json_cannot_close_its_script.sh",
+        "route": "/cockpit/objects/test/test-cases-3043-site-json-cannot-close-its-script-sh",
+        "source": "test/cases/3043_site_json_cannot_close_its_script.sh"
       },
       {
         "id": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -82894,6 +82907,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3043_site_json_cannot_close_its_script.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88190,8 +88208,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6130,
       "acyclic": false,
       "truncated": false
     }
