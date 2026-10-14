@@ -302,6 +302,141 @@ mj_git() { mj_count git; git --no-pager -C "$MJ_ROOT" "$@"; }
 # which every worktree of one repository shares and no two repositories do. $1 names the
 # checkout to ask; the default is MJ_ROOT, and the value records write is that one.
 mj_git_repo_id() { local r="${1:-$MJ_ROOT}"; mj_count git; git -C "$r" rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$r" "$d" ;; esac; }; }
+# ---------------------------------------------------------------- personal
+# A personal layer (ADR 0145): the same layer a plain init makes, kept as one person's own
+# in a repository other people share. Nothing shared is changed — no tracked file, no
+# .gitignore line — because the layer is covered in this repository's own exclude file,
+# $GIT_COMMON_DIR/info/exclude, which git never commits, pushes or clones.
+#
+# There is no setting for it. A layer is personal when that file covers it in the block
+# below: the cover is the mechanism and the record at once, read each time it is asked.
+# Whether the cover still holds is a second question, answered by mj_personal_verify: a
+# file of the layer that got tracked anyway is reported, not read as a change of mind.
+# Proposing the layer to the team is `init --extend --shared`, which removes the block.
+#
+# The common directory, not .git: in a linked worktree .git is a file, and the exclude file
+# every worktree of the repository obeys is the common one.
+MJ_PERSONAL_BEGIN='# >>> majordomus personal >>>'
+MJ_PERSONAL_END='# <<< majordomus personal <<<'
+mj_personal_exclude_file() { printf '%s/info/exclude' "$(mj_git_repo_id)"; }
+# The patterns the block holds now, one a line; nothing when there is no block.
+mj_personal_covered() {
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} inb' "$(mj_personal_exclude_file)" 2>/dev/null
+}
+mj_personal_active() {
+  [ -n "${MJ_AI_DIR:-}" ] && [ -f "$MJ_AI_DIR/manifest.yaml" ] || return 1
+  mj_personal_covered | grep -qxF -- "/$(mj_rel "$MJ_AI_DIR")/"
+}
+# Cover repository-relative paths: each anchored pattern once, inside the block, and every
+# other line of the file left exactly as it was. A directory is given with its slash.
+mj_personal_cover() {
+  local f tmp p have
+  f="$(mj_personal_exclude_file)"
+  mkdir -p "$(dirname "$f")" || return 1
+  [ -f "$f" ] || : > "$f"
+  have="$(mj_personal_covered)"
+  for p in "$@"; do
+    p="/${p#/}"
+    printf '%s\n' "$have" | grep -qxF -- "$p" || have="${have:+$have
+}$p"
+  done
+  # beside the file, so that the rename which publishes it never crosses a filesystem
+  tmp="$f.mj-tmp.$$"
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" || { rm -f "$tmp"; return 1; }
+  { [ -s "$tmp" ] && [ -n "$(tail -c1 "$tmp")" ] && printf '\n'
+    printf '%s\n%s\n%s\n' "$MJ_PERSONAL_BEGIN" "$have" "$MJ_PERSONAL_END"; } >> "$tmp"
+  mv "$tmp" "$f"
+}
+# A writer outside the layer asks before it writes: under a personal layer a path is covered
+# first, and a path git already tracks is refused, because that file is the project's and a
+# change to it would be a change to what everyone shares. Elsewhere this is a no-op, so
+# every writer calls it unconditionally.
+mj_personal_guard() {
+  local p
+  mj_personal_active || return 0
+  mj_personal_refuse_tracked "$@"
+  for p in "$@"; do mj_personal_cover "$p" "$p.mj-tmp" || return 1; done
+}
+# Is this path the project's? Under a personal layer, whatever git tracks is.
+mj_personal_is_the_projects() {
+  mj_personal_active && mj_git ls-files --error-unmatch -- "$1" >/dev/null 2>&1
+}
+# The refusal alone, with nothing written: what a writer asks while it is still planning,
+# so that a dry run says the same thing a real one would and no advice to force is ever
+# printed for a file that is somebody else's.
+mj_personal_refuse_tracked() {
+  local p
+  for p in "$@"; do
+    mj_personal_is_the_projects "$p" || continue
+    mj_die "$MJ_EX_REFUSED" "$p is tracked, so it is the project's, and this layer is personal: writing it would change what everyone shares. Leave it as it is and point that projection at a file of your own in $(mj_rel "$MJ_POLICY_FILE") (CLAUDE.local.md is the one Claude Code reads beside the project's), or share the layer with the team (majordomus init --extend --shared)"
+  done
+}
+# What `init --shared` runs: the cover is lifted from everything except the files that are
+# one person's by their own name — `*.local` and `*.local.*`, the convention CLAUDE.local.md
+# and .envrc.local follow. Those stay covered, because handing the layer to the team is not
+# handing it a personal projection. Prints the lifted paths, then a line `kept <path>` each.
+# With the layer's own pattern gone the layer is no longer personal, whatever stays covered.
+mj_personal_uncover() {
+  local f tmp have keep lift p
+  f="$(mj_personal_exclude_file)"
+  [ -f "$f" ] || return 0
+  have="$(mj_personal_covered)"; keep=''; lift=''
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "${p%.mj-tmp}" in
+      *.local|*.local.*) keep="${keep:+$keep
+}$p" ;;
+      *) lift="${lift:+$lift
+}$p" ;;
+    esac
+  done <<EOF
+$have
+EOF
+  tmp="$f.mj-tmp.$$"
+  awk -v b="$MJ_PERSONAL_BEGIN" -v e="$MJ_PERSONAL_END" \
+    '$0==b{inb=1;next} $0==e{inb=0;next} !inb' "$f" > "$tmp" || { rm -f "$tmp"; return 1; }
+  if [ -n "$keep" ]; then
+    { [ -s "$tmp" ] && [ -n "$(tail -c1 "$tmp")" ] && printf '\n'
+      printf '%s\n%s\n%s\n' "$MJ_PERSONAL_BEGIN" "$keep" "$MJ_PERSONAL_END"; } >> "$tmp"
+  fi
+  mv "$tmp" "$f" || return 1
+  [ -z "$lift" ] || printf '%s\n' "$lift"
+  [ -z "$keep" ] || printf '%s\n' "$keep" | sed -e '/\.mj-tmp$/d' -e 's/^/kept /'
+}
+# Does the cover hold? One finding a fact, through the callbacks the caller names (doctor's
+# and init's differ only in how a finding is printed). Returns 1 when something shared shows it.
+mj_personal_verify() {
+  # The reporter is named by a word, not by its two functions: `doctrine` reports through the
+  # doctrine's ok and fail (so a class decides what a violation costs), anything else through
+  # the plain ones. A caller passing the functions themselves put the name of a reporting
+  # helper on a line that reports nothing, which scripts/ci/finding-reproduce-check reads as
+  # a finding with no command to reproduce it.
+  local reporter="" ok_fn fail_fn rel bad=0 p seen
+  [ "${1:-}" = doctrine ] && reporter=doctrine_
+  ok_fn="mj_${reporter}ok"; fail_fn="mj_${reporter}fail"
+  rel="$(mj_rel "$MJ_AI_DIR")"
+  if [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
+    "$fail_fn" personal "$rel/" "carries tracked files; a personal layer is tracked nowhere (share it with: majordomus init --extend --shared)" "git ls-files $rel"; bad=1
+  fi
+  if ! mj_git check-ignore -q "$rel/manifest.yaml" 2>/dev/null; then
+    "$fail_fn" personal "$rel/" "is not covered; the next 'git add -A' would stage it" "majordomus init --extend --personal"; bad=1
+  fi
+  seen=''
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    p="${p#/}"
+    [ -z "$(mj_git status --porcelain --untracked-files=all -- "$p" 2>/dev/null | head -n 1)" ] || seen="$seen $p"
+  done <<EOF
+$(mj_personal_covered)
+EOF
+  if [ -n "$seen" ]; then
+    "$fail_fn" personal "$(mj_rel "$(mj_personal_exclude_file)")" "git status still shows:$seen" "git status --porcelain --untracked-files=all"; bad=1
+  fi
+  [ "$bad" = 0 ] && "$ok_fn" personal "$rel/" "tracked nowhere, ignored through $(mj_personal_exclude_file), and absent from git status ($(mj_personal_covered | grep -c .) path(s) covered)"
+  return "$bad"
+}
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
 # literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
@@ -348,9 +483,16 @@ mj_git_label() {
 # arrived by a fast-forward, or that a rebase used as its base, has no such entry. A commit
 # the task made and pushed to the trunk is therefore still the task's. Without a trunk
 # (no remote, or no refs/remotes/<remote>/HEAD) nothing is left out, as before.
+#
+# One path per line, the path as git stores it, so a caller reads lines and never words:
+# a file named "Futuristic PR Drain Developer Dashboard.png" is one path. Both git
+# commands are read with -z, because without it `status --porcelain` wraps a path that
+# holds a space in quotes and `log --name-only` octal-escapes one outside ASCII, and either
+# way the name no longer matches the scope it is inside (2026-10-11, a pre-push refused
+# four images as twenty out-of-scope "paths").
 mj_git_touched() {
   local base="$1" trunk all foreign own keep
-  { mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //'
+  { mj_git_dirty_paths
     if [ -n "$base" ] && [ "$base" != "NONE" ]; then
       trunk="$(mj_git_trunk_ref)"
       foreign=""
@@ -365,13 +507,28 @@ mj_git_touched() {
         fi
       fi
       if [ -z "$foreign" ]; then
-        mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
+        mj_git log -z --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null \
+          | tr '\0' '\n'
       else
         LC_ALL=C comm -23 <(printf '%s\n' "$all" | sed '/^$/d') <(printf '%s\n' "$foreign") \
-          | sed '/^$/d' | mj_git log --no-walk --stdin --name-only --format= 2>/dev/null
+          | sed '/^$/d' | mj_git log -z --no-walk --stdin --name-only --format= 2>/dev/null \
+          | tr '\0' '\n'
       fi
     fi
   } | LC_ALL=C sort -u | sed '/^$/d'
+}
+
+# The paths the working tree and the index change, one per line, as git stores them.
+# Read with -z for the reason above; a rename or a copy is followed by its source path,
+# which is not a changed path of its own, so the entry after one is skipped. The path kept
+# is the new one, as `sed 's/^.* -> //'` kept it before.
+mj_git_dirty_paths() {
+  local e skip=0
+  mj_git status --porcelain=v1 -z 2>/dev/null | while IFS= read -r -d '' e; do
+    if [ "$skip" = 1 ]; then skip=0; continue; fi
+    case "${e:0:2}" in *R* | *C*) skip=1 ;; esac
+    printf '%s\n' "${e:3}"
+  done
 }
 
 # The trunk's remote-tracking branch, as a full ref, or nothing. The default branch is
@@ -498,13 +655,33 @@ mj_has()   { command -v "$1" >/dev/null 2>&1; }
 
 # policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
 # error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+#
+# Each file is hashed in its normal form (mj_yaml_normal), not as bytes: a comment or a
+# blank line changes no setting, so it must not move the stamp and regenerate every
+# bootstrap (I1991). The executable computes the same form (policy::normal_form), and the
+# two are held equal by apps/majordomus-cli/tests/providers_projection.rs.
 mj_policy_cat() {
   local pf
-  cat "$MJ_POLICY_FILE"
+  mj_yaml_normal < "$MJ_POLICY_FILE"
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
-    if [ -f "$pf" ]; then cat "$pf"; fi
+    if [ -f "$pf" ]; then mj_yaml_normal < "$pf"; fi
   done
   return 0
+}
+# The normal form of a file in the layer's YAML subset, stdin to stdout: trailing spaces,
+# tabs and carriage returns dropped; blank lines and whole-line comments dropped; a
+# trailing comment (a `#` after a space or tab) dropped from a line that holds no quote,
+# since in a quoted scalar ` #` may be text. Indentation, order and every value are kept,
+# so two files with one normal form are one setting. The subset refuses block scalars, so
+# no `#` line is ever content. Every line ends in a newline.
+mj_yaml_normal() {
+  awk -v sq="'" -v dq='"' '
+    { sub(/[ \t\r]+$/, "") }
+    /^[ \t]*$/ || /^[ \t]*#/ { next }
+    index($0, sq) == 0 && index($0, dq) == 0 && match($0, /[ \t]#/) {
+      $0 = substr($0, 1, RSTART - 1); sub(/[ \t]+$/, "")
+    }
+    { print }'
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
@@ -1072,10 +1249,11 @@ mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 # a verify command, an editor or a server this process starts inherits the environment and
 # may outlive the directory.
 #
-# The root is made by the entry point, once, before a command runs, and not on first use: a
-# first use inside a command substitution would name a root only that subshell knows. A
-# script that sources this library without asking for a root gets `mktemp` unchanged.
-MJ_TMP_ROOT=""
+# The root is made once, before a command runs, and not on first use: a first use inside a
+# command substitution would name a root only that subshell knows. The entry point makes it
+# after its dispatch; a script that sources this library gets it as it sources it (below).
+# Sourcing the library again keeps the root this process already has.
+case "${MJ_TMP_ROOT:-}" in */mj."$$".*) ;; *) MJ_TMP_ROOT="" ;; esac
 mj_tmp_root_init() {
   local base="${TMPDIR:-/tmp}"
   MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
@@ -1086,14 +1264,21 @@ mj_tmp_root_init() {
   # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
   # "write error: Broken pipe" line on stderr that was never there. So the root carries its
   # process id, and here every root of this user's whose process no longer exists goes. A
-  # process id that has been reused keeps a dead root until that process ends too; nothing
-  # living is removed, since `kill -0` answers for a process this user can signal.
-  local stale pid
+  # process id that has been reused keeps a dead root until that process ends too.
+  #
+  # Gone means the system said "no such process" and nothing else. `kill -0` also fails when
+  # this process may not signal that one, and a session inside a sandbox may signal nobody:
+  # read as "gone", that refusal removed the roots of every living command of this user's,
+  # and on 2026-10-12 three derives died mid-run with their temporary files deleted under
+  # them. Any other answer — permission, or a wording this cannot read — keeps the root:
+  # a root kept too long costs disk, and a root removed too soon costs somebody's work.
+  local stale pid why
   for stale in "${base%/}"/mj.[0-9]*.??????; do
     [ -d "$stale" ] && [ -O "$stale" ] || continue
     pid="${stale##*/mj.}"; pid="${pid%.*}"
     case "$pid" in ''|*[!0-9]*) continue ;; esac
-    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+    why="$(LC_ALL=C; export LC_ALL; kill -0 "$pid" 2>&1)" && continue
+    case "$why" in *[Nn]'o such process'*) rm -rf "$stale" 2>/dev/null || true ;; esac
   done
 }
 mktemp() {
@@ -1119,7 +1304,10 @@ mj_cleanup() {
   mj_timing_report
   rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
   # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
-  [ -n "${MJ_TMP_ROOT:-}" ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
+  # Only the shell that made the root removes it. A subshell that sources the library again
+  # sets this trap for itself and keeps the root it inherited (above), so its exit would
+  # otherwise remove the root its parent is still writing into.
+  [ -n "${MJ_TMP_ROOT:-}" ] && [ "${BASH_SUBSHELL:-0}" = 0 ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
@@ -1127,6 +1315,24 @@ mj_cleanup() {
   return 0
 }
 trap mj_cleanup EXIT
+
+# A script that sources this library makes its root here. Before this only the entry point
+# asked for one, and every script that sources the library — the derive's generators, the
+# site build and its checks, the cases — made its files directly in TMPDIR and left them:
+# the project model's directory, the manifest's and the knowledge sources' flattenings, one
+# of each per run. On 2026-10-11 TMPDIR held 65,530 entries, the most one directory holds
+# on that volume, and every `mktemp -d` on the machine failed as if its parent were gone.
+# The entry point still makes its root only after its dispatch, because a command it hands
+# to the other program is an exec, which runs no exit trap; it sets MJ_TMP_ROOT_DEFER
+# before sourcing the library to say so. A script that replaces the exit trap leaves its
+# root to the next process that starts, as a KILL does. A root that cannot be made leaves
+# `mktemp` as it was rather than stopping the script that sourced the library. A subshell
+# makes none: it shares its parent's root, and a root of its own would be named after the
+# parent's process and outlive the subshell.
+if [ -z "${MJ_TMP_ROOT_DEFER:-}" ] && [ -z "$MJ_TMP_ROOT" ] && [ "${BASH_SUBSHELL:-0}" = 0 ]; then
+  mj_tmp_root_init 2>/dev/null || true
+  [ -d "${MJ_TMP_ROOT:-}" ] || MJ_TMP_ROOT=""
+fi
 
 # ---------------------------------------------------------------- mutual exclusion
 # One named lock, taken by creating a directory, which is the one filesystem operation

@@ -1,11 +1,24 @@
 # The deployment of this repository's executable. Authoritative: the container image
-# definition, its ignore file and the provider configuration are generated from this file
-# and `majordomus generate --check` fails when one of them is edited by hand.
+# definition and its ignore file are generated from this file and `majordomus generate
+# --check` fails when one of them is edited by hand.
+#
+# No hosting provider is a target (owner order, 2026-10-12: "disable Fly.io; deploy only
+# binaries + GitHub Pages (+ the GHCR image); Fly.io is now disconnected"). This object
+# named Fly.io in a `provider` block and fly.toml was rendered from it; nothing ever ran
+# there, so `retired` ("it was deployed, and is kept for the record") would claim a past
+# that did not happen. The block left the contract instead: a field nothing reads is
+# removed (docs/SCHEMAS.md), and fly.toml is no longer generated. What still reads this
+# object is the generated deploy/Dockerfile, built and smoke-tested by docker-image.yml and
+# by release.yml's `image` job into ghcr.io, and the image's own `serve --deployment
+# majordomus`, which takes its address from `listen`. `status: declared` stays true:
+# nothing runs from this object. `region`, `machines` and `resources` are still required
+# by deployment/v1 but no generated artifact reads them any more; whether they go too is
+# the fly-deployment milestone's decision, not this change's.
 schema: deployment/v1
 kind: deployment
 id: majordomus
-title: The Majordomus layer, served from one machine
-description: One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.
+title: The Majordomus layer, served from its container image
+description: The container image of this repository's executable, published to GHCR, serving the AI layer over HTTP and MCP; no hosting provider runs it.
 status: declared
 
 application: majordomus
@@ -35,7 +48,7 @@ build:
   # serve would be the drift this kind exists to prevent (I0912 owns it).
 
 listen:
-  # One port. The process, the image and the provider configuration all read this.
+  # One port. The process and the image both read this.
   port: 8080
   # A hosted process is reachable or it is nothing; `all` is the intent, not a suppressed
   # warning. Local invocation keeps its loopback default and never reads this object.
@@ -74,13 +87,5 @@ budgets:
   # still an order of magnitude under any platform's check timeout.
   blocking_check_ms: 25
 
-provider:
-  name: fly
-  fly:
-    force_https: true
-    concurrency:
-      soft_limit: 20
-      hard_limit: 40
-
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-12

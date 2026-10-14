@@ -1,0 +1,115 @@
+---
+schema: adr/v1
+id: adr-0138
+kind: adr
+title: A train of pull requests is a typed object that can be seen
+status: proposed
+date: 2026-10-11
+tags:
+  - integration
+  - cockpit
+  - pull-requests
+provenance:
+  origin: authored
+related:
+  - file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md
+  - file:apps/majordomus-cli/src/integration/train.rs
+  - file:apps/majordomus-cli/src/capability/builtin/integration.rs
+  - file:apps/majordomus-cli/src/cockpit/trains.rs
+  - file:share/cockpit/trains.js
+  - file:docs/INTEGRATION.md
+  - test:test/cases/1072_the_train_is_seen.sh
+---
+
+# 138. A train of pull requests is a typed object that can be seen
+
+## Context
+
+Pull requests in this repository are often stacked: a change is split into links, each one
+standing on the one below it, and the train lands from the bottom up. The executor already
+knows the edges. The classifier reads every `Stacked on #N` and `Depends on #N` line and every
+base branch that is another open pull request's head into confirmed dependencies, and gives
+reasons such as `stacked_on:#807` and `depends_on:#883`. The executor also prepares the next head
+of each link before its turn and keeps it in a local ref, `refs/prep/<n>`, and it pushes that
+head only when the link's turn comes.
+
+None of that formed an object anyone could read. Which pull requests make up a train, which link
+lands next, which prepared heads are still unpushed and how far each link is behind master were
+known only from session messages and from local refs that no other session could see. In one
+evening two sessions asked each other for the order of the same eleven links. `prs status`
+shows one pull request at a time, ranked by the queue, and the queue's order is not a train's
+order: an upper link ranks before the lower link it waits for whenever the upper link is less
+risky.
+
+The owner asked on 2026-10-11 for an interactive, detailed visualisation of the train, in the
+style of the Neo4j Browser.
+
+## Decision
+
+1. **A train is derived, never declared.** `crate::integration::train` computes trains from
+   three things the checkout already has: the queue (`queue_of`, from the recorded observation),
+   the bodies and checks in that observation, and the `refs/prep/` refs. A train is a connected
+   component of open pull requests under their confirmed dependencies on each other, together
+   with any open pull request that declares a dependency at all. A link whose lower links already
+   landed is still the rest of its train, with those pull requests *beneath* it. Inferred
+   dependencies (a head that merely contains another) are evidence and join nothing, as in the
+   classifier.
+
+2. **The order is the train's, not the queue's.** Links are ordered by a topological sort,
+   lower links first, with ties broken by queue rank. Links caught in a cycle come last and are
+   marked, and the cycle is reported. Each link carries its `position`, its `depth` from master,
+   whether it is `at_turn` (every dependency it declares has landed), what it stands `on` and what
+   it `carries`. Each train carries its `roots`, `tops` and `next` link.
+
+3. **An edge says how it is declared.** A base-branch stack or a `Stacked on` line is
+   `STACKED_ON`; `Depends on`, `Requires` and `Land after` are `DEPENDS_ON`. An edge is
+   `satisfied` when the pull request below has merged.
+
+4. **The prepared head is compared, never moved.** `refs/prep/<n>` is read with
+   `git for-each-ref`. A link's prepared head is `pushed` when it is the head the forge serves,
+   and `pending` otherwise. A prepared head whose pull request is no link is listed as
+   unattached. Nothing in this model fetches, pushes or writes a ref, and pushing at a link's
+   turn stays the executor's act.
+
+5. **One capability, every surface.** `integration.trains` is declared once with
+   `capability!` and projected to `majordomus prs trains` (text and `--format json`),
+   `GET /api/v1/pull-requests/trains` and MCP `majordomus_pull_request_trains`. Like the rest of
+   the module, it is read-only and offline.
+
+6. **The Cockpit draws it and lists it.** `/cockpit/trains` renders one table per train that
+   needs no JavaScript, with the same facts. `share/cockpit/trains.js` adds a Cytoscape drawing
+   in the manner of the Neo4j Browser: master as the anchor node, round nodes with their caption
+   inside, coloured by disposition from the declared status and tone roles (never a colour
+   literal), labelled directed relationships, a force or layered layout, drag, zoom, pan, the
+   neighbours of the node under the pointer lit, a property panel, filters by train and by
+   disposition, search, and keyboard navigation. Motion follows `prefers-reduced-motion`. It
+   polls the same HTTP route once a minute while the tab is visible and shows when it last asked.
+   No stream is invented for it.
+
+## Consequences
+
+- What a train is, what lands next and which prepared heads wait for their turn can be read by
+  any session, person or tool from the same answer, with no message between sessions needed to
+  carry it.
+- The drawing and the table cannot disagree, because both render one capability's answer, and
+  the capability is the same value the command line prints (case 1072).
+- Each answer decides every link's relation to master again, which takes seconds on a busy
+  machine. The page therefore polls once a minute and never while an ask is still out. A cached
+  answer would be a separate decision.
+- The relation word `carries_master` (ADR 0129) is read from the relation's serialised kind, so
+  the model works on an executable with or without that relation and reports `false` where it
+  is not known.
+- The forge link is GitHub's, because the executor observes the forge through the GitHub CLI and
+  nothing else.
+
+## Alternatives rejected
+
+- **Declaring trains in a file.** That would be a second record of what the bodies and base
+  branches already declare, and it would go stale the moment a link was retargeted.
+- **Ordering a train by queue rank.** Rank answers "what is safest to do next", not "what stands
+  on what". Shown as a train's order, it would put an upper link before the link it waits for.
+- **A stream for the page.** Session 1b owns `majordomus monitor` (I2400 to I2407). Polling an
+  existing route invents nothing and degrades to the server-rendered table.
+- **A layout extension for Cytoscape.** The Cockpit vendors `cytoscape.min.js` and nothing
+  else, and its content-security policy names no remote origin. The built-in `cose` is a force
+  layout, and `breadthfirst` from master gives the layered view.

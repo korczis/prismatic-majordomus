@@ -31,9 +31,30 @@ echo "==> bash -n"
 for f in $scripts test/cases/*.sh; do bash -n "$f" || { echo "shell-lint: syntax: $f"; exit 1; }; done
 command -v shellcheck >/dev/null || { echo "shell-lint: shellcheck is required (brew install shellcheck / apt-get install shellcheck)" >&2; exit 12; }
 echo "==> shellcheck"
+# Every file is linted on its own, so the files are dealt in batches over a bounded pool
+# rather than one process at a time: serially the cases alone took 403 s on a 4-vCPU runner.
+# A batch writes its findings and its exit status to files of its own, and they are read in
+# batch order once every batch has finished, so the output is the serial run's whatever order
+# the batches ended in. A batch that left no status is a failure, never a pass.
+lint_jobs="${MJ_LINT_JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
+case "$lint_jobs" in ''|*[!0-9]*|0) echo "shell-lint: MJ_LINT_JOBS must be a positive integer, got '$lint_jobs'" >&2; exit 2 ;; esac
+lint_dir="$(mktemp -d "${TMPDIR:-/tmp}/shell-lint.XXXXXX")"; trap 'rm -rf "$lint_dir"' EXIT
 # shellcheck disable=SC2086
-shellcheck -x -s bash -S warning $scripts
-shellcheck -x -s bash -S warning test/cases/*.sh
+printf '%s\n' $scripts test/cases/*.sh > "$lint_dir/files"
+(cd "$lint_dir" && split -l 16 files batch.)
+# the batches are listed before any of them runs, so a batch's own output is never dealt
+(cd "$lint_dir" && ls batch.* | LC_ALL=C sort) > "$lint_dir/batches"
+lint_rc=0
+# shellcheck disable=SC2016
+(cd "$lint_dir" && xargs -P "$lint_jobs" -n 1 sh -c \
+  'rc=0; tr "\n" "\0" < "$1" | (cd "$0" && xargs -0 shellcheck -x -s bash -S warning) > "$1.out" 2>&1 || rc=$?; echo "$rc" > "$1.rc"' \
+  "$ROOT" < batches) || lint_rc=$?
+while IFS= read -r b; do
+  [ -f "$lint_dir/$b.out" ] && cat "$lint_dir/$b.out"
+  if [ ! -f "$lint_dir/$b.rc" ]; then echo "shell-lint: a shellcheck batch left no status (from $(head -n 1 "$lint_dir/$b"))"; lint_rc=1
+  elif [ "$(cat "$lint_dir/$b.rc")" != 0 ]; then lint_rc=1; fi
+done < "$lint_dir/batches"
+[ "$lint_rc" = 0 ] || { echo "shell-lint: shellcheck reported findings"; exit 1; }
 # A gate that counts its findings in a variable and raises one inside a loop fed by a pipe
 # (`... | while read -r l; do fail "$l"; done`) loses every one of them: bash runs that loop in a
 # subshell, so the finding is printed and the count, and the exit status, never see it. That is
@@ -62,6 +83,24 @@ for f in $scripts; do
   [ -z "$out" ] || { printf 'shell-lint: %s\n' "$out"; pc_hits=1; }
 done
 [ "$pc_hits" = 0 ] || { echo "shell-lint: a counting call inside a pipeline loop is lost to a subshell; read the loop's input from a file (\`done < file\`) instead"; exit 1; }
+# A remote that did not answer is not a remote with nothing in it. `gh ... > file 2>/dev/null
+# || true` leaves an empty file either way, and scripts/github-sync read one as "no issue
+# exists": a check then reported every record missing, and an apply would have created each
+# again. Every script is read for an answer written to a file with the failure of asking
+# discarded (rule project.a-failed-read-is-not-an-empty-answer). The scanner is held to a
+# fixture whose answer is known first, as the one above is.
+echo "==> no remote answer kept with its failure discarded"
+sw_awk=scripts/lib/swallowed-listings.awk; sw_fixture=scripts/lib/swallowed-listings.fixture
+sw_want="$(sed -n 's/^# The known answer for scripts\/lib\/swallowed-listings.awk is: //p' "$sw_fixture")"
+sw_got="$(LC_ALL=C awk -f "$sw_awk" "$sw_fixture" | sed -E 's#^[^:]*:([0-9]+):.*#\1#' | tr '\n' ' ' | sed 's/ $//')"
+[ -n "$sw_want" ] && [ "$sw_got" = "$sw_want" ] || { echo "shell-lint: $sw_awk found lines [$sw_got] in $sw_fixture, whose answer is [$sw_want]; the scanner is not trustworthy"; exit 1; }
+sw_hits=0
+for f in $scripts; do
+  rc=0; out="$(LC_ALL=C awk -f "$sw_awk" "$f")" || rc=$?
+  [ "$rc" = 0 ] || { echo "shell-lint: $sw_awk could not read $f to the end"; exit 1; }
+  [ -z "$out" ] || { printf 'shell-lint: %s\n' "$out"; sw_hits=1; }
+done
+[ "$sw_hits" = 0 ] || { echo "shell-lint: say that the remote could not be read and stop (\`|| { echo ...; exit 12; }\`), or keep the answer in a variable and test it where it is set"; exit 1; }
 # The installer is POSIX shell, not bash, and is generated: it is linted as what it is, and
 # as what is actually published rather than as its template.
 if [ -f site/static/install.sh ]; then

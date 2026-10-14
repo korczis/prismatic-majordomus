@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist."
 why: "The published-artifact guard generate::forbidden_in (apps/majordomus-cli/src/generate.rs:1364,1398) is a substring list (ghp_, AKIA, Bearer, PEM, /Users/) applied to generated documents only, not to HTTP responses, MCP results, mesh frames or logs. Request paths and origins are logged raw (apps/majordomus-cli/src/http/router.rs:731-736) and logging has no redaction layer (apps/majordomus-cli/src/logging.rs:29-37). redaction::public_text (apps/majordomus-cli/src/redaction.rs:223) has no production caller, although the module doc (apps/majordomus-cli/src/redaction.rs:1-7) and case 504_public_text_is_redacted_once.sh say published evidence goes through it; wiring the evidence publication to it is I1955 (test-evidence). The mesh replicates intents, scopes and handover bodies in clear over plain HTTP (apps/majordomus-cli/src/mesh/link.rs:878-908). Pack invariant 9: no token or key in logs, web responses, mesh discovery, telemetry or generated docs. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 7, the redaction rows and drift 1."
 current_state: "Only generated documents and tracked text are scanned; responses, logs and frames are not."
-desired_state: "Every HTTP error body (Response::error, error_response), every JSON-RPC error and MCP tool refusal, the request fields the server logs (origin, path, target), and a handover body before it is signed into the journal pass redaction::redact_secrets; the module documentation of redaction.rs names only callers that exist. Not done here: an allow-list in scripts/ci/mesh-check that refuses an EventBody field nobody listed, a redaction layer for every tracing field, and review bodies (they carry a subject and a verdict a person typed and are left to the allow-list change)."
+desired_state: "Every HTTP error body (Response::error, error_response), every JSON-RPC error and MCP tool refusal, the request fields the server logs (origin, path, target), and a handover body before it is signed into the journal pass redaction::redact_secrets; the module documentation of redaction.rs names only callers that exist. The deferred part, an EventBody allow-list in scripts/ci/mesh-check, a redaction layer for every tracing field and review bodies, is I2708."
 scope:
   - "apps/majordomus-cli/src/http/router.rs"
   - "apps/majordomus-cli/src/http/server.rs"
@@ -23,14 +23,23 @@ depends_on: []
 acceptance_criteria:
   - "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log"
   - "A handover body containing a credential shape is redacted or refused before it is signed into the journal"
-  - "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check"
   - "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
 validation:
   - "bin/majordomus plan validate"
   - "cargo test --test redaction"
-  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+  - "cargo test --test no_answer_carries_a_credential"
 evidence_required:
   - "credential_never_echoed_test"
-  - "eventbody_allowlist_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T12:16:43Z
+started_at: 2026-10-14T12:16:03Z
+started_event: sha256:2c393dd7d7d9ab07c0bbc89f2677db2ec05c5ba9247f3d580356124e28b1204c
+completed_at: 2026-10-14T12:16:43Z
+completed_event: sha256:ed04c55aa239b76beb4756dd1824df51cd5459c59f8b82e5ec0ec16238c41105
+evidence:
+  - covers: credential_never_echoed_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test no_answer_carries_a_credential"
+    result: "test result: ok. 5 passed; 0 failed: HTTP error, MCP error, handover body, server.log, and the redaction module doc names exactly its callers (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:21Z

@@ -32,9 +32,20 @@
 //! below. A client that does not recognise a `type` must ignore that frame; that is what
 //! lets a variant be added without a version change.
 //!
-//! The server pings on a heartbeat and never reads. A client that goes away is noticed
-//! when the next write fails, which the heartbeat guarantees happens; a client that sends
-//! anything is ignored, and the reason is in [`super::ws`].
+//! The server pings on a heartbeat and never reads a frame. A client that goes away is
+//! noticed within [`LOOK`] where the server can ask the connection's socket (the read
+//! deadline's sweeper finds it, `super::deadline`), and otherwise when the next write
+//! fails, which the heartbeat guarantees happens; a client that sends anything is ignored,
+//! and the reason is in [`super::ws`]. Beside the ping, which is a
+//! control frame a browser never shows to a page, the same quiet interval writes a
+//! `stream.heartbeat` text frame, so a client can tell a quiet channel from a dead one.
+//!
+//! A replay is paged until it is caught up: a cursor further behind than one page
+//! ([`MAX_REPLAY`]) receives every retained event after it, not the first page and then
+//! the live stream with the rest missing. An event whose frame would exceed
+//! [`ws::MAX_FRAME_BYTES`] is written with its unbounded value — a completed execution's
+//! `output`, a created one's `input` — replaced by a [`Withheld`] reference naming where the
+//! whole value is read, rather than refused and taken for a client that went away.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -44,7 +55,9 @@ use std::time::Duration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::execution::{Delivery, ExecutionId, ExecutionStore, Filter, PROTOCOL_VERSION};
+use crate::execution::{
+    Delivery, EventPayload, ExecutionEvent, ExecutionId, ExecutionStore, Filter, PROTOCOL_VERSION,
+};
 
 use super::router::{Request, Response};
 use super::ws;
@@ -60,8 +73,9 @@ pub const HEARTBEAT: Duration = Duration::from_secs(20);
 /// with a reason rather than accepted and starved.
 pub const MAX_CONNECTIONS: usize = 64;
 
-/// How many retained events a scoped subscription replays, per execution it follows, before
-/// going live.
+/// How many retained events one page of a replay reads, per execution a scoped subscription
+/// follows. The replay reads pages until it is caught up, so this bounds one read of the
+/// store, not the replay.
 pub const MAX_REPLAY: usize = 1_000;
 
 /// A message about the stream itself, rather than about an execution.
@@ -91,6 +105,14 @@ pub enum StreamMessage {
         /// How many seconds of quiet before the server pings.
         heartbeat_seconds: u64,
     },
+    /// The channel is quiet and alive: written with the ping on every quiet heartbeat, as
+    /// a text frame a page can see, so a client that has heard nothing for a few heartbeats
+    /// knows the connection is dead and reconnects from its cursor.
+    #[serde(rename = "stream.heartbeat")]
+    Heartbeat {
+        /// When it was written, RFC 3339 in UTC.
+        at: String,
+    },
     /// The client fell behind and events were dropped rather than buffered. It must read
     /// the snapshot and the history again, from the last sequence it saw.
     #[serde(rename = "stream.lagged")]
@@ -116,6 +138,38 @@ pub enum Scope {
     Executions,
 }
 
+/// What an event carries in place of a value too large for one frame: why it was withheld,
+/// how large it is, and where the whole value is read.
+///
+/// The event is still the same typed event, with its sequence, so nothing about the
+/// execution's story is lost — only the value is read elsewhere, from the snapshot.
+///
+/// ```
+/// use majordomus_cli::http::events::Withheld;
+/// let w = Withheld {
+///     withheld: "too_large".into(),
+///     bytes: 2_000_000,
+///     limit: 1_048_576,
+///     itself: "/api/v1/executions/get?id=e1".into(),
+/// };
+/// let json = serde_json::to_value(&w).unwrap();
+/// assert_eq!(json["self"], "/api/v1/executions/get?id=e1", "the reference is `self` on the wire");
+/// assert!(json.get("itself").is_none());
+/// assert_eq!(serde_json::from_value::<Withheld>(json).unwrap(), w);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Withheld {
+    /// Why: always `too_large`.
+    pub withheld: String,
+    /// The size of the value as JSON, in bytes.
+    pub bytes: usize,
+    /// The largest frame this server writes, [`ws::MAX_FRAME_BYTES`].
+    pub limit: usize,
+    /// The snapshot that carries the whole value: `GET /api/v1/executions/get?id=…`.
+    #[serde(rename = "self")]
+    pub itself: String,
+}
+
 /// How many live channels this process has open.
 static OPEN: AtomicUsize = AtomicUsize::new(0);
 
@@ -135,14 +189,52 @@ impl Accepted {
     /// Serve the connection on an upgraded socket until it ends. Blocking; the caller runs
     /// it on a thread of its own.
     pub fn serve(self, socket: Box<dyn std::io::Write + Send>) {
-        self.stream.run(socket);
+        self.stream.run(socket, || false);
+    }
+
+    /// [`Accepted::serve`], also ending as soon as `hung_up` says the client has gone: asked
+    /// every [`LOOK`] while the channel is quiet, so a closed channel stops counting as use
+    /// of the server within a second, not at its next write (I2131).
+    ///
+    /// A client that has already gone ends the channel at the first look, long before the
+    /// heartbeat would have found out by writing:
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::{Duration, Instant};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits};
+    /// use majordomus_cli::http::events::{accept, PATH};
+    /// use majordomus_cli::http::Request;
+    ///
+    /// let store = Arc::new(ExecutionStore::new(Limits::default()));
+    /// let req = Request::parse_target("GET", PATH, vec![]).with_headers(vec![
+    ///     ("Upgrade".into(), "websocket".into()),
+    ///     ("Connection".into(), "Upgrade".into()),
+    ///     ("Sec-WebSocket-Key".into(), "dGhlIHNhbXBsZSBub25jZQ==".into()),
+    ///     ("Sec-WebSocket-Version".into(), "13".into()),
+    /// ]);
+    /// let accepted = accept(&store, &req, "/api/v1/executions/get").expect("an upgrade");
+    /// let started = Instant::now();
+    /// accepted.serve_until(Box::new(Vec::new()), || true);
+    /// assert!(started.elapsed() < Duration::from_secs(5), "a gone client ends the channel");
+    /// ```
+    pub fn serve_until(self, socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
+        self.stream.run(socket, hung_up);
     }
 }
+
+/// How often a quiet channel asks whether its client has hung up: the idle timer's own tick,
+/// so a channel that closes is no longer counted as use by the next time the timer looks.
+pub const LOOK: Duration = Duration::from_secs(1);
 
 struct LiveStream {
     store: Arc<ExecutionStore>,
     filter: Filter,
     after: u64,
+    /// How long the channel stays quiet before it pings and writes a heartbeat.
+    heartbeat: Duration,
+    /// The snapshot route a [`Withheld`] reference names, from the registry.
+    snapshot: String,
 }
 
 /// Decide what a request to [`PATH`] means: an accepted connection, or the response to
@@ -151,7 +243,14 @@ struct LiveStream {
 /// The origin is checked here for the same reason it is checked for a state-changing
 /// request: a page on another origin can open a WebSocket to this server, and the
 /// same-origin policy does not stop it. This does.
-pub fn accept(store: &Arc<ExecutionStore>, req: &Request) -> Result<Accepted, Response> {
+///
+/// `snapshot` is the route of `executions.get`, as the registry declares it: what a
+/// [`Withheld`] reference names as the place the whole value is read.
+pub fn accept(
+    store: &Arc<ExecutionStore>,
+    req: &Request,
+    snapshot: &str,
+) -> Result<Accepted, Response> {
     if !ws::is_upgrade(req) {
         return Err(Response::error(
             426,
@@ -236,12 +335,14 @@ pub fn accept(store: &Arc<ExecutionStore>, req: &Request) -> Result<Accepted, Re
             store: Arc::clone(store),
             filter,
             after,
+            heartbeat: HEARTBEAT,
+            snapshot: snapshot.to_string(),
         },
     })
 }
 
 impl LiveStream {
-    fn run(self, mut socket: Box<dyn std::io::Write + Send>) {
+    fn run(self, mut socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
         let open = OPEN.fetch_add(1, Ordering::Relaxed) + 1;
         tracing::debug!(connections = open, "a live channel opened");
         let (subscriber, rx) = self.store.subscribe(self.filter.clone());
@@ -260,16 +361,10 @@ impl LiveStream {
                 // a socket that fails mid-replay ends the connection before the live stream
                 // reads a cursor, so the two only differ on a connection that is already gone
                 for id in ids {
-                    let mut cursor = self.after;
-                    if let Some(page) = self.store.events(id, self.after, MAX_REPLAY) {
-                        truncated |= page.truncated;
-                        cursor = page
-                            .events
-                            .iter()
-                            .map(|e| e.sequence)
-                            .fold(cursor, u64::max);
-                        replayed.extend(page.events);
-                    }
+                    let (events, cut) = self.replay(id);
+                    truncated |= cut;
+                    let cursor = events.iter().map(|e| e.sequence).fold(self.after, u64::max);
+                    replayed.extend(events);
                     written.insert(id.clone(), cursor);
                 }
             }
@@ -296,10 +391,14 @@ impl LiveStream {
             if !alive {
                 break;
             }
-            alive = write(&mut socket, &*event);
+            alive = self.write_event(&mut socket, &event);
         }
+        // quiet since: the heartbeat is written after this long without a frame, and the
+        // wait for the next delivery is cut into looks at whether the client has hung up
+        let mut quiet = std::time::Instant::now();
         while alive {
-            match rx.recv_timeout(HEARTBEAT) {
+            let until_heartbeat = self.heartbeat.saturating_sub(quiet.elapsed());
+            match rx.recv_timeout(until_heartbeat.min(LOOK)) {
                 Ok(Delivery::Event(event)) => {
                     // only a scoped connection has cursors; an unscoped one replayed nothing
                     if let Some(cursor) = written.get_mut(&event.execution_id) {
@@ -308,13 +407,30 @@ impl LiveStream {
                         }
                         *cursor = event.sequence;
                     }
-                    alive = write(&mut socket, &*event);
+                    alive = self.write_event(&mut socket, &event);
+                    quiet = std::time::Instant::now();
                 }
                 Ok(Delivery::Lagged { dropped }) => {
                     alive = write(&mut socket, &StreamMessage::Lagged { dropped });
+                    quiet = std::time::Instant::now();
                 }
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout) if hung_up() => {
+                    tracing::debug!("the client of a live channel hung up");
+                    break;
+                }
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+                    if quiet.elapsed() < self.heartbeat => {}
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                    alive = ws::write_ping(&mut socket).is_ok();
+                    // the ping keeps intermediaries and the protocol honest; the heartbeat
+                    // is the frame a page can see, so a dead channel is told from a quiet one
+                    alive = ws::write_ping(&mut socket).is_ok()
+                        && write(
+                            &mut socket,
+                            &StreamMessage::Heartbeat {
+                                at: crate::peers::rfc3339(std::time::SystemTime::now()),
+                            },
+                        );
+                    quiet = std::time::Instant::now();
                 }
                 Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                     let _ = write(
@@ -332,6 +448,102 @@ impl LiveStream {
         let open = OPEN.fetch_sub(1, Ordering::Relaxed) - 1;
         tracing::debug!(connections = open, "a live channel closed");
     }
+
+    /// Every retained event of one execution after the cursor, page by page until caught
+    /// up, and whether the history before the first had already been dropped.
+    ///
+    /// One page is [`MAX_REPLAY`]; the whole replay is bounded by the store's own
+    /// retention, so the loop ends. Taking only the first page would leave the events
+    /// between it and the moment of subscription unwritten, with `stream.ready` claiming
+    /// nothing was missing.
+    fn replay(&self, id: &ExecutionId) -> (Vec<Arc<ExecutionEvent>>, bool) {
+        let Some(first) = self.store.events(id, self.after, MAX_REPLAY) else {
+            return (Vec::new(), false);
+        };
+        let truncated = first.truncated;
+        let mut more = first.more;
+        let mut cursor = first.last_sequence;
+        let mut events = first.events;
+        while more {
+            let Some(page) = self.store.events(id, cursor, MAX_REPLAY) else {
+                break;
+            };
+            if page.events.is_empty() {
+                break;
+            }
+            more = page.more;
+            cursor = page.last_sequence;
+            events.extend(page.events);
+        }
+        (events, truncated)
+    }
+
+    /// Write one execution event; one too large for a frame is written with its unbounded
+    /// value replaced by a [`Withheld`] reference, so the channel stays open.
+    fn write_event(
+        &self,
+        socket: &mut Box<dyn std::io::Write + Send>,
+        event: &ExecutionEvent,
+    ) -> bool {
+        let Ok(text) = serde_json::to_string(event) else {
+            tracing::error!("an execution event could not be rendered as JSON");
+            return true;
+        };
+        if text.len() <= ws::MAX_FRAME_BYTES {
+            return write_frame(socket, &text);
+        }
+        match self.withhold(event) {
+            Some(lighter) => write(socket, &lighter),
+            None => {
+                // no payload but the two unbounded values can reach the bound; one that
+                // does is skipped rather than taken for a client that went away, and the
+                // client's gap check reads it from the history over HTTP
+                tracing::warn!(
+                    event = %event.event_id,
+                    bytes = text.len(),
+                    "an execution event too large for one frame was not written"
+                );
+                true
+            }
+        }
+    }
+
+    /// The event with its unbounded value replaced by a reference, when it has one.
+    fn withhold(&self, event: &ExecutionEvent) -> Option<ExecutionEvent> {
+        let reference = |value: &serde_json::Value| {
+            let bytes = serde_json::to_string(value).map_or(0, |t| t.len());
+            serde_json::to_value(Withheld {
+                withheld: "too_large".into(),
+                bytes,
+                limit: ws::MAX_FRAME_BYTES,
+                itself: format!(
+                    "{}?id={}",
+                    self.snapshot,
+                    super::router::percent_encode(event.execution_id.as_str())
+                ),
+            })
+            .unwrap_or_default()
+        };
+        let payload = match &event.payload {
+            EventPayload::Completed { output } => EventPayload::Completed {
+                output: reference(output),
+            },
+            EventPayload::Created {
+                capability,
+                title,
+                input,
+            } => EventPayload::Created {
+                capability: capability.clone(),
+                title: title.clone(),
+                input: reference(input),
+            },
+            _ => return None,
+        };
+        Some(ExecutionEvent {
+            payload,
+            ..event.clone()
+        })
+    }
 }
 
 /// Write one value as a text frame; `false` when the client is gone.
@@ -340,7 +552,12 @@ fn write<T: Serialize>(socket: &mut Box<dyn std::io::Write + Send>, value: &T) -
         tracing::error!("an execution event could not be rendered as JSON");
         return true;
     };
-    match ws::write_text(socket.as_mut(), &text) {
+    write_frame(socket, &text)
+}
+
+/// Write one rendered document as a text frame; `false` when the client is gone.
+fn write_frame(socket: &mut Box<dyn std::io::Write + Send>, text: &str) -> bool {
+    match ws::write_text(socket.as_mut(), text) {
         Ok(()) => true,
         Err(e) => {
             tracing::debug!("a live channel went away: {e}");
@@ -355,6 +572,15 @@ mod tests {
     use crate::execution::{
         Actor, ActorKind, EventPayload, ExecutionState, Limits, ProgressView, RepositoryRef,
     };
+
+    /// The snapshot route the registry declares for `executions.get`, as the router
+    /// passes it.
+    const SNAPSHOT: &str = "/api/v1/executions/get";
+
+    /// The tests' accept: the router's, with the snapshot route it passes.
+    fn accept(store: &Arc<ExecutionStore>, req: &Request) -> Result<Accepted, Response> {
+        super::accept(store, req, SNAPSHOT)
+    }
 
     fn upgrade_request(target: &str) -> Request {
         Request::parse_target("GET", target, vec![]).with_headers(vec![
@@ -671,6 +897,226 @@ mod tests {
             std::thread::sleep(Duration::from_millis(10));
         }
         panic!("the connection never noticed its client had gone");
+    }
+
+    /// A reconnect further behind than one replay page receives every retained event
+    /// after its cursor, densely, before it goes live: the first page alone would leave the
+    /// rest unwritten while `stream.ready` claimed nothing was missing.
+    #[test]
+    fn a_reconnect_further_behind_than_one_page_is_replayed_without_a_gap() {
+        let (store, id) = store_with_one();
+        for n in 0..(MAX_REPLAY + 300) {
+            store.publish(
+                &id,
+                EventPayload::Log {
+                    stream: crate::execution::LogStream::Handler,
+                    message: format!("line {n}"),
+                },
+            );
+        }
+        let last = store.get(&id).expect("retained").last_sequence;
+        let after = 2u64;
+        let behind = usize::try_from(last - after).unwrap();
+        assert!(
+            behind > MAX_REPLAY,
+            "the cursor is more than one page behind"
+        );
+        let mut accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={id}&after={after}")),
+        )
+        .expect("accepted");
+        // a short heartbeat, so a replay that stopped early ends in a failed assertion
+        // rather than in a wait: its unused writes are spent on heartbeats at once
+        accepted.stream.heartbeat = Duration::from_millis(1);
+        // the ready frame and every replayed event; the nudge is the first write refused
+        let sink = SharedSink::new(1 + behind);
+        let writer = Box::new(sink.clone());
+        let handle = std::thread::spawn(move || accepted.serve(writer));
+        nudge(&store, &id);
+        handle.join().expect("ended");
+
+        let frames: Vec<serde_json::Value> = sink
+            .frames()
+            .iter()
+            .map(|f| serde_json::from_str(f).unwrap())
+            .collect();
+        assert_eq!(frames[0]["type"], "stream.ready");
+        assert_eq!(
+            frames[0]["data"]["replayed"], behind,
+            "the whole gap, not one page"
+        );
+        let sequences: Vec<u64> = frames[1..]
+            .iter()
+            .map(|f| f["sequence"].as_u64().expect("an event"))
+            .collect();
+        let expected: Vec<u64> = (after + 1..=last).collect();
+        assert_eq!(
+            sequences, expected,
+            "every retained sequence after the cursor, densely"
+        );
+    }
+
+    /// A quiet channel writes a heartbeat a page can see beside the ping it cannot, on the
+    /// same interval, so a client can tell a quiet channel from a dead one.
+    #[test]
+    fn a_quiet_channel_writes_a_heartbeat_a_page_can_see() {
+        let (store, id) = store_with_one();
+        let last = store.get(&id).expect("retained").last_sequence;
+        let mut accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={id}&after={last}")),
+        )
+        .expect("accepted");
+        accepted.stream.heartbeat = Duration::from_millis(20);
+        // the ready frame, one ping and one heartbeat; the next ping finds the client gone
+        let sink = SharedSink::new(3);
+        let writer = Box::new(sink.clone());
+        std::thread::spawn(move || accepted.serve(writer))
+            .join()
+            .expect("the connection ended by itself at the next quiet interval");
+        let frames: Vec<serde_json::Value> = sink
+            .frames()
+            .iter()
+            .map(|f| serde_json::from_str(f).unwrap())
+            .collect();
+        let types: Vec<&str> = frames
+            .iter()
+            .map(|f| f["type"].as_str().unwrap_or_default())
+            .collect();
+        assert_eq!(types, ["stream.ready", "stream.heartbeat"]);
+        assert!(
+            frames[1]["data"]["at"]
+                .as_str()
+                .is_some_and(|at| at.ends_with('Z')),
+            "{}",
+            frames[1]
+        );
+    }
+
+    /// A quiet channel whose client hangs up ends within a look, with nothing written after
+    /// its ready frame: before, it learned only when its next heartbeat failed, twenty
+    /// seconds on, and the idle timer counted it as an open channel all that time (I2131).
+    #[test]
+    fn a_quiet_channel_whose_client_hangs_up_ends_within_a_look_without_a_write() {
+        let (store, id) = store_with_one();
+        let last = store.get(&id).expect("retained").last_sequence;
+        let accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={id}&after={last}")),
+        )
+        .expect("accepted");
+        // a socket that never refuses a write: only the hang-up can end this channel
+        let sink = SharedSink::new(usize::MAX);
+        let writer = Box::new(sink.clone());
+        let gone = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let asked = Arc::clone(&gone);
+        let handle = std::thread::spawn(move || {
+            accepted.serve_until(writer, move || asked.load(Ordering::SeqCst))
+        });
+        std::thread::sleep(Duration::from_millis(300));
+        assert!(
+            !handle.is_finished(),
+            "a client that is there keeps its channel"
+        );
+        gone.store(true, Ordering::SeqCst);
+        let hung_up = std::time::Instant::now();
+        handle.join().expect("the channel ended by itself");
+        assert!(
+            hung_up.elapsed() < LOOK + Duration::from_millis(500),
+            "the hang-up was noticed after {:?}, not within a look",
+            hung_up.elapsed()
+        );
+        assert!(
+            LOOK < HEARTBEAT,
+            "a look is sooner than the heartbeat it replaces"
+        );
+        let types: Vec<String> = sink
+            .frames()
+            .iter()
+            .map(|f| serde_json::from_str::<serde_json::Value>(f).unwrap()["type"].to_string())
+            .collect();
+        assert_eq!(
+            types,
+            ["\"stream.ready\""],
+            "nothing was written to a client that left"
+        );
+        assert_eq!(store.subscribers(), 0, "its subscription was ended");
+    }
+
+    /// An output larger than one frame is written as a reference to the snapshot that
+    /// carries it, and the channel stays open: before, the refused frame was taken for a
+    /// client that went away, and every subscriber was dropped.
+    #[test]
+    fn an_output_too_large_for_a_frame_is_named_not_fatal() {
+        let store = Arc::new(ExecutionStore::new(Limits::default()));
+        let id = ExecutionId::fresh();
+        store.create(
+            id.clone(),
+            "demo.x",
+            "Demo",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            RepositoryRef {
+                name: "r".into(),
+                id: "i".into(),
+                branch: None,
+            },
+        );
+        store.publish(&id, EventPayload::Started);
+        let big = "x".repeat(ws::MAX_FRAME_BYTES + 1024);
+        store.publish(
+            &id,
+            EventPayload::Completed {
+                output: serde_json::json!({ "text": big }),
+            },
+        );
+        let mut accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={id}&after=2")),
+        )
+        .expect("accepted");
+        accepted.stream.heartbeat = Duration::from_millis(20);
+        // ready, the completed event, the nudge's log line; the next ping is refused
+        let sink = SharedSink::new(3);
+        let writer = Box::new(sink.clone());
+        let handle = std::thread::spawn(move || accepted.serve(writer));
+        nudge(&store, &id);
+        handle.join().expect("ended");
+
+        let raw = sink.frames();
+        assert!(raw.iter().all(|f| f.len() <= ws::MAX_FRAME_BYTES));
+        let frames: Vec<serde_json::Value> = raw
+            .iter()
+            .map(|f| serde_json::from_str(f).unwrap())
+            .collect();
+        let types: Vec<&str> = frames
+            .iter()
+            .map(|f| f["type"].as_str().unwrap_or_default())
+            .collect();
+        assert_eq!(
+            types,
+            ["stream.ready", "execution.completed", "execution.log"],
+            "the event is written, and the channel is still there for the next one"
+        );
+        let completed = &frames[1];
+        assert_eq!(
+            completed["sequence"], 3,
+            "the same event, at its own sequence"
+        );
+        let output = &completed["data"]["output"];
+        assert_eq!(output["withheld"], "too_large", "{output}");
+        assert!(output["bytes"].as_u64().unwrap() > ws::MAX_FRAME_BYTES as u64);
+        assert_eq!(output["limit"], ws::MAX_FRAME_BYTES);
+        assert_eq!(output["self"], format!("{SNAPSHOT}?id={id}"));
+        // the store itself keeps the whole value for the snapshot to serve
+        assert_eq!(
+            store.get(&id).and_then(|e| e.output).expect("an output")["text"]
+                .as_str()
+                .map(str::len),
+            Some(ws::MAX_FRAME_BYTES + 1024)
+        );
     }
 
     /// One more event on an execution, so a connection whose client has gone finds out at

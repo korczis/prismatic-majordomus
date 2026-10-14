@@ -16,6 +16,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use serde_json::Value;
 
@@ -311,6 +312,55 @@ fn added_at(root: &Path, path: &str) -> Option<String> {
     }
 }
 
+/// When each of `paths` was added, as [`added_at`] answers it, in the order given.
+///
+/// One `git log` per decision walks the whole history each time, and asked one after the
+/// other they were 43% of `generate --check` — some ten of the twenty seconds the pre-commit
+/// gate is bounded by (case 56). A single walk over every path is not the same question:
+/// git simplifies history per pathspec, so a merge that leaves one decision untouched but
+/// changes another prunes a side branch for the first and follows it for the second, and on
+/// this repository's history three of 95 answers moved. The question is unchanged here; the
+/// processes run side by side instead, and they mostly wait on git rather than on this
+/// process.
+fn added_at_each(root: &Path, paths: &[&str]) -> Vec<Option<String>> {
+    // as many at once as the machine runs, and no more: it runs other sessions' work too
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4)
+        .clamp(1, 16)
+        .min(paths.len());
+    if threads < 2 {
+        return paths.iter().map(|p| added_at(root, p)).collect();
+    }
+    let next = AtomicUsize::new(0);
+    let answered: Vec<(usize, Option<String>)> = std::thread::scope(|scope| {
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut mine = Vec::new();
+                    loop {
+                        let i = next.fetch_add(1, Ordering::Relaxed);
+                        let Some(path) = paths.get(i) else {
+                            return mine;
+                        };
+                        mine.push((i, added_at(root, path)));
+                    }
+                })
+            })
+            .collect();
+        workers
+            .into_iter()
+            // `added_at` has no panic site, so a worker always returns: no panic to carry on
+            .flat_map(|w| w.join().expect("added_at does not panic"))
+            .collect()
+    });
+    let mut out = vec![None; paths.len()];
+    for (i, added) in answered {
+        out[i] = added;
+    }
+    out
+}
+
 /// Which commits a tree already holds, asked of git once per tree.
 ///
 /// The question the two window functions ask is "was the commit that added this decision
@@ -368,12 +418,20 @@ fn history(root: &Path, of: &str) -> HashSet<String> {
 
 /// Every decision the layer holds, newest first.
 fn decisions_of(root: &Path, objects: &[Object]) -> Vec<Decision> {
-    let mut out: Vec<Decision> = objects
+    let adrs: Vec<(&Object, String)> = objects
         .iter()
         .filter(|o| o.kind == ADR_KIND)
-        .filter_map(|o| {
-            let id = o.metadata.get("id")?.as_str()?.to_string();
-            Some(Decision {
+        .filter_map(|o| Some((o, o.metadata.get("id")?.as_str()?.to_string())))
+        .collect();
+    let paths: Vec<&str> = adrs
+        .iter()
+        .map(|(o, _)| o.provenance.path.as_str())
+        .collect();
+    let mut out: Vec<Decision> = adrs
+        .into_iter()
+        .zip(added_at_each(root, &paths))
+        .map(|((o, id), added)| {
+            Decision {
                 title: o
                     .title
                     .clone()
@@ -400,9 +458,9 @@ fn decisions_of(root: &Path, objects: &[Object]) -> Vec<Decision> {
                 // Which release carried it is a question for git, not for the front matter:
                 // the date says when the decision was made, and two ADRs written the day
                 // after a release were claimed by it while this read that field instead.
-                added: added_at(root, &o.provenance.path),
+                added,
                 id,
-            })
+            }
         })
         .collect();
     out.sort_by(|a, b| b.date.cmp(&a.date).then_with(|| b.id.cmp(&a.id)));
@@ -703,6 +761,47 @@ mod tests {
         let unknown = "0".repeat(40);
         assert!(!ancestry.holds(&unknown, &all[0]));
         assert_eq!(ancestry.held.len(), all.len() + 1, "one listing per tree");
+    }
+
+    /// Asked side by side, every decision gets the answer it got asked alone, in its own
+    /// place: the order of the paths survives the order the threads finish in, and a path git
+    /// never saw added is still nobody's.
+    #[test]
+    fn decisions_asked_together_are_dated_as_when_asked_alone() {
+        let ids: Vec<String> = (1..=12).map(|n| format!("adr-{n:04}")).collect();
+        let refs: Vec<&str> = ids.iter().map(String::as_str).collect();
+        let (dir, at) = repo_with_decisions(&refs);
+        let mut paths: Vec<String> = ids
+            .iter()
+            .rev()
+            .map(|id| format!(".ai/repo/decisions/{id}.md"))
+            .collect();
+        paths.insert(5, ".ai/repo/decisions/never-added.md".into());
+        let asked: Vec<&str> = paths.iter().map(String::as_str).collect();
+
+        let together = added_at_each(dir.path(), &asked);
+        let alone: Vec<Option<String>> = asked.iter().map(|p| added_at(dir.path(), p)).collect();
+        assert_eq!(together, alone);
+        assert_eq!(together[5], None);
+        assert_eq!(together[0].as_deref(), Some(at[11].as_str()));
+        assert_eq!(together[12].as_deref(), Some(at[0].as_str()));
+        assert!(added_at_each(dir.path(), &[]).is_empty());
+        // one path is asked in this thread, and answered as it is alone
+        assert_eq!(added_at_each(dir.path(), &asked[..1]), alone[..1]);
+    }
+
+    /// An ADR the index holds without a string `id` names no decision: it is left out, not
+    /// listed under an empty or a numeric name.
+    #[test]
+    fn an_adr_without_a_string_id_is_no_decision() {
+        let (dir, _) = repo_with_decisions(&["adr-0001"]);
+        let mut unnamed = adr_object("adr-0002");
+        unnamed.metadata.as_object_mut().unwrap().remove("id");
+        let mut numbered = adr_object("adr-0003");
+        numbered.metadata["id"] = 3.into();
+        let all = decisions_of(dir.path(), &[adr_object("adr-0001"), unnamed, numbered]);
+        let ids: Vec<&str> = all.iter().map(|d| d.id.as_str()).collect();
+        assert_eq!(ids, ["adr-0001"]);
     }
 
     /// A throwaway repository with `n` commits, the first of them tagged as a release the

@@ -579,6 +579,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["distribution".into(), "releases".into()] }),
                 },
                 tags: ["distribution", "release"],
+                cache: crate::capability::CachePolicy::Generation { max_entries: 1 },
                 handler: releases,
             },
             capability! {

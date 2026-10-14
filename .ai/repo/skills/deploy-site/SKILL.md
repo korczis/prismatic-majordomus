@@ -53,6 +53,20 @@ scripts/site-deploy --probe        # add the browser probe (every route at 320, 
 projections in sync (`majordomus generate --check`), `site-build`, `site-check`. A failure
 anywhere stops before the push, with the reason; fix the source, never the output.
 
+The site build does not compose the UI's snapshot (ADR 0141): the pages workflow writes it in a
+job of its own and its deploy job places it. A deploy from a terminal has no such job, so the
+script refuses a built site that lacks a snapshot the publication model declares
+(`scripts/pages snapshots` lists them), or carries one read at another commit, and prints the
+commands that place it (`project.the-published-ui-is-the-trunks`). After that refusal the site
+is already built and checked, so write the snapshot at this commit, copy it to its mount and
+publish what is there:
+
+```bash
+majordomus web report ui-snapshot
+mkdir -p site/public/ui && cp -R target/web/ui-snapshot/. site/public/ui/
+scripts/site-deploy --skip-build
+```
+
 ## 3. Verify
 
 GitHub serves the new branch head in about a minute. The deploy is real when the live site
@@ -61,6 +75,9 @@ names the commit you published:
 ```bash
 curl -s https://majordomus.dev/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
 ```
+
+`scripts/pages verify-ui --commit "$(git rev-parse HEAD)"` asks the same of the UI at `/ui/`:
+its snapshot names that commit and every page it lists answers.
 
 Then open the page you changed.
 

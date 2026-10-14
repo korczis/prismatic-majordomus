@@ -73,6 +73,6 @@
   </details>
   {%- endif %}
   {%- if not gsrc %}
-  <script type="application/json" id="{{ graph_id }}-data">{{ graph | json_encode() | safe }}</script>
+  <script type="application/json" id="{{ graph_id }}-data">{{ graph | json_encode() | replace(from="</", to="<\\/") | safe }}</script>
   {%- endif %}
 </figure>
