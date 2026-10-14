@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 102,
+      "count": 105,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 177,
+      "count": 179,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 102
+      "count": 105
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 245
+      "count": 246
     },
     {
       "kind": "command",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 37
+      "count": 39
     },
     {
       "kind": "critique",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 342
+      "count": 344
     },
     {
       "kind": "domain",
@@ -141,7 +141,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 28
+      "count": 29
     },
     {
       "kind": "gap",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 341
+      "count": 362
     },
     {
       "kind": "knowledge",
@@ -181,7 +181,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 1
+      "count": 4
     },
     {
       "kind": "mesh-declaration",
@@ -237,7 +237,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 22
+      "count": 25
     },
     {
       "kind": "rule",
@@ -245,7 +245,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 177
+      "count": 179
     },
     {
       "kind": "scope",
@@ -269,7 +269,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 7
+      "count": 8
     },
     {
       "kind": "taxonomy",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 465
+      "count": 482
     },
     {
       "kind": "use-case",
@@ -803,6 +803,13 @@
           "label": "adr-0142",
           "kind": "adr",
           "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
           "external": false
         }
       ]
@@ -6052,6 +6059,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0138/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
         }
       ]
     },
@@ -7211,6 +7225,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0142/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
+          "external": false
         }
       ]
     },
@@ -7485,7 +7506,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0147",
+          "kind": "adr",
+          "route": "/adrs/adr-0147/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7561,7 +7590,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7804,6 +7841,96 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0147",
+      "identity": "adr-0147",
+      "slug": "adr-0147",
+      "cockpit": "/cockpit/objects/adr/adr-0147",
+      "title": "The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "cockpit",
+        "ui",
+        "pages"
+      ],
+      "source": ".ai/repo/adrs/0147-the-cockpit-is-published-as-a-snapshot-by-the-exporter-that-reads-the-ui.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/pages.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/web/report/snapshot.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2981_the_cockpit_snapshot_holds_its_routes.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0149",
       "identity": "adr-0149",
       "slug": "adr-0149",
@@ -7891,6 +8018,170 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0155",
+      "identity": "adr-0155",
+      "slug": "adr-0155",
+      "cockpit": "/cockpit/objects/adr/adr-0155",
+      "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "governance",
+        "ci",
+        "release"
+      ],
+      "source": ".ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-verdict",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/362_a_release_follows_the_ci_verdict.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0158",
+      "identity": "adr-0158",
+      "slug": "adr-0158",
+      "cockpit": "/cockpit/objects/adr/adr-0158",
+      "title": "The Observatory is one screen of the UI, and it draws only what was observed",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "observatory",
+        "evidence",
+        "mesh"
+      ],
+      "source": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/observatory.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/ui/observatory.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-screen-waits-for-a-source@1",
+          "kind": "rule",
+          "route": "/rules/project-no-screen-waits-for-a-source-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-published-ui-is-the-trunks@1",
+          "kind": "rule",
+          "route": "/rules/project-the-published-ui-is-the-trunks-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -10693,6 +10984,39 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-build-never-waits-in-silence-on-anothers-lock@1",
+      "identity": "project.a-build-never-waits-in-silence-on-anothers-lock@1",
+      "slug": "project-a-build-never-waits-in-silence-on-anothers-lock-1",
+      "cockpit": "/cockpit/objects/rule/project-a-build-never-waits-in-silence-on-anothers-lock-1",
+      "title": "A build never waits in silence behind another build's lock",
+      "status": "active",
+      "tags": [
+        "process",
+        "shell",
+        "build",
+        "worktrees"
+      ],
+      "source": ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.every-wait-is-bounded@2",
+          "kind": "rule",
+          "route": "/rules/project-every-wait-is-bounded-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.worktrees-share-build-intermediates@1",
+          "kind": "rule",
+          "route": "/rules/project-worktrees-share-build-intermediates-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
       "identity": "project.a-closing-question-is-answered-by-measurement@1",
       "slug": "project-a-closing-question-is-answered-by-measurement-1",
@@ -11288,6 +11612,48 @@
           "label": "project.review-is-recorded-not-claimed@1",
           "kind": "rule",
           "route": "/rules/project-review-is-recorded-not-claimed-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
+      "identity": "project.an-expedited-landing-is-the-owners-word@1",
+      "slug": "project-an-expedited-landing-is-the-owners-word-1",
+      "cockpit": "/cockpit/objects/rule/project-an-expedited-landing-is-the-owners-word-1",
+      "title": "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag",
+      "status": "active",
+      "tags": [
+        "process",
+        "integration",
+        "deployment",
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
           "external": false
         }
       ]
@@ -12798,6 +13164,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-build-never-waits-in-silence-on-anothers-lock@1",
+          "kind": "rule",
+          "route": "/rules/project-a-build-never-waits-in-silence-on-anothers-lock-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
@@ -13266,6 +13639,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0129/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
+          "external": false
         }
       ]
     },
@@ -13681,6 +14068,20 @@
           "label": "adr-0129",
           "kind": "adr",
           "route": "/adrs/adr-0129/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-expedited-landing-is-the-owners-word@1",
+          "kind": "rule",
+          "route": "/rules/project-an-expedited-landing-is-the-owners-word-1/",
           "external": false
         },
         {
@@ -14578,7 +14979,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -15879,6 +16288,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0141/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
         }
       ]
     },
@@ -16186,6 +16602,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
           "external": false
         },
         {
@@ -16672,7 +17095,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-build-never-waits-in-silence-on-anothers-lock@1",
+          "kind": "rule",
+          "route": "/rules/project-a-build-never-waits-in-silence-on-anothers-lock-1/",
+          "external": false
+        }
+      ]
     }
   ]
 }
