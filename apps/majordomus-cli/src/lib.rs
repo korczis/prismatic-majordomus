@@ -80,6 +80,7 @@ pub mod release;
 pub mod repository;
 pub mod rules;
 pub mod scope;
+pub(crate) mod script;
 pub mod served;
 pub mod session;
 pub mod share;
