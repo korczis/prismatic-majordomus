@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "a562a72bd5a4ebb3d897b18fcbdddf2e8a76b18673dc64afa0d957471d02520c",
+    "fingerprint": "31c11996f0a00a624216ab5bfa2391ae7fc4a0d875a343fa422f7f2c2abb0c92",
     "summary": {
-      "total": 2378,
+      "total": 2384,
       "builtin": 199,
-      "declarative": 2179,
+      "declarative": 2185,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2179
+        "resource": 2185
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2188
+        "implemented": 2194
       },
       "mcp_tools": 190,
-      "mcp_resources": 2234,
+      "mcp_resources": 2240,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -80579,7 +80579,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 367,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "94022cd3a3ad9106fb500c5a33852e0dc7a460b96f11a27d27474893d1a17eaf",
+    "fingerprint": "90d15d19d85b6d99e4e7b88b78953e33f88d221c961fbbd7b5465f7a9d8a3db9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81873,7 +81873,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 105,
+      "adr": 106,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81890,7 +81890,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 367,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -83646,6 +83646,23 @@
           "observatory",
           "evidence",
           "mesh"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0161",
+        "kind": "adr",
+        "identity": "adr-0161",
+        "title": "A mesh node follows the published release, through the one installer, forward only",
+        "description": "A mesh node follows the published release, through the one installer, forward only",
+        "path": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9480,
+        "tags": [
+          "distribution",
+          "release",
+          "mesh",
+          "runtime"
         ]
       },
       {
@@ -87632,7 +87649,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 33390
+        "bytes": 35379
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -87848,7 +87865,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 60156
+        "bytes": 60783
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -87920,7 +87937,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134640
+        "bytes": 142281
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94637,7 +94654,7 @@
         "path": ".ai/repo/project/issues/I2165.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3310
+        "bytes": 3300
       },
       {
         "uri": "majordomus://issue/I2282",
@@ -95344,6 +95361,61 @@
         "bytes": 2234
       },
       {
+        "uri": "majordomus://issue/I2720",
+        "kind": "issue",
+        "identity": "I2720",
+        "title": "majordomus self update re-runs the published installer, and never reimplements it",
+        "description": "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once.",
+        "path": ".ai/repo/project/issues/I2720.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2322
+      },
+      {
+        "uri": "majordomus://issue/I2721",
+        "kind": "issue",
+        "identity": "I2721",
+        "title": "An enrolled mesh node follows the stable pointer by itself",
+        "description": "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking at server start, every 15 minutes with jitter and when the mesh announces a release, and applying through self update.",
+        "path": ".ai/repo/project/issues/I2721.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2152
+      },
+      {
+        "uri": "majordomus://issue/I2722",
+        "kind": "issue",
+        "identity": "I2722",
+        "title": "A hub activates a new version under its service manager, checks its health and rolls back by itself",
+        "description": "Make a hub that has installed a newer release restart onto it through its systemd user unit or launchd agent when no session is attached or after a bounded grace, pass a readiness and mesh verify check, and otherwise rename the launcher back, keep serving the previous version and put a rollout failed entry on the board.",
+        "path": ".ai/repo/project/issues/I2722.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2127
+      },
+      {
+        "uri": "majordomus://issue/I2723",
+        "kind": "issue",
+        "identity": "I2723",
+        "title": "The mesh shows each node's version and how far a release has rolled out",
+        "description": "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it.",
+        "path": ".ai/repo/project/issues/I2723.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1399
+      },
+      {
+        "uri": "majordomus://issue/I2724",
+        "kind": "issue",
+        "identity": "I2724",
+        "title": "A node without a route to the site takes the archive from a peer and still verifies it itself",
+        "description": "Let a following node that cannot reach github.com or majordomus.dev fetch the release archive from a linked peer over the authenticated mesh link, and install it only after checking its digest and size against release metadata it read itself or that was relayed and signed by the publishing node.",
+        "path": ".ai/repo/project/issues/I2724.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1684
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -95728,12 +95800,12 @@
         "uri": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "identity": "safe-self-update",
-        "title": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
-        "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
+        "title": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked",
+        "description": "An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
         "path": ".ai/repo/project/milestones/safe-self-update.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3948
+        "bytes": 4902
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -105276,7 +105348,7 @@
       "identity": [
         "id"
       ],
-      "objects": 105
+      "objects": 106
     },
     {
       "name": "application",
@@ -105439,7 +105511,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 367
     },
     {
       "name": "knowledge",
