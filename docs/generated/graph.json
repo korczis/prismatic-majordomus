@@ -23444,6 +23444,8 @@
             "generate --check is green after regeneration and fails when a projection is edited by hand",
             "The benchmark coverage projection accounts for the new capabilities, as the coverage rule requires"
           ],
+          "completed_at": "2026-10-14T09:04:42Z",
+          "completed_event": "sha256:39fbac8b9a472e2047c932bbf16625c546d9c7c8ece3ffce01517224ebbe84dc",
           "created_at": "2026-09-06",
           "depends_on": [
             "I0902"
@@ -23469,7 +23471,9 @@
             "apps/majordomus-cli/src/capability/builtin/mod.rs"
           ],
           "slug": "deployment-capabilities",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-14T09:04:28Z",
+          "started_event": "sha256:1aedd9fb2f3639c70758badc39340e6796843bf16505a741c5e2d99875a75b3c",
+          "updated_at": "2026-10-14T09:04:42Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
@@ -23491,6 +23495,8 @@
             "A hosted bind is expressed as intent rather than by suppressing the warning",
             "A test proves the hosted configuration binds a reachable address and the local default does not"
           ],
+          "completed_at": "2026-10-14T09:04:57Z",
+          "completed_event": "sha256:b7dbad778a985085855e4261ab97b34780d98e4597ade68a2a80318b363651a2",
           "created_at": "2026-09-06",
           "depends_on": [
             "I0902"
@@ -23516,7 +23522,9 @@
             "apps/majordomus-cli/src/cli.rs"
           ],
           "slug": "cloud-bind-address",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-14T09:04:46Z",
+          "started_event": "sha256:0878a8a4527f95e12ee3eac2ecb2c4683739ac12b262a60c0c9c945e5f1d319f",
+          "updated_at": "2026-10-14T09:04:57Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
@@ -23916,6 +23924,7 @@
             "Concurrency limits follow the measured behaviour of the server rather than an arbitrary number",
             "The provider's own configuration validator accepts the generated file"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "depends_on": [
             "I0902",
@@ -23943,7 +23952,7 @@
             "apps/majordomus-cli/src/deploy/fly.rs"
           ],
           "slug": "fly-configuration-projection",
-          "updated_at": "2026-10-12",
+          "updated_at": "2026-10-14",
           "validation": [
             "majordomus generate --check",
             "fly config validate"
@@ -23958,6 +23967,7 @@
         "route": "/cockpit/objects/issue/i0914",
         "source": ".ai/repo/project/issues/I0914.yaml",
         "facts": {
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "Nothing performs any deployment step. Every operation named here does not exist.",
           "depends_on": [
@@ -23987,7 +23997,7 @@
             "apps/majordomus-cli/src/commands/deploy.rs"
           ],
           "slug": "deployment-core-and-command",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus deploy --dry-run"
@@ -24002,6 +24012,7 @@
         "route": "/cockpit/objects/issue/i0915",
         "source": ".ai/repo/project/issues/I0915.yaml",
         "facts": {
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "system.health aggregates index diagnostics, benchmark coverage and projection staleness. No check knows anything about a deployment.",
           "depends_on": [
@@ -24026,7 +24037,7 @@
             "apps/majordomus-cli/src/deploy/doctor.rs"
           ],
           "slug": "deploy-doctor",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "majordomus deploy doctor",
             "cargo test --workspace --all-features"
@@ -24090,6 +24101,7 @@
             "The rollback path rests on the provider's documented current behaviour, and is either executed automatically because it has been proved to work or offered as one deterministic command",
             "The rollback is documented where an operator under pressure will find it"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "Nothing is deployed and nothing records what was deployed before.",
           "depends_on": [
@@ -24114,7 +24126,7 @@
             "apps/majordomus-cli/src/deploy/rollback.rs"
           ],
           "slug": "rollback-path",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "majordomus deploy doctor",
             "bash test/run.sh"
@@ -24137,6 +24149,7 @@
             "A check proves no path belonging to another repository appears anywhere in this one",
             "Deployment credentials and application runtime secrets are treated as distinct concepts, and the distinction is documented"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "No deployment exists and no credential handling exists. A usable credential is expected to be reachable through the operator's existing authenticated tooling.",
           "depends_on": [
@@ -24164,7 +24177,7 @@
             "apps/majordomus-cli/src/deploy/credentials.rs"
           ],
           "slug": "credential-bootstrap",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "bash test/run.sh",
             "cargo test --workspace --all-features"
@@ -24331,6 +24344,7 @@
             "If the declared limit does not hold, the cause is diagnosed and the waste addressed before the limit is raised, and the raise is recorded with its evidence",
             "The measurement is recorded through the existing benchmark infrastructure and becomes a regression budget"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "The canonical object states a memory hypothesis. Nothing has been run under any limit.",
           "depends_on": [
@@ -24356,7 +24370,7 @@
             ".ai/repo/benchmarks/rust"
           ],
           "slug": "memory-budget",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "majordomus bench --check",
             "bash test/run.sh"
@@ -24641,6 +24655,7 @@
             "Concurrency is configured deliberately so two pushes cannot deploy the same application at once, and the choice about cancellation is stated",
             "External actions are pinned and the provider tool version is deliberate rather than floating"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "No deployment workflow exists and no token has been created.",
           "depends_on": [
@@ -24667,7 +24682,7 @@
             ".github/workflows"
           ],
           "slug": "ci-deploy-workflow",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "bash test/run.sh"
           ]
@@ -24731,6 +24746,7 @@
         "route": "/cockpit/objects/issue/i0931",
         "source": ".ai/repo/project/issues/I0931.yaml",
         "facts": {
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "No application exists at any provider.",
           "depends_on": [
@@ -24763,7 +24779,7 @@
             ".ai/repo/deployments"
           ],
           "slug": "first-production-deployment",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-14",
           "validation": [
             "majordomus deploy",
             "majordomus deploy status",
@@ -36619,10 +36635,21 @@
         "id": "majordomus://milestone/fly-deployment",
         "kind": "milestone",
         "label": "fly-deployment",
-        "summary": "A deployment is a projection of the repository model, and a reachable URL is its evidence",
+        "summary": "The container image is a projection of the repository model, and its smoke is its evidence",
         "route": "/cockpit/objects/milestone/fly-deployment",
         "source": ".ai/repo/project/milestones/fly-deployment.yaml",
         "facts": {
+          "acceptance_criteria": [
+            "One canonical deployment object is the only place the port, the region, the resources, the Machine count, the health routes, the build inputs and the budgets are stated",
+            "Every image artifact — the Dockerfile and its ignore file — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand",
+            "The deployment reads are declared once in the capability registry and appear in the CLI, the HTTP API, MCP, OpenAPI and the generated documentation without a second registration",
+            "The smoke suite is derived from the route registry; no second list of endpoints exists anywhere",
+            "The production image runs as a non-root user, contains no build toolchain, no repository history, no secret and no absolute developer path",
+            "The published image answers live and ready in its smoke, run from outside the container on a free host port",
+            "Image size, binary size, build context size, cold start, resident memory and endpoint latency are measured, recorded as baselines and gated against unexplained regression",
+            "No credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and the image is published with the workflow's own token",
+            "Every rule this milestone states is enforced by a check that CI executes"
+          ],
           "created_at": "2026-09-06",
           "evidence_required": [
             "canonical_object",
@@ -36630,7 +36657,7 @@
             "generated_projections",
             "registry_derived_smoke",
             "container_minimal",
-            "deployed_url",
+            "image_smoke",
             "budgets_measured",
             "secrets_isolated",
             "rules_enforced"
@@ -36654,7 +36681,6 @@
             "apps/majordomus-cli/src/capability/builtin",
             "apps/majordomus-cli/src/http",
             "deploy",
-            "fly.toml",
             "share/kinds.yaml",
             "share/allow",
             "share/schemas",
@@ -36670,9 +36696,7 @@
             "bin/majordomus doctor",
             "cargo test --workspace --all-features",
             "cargo clippy --workspace --all-targets --all-features -- -D warnings",
-            "majordomus generate --check",
-            "majordomus deploy doctor",
-            "fly config validate"
+            "majordomus generate --check"
           ]
         }
       },
