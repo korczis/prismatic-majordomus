@@ -409,16 +409,13 @@ pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Healt
         Err(e) if e.kind() == std::io::ErrorKind::ConnectionRefused => return Health::Unhealthy,
         Err(_) => return Health::Unknown,
     };
-    if stream.set_read_timeout(Some(budget)).is_err()
-        || stream.set_write_timeout(Some(budget)).is_err()
-    {
-        return Health::Unknown;
-    }
+    // A zero budget is the one value a timeout refuses, and connecting with it already
+    // answered `Unknown` above, so setting it here cannot fail. A request that cannot be
+    // written is not a verdict either: the read below then gets nothing and says `Unknown`.
+    let _ = stream.set_read_timeout(Some(budget));
     let request =
         format!("GET {ready_path} HTTP/1.0\r\nHost: {authority}\r\nConnection: close\r\n\r\n");
-    if stream.write_all(request.as_bytes()).is_err() {
-        return Health::Unknown;
-    }
+    let _ = stream.write_all(request.as_bytes());
     let mut head = [0u8; 32];
     let n = match stream.read(&mut head) {
         Ok(n) if n > 0 => n,
@@ -935,11 +932,10 @@ mod tests {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let addr = listener.local_addr().unwrap();
         std::thread::spawn(move || {
-            if let Ok((mut c, _)) = listener.accept() {
-                let mut buf = [0u8; 256];
-                let _ = c.read(&mut buf);
-                let _ = c.write_all(reply);
-            }
+            let (mut c, _) = listener.accept().expect("the probe connects");
+            let mut buf = [0u8; 256];
+            let _ = c.read(&mut buf);
+            let _ = c.write_all(reply);
         });
         format!("http://{addr}")
     }
@@ -1054,5 +1050,22 @@ mod tests {
             offers[0].rtt_ms, None,
             "a node's own offer carries no measured round trip"
         );
+    }
+    #[test]
+    fn a_provider_the_policy_does_not_accept_is_passed_over_by_name() {
+        let mut other = offer("a");
+        other.provider = "garage".into();
+        let policy = Policy {
+            providers: vec!["minio".into()],
+            ..Policy::default()
+        };
+        let s = select(&[other, offer("b")], &policy);
+        assert_eq!(s.chosen.map(|o| o.node), Some("b".into()));
+        let a = s
+            .passed_over
+            .iter()
+            .find(|p| p.node == "a")
+            .expect("a is listed");
+        assert!(a.why.contains("garage"), "{}", a.why);
     }
 }
