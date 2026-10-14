@@ -32,4 +32,21 @@ evidence_required:
   - intent_stage_is_derived
   - intent_surfaces_agree
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-14T08:01:23Z
+started_at: 2026-10-14T08:01:15Z
+started_event: sha256:31672c1fc0aeded2f66804f4003ec6ffc114619b26bac535ee7899c77da419fd
+completed_at: 2026-10-14T08:01:23Z
+completed_event: sha256:171f2a2ec63b5cb05b0e0ee90d758f39feb050ec43814de86e5047ee5ff2fc95
+evidence:
+  - covers: intent_stage_is_derived
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent::tests::the_stage_follows_the_milestones_and_only_then_the_evidence && MJ_TEST_JOBS=2 bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+    result: "test result: ok. 1 passed; tests: 1 passed, 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:19Z
+  - covers: intent_surfaces_agree
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test intent the_command_line_http_and_mcp_answer_the_same_intents"
+    result: "test result: ok. 1 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:21Z
