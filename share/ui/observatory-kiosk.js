@@ -430,4 +430,116 @@
     checks.forEach((c) => { words[c.state] = (words[c.state] || 0) + 1; });
     return `${checks.length} check(s): ${Object.keys(words).sort().map((w) => `${words[w]} ${plain(w)}`).join(' · ')} · ${m.installable === true ? 'installable' : m.installable === false ? 'not installable' : 'installability unstated'}`;
   });
+  // 6. Registry Treemap: what the repository is made of, one tile per module of the registry.
+  registry.scenes.registry = scene('registry', (p, f) => {
+    const { box, model: m } = f;
+    const mods = [...(m.modules || [])].sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
+    const most = Math.max(1, ...mods.map((x) => x.count));
+    const area = { x: box.w * 0.04, y: box.h * 0.16, w: box.w * 0.62, h: box.h * 0.68 };
+    // slice and dice: split the sorted list into two halves of near-equal weight along the
+    // longer side, recursively; the order is the count's, so the same registry is the same map
+    const tiles = [];
+    (function split(list, x, y, w, h) {
+      if (!list.length) return;
+      if (list.length === 1) { tiles.push({ item: list[0], x, y, w, h }); return; }
+      const total = list.reduce((n, i) => n + i.count, 0);
+      let acc = 0;
+      let cut = 1;
+      for (let i = 0; i < list.length - 1; i += 1) {
+        acc += list[i].count;
+        cut = i + 1;
+        if (acc >= total / 2) break;
+      }
+      const share = list.slice(0, cut).reduce((n, i) => n + i.count, 0) / total;
+      if (w >= h) {
+        split(list.slice(0, cut), x, y, w * share, h);
+        split(list.slice(cut), x + w * share, y, w * (1 - share), h);
+      } else {
+        split(list.slice(0, cut), x, y, w, h * share);
+        split(list.slice(cut), x, y + h * share, w, h * (1 - share));
+      }
+    })(mods, area.x, area.y, area.w, area.h);
+    p.noStroke();
+    tiles.forEach(({ item, x, y, w, h }) => {
+      // the tile's shade is its count again, so a darker tile never says more than a number
+      p.fill(withAlpha(tone('cyan'), 0.18 + 0.7 * (item.count / most)));
+      p.rect(x + 1.5, y + 1.5, Math.max(1, w - 3), Math.max(1, h - 3), Math.min(w, h) * 0.06);
+      if (w > box.u * 5 && h > box.u * 2.4) {
+        text(p, box, item.module, x + box.u * 0.6, y + box.u * 1.1, 0.62, 'left', 1);
+        text(p, box, item.count, x + box.u * 0.6, y + box.u * 2.4, 0.9, 'left', 0.85);
+      } else if (w > box.u * 2.4 && h > box.u * 1.4) {
+        text(p, box, item.count, x + w / 2, y + h / 2, 0.55, 'center', 0.95);
+      }
+    });
+    // beside it: the same registry by its other counts
+    const rows = [];
+    rows.push(['declared by the repository', m.declarative, m.total, 'violet']);
+    rows.push(['built into the executable', m.builtin, m.total, 'cyan']);
+    const kinds = m.by_kind || {};
+    Object.keys(kinds).sort().forEach((k) => rows.push([`kind: ${k}`, kinds[k], m.total, 'blue']));
+    [['mcp tools', m.mcp_tools], ['http routes', m.http_routes], ['cli commands', m.cli_commands]]
+      .forEach(([name, n]) => { if (typeof n === 'number') rows.push([name, n, m.builtin || m.total, 'green']); });
+    rows.forEach(([name, have, of, colour], i) => {
+      if (typeof have !== 'number' || !of) return;
+      const y = box.h * 0.22 + i * box.u * 2.7;
+      const x = box.w * 0.7;
+      const w = box.w * 0.25;
+      p.noStroke();
+      p.fill(withAlpha(token('--mj-line', '#445'), 0.45));
+      p.rect(x, y, w, box.u * 0.8, box.u * 0.2);
+      p.fill(withAlpha(tone(colour), 0.92));
+      p.rect(x, y, Math.max(2, Math.min(1, have / of) * w), box.u * 0.8, box.u * 0.2);
+      text(p, box, `${name}  ${have}`, x, y - box.u * 0.85, 0.6, 'left');
+    });
+    dim(p, box, `${m.total} capabilities in ${mods.length} module(s); a tile is as large as its count`, box.w * 0.04, box.h * 0.1, 0.62, 'left');
+    return `${m.total} capabilities · ${mods.length} module(s) · ${m.declarative} declared by the repository · ${m.builtin} built in`;
+  });
+
+  // 7. Milestone Ladder: one rung per milestone, split by its issues' recorded status.
+  registry.scenes.ladder = scene('ladder', (p, f) => {
+    const { box, model: m } = f;
+    const list = [...(m.milestones || [])].sort((a, b) => a.id.localeCompare(b.id));
+    const columns = list.length > 18 ? 2 : 1;
+    const perColumn = Math.ceil(list.length / columns);
+    const most = Math.max(1, ...list.map((x) => x.total || 0));
+    const top = box.h * 0.17;
+    const rowH = Math.min(box.u * 2.3, (box.h * 0.7) / perColumn);
+    const colW = (box.w * 0.92) / columns;
+    const totals = {};
+    list.forEach((ms, i) => {
+      const col = Math.floor(i / perColumn);
+      const y = top + (i % perColumn) * rowH;
+      const x = box.w * 0.04 + col * colW;
+      const label_ = `${ms.id}  ${ms.title}`.slice(0, 34);
+      text(p, box, label_, x, y + rowH * 0.45, 0.5, 'left', 0.85);
+      const bx = x + colW * 0.4;
+      const bw = colW * 0.46;
+      let cx = bx;
+      const by = ms.by_status || {};
+      Object.keys(by).sort((a, b) => (b === 'DONE') - (a === 'DONE') || a.localeCompare(b)).forEach((word) => {
+        const n = by[word];
+        if (!n) return;
+        totals[word] = (totals[word] || 0) + n;
+        const w = (n / most) * bw;
+        p.noStroke();
+        p.fill(paint(word, 0.9));
+        p.rect(cx, y + rowH * 0.18, Math.max(1.5, w - 1), rowH * 0.54, 2);
+        cx += w;
+      });
+      const done = by.DONE || 0;
+      const share = ms.total ? Math.round((done / ms.total) * 100) : null;
+      text(p, box, share === null ? '—' : `${done}/${ms.total}  ${share}%`, bx + bw + box.u * 0.5, y + rowH * 0.45, 0.5, 'left', 0.7);
+    });
+    grouped(totals).forEach(([word, count], i) => {
+      const x = box.w * 0.04 + i * box.w * 0.15;
+      p.noStroke();
+      p.fill(paint(word, 0.9));
+      p.rect(x, box.h * 0.91, box.u * 0.7, box.u * 0.7, box.u * 0.15);
+      text(p, box, `${plain(word)} · ${count}`, x + box.u * 1.0, box.h * 0.91 + box.u * 0.35, 0.6, 'left');
+    });
+    dim(p, box, 'a bar is as long as the milestone has issues; the share beside it is done', box.w * 0.04, box.h * 0.1, 0.62, 'left');
+    const all = list.reduce((n, x) => n + (x.total || 0), 0);
+    const done = totals.DONE || 0;
+    return `${list.length} milestone(s) · ${all} issue(s) · ${done} done${all ? ` (${Math.round((done / all) * 100)}%)` : ''}`;
+  });
 })();

@@ -3,7 +3,8 @@
 # installs, and the one oracle that matters for them: every number on a scene is a count
 # its source answered.
 #
-#   1. the kiosk and the screen carry the five scenes (proof claims surface waves matrix),
+#   1. the kiosk and the screen carry the seven scenes (proof claims surface waves matrix registry
+#      ladder),
 #      each requiring one capability, in the one inventory;
 #   2. the page names the scenes script and the drawing library, so a display that has p5
 #      can draw them and one that has not can say so;
@@ -42,7 +43,7 @@ code() { curl -s --max-time 120 -o "$2" -w '%{http_code}' "$U$1"; }
 projection kiosk.html kiosk.json || exit 1
 
 # --- 1. the five scenes, each with its source
-for pair in proof:rules.report claims:evidence.report surface:quality.report waves:plan.waves matrix:distribution.status; do
+for pair in proof:rules.report claims:evidence.report surface:quality.report waves:plan.waves matrix:distribution.status registry:capabilities.list ladder:plan.roadmap; do
   id="${pair%%:*}"; cap="${pair#*:}"
   jq -e --arg id "$id" --arg cap "$cap" '.scenes[] | select(.id == $id)
       | (.character == "semantic") and (.requires == [$cap])' kiosk.json >/dev/null \
@@ -56,7 +57,7 @@ grep -qE 'data-p5-lib="[^"]*vendor/p5\.min\.js' kiosk.html \
   || { echo "    the page does not name the drawing library"; exit 1; }
 
 # --- 3. available with a model, or unavailable with none and a reason
-jq -e '[.scenes[] | select(.id | IN("proof","claims","surface","waves","matrix"))]
+jq -e '[.scenes[] | select(.id | IN("proof","claims","surface","waves","matrix","registry","ladder"))]
     | all(if .available then .model != null
           else (.model == null and (.reason | type == "string" and length > 0)) end)' kiosk.json >/dev/null \
   || { echo "    a proof scene is available without a model or unavailable without a reason:"
@@ -109,10 +110,47 @@ if avail matrix; then
   checked=$((checked+1))
 fi
 
+if avail registry; then
+  answer capabilities.list > caps.json
+  want="$(jq '.capabilities | length' caps.json)"
+  got="$(model registry | jq '.total')"
+  [ "$got" = "$want" ] || { echo "    the registry treemap counts $got capabilities; capabilities.list lists $want"; exit 1; }
+  sum="$(model registry | jq '[.modules[].count] | add')"
+  [ "$sum" = "$want" ] || { echo "    the registry treemap's tiles hold $sum capabilities, not $want"; exit 1; }
+  checked=$((checked+1))
+fi
+if avail ladder; then
+  answer plan.roadmap > roadmap.json
+  want="$(jq '.milestones | length' roadmap.json)"
+  got="$(model ladder | jq '.milestones | length')"
+  [ "$got" = "$want" ] || { echo "    the milestone ladder draws $got rung(s); plan.roadmap lists $want"; exit 1; }
+  checked=$((checked+1))
+fi
+
 # --- 5. the scenes script is served and is not a second director
 [ "$(code /ui/assets/observatory-kiosk.js kiosk.js)" = 200 ] || { echo "    the scenes script is not served"; exit 1; }
 grep -q 'registry.scenes' kiosk.js || { echo "    the scenes script registers no scene"; exit 1; }
 if grep -qE 'function mount|mjObservatory *= *\{' kiosk.js; then
   echo "    the scenes script holds a second director"; exit 1
 fi
-echo "    five proof scenes: inventory, sources, page names, $checked count(s) re-counted, script served"
+serve_down; SRV=""
+
+# --- 6. the snapshot the public site publishes holds the scenes script, and the page links to it
+S="$PWD/target/web/ui-snapshot"
+"$RB" web report ui-snapshot --limit 40 >/dev/null 2> snap.err \
+  || { echo "    the snapshot was not written:"; tail -5 snap.err | sed 's/^/    | /'; exit 1; }
+KP="$(cd "$S" && find . -path '*kiosk*' -name 'index.html' | LC_ALL=C sort | head -1)"
+[ -n "$KP" ] || { echo "    the snapshot holds no kiosk page"; exit 1; }
+KP="$S/${KP#./}"
+[ -n "$(find "$S" -name 'observatory-kiosk.js' | head -1)" ] \
+  || { echo "    the snapshot does not hold observatory-kiosk.js"; exit 1; }
+grep -qE 'data-observatory-companion="[^"/][^"]*observatory-kiosk\.js' "$KP" \
+  || grep -qE 'data-observatory-companion="\.\./' "$KP" \
+  || { echo "    the snapshot's kiosk page does not link to the scenes script by a path of the snapshot:"
+       grep -oE 'data-observatory-companion="[^"]*"' "$KP" | head -1; exit 1; }
+# the library is held where it was built, and named by the page where it was not
+if [ -f "$ROOT/share/ui/vendor/p5.min.js" ]; then
+  [ -n "$(find "$S" -name 'p5.min.js' | head -1)" ] \
+    || { echo "    p5 is built here and the snapshot does not hold it"; exit 1; }
+fi
+echo "    seven scenes: inventory, sources, page names, $checked count(s) re-counted, script served, snapshot holds it"

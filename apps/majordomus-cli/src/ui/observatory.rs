@@ -96,6 +96,7 @@ const EVIDENCE: Source = Source::of("evidence.report");
 const QUALITY: Source = Source::of("quality.report");
 const WAVES: Source = Source::of("plan.waves");
 const DISTRIBUTION: Source = Source::of("distribution.status");
+const CAPABILITIES: Source = Source::of("capabilities.list");
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
@@ -113,6 +114,7 @@ pub const SOURCES: &[Source] = &[
     QUALITY,
     WAVES,
     DISTRIBUTION,
+    CAPABILITIES,
 ];
 
 /// How many marks one scene carries at most: a wall display is read from metres away, and
@@ -259,6 +261,24 @@ pub const SCENES: &[Scene] = &[
         meaning: "A tile is one check of the published installation: model, version, release, artifacts, metadata and public site, each in the word the check decided. Unknown is drawn as unknown.",
         href: super::delivery::ROUTE,
         dwell_seconds: 35,
+    },
+    Scene {
+        id: "registry",
+        label: "Registry Treemap",
+        character: Character::Semantic,
+        requires: &[CAPABILITIES],
+        meaning: "A tile is one module of the capability registry, as large as the number of capabilities it declares: the tests, issues, documents, claims, rules and decisions the repository is made of, and the operations it serves.",
+        href: super::capabilities::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
+        id: "ladder",
+        label: "Milestone Ladder",
+        character: Character::Semantic,
+        requires: &[ROADMAP],
+        meaning: "A rung is one milestone of the plan; its bar is as long as its issues are many and is split by their recorded status. The number beside it is the share that is done.",
+        href: super::roadmap::ROUTE,
+        dwell_seconds: 40,
     },
     Scene {
         id: "ambient",
@@ -753,6 +773,48 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                 "published_artifacts": status.get("published_artifacts"),
             }))
         }
+        "registry" => {
+            let list = answer(answers, CAPABILITIES);
+            let caps = items(list, "/capabilities");
+            if caps.is_empty() {
+                return Err("capabilities.list holds no capability".into());
+            }
+            let mut modules = std::collections::BTreeMap::<String, u64>::new();
+            for c in caps {
+                *modules.entry(word(c, "module")).or_default() += 1;
+            }
+            let summary = list.get("summary");
+            let get = |k: &str| summary.and_then(|s| s.get(k));
+            Ok(serde_json::json!({
+                "modules": modules.iter().take(BOUND).map(|(module, count)| serde_json::json!({
+                    "module": module,
+                    "count": count,
+                })).collect::<Vec<_>>(),
+                "total": caps.len(),
+                "builtin": get("builtin"),
+                "declarative": get("declarative"),
+                "by_kind": get("by_kind"),
+                "by_stability": get("by_stability"),
+                "mcp_tools": get("mcp_tools"),
+                "http_routes": get("http_routes"),
+                "cli_commands": get("cli_commands"),
+            }))
+        }
+        "ladder" => {
+            let milestones = items(answer(answers, ROADMAP), "/milestones");
+            if milestones.is_empty() {
+                return Err("plan.roadmap holds no milestone".into());
+            }
+            Ok(serde_json::json!({
+                "milestones": milestones.iter().take(BOUND).map(|m| serde_json::json!({
+                    "id": word(m, "id"),
+                    "title": word(m, "title"),
+                    "status": word(m, "status"),
+                    "total": m.pointer("/counts/total").and_then(Value::as_u64),
+                    "by_status": m.pointer("/counts/by_status"),
+                })).collect::<Vec<_>>(),
+            }))
+        }
         "ambient" => Ok(serde_json::json!({
             "sources": sources.iter().map(|s| serde_json::json!({
                 "capability": s.capability,
@@ -920,7 +982,7 @@ mod tests {
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), SCENES.len());
-        assert_eq!(SCENES.len(), 13);
+        assert_eq!(SCENES.len(), 15);
         for s in SCENES {
             assert_eq!(
                 s.requires.is_empty(),
@@ -1106,6 +1168,23 @@ mod tests {
                 })),
             ),
             (
+                CAPABILITIES,
+                Ok(serde_json::json!({
+                    "summary": {"builtin": 2, "declarative": 3, "mcp_tools": 2},
+                    "capabilities": [
+                        {"module": "test"}, {"module": "test"}, {"module": "issue"},
+                        {"module": "plan"}, {"module": "plan"},
+                    ],
+                })),
+            ),
+            (
+                ROADMAP,
+                Ok(serde_json::json!({"milestones": [
+                    {"id": "M1", "title": "one", "status": "DONE",
+                     "counts": {"total": 4, "by_status": {"DONE": 4}}},
+                ]})),
+            ),
+            (
                 DISTRIBUTION,
                 Ok(serde_json::json!({
                     "installable": true, "stable_tag": "v1", "local_version": "0.9",
@@ -1133,6 +1212,14 @@ mod tests {
         assert_eq!(waves.model["waves"][0]["issues"], 2);
         assert_eq!(waves.model["waves"][0]["by_status"]["DONE"], 1);
         assert_eq!(waves.model["serialised"], 2);
+        let registry = scene(&p, "registry");
+        assert_eq!(registry.model["total"], 5);
+        assert_eq!(registry.model["modules"][2]["module"], "test");
+        assert_eq!(registry.model["modules"][2]["count"], 2);
+        assert_eq!(registry.model["builtin"], 2);
+        let ladder = scene(&p, "ladder");
+        assert_eq!(ladder.model["milestones"][0]["total"], 4);
+        assert_eq!(ladder.model["milestones"][0]["by_status"]["DONE"], 4);
         let matrix = scene(&p, "matrix");
         assert_eq!(matrix.model["checks"][1]["state"], "unknown");
         assert_eq!(matrix.model["required_targets"], 6);
@@ -1143,10 +1230,14 @@ mod tests {
             (EVIDENCE, Ok(serde_json::json!({"claims": []}))),
             (QUALITY, Ok(serde_json::json!({"report": {}}))),
             (WAVES, Ok(serde_json::json!({"waves": []}))),
+            (CAPABILITIES, Ok(serde_json::json!({"capabilities": []}))),
+            (ROADMAP, Ok(serde_json::json!({"milestones": []}))),
             (DISTRIBUTION, Err("no network".into())),
         ]);
         let p = project_from(&empty, at());
-        for id in ["proof", "claims", "surface", "waves", "matrix"] {
+        for id in [
+            "proof", "claims", "surface", "waves", "matrix", "registry", "ladder",
+        ] {
             let s = scene(&p, id);
             assert!(!s.available, "{id}");
             assert_eq!(s.model, Value::Null, "{id}");

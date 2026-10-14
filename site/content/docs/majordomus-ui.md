@@ -73,7 +73,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`: thirteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 </div>
 
@@ -324,6 +324,8 @@ the same facts as rows, how long it stays, and its character:
 | `surface` | Surface Atlas | `quality.report` | Capabilities |
 | `waves` | Wave Front | `plan.waves` | Roadmap |
 | `matrix` | Release Matrix | `distribution.status` | CI/CD & Releases |
+| `registry` | Registry Treemap | `capabilities.list` | Capabilities |
+| `ladder` | Milestone Ladder | `plan.roadmap` | Roadmap |
 | `ambient` | Ambient Intelligence | nothing: it is decoration | Dashboard |
 
 </div>
@@ -332,7 +334,7 @@ the same facts as rows, how long it stays, and its character:
 The table is a reading aid; the list in the module is what the page, the script and case 3011
 read, and the page prints each scene's own `requires`.
 
-The last five (`proof` to `matrix`, ADR 0160) read what the repository proves and need no
+The last seven (`proof` to `ladder`, ADR 0160) read what the repository proves and need no
 mesh, so they are drawn on the public site too. They are counted, never estimated: a mark is a
 rule, a kind of claim, a measured count, a wave or a check, and where a source reports more
 items than a display holds the scene groups them and says how many it drew. They are drawn with
