@@ -6,7 +6,7 @@
     "version": "0.25.0"
   },
   "registry": {
-    "fingerprint": "902ff5e312fdead926b9084502b35f805e11211d85c5e7bfc5d936e80ec623e5",
+    "fingerprint": "7c56ad639f88e7659d3a89b20386f366191ecb2a6995631d82807920ccdee6c7",
     "summary": {
       "total": 2363,
       "builtin": 199,
@@ -81845,7 +81845,7 @@
     ]
   },
   "index": {
-    "fingerprint": "822ea27a0f6d3098358eb657de591f561be5fda71d9b6db67821efb182aefed5",
+    "fingerprint": "e6f03e6d19066f00bef264ec58833bb802f2278b2c78b16090eed12039d69d70",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87922,7 +87922,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 170799
+        "bytes": 170650
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92384,7 +92384,7 @@
         "path": ".ai/repo/project/issues/I0903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2365
+        "bytes": 3835
       },
       {
         "uri": "majordomus://issue/I0904",
@@ -92395,7 +92395,7 @@
         "path": ".ai/repo/project/issues/I0904.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2203
+        "bytes": 3419
       },
       {
         "uri": "majordomus://issue/I0905",
@@ -92494,7 +92494,7 @@
         "path": ".ai/repo/project/issues/I0913.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3084
+        "bytes": 3424
       },
       {
         "uri": "majordomus://issue/I0914",
@@ -92505,7 +92505,7 @@
         "path": ".ai/repo/project/issues/I0914.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2440
+        "bytes": 2826
       },
       {
         "uri": "majordomus://issue/I0915",
@@ -92516,7 +92516,7 @@
         "path": ".ai/repo/project/issues/I0915.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2330
+        "bytes": 2676
       },
       {
         "uri": "majordomus://issue/I0916",
@@ -92538,7 +92538,7 @@
         "path": ".ai/repo/project/issues/I0917.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1900
+        "bytes": 2272
       },
       {
         "uri": "majordomus://issue/I0918",
@@ -92549,7 +92549,7 @@
         "path": ".ai/repo/project/issues/I0918.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2471
+        "bytes": 2806
       },
       {
         "uri": "majordomus://issue/I0919",
@@ -92593,7 +92593,7 @@
         "path": ".ai/repo/project/issues/I0922.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1979
+        "bytes": 2320
       },
       {
         "uri": "majordomus://issue/I0923",
@@ -92670,7 +92670,7 @@
         "path": ".ai/repo/project/issues/I0929.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2184
+        "bytes": 2525
       },
       {
         "uri": "majordomus://issue/I0930",
@@ -92692,7 +92692,7 @@
         "path": ".ai/repo/project/issues/I0931.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2694
+        "bytes": 3036
       },
       {
         "uri": "majordomus://issue/I0932",
@@ -95532,12 +95532,12 @@
         "uri": "majordomus://milestone/fly-deployment",
         "kind": "milestone",
         "identity": "fly-deployment",
-        "title": "A deployment is a projection of the repository model, and a reachable URL is its evidence",
-        "description": "One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers.",
+        "title": "The container image is a projection of the repository model, and its smoke is its evidence",
+        "description": "One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12.",
         "path": ".ai/repo/project/milestones/fly-deployment.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 6286
+        "bytes": 6500
       },
       {
         "uri": "majordomus://milestone/foundation",
