@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "0648810ecf6c4d9129d6f03678c09a14925e90ae7d69aae3295029de37b4729e",
     "summary": {
-      "total": 2379,
+      "total": 2385,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2186,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2186
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2195
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2241,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 365,
         "capability_ids": []
       },
       {
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 484,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "a3175353101bae1b9c91d9a48ec3d30ad99d87974284c97f01afc358c923d0d2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,7 +81890,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 365,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81904,7 +81904,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 484,
       "use-case": 49,
       "workspace": 1
     },
@@ -87506,7 +87506,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 34901
+        "bytes": 37724
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -87632,7 +87632,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 33390
+        "bytes": 34345
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -87920,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131889
+        "bytes": 132404
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87974,7 +87974,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 41705
+        "bytes": 42403
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -95344,6 +95344,39 @@
         "bytes": 2234
       },
       {
+        "uri": "majordomus://issue/I2710",
+        "kind": "issue",
+        "identity": "I2710",
+        "title": "A release run never waits behind pull-request validates for a job slot",
+        "description": "Give the release path (the release workflow, the record pull request's verdict and the Pages deploy that publishes the release) priority over branch validates on the shared runner pool, so that a published release reaches majordomus.dev within its own run time.",
+        "path": ".ai/repo/project/issues/I2710.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3357
+      },
+      {
+        "uri": "majordomus://issue/I2711",
+        "kind": "issue",
+        "identity": "I2711",
+        "title": "The pages job judges production only after the deployment of its own commit has arrived",
+        "description": "Stop validate's `pages` job on master from reporting red because it read majordomus.dev before the deployment of the commit it judges had been served.",
+        "path": ".ai/repo/project/issues/I2711.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3038
+      },
+      {
+        "uri": "majordomus://issue/I2712",
+        "kind": "issue",
+        "identity": "I2712",
+        "title": "release-check treats a tag whose release run is still going as pending, not as a missing record",
+        "description": "Make scripts/ci/release-check tell a tag whose release workflow is still running (or whose record branch is about to be opened by it) from a published release that nobody recorded.",
+        "path": ".ai/repo/project/issues/I2712.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2927
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -102340,7 +102373,7 @@
         "identity": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
         "path": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
         "source_class": "case",
-        "bytes": 8595
+        "bytes": 8780
       },
       {
         "uri": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -102381,6 +102414,30 @@
         "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
         "source_class": "case",
         "bytes": 5317
+      },
+      {
+        "uri": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
+        "kind": "test",
+        "identity": "test/cases/3027_the_release_path_goes_first.sh",
+        "path": "test/cases/3027_the_release_path_goes_first.sh",
+        "source_class": "case",
+        "bytes": 15470
+      },
+      {
+        "uri": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "kind": "test",
+        "identity": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "path": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "source_class": "case",
+        "bytes": 9870
+      },
+      {
+        "uri": "majordomus://test/test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "kind": "test",
+        "identity": "test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "path": "test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "source_class": "case",
+        "bytes": 8170
       },
       {
         "uri": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -105449,7 +105506,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 365
     },
     {
       "name": "knowledge",
@@ -105601,7 +105658,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 484
     },
     {
       "name": "use-case",

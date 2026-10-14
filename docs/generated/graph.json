@@ -36242,6 +36242,140 @@
         }
       },
       {
+        "id": "majordomus://issue/I2710",
+        "kind": "issue",
+        "label": "I2710",
+        "summary": "A release run never waits behind pull-request validates for a job slot",
+        "route": "/cockpit/objects/issue/i2710",
+        "source": ".ai/repo/project/issues/I2710.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a release run or record verdict queued, a pull-request validate yields within one minute and says which release run it yielded to",
+            "A yielded validate is re-requested once the release path is done, without a person",
+            "Master's validate and the release path themselves are never cancelled by the rule"
+          ],
+          "completed_at": "2026-10-14T22:02:16Z",
+          "completed_event": "sha256:1a17ad59de0626364df99c43d796ba5cf9892986aba3cfdd303ff679f2feee05",
+          "created_at": "2026-10-14",
+          "current_state": "Every workflow competes for the same runner pool first come, first served. Nothing makes a pull-request validate yield while a release, its record verdict or its Pages deploy waits for a slot.",
+          "depends_on": [],
+          "evidence_required": [
+            "release_path_has_priority_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Buying runners or changing the pool's size"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            "scripts/ci",
+            "docs/CI.md",
+            "docs/RELEASE.md",
+            "test/cases"
+          ],
+          "slug": "a-release-run-never-starves",
+          "started_at": "2026-10-14T22:00:40Z",
+          "started_event": "sha256:1fece0319e55694f6646b2269bb596c8208afe53001fe89460a061a16e8323bc",
+          "updated_at": "2026-10-14T22:02:16Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2711",
+        "kind": "issue",
+        "label": "I2711",
+        "summary": "The pages job judges production only after the deployment of its own commit has arrived",
+        "route": "/cockpit/objects/issue/i2711",
+        "source": ".ai/repo/project/issues/I2711.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The pages job passes when the deployment of its commit arrives within the declared bound after the job starts",
+            "It fails, naming both commits, when production serves an older commit after the bound",
+            "The wait is bounded and declared, and liveness-check accepts it"
+          ],
+          "completed_at": "2026-10-14T22:02:38Z",
+          "completed_event": "sha256:a1bc76379a2745d5e3ceaa39d92a092cbfae8d8bab6cd8a628c4e41267d5b104",
+          "created_at": "2026-10-14",
+          "current_state": "The step reads production's build.json once, at the time the job reaches it, and fails when the deployment of its commit has not finished yet.",
+          "depends_on": [],
+          "evidence_required": [
+            "pages_waits_for_its_deployment_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Making the Pages deployment itself faster"
+          ],
+          "objective": "Stop validate's `pages` job on master from reporting red because it read majordomus.dev before the deployment of the commit it judges had been served.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/pages-check",
+            "scripts/site-check",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "the-pages-job-waits-for-its-deployment",
+          "started_at": "2026-10-14T22:01:02Z",
+          "started_event": "sha256:80ed06b6058b86c7a10c5493435d27450578ecf7aa7af9cebb49ed5cdbe6b675",
+          "updated_at": "2026-10-14T22:02:38Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2712",
+        "kind": "issue",
+        "label": "I2712",
+        "summary": "release-check treats a tag whose release run is still going as pending, not as a missing record",
+        "route": "/cockpit/objects/issue/i2712",
+        "source": ".ai/repo/project/issues/I2712.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Between a tag push and its record branch, release-check reports the tag as pending with its run and exits 0",
+            "After the release run concluded with no record and no record branch, it is still a finding"
+          ],
+          "completed_at": "2026-10-14T22:02:55Z",
+          "completed_event": "sha256:c635dd6ed62bc6fce042f9d66f6321192e0182e6eb7b71d214e565db6e0b01dd",
+          "created_at": "2026-10-14",
+          "current_state": "release-check counts a pushed tag as published and demands a record or a record branch at once.",
+          "depends_on": [
+            "I2054"
+          ],
+          "evidence_required": [
+            "tag_in_flight_is_pending_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "What the release workflow itself does"
+          ],
+          "objective": "Make scripts/ci/release-check tell a tag whose release workflow is still running (or whose record branch is about to be opened by it) from a published release that nobody recorded.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/release-check",
+            "docs/RELEASE.md",
+            "test/cases"
+          ],
+          "slug": "a-tag-in-flight-is-pending",
+          "started_at": "2026-10-14T22:01:24Z",
+          "started_event": "sha256:31e54c2864bd6ef23accd2311aa33df387f47fb178d7ca404de50bd4ed8e643c",
+          "updated_at": "2026-10-14T22:02:55Z",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -53049,6 +53183,27 @@
         "label": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
         "route": "/cockpit/objects/test/test-cases-3023-a-knowledge-record-outlives-the-file-it-cites-sh",
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
+        "kind": "test",
+        "label": "test/cases/3027_the_release_path_goes_first.sh",
+        "route": "/cockpit/objects/test/test-cases-3027-the-release-path-goes-first-sh",
+        "source": "test/cases/3027_the_release_path_goes_first.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "kind": "test",
+        "label": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "route": "/cockpit/objects/test/test-cases-3028-the-pages-job-waits-for-its-deployment-sh",
+        "source": "test/cases/3028_the_pages_job_waits_for_its_deployment.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "kind": "test",
+        "label": "test/cases/3029_a_tag_in_flight_is_pending.sh",
+        "route": "/cockpit/objects/test/test-cases-3029-a-tag-in-flight-is-pending-sh",
+        "source": "test/cases/3029_a_tag_in_flight_is_pending.sh"
       },
       {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -78574,6 +78729,41 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2710",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2710",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2711",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2711",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "majordomus://issue/I2054",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2712",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -82880,6 +83070,21 @@
       },
       {
         "source": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3028_the_pages_job_waits_for_its_deployment.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3029_a_tag_in_flight_is_pending.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -88190,8 +88395,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2802,
+      "edges": 6139,
       "acyclic": false,
       "truncated": false
     }

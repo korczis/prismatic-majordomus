@@ -321,6 +321,43 @@ and a dispatch are never cancelled this way: the trunk's remaining jobs are the 
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
 
+The release path goes first (I2710). Every workflow of this repository draws on one pool of
+job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
+verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
+holding all twenty slots; the site offered the previous release until a person cancelled one
+of them by hand. The release path is three kinds of run, read from what GitHub lists rather
+than from the release workflow: a run of `release.yml`, the validate run on a
+`release/record-<tag>` branch (the record's verdict), and a `pages.yml` run of master that the
+release's token dispatched. While any of them is queued or running:
+
+- a pull request's validate yields at the first step of its plan job, before any job of its
+  own asks for a runner: it labels its pull request `ci:yielded`, comments which run it yielded
+  to, and cancels itself;
+- a tag push preempts: `.github/workflows/release-path.yml` starts on the same push as the
+  release and cancels every pull-request validate already queued or running, labelling and
+  telling each the same way;
+- once the path is clear, `scripts/ci/release-path resume` re-runs the newest validate run of
+  each labelled pull request's head when that run is the cancelled one, and removes the label.
+  It is asked at the end of every validate run that is not a pull request's (the record's
+  verdict is one) and every fifteen minutes by `release-path.yml`'s schedule.
+
+Never cancelled by this: anything of the release path, master's validate, the schedule and a
+dispatch, a run on a record branch, and a run whose pull request GitHub does not name. A
+reading that cannot be made lets a run proceed and touches nothing. The model is
+`.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
+
+The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
+minutes after the push that also starts that commit's deploy, and on 2026-10-14 run
+38600347235 read the site while the deploy was in flight and went red; a rerun passed.
+`scripts/ci/pages-check --for "$GITHUB_SHA"` first waits, bounded by `PAGES_CHECK_DEPLOY_WAIT`
+(twenty minutes) and asking every `PAGES_CHECK_POLL` seconds (thirty) with a line each time,
+until production serves that commit or one that carries it — a newer trunk commit, or an older
+one when nothing since changed what the site is built from. It refuses early only when
+production serves an older commit and no deployment is in flight (no pages run queued or
+running, GitHub's own build not building), and otherwise at the bound, naming both commits. A
+pull request's merge commit is not on master and is not waited for. The job's bound is 35
+minutes to hold the wait and the checks after it; case 3028 holds the wait.
+
 ### The three ways a deploy fails, and who reports each
 
 A deploy that does not put the intended commit in front of a reader has failed, and until
