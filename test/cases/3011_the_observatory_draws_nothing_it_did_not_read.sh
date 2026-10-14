@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: observatory-draws-nothing-it-did-not-read
 # The Observatory of majordomus ui (ADR 0158), through a real server over a fixture
 # `majordomus init` installs, and through the snapshot the public site publishes:
 #
