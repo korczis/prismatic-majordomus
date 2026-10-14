@@ -358,6 +358,23 @@
       "tool": "majordomus_convergence"
     },
     {
+      "api_anchor": "/docs/api/dashboard/#op-dashboard-cluster",
+      "claims": [],
+      "cli": "majordomus dashboard cluster",
+      "id": "dashboard.cluster",
+      "kind": "query",
+      "module": "dashboard",
+      "module_route": "/registry/modules/dashboard/",
+      "resource": null,
+      "route": "/registry/capabilities/dashboard-cluster/",
+      "slug": "dashboard-cluster",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "tests": [],
+      "title": "The cluster: machines, sessions, claims and plan progress",
+      "tool": "majordomus_dashboard_cluster"
+    },
+    {
       "api_anchor": "/docs/api/dashboard/#op-dashboard-overview",
       "claims": [],
       "cli": "majordomus dashboard overview",
@@ -4132,7 +4149,7 @@
     ]
   },
   "counts": {
-    "capabilities": 196,
+    "capabilities": 197,
     "claims": 92,
     "modules": 56
   },
@@ -4322,6 +4339,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "dashboard.cluster",
+          "route": "/registry/capabilities/dashboard-cluster/",
+          "slug": "dashboard-cluster"
+        },
         {
           "id": "dashboard.overview",
           "route": "/registry/capabilities/dashboard-overview/",

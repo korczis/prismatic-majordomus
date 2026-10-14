@@ -259,6 +259,15 @@
         "status": "query"
       },
       {
+        "id": "capability:dashboard.cluster",
+        "kind": "capability",
+        "label": "dashboard.cluster",
+        "summary": "The cluster: machines, sessions, claims and plan progress",
+        "route": "/cockpit/capabilities/dashboard.cluster",
+        "source": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:dashboard.overview",
         "kind": "capability",
         "label": "dashboard.overview",
@@ -7232,6 +7241,32 @@
             "governance",
             "ci",
             "release"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0159",
+        "kind": "adr",
+        "label": "adr-0159",
+        "summary": "The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval",
+        "route": "/cockpit/objects/adr/adr-0159",
+        "source": ".ai/repo/adrs/0159-the-cluster-is-drawn-once-and-every-session-reports-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+            "file:.ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:docs/BRIEF.md",
+            "file:docs/MAJORDOMUS_UI.md"
+          ],
+          "tags": [
+            "dashboard",
+            "ui",
+            "session",
+            "mesh"
           ]
         }
       },
@@ -35281,6 +35316,225 @@
         }
       },
       {
+        "id": "majordomus://issue/I2685",
+        "kind": "issue",
+        "label": "I2685",
+        "summary": "The cluster page is one reading with one generated text on the command line and in the UI",
+        "route": "/cockpit/objects/issue/i2685",
+        "source": ".ai/repo/project/issues/I2685.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The page's milestone tally is plan.status's own",
+            "No line is wider than the width asked, within a floor of 40 and a ceiling of 200",
+            "The text format prints the page's lines unchanged",
+            "A source that did not answer is named in notes and its section is empty",
+            "The /ui panel draws the lines unchanged and says when the source did not answer"
+          ],
+          "created_at": "2026-10-14",
+          "desired_state": "dashboard.cluster, majordomus dashboard cluster [--width], GET /api/v1/dashboard/cluster, the MCP tool, and a /ui/panels/cluster panel that draws the lines unchanged.",
+          "evidence_required": [
+            "cluster_unit_tests",
+            "cluster_case_3012",
+            "cluster_panel_unit_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Estimates, risks and developer-experience measurements: I2686",
+            "A pushed stream: I2487"
+          ],
+          "objective": "Compose machines, sessions, claims, milestone progress and the queue lines from their owners in one capability and draw it once as console text, so that the terminal and the /ui panel are one text.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+            "apps/majordomus-cli/src/commands/dashboard.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "test/cases/3012_the_dashboard_is_one_reading.sh"
+          ],
+          "slug": "the-cluster-page-is-one-reading-with-one-text",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib dashboard",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2686",
+        "kind": "issue",
+        "label": "I2686",
+        "summary": "The cluster page states estimates, risks and timings only where a source records them",
+        "route": "/cockpit/objects/issue/i2686",
+        "source": ".ai/repo/project/issues/I2686.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An estimate names the recorded durations it is the median of and how many",
+            "With fewer than three samples the page says there is no estimate",
+            "A risk is a finding another capability reported, with its pointer"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2685"
+          ],
+          "evidence_required": [
+            "estimate_basis_case",
+            "risk_pointer_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Predicting the unmeasured"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "apps/majordomus-cli/src/integration/timings.rs",
+            "test/cases/3012_the_dashboard_is_one_reading.sh"
+          ],
+          "slug": "the-cluster-page-states-estimates-risks-and-timings-it-can-read",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2687",
+        "kind": "issue",
+        "label": "I2687",
+        "summary": "The /ui cluster panel is updated by the stream, not by polling, when the readings stream exists",
+        "route": "/cockpit/objects/issue/i2687",
+        "source": ".ai/repo/project/issues/I2687.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A session opening on another machine appears on the panel without a reload within the stream's lifetime",
+            "With no stream the panel still refreshes on its interval"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Measured on master a3a67a307e on 2026-10-14: the UI polls fragments on a 60 s interval (share/ui/ui.js); I2487 plans one WebSocket telling the page which readings changed.",
+          "depends_on": [
+            "I2685",
+            "I2487"
+          ],
+          "desired_state": "The cluster panel subscribes to the readings that feed it and re-asks on change; the polling interval is its fallback.",
+          "evidence_required": [
+            "panel_live_probe"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A channel of its own (ADR 0033)"
+          ],
+          "objective": "Use the one streaming mechanism of I2487 for the cluster panel so that a session that starts, ends or claims is on the screen within the stream's lifetime.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "share/ui/ui.js"
+          ],
+          "slug": "the-cluster-page-is-pushed-when-the-stream-lands",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2688",
+        "kind": "issue",
+        "label": "I2688",
+        "summary": "Every session reports the cluster on the policy's interval, and a session that does not is visible",
+        "route": "/cockpit/objects/issue/i2688",
+        "source": ".ai/repo/project/issues/I2688.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A checkout with the switch on and the mod not installed fails doctor naming the command",
+            "The interval prompt carries the cluster page",
+            "A machine with no report in two intervals is marked on the page"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2685"
+          ],
+          "evidence_required": [
+            "mod_wiring_finding",
+            "silent_machine_marked"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Providers that publish no session events"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/mods/claude-code/majordomus-brief/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "lib/doctor.sh",
+            ".ai/repo/policy.yaml"
+          ],
+          "slug": "every-session-reports-the-cluster-on-the-policys-interval",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1065_a_session_briefs_itself"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2689",
+        "kind": "issue",
+        "label": "I2689",
+        "summary": "The cluster page is documented once and published on the site and the Pages",
+        "route": "/cockpit/objects/issue/i2689",
+        "source": ".ai/repo/project/issues/I2689.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Public pages carry the shape of the page and no real session, address or intent",
+            "majordomus generate --check and scripts/pages current are clean"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Measured on master a3a67a307e on 2026-10-14: docs/BRIEF.md and docs/MAJORDOMUS_UI.md do not name a cluster page.",
+          "depends_on": [
+            "I2685"
+          ],
+          "desired_state": "A section generated from the capability's own description and a screenshot-free sample of the lines in each document, current by majordomus generate --check.",
+          "evidence_required": [
+            "docs_current"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Private addresses or session intents on a public page"
+          ],
+          "objective": "Say what the page is, how to read it and what it does not know, from the capability, on the handbook, docs/BRIEF.md, docs/MAJORDOMUS_UI.md and the site.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/BRIEF.md",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/DASHBOARD.md",
+            "site/"
+          ],
+          "slug": "the-cluster-page-is-documented-and-on-the-site",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus generate --check",
+            "scripts/pages current"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -51936,6 +52190,13 @@
         "source": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3012_the_dashboard_is_one_reading.sh",
+        "kind": "test",
+        "label": "test/cases/3012_the_dashboard_is_one_reading.sh",
+        "route": "/cockpit/objects/test/test-cases-3012-the-dashboard-is-one-reading-sh",
+        "source": "test/cases/3012_the_dashboard_is_one_reading.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
         "kind": "test",
         "label": "test/cases/301_the_mesh_stays_one_subsystem.sh",
@@ -56822,6 +57083,26 @@
       },
       {
         "source": "capability:convergence.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -64048,6 +64329,41 @@
       {
         "source": "majordomus://adr/adr-0155",
         "target": "majordomus://test/test/cases/362_a_release_follows_the_ci_verdict.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0033",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0088",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0136",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://document/docs/BRIEF.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
         "kind": "put_in_force"
       },
       {
@@ -77136,6 +77452,81 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2685",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2685",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://issue/I2487",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2689",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2689",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2689",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -81372,6 +81763,11 @@
       },
       {
         "source": "majordomus://test/test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3012_the_dashboard_is_one_reading.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -85797,6 +86193,11 @@
       },
       {
         "source": "module:dashboard",
+        "target": "capability:dashboard.cluster",
+        "kind": "composes"
+      },
+      {
+        "source": "module:dashboard",
         "target": "capability:dashboard.overview",
         "kind": "composes"
       },
@@ -86672,8 +87073,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2757,
-      "edges": 6048,
+      "nodes": 2765,
+      "edges": 6076,
       "acyclic": false,
       "truncated": false
     }

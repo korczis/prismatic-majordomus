@@ -1,0 +1,33 @@
+id: I2688
+milestone: development-runtime
+title: "Every session reports the cluster on the policy's interval, and a session that does not is visible"
+slug: every-session-reports-the-cluster-on-the-policys-interval
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the periodic report a property of the repository: the provider mod's interval prompt carries the cluster page, the interval is the policy's, and a session with no report inside two intervals is marked on the page and in doctor."
+why: "The owner, 2026-10-13/14: a brief report every minute with deliveries, plan, charts, dependencies and estimates, for every peer of the mesh, derived and generated, real time in /ui, nice in the console, on every surface and enforced from .ai. See ADR 0159."
+current_state: "Measured on master a3a67a307e on 2026-10-14: session.brief_on_interval is true with a 20 minute interval, the majordomus-brief mod is installed only by capture install, and on the owner's Mac it was not installed, so no report ever came."
+desired_state: "doctor reports a machine whose provider mod is not installed as one finding with the one command that installs it; the interval prompt quotes the cluster page; the page marks a machine whose sessions have not reported inside two intervals."
+scope:
+  - "share/mods/claude-code/majordomus-brief/"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs"
+  - "lib/doctor.sh"
+  - ".ai/repo/policy.yaml"
+non_scope:
+  - "Providers that publish no session events"
+depends_on:
+  - I2685
+acceptance_criteria:
+  - "A checkout with the switch on and the mod not installed fails doctor naming the command"
+  - "The interval prompt carries the cluster page"
+  - "A machine with no report in two intervals is marked on the page"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1065_a_session_briefs_itself"
+evidence_required:
+  - "mod_wiring_finding"
+  - "silent_machine_marked"
+created_at: 2026-10-14
+updated_at: 2026-10-14

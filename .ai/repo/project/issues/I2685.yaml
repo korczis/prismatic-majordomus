@@ -1,0 +1,38 @@
+id: I2685
+milestone: development-runtime
+title: "The cluster page is one reading with one generated text on the command line and in the UI"
+slug: the-cluster-page-is-one-reading-with-one-text
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Compose machines, sessions, claims, milestone progress and the queue lines from their owners in one capability and draw it once as console text, so that the terminal and the /ui panel are one text."
+why: "The owner, 2026-10-13/14: a brief report every minute with deliveries, plan, charts, dependencies and estimates, for every peer of the mesh, derived and generated, real time in /ui, nice in the console, on every surface and enforced from .ai. See ADR 0159."
+current_state: "Measured on master a3a67a307e on 2026-10-14: dashboard.overview answers four questions; no page puts machines with their sessions' intent and milestone progress in one place, and the periodic report was assembled by hand from five commands."
+desired_state: "dashboard.cluster, majordomus dashboard cluster [--width], GET /api/v1/dashboard/cluster, the MCP tool, and a /ui/panels/cluster panel that draws the lines unchanged."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs"
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/commands/dashboard.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "test/cases/3012_the_dashboard_is_one_reading.sh"
+non_scope:
+  - "Estimates, risks and developer-experience measurements: I2686"
+  - "A pushed stream: I2487"
+acceptance_criteria:
+  - "The page's milestone tally is plan.status's own"
+  - "No line is wider than the width asked, within a floor of 40 and a ceiling of 200"
+  - "The text format prints the page's lines unchanged"
+  - "A source that did not answer is named in notes and its section is empty"
+  - "The /ui panel draws the lines unchanged and says when the source did not answer"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib dashboard"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+evidence_required:
+  - "cluster_unit_tests"
+  - "cluster_case_3012"
+  - "cluster_panel_unit_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

@@ -34393,6 +34393,12 @@
           "command": "majordomus dashboard overview",
           "name": "overview",
           "route": "/docs/cli/dashboard/overview/"
+        },
+        {
+          "about": "Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`",
+          "command": "majordomus dashboard cluster",
+          "name": "cluster",
+          "route": "/docs/cli/dashboard/cluster/"
         }
       ],
       "command": "majordomus dashboard",
@@ -34539,6 +34545,149 @@
       ],
       "route": "/docs/cli/dashboard/overview/",
       "usage": "majordomus dashboard overview [OPTIONS]"
+    },
+    {
+      "about": "Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus dashboard",
+          "name": "dashboard",
+          "route": "/docs/cli/dashboard/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The console width the page is cut to, in characters (40 to 200)",
+          "long": "width",
+          "name": "width",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "WIDTH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus dashboard cluster",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "dashboard",
+            "cluster",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus dashboard cluster --format json",
+          "description": "The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.",
+          "expectation": "exits 0",
+          "id": "dashboard-cluster-json",
+          "setup": [],
+          "title": "The cluster: machines, sessions, claims and plan progress, with the console text"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "cluster",
+      "parent_route": "/docs/cli/dashboard/",
+      "path": [
+        "majordomus",
+        "dashboard",
+        "cluster"
+      ],
+      "route": "/docs/cli/dashboard/cluster/",
+      "usage": "majordomus dashboard cluster [OPTIONS]"
     },
     {
       "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
@@ -36944,10 +37093,10 @@
     }
   ],
   "counts": {
-    "arguments": 1604,
-    "commands": 231,
-    "examples": 235,
-    "runnable": 204
+    "arguments": 1610,
+    "commands": 232,
+    "examples": 236,
+    "runnable": 205
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.24.1",

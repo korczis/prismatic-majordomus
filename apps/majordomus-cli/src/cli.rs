@@ -315,6 +315,12 @@ pub struct BriefArgs {
 pub enum DashboardCommand {
     /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
     Overview,
+    /// Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`.
+    Cluster {
+        #[arg(long)]
+        /// The console width the page is cut to, in characters (40 to 200)
+        width: Option<u16>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -5063,6 +5069,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["dashboard", "overview", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "dashboard cluster",
+        examples: &[ExampleDoc {
+            id: "dashboard-cluster-json",
+            title: "The cluster: machines, sessions, claims and plan progress, with the console text",
+            description: "The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.",
+            argv: &["dashboard", "cluster", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
         }],
     },
     CommandExamples {

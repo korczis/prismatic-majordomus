@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 104,
+      "count": 105,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 104
+      "count": 105
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 348
+      "count": 353
     },
     {
       "kind": "knowledge",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 471
+      "count": 472
     },
     {
       "kind": "use-case",
@@ -2127,6 +2127,13 @@
           "label": "adr-0142",
           "kind": "adr",
           "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0159",
+          "kind": "adr",
+          "route": "/adrs/adr-0159/",
           "external": false
         }
       ]
@@ -5309,6 +5316,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0142/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0159",
+          "kind": "adr",
+          "route": "/adrs/adr-0159/",
+          "external": false
         }
       ]
     },
@@ -7300,7 +7314,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0159",
+          "kind": "adr",
+          "route": "/adrs/adr-0159/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7590,7 +7612,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0159",
+          "kind": "adr",
+          "route": "/adrs/adr-0159/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8086,6 +8116,67 @@
           "edge": "put_in_force",
           "label": "test/cases/362_a_release_follows_the_ci_verdict.sh",
           "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0159",
+      "identity": "adr-0159",
+      "slug": "adr-0159",
+      "cockpit": "/cockpit/objects/adr/adr-0159",
+      "title": "The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval",
+      "status": "proposed",
+      "tags": [
+        "dashboard",
+        "ui",
+        "session",
+        "mesh"
+      ],
+      "source": ".ai/repo/adrs/0159-the-cluster-is-drawn-once-and-every-session-reports-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0033",
+          "kind": "adr",
+          "route": "/adrs/adr-0033/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0136",
+          "kind": "adr",
+          "route": "/adrs/adr-0136/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/BRIEF.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MAJORDOMUS_UI.md",
+          "kind": "document",
           "route": null,
           "external": false
         }

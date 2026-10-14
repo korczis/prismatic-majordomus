@@ -23,6 +23,8 @@ use super::view::{
 
 /// The route of the pull-request queue panel.
 pub const PULL_REQUESTS_PANEL: &str = "/ui/panels/pull-requests";
+/// The route of the cluster panel: the same text `majordomus dashboard cluster` prints.
+pub const CLUSTER_PANEL: &str = "/ui/panels/cluster";
 
 const REPOSITORY: Source = Source::of("repository.info");
 const HEALTH: Source = Source::of("health.report");
@@ -32,6 +34,7 @@ const PLAN: Source = Source::of("plan.status");
 const ROADMAP: Source = Source::of("plan.roadmap");
 const MESH: Source = Source::of("mesh.peers");
 const QUEUE: Source = Source::of("integration.queue");
+const CLUSTER: Source = Source::of("dashboard.cluster");
 
 /// The sources the first paint asks, together.
 pub const FIRST_PAINT: &[Source] = &[REPOSITORY, HEALTH, VERSION, RELEASES, PLAN, ROADMAP, MESH];
@@ -91,6 +94,7 @@ pub fn screen(ctx: &Context) -> View {
         .class("mj-ui-grid")
         .child(plan_panel(a(ROADMAP), a(PLAN)))
         .child(issues_panel(a(PLAN)))
+        .child(wide(cluster_placeholder()))
         .child(wide(queue_placeholder()))
         .child(releases_panel(a(RELEASES), a(VERSION), Some(ROWS)))
         .child(mesh_panel(a(MESH)))
@@ -100,6 +104,60 @@ pub fn screen(ctx: &Context) -> View {
         "Dashboard",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+/// The cluster, as a panel: the console text `dashboard.cluster` generated, drawn as it is,
+/// so that the terminal and this screen cannot disagree (ADR 0159).
+pub fn cluster_panel(ctx: &Context) -> View {
+    View::new("Cluster", cluster_body(&ask(ctx, CLUSTER)))
+}
+
+/// The panel's body: the capability's own lines, or why there are none.
+pub fn cluster_body(page: &Answer) -> El {
+    let body = unanswered(page).unwrap_or_else(|| {
+        let lines: Vec<String> = list(page, "/lines")
+            .iter()
+            .filter_map(|l| l.as_str().map(str::to_string))
+            .collect();
+        if lines.is_empty() {
+            return nothing("The cluster page came back empty.");
+        }
+        el("pre").class("mj-ui-code").text(lines.join("\n"))
+    });
+    panel_to(
+        "Cluster",
+        "Machines, sessions, claims and plan progress: the text `majordomus dashboard cluster` prints, drawn as it is.",
+        None,
+        body,
+        &[page],
+    )
+}
+
+/// Where the cluster panel will be: a link to its own page without JavaScript, the panel
+/// itself once the script has pulled it in. It is asked on its own because it asks the
+/// checkout's leaseholder for the board.
+fn cluster_placeholder() -> El {
+    el("section")
+        .class("mj-ui-panel")
+        .attr("aria-label", "Cluster")
+        .attr("data-panel-src", CLUSTER_PANEL)
+        .attr("aria-busy", "false")
+        .child(
+            el("header")
+                .class("mj-ui-panel-head")
+                .child(el("h2").class("mj-ui-panel-title").text("Cluster"))
+                .child(el("p").class("mj-ui-panel-sub").text(
+                    "Asked on its own: dashboard.cluster asks the server that holds this checkout's board.",
+                )),
+        )
+        .child(
+            el("p").class("mj-ui-panel-body").child(
+                el("a")
+                    .class("mj-ui-link")
+                    .attr("href", CLUSTER_PANEL)
+                    .text("Open the cluster"),
+            ),
+        )
 }
 
 /// The pull-request queue, as a panel: what the fragment request and the page without
@@ -719,6 +777,29 @@ mod tests {
         let html = pull_request_detail(&serde_json::json!({ "title": "unnumbered", "gates": [] }))
             .render();
         assert!(html.contains("unknown") && !html.contains("#0"), "{html}");
+    }
+
+    /// The cluster panel draws the capability's own lines, unchanged and in order, and says
+    /// so when the source could not answer: the terminal and this screen are one text.
+    #[test]
+    fn the_cluster_panel_draws_the_lines_the_capability_generated() {
+        let page = answer(
+            CLUSTER,
+            serde_json::json!({ "lines": ["╭─ CLUSTER ─╮", "MACHINES", "  ● mac (this)"] }),
+        );
+        let html = cluster_body(&page).render();
+        assert!(html.contains("<pre"), "{html}");
+        assert!(
+            html.contains("╭─ CLUSTER ─╮\nMACHINES\n  ● mac (this)"),
+            "{html}"
+        );
+        let failed = Answer {
+            value: Err("no server answered".into()),
+            ..page.clone()
+        };
+        assert!(cluster_body(&failed).render().contains("could not answer"));
+        let empty = answer(CLUSTER, serde_json::json!({ "lines": [] }));
+        assert!(cluster_body(&empty).render().contains("came back empty"));
     }
 
     /// A failed source says it could not answer, and a queue never observed says so.
