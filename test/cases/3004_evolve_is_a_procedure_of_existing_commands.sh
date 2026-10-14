@@ -34,6 +34,18 @@ if grep -nE '\.ai/repo/(evolution|lessons|evolve)/' "$SKILL"; then
   echo "    the skill names a store of its own for lessons"; exit 1
 fi
 
+# ---------------------------------------------------------------- it is reachable by its name
+# Claude Code reads .claude/skills/ and nothing else, so /evolve there is this skill only when
+# the projection wrote its pointer there: generated, named evolve, and leading to the
+# definition. Without it the name reaches whatever command a person keeps in their settings.
+for P in "$ROOT/.claude/skills/evolve/SKILL.md" "$ROOT/.agents/skills/evolve/SKILL.md"; do
+  [ -f "$P" ] || { echo "    ${P#"$ROOT"/} is missing: the skill is not reachable by its name there"; exit 1; }
+  [ "$(sed -n 2p "$P")" = "name: evolve" ] || { echo "    ${P#"$ROOT"/} is not named evolve: $(sed -n 2p "$P")"; exit 1; }
+  grep -q 'GENERATED FILE' "$P" || { echo "    ${P#"$ROOT"/} is not a generated projection"; exit 1; }
+  grep -qF '(../../../.ai/repo/skills/evolve/SKILL.md)' "$P" \
+    || { echo "    ${P#"$ROOT"/} does not lead to the definition"; exit 1; }
+done
+
 # ---------------------------------------------------------------- the procedure, run
 unset MAJORDOMUS_PROVIDER_SESSION CLAUDE_CODE_SESSION_ID
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
