@@ -10307,6 +10307,21 @@
         }
       },
       {
+        "id": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "kind": "claim",
+        "label": "observatory-draws-nothing-it-did-not-read",
+        "summary": "The Observatory at /ui/observatory and /ui/kiosk shows a scene only when the capabilities it requires answered with something to draw; a scene without that carries no model and states the source's reason, on a server and in the published snapshot alike",
+        "route": "/cockpit/objects/claim/observatory-draws-nothing-it-did-not-read",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+          "responsibility": "none",
+          "source": "docs/MAJORDOMUS_UI.md",
+          "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/open-question-gate",
         "kind": "claim",
         "label": "open-question-gate",
@@ -15863,6 +15878,14 @@
         "source": "docs/claims/obligation-establishment.md"
       },
       {
+        "id": "majordomus://document/docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "kind": "document",
+        "label": "docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "summary": "The Observatory draws nothing it did not read",
+        "route": "/cockpit/objects/document/docs-claims-observatory-draws-nothing-it-did-not-read-md",
+        "source": "docs/claims/observatory-draws-nothing-it-did-not-read.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/open-question-gate.md",
         "kind": "document",
         "label": "docs/claims/open-question-gate.md",
@@ -17930,6 +17953,59 @@
           ],
           "use_cases": [],
           "weight": 46
+        }
+      },
+      {
+        "id": "majordomus://feature/observatory",
+        "kind": "feature",
+        "label": "observatory",
+        "summary": "The Observatory: the repository and its mesh, drawn for a wall",
+        "route": "/cockpit/objects/feature/observatory",
+        "source": ".ai/repo/features/observatory.md",
+        "status": "stable",
+        "facts": {
+          "adrs": [
+            "adr-0158"
+          ],
+          "areas": [
+            "observability"
+          ],
+          "claims": [
+            "observatory-draws-nothing-it-did-not-read"
+          ],
+          "docs": [
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "domain": "surfaces",
+          "featured": false,
+          "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+          "modules": [
+            "mesh",
+            "plan",
+            "distribution",
+            "release",
+            "health",
+            "economics",
+            "repository"
+          ],
+          "related": [
+            "ui",
+            "cockpit"
+          ],
+          "rules": [
+            "project.ui-derived-state",
+            "project.interfaces-are-projections"
+          ],
+          "short_title": "Observatory",
+          "tags": [
+            "ui",
+            "interface",
+            "mesh"
+          ],
+          "web": [
+            "ui"
+          ],
+          "weight": 94
         }
       },
       {
@@ -67511,6 +67587,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/observatory-draws-nothing-it-did-not-read",
+        "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/open-question-gate",
         "target": "kind:claim",
         "kind": "is_a"
@@ -71151,6 +71247,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/observatory-draws-nothing-it-did-not-read.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/open-question-gate.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -71722,6 +71823,11 @@
       },
       {
         "source": "majordomus://feature/models",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/observatory",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -86922,8 +87028,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2764,
-      "edges": 6064,
+      "nodes": 2767,
+      "edges": 6070,
       "acyclic": false,
       "truncated": false
     }
