@@ -44,6 +44,6 @@ it was in `CLAUDE.md` and was read. See ADR 0156 for the account and the decisio
 Advisory until the capability that derives the four facts lands (ADR 0156). Then this rule
 is raised to `blocking` as version 2, `start`, `check`, `finish` and the commit and push
 hooks refuse a change from a session that is not announced or is behind the trunk by more
-than the policy's bound, and `test/cases/3010_a_session_joins_the_cluster.sh` proves the
+than the policy's bound, and the case numbered 3010 (`a_session_joins_the_cluster`, under test/cases) proves the
 refusals and the unreachable-remote case.
 {% endraw %}

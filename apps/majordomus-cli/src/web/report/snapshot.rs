@@ -667,7 +667,7 @@ impl Subject {
 }
 
 /// The attributes whose value is a URL a reader or the script follows.
-const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-panel-src";
+const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|data-panel-src";
 
 fn attribute_pattern() -> regex::Regex {
     regex::Regex::new(&format!(r#"\b({URL_ATTRIBUTES})="([^"]*)""#))
