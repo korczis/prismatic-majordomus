@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "37f101a643f12d61ce1b442b81ccd1fcf2b0b62fa82520fc6c5cb2f03839e0c2",
+    "fingerprint": "d3fe7f7e6271697f049f57b0725cf213196d3890b91ba34bacb45bf88100a6b0",
     "summary": {
-      "total": 2379,
+      "total": 2383,
       "builtin": 199,
-      "declarative": 2180,
+      "declarative": 2184,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2180
+        "resource": 2184
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2193
       },
       "mcp_tools": 190,
-      "mcp_resources": 2235,
+      "mcp_resources": 2239,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81189,7 +81189,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 366,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7b8e43156bdc6d6153bca5eaf226440af1a9dd090661e7baa471caf67d1725da",
+    "fingerprint": "0c57093de77fb40b10be13763fa0ee289cadf465f494998df7571a38c77a7be6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81890,7 +81890,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 366,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -87920,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 134640
+        "bytes": 146159
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95342,6 +95342,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2234
+      },
+      {
+        "uri": "majordomus://issue/I2713",
+        "kind": "issue",
+        "identity": "I2713",
+        "title": "A build never lets idle incremental sessions fill the disk",
+        "description": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+        "path": ".ai/repo/project/issues/I2713.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2052
+      },
+      {
+        "uri": "majordomus://issue/I2714",
+        "kind": "issue",
+        "identity": "I2714",
+        "title": "One build directory never serves two worktrees' jobs at once",
+        "description": "Prevent a build directory set through CARGO_BUILD_BUILD_DIR from being used by jobs of two different worktrees at the same time, so that one job's build cannot replace the artifacts another job is testing.",
+        "path": ".ai/repo/project/issues/I2714.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1900
+      },
+      {
+        "uri": "majordomus://issue/I2717",
+        "kind": "issue",
+        "identity": "I2717",
+        "title": "A release record pull request gets a verdict that can pass",
+        "description": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+        "path": ".ai/repo/project/issues/I2717.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2419
+      },
+      {
+        "uri": "majordomus://issue/I2718",
+        "kind": "issue",
+        "identity": "I2718",
+        "title": "A linked worktree runs its own hooks, never the primary checkout's",
+        "description": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+        "path": ".ai/repo/project/issues/I2718.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2444
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -105449,7 +105493,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 366
     },
     {
       "name": "knowledge",

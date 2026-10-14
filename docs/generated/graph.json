@@ -36236,6 +36236,159 @@
         }
       },
       {
+        "id": "majordomus://issue/I2713",
+        "kind": "issue",
+        "label": "I2713",
+        "summary": "A build never lets idle incremental sessions fill the disk",
+        "route": "/cockpit/objects/issue/i2713",
+        "source": ".ai/repo/project/issues/I2713.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build prunes idle incremental sessions of its own build directory and says how much it reclaimed",
+            "A live (-working) session and other build directories are never touched",
+            "Under the floor after pruning, the refusal names the largest build directories"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "lib/rust_bin.sh's bounded build refuses below a free-space floor but never reclaims; cargo keeps every finished incremental session until a clean.",
+          "depends_on": [],
+          "evidence_required": [
+            "idle_sessions_are_pruned_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Deleting another worktree's build output or any target directory"
+          ],
+          "objective": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/derive",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/policy.yaml",
+            "test/cases"
+          ],
+          "slug": "idle-incremental-sessions-are-pruned",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2714",
+        "kind": "issue",
+        "label": "I2714",
+        "summary": "One build directory never serves two worktrees' jobs at once",
+        "route": "/cockpit/objects/issue/i2714",
+        "source": ".ai/repo/project/issues/I2714.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two worktrees building with the same CARGO_BUILD_BUILD_DIR at once: the second refuses or relocates with a line naming the holder",
+            "One worktree's repeated builds in its own directory are unaffected"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "build_dir_has_one_holder_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/adrs/0139-*.md",
+            "test/cases"
+          ],
+          "slug": "a-build-dir-serves-one-worktree",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2717",
+        "kind": "issue",
+        "label": "I2717",
+        "summary": "A release record pull request gets a verdict that can pass",
+        "route": "/cockpit/objects/issue/i2717",
+        "source": ".ai/repo/project/issues/I2717.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record PR's validate concludes success when every gate its plan selects passes",
+            "The evidence job on a plan without suite and crate lanes records a planned-empty report and passes",
+            "The record PR shows that verdict as a check on its head without a person approving a run"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "record_pr_verdict_can_pass_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "release.yml's build and publish jobs (another worker owns them)"
+          ],
+          "objective": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "scripts/ci/verdict",
+            "docs/RELEASE.md",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-record-pr-gets-a-passing-verdict",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2718",
+        "kind": "issue",
+        "label": "I2718",
+        "summary": "A linked worktree runs its own hooks, never the primary checkout's",
+        "route": "/cockpit/objects/issue/i2718",
+        "source": ".ai/repo/project/issues/I2718.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree made by `majordomus worktree create` answers its own .githooks to `git rev-parse --git-path hooks`",
+            "doctor in a linked worktree whose hooks resolve to another tree fails with the fixing command",
+            "The main worktree's hooks path is unchanged"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "worktree_runs_its_own_hooks_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "a-worktree-runs-its-own-hooks",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -78568,6 +78721,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2713",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2713",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -88184,8 +88377,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2800,
+      "edges": 6137,
       "acyclic": false,
       "truncated": false
     }
