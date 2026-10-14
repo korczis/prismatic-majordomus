@@ -7267,6 +7267,8 @@
             "file:.ai/repo/rules/project/land-and-publish.v1.md",
             "test:test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
             "test:test/cases/362_a_release_follows_the_ci_verdict.sh",
+            "test:test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+            "test:test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
             "file:docs/INTEGRATION.md",
             "file:scripts/ci/release-verdict"
           ],
@@ -31264,6 +31266,8 @@
           "acceptance_criteria": [
             "init in a fixture JavaScript repository writes no Elixir or Rust paths into its scope"
           ],
+          "completed_at": "2026-10-14T13:31:37Z",
+          "completed_event": "sha256:0567bbf936e11674cc14f21e1f33da9815ea50517f2bebeccb7bd954a8951040",
           "created_at": "2026-10-04",
           "current_state": "share/skeleton scope is stack-specific.",
           "desired_state": "init writes a scope that names what the adopter's tree contains, and says what it guessed.",
@@ -31278,10 +31282,13 @@
           "scope": [
             "share/skeleton",
             "lib/init.sh",
+            "docs/SCOPE.md",
             "test/cases"
           ],
           "slug": "init-seeds-a-scope-for-the-stack-it-finds",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-14T13:31:18Z",
+          "started_event": "sha256:315979e306d80e1019a13d0596ba8ea0f855937c876157422db8f486e6e22829",
+          "updated_at": "2026-10-14T13:31:37Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31334,8 +31341,10 @@
         "source": ".ai/repo/project/issues/I1991.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Adding a comment to policy.yaml leaves `majordomus update --check` clean"
+            "Adding a comment to policy.yaml leaves `majordomus update --dry-run` reporting every target unchanged (update has no --check flag)"
           ],
+          "completed_at": "2026-10-14T13:31:41Z",
+          "completed_event": "sha256:1940175a9735d9c68ee12577cfe972d6cd3117b2553650d514ab315441db3eee",
           "created_at": "2026-10-04",
           "current_state": "The stamp hashes the file's bytes (lib/update.sh, apps/majordomus-cli/src/providers.rs).",
           "desired_state": "Both renderers hash the same canonical form; a comment edit is a no-op for update.",
@@ -31350,10 +31359,15 @@
           "scope": [
             "lib/update.sh",
             "apps/majordomus-cli/src/providers.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/tests/providers_projection.rs",
+            "lib/common.sh",
             "test/cases"
           ],
           "slug": "a-comment-in-the-policy-moves-no-bootstrap",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-14T13:31:22Z",
+          "started_event": "sha256:45ba0bd1b63d70ad27d8a91753a52dc3e3a757eff7c3d963730df5f41c95e13c",
+          "updated_at": "2026-10-14T13:31:41Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31454,6 +31468,8 @@
             "The same two files in this repository are still refused",
             "No reproduce hint doctor prints in an adopter repository names bin/majordomus-cli"
           ],
+          "completed_at": "2026-10-14T13:31:45Z",
+          "completed_event": "sha256:407b898a71abae4bae4aab9e5070f025343e2df197ddd1e9459745280ea25592",
           "created_at": "2026-10-08",
           "current_state": "The ci and claims families of `reasoning check` scan every workflow and document of the repository they run in and fail doctor on a match. Reproduce hints name bin/majordomus-cli.",
           "evidence_required": [
@@ -31468,11 +31484,14 @@
           "scope": [
             "lib/doctor.sh",
             "apps/majordomus-cli/src/reasoning",
+            "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
             "docs/REASONING.md",
             "test/cases"
           ],
           "slug": "doctor-does-not-fail-an-adopter-on-our-own-check",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T13:31:26Z",
+          "started_event": "sha256:57dd8212d98b735a4cd881685e0be60d60f072c41154234118121e8c4fc746b8",
+          "updated_at": "2026-10-14T13:31:45Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -35557,13 +35576,12 @@
           "acceptance_criteria": [
             "A validate run on a branch is cancelled by the workflow itself when one of its jobs has failed, and a case holds the workflow to it",
             "The rule of expedited landings says which jobs a lander reads for which kind of change, and names the crate tests that read repository records (skills, rules, claims) as part of a record change",
-            "Adding an active skill without naming it where the crate test requires is refused by a structure gate, not first by a rust lane an hour later",
-            "A red on the trunk has a named carrier on the board within the minute it is read, and the landing claim is refused to anyone else until the fix lands"
+            "Adding an active skill without naming it where the crate test requires is refused by a structure gate, not first by a rust lane an hour later"
           ],
+          "completed_at": "2026-10-14T12:55:14Z",
+          "completed_event": "sha256:abdd2769d4a9d22b2ac186ec4084dda5ee041113de88bf0185ab965f06b20192",
           "created_at": "2026-10-13",
-          "depends_on": [
-            "I2662"
-          ],
+          "depends_on": [],
           "evidence_required": [
             "a_failed_run_is_cancelled_case",
             "skill_named_by_crate_test_gate"
@@ -35587,7 +35605,9 @@
             ".ai/repo/project/issues/I2664.yaml"
           ],
           "slug": "a-failed-run-ends-at-its-first-red",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-10-14T12:55:10Z",
+          "started_event": "sha256:0ef633ad3b06875017882715e08fd7c7e7b1423cfa241936ae471a3f281f1e16",
+          "updated_at": "2026-10-14T12:55:14Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/github-check",
@@ -36161,6 +36181,45 @@
             "bin/majordomus plan validate",
             "scripts/ci/mesh-check",
             "cargo test --test redaction"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2709",
+        "kind": "issue",
+        "label": "I2709",
+        "summary": "A red on the trunk has one named carrier, and nobody else may land until it is paid",
+        "route": "/cockpit/objects/issue/i2709",
+        "source": ".ai/repo/project/issues/I2709.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A red on the trunk has a named carrier on the board within the minute it is read, and the landing claim is refused to anyone else until the fix lands"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2664"
+          ],
+          "evidence_required": [
+            "red_trunk_holds_the_landing_claim_test"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Cancelling runs, which I2664 delivered"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin",
+            "docs/INTEGRATION.md",
+            ".ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
+            "test/cases"
+          ],
+          "slug": "a-red-trunk-has-one-carrier",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -52888,11 +52947,46 @@
         "source": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "kind": "test",
+        "label": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "route": "/cockpit/objects/test/test-cases-3016-init-seeds-the-scope-of-the-stack-it-finds-sh",
+        "source": "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "kind": "test",
+        "label": "test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "route": "/cockpit/objects/test/test-cases-3017-doctor-holds-an-adopter-to-what-it-adopted-sh",
+        "source": "test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "kind": "test",
+        "label": "test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "route": "/cockpit/objects/test/test-cases-3018-a-comment-in-the-policy-moves-no-bootstrap-sh",
+        "source": "test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "kind": "test",
+        "label": "test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "route": "/cockpit/objects/test/test-cases-3019-a-failed-branch-run-cancels-itself-sh",
+        "source": "test/cases/3019_a_failed_branch_run_cancels_itself.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
         "kind": "test",
         "label": "test/cases/301_the_mesh_stays_one_subsystem.sh",
         "route": "/cockpit/objects/test/test-cases-301-the-mesh-stays-one-subsystem-sh",
         "source": "test/cases/301_the_mesh_stays_one_subsystem.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+        "kind": "test",
+        "label": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
+        "route": "/cockpit/objects/test/test-cases-3020-an-active-skill-is-named-where-the-crate-test-demands-sh",
+        "source": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh"
       },
       {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -65045,6 +65139,16 @@
       {
         "source": "majordomus://adr/adr-0155",
         "target": "majordomus://test/test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://test/test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0155",
+        "target": "majordomus://test/test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
         "kind": "put_in_force"
       },
       {
@@ -78214,11 +78318,6 @@
       },
       {
         "source": "majordomus://issue/I2664",
-        "target": "majordomus://issue/I2662",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://issue/I2664",
         "target": "majordomus://milestone/M004",
         "kind": "belongs_to"
       },
@@ -78395,6 +78494,21 @@
       {
         "source": "majordomus://issue/I2708",
         "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2709",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2709",
+        "target": "majordomus://issue/I2664",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2709",
+        "target": "majordomus://milestone/M004",
         "kind": "belongs_to"
       },
       {
@@ -82658,7 +82772,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3017_doctor_holds_an_adopter_to_what_it_adopted.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3018_a_comment_in_the_policy_moves_no_bootstrap.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3019_a_failed_branch_run_cancels_itself.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/301_the_mesh_stays_one_subsystem.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87969,8 +88108,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2786,
-      "edges": 6116,
+      "nodes": 2792,
+      "edges": 6125,
       "acyclic": false,
       "truncated": false
     }

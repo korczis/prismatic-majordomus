@@ -51,6 +51,9 @@ permissions:
   # scripts/ci/github-check reads the repository's issues and milestones to prove the
   # canonical project model and its GitHub projection still agree.
   issues: read
+  # `gh run cancel` of this run's own id, the last step of every gate job, and nothing else
+  # of Actions: a run on a branch ends at its first red (I2664, see `concurrency` below).
+  actions: write
 
 # One run of a pull request at a time, and a started run reaches its verdict. A newer commit
 # waits in the group and replaces any commit still waiting there, so a burst of pushes costs
@@ -60,6 +63,16 @@ permissions:
 # was cancelled four times in a row without ever producing the verdict a merge is decided
 # on. Every other run (master, the schedule, a dispatch) is its own group: it neither waits
 # for nor cancels another; only deployments queue, in the pages job's own group.
+#
+# What ends a pull request's run early is its own first red, never a newer commit (I2664).
+# Once one job of a branch's run has failed the run cannot be green, and the jobs still going
+# decide nothing about that head while they hold the runners the trunk's run and the
+# deployments wait for; on 2026-10-13 a run with two failed jobs kept nine more running for
+# twenty minutes. So the last step of every gate job, `if: failure()` on a pull_request event
+# alone, cancels the run by its own id: the jobs that `if: always()` (ci, evidence, the suite's
+# union) still run and report it red. A run of master, the schedule or a dispatch (which is how
+# the release pipeline asks for its record's verdict) is never cancelled this way: the
+# trunk's other jobs are the only reading of its other lanes. Case 3019 holds every job to it.
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
@@ -152,6 +165,13 @@ jobs:
           name: ci-plan
           path: plan.json
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ structure
   # The cheap, deterministic gates every plan runs: the shell syntax and shellcheck, then
@@ -219,6 +239,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ suite
   # Every behavioural case (test/run.sh), four at a time, in a disposable repository each.
@@ -332,6 +359,13 @@ jobs:
           name: suite-shard-${{ matrix.shard }}
           path: suite.tsv
           retention-days: 3
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # The suite's one verdict, over every shard: the four reports joined, every case under
   # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
@@ -417,6 +451,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
@@ -591,6 +632,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ coverage
   # Line, function and region coverage of the crate, measured over the code that is under
@@ -672,6 +720,13 @@ jobs:
           retention-days: 14
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ evidence
   # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
@@ -781,6 +836,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ site
   # The site built once: the derived data current, the build, every static check over the
@@ -872,6 +934,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
@@ -919,6 +988,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ----------------------------------------------------------------- ui
   # Every discovered page at every width the compiled theme implies, in a browser, against the
@@ -989,6 +1065,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ----------------------------------------------------------------- cockpit
   # The Cockpit measured against a server this job starts: every route the server serves
@@ -1033,6 +1116,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ mesh-lab
   # Mesh cooperation over a real network (test/mesh-lab/run, claim mesh-network-acceptance):
@@ -1086,6 +1176,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ macos
   # The behaviour that depends on the platform: the suite under the stock macOS shell
@@ -1147,6 +1244,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ install
   # The advertised command, from the published site, on two of the platforms it claims to
@@ -1186,6 +1290,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ pages
   # Is what GitHub Pages serves a projection of this branch at all? One runner, because the
@@ -1210,6 +1321,8 @@ jobs:
     permissions:
       contents: read
       pages: read
+      # its last step cancels a branch's run that this job turned red, as every gate job's does
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -1229,6 +1342,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
 
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job
