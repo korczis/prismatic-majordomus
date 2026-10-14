@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var ARTIFACT = 'https://claude.ai/artifact/CBgdBRrXSimNAgQZuxt5JU';
+  var ARTIFACT = 'https://claude.ai/artifact/XgCzwV1MFNDL1ssJHstPQ1';
   function $(id) { return document.getElementById(id); }
   function el(tag, attrs, parent, text) {
     var e = document.createElement(tag);
