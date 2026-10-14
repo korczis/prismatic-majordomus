@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.24.1"
+    "version": "0.25.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -706,6 +706,21 @@
       "kind": "capability",
       "subject": "capability:obligations.vocabulary",
       "path": "/evidence/capabilities/obligations-vocabulary/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.capture",
+      "path": "/evidence/capabilities/observatory-capture/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.events",
+      "path": "/evidence/capabilities/observatory-events/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:observatory.replay",
+      "path": "/evidence/capabilities/observatory-replay/"
     },
     {
       "kind": "capability",
@@ -5297,6 +5312,36 @@
       "kind": "capability",
       "id": "obligations.vocabulary",
       "page": "/evidence/capabilities/obligations-vocabulary/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.capture": {
+      "kind": "capability",
+      "id": "observatory.capture",
+      "page": "/evidence/capabilities/observatory-capture/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.events": {
+      "kind": "capability",
+      "id": "observatory.events",
+      "page": "/evidence/capabilities/observatory-events/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:observatory.replay": {
+      "kind": "capability",
+      "id": "observatory.replay",
+      "page": "/evidence/capabilities/observatory-replay/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -20233,6 +20278,42 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_observatory_capture": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_capture",
+      "alias_of": "capability:observatory.capture",
+      "programs": [],
+      "members": [
+        "capability:observatory.capture"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_events": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_events",
+      "alias_of": "capability:observatory.events",
+      "programs": [],
+      "members": [
+        "capability:observatory.events"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_observatory_replay": {
+      "kind": "mcp",
+      "id": "majordomus_observatory_replay",
+      "alias_of": "capability:observatory.replay",
+      "programs": [],
+      "members": [
+        "capability:observatory.replay"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_pack_plan": {
       "kind": "mcp",
       "id": "majordomus_pack_plan",
@@ -27284,6 +27365,7 @@
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
+    "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
     "crate:properties",
