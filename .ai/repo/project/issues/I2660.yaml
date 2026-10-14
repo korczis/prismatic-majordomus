@@ -1,35 +1,37 @@
 id: I2660
-milestone: development-runtime
-title: "A session reads whether it is current, attached, announced and useful, from one capability"
-slug: a-session-reads-whether-it-has-joined-the-cluster
-priority: p0
+milestone: M004
+title: "The site is published as an artifact by the job that built it, so a ready site waits for no second workflow"
+slug: pages-is-published-by-our-own-job
+priority: p1
 profile: implementation
-parallel_safe: false
-objective: "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
-current_state: "Measured on master f0696ec535 on 2026-10-13: majordomus context prints the task and the peers but not whether the checkout is behind the trunk or the session is unannounced; the SessionStart line says 'Already up to date' from a state fetched earlier; mesh peers lists asks to all but no command lists what is unheld."
-desired_state: "One read capability, declared once with capability! under apps/majordomus-cli/src/capability/builtin/ and projected by majordomus generate to CLI, MCP and HTTP, answers current, attached, announced and useful with the commands that repair each one; an unreachable remote, a closed mesh and a missing server are each a named state, never 'current'."
+parallel_safe: true
+objective: "Remove the second queue from a publication: the job that built and checked the site hands it to GitHub Pages itself, and one publisher writes everything the site serves."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13: Pages is build_type legacy from the gh-pages branch, so after our push GitHub runs its own 'pages build and deployment' workflow of three jobs in the same runner pool. Run 38458452794: build ran 77 s, and its deploy job, 19 s of work, was created at 19:57:22Z and started at 20:44:25Z, 47 minutes later. The release workflow also writes to gh-pages (releases, the installer), so the branch has two writers."
+desired_state: "The deploy job uploads the built site as a Pages artifact and deploys it in the same run; nothing waits for a workflow this repository does not start. Whatever the release workflow publishes reaches the site through that one publisher. The time from a merge to /build.json naming its commit is measured on every run and its bound is declared in .ai/repo/ci/pages.yaml."
 scope:
-  - "apps/majordomus-cli/src/capability/builtin/"
-  - "apps/majordomus-cli/src/mesh/"
-  - "test/cases/3010_a_session_joins_the_cluster.sh"
-  - ".ai/repo/policy.yaml"
+  - ".github/workflows/pages.yml"
+  - ".github/workflows/release.yml"
+  - "scripts/site-deploy"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/PAGES_STATUS.md"
+  - ".ai/repo/project/issues/I2660.yaml"
 non_scope:
-  - "Refusing anything: that is I2661"
-  - "Any screen or page: that is I2662"
-  - "A change to how the board is gathered (ADR 0044)"
+  - "What the site contains"
+  - "The runner pool's size, which is the account's"
 acceptance_criteria:
-  - "A checkout N commits behind the fetched trunk is reported behind by N with the newest tag"
-  - "An unreachable remote is unverified and is never reported current"
-  - "A session with no open mesh session on the live server is reported unannounced with the command that announces it"
-  - "With no claim held, the answer lists unheld asks to all, review requests with no answer and tasks without an owner, bounded and counted"
-  - "The bounds (how far behind, how old a fetch) are read from the policy and declared once"
+  - "A publication needs no workflow other than the one that built it; the repository's Pages source is the workflow, and the change of that setting is recorded with who made it"
+  - "The releases directory and the installer are served after a deployment exactly as before it, proven by the publication probes"
+  - "The merge-to-served time of three consecutive deployments is recorded, and none waits for a runner after the site was built"
+  - "A hand deploy from a terminal still has one path and says what it cannot do"
 validation:
   - "bin/majordomus plan validate"
-  - "majordomus generate --check"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
+  - "scripts/pages verify --smoke"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2983_the_published_ui_is_the_trunks 489_rustdoc_deploy"
 evidence_required:
-  - "join_state_unit_tests"
-  - "join_state_case_3004"
+  - "three_deployments_merge_to_served_seconds"
+  - "publication_probes_after_the_switch"
 created_at: 2026-10-13
 updated_at: 2026-10-13

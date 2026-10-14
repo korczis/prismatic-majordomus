@@ -22255,6 +22255,37 @@
       ],
       "findings": []
     },
+    "rule:project.a-build-never-waits-in-silence-on-anothers-lock": {
+      "kind": "rule",
+      "id": "project.a-build-never-waits-in-silence-on-anothers-lock",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:122_liveness_gate",
+          "path": "test/cases/122_liveness_gate.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/122_liveness_gate.sh",
+            ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3002_a_build_never_waits_in_silence",
+          "path": "test/cases/3002_a_build_never_waits_in_silence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3002_a_build_never_waits_in_silence.sh",
+            ".ai/repo/rules/project/a-build-never-waits-in-silence-on-anothers-lock.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-closing-question-is-answered-by-measurement": {
       "kind": "rule",
       "id": "project.a-closing-question-is-answered-by-measurement",

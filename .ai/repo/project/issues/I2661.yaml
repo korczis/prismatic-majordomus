@@ -1,37 +1,33 @@
 id: I2661
-milestone: development-runtime
-title: "start, check, finish and the commit and push hooks refuse a change from a session that has not joined"
-slug: work-from-a-session-that-has-not-joined-is-refused
-priority: p0
+milestone: M004
+title: "A publication that did not arrive is a finding the next reader meets, never a green step"
+slug: a-publication-that-did-not-arrive-is-a-finding
+priority: p1
 profile: implementation
-parallel_safe: false
-objective: "Make the derived state of I2660 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
-current_state: "Measured on master f0696ec535 on 2026-10-13: nothing refuses a stale or unannounced session; on the owner's Mac the git hooks were not installed at all (core.hooksPath unset), and doctor said so only as six wiring failures nobody read."
-desired_state: "start, check and finish carry the join doctrine; the pre-commit and pre-push hooks run it; doctor reports a machine whose hooks are not wired as one finding with the single command that wires them; an unreachable remote, a closed mesh and a mesh with no server never refuse."
+parallel_safe: true
+objective: "Make the gap between 'the workflow succeeded' and 'the site serves the commit' visible where a lander looks, the minute it exists."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13 on pages runs 38451796942 and 38446047641: the step that waits for /build.json to name the commit (scripts/pages verify --timeout 600) ran 602 s both times, to its limit, and is continue-on-error, so the deploy job ended green while production served the previous commit. The pages-live gate reads the live site only on the next validation run, which waited in the same queue."
+desired_state: "When the wait ends without the site serving the commit, the run says so in its summary and as an annotation, the timing row records 'not served', and a deployment record names the commit production does serve; a lander's verification reads that record. The wait itself is no longer the whole bound when the cause is known to be a queue: it reports what GitHub's deployment is waiting for."
 scope:
-  - "apps/majordomus-cli/src/doctrine/"
-  - "apps/majordomus-cli/src/capability/builtin/"
-  - "lib/doctor.sh"
-  - ".githooks/"
-  - ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v2.md"
-  - "test/cases/3010_a_session_joins_the_cluster.sh"
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "docs/PAGES_STATUS.md"
+  - ".ai/repo/project/issues/I2661.yaml"
 non_scope:
-  - "Deriving the facts: that is I2660"
-  - "A refusal of reads, of context, of mesh or of doctor"
-depends_on:
-  - "I2660"
+  - "Failing the deploy job for a wait this repository does not control"
+  - "Publishing by artifact, which is I2660"
 acceptance_criteria:
-  - "An unannounced session's commit is refused naming the announcing command, and the same session's context and mesh peers are not"
-  - "A session behind the bound is refused at push and told to merge the trunk"
-  - "An offline machine is told the check is unverified and proceeds"
-  - "The rule is raised to blocking as version 2 with test 3004 as its decision and reviewed_because removed"
+  - "A run whose publication did not arrive within the bound is distinguishable from one that did without opening its log: summary, annotation and timing row"
+  - "scripts/pages verify names what the site serves and, when GitHub's own deployment is queued, that it is queued and since when"
+  - "A case breaks the wait with a site that never changes and proves each of the three signals"
 validation:
   - "bin/majordomus plan validate"
-  - "majordomus rules list"
-  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
+  - "scripts/ci/shell-lint"
+  - "bash test/run.sh <the new case>"
 evidence_required:
-  - "join_refusal_case_3004"
-  - "rule_v2_blocking"
+  - "not_served_is_visible_case"
+  - "one_real_run_with_a_late_publication"
 created_at: 2026-10-13
 updated_at: 2026-10-13

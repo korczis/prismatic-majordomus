@@ -1,36 +1,34 @@
 id: I2662
-milestone: development-runtime
-title: "The join state is projected to the briefing, the Cockpit, the UI, the handbook, the site and GitHub Pages"
-slug: the-join-state-is-on-every-surface-that-describes-the-cluster
-priority: p0
+milestone: M004
+title: "Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs"
+slug: validation-leaves-the-deployment-a-runner
+priority: p1
 profile: implementation
-parallel_safe: false
-objective: "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
-current_state: "Measured on master f0696ec535 on 2026-10-13: docs/MESH.md describes announcing in prose; the landing page and the handbook do not say what keeps a late worker from working alone; no screen shows who is stale or unannounced."
-desired_state: "The SessionStart briefing opens with the four facts; /ui and the Cockpit show each worker's state on the board; docs/MESH.md, the handbook and the site's description of coordination are generated from the rule and the capability; the landing page answers 'how do the workers not collide' with the evidence chain; the published Pages carry all of it."
+parallel_safe: true
+objective: "Bound what validation may occupy, so that the two things only the trunk can do, publish and record a release, start when they are ready."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13: jobs of the pages workflow waited 78 to 876 s for a runner in two finished runs and 20.5 minutes in a third, while several validate runs of branches were queued or running; each validate run starts about nineteen jobs. No rule says how much of the pool validation may take, and a run nobody will read is cancelled only by hand (ADR 0155 clause 7)."
+desired_state: "The validate workflow declares how many of its jobs may run at once and cancels a branch's superseded run by itself; a run on the trunk, a deployment and a release run are never cancelled and never wait behind a branch's matrix. The wait of a pages job for a runner is recorded per run and has a declared bound."
 scope:
-  - "apps/majordomus-cli/src/ui/"
-  - "docs/MESH.md"
-  - "site/"
-  - "scripts/generate-site-data"
-  - "test/cases/3010_a_session_joins_the_cluster.sh"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/pages.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci-plan"
+  - "docs/CI.md"
+  - ".ai/repo/project/issues/I2662.yaml"
 non_scope:
-  - "Deriving or enforcing the state: I2660 and I2661"
-  - "A new screen framework"
-depends_on:
-  - "I2660"
+  - "Buying runners"
+  - "What the gates check"
 acceptance_criteria:
-  - "The briefing's first block names current, attached, announced and useful"
-  - "The board screen marks a worker that is behind or unannounced, linking its session"
-  - "docs/MESH.md and the site page are generated and majordomus generate --check is clean"
-  - "The deployed Pages answer with the same text at the released commit, which pages-live verifies"
+  - "A new push to a branch cancels that branch's unfinished validate run; the trunk's runs are never cancelled"
+  - "The number of validate jobs running at once has a declared maximum, and a case holds the workflow to it"
+  - "Over a day of landings no pages job waits longer for a runner than the declared bound, read from the recorded timings"
 validation:
   - "bin/majordomus plan validate"
-  - "majordomus generate --check"
-  - "scripts/pages current"
+  - "scripts/ci/github-check"
+  - "scripts/ci-plan --check"
 evidence_required:
-  - "join_state_on_ui"
-  - "join_state_on_pages"
+  - "runner_wait_per_pages_job_over_a_day"
+  - "superseded_run_cancelled_case"
 created_at: 2026-10-13
 updated_at: 2026-10-13

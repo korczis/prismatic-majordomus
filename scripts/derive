@@ -140,7 +140,7 @@ else
   mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
-  mj_lock_run env RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
+  RUSTFLAGS='' mj_lock_run mj_cargo_bounded "$ROOT" build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
   # ask cargo where it put the result rather than compose it: a run that then spends ten
   # minutes can afford the 80ms, and the composed path is what exits 127 under a shared
   # CARGO_TARGET_DIR — the executable is in the shared directory, not under the worktree
