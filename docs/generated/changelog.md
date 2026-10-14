@@ -7,6 +7,40 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.25.0**
 
+## v0.25.0 — 2026-10-14
+
+### Added
+
+- **ui**: the Observatory follows the journal from a cursor, and every new tool is called (`bb844110b`)
+- **ui**: the published Observatory replays a recording of the real mesh, and says it is a replay (`f58b8a1c6`)
+- **editors**: Claude Code reaches every workflow skill by its name, and evolve says what it learned (`9709eea84`)
+
+### Fixed
+
+- **plan**: I1900 is ready again until the intent it serves has a critique (`f044ae642`)
+- **plan**: an open issue scopes the test directory, not a case it has not written yet (`70b4e540c`)
+
+### Documentation
+
+- **handbook**: the Czech handbook says what the MJ way is, and states no figure by hand (`e217df9d6`)
+
+### Housekeeping
+
+- **plan**: the deployment milestone is the GHCR image, and eight Fly-only issues are cancelled (`3b787430c`)
+- **release**: 0.25.0, for the Observatory's three new capabilities (`2b9f58e93`)
+- **plan**: 26 issues master already delivers are done with their evidence, and I0924 is cancelled (`f29cb6ac2`)
+- **release**: record v0.24.1 and the metadata it publishes (`b8f6f3ec3`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.25.0-aarch64-apple-darwin.tar.gz (`315a5f7824e6`)
+- `macos-x86_64` — majordomus-v0.25.0-x86_64-apple-darwin.tar.gz (`c4de17255b78`)
+- `linux-x86_64-gnu` — majordomus-v0.25.0-x86_64-unknown-linux-gnu.tar.gz (`edb3a128a163`)
+- `linux-x86_64-musl` — majordomus-v0.25.0-x86_64-unknown-linux-musl.tar.gz (`34416d74a83d`)
+- `linux-aarch64-gnu` — majordomus-v0.25.0-aarch64-unknown-linux-gnu.tar.gz (`1c34018c1250`)
+- `linux-aarch64-musl` — majordomus-v0.25.0-aarch64-unknown-linux-musl.tar.gz (`9185d67e2b07`)
+
+
 ## v0.24.1 — 2026-10-14
 
 ### Decisions
