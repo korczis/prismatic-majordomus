@@ -5997,6 +5997,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0069",
+        "kind": "adr",
+        "label": "adr-0069",
+        "summary": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+        "route": "/cockpit/objects/adr/adr-0069",
+        "source": ".ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.no-network-no-eval",
+            "rule:project.no-new-nouns",
+            "rule:project.optional-complexity",
+            "rule:project.interfaces-are-projections",
+            "rule:project.executions-carry-no-secret",
+            "file:docs/CONCEPTS.md",
+            "file:SECURITY.md"
+          ],
+          "tags": [
+            "automation",
+            "capabilities",
+            "architecture",
+            "portability",
+            "security"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0070",
         "kind": "adr",
         "label": "adr-0070",
@@ -29470,6 +29498,226 @@
         }
       },
       {
+        "id": "majordomus://issue/I1800",
+        "kind": "issue",
+        "label": "I1800",
+        "summary": "The sandboxed engine a scripted capability runs in",
+        "route": "/cockpit/objects/issue/i1800",
+        "source": ".ai/repo/project/issues/I1800.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "eval does not compile in a script",
+            "a script has no clock function",
+            "an endless loop ends with the operation limit, and a string cannot grow past its limit",
+            "a cancelled execution stops at its next operation",
+            "the engine is Send and Sync"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "No interpreter is embedded; every orchestration is shell.",
+          "depends_on": [],
+          "desired_state": "apps/majordomus-cli/src/script builds the one engine; each guarantee it makes is proved by a unit test.",
+          "evidence_required": [
+            "sandbox_engine_proved"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Binding the engine to a capability; that is I1801"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            ".ai/repo/adrs"
+          ],
+          "slug": "the-sandboxed-engine",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1801",
+        "kind": "issue",
+        "label": "I1801",
+        "summary": "A scripted capability is a kind, discovered and registered, runnable and projected like any capability",
+        "route": "/cockpit/objects/issue/i1801",
+        "source": ".ai/repo/project/issues/I1801.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "a definition with an unknown key or a missing script is refused naming the file and field",
+            "a compile error names the script file, line and column",
+            "a runtime error names the script file, line and column",
+            "a call to a capability whose effect exceeds the declared effect is refused",
+            "a cancelled execution of a scripted capability stops",
+            "the scripted capability appears in capabilities list, OpenAPI and MCP after generate with no edit elsewhere"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "Capabilities come from Rust modules and from declarative objects as resources only; nothing turns a layer file into an executable capability.",
+          "depends_on": [
+            "I1800"
+          ],
+          "evidence_required": [
+            "scripted_capability_projected_everywhere",
+            "effect_ceiling_enforced"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Migrating shell scripts; that is I1804",
+            "A function that takes a shell command string"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            "share",
+            ".ai/repo",
+            "docs",
+            "test",
+            "SECURITY.md"
+          ],
+          "slug": "a-scripted-capability-is-a-kind",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::",
+            "bash test/run.sh 383_a_scripted_capability_runs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1802",
+        "kind": "issue",
+        "label": "I1802",
+        "summary": "Nothing runs Perl",
+        "route": "/cockpit/objects/issue/i1802",
+        "source": ".ai/repo/project/issues/I1802.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "no tracked file invokes perl or shasum",
+            "a gate refuses a new invocation"
+          ],
+          "completed_at": "2026-10-14T21:35:47Z",
+          "completed_event": "sha256:a18220b3fe25e752edd8e1585c9abdb5837ffa023ba9b736d68a6bee73e99536",
+          "created_at": "2026-09-15",
+          "current_state": "shasum is called from shell under scripts and lib.",
+          "depends_on": [],
+          "desired_state": "No tracked file invokes perl or shasum; a gate refuses a new one.",
+          "evidence_required": [
+            "no_perl"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Replacing shell as a whole; that is the rest of the milestone"
+          ],
+          "objective": "Remove every invocation of Perl from tracked files, including indirect ones such as shasum on macOS, and hold the absence with a gate.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            "lib",
+            "bin",
+            "test"
+          ],
+          "slug": "nothing-runs-perl",
+          "started_at": "2026-10-14T21:35:18Z",
+          "started_event": "sha256:e1010724aa2bea80113a987af0ea98e5387cb6f3a4bd5fb088c447e66390681c",
+          "updated_at": "2026-10-14T21:35:47Z",
+          "validation": [
+            "bash test/run.sh"
+          ],
+          "why": "The repository owner ruled Perl out on 2026-09-15. shasum is a Perl script on macOS, so a digest taken with it runs Perl without the word appearing anywhere. Worked on branch fix/nothing-runs-perl."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1803",
+        "kind": "issue",
+        "label": "I1803",
+        "summary": "New shell is refused without a declared exemption, and the migration inventory is tracked",
+        "route": "/cockpit/objects/issue/i1803",
+        "source": ".ai/repo/project/issues/I1803.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "a new shell file under a governed path without an exemption fails the gate",
+            "every existing shell unit appears in the inventory with its disposition"
+          ],
+          "completed_at": "2026-10-14T21:36:57Z",
+          "completed_event": "sha256:8bd2954dc8472e024fce8922dc93211e8f134049b3a363ab5aa09b645f092b62",
+          "created_at": "2026-09-15",
+          "current_state": "Nothing refuses a new shell file; the inventory exists only as an audit report.",
+          "depends_on": [],
+          "desired_state": "A gate and an exemption list; the inventory is a tracked, machine-readable record each migration updates.",
+          "evidence_required": [
+            "new_shell_refused"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Migrating any unit"
+          ],
+          "objective": "Refuse a new shell file under a governed path unless a machine-readable exemption list names it, and track the inventory of existing shell with each unit's disposition.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            ".ai/repo",
+            "test"
+          ],
+          "slug": "new-shell-is-refused",
+          "started_at": "2026-10-14T21:36:29Z",
+          "started_event": "sha256:8199848a3bc7f9aba7d178f6f925b9c323192535a807917fd6d5305874b1ba89",
+          "updated_at": "2026-10-14T21:36:57Z",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1804",
+        "kind": "issue",
+        "label": "I1804",
+        "summary": "The first shell scripts become scripted capabilities over typed Rust",
+        "route": "/cockpit/objects/issue/i1804",
+        "source": ".ai/repo/project/issues/I1804.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "the ratchet is one typed capability with tests",
+            "each migrated gate produces the same verdict on the same tree as its shell predecessor"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "Ten scripts/ci gates each carry their own copy of the baseline comparison.",
+          "depends_on": [
+            "I1801"
+          ],
+          "desired_state": "One Rust capability compares a finding set with its baseline; the migrated gates are scripted capabilities; their shell is deleted and the inventory updated.",
+          "evidence_required": [
+            "ratchet_is_one_capability"
+          ],
+          "milestone": "automation",
+          "non_scope": [
+            "Gates whose logic is not the ratchet"
+          ],
+          "objective": "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli",
+            "scripts/ci",
+            "share",
+            ".ai/repo",
+            "test"
+          ],
+          "slug": "first-scripts-become-scripted-capabilities",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1900",
         "kind": "issue",
         "label": "I1900",
@@ -36765,6 +37013,58 @@
             "bin/majordomus plan validate",
             "scripts/ci/core-check",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/automation",
+        "kind": "milestone",
+        "label": "automation",
+        "summary": "Repository automation is scripted capabilities over typed Rust, not shell",
+        "route": "/cockpit/objects/milestone/automation",
+        "source": ".ai/repo/project/milestones/automation.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A Rhai script runs only inside the sandbox engine, with eval disabled, no clock, bounded work and cancellation",
+            "A scripted capability declared in the layer appears in the registry, capabilities list, OpenAPI and MCP with no edit anywhere else",
+            "A script calling a capability whose effect exceeds its own declared effect is refused at run time",
+            "No tracked file invokes Perl, held by a gate",
+            "A new shell file under a governed path without an exemption entry is refused, and the migration inventory is machine-readable"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "sandbox_engine_proved",
+            "scripted_capability_projected_everywhere",
+            "effect_ceiling_enforced",
+            "no_perl",
+            "new_shell_refused"
+          ],
+          "non_scope": [
+            "Transliterating shell scripts into Rhai. Domain logic moves to typed Rust capabilities; a script only orchestrates capabilities",
+            "A generic shell or exec capability, or any function that takes a command string",
+            "Perl, Python or Node as a portable layer"
+          ],
+          "order": 130,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli",
+            "share",
+            "scripts",
+            "lib",
+            "bin",
+            ".ai/repo",
+            "docs",
+            "test",
+            "SECURITY.md"
+          ],
+          "slug": "automation",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh 383_a_scripted_capability_runs"
           ]
         }
       },
@@ -62873,6 +63173,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0069",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://document/SECURITY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://document/docs/CONCEPTS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.executions-carry-no-secret@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0069",
+        "target": "majordomus://rule/project.optional-complexity@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0070",
         "target": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
         "kind": "put_in_force"
@@ -76688,6 +77028,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1800",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1800",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "majordomus://issue/I1800",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1801",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1802",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1802",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1803",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1803",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "majordomus://issue/I1801",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1804",
+        "target": "majordomus://milestone/automation",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1900",
         "target": "kind:issue",
         "kind": "is_a"
@@ -78629,6 +79029,11 @@
       },
       {
         "source": "majordomus://milestone/architecture-is-enforced",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/automation",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -88184,8 +88589,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2803,
+      "edges": 6150,
       "acyclic": false,
       "truncated": false
     }

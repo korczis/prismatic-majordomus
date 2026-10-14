@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 362
+      "count": 367
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 35
+      "count": 36
     },
     {
       "kind": "moment",
@@ -4113,6 +4113,75 @@
           "label": "docs/EVIDENCE.md",
           "kind": "document",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0069",
+      "identity": "adr-0069",
+      "slug": "adr-0069",
+      "cockpit": "/cockpit/objects/adr/adr-0069",
+      "title": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+      "status": "proposed",
+      "tags": [
+        "automation",
+        "capabilities",
+        "architecture",
+        "portability",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "SECURITY.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/CONCEPTS.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.executions-carry-no-secret@1",
+          "kind": "rule",
+          "route": "/rules/project-executions-carry-no-secret-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-network-no-eval@1",
+          "kind": "rule",
+          "route": "/rules/project-no-network-no-eval-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.optional-complexity@1",
+          "kind": "rule",
+          "route": "/rules/project-optional-complexity-1/",
           "external": false
         }
       ],
@@ -13331,6 +13400,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0033/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
+          "external": false
         }
       ]
     },
@@ -13768,6 +13844,13 @@
           "label": "adr-0054",
           "kind": "adr",
           "route": "/adrs/adr-0054/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
           "external": false
         },
         {
@@ -14771,6 +14854,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0091",
           "kind": "adr",
           "route": "/adrs/adr-0091/",
@@ -14860,6 +14950,13 @@
           "label": "adr-0046",
           "kind": "adr",
           "route": "/adrs/adr-0046/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
           "external": false
         },
         {
@@ -15106,6 +15203,13 @@
           "label": "adr-0048",
           "kind": "adr",
           "route": "/adrs/adr-0048/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
           "external": false
         }
       ]
