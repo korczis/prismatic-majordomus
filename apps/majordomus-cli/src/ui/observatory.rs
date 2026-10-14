@@ -30,7 +30,7 @@ use crate::cockpit::html::el;
 
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
-use super::view::{hero, link, panel, table, technical};
+use super::view::{hero, link, panel, table};
 
 /// The Observatory's route.
 pub const ROUTE: &str = "/ui/observatory";
@@ -175,7 +175,9 @@ pub const SCENES: &[Scene] = &[
     },
 ];
 
-/// One source as the Observatory read it.
+/// One source as the Observatory read it. It carries no link: the page's own source lines
+/// link each capability's technical view, and a link inside this document would be a second
+/// copy of one that a publication has to lead somewhere (case 2982).
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SourceStanding {
     /// The capability asked.
@@ -187,8 +189,6 @@ pub struct SourceStanding {
     pub reason: Option<String>,
     /// How long the executor took, in milliseconds.
     pub took_ms: u64,
-    /// The technical view of the capability, where every other way to ask it is listed.
-    pub href: String,
 }
 
 /// One scene as projected: the descriptor, whether it can be drawn, and the model it draws.
@@ -261,7 +261,6 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
             },
             reason: a.value.as_ref().err().cloned(),
             took_ms: a.took.as_millis() as u64,
-            href: technical(a.source.capability),
         })
         .collect::<Vec<_>>();
     let scenes = SCENES
@@ -880,5 +879,8 @@ mod tests {
         for s in SOURCES {
             assert!(html.contains(s.capability), "{} is not named", s.capability);
         }
+        // the document holds no link into another surface; the source lines below it do
+        let carried = serde_json::to_string(&p).unwrap();
+        assert!(!carried.contains("/cockpit"), "{carried}");
     }
 }

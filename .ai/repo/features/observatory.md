@@ -9,7 +9,7 @@ summary: At /ui/observatory, and at /ui/kiosk filling the window unattended, the
 status: stable
 weight: 94
 domain: surfaces
-featured: false
+featured: true
 areas: [observability]
 modules: [mesh, plan, distribution, release, health, economics, repository]
 rules: [project.ui-derived-state, project.interfaces-are-projections]

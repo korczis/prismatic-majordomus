@@ -35,8 +35,9 @@ done < nav.txt
 pages="$(jq -r '.pages | length' "$S/snapshot.json")"
 [ "$pages" -le 60 ] && [ "$pages" -ge "$(wc -l < nav.txt | tr -d ' ')" ] \
   || { echo "    the snapshot records $pages page(s) for a bound of 60 and $(wc -l < nav.txt | tr -d ' ') screen(s)"; exit 1; }
-[ "$(find "$S" -name index.html | wc -l | tr -d ' ')" = "$(( pages + 1 ))" ] \
-  || { echo "    the files are not the pages the snapshot records and its one page about the live UI"; exit 1; }
+redirects="$(jq -r '.redirects | length' "$S/snapshot.json")"
+[ "$(find "$S" -name index.html | wc -l | tr -d ' ')" = "$(( pages + 1 + redirects ))" ] \
+  || { echo "    the files are not the pages the snapshot records, its one page about the live UI and the pages for the names it redirects"; exit 1; }
 
 # ---------------------------------------------------------------- what it is
 for f in $(jq -r '.pages[]' "$S/snapshot.json"); do
