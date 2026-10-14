@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.25.0"
+    "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "64abb7869adecdfbfaf32e6a64d462674221aceaa8bf971e105ae547e4c6d4af",
+    "fingerprint": "a562a72bd5a4ebb3d897b18fcbdddf2e8a76b18673dc64afa0d957471d02520c",
     "summary": {
-      "total": 2375,
+      "total": 2378,
       "builtin": 199,
-      "declarative": 2176,
+      "declarative": 2179,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2176
+        "resource": 2179
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2185
+        "implemented": 2188
       },
       "mcp_tools": 190,
-      "mcp_resources": 2231,
+      "mcp_resources": 2234,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -42032,11 +42032,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "historical",
+                    "description": "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+                  },
+                  {
+                    "type": "string",
                     "const": "missing",
                     "description": "Nothing answers to it. A dangling reference is the integrity validator's finding."
                   }
                 ],
-                "description": "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+                "description": "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
               },
               "ResolvedRelation": {
                 "type": "object",
@@ -81755,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 478,
+        "capabilities": 481,
         "capability_ids": []
       },
       {
@@ -81845,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ba63b094eb6d80da8c51d8b4b53d04147284645bfd72ab42d18b8ae7a5614242",
+    "fingerprint": "94022cd3a3ad9106fb500c5a33852e0dc7a460b96f11a27d27474893d1a17eaf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81899,7 +81904,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 478,
+      "test": 481,
       "use-case": 49,
       "workspace": 1
     },
@@ -87627,7 +87632,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 31690
+        "bytes": 33390
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -87636,7 +87641,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 23724
+        "bytes": 24229
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -87807,7 +87812,7 @@
         "title": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
         "path": "docs/KNOWLEDGE.md",
         "source_class": "document",
-        "bytes": 21012
+        "bytes": 21957
       },
       {
         "uri": "majordomus://document/docs/LAUNCH.md",
@@ -87915,7 +87920,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 143744
+        "bytes": 134640
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87969,7 +87974,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 41219
+        "bytes": 41705
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -91142,7 +91147,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 97867
+        "bytes": 101109
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -94126,7 +94131,7 @@
         "path": ".ai/repo/project/issues/I1986.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1799
+        "bytes": 2890
       },
       {
         "uri": "majordomus://issue/I1987",
@@ -94137,7 +94142,7 @@
         "path": ".ai/repo/project/issues/I1987.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1308
+        "bytes": 2119
       },
       {
         "uri": "majordomus://issue/I1988",
@@ -94313,7 +94318,7 @@
         "path": ".ai/repo/project/issues/I2054.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2458
+        "bytes": 3136
       },
       {
         "uri": "majordomus://issue/I2059",
@@ -96797,7 +96802,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/adr-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3384,
+        "bytes": 3423,
         "tags": [
           "adrs",
           "records"
@@ -96932,7 +96937,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/completion-gates.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6004,
+        "bytes": 6050,
         "tags": [
           "tasks",
           "evidence",
@@ -97231,7 +97236,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3931,
+        "bytes": 3971,
         "tags": [
           "sessions",
           "continuity",
@@ -97276,7 +97281,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4941,
+        "bytes": 4985,
         "tags": [
           "tasks",
           "evidence",
@@ -97394,7 +97399,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/prompt-continuity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7098,
+        "bytes": 7138,
         "tags": [
           "prompts",
           "continuity",
@@ -97425,7 +97430,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6611,
+        "bytes": 6702,
         "tags": [
           "tasks",
           "completion",
@@ -97457,7 +97462,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/record-changed-files.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5181,
+        "bytes": 5233,
         "tags": [
           "records",
           "session",
@@ -97517,7 +97522,7 @@
         "path": ".ai/repo/rules/vendor/majordomus/rules/schema-integrity.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4146,
+        "bytes": 4217,
         "tags": [
           "schema",
           "rules",
@@ -101613,7 +101618,7 @@
         "identity": "test/cases/130_context_compiler.sh",
         "path": "test/cases/130_context_compiler.sh",
         "source_class": "case",
-        "bytes": 20384
+        "bytes": 20672
       },
       {
         "uri": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
@@ -102344,6 +102349,30 @@
         "bytes": 5089
       },
       {
+        "uri": "majordomus://test/test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "kind": "test",
+        "identity": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "path": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "source_class": "case",
+        "bytes": 7179
+      },
+      {
+        "uri": "majordomus://test/test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "kind": "test",
+        "identity": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "path": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "source_class": "case",
+        "bytes": 5850
+      },
+      {
+        "uri": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "kind": "test",
+        "identity": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "source_class": "case",
+        "bytes": 5317
+      },
+      {
         "uri": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "kind": "test",
         "identity": "test/cases/302_the_topology_rule_has_one_source.sh",
@@ -102749,7 +102778,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 13989
+        "bytes": 14333
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -105562,7 +105591,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 478
+      "objects": 481
     },
     {
       "name": "use-case",

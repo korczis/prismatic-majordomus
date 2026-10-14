@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.25.0",
+  "generator": "majordomus-cli 0.26.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -31154,6 +31154,8 @@
             "No vendored rule's text names this repository's own incidents as the adopter's",
             "scripts/rules-package write stamps the producing release as source_revision"
           ],
+          "completed_at": "2026-10-14T14:53:20Z",
+          "completed_event": "sha256:c2af21108b49ea853bfba2b3d084d7e072f00226817c6e7c6365b71114305ea2",
           "created_at": "2026-10-04",
           "current_state": "As above at e08aec8651.",
           "desired_state": "Adopter-neutral rule text; tests resolvable or explicitly upstream; source_revision equals the release that produced the package.",
@@ -31171,7 +31173,9 @@
             "test/cases"
           ],
           "slug": "vendored-rules-are-adopter-neutral",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T14:52:58Z",
+          "started_event": "sha256:8facc572b750776d0a2e85228c6d3fece4bc4190ac7954a5f7d2d80dbf3dd8e0",
+          "updated_at": "2026-10-14T14:53:20Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31190,6 +31194,8 @@
             "A record citing a since-deleted file at its commit passes knowledge check",
             "A file reference that never existed still fails"
           ],
+          "completed_at": "2026-10-14T14:53:24Z",
+          "completed_event": "sha256:b2a8adc95601fb072202a46e071a178964daee08a11b080eee376ba9fd4bc94f",
           "created_at": "2026-10-04",
           "current_state": "file: references are resolved against the working tree only.",
           "desired_state": "A historical file reference resolves through git; knowledge check reports it as historical, not dangling.",
@@ -31208,7 +31214,9 @@
             "test/cases"
           ],
           "slug": "knowledge-file-provenance-survives-deletion",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-14T14:53:04Z",
+          "started_event": "sha256:0f68d079203f55bbdc05d92bfaad8afb5f2362132b47f2ff286bed4513f731f0",
+          "updated_at": "2026-10-14T14:53:24Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31864,6 +31872,8 @@
             "The same case shows a published version with no record and nothing proposing one is still refused",
             "The document that describes a release says in which order the tag and the record are made and why"
           ],
+          "completed_at": "2026-10-14T14:53:16Z",
+          "completed_event": "sha256:06a18d429b58a34f77ff729911dbb490f1ceb51d0dc35deed37db2c803f3cd41",
           "created_at": "2026-10-08",
           "depends_on": [],
           "desired_state": "A tag and its record landing are invisible to a pull request that touches no release file; a published version with no record and no pull request proposing one is still refused.",
@@ -31884,7 +31894,9 @@
             "docs"
           ],
           "slug": "a-tag-does-not-freeze-the-queue",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T14:52:51Z",
+          "started_event": "sha256:4489adabb0b77c33d8b5862f15d9989726249efca9fed2f9b7235f58092c9622",
+          "updated_at": "2026-10-14T14:53:16Z",
           "validation": [
             "scripts/ci/release-check"
           ]
@@ -52987,6 +52999,27 @@
         "label": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh",
         "route": "/cockpit/objects/test/test-cases-3020-an-active-skill-is-named-where-the-crate-test-demands-sh",
         "source": "test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "kind": "test",
+        "label": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "route": "/cockpit/objects/test/test-cases-3021-a-tag-does-not-freeze-the-queue-sh",
+        "source": "test/cases/3021_a_tag_does_not_freeze_the_queue.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "kind": "test",
+        "label": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "route": "/cockpit/objects/test/test-cases-3022-the-rule-package-is-stamped-and-adopter-neutral-sh",
+        "source": "test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "kind": "test",
+        "label": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "route": "/cockpit/objects/test/test-cases-3023-a-knowledge-record-outlives-the-file-it-cites-sh",
+        "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
       },
       {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -82802,6 +82835,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3022_the_rule_package_is_stamped_and_adopter_neutral.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88108,8 +88156,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2792,
-      "edges": 6125,
+      "nodes": 2795,
+      "edges": 6128,
       "acyclic": false,
       "truncated": false
     }

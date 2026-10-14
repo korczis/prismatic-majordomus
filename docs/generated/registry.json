@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.25.0",
+  "generator": "majordomus-cli 0.26.0",
   "modules": [
     {
       "id": "artifacts",
@@ -42462,11 +42462,16 @@
                 },
                 {
                   "type": "string",
+                  "const": "historical",
+                  "description": "A `file:` or `test:` the tree no longer holds and git history does: cited before the\nfile was deleted, or pinned as `file:<path>@<commit>`. The `target` is the blob that\nanswers, `<commit>:<path>`, which `git show` reads."
+                },
+                {
+                  "type": "string",
                   "const": "missing",
                   "description": "Nothing answers to it. A dangling reference is the integrity validator's finding."
                 }
               ],
-              "description": "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+              "description": "How a typed reference resolved.\n\nFour words and no fifth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or a file the tree no longer holds and git history\ndoes, or nothing. `external` is not a weaker `object` — a commit or a task is exactly as\nreal as a rule — it says which reader answered; `historical` resolves as well, and is\nnamed apart so a reader sees which provenance outlived its file (I1987).\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
             },
             "ResolvedRelation": {
               "type": "object",
