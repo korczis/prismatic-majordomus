@@ -271,8 +271,8 @@
       </li>
       {%- endif %}{% endfor %}
       {%- for s in model.surfaces %}{% if s.id not in face_ids %}
-      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary-soft p-4 sm:p-5" data-interface="{{ s.id }}">
-        <h3 class="text-base font-bold tracking-tight text-heading sm:text-lg">{{ s.title }}</h3>
+      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary-soft p-3 sm:p-5" data-interface="{{ s.id }}">
+        <h3 class="break-words text-sm font-bold tracking-tight text-heading sm:text-lg">{{ s.title }}</h3>
         {%- if m.interfaces[s.id] or false %}<p class="mt-2 text-xs leading-relaxed text-body sm:text-sm">{{ m.interfaces[s.id] }}</p>{% endif %}
         <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{{ s.route }}" class="text-fg-brand hover:underline">Reference &rarr;</a></p>
       </li>
