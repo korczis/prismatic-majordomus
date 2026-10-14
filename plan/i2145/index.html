@@ -157,12 +157,9 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p0 · implementation profile · runs alone</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/mcp-transports-are-reliable/" class="text-fg-brand underline">mcp-transports-are-reliable — Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I2145</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Make the stdio bridge resend a message only when the server provably did not receive or run it, and report every other failure as the error it is, so no tool call executes twice.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The bridge waits REQUEST_TIMEOUT, 60 s, for an answer (apps/majordomus-cli/src/mcp/bridge.rs:25). A timeout is Unreachable, which makes Session::failover re-elect (apps/majordomus-cli/src/commands/mcp.rs:229-311); when the election finds the same server as Peer, the bridge reinitializes and calls b.handle(&amp;message) again (apps/majordomus-cli/src/commands/mcp.rs:301, and :283 after a takeover), so the same tools/call is sent twice. A slow repository_mutation tool (there are six, plus executions.start, which runs any capability) can therefore run twice. Any 4xx other than 404, such as 413, 403 or 400, also triggers a re-election (apps/majordomus-cli/src/mcp/bridge.rs:352): a message over the 1 MiB body limit (apps/majordomus-cli/src/http/server.rs:20, the 413 at :227-232) becomes 413, then a resend, then -32603 &#39;shared server unavailable&#39;, which names the wrong cause. The bridge is synchronous under a mutex (apps/majordomus-cli/src/commands/mcp.rs:218). Gemini allows a 120 s call timeout against the bridge&#39;s 60 s. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 2 (ranked second after authorization) and the payload-limit row.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A timed-out or rejected tool call is re-sent after a re-election, whatever its effect.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">failover resends only on Sent::SessionLost, a refused connection, or a tool whose declared execution hints say idempotent; otherwise the client receives -32603 with &#39;outcome unknown&#39; and the request id. A 4xx other than 404 or 409 is answered as that error, with no re-election.</p>
@@ -186,17 +183,22 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">timed_out_mutation_runs_once_test</li><li class="font-mono text-heading break-words">rejected_request_is_not_reelected_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">timed_out_mutation_runs_once_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_bridge_resend</td><td class="px-4 py-2 text-body">test result: ok. 5 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">ce5959d</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">rejected_request_is_not_reelected_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_bridge_resend</td><td class="px-4 py-2 text-body">test result: ok. 5 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">ce5959d</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T08:01:47Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T08:01:55Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/.ai/repo/project/issues/I2145.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2145.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2145</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/.ai/repo/project/issues/I2145.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2145.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2145</code>.</p>
 </div>
 
 </div>
@@ -246,9 +248,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -256,7 +258,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ce5959db59096ff22a45ee65e1464b16df74348a" class="font-mono underline">ce5959d</a> · inputs <span class="font-mono">74723254283e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e28daccd9b29247efec9fe352e8b8c630f6f9919" class="font-mono underline">e28dacc</a> · inputs <span class="font-mono">a980029a475d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

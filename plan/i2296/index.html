@@ -157,12 +157,9 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p1 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/test-evidence/" class="text-fg-brand underline">test-evidence — Every verifiable claim and widget resolves to revision-bound test evidence, on every surface</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I2296</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Let `majordomus prs drain` close and reopen a release&#39;s record pull request itself when the workflow&#39;s token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A release proposes its record as `release/record-&lt;tag&gt;` with GITHUB_TOKEN, and GitHub starts no workflow from an event that token caused: the pull request&#39;s own run concludes failure with no job in it and its required `ci` never reports. Until the record is on master, release-check fails `structure` on every open head (the owner kept that check strict on 2026-10-10). For v0.19.0 that window was 3 hours (#861, admin-merged after 1.7 h); for v0.19.1 it was 5.7 hours (#866): the dispatched validate went green at the head, branch protection still refused the merge, and a person closed and reopened the pull request 3.4 hours after it was proposed, which is what started the run that let it merge. The dispatch bought nothing but ninety minutes. I2282 records that defect; this issue removes the person from it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The executor classifies a record pull request with an empty rollup as waiting_for_checks with required_checks:missing and waits for a check nothing will ever report. A person has to notice, close and reopen it. Nothing in the executor closes and reopens anything.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">When nothing is ready to merge, a pull request from a `release/record-` branch that waits for a missing required check is looked at on the forge: if it is open at the head decided on, was opened by the workflow&#39;s token, is older than a two-minute grace and has not a single check of its own, the executor closes it with a comment saying why and reopens it at once. It does so once per head, under the integration lease, with `reopen_attempted` on the trail before the forge is asked and `reopened` or `reopen_failed` after, and `--dry-run` only names it. A record a person opened, one that already has a run of its own, one still inside the grace, and every other branch are left alone. A reopen that fails after the closure says the pull request was left closed and names the command a person runs. Left to the owner, because it changes the release pipeline and case 996: the dispatch of validate in `.github/workflows/release.yml` is redundant once the executor reopens the record (both runs then validate the same head), and it stays until the owner removes it.</p>
@@ -186,17 +183,22 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">record_reopened_once_under_the_lease_case</li><li class="font-mono text-heading break-words">reopen_trail_first_unit_tests</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">record_reopened_once_under_the_lease_case</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">MJ_TEST_JOBS=2 bash test/run.sh 1036_the_executor_reopens_a_record_pull_request</td><td class="px-4 py-2 text-body">tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">ce5959d</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">reopen_trail_first_unit_tests</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_record_reopen</td><td class="px-4 py-2 text-body">test result: ok. 3 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">ce5959d</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T08:00:01Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T08:00:09Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/.ai/repo/project/issues/I2296.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2296.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2296</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/.ai/repo/project/issues/I2296.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2296.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2296</code>.</p>
 </div>
 
 </div>
@@ -246,9 +248,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -256,7 +258,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ce5959db59096ff22a45ee65e1464b16df74348a" class="font-mono underline">ce5959d</a> · inputs <span class="font-mono">74723254283e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e28daccd9b29247efec9fe352e8b8c630f6f9919" class="font-mono underline">e28dacc</a> · inputs <span class="font-mono">a980029a475d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

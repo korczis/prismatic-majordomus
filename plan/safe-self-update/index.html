@@ -157,15 +157,15 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--planned relative" data-status="planned"><span aria-hidden="true">○</span>PLANNED</span>
-<span class="text-sm text-body">0 of 2 issues done</span></p>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
+<span class="text-sm text-body">1 of 2 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
   </dl>
 
@@ -209,7 +209,7 @@
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i2165/" class="text-fg-brand hover:underline">I2165</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">0</td>
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
@@ -225,7 +225,7 @@
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">safe-self-update dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
   <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0">flowchart LR
     I2163[&quot;I2163&lt;br/&gt;A client never attaches to a server of another version without saying so, and a newer client replaces an older server&quot;]:::blocked
-    I2165[&quot;I2165&lt;br/&gt;A released archive carries a provenance attestation the installer can check&quot;]:::ready
+    I2165[&quot;I2165&lt;br/&gt;A released archive carries a provenance attestation the installer can check&quot;]:::done
     classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
@@ -235,7 +235,7 @@
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/.ai/repo/project/milestones/safe-self-update.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/safe-self-update.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show safe-self-update</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/.ai/repo/project/milestones/safe-self-update.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/safe-self-update.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show safe-self-update</code>.</p>
 </div>
 
 </div>
@@ -285,9 +285,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/ce5959db59096ff22a45ee65e1464b16df74348a/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e28daccd9b29247efec9fe352e8b8c630f6f9919/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -295,7 +295,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ce5959db59096ff22a45ee65e1464b16df74348a" class="font-mono underline">ce5959d</a> · inputs <span class="font-mono">74723254283e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.24.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e28daccd9b29247efec9fe352e8b8c630f6f9919" class="font-mono underline">e28dacc</a> · inputs <span class="font-mono">a980029a475d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
