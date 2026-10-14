@@ -7,7 +7,7 @@
   },
   "active_milestone": "M003",
   "next_ready": "I0806",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::cancelled\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::ready\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::done\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::done\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::done\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::done\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::done\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::ready\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::ready\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::ready\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::ready\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::cancelled\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::cancelled\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::cancelled\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::cancelled\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::cancelled\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::cancelled\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::cancelled\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::ready\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::cancelled\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::cancelled\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::done\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::done\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::ready\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::done\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::done\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::done\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::done\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1516[\"I1516<br/>The adapter composes a projected body in one place\"]:::done\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::done\n    I1600[\"I1600<br/>The challenge is one recorded run, and every public surface replays it\"]:::ready\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::done\n    I1901[\"I1901<br/>An issue names the intent criterion it serves, and coverage is derived\"]:::blocked\n    I1902[\"I1902<br/>The gap and the critique of an intent are typed records the plan is held to\"]:::blocked\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::ready\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::done\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::done\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::done\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::done\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::done\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::done\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::ready\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::done\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::ready\n    I1966[\"I1966<br/>The composed graph is whole or its generation refuses\"]:::ready\n    I1967[\"I1967<br/>A reporter that sets a flag is a reporter\"]:::done\n    I1980[\"I1980<br/>A layer names the tool version it was written for, and doctor tells version skew from defects\"]:::ready\n    I1981[\"I1981<br/>A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv\"]:::done\n    I1982[\"I1982<br/>Plan stamps written before seals existed are re-sealed by a command that keeps their original times\"]:::blocked\n    I1983[\"I1983<br/>Upgrading the vendored rules reports or applies the policy and source keys those rules depend on\"]:::blocked\n    I1984[\"I1984<br/>Knowledge candidates never leave untracked files on a trunk that only pull requests change\"]:::ready\n    I1985[\"I1985<br/>A knowledge candidate relates to its own decision and commit, not to the whole episode\"]:::blocked\n    I1986[\"I1986<br/>The vendored rule package says nothing that is only true of this repository\"]:::ready\n    I1987[\"I1987<br/>A knowledge record's file provenance survives the file's deletion\"]:::ready\n    I1988[\"I1988<br/>A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands\"]:::ready\n    I1989[\"I1989<br/>init seeds a scope for the stack it finds, not for this repository's\"]:::ready\n    I1990[\"I1990<br/>The pre-push check judges the refs being pushed, or says why the checkout's task binds them\"]:::ready\n    I1991[\"I1991<br/>A comment-only edit of the policy regenerates no bootstrap\"]:::ready\n    I1992[\"I1992<br/>A rebuild that fails consumes no change: the next request retries it\"]:::done\n    I1995[\"I1995<br/>Work a session left uncommitted in a worktree is named, not found by luck\"]:::ready\n    I1996[\"I1996<br/>doctor does not fail an adopter on a check written for this repository\"]:::ready\n    I1997[\"I1997<br/>The peer board can be read from the command line\"]:::ready\n    I1998[\"I1998<br/>A health command in an unsupervised repository does not exit 0\"]:::ready\n    I1999[\"I1999<br/>A tracked file a hook regenerates does not refuse a task that never touched it\"]:::ready\n    I2000[\"I2000<br/>What a piece of work serves is one derivation, with a revision\"]:::blocked\n    I2001[\"I2001<br/>start asks what the task serves and refuses a refused binding where the policy requires it\"]:::blocked\n    I2002[\"I2002<br/>The context of a bound task says what the intent asks of this work\"]:::blocked\n    I2003[\"I2003<br/>A handover pins the binding it was written under, and resolving it reports drift\"]:::blocked\n    I2004[\"I2004<br/>plan start refuses an issue whose binding is refused, in both engines\"]:::blocked\n    I2054[\"I2054<br/>A tag does not turn every other pull request red until its record lands\"]:::ready\n    I2059[\"I2059<br/>A rebuild never replaces the executable a live lease names\"]:::ready\n    I2068[\"I2068<br/>A verdict that depends on the runner says so, and one cold sample is not a regression\"]:::ready\n    I2073[\"I2073<br/>A worker records an observation in one command\"]:::done\n    I2074[\"I2074<br/>An observation becomes a candidate that says what it is about, and reading groups recurrence\"]:::ready\n    I2075[\"I2075<br/>A candidate is routed by what it is about\"]:::blocked\n    I2114[\"I2114<br/>A task's scope admits what its derive writes\"]:::ready\n    I2123[\"I2123<br/>A caller beyond loopback reads, and changes nothing it cannot authenticate\"]:::ready\n    I2124[\"I2124<br/>An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock\"]:::ready\n    I2126[\"I2126<br/>A server busy with tool calls is never taken over as if it were dead\"]:::ready\n    I2127[\"I2127<br/>A server that lost its lease hands its sessions on and ends\"]:::ready\n    I2128[\"I2128<br/>A lease is removed only by the process that holds it, and serve stop stops the server in order\"]:::ready\n    I2129[\"I2129<br/>The lease timings the policy declares are the ones the mcp and serve elections use\"]:::ready\n    I2131[\"I2131<br/>A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address\"]:::ready\n    I2132[\"I2132<br/>A hello names the runtime it is meant for, and no other runtime accepts it\"]:::ready\n    I2133[\"I2133<br/>Every mesh input and answer has a bound, and a refused registration learns nothing\"]:::ready\n    I2134[\"I2134<br/>A key removed from the trust list loses its links without a restart, and a node key can be rotated\"]:::ready\n    I2135[\"I2135<br/>The trust root is read from the default branch, not from whatever the checkout holds\"]:::ready\n    I2137[\"I2137<br/>An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently\"]:::ready\n    I2139[\"I2139<br/>A sync message stays under the link bound whatever the marks weigh\"]:::done\n    I2140[\"I2140<br/>Paging mesh.events returns every event exactly once\"]:::ready\n    I2145[\"I2145<br/>A tool call that may have run is never sent a second time\"]:::done\n    I2147[\"I2147<br/>The MCP transports bound what they read and follow the Streamable HTTP rules they claim\"]:::ready\n    I2151[\"I2151<br/>A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing\"]:::ready\n    I2156[\"I2156<br/>A slow or silent HTTP client cannot hold a server worker\"]:::done\n    I2157[\"I2157<br/>Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready\"]:::ready\n    I2161[\"I2161<br/>No answer, log line or mesh frame carries a credential the redactor knows\"]:::ready\n    I2162[\"I2162<br/>A released archive, installed, serves a foreign repository over the shared server in CI\"]:::done\n    I2163[\"I2163<br/>A client never attaches to a server of another version without saying so, and a newer client replaces an older server\"]:::blocked\n    I2165[\"I2165<br/>A released archive carries a provenance attestation the installer can check\"]:::done\n    I2282[\"I2282<br/>The record pull request's dispatched verdict does not satisfy branch protection\"]:::ready\n    I2296[\"I2296<br/>The executor reopens a record pull request no run was started for\"]:::done\n    I2298[\"I2298<br/>A pull request stacked on one that landed merges on the verdict its head already has\"]:::done\n    I2300[\"I2300<br/>A head is judged against what it changes, not against GitHub's live state\"]:::done\n    I2301[\"I2301<br/>Whether the work is done is answered by measurement: the done invariant asks about debt, what was left behind and the backlog\"]:::done\n    I2303[\"I2303<br/>A release publishes its metadata to the site before its record lands, and the site never goes back a release\"]:::done\n    I2396[\"I2396<br/>The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed\"]:::done\n    I2398[\"I2398<br/>A derive offloaded to another machine waits its turn in a declared queue\"]:::done\n    I2399[\"I2399<br/>Every session briefs itself on an interval, without being asked\"]:::done\n    I2400[\"I2400<br/>A signal model and a fold join every source the server already records\"]:::done\n    I2401[\"I2401<br/>monitor is one read capability with three projections\"]:::ready\n    I2402[\"I2402<br/>majordomus monitor follows the stream from a terminal and a script\"]:::blocked\n    I2403[\"I2403<br/>Pull requests, checks and deploys reach the stream when GitHub is reachable\"]:::ready\n    I2404[\"I2404<br/>The Cockpit shows the stream live\"]:::blocked\n    I2405[\"I2405<br/>Every session is told what happened since its last look\"]:::blocked\n    I2406[\"I2406<br/>The stream is documented where a reader looks\"]:::blocked\n    I2407[\"I2407<br/>The monitor is released and deployed\"]:::blocked\n    I2416[\"I2416<br/>The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red\"]:::done\n    I2417[\"I2417<br/>The landing page is a click-through story: an editorial hero and an evidence chain a visitor steps through\"]:::ready\n    I2460[\"I2460<br/>The overview asks its sources at once, so it costs its slowest source and not their sum\"]:::done\n    I2461[\"I2461<br/>majordomus ui is served at /ui as its own product, with screens composed from capabilities\"]:::done\n    I2462[\"I2462<br/>The UI has every screen, and its mesh is a graph whose nodes open an inspector\"]:::done\n    I2463[\"I2463<br/>A train of stacked pull requests is a typed object, served everywhere and drawn as a graph\"]:::done\n    I2464[\"I2464<br/>A path that holds a space is one path to the scope doctrine\"]:::done\n    I2470[\"I2470<br/>The pull requests drain in the UI: a queue a reader narrows, inspects and follows to what each depends on\"]:::done\n    I2471[\"I2471<br/>The roadmap opens a milestone: what it holds, what can start, its critical path, and what it waits for\"]:::done\n    I2472[\"I2472<br/>How long CI takes is measured, from when each run started to when it completed, and the CI/CD screen draws it\"]:::done\n    I2473[\"I2473<br/>A pull request shows its trail: what the executor did to it, and the drain what the lane did lately\"]:::done\n    I2474[\"I2474<br/>The drain draws its merge throughput: each day's merges over the fortnight its trail ends on\"]:::done\n    I2475[\"I2475<br/>The issues are browsed: every issue of the plan by status, milestone, priority or text, each a link onward\"]:::done\n    I2476[\"I2476<br/>An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it\"]:::done\n    I2477[\"I2477<br/>A claim opens its proof: what settles it, its last run, what changed since, how to see it again\"]:::done\n    I2478[\"I2478<br/>A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it\"]:::done\n    I2481[\"I2481<br/>The UI links every entity it names, and says none where a source has no value\"]:::done\n    I2482[\"I2482<br/>Every screen of the UI has a case, and no link on the UI is dead\"]:::ready\n    I2483[\"I2483<br/>The UI is published as a snapshot: read once at the published commit and carried by the site at /ui\"]:::done\n    I2484[\"I2484<br/>majordomus ui ensures the shared server and opens the UI's dashboard\"]:::ready\n    I2485[\"I2485<br/>The bench measures the first request after the repository moved, and a budget bounds it\"]:::ready\n    I2486[\"I2486<br/>No screen waits for a source: a page shows the latest reading with its age, read again behind the reader\"]:::done\n    I2487[\"I2487<br/>A screen is streamed, and one stream tells an open page which readings changed\"]:::ready\n    I2488[\"I2488<br/>The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum\"]:::ready\n    I2489[\"I2489<br/>A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them\"]:::done\n    I2491[\"I2491<br/>A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team\"]:::done\n    I2495[\"I2495<br/>The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it\"]:::done\n    I2652[\"I2652<br/>The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on\"]:::ready\n    I2660[\"I2660<br/>The site is published as an artifact by the job that built it, so a ready site waits for no second workflow\"]:::ready\n    I2661[\"I2661<br/>A publication that did not arrive is a finding the next reader meets, never a green step\"]:::ready\n    I2662[\"I2662<br/>Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs\"]:::ready\n    I2663[\"I2663<br/>The published UI is not read from nothing on every deployment\"]:::ready\n    I2664[\"I2664<br/>A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared\"]:::blocked\n    I2678[\"I2678<br/>The public Observatory replays events that were recorded, and says it is a replay\"]:::ready\n    I2679[\"I2679<br/>The Observatory follows a stream with a cursor instead of asking for its page again\"]:::ready\n    I2680[\"I2680<br/>The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills\"]:::ready\n    I2694[\"I2694<br/>A promoted note resolves in every checkout, not only where it was promoted\"]:::ready\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0809 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    I1900 --> I1901\n    I1900 --> I1903\n    I1901 --> I1902\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    I1980 --> I1982\n    I1980 --> I1983\n    I1981 --> I1988\n    I1984 --> I1985\n    I2000 --> I2001\n    I2000 --> I2004\n    I2001 --> I2002\n    I2001 --> I2003\n    I2073 --> I2074\n    I2074 --> I2075\n    I2127 --> I2163\n    I2400 --> I2401\n    I2400 --> I2403\n    I2401 --> I2402\n    I2401 --> I2404\n    I2401 --> I2405\n    I2402 --> I2406\n    I2402 --> I2407\n    I2404 --> I2406\n    I2404 --> I2407\n    I2405 --> I2407\n    I2406 --> I2407\n    I2461 --> I2462\n    I2461 --> I2484\n    I2461 --> I2486\n    I2462 --> I2470\n    I2462 --> I2477\n    I2462 --> I2478\n    I2462 --> I2483\n    I2470 --> I2471\n    I2470 --> I2473\n    I2470 --> I2475\n    I2471 --> I2472\n    I2471 --> I2475\n    I2471 --> I2476\n    I2473 --> I2474\n    I2478 --> I2481\n    I2481 --> I2482\n    I2483 --> I2495\n    I2486 --> I2487\n    I2486 --> I2488\n    I2486 --> I2489\n    I2486 --> I2652\n    I2489 --> I2485\n    I2489 --> I2663\n    I2662 --> I2664\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::cancelled\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::ready\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::done\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::done\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::done\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::done\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::done\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::ready\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::ready\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::ready\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::ready\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::cancelled\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::cancelled\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::cancelled\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::cancelled\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::cancelled\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::cancelled\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::cancelled\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::ready\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::cancelled\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::cancelled\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::done\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::done\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::ready\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::done\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::done\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::done\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::done\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1516[\"I1516<br/>The adapter composes a projected body in one place\"]:::done\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::done\n    I1600[\"I1600<br/>The challenge is one recorded run, and every public surface replays it\"]:::ready\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::ready\n    I1901[\"I1901<br/>An issue names the intent criterion it serves, and coverage is derived\"]:::blocked\n    I1902[\"I1902<br/>The gap and the critique of an intent are typed records the plan is held to\"]:::blocked\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::blocked\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::done\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::done\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::done\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::done\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::done\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::done\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::ready\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::done\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::ready\n    I1966[\"I1966<br/>The composed graph is whole or its generation refuses\"]:::ready\n    I1967[\"I1967<br/>A reporter that sets a flag is a reporter\"]:::done\n    I1980[\"I1980<br/>A layer names the tool version it was written for, and doctor tells version skew from defects\"]:::ready\n    I1981[\"I1981<br/>A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv\"]:::done\n    I1982[\"I1982<br/>Plan stamps written before seals existed are re-sealed by a command that keeps their original times\"]:::blocked\n    I1983[\"I1983<br/>Upgrading the vendored rules reports or applies the policy and source keys those rules depend on\"]:::blocked\n    I1984[\"I1984<br/>Knowledge candidates never leave untracked files on a trunk that only pull requests change\"]:::ready\n    I1985[\"I1985<br/>A knowledge candidate relates to its own decision and commit, not to the whole episode\"]:::blocked\n    I1986[\"I1986<br/>The vendored rule package says nothing that is only true of this repository\"]:::ready\n    I1987[\"I1987<br/>A knowledge record's file provenance survives the file's deletion\"]:::ready\n    I1988[\"I1988<br/>A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands\"]:::ready\n    I1989[\"I1989<br/>init seeds a scope for the stack it finds, not for this repository's\"]:::ready\n    I1990[\"I1990<br/>The pre-push check judges the refs being pushed, or says why the checkout's task binds them\"]:::ready\n    I1991[\"I1991<br/>A comment-only edit of the policy regenerates no bootstrap\"]:::ready\n    I1992[\"I1992<br/>A rebuild that fails consumes no change: the next request retries it\"]:::done\n    I1995[\"I1995<br/>Work a session left uncommitted in a worktree is named, not found by luck\"]:::ready\n    I1996[\"I1996<br/>doctor does not fail an adopter on a check written for this repository\"]:::ready\n    I1997[\"I1997<br/>The peer board can be read from the command line\"]:::ready\n    I1998[\"I1998<br/>A health command in an unsupervised repository does not exit 0\"]:::ready\n    I1999[\"I1999<br/>A tracked file a hook regenerates does not refuse a task that never touched it\"]:::ready\n    I2000[\"I2000<br/>What a piece of work serves is one derivation, with a revision\"]:::blocked\n    I2001[\"I2001<br/>start asks what the task serves and refuses a refused binding where the policy requires it\"]:::blocked\n    I2002[\"I2002<br/>The context of a bound task says what the intent asks of this work\"]:::blocked\n    I2003[\"I2003<br/>A handover pins the binding it was written under, and resolving it reports drift\"]:::blocked\n    I2004[\"I2004<br/>plan start refuses an issue whose binding is refused, in both engines\"]:::blocked\n    I2054[\"I2054<br/>A tag does not turn every other pull request red until its record lands\"]:::ready\n    I2059[\"I2059<br/>A rebuild never replaces the executable a live lease names\"]:::ready\n    I2068[\"I2068<br/>A verdict that depends on the runner says so, and one cold sample is not a regression\"]:::ready\n    I2073[\"I2073<br/>A worker records an observation in one command\"]:::done\n    I2074[\"I2074<br/>An observation becomes a candidate that says what it is about, and reading groups recurrence\"]:::ready\n    I2075[\"I2075<br/>A candidate is routed by what it is about\"]:::blocked\n    I2114[\"I2114<br/>A task's scope admits what its derive writes\"]:::ready\n    I2123[\"I2123<br/>A caller beyond loopback reads, and changes nothing it cannot authenticate\"]:::ready\n    I2124[\"I2124<br/>An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock\"]:::ready\n    I2126[\"I2126<br/>A server busy with tool calls is never taken over as if it were dead\"]:::ready\n    I2127[\"I2127<br/>A server that lost its lease hands its sessions on and ends\"]:::ready\n    I2128[\"I2128<br/>A lease is removed only by the process that holds it, and serve stop stops the server in order\"]:::ready\n    I2129[\"I2129<br/>The lease timings the policy declares are the ones the mcp and serve elections use\"]:::ready\n    I2131[\"I2131<br/>A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address\"]:::ready\n    I2132[\"I2132<br/>A hello names the runtime it is meant for, and no other runtime accepts it\"]:::ready\n    I2133[\"I2133<br/>Every mesh input and answer has a bound, and a refused registration learns nothing\"]:::ready\n    I2134[\"I2134<br/>A key removed from the trust list loses its links without a restart, and a node key can be rotated\"]:::ready\n    I2135[\"I2135<br/>The trust root is read from the default branch, not from whatever the checkout holds\"]:::ready\n    I2137[\"I2137<br/>An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently\"]:::done\n    I2139[\"I2139<br/>A sync message stays under the link bound whatever the marks weigh\"]:::done\n    I2140[\"I2140<br/>Paging mesh.events returns every event exactly once\"]:::ready\n    I2145[\"I2145<br/>A tool call that may have run is never sent a second time\"]:::done\n    I2147[\"I2147<br/>The MCP transports bound what they read and follow the Streamable HTTP rules they claim\"]:::ready\n    I2151[\"I2151<br/>A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing\"]:::ready\n    I2156[\"I2156<br/>A slow or silent HTTP client cannot hold a server worker\"]:::done\n    I2157[\"I2157<br/>Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready\"]:::ready\n    I2161[\"I2161<br/>No answer, log line or mesh frame carries a credential the redactor knows\"]:::ready\n    I2162[\"I2162<br/>A released archive, installed, serves a foreign repository over the shared server in CI\"]:::done\n    I2163[\"I2163<br/>A client never attaches to a server of another version without saying so, and a newer client replaces an older server\"]:::blocked\n    I2165[\"I2165<br/>A released archive carries a provenance attestation the installer can check\"]:::done\n    I2282[\"I2282<br/>The record pull request's dispatched verdict does not satisfy branch protection\"]:::ready\n    I2296[\"I2296<br/>The executor reopens a record pull request no run was started for\"]:::done\n    I2298[\"I2298<br/>A pull request stacked on one that landed merges on the verdict its head already has\"]:::done\n    I2300[\"I2300<br/>A head is judged against what it changes, not against GitHub's live state\"]:::done\n    I2301[\"I2301<br/>Whether the work is done is answered by measurement: the done invariant asks about debt, what was left behind and the backlog\"]:::done\n    I2303[\"I2303<br/>A release publishes its metadata to the site before its record lands, and the site never goes back a release\"]:::done\n    I2396[\"I2396<br/>The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed\"]:::done\n    I2398[\"I2398<br/>A derive offloaded to another machine waits its turn in a declared queue\"]:::done\n    I2399[\"I2399<br/>Every session briefs itself on an interval, without being asked\"]:::done\n    I2400[\"I2400<br/>A signal model and a fold join every source the server already records\"]:::done\n    I2401[\"I2401<br/>monitor is one read capability with three projections\"]:::ready\n    I2402[\"I2402<br/>majordomus monitor follows the stream from a terminal and a script\"]:::blocked\n    I2403[\"I2403<br/>Pull requests, checks and deploys reach the stream when GitHub is reachable\"]:::ready\n    I2404[\"I2404<br/>The Cockpit shows the stream live\"]:::blocked\n    I2405[\"I2405<br/>Every session is told what happened since its last look\"]:::blocked\n    I2406[\"I2406<br/>The stream is documented where a reader looks\"]:::blocked\n    I2407[\"I2407<br/>The monitor is released and deployed\"]:::blocked\n    I2416[\"I2416<br/>The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red\"]:::done\n    I2417[\"I2417<br/>The landing page is a click-through story: an editorial hero and an evidence chain a visitor steps through\"]:::ready\n    I2460[\"I2460<br/>The overview asks its sources at once, so it costs its slowest source and not their sum\"]:::done\n    I2461[\"I2461<br/>majordomus ui is served at /ui as its own product, with screens composed from capabilities\"]:::done\n    I2462[\"I2462<br/>The UI has every screen, and its mesh is a graph whose nodes open an inspector\"]:::done\n    I2463[\"I2463<br/>A train of stacked pull requests is a typed object, served everywhere and drawn as a graph\"]:::done\n    I2464[\"I2464<br/>A path that holds a space is one path to the scope doctrine\"]:::done\n    I2470[\"I2470<br/>The pull requests drain in the UI: a queue a reader narrows, inspects and follows to what each depends on\"]:::done\n    I2471[\"I2471<br/>The roadmap opens a milestone: what it holds, what can start, its critical path, and what it waits for\"]:::done\n    I2472[\"I2472<br/>How long CI takes is measured, from when each run started to when it completed, and the CI/CD screen draws it\"]:::done\n    I2473[\"I2473<br/>A pull request shows its trail: what the executor did to it, and the drain what the lane did lately\"]:::done\n    I2474[\"I2474<br/>The drain draws its merge throughput: each day's merges over the fortnight its trail ends on\"]:::done\n    I2475[\"I2475<br/>The issues are browsed: every issue of the plan by status, milestone, priority or text, each a link onward\"]:::done\n    I2476[\"I2476<br/>An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it\"]:::done\n    I2477[\"I2477<br/>A claim opens its proof: what settles it, its last run, what changed since, how to see it again\"]:::done\n    I2478[\"I2478<br/>A rule opens its proof: what it states, the tests that prove it, what is missing, and the rules around it\"]:::done\n    I2481[\"I2481<br/>The UI links every entity it names, and says none where a source has no value\"]:::done\n    I2482[\"I2482<br/>Every screen of the UI has a case, and no link on the UI is dead\"]:::ready\n    I2483[\"I2483<br/>The UI is published as a snapshot: read once at the published commit and carried by the site at /ui\"]:::done\n    I2484[\"I2484<br/>majordomus ui ensures the shared server and opens the UI's dashboard\"]:::ready\n    I2485[\"I2485<br/>The bench measures the first request after the repository moved, and a budget bounds it\"]:::ready\n    I2486[\"I2486<br/>No screen waits for a source: a page shows the latest reading with its age, read again behind the reader\"]:::done\n    I2487[\"I2487<br/>A screen is streamed, and one stream tells an open page which readings changed\"]:::ready\n    I2488[\"I2488<br/>The HTTP stack is chosen by measurement: the same routes and several hundred open streams on tiny_http and on axum\"]:::ready\n    I2489[\"I2489<br/>A screen over its budget fails the build: the UI's latency budgets are benchmark policy, and bench --check holds them\"]:::done\n    I2491[\"I2491<br/>A personal layer changes nothing shared: init --personal and install.sh --personal keep the layer one person's own, verify it, and --shared hands it to the team\"]:::done\n    I2495[\"I2495<br/>The Cockpit is published as a snapshot at /cockpit, and the UI's evidence links lead to it\"]:::done\n    I2652[\"I2652<br/>The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on\"]:::ready\n    I2660[\"I2660<br/>The site is published as an artifact by the job that built it, so a ready site waits for no second workflow\"]:::ready\n    I2661[\"I2661<br/>A publication that did not arrive is a finding the next reader meets, never a green step\"]:::ready\n    I2662[\"I2662<br/>Validation leaves the deployment a runner: a branch's checks never hold the pool a publication or a release record needs\"]:::ready\n    I2663[\"I2663<br/>The published UI is not read from nothing on every deployment\"]:::ready\n    I2664[\"I2664<br/>A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared\"]:::blocked\n    I2678[\"I2678<br/>The public Observatory replays events that were recorded, and says it is a replay\"]:::ready\n    I2679[\"I2679<br/>The Observatory follows a stream with a cursor instead of asking for its page again\"]:::ready\n    I2680[\"I2680<br/>The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills\"]:::ready\n    I2694[\"I2694<br/>A promoted note resolves in every checkout, not only where it was promoted\"]:::ready\n    I2700[\"I2700<br/>A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder\"]:::blocked\n    I2701[\"I2701<br/>The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration\"]:::blocked\n    I2702[\"I2702<br/>A checkout keeps one address across restarts, because its server binds a port derived from the checkout\"]:::blocked\n    I2703[\"I2703<br/>The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order\"]:::blocked\n    I2704[\"I2704<br/>A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate\"]:::blocked\n    I2705[\"I2705<br/>A node key can be rotated, peers follow the new key, and the old key is refused\"]:::blocked\n    I2706[\"I2706<br/>An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size\"]:::ready\n    I2707[\"I2707<br/>majordomus doctor reports a stale server, or says plainly that it checks governance only\"]:::blocked\n    I2708[\"I2708<br/>A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0809 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    I1900 --> I1901\n    I1900 --> I1903\n    I1901 --> I1902\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    I1980 --> I1982\n    I1980 --> I1983\n    I1981 --> I1988\n    I1984 --> I1985\n    I2000 --> I2001\n    I2000 --> I2004\n    I2001 --> I2002\n    I2001 --> I2003\n    I2073 --> I2074\n    I2074 --> I2075\n    I2126 --> I2700\n    I2127 --> I2163\n    I2129 --> I2701\n    I2131 --> I2702\n    I2132 --> I2703\n    I2133 --> I2704\n    I2134 --> I2705\n    I2137 --> I2706\n    I2157 --> I2707\n    I2161 --> I2708\n    I2400 --> I2401\n    I2400 --> I2403\n    I2401 --> I2402\n    I2401 --> I2404\n    I2401 --> I2405\n    I2402 --> I2406\n    I2402 --> I2407\n    I2404 --> I2406\n    I2404 --> I2407\n    I2405 --> I2407\n    I2406 --> I2407\n    I2461 --> I2462\n    I2461 --> I2484\n    I2461 --> I2486\n    I2462 --> I2470\n    I2462 --> I2477\n    I2462 --> I2478\n    I2462 --> I2483\n    I2470 --> I2471\n    I2470 --> I2473\n    I2470 --> I2475\n    I2471 --> I2472\n    I2471 --> I2475\n    I2471 --> I2476\n    I2473 --> I2474\n    I2478 --> I2481\n    I2481 --> I2482\n    I2483 --> I2495\n    I2486 --> I2487\n    I2486 --> I2488\n    I2486 --> I2489\n    I2486 --> I2652\n    I2489 --> I2485\n    I2489 --> I2663\n    I2662 --> I2664\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -756,15 +756,16 @@
       "evidence": [],
       "issues": [
         "I2161",
-        "I2162"
+        "I2162",
+        "I2708"
       ],
-      "mermaid": "flowchart LR\n    I2161[\"I2161<br/>No answer, log line or mesh frame carries a credential the redactor knows\"]:::ready\n    I2162[\"I2162<br/>A released archive, installed, serves a foreign repository over the shared server in CI\"]:::done\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I2161[\"I2161<br/>No answer, log line or mesh frame carries a credential the redactor knows\"]:::ready\n    I2162[\"I2162<br/>A released archive, installed, serves a foreign repository over the shared server in CI\"]:::done\n    I2708[\"I2708<br/>A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows\"]:::blocked\n    I2161 --> I2708\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 2,
-        "required": 2,
+        "total": 3,
+        "required": 3,
         "by_status": {
           "READY": 1,
-          "BLOCKED": 0,
+          "BLOCKED": 1,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 1,
@@ -1418,15 +1419,16 @@
       "evidence": [],
       "issues": [
         "I2156",
-        "I2157"
+        "I2157",
+        "I2707"
       ],
-      "mermaid": "flowchart LR\n    I2156[\"I2156<br/>A slow or silent HTTP client cannot hold a server worker\"]:::done\n    I2157[\"I2157<br/>Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready\"]:::ready\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I2156[\"I2156<br/>A slow or silent HTTP client cannot hold a server worker\"]:::done\n    I2157[\"I2157<br/>Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready\"]:::ready\n    I2707[\"I2707<br/>majordomus doctor reports a stale server, or says plainly that it checks governance only\"]:::blocked\n    I2157 --> I2707\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 2,
-        "required": 2,
+        "total": 3,
+        "required": 3,
         "by_status": {
           "READY": 1,
-          "BLOCKED": 0,
+          "BLOCKED": 1,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 1,
@@ -1704,7 +1706,7 @@
     {
       "id": "intent-lifecycle",
       "slug": "intent-lifecycle",
-      "status": "ACTIVE",
+      "status": "PLANNED",
       "order": 96,
       "priority": "p1",
       "title": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
@@ -1751,16 +1753,16 @@
         "I1900",
         "I1903"
       ],
-      "mermaid": "flowchart LR\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::done\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::ready\n    I1900 --> I1903\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::ready\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::blocked\n    I1900 --> I1903\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
         "total": 2,
         "required": 2,
         "by_status": {
           "READY": 1,
-          "BLOCKED": 0,
+          "BLOCKED": 1,
           "ACTIVE": 0,
           "VERIFY": 0,
-          "DONE": 1,
+          "DONE": 0,
           "CANCELLED": 0
         }
       }
@@ -1953,18 +1955,19 @@
       "issues": [
         "I2137",
         "I2139",
-        "I2140"
+        "I2140",
+        "I2706"
       ],
-      "mermaid": "flowchart LR\n    I2137[\"I2137<br/>An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently\"]:::ready\n    I2139[\"I2139<br/>A sync message stays under the link bound whatever the marks weigh\"]:::done\n    I2140[\"I2140<br/>Paging mesh.events returns every event exactly once\"]:::ready\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I2137[\"I2137<br/>An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently\"]:::done\n    I2139[\"I2139<br/>A sync message stays under the link bound whatever the marks weigh\"]:::done\n    I2140[\"I2140<br/>Paging mesh.events returns every event exactly once\"]:::ready\n    I2706[\"I2706<br/>An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size\"]:::ready\n    I2137 --> I2706\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 3,
-        "required": 3,
+        "total": 4,
+        "required": 4,
         "by_status": {
           "READY": 2,
           "BLOCKED": 0,
           "ACTIVE": 0,
           "VERIFY": 0,
-          "DONE": 1,
+          "DONE": 2,
           "CANCELLED": 0
         }
       }
@@ -2221,15 +2224,18 @@
         "I2127",
         "I2128",
         "I2129",
-        "I2131"
+        "I2131",
+        "I2700",
+        "I2701",
+        "I2702"
       ],
-      "mermaid": "flowchart LR\n    I2126[\"I2126<br/>A server busy with tool calls is never taken over as if it were dead\"]:::ready\n    I2127[\"I2127<br/>A server that lost its lease hands its sessions on and ends\"]:::ready\n    I2128[\"I2128<br/>A lease is removed only by the process that holds it, and serve stop stops the server in order\"]:::ready\n    I2129[\"I2129<br/>The lease timings the policy declares are the ones the mcp and serve elections use\"]:::ready\n    I2131[\"I2131<br/>A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address\"]:::ready\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I2126[\"I2126<br/>A server busy with tool calls is never taken over as if it were dead\"]:::ready\n    I2127[\"I2127<br/>A server that lost its lease hands its sessions on and ends\"]:::ready\n    I2128[\"I2128<br/>A lease is removed only by the process that holds it, and serve stop stops the server in order\"]:::ready\n    I2129[\"I2129<br/>The lease timings the policy declares are the ones the mcp and serve elections use\"]:::ready\n    I2131[\"I2131<br/>A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address\"]:::ready\n    I2700[\"I2700<br/>A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder\"]:::blocked\n    I2701[\"I2701<br/>The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration\"]:::blocked\n    I2702[\"I2702<br/>A checkout keeps one address across restarts, because its server binds a port derived from the checkout\"]:::blocked\n    I2126 --> I2700\n    I2129 --> I2701\n    I2131 --> I2702\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 5,
-        "required": 5,
+        "total": 8,
+        "required": 8,
         "by_status": {
           "READY": 5,
-          "BLOCKED": 0,
+          "BLOCKED": 3,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 0,
@@ -2285,15 +2291,18 @@
         "I2132",
         "I2133",
         "I2134",
-        "I2135"
+        "I2135",
+        "I2703",
+        "I2704",
+        "I2705"
       ],
-      "mermaid": "flowchart LR\n    I2123[\"I2123<br/>A caller beyond loopback reads, and changes nothing it cannot authenticate\"]:::ready\n    I2124[\"I2124<br/>An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock\"]:::ready\n    I2132[\"I2132<br/>A hello names the runtime it is meant for, and no other runtime accepts it\"]:::ready\n    I2133[\"I2133<br/>Every mesh input and answer has a bound, and a refused registration learns nothing\"]:::ready\n    I2134[\"I2134<br/>A key removed from the trust list loses its links without a restart, and a node key can be rotated\"]:::ready\n    I2135[\"I2135<br/>The trust root is read from the default branch, not from whatever the checkout holds\"]:::ready\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I2123[\"I2123<br/>A caller beyond loopback reads, and changes nothing it cannot authenticate\"]:::ready\n    I2124[\"I2124<br/>An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock\"]:::ready\n    I2132[\"I2132<br/>A hello names the runtime it is meant for, and no other runtime accepts it\"]:::ready\n    I2133[\"I2133<br/>Every mesh input and answer has a bound, and a refused registration learns nothing\"]:::ready\n    I2134[\"I2134<br/>A key removed from the trust list loses its links without a restart, and a node key can be rotated\"]:::ready\n    I2135[\"I2135<br/>The trust root is read from the default branch, not from whatever the checkout holds\"]:::ready\n    I2703[\"I2703<br/>The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order\"]:::blocked\n    I2704[\"I2704<br/>A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate\"]:::blocked\n    I2705[\"I2705<br/>A node key can be rotated, peers follow the new key, and the old key is refused\"]:::blocked\n    I2132 --> I2703\n    I2133 --> I2704\n    I2134 --> I2705\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 6,
-        "required": 6,
+        "total": 9,
+        "required": 9,
         "by_status": {
           "READY": 6,
-          "BLOCKED": 0,
+          "BLOCKED": 3,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 0,
@@ -15164,7 +15173,7 @@
       "id": "I1900",
       "slug": "an-intent-is-a-typed-record",
       "milestone": "intent-lifecycle",
-      "status": "DONE",
+      "status": "READY",
       "wave": 0,
       "priority": "p1",
       "profile": "implementation",
@@ -15202,31 +15211,12 @@
         "intent_stage_is_derived",
         "intent_surfaces_agree"
       ],
-      "evidence": [
-        {
-          "covers": "intent_stage_is_derived",
-          "type": "test",
-          "command": "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent::tests::the_stage_follows_the_milestones_and_only_then_the_evidence && MJ_TEST_JOBS=2 bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence",
-          "result": "test result: ok. 1 passed; tests: 1 passed, 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)",
-          "artifact": "",
-          "commit": "ce5959db59096ff22a45ee65e1464b16df74348a",
-          "recorded_at": "2026-10-14T08:01:19Z"
-        },
-        {
-          "covers": "intent_surfaces_agree",
-          "type": "test",
-          "command": "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test intent the_command_line_http_and_mcp_answer_the_same_intents",
-          "result": "test result: ok. 1 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)",
-          "artifact": "",
-          "commit": "ce5959db59096ff22a45ee65e1464b16df74348a",
-          "recorded_at": "2026-10-14T08:01:21Z"
-        }
-      ],
+      "evidence": [],
       "risk": "",
       "completion": "",
-      "started_at": "2026-10-14T08:01:15Z",
+      "started_at": "",
       "verified_at": "",
-      "completed_at": "2026-10-14T08:01:23Z"
+      "completed_at": ""
     },
     {
       "id": "I1901",
@@ -15242,6 +15232,7 @@
         "I1900"
       ],
       "blocked_by": [
+        "I1900",
         "milestone:intent-planning"
       ],
       "dependents": [
@@ -15334,7 +15325,7 @@
       "id": "I1903",
       "slug": "intent-realization",
       "milestone": "intent-lifecycle",
-      "status": "READY",
+      "status": "BLOCKED",
       "wave": 1,
       "priority": "p1",
       "profile": "implementation",
@@ -15343,7 +15334,9 @@
       "depends_on": [
         "I1900"
       ],
-      "blocked_by": [],
+      "blocked_by": [
+        "I1900"
+      ],
       "dependents": [],
       "scope": [
         "apps/majordomus-cli/src/intent_realization.rs",
@@ -18514,7 +18507,9 @@
       "title": "A server busy with tool calls is never taken over as if it were dead",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2700"
+      ],
       "scope": [
         "apps/majordomus-cli/src/lease.rs",
         "apps/majordomus-cli/src/http/server.rs",
@@ -18528,19 +18523,16 @@
       "objective": "Make the lease probe reach a server whose HTTP workers are all running tool calls, and make it prove it reached the leaseholder, so that a client deciding whether the owner is alive is never answered by a full worker pool or by another process.",
       "why": "The probe a client sends before taking over is GET / (apps/majordomus-cli/src/lease.rs:896-925), served by the same four workers (apps/majordomus-cli/src/http/server.rs:23) that run each tools/call synchronously. Four tool calls that outlast the probe timeout plus the busy grace (about 12 s, apps/majordomus-cli/src/lease.rs:43-62, 555-568) make a healthy server look wedged, and the next client to start takes its lease. is_own (apps/majordomus-cli/src/lease.rs:429) fixes only a server probing itself. GET / is also the most expensive route: it resolves the index and every surface, while /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs:691,702) and the probe does not use them. The probe compares name, repository_id and leaseholder (apps/majordomus-cli/src/lease.rs:902-905) but not the lease token, pid or started_at, and GET / does not expose them. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 3 and the fencing row.",
       "current_state": "apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.",
-      "desired_state": "The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. Not done here: a cheap liveness probe route that carries a digest of the lease token and the check that refuses a server whose token differs.",
+      "desired_state": "The workers only accept; each request is answered on a thread of its own up to MAX_HANDLERS (64), so a lease probe is answered while slow tool calls run, and stop waits a bounded time for handed-off requests. The deferred part, a liveness probe route carrying a digest of the lease token and the check that refuses a server whose token differs, is I2700.",
       "acceptance_criteria": [
-        "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged",
-        "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token",
-        "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+        "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged"
       ],
       "validation": [
         "bin/majordomus plan validate",
         "cargo test --test lease_busy --test mcp_shared"
       ],
       "evidence_required": [
-        "busy_pool_is_not_taken_over_test",
-        "probe_compares_the_token_test"
+        "busy_pool_is_not_taken_over_test"
       ],
       "evidence": [],
       "risk": "",
@@ -18663,7 +18655,9 @@
       "title": "The lease timings the policy declares are the ones the mcp and serve elections use",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2701"
+      ],
       "scope": [
         "apps/majordomus-cli/src/lease.rs",
         "apps/majordomus-cli/src/policy.rs",
@@ -18681,11 +18675,10 @@
       "objective": "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings.",
       "why": "Timings (apps/majordomus-cli/src/lease.rs:89-191) is a OnceLock filled with compiled defaults on first read, and declare_timings is called only from LoadedPolicy::load (apps/majordomus-cli/src/policy.rs:364). In mcp and serve, Lease::keep_alive (apps/majordomus-cli/src/lease.rs:1043) and inspect read the timings before App::load, which does not load the policy (apps/majordomus-cli/src/commands/mcp.rs:173-174, apps/majordomus-cli/src/commands/serve.rs:72,89-90), so the later declaration is a silent no-op. Only env enter loads the policy first (apps/majordomus-cli/src/commands/env.rs:548). standing_of (apps/majordomus-cli/src/capability/builtin/server.rs:370,386) and the spawn claim (apps/majordomus-cli/src/commands/serve.rs:330,358) use the compiled BIND_GRACE whatever is declared. docs/MCP.md:284-303 and the comment at .ai/repo/policy.yaml:335-339 say the contest is judged by the declaration. apps/majordomus-cli/tests/lease_declared.rs calls declare_timings directly and case 354_a_lease_contest_is_judged_by_a_declaration.sh checks the schema only. Latent today because the declared values equal the defaults. The idle timeout DEFAULT_IDLE_SECONDS (apps/majordomus-cli/src/cli.rs:3427) is a compiled constant absent from policy.yaml server:. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 6 and drift 1.",
       "current_state": "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values.",
-      "desired_state": "mcp and serve read the policy before their first election, so the declared timings are the ones the election uses; standing_of and the spawn-claim bound read lease::timings() rather than the compiled BIND_GRACE and JOIN_TIMEOUT. Not done here: the idle timeout as a declared server key (it stays the compiled default, overridden by serve --idle).",
+      "desired_state": "mcp and serve read the policy before their first election, so the declared timings are the ones the election uses; standing_of and the spawn-claim bound read lease::timings() rather than the compiled BIND_GRACE and JOIN_TIMEOUT. The deferred part, the idle timeout as a declared server key, is I2701.",
       "acceptance_criteria": [
         "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve",
-        "No reader of a lease timing names a compiled constant directly",
-        "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
+        "No reader of a lease timing names a compiled constant directly"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -18714,7 +18707,9 @@
       "title": "A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2702"
+      ],
       "scope": [
         "apps/majordomus-cli/src/shared.rs",
         "apps/majordomus-cli/src/commands/serve.rs",
@@ -18731,12 +18726,9 @@
       "objective": "Count every surface's use toward the idle timeout, and bind a port derived from the checkout's identity before falling back to a random one.",
       "why": "'Attached' means MCP HTTP sessions only (apps/majordomus-cli/src/shared.rs:250-253), and the serve --idle loop stops after 900 s without one (apps/majordomus-cli/src/commands/serve.rs:128-146). A person using only the Cockpit, REST or the /events WebSocket is not counted, so a UI-first server stops 15 minutes into being viewed. The default port 8741 (apps/majordomus-cli/src/cli.rs:3301) goes to one checkout and every other one falls back to a random port (apps/majordomus-cli/src/http/server.rs:77-86): on 2026-10-09 the live server asked for 8741 and serves 61068, an address that changes on every restart, so a Streamable HTTP client configuration or a bookmarked Cockpit has nothing stable to name. docs/MCP.md:29 shows :8741 as if it were the norm. There is no majordomus ui command; serve ensure and env enter are the UI-first entries (apps/majordomus-cli/src/commands/serve.rs:481-576, apps/majordomus-cli/src/commands/env.rs:701-760) and work without stdio (case 190_entry_is_automatic.sh). Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10.",
       "current_state": "A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.",
-      "desired_state": "The idle timer counts as use an MCP session attached, an HTTP request answered within the last second (http::server::used_within) and an open /events channel, so the Cockpit, the REST API and a watched execution keep their server. Not done here: a port derived from the repository and worktree identity, so a checkout keeps one address across restarts; and the question whether an entry beyond serve ensure (the pack's majordomus ui) is needed.",
+      "desired_state": "The idle timer counts as use an MCP session attached, an HTTP request answered within the last second (http::server::used_within) and an open /events channel, so the Cockpit, the REST API and a watched execution keep their server. The deferred part, a port derived from the repository and worktree identity, is I2702; whether an entry beyond serve ensure is needed is decided by ADR 0135 and planned as I2484.",
       "acceptance_criteria": [
-        "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing",
-        "Two consecutive starts of one checkout's server bind the same port when it is free",
-        "Two checkouts of one repository derive different ports",
-        "docs/MCP.md describes the derived port and the fallback"
+        "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -18744,8 +18736,7 @@
         "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
       ],
       "evidence_required": [
-        "ui_use_keeps_server_alive_test",
-        "stable_port_per_checkout_test"
+        "ui_use_keeps_server_alive_test"
       ],
       "evidence": [],
       "risk": "",
@@ -18766,7 +18757,9 @@
       "title": "A hello names the runtime it is meant for, and no other runtime accepts it",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2703"
+      ],
       "scope": [
         "apps/majordomus-cli/src/mesh/link.rs",
         "apps/majordomus-cli/src/mesh/cooperation.rs",
@@ -18778,11 +18771,10 @@
       "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
       "why": "Hello (apps/majordomus-cli/src/mesh/link.rs:444-456) names no audience. The nonce cache that refuses a replay is per answerer, held in memory and checked after trust (apps/majordomus-cli/src/mesh/cooperation.rs:1847-1875), so a captured hello replays to another runtime of the same repository, or to the same runtime after a restart, within the 300 s skew window (threat T6). The effect is a displaced inbound link and a false 'connected' for the real peer (apps/majordomus-cli/src/mesh/cooperation.rs:1918-1934); the replayer cannot sync. docs/MESH.md:128-136 and item 1 of rule project.mesh-cooperation-is-authenticated put the nonce check before protocol, self, repository and trust; the code checks it last on purpose, so strangers cannot fill the cache, while the blocking rule says 'verify, in order'. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 9 and drift 1.",
       "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
-      "desired_state": "Hello carries an optional to (the runtime key it means to reach) inside its signed bytes; the dialer fills it whenever it knows the key (a registry target, or a runtime it linked before); accept_hello refuses a hello addressed elsewhere as misaddressed, before the replay cache sees its nonce; a hello without to is still admitted (seeds, first contacts, releases before this one), so the link protocol version is unchanged and a mixed fleet keeps linking. docs/MESH.md states the order the code checks in and why the nonce cache is last. Not done here: the rule project.mesh-cooperation-is-authenticated@1 still lists the nonce fourth; correcting it is a version bump of a blocking rule that mesh-check and case 301 name by file, left to its own change.",
+      "desired_state": "Hello carries an optional to (the runtime key it means to reach) inside its signed bytes; the dialer fills it whenever it knows the key (a registry target, or a runtime it linked before); accept_hello refuses a hello addressed elsewhere as misaddressed, before the replay cache sees its nonce; a hello without to is still admitted (seeds, first contacts, releases before this one), so the link protocol version is unchanged and a mixed fleet keeps linking. docs/MESH.md states the order the code checks in and why the nonce cache is last. The deferred part, bringing rule project.mesh-cooperation-is-authenticated to the code's check order, is I2703.",
       "acceptance_criteria": [
         "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
-        "A hello replayed to A after A restarts cannot displace an established link",
-        "The rule's check order and the code's check order are the same, and a test names the order"
+        "A hello replayed to A after A restarts cannot displace an established link"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -18811,7 +18803,9 @@
       "title": "Every mesh input and answer has a bound, and a refused registration learns nothing",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2704"
+      ],
       "scope": [
         "apps/majordomus-cli/src/mesh/manager.rs",
         "apps/majordomus-cli/src/mesh/rendezvous.rs",
@@ -18825,12 +18819,10 @@
       "objective": "Bound the discovery channel, every reply a runtime reads and the candidates it accepts; answer a refused registration with its refusal alone; and give every link retry a floor and jitter.",
       "why": "The provider channel is unbounded (apps/majordomus-cli/src/mesh/manager.rs:425 channel()) and feeds one thread that runs an Ed25519 verify per datagram, with no per-source rate and no drop counter (threat T3). Rendezvous and link replies to the dialer are read with an unbounded read_to_end (apps/majordomus-cli/src/mcp/bridge.rs:84-85) under a per-read timeout only, so a slow trickle holds the worker and the per-runtime round lock (apps/majordomus-cli/src/mesh/cooperation.rs:2383-2387) (T4), and the candidate count received is unbounded. docs/MESH.md:341 lists 'messages (900 KiB)' as a flood bound, which holds only for what the answerer receives (apps/majordomus-cli/src/mesh/cooperation.rs:1769-1779, 2010-2020) and the dialer sends (apps/majordomus-cli/src/mesh/link.rs:883-888). mesh.register answers its own envelope and up to 32 candidates even when the caller's envelope is refused (apps/majordomus-cli/src/mesh/manager.rs:623-636), and the candidates include untrusted nodes of any repository (apps/majordomus-cli/src/mesh/registry.rs:342-357) (T2, T13). An UnknownLink answer is retried with zero delay (apps/majordomus-cli/src/mesh/cooperation.rs:2592-2595), so a peer that welcomes and then refuses sync drives a busy loop, and the link backoff has no jitter (apps/majordomus-cli/src/mesh/cooperation.rs:2611-2614). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T2, T3, T4 and T13, drift 5.",
       "current_state": "Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not.",
-      "desired_state": "Providers send through a bounded queue (OBSERVATION_QUEUE, 1024) whose drops are counted as overflow in mesh.status refusals; a refused registration is answered with the refusal alone, and an admitted one with this node and the trusted nodes of the caller's own repositories (MeshRegistry::candidates_for; the unfiltered candidates is gone); an answerer that keeps answering unknown_link is retried no faster than a heartbeat after the first immediate retry. Not done here: capping the reply a dialer reads (with I2147, on the shared request function) and the received candidate count, jitter on the link backoff, and a test that measures the unknown_link retry rate.",
+      "desired_state": "Providers send through a bounded queue (OBSERVATION_QUEUE, 1024) whose drops are counted as overflow in mesh.status refusals; a refused registration is answered with the refusal alone, and an admitted one with this node and the trusted nodes of the caller's own repositories (MeshRegistry::candidates_for; the unfiltered candidates is gone); an answerer that keeps answering unknown_link is retried no faster than a heartbeat after the first immediate retry. The deferred part, the dialer's reply and candidate bounds, jitter on the link backoff and a test of the unknown_link retry rate, is I2704.",
       "acceptance_criteria": [
         "Datagrams beyond the channel bound are dropped and counted in mesh status, and the process's memory stays bounded under a flood test",
-        "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors",
-        "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository",
-        "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat"
+        "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -18839,7 +18831,6 @@
       ],
       "evidence_required": [
         "discovery_flood_bounded_test",
-        "reply_bound_test",
         "refused_registration_learns_nothing_test"
       ],
       "evidence": [],
@@ -18861,7 +18852,9 @@
       "title": "A key removed from the trust list loses its links without a restart, and a node key can be rotated",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2705"
+      ],
       "scope": [
         "apps/majordomus-cli/src/mesh/manager.rs",
         "apps/majordomus-cli/src/mesh/cooperation.rs",
@@ -18876,10 +18869,9 @@
       "objective": "Re-read the trust declaration while the runtime runs, drop the links and admission of a de-listed key, offer a key rotation that peers can follow, and create the node key file private from its first byte.",
       "why": "Trust is frozen at activation (apps/majordomus-cli/src/mesh/manager.rs:466,486, apps/majordomus-cli/src/mesh/cooperation.rs:1150): a key removed from trust.allow keeps its links until every peer restarts, and there is no rotate or revoke flow (threat T11). A compromised key therefore cannot be cut off without restarting every runtime. The node key file is written and then chmodded to 0600 (apps/majordomus-cli/src/mesh/identity.rs:338-347), so it exists for a moment at umask permissions. Reloaded events of a revoked key are I2124's (the journal reload applies the trust policy, milestone runtime-trust); this issue is the live half. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 6 and the identity row.",
       "current_state": "Revocation takes effect only on each peer's restart. Rotation does not exist. The key file is briefly readable at umask permissions.",
-      "desired_state": "Cooperation holds its trust as a replaceable value; Cooperation::retrust puts a new one in force and ends the link of every peer it no longer trusts, and the server calls it with each new generation of the repository it reads, so a key withdrawn from trust.allow and committed loses its links without a restart: its next sync meets unknown_link and its hello is refused untrusted. Not done here: rotating a node key, and purging a withdrawn key's events from the running journal (the next restart's reload applies the trust in force, I2124).",
+      "desired_state": "Cooperation holds its trust as a replaceable value; Cooperation::retrust puts a new one in force and ends the link of every peer it no longer trusts, and the server calls it with each new generation of the repository it reads, so a key withdrawn from trust.allow and committed loses its links without a restart: its next sync meets unknown_link and its hello is refused untrusted. The deferred part, rotating a node key and purging a withdrawn key's events from the running journal, is I2705.",
       "acceptance_criteria": [
         "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart",
-        "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
         "Under a permissive umask the node key file is never readable by group or others"
       ],
       "validation": [
@@ -18889,7 +18881,6 @@
       ],
       "evidence_required": [
         "revocation_without_restart_test",
-        "key_rotation_test",
         "key_file_created_private_test"
       ],
       "evidence": [],
@@ -18954,7 +18945,7 @@
       "id": "I2137",
       "slug": "the-journal-is-durable",
       "milestone": "mesh-journal-converges",
-      "status": "READY",
+      "status": "DONE",
       "wave": 0,
       "priority": "p0",
       "profile": "implementation",
@@ -18962,7 +18953,9 @@
       "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2706"
+      ],
       "scope": [
         "apps/majordomus-cli/src/mesh/journal.rs",
         "apps/majordomus-cli/src/mesh/doctor.rs",
@@ -18975,10 +18968,10 @@
       "objective": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
       "why": "Journal::persist ignores write errors (apps/majordomus-cli/src/mesh/journal.rs:1984, let _ = file.write_all) and never fsyncs; reload reads the whole file with read_to_string and drops every unparsable line silently (apps/majordomus-cli/src/mesh/journal.rs:1407-1413); an append after a torn tail with no trailing newline fuses the next event into the corrupt line (apps/majordomus-cli/src/mesh/journal.rs:1969-1984), so one crash also loses the event after it. The compaction rewrite (apps/majordomus-cli/src/mesh/journal.rs:2250-2264) has the same properties, and the file is created at the default umask. The only reload test uses a clean file (apps/majordomus-cli/src/mesh/journal.rs:2655, a_reloaded_journal_keeps_events_and_resurrects_no_liveness). Disk full is handled nowhere on this path; the only sync_all in the crate is apps/majordomus-cli/src/economics/runner.rs:1035. The journal holds other runtimes' events and handover bodies (apps/majordomus-cli/src/mesh/journal.rs:1961-1985), so a lost line is lost cooperation. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 4 and the failure-class rows disk full, truncated journal and partial write.",
       "current_state": "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload.",
-      "desired_state": "An append writes a missing trailing newline first (a torn tail stays one unreadable line), syncs, and counts a failure in JournalTallies.write_failures instead of discarding it; reload counts unreadable lines (JournalTallies.unreadable); compaction writes a synced file and renames it over the old one, then syncs the directory; the file is created owner-only (0600); mesh doctor fails its journal check while either count is nonzero. Not done here: a reload size bound, and refusing to acknowledge an own event whose append failed (it is held in memory and replicated, and the loss is reported).",
+      "desired_state": "An append writes a missing trailing newline first (a torn tail stays one unreadable line), syncs, and counts a failure in JournalTallies.write_failures instead of discarding it; reload counts unreadable lines (JournalTallies.unreadable); compaction writes a synced file and renames it over the old one, then syncs the directory; the file is created owner-only (0600); mesh doctor fails its journal check while either count is nonzero. The deferred part, a reload size bound and refusing to acknowledge an own event whose append failed, is I2706.",
       "acceptance_criteria": [
         "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload",
-        "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable",
+        "A failed write on a read-only or full file system in a test is counted and reported by mesh doctor",
         "A kill during compaction leaves the old or the new journal, never a mix",
         "The journal file is created with owner-only permissions"
       ],
@@ -18993,12 +18986,40 @@
         "write_failure_reported_test",
         "compaction_crash_test"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "torn_tail_reload_test",
+          "type": "test",
+          "command": "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::tests::a_torn_tail_is_one_unreadable_line_and_the_next_append_reads",
+          "result": "test result: ok. 1 passed; 0 failed (run 2026-10-14 10:02Z on master 6f28de9207)",
+          "artifact": "",
+          "commit": "6f28de92072326209d83caa2053d4d2de1c16145",
+          "recorded_at": "2026-10-14T10:03:11Z"
+        },
+        {
+          "covers": "write_failure_reported_test",
+          "type": "test",
+          "command": "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::tests::a_failed_append_is_counted_and_the_file_is_the_owners_alone",
+          "result": "test result: ok. 1 passed; 0 failed (run 2026-10-14 10:02Z on master 6f28de9207)",
+          "artifact": "",
+          "commit": "6f28de92072326209d83caa2053d4d2de1c16145",
+          "recorded_at": "2026-10-14T10:03:13Z"
+        },
+        {
+          "covers": "compaction_crash_test",
+          "type": "test",
+          "command": "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::tests::a_compaction_that_cannot_replace_the_file_leaves_the_old_one_and_no_temporary",
+          "result": "test result: ok. 1 passed; 0 failed; a failed rename, not a killed process (run 2026-10-14 10:02Z on master 6f28de9207)",
+          "artifact": "",
+          "commit": "6f28de92072326209d83caa2053d4d2de1c16145",
+          "recorded_at": "2026-10-14T10:03:15Z"
+        }
+      ],
       "risk": "",
       "completion": "",
-      "started_at": "",
+      "started_at": "2026-10-14T10:03:06Z",
       "verified_at": "",
-      "completed_at": ""
+      "completed_at": "2026-10-14T10:03:17Z"
     },
     {
       "id": "I2139",
@@ -19331,7 +19352,9 @@
       "title": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2707"
+      ],
       "scope": [
         "apps/majordomus-cli/src/capability/builtin/health.rs",
         "apps/majordomus-cli/src/http/router.rs",
@@ -19345,12 +19368,11 @@
       "objective": "Fold lease loss and a degraded index into readiness with a named reason, add a mesh check to health.report, and make majordomus doctor report the runtime or say that it does not.",
       "why": "Readiness (apps/majordomus-cli/src/capability/builtin/health.rs:214, GET /api/v1/ready) checks a non-empty registry and that the code is not replaced; a degraded index stays ready:true with layer: warn, and mesh state and lease loss are absent: was_lost() reaches only GET / through LEASEHOLDER_KEY (apps/majordomus-cli/src/http/router.rs:710). health.report (apps/majordomus-cli/src/capability/builtin/health.rs:299) has no mesh and no policy-allowed dimension; mesh health lives only in mesh.status, mesh doctor and mesh verify. Running, ready, mesh-healthy and degraded are split across /live, /ready, server.standing_at (apps/majordomus-cli/src/capability/builtin/server.rs:403), MeshStatus, index::State::Degraded (apps/majordomus-cli/src/index.rs:34) and LinkState::Degraded (apps/majordomus-cli/src/mesh/cooperation.rs:265). The top-level majordomus doctor is a governance doctor (lib/doctor.sh:53-77) that checks nothing about the server, the lease or the mesh, which its name suggests it does. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 10 and premise 4.",
       "current_state": "A server that lost its lease, or serves a degraded index, answers /api/v1/ready with ready true.",
-      "desired_state": "GET /api/v1/ready answers ready false after a lease loss, with reasons naming lease_lost (and stale, as before); a degraded layer is listed as layer_degraded and stays ready, which docs/MCP.md says; health.report carries a mesh check that applies mesh doctor's runtime verdict (doctor::runtime_verdict) in a process whose server decided the mesh, and reports unknown elsewhere. Not done here: majordomus doctor still checks governance alone and its help does not yet say so; the shell usage, share/commands.yaml and docs/CLI.md that would change together are left to their own change.",
+      "desired_state": "GET /api/v1/ready answers ready false after a lease loss, with reasons naming lease_lost (and stale, as before); a degraded layer is listed as layer_degraded and stays ready, which docs/MCP.md says; health.report carries a mesh check that applies mesh doctor's runtime verdict (doctor::runtime_verdict) in a process whose server decided the mesh, and reports unknown elsewhere. The deferred part, majordomus doctor reporting the runtime or saying that it checks governance only, is I2707.",
       "acceptance_criteria": [
         "A server that lost its lease answers /api/v1/ready with ready false and the reason lease_lost",
         "A degraded index is reported on /api/v1/ready with its reason, and docs/MCP.md says whether that is ready",
-        "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled",
-        "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+        "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -19379,7 +19401,9 @@
       "title": "No answer, log line or mesh frame carries a credential the redactor knows",
       "depends_on": [],
       "blocked_by": [],
-      "dependents": [],
+      "dependents": [
+        "I2708"
+      ],
       "scope": [
         "apps/majordomus-cli/src/http/router.rs",
         "apps/majordomus-cli/src/http/server.rs",
@@ -19395,21 +19419,19 @@
       "objective": "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist.",
       "why": "The published-artifact guard generate::forbidden_in (apps/majordomus-cli/src/generate.rs:1364,1398) is a substring list (ghp_, AKIA, Bearer, PEM, /Users/) applied to generated documents only, not to HTTP responses, MCP results, mesh frames or logs. Request paths and origins are logged raw (apps/majordomus-cli/src/http/router.rs:731-736) and logging has no redaction layer (apps/majordomus-cli/src/logging.rs:29-37). redaction::public_text (apps/majordomus-cli/src/redaction.rs:223) has no production caller, although the module doc (apps/majordomus-cli/src/redaction.rs:1-7) and case 504_public_text_is_redacted_once.sh say published evidence goes through it; wiring the evidence publication to it is I1955 (test-evidence). The mesh replicates intents, scopes and handover bodies in clear over plain HTTP (apps/majordomus-cli/src/mesh/link.rs:878-908). Pack invariant 9: no token or key in logs, web responses, mesh discovery, telemetry or generated docs. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 7, the redaction rows and drift 1.",
       "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
-      "desired_state": "Every HTTP error body (Response::error, error_response), every JSON-RPC error and MCP tool refusal, the request fields the server logs (origin, path, target), and a handover body before it is signed into the journal pass redaction::redact_secrets; the module documentation of redaction.rs names only callers that exist. Not done here: an allow-list in scripts/ci/mesh-check that refuses an EventBody field nobody listed, a redaction layer for every tracing field, and review bodies (they carry a subject and a verdict a person typed and are left to the allow-list change).",
+      "desired_state": "Every HTTP error body (Response::error, error_response), every JSON-RPC error and MCP tool refusal, the request fields the server logs (origin, path, target), and a handover body before it is signed into the journal pass redaction::redact_secrets; the module documentation of redaction.rs names only callers that exist. The deferred part, an EventBody allow-list in scripts/ci/mesh-check, a redaction layer for every tracing field and review bodies, is I2708.",
       "acceptance_criteria": [
         "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log",
         "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
-        "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
         "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
       ],
       "validation": [
         "bin/majordomus plan validate",
         "cargo test --test redaction",
-        "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+        "cargo test --test no_answer_carries_a_credential"
       ],
       "evidence_required": [
-        "credential_never_echoed_test",
-        "eventbody_allowlist_case"
+        "credential_never_echoed_test"
       ],
       "evidence": [],
       "risk": "",
@@ -23076,6 +23098,471 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I2700",
+      "slug": "the-lease-probe-compares-the-token",
+      "milestone": "runtime-lifecycle",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder",
+      "depends_on": [
+        "I2126"
+      ],
+      "blocked_by": [
+        "I2126"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/lease.rs",
+        "apps/majordomus-cli/src/http/router.rs",
+        "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "apps/majordomus-cli/tests/lease_busy.rs",
+        "test/cases",
+        "docs/MCP.md"
+      ],
+      "non_scope": [
+        "How requests are handed to handler threads and MAX_HANDLERS, which I2126 delivered"
+      ],
+      "objective": "Point the lease probe at a liveness route that answers without resolving the index and carries the repository id, the leaseholder and a digest of the lease token, and judge a process whose digest differs from the lease's not the leaseholder.",
+      "why": "Split from I2126 on 2026-10-14. I2126 delivered the busy-pool half (every request answered on a thread of its own up to MAX_HANDLERS) and its desired_state said 'Not done here' of the liveness probe route and the token check, while its acceptance criteria still required both, so it could never close. The probe still asks GET /, the most expensive route, and compares name, repository_id and leaseholder but not the lease token, pid or started_at, so another process answering GET / for the same repository is taken for the leaseholder. Baseline audit of 2026-10-09 at master 1fb8d6be44, the fencing row.",
+      "current_state": "lease::ask (apps/majordomus-cli/src/lease.rs, behind lease::probe, lease::probe_reply and lease::probe_patiently) sends GET / and compares the index document's name, repository_id and leaseholder key. The lease document carries a token (apps/majordomus-cli/src/lease.rs, LeaseDocument.token) that no answer exposes. /api/v1/live and /api/v1/ready exist (apps/majordomus-cli/src/capability/builtin/health.rs) and the probe uses neither.",
+      "desired_state": "The lease probe asks a liveness route that answers without resolving the index; the answer carries the repository id, whether the process holds the lease, and a digest of the lease token it holds, never the token itself; a probe that hears a digest other than that of the lease it read judges the answerer not the leaseholder. docs/MCP.md names the route and the comparison.",
+      "acceptance_criteria": [
+        "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token",
+        "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --test lease_busy --test mcp_shared"
+      ],
+      "evidence_required": [
+        "probe_compares_the_token_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2701",
+      "slug": "the-idle-timeout-is-declared",
+      "milestone": "runtime-lifecycle",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The idle timeout is declared beside the other server timings, and serve --idle overrides the declaration",
+      "depends_on": [
+        "I2129"
+      ],
+      "blocked_by": [
+        "I2129"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/serve.rs",
+        "apps/majordomus-cli/src/commands/env.rs",
+        "apps/majordomus-cli/src/policy.rs",
+        ".ai/repo/policy.yaml",
+        "share/schemas/majordomus/policy",
+        "apps/majordomus-cli/tests/serve_lifecycle.rs",
+        "test/cases",
+        "docs/MCP.md"
+      ],
+      "non_scope": [
+        "The lease timings the elections read, which I2129 delivered"
+      ],
+      "objective": "Declare the server's idle timeout under policy.yaml server: beside the lease timings, validate it by the policy schema, and make every server that starts stop after the declared time unless serve --idle says otherwise.",
+      "why": "Split from I2129 on 2026-10-14. I2129 made the declared lease timings the ones mcp and serve elect by, and its desired_state said 'Not done here' of the idle timeout as a declared server key, while its acceptance criteria still required it, so it could never close. The idle timeout is the one server timing a repository cannot declare: a compiled constant, absent from policy.yaml server:. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle drift 1.",
+      "current_state": "DEFAULT_IDLE_SECONDS (900, apps/majordomus-cli/src/cli.rs) is the clap default of serve --idle and serve ensure --idle, and env enter passes it to the server it starts (apps/majordomus-cli/src/commands/env.rs). .ai/repo/policy.yaml server: declares probe_timeout_seconds, bind_grace_seconds, join_timeout_seconds, busy_grace_seconds and read_deadline_seconds (lease::Timings, apps/majordomus-cli/src/lease.rs); the policy schema (share/schemas/majordomus/policy/policy.v1.schema.json) knows no idle key.",
+      "desired_state": "policy.yaml server: may declare the idle timeout (server.idle_seconds) and the policy schema validates it; a server started by serve, serve ensure or env enter without --idle stops after the declared time, an absent key keeps 900 s, and --idle given on the command line overrides the declaration. docs/MCP.md lists the key with the other server timings.",
+      "acceptance_criteria": [
+        "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it",
+        "A server started without --idle under a declared idle timeout of a few seconds stops after the declared time, not after 900 s"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --test serve_lifecycle"
+      ],
+      "evidence_required": [
+        "idle_timeout_declared_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2702",
+      "slug": "a-checkout-keeps-one-address",
+      "milestone": "runtime-lifecycle",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A checkout keeps one address across restarts, because its server binds a port derived from the checkout",
+      "depends_on": [
+        "I2131"
+      ],
+      "blocked_by": [
+        "I2131"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/http/server.rs",
+        "apps/majordomus-cli/src/commands/serve.rs",
+        "apps/majordomus-cli/src/commands/env.rs",
+        "apps/majordomus-cli/tests/serve_lifecycle.rs",
+        "docs/MCP.md"
+      ],
+      "non_scope": [
+        "The idle timer and what counts as use, which I2131 delivered",
+        "A majordomus ui command, which ADR 0135 decided and I2484 plans"
+      ],
+      "objective": "Bind a port derived from the repository and worktree identity before falling back to a free one, so that a Streamable HTTP client configuration or a bookmarked UI names an address that survives a restart.",
+      "why": "Split from I2131 on 2026-10-14. I2131 made every surface's use count toward the idle timeout, and its desired_state said 'Not done here' of a port derived from the repository and worktree identity, while its acceptance criteria still required it, so it could never close. On 2026-10-09 the live server asked for 8741 and served 61068, an address that changes on every restart. The other deferred question of I2131, whether an entry beyond serve ensure is needed, is decided by ADR 0135 and planned as I2484, and is not carried here. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10.",
+      "current_state": "DEFAULT_PORT is 8741 (apps/majordomus-cli/src/cli.rs); the first checkout to start takes it and every other is given a free port when http::server::bind (apps/majordomus-cli/src/http/server.rs) cannot have the one asked for, a different one on each restart. docs/MCP.md says a taken port is replaced by a free one and shows :8741 in its examples.",
+      "desired_state": "A server asks first for a port derived from the repository identity and the worktree it serves, so one checkout asks for the same port on every start and two checkouts of one repository ask for different ones; a port that is taken falls back to a free one and both are logged, as today. docs/MCP.md describes the derived port and the fallback.",
+      "acceptance_criteria": [
+        "Two consecutive starts of one checkout's server bind the same port when it is free",
+        "Two checkouts of one repository derive different ports",
+        "docs/MCP.md describes the derived port and the fallback"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --test serve_lifecycle",
+        "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
+      ],
+      "evidence_required": [
+        "stable_port_per_checkout_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2703",
+      "slug": "the-rule-states-the-hello-check-order",
+      "milestone": "runtime-trust",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order",
+      "depends_on": [
+        "I2132"
+      ],
+      "blocked_by": [
+        "I2132"
+      ],
+      "dependents": [],
+      "scope": [
+        ".ai/repo/rules/project",
+        "scripts/ci/mesh-check",
+        "test/cases/301_the_mesh_stays_one_subsystem.sh",
+        "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "docs/MESH.md"
+      ],
+      "non_scope": [
+        "The recipient field of a hello and the misaddressed refusal, which I2132 delivered"
+      ],
+      "objective": "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test.",
+      "why": "Split from I2132 on 2026-10-14. I2132 bound each hello to its recipient and made docs/MESH.md state the order the code checks in, and its desired_state said 'Not done here' of the rule, which still lists the nonce fourth; correcting it is a version bump of a blocking rule that scripts/ci/mesh-check and case 301 name by file. Its acceptance criteria still required rule and code to agree, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh drift 1.",
+      "current_state": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md says the answerer verifies 'in order' signature, timestamp, nonce, protocol, self, repository, trust, and has no recipient check. docs/MESH.md lists the ten checks in the code's order, with the recipient (misaddressed) seventh and the nonce cache last, while its diagram still reads 'signature · freshness · nonce · protocol · self · repository · trust'. scripts/ci/mesh-check and test/cases/301_the_mesh_stays_one_subsystem.sh name the v1 rule file. No test names the order Cooperation::accept_hello (apps/majordomus-cli/src/mesh/cooperation.rs) checks in.",
+      "desired_state": "A new version of the rule states the order accept_hello checks in, the recipient check included and the nonce cache last with its reason; scripts/ci/mesh-check, case 301 and the docs/MESH.md diagram follow the new version; a test sends hellos that fail two checks at once and asserts the refusal of the earlier one, for each adjacent pair the rule orders.",
+      "acceptance_criteria": [
+        "The rule's check order and the code's check order are the same, and a test names the order"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --lib mesh::cooperation",
+        "scripts/ci/mesh-check",
+        "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem"
+      ],
+      "evidence_required": [
+        "hello_check_order_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2704",
+      "slug": "mesh-replies-are-bounded-for-the-dialer",
+      "milestone": "runtime-trust",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate",
+      "depends_on": [
+        "I2133"
+      ],
+      "blocked_by": [
+        "I2133"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/mesh/link.rs",
+        "apps/majordomus-cli/src/mesh/rendezvous.rs",
+        "apps/majordomus-cli/src/mesh/manager.rs",
+        "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "apps/majordomus-cli/src/mcp/bridge.rs",
+        "apps/majordomus-cli/tests/mesh.rs",
+        "apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "docs/MESH.md"
+      ],
+      "non_scope": [
+        "The bounded discovery queue and the registration answer, which I2133 delivered",
+        "The general MAX_REPLY_BYTES bound of bridge::request, which is I2147's"
+      ],
+      "objective": "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test.",
+      "why": "Split from I2133 on 2026-10-14. I2133 bounded the discovery queue, answered a refused registration with its refusal alone and slowed the unknown_link retry, and its desired_state said 'Not done here' of capping the reply a dialer reads and the received candidate count, jitter on the link backoff, and a test that measures the unknown_link retry rate, while its acceptance criteria still required them, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T4 and T13.",
+      "current_state": "Every reply bridge::request reads is bounded at MAX_REPLY_BYTES, 32 MiB (apps/majordomus-cli/src/mcp/bridge.rs, I2147), not at MAX_LINK_MESSAGE (900 KiB, apps/majordomus-cli/src/mesh/link.rs), which bounds only what the answerer receives and the dialer sends. The rendezvous client takes every candidate an answer carries (apps/majordomus-cli/src/mesh/rendezvous.rs); MAX_CANDIDATES (32) bounds only what this node answers (apps/majordomus-cli/src/mesh/manager.rs). Cooperation::backoff (apps/majordomus-cli/src/mesh/cooperation.rs) is heartbeat times 2^failures with no jitter. No test measures how often a peer that answers hello and refuses every sync is retried.",
+      "desired_state": "A link reply over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors before they are parsed; the link backoff carries a bounded jitter; a test drives a peer that welcomes and refuses every sync and measures the retry rate.",
+      "acceptance_criteria": [
+        "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors",
+        "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat",
+        "Two runtimes whose links to one peer fail together do not retry it at the same instant: the link backoff carries a bounded jitter"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --lib mesh",
+        "cargo test --test mesh --test mesh_cooperation"
+      ],
+      "evidence_required": [
+        "reply_bound_test",
+        "unknown_link_retry_rate_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2705",
+      "slug": "a-node-key-can-be-rotated",
+      "milestone": "runtime-trust",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A node key can be rotated, peers follow the new key, and the old key is refused",
+      "depends_on": [
+        "I2134"
+      ],
+      "blocked_by": [
+        "I2134"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/mesh/identity.rs",
+        "apps/majordomus-cli/src/mesh/trust.rs",
+        "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "apps/majordomus-cli/src/mesh/journal.rs",
+        "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "docs/MESH.md"
+      ],
+      "non_scope": [
+        "Ending a withdrawn key's links without a restart, which I2134 delivered",
+        "Creating the key file owner-only from its first byte, which session prismatic-majordomus-6e is fixing on its own branch under I2134",
+        "The journal reload applying the trust in force, which is I2124's"
+      ],
+      "objective": "Offer a node key rotation that peers which trusted the old key can follow to the new one, after which the old key's hello is refused, and purge a withdrawn key's events from the running journal without waiting for a restart.",
+      "why": "Split from I2134 on 2026-10-14. I2134 made a key withdrawn from trust.allow lose its links without a restart (Cooperation::retrust), and its desired_state said 'Not done here' of rotating a node key and of purging a withdrawn key's events from the running journal, while its acceptance criteria still required rotation, so it could never close. A compromised key can now be cut off live, but it cannot be replaced: there is no rotate flow (threat T11). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 6 and the identity row.",
+      "current_state": "The node identity is created once and loaded from its key file (apps/majordomus-cli/src/mesh/identity.rs); nothing replaces it, and no message tells a peer that a key it trusts is succeeded by another. Cooperation::retrust (apps/majordomus-cli/src/mesh/cooperation.rs), called from the live reload (apps/majordomus-cli/src/live.rs) through capability::builtin::mesh::retrust, ends the links of keys no longer trusted; a withdrawn key's events stay in the running journal until the next restart's reload applies the trust in force (I2124). The key file is written at the umask's mode and chmodded to 0600 afterwards (apps/majordomus-cli/src/mesh/identity.rs); session prismatic-majordomus-6e is fixing exactly that on its own branch, and it is not this issue's work.",
+      "desired_state": "A command rotates this node's key: the new identity is signed for by the old one, peers that trusted the old key accept the succession and link to the new key, and the old key's next hello is refused. A key withdrawn from the trust in force has its events dropped from the running journal at the reload that withdrew it. docs/MESH.md describes rotation and what a peer does on it.",
+      "acceptance_criteria": [
+        "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
+        "A key withdrawn from trust.allow on a running runtime has its events dropped from the running journal at the reload that withdrew it, with no restart"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --test mesh_cooperation",
+        "cargo test --lib mesh::identity"
+      ],
+      "evidence_required": [
+        "key_rotation_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2706",
+      "slug": "a-lost-append-is-not-acknowledged",
+      "milestone": "mesh-journal-converges",
+      "status": "READY",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "An own event whose append failed is never acknowledged as durable, and a journal reload is bounded in size",
+      "depends_on": [
+        "I2137"
+      ],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/mesh/journal.rs",
+        "apps/majordomus-cli/src/mesh/doctor.rs",
+        "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "test/cases",
+        "docs/MESH.md"
+      ],
+      "non_scope": [
+        "Synced appends, the write-failure and unreadable-line tallies, atomic compaction and owner-only creation, which I2137 delivered"
+      ],
+      "objective": "Refuse to acknowledge an own mesh event as durable when its append failed, and bound how much a journal reload reads.",
+      "why": "Split from I2137 on 2026-10-14. I2137 made appends synced and failure-counting, reloads count unreadable lines, compaction atomic and the file owner-only, and its desired_state said 'Not done here' of a reload size bound and of refusing to acknowledge an own event whose append failed (it is held in memory and replicated, and the loss is reported), while its acceptance criteria still required that the event not be acknowledged as durable, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 4 and the failure-class rows disk full and truncated journal.",
+      "current_state": "Journal::append_own (apps/majordomus-cli/src/mesh/journal.rs) returns Ok when the write to disk fails: the event is held in memory and replicated, and JournalTallies.write_failures counts the loss, which mesh doctor reports (apps/majordomus-cli/src/mesh/doctor.rs, journal_check). The test a_failed_append_is_counted_and_the_file_is_the_owners_alone asserts exactly that Ok. Reload reads the whole file with no size bound.",
+      "desired_state": "An own event whose append failed is reported to its caller as not durable (held and replicated, but not acknowledged), so a capability that writes it does not claim it is on disk; a reload reads at most a declared number of bytes and reports what it left unread, and mesh doctor names it.",
+      "acceptance_criteria": [
+        "A failed write on a read-only or full file system in a test leaves its event not acknowledged as durable to the caller that appended it",
+        "A journal larger than the reload bound is reloaded up to the bound, and the part left unread is counted and reported by mesh doctor"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "cargo test --lib mesh::journal"
+      ],
+      "evidence_required": [
+        "failed_append_not_acknowledged_test",
+        "reload_size_bound_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2707",
+      "slug": "doctor-says-what-it-checks",
+      "milestone": "failure-is-visible",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "majordomus doctor reports a stale server, or says plainly that it checks governance only",
+      "depends_on": [
+        "I2157"
+      ],
+      "blocked_by": [
+        "I2157"
+      ],
+      "dependents": [],
+      "scope": [
+        "lib/doctor.sh",
+        "share/commands.yaml",
+        "docs/CLI.md",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Readiness and the health.report mesh check, which I2157 delivered"
+      ],
+      "objective": "Make the top-level majordomus doctor either report the runtime of the checkout (server, lease, mesh) or say in its help, usage and reference that it checks governance alone.",
+      "why": "Split from I2157 on 2026-10-14. I2157 made /api/v1/ready refuse a lost lease and name a degraded layer, and gave health.report a mesh check, and its desired_state said 'Not done here' of majordomus doctor, which still checks governance alone while its help does not say so; the shell usage, share/commands.yaml and docs/CLI.md that would change together were left to their own change. Its acceptance criteria still required it, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 10 and premise 4.",
+      "current_state": "majordomus doctor is the governance doctor of lib/doctor.sh; it checks nothing about the server, the lease or the mesh, which its name suggests it does. Runtime health is read through health.report, GET /api/v1/ready, serve status and mesh doctor.",
+      "desired_state": "majordomus doctor in a checkout whose server is stale reports it, or its help, the shell usage, share/commands.yaml and docs/CLI.md say together that it checks governance only and name where runtime health is read.",
+      "acceptance_criteria": [
+        "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+      ],
+      "validation": [
+        "bin/majordomus plan validate"
+      ],
+      "evidence_required": [
+        "doctor_states_its_reach_case"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2708",
+      "slug": "mesh-event-fields-are-listed",
+      "milestone": "architecture-is-enforced",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A mesh event field nobody listed fails the mesh check, and no log field or review body carries a credential the redactor knows",
+      "depends_on": [
+        "I2161"
+      ],
+      "blocked_by": [
+        "I2161"
+      ],
+      "dependents": [],
+      "scope": [
+        "scripts/ci/mesh-check",
+        "apps/majordomus-cli/src/mesh/journal.rs",
+        "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "apps/majordomus-cli/src/logging.rs",
+        "apps/majordomus-cli/src/redaction.rs",
+        "apps/majordomus-cli/tests/redaction.rs",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Error bodies, MCP errors, logged request fields and handover bodies, which I2161 delivered",
+        "Wiring the evidence publication to redaction::public_text, which is I1955's"
+      ],
+      "objective": "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor.",
+      "why": "Split from I2161 on 2026-10-14. I2161 passed every HTTP error body, JSON-RPC error, MCP tool refusal, logged request field and handover body through redaction::redact_secrets, and its desired_state said 'Not done here' of an allow-list in scripts/ci/mesh-check that refuses an EventBody field nobody listed, a redaction layer for every tracing field, and review bodies, while its acceptance criteria still required the allow-list, so it could never close. The mesh replicates event bodies in clear over plain HTTP; a field added to EventBody reaches every linked runtime without anyone deciding it may. Pack invariant 9.",
+      "current_state": "EventBody (apps/majordomus-cli/src/mesh/journal.rs) is replicated as it is declared; scripts/ci/mesh-check holds the mesh to one subsystem and lists no EventBody field. Logging (apps/majordomus-cli/src/logging.rs) has no redaction layer: only the request fields the router logs are redacted at the call site (apps/majordomus-cli/src/http/router.rs). A handover body is redacted before it is signed (apps/majordomus-cli/src/mesh/handover.rs); a review's subject and verdict are not.",
+      "desired_state": "scripts/ci/mesh-check reads the fields of every EventBody variant and fails on one that its allow-list does not name, and the allow-list says for each listed field whether it is redacted before signing; every tracing field passes redaction::redact_secrets in one layer; a review's subject and verdict are redacted before they are signed into the journal.",
+      "acceptance_criteria": [
+        "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
+        "A credential-shaped value in any tracing field is absent from server.log",
+        "A review whose subject or verdict carries a credential shape is redacted or refused before it is signed into the journal"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "scripts/ci/mesh-check",
+        "cargo test --test redaction"
+      ],
+      "evidence_required": [
+        "eventbody_allowlist_case"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -23242,7 +23729,16 @@
         "I2462",
         "I2484",
         "I2486",
-        "I2664"
+        "I2664",
+        "I2700",
+        "I2701",
+        "I2702",
+        "I2703",
+        "I2704",
+        "I2705",
+        "I2706",
+        "I2707",
+        "I2708"
       ]
     },
     {
@@ -24784,8 +25280,44 @@
       "to": "I2075"
     },
     {
+      "from": "I2126",
+      "to": "I2700"
+    },
+    {
       "from": "I2127",
       "to": "I2163"
+    },
+    {
+      "from": "I2129",
+      "to": "I2701"
+    },
+    {
+      "from": "I2131",
+      "to": "I2702"
+    },
+    {
+      "from": "I2132",
+      "to": "I2703"
+    },
+    {
+      "from": "I2133",
+      "to": "I2704"
+    },
+    {
+      "from": "I2134",
+      "to": "I2705"
+    },
+    {
+      "from": "I2137",
+      "to": "I2706"
+    },
+    {
+      "from": "I2157",
+      "to": "I2707"
+    },
+    {
+      "from": "I2161",
+      "to": "I2708"
     },
     {
       "from": "I2400",
@@ -24946,6 +25478,12 @@
       "code": "scope_conflict",
       "subject": "I0201",
       "message": "shares share with I1600; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0201",
+      "message": "shares share with I1900; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -25227,12 +25765,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I0701",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I0701",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -25287,12 +25819,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I0821",
-      "message": "shares test/cases with I1903; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I0821",
       "message": "shares test/cases with I1951; they may not run concurrently"
     },
     {
@@ -25330,6 +25856,12 @@
       "code": "scope_conflict",
       "subject": "I0821",
       "message": "shares test/cases with I2484; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0821",
+      "message": "shares test/cases with I2706; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -25443,6 +25975,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1201",
+      "message": "shares share/schemas with I1900; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1201",
       "message": "shares share/schemas with I1980; they may not run concurrently"
     },
     {
@@ -25508,6 +26046,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1302",
+      "message": "shares docs with I2706; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1403",
       "message": "shares .ai/repo/project with I2485; they may not run concurrently"
     },
@@ -25546,6 +26090,12 @@
       "code": "scope_conflict",
       "subject": "I1409",
       "message": "shares scripts with I1600; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares .ai/repo/ci with I1900; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -25678,12 +26228,6 @@
       "code": "scope_conflict",
       "subject": "I1409",
       "message": "shares scripts with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1409",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -25899,12 +26443,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1501",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1501",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -26073,12 +26611,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1504",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1504",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -26176,12 +26708,6 @@
       "code": "scope_conflict",
       "subject": "I1509",
       "message": "shares apps/majordomus-cli/tests with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1509",
-      "message": "shares apps/majordomus-cli/tests with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -26361,12 +26887,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1510",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1510",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -26410,6 +26930,12 @@
       "code": "scope_conflict",
       "subject": "I1512",
       "message": "shares scripts/ci with I1600; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I1900; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -26554,12 +27080,6 @@
       "code": "scope_conflict",
       "subject": "I1512",
       "message": "shares apps/majordomus-cli/src/capability/builtin with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1512",
-      "message": "shares apps/majordomus-cli/src/capability/builtin with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -26733,12 +27253,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1600",
-      "message": "shares test with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1600",
       "message": "shares test with I2151; they may not run concurrently"
     },
     {
@@ -26780,26 +27294,32 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I1903",
-      "message": "shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I1965; they may not run concurrently"
+      "subject": "I1900",
+      "message": "shares share/schemas/majordomus/intent with I1980; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I1903",
-      "message": "shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I1988; they may not run concurrently"
+      "subject": "I1900",
+      "message": "shares share/schemas/majordomus/intent with I1987; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I1903",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/intent_realization.rs with I2401; they may not run concurrently"
+      "subject": "I1900",
+      "message": "shares apps/majordomus-cli/src/intent.rs with I1999; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I1903",
-      "message": "shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I2484; they may not run concurrently"
+      "subject": "I1900",
+      "message": "shares .ai/repo/ci/gates.yaml with I2054; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1900",
+      "message": "shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -26828,6 +27348,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1951",
+      "message": "shares test/cases/505_a_recording_carries_what_its_run_measured.sh with I2706; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1965",
       "message": "shares test/cases with I1988; they may not run concurrently"
     },
@@ -26848,6 +27374,12 @@
       "code": "scope_conflict",
       "subject": "I1965",
       "message": "shares test/cases with I2484; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1965",
+      "message": "shares test/cases with I2706; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -26956,12 +27488,6 @@
       "code": "scope_conflict",
       "subject": "I1966",
       "message": "shares test/cases/390_unresolved_relation_refuses_generation.sh with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1966",
-      "message": "shares test/cases/390_unresolved_relation_refuses_generation.sh with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -27094,12 +27620,6 @@
       "code": "scope_conflict",
       "subject": "I1980",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1980",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -27243,12 +27763,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1984",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1984",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -27381,12 +27895,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1986",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1986",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -27507,12 +28015,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1987",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1987",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -27556,6 +28058,12 @@
       "code": "scope_conflict",
       "subject": "I1988",
       "message": "shares docs with I2484; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1988",
+      "message": "shares docs with I2706; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -27652,12 +28160,6 @@
       "code": "scope_conflict",
       "subject": "I1989",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1989",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -27771,12 +28273,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1990",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -27879,12 +28375,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1991",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1991",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -27981,12 +28471,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1995",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1995",
       "message": "shares test/cases with I2151; they may not run concurrently"
     },
     {
@@ -28078,12 +28562,6 @@
       "code": "scope_conflict",
       "subject": "I1996",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1996",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -28191,12 +28669,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1997",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1997",
       "message": "shares docs/MCP.md with I2147; they may not run concurrently"
     },
     {
@@ -28282,12 +28754,6 @@
       "code": "scope_conflict",
       "subject": "I1998",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1998",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -28408,12 +28874,6 @@
       "code": "scope_conflict",
       "subject": "I1999",
       "message": "shares apps/majordomus-cli/src with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1999",
-      "message": "shares apps/majordomus-cli/src with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -28557,12 +29017,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2054",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2054",
       "message": "shares docs with I2140; they may not run concurrently"
     },
     {
@@ -28689,12 +29143,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2059",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2059",
       "message": "shares docs/MCP.md with I2147; they may not run concurrently"
     },
     {
@@ -28749,12 +29197,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2068",
-      "message": "shares test/cases/82_bench_check.sh with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2068",
       "message": "shares test/cases/82_bench_check.sh with I2151; they may not run concurrently"
     },
     {
@@ -28774,6 +29216,12 @@
       "code": "scope_conflict",
       "subject": "I2074",
       "message": "shares test/cases/981_an_observation_becomes_a_grouped_candidate.sh with I2484; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2074",
+      "message": "shares test/cases/981_an_observation_becomes_a_grouped_candidate.sh with I2706; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -28804,12 +29252,6 @@
       "code": "scope_conflict",
       "subject": "I2114",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2114",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -28893,12 +29335,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2123",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2123",
       "message": "shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I2140; they may not run concurrently"
     },
     {
@@ -28953,12 +29389,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2124",
-      "message": "shares apps/majordomus-cli/src/mesh/journal.rs with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2124",
       "message": "shares apps/majordomus-cli/src/mesh/journal.rs with I2140; they may not run concurrently"
     },
     {
@@ -28996,12 +29426,6 @@
       "code": "scope_conflict",
       "subject": "I2126",
       "message": "shares test/cases with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2126",
-      "message": "shares test/cases with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -29109,12 +29533,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2128",
-      "message": "shares test/cases with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2128",
       "message": "shares docs/MCP.md with I2147; they may not run concurrently"
     },
     {
@@ -29152,12 +29570,6 @@
       "code": "scope_conflict",
       "subject": "I2129",
       "message": "shares test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh with I2135; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2129",
-      "message": "shares test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -29241,12 +29653,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2132",
-      "message": "shares docs/MESH.md with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2132",
       "message": "shares docs/MESH.md with I2140; they may not run concurrently"
     },
     {
@@ -29265,12 +29671,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2133",
-      "message": "shares docs/MESH.md with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2133",
       "message": "shares apps/majordomus-cli/tests/mesh.rs with I2140; they may not run concurrently"
     },
     {
@@ -29283,19 +29683,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2134",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I2137; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2134",
       "message": "shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I2140; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2135",
-      "message": "shares apps/majordomus-cli/src/mesh/doctor.rs with I2137; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -29325,36 +29713,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2135",
-      "message": "shares test/cases with I2282; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2137",
-      "message": "shares apps/majordomus-cli/src/mesh/journal.rs with I2140; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2137",
-      "message": "shares test/cases with I2151; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2137",
-      "message": "shares apps/majordomus-cli/src/mesh/doctor.rs with I2157; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2137",
-      "message": "shares apps/majordomus-cli/src/mesh/journal.rs with I2161; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2137",
       "message": "shares test/cases with I2282; they may not run concurrently"
     },
     {
@@ -29420,8 +29778,26 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I2401",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I2706; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I2403",
       "message": "shares test/cases/1052_an_absent_source_is_reported.sh with I2484; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2403",
+      "message": "shares test/cases/1052_an_absent_source_is_reported.sh with I2706; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2484",
+      "message": "shares test/cases with I2706; they may not run concurrently"
     },
     {
       "level": "WARN",
