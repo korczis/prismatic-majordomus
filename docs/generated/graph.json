@@ -29197,6 +29197,8 @@
             "A row naming an issue that exists passes",
             "The check runs in the repository's own suite as test case 194"
           ],
+          "completed_at": "2026-10-14T17:42:45Z",
+          "completed_event": "sha256:0f306de9e3312cb471881f0d2b7767734764eb2d70d1630adc5c81da9e716c5b",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -29217,7 +29219,9 @@
             "docs/COCKPIT_IDE_AUDIT.md"
           ],
           "slug": "audit-rows-are-checked-against-the-plan",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T17:42:28Z",
+          "started_event": "sha256:84d042cc0bc6f2461636cad6b7163bfa4bb4a4c538948ab2a3235ff42160c3bf",
+          "updated_at": "2026-10-14T17:42:45Z",
           "validation": [
             "bash test/run.sh 194_audit_rows_are_planned",
             "bin/majordomus doctor"
@@ -52600,6 +52604,13 @@
         "label": "test/cases/192_entry_across_checkouts_and_clients.sh",
         "route": "/cockpit/objects/test/test-cases-192-entry-across-checkouts-and-clients-sh",
         "source": "test/cases/192_entry_across_checkouts_and_clients.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "kind": "test",
+        "label": "test/cases/194_audit_rows_are_planned.sh",
+        "route": "/cockpit/objects/test/test-cases-194-audit-rows-are-planned-sh",
+        "source": "test/cases/194_audit_rows_are_planned.sh"
       },
       {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
@@ -82550,6 +82561,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/19_end_to_end.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -88156,8 +88172,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2795,
-      "edges": 6128,
+      "nodes": 2796,
+      "edges": 6129,
       "acyclic": false,
       "truncated": false
     }

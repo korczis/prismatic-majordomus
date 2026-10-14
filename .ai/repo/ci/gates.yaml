@@ -270,6 +270,15 @@ gates:
     runs: scripts/ci/skill-naming-check
     summary: every active skill is named where a test demands the whole list — the majordomus-skill header of apps/majordomus-cli/tests/skills.rs and the first marker line of test/cases/391_skills_are_proven_capabilities.sh — and neither names a skill that does not exist
 
+  # docs/COCKPIT_IDE_AUDIT.md's gap matrix says "Planned" requires a plan object, and nothing
+  # read it: a row could claim to be scheduled with nothing scheduling it (I1510). This reads
+  # the matrix and the plan's issue records together, keys on the status vocabulary and the
+  # issue ids only, and builds nothing.
+  - id: audit-plan
+    job: structure
+    runs: scripts/ci/audit-plan-check
+    summary: every row of docs/COCKPIT_IDE_AUDIT.md's gap matrix whose status is planned names an issue id, and every id it names is an issue of the plan; rows in the other statuses are evidence claims and are not read
+
   # The ChatGPT source pack of this repository can be built (rule
   # project.packs-carry-only-sources): the plan of the `chatgpt` profile has no finding — no
   # file over a shard's token budget, no more files than a ChatGPT project indexes, no file
@@ -880,6 +889,13 @@ classes:
   - id: skills
     paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
     gates: [skills-proof, skill-naming, shell-suite, rust-integration]
+
+  # the audit's gap matrix and the plan it names: a planned row is a claim on an issue, so an
+  # edit to the matrix, to an issue record (one renamed or deleted), to the gate or to its case
+  # runs the gate. `docs` and `layer` already select the suites; this class adds the gate.
+  - id: audit-plan
+    paths: [docs/COCKPIT_IDE_AUDIT.md, .ai/repo/project/issues/**, scripts/ci/audit-plan-check, test/cases/194_audit_rows_are_planned.sh]
+    gates: [audit-plan, shell-suite]
 
   # the source pack and the archive: one profile declaration, the selection both read, the
   # skill on top of them and the rule they hold. A change to any of them can move what a
