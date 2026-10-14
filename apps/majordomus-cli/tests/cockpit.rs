@@ -37,6 +37,10 @@ const QUERY_PAGES: &[&str] = &[
     "/cockpit/objects?q=scope",
     "/cockpit/objects?page=2",
     "/cockpit/graphs/registry",
+    // The largest page the Cockpit serves, and the one no test rendered: every other graph
+    // composed into one, its tables paged by `?nodes=` and `?edges=` like the registry's.
+    "/cockpit/graphs/composed",
+    "/cockpit/graphs/composed?nodes=2&edges=2",
     "/cockpit/search?q=scope",
     // The two route shapes an entity's own address adds: a kind's index and one object of
     // it. They are the newest arms of the dispatcher and the only ones that resolve an

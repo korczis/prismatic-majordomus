@@ -30,4 +30,15 @@ validation:
 evidence_required:
   - "ui_use_keeps_server_alive_test"
 created_at: 2026-10-09
-updated_at: 2026-10-14
+updated_at: 2026-10-14T12:16:31Z
+started_at: 2026-10-14T12:15:51Z
+started_event: sha256:519bffc8c7526c1932149404a7c5b596e7088c07560d3fdd02910353edce7322
+completed_at: 2026-10-14T12:16:31Z
+completed_event: sha256:cf3febfce3dff0f70fcf578ee07d9be349e5f3f7df429224e436df80229c7a49
+evidence:
+  - covers: ui_use_keeps_server_alive_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test serve_in_use a_server_watched_over_its_live_channel_outlives_its_idle_timeout_and_ends_once_it_closes"
+    result: "test result: ok. 2 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:11Z
