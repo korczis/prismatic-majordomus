@@ -1,11 +1,144 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.23.0 -->
+     Generator: majordomus-cli 0.26.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.23.0**
+Current version: **0.26.0**
+
+## v0.26.0 — 2026-10-14
+
+### Added
+
+- **adopters**: an adopter gets only what fits it, and a failed branch run ends itself (`a47c70939`)
+- **ui**: the Observatory's gates are closed with evidence, and new events interrupt its rotation (`d7a4361bc`)
+
+### Fixed
+
+- **test**: case 130 compares surfaces at a budget the seeded governance fits (`d4d23c378`)
+- **release**: a tag no longer freezes the queue, and two adopter records hold (`96cff105c`)
+- **adopters**: the catalogue drops doctor's adopter reasoning line; case 3018 asks for no pager (`d9dea083b`)
+- **runtime**: a closed live channel stops keeping its server, and eight issues are proven (`3e848ca4d`)
+- **mesh**: a node key is owner-only from the moment it is written (`37c72bbed`)
+
+### Housekeeping
+
+- **release**: 0.26.0, the contract the knowledge reference answer changed (`83d4afbff`)
+- **release**: record v0.25.0 and the metadata it publishes (`0f0c35eb7`)
+- **observatory**: the gates' production evidence is the published site at 2ca25bb9cf (`63ae8e0c2`)
+- **plan**: the Observatory's milestones are done with their evidence (`c3da677d4`)
+- **observatory**: the published replay is the mesh as recorded at 11:39Z (`753449f90`)
+- **plan**: nine issues stop requiring what they deferred, and I2137 is done (`304469c84`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.26.0-aarch64-apple-darwin.tar.gz (`b503fa119f32`)
+- `macos-x86_64` — majordomus-v0.26.0-x86_64-apple-darwin.tar.gz (`5660a987bb0a`)
+- `linux-x86_64-gnu` — majordomus-v0.26.0-x86_64-unknown-linux-gnu.tar.gz (`54f911fa0b69`)
+- `linux-x86_64-musl` — majordomus-v0.26.0-x86_64-unknown-linux-musl.tar.gz (`6de4ec37191e`)
+- `linux-aarch64-gnu` — majordomus-v0.26.0-aarch64-unknown-linux-gnu.tar.gz (`89633a013bf8`)
+- `linux-aarch64-musl` — majordomus-v0.26.0-aarch64-unknown-linux-musl.tar.gz (`1fa2dfd6b2bc`)
+
+
+## v0.25.0 — 2026-10-14
+
+### Added
+
+- **ui**: the Observatory follows the journal from a cursor, and every new tool is called (`bb844110b`)
+- **ui**: the published Observatory replays a recording of the real mesh, and says it is a replay (`f58b8a1c6`)
+- **editors**: Claude Code reaches every workflow skill by its name, and evolve says what it learned (`9709eea84`)
+
+### Fixed
+
+- **plan**: I1900 is ready again until the intent it serves has a critique (`f044ae642`)
+- **plan**: an open issue scopes the test directory, not a case it has not written yet (`70b4e540c`)
+
+### Documentation
+
+- **handbook**: the Czech handbook says what the MJ way is, and states no figure by hand (`e217df9d6`)
+
+### Housekeeping
+
+- **plan**: the deployment milestone is the GHCR image, and eight Fly-only issues are cancelled (`3b787430c`)
+- **release**: 0.25.0, for the Observatory's three new capabilities (`2b9f58e93`)
+- **plan**: 26 issues master already delivers are done with their evidence, and I0924 is cancelled (`f29cb6ac2`)
+- **release**: record v0.24.1 and the metadata it publishes (`b8f6f3ec3`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.25.0-aarch64-apple-darwin.tar.gz (`315a5f7824e6`)
+- `macos-x86_64` — majordomus-v0.25.0-x86_64-apple-darwin.tar.gz (`c4de17255b78`)
+- `linux-x86_64-gnu` — majordomus-v0.25.0-x86_64-unknown-linux-gnu.tar.gz (`edb3a128a163`)
+- `linux-x86_64-musl` — majordomus-v0.25.0-x86_64-unknown-linux-musl.tar.gz (`34416d74a83d`)
+- `linux-aarch64-gnu` — majordomus-v0.25.0-aarch64-unknown-linux-gnu.tar.gz (`1c34018c1250`)
+- `linux-aarch64-musl` — majordomus-v0.25.0-aarch64-unknown-linux-musl.tar.gz (`9185d67e2b07`)
+
+
+## v0.24.1 — 2026-10-14
+
+### Decisions
+
+- **ADR-0158** The Observatory is one screen of the UI, and it draws only what was observed _(proposed)_
+- **ADR-0155** An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag _(proposed)_
+- **ADR-0147** The Cockpit is published as a snapshot by the exporter that reads the UI, and two snapshots link only the pages each holds _(proposed)_
+
+### Added
+
+- **product**: the Observatory is a feature with a claim a reader can check (`3d8da99be`)
+- **ui**: the Observatory draws the repository and its mesh from what the sources answered (`6e06a86c6`)
+- **skills**: evolve is a skill that composes the knowledge commands, and the version is 0.23.1 (`a9d7b2115`)
+- **ui**: the UI shows what the knowledge base holds (I2652) (`6b46a80f5`)
+- **rules**: an expedited landing is the owner's word and never reaches a tag (`a383e44b3`)
+- **pages**: the Cockpit is published as a snapshot (I2495, ADR 0147) (`46bdc20b6`)
+- **session**: session records are capped by policy and archived on request (`ebe15d2e4`)
+
+### Fixed
+
+- **ui**: the Observatory's projection carries no link into another surface (`ce94eb767`)
+- **ui**: every name of the Observatory answers on the published site, and the homepage shows it (`e37877639`)
+- **test**: case 3011 finds the snapshot's observatory page by its path inside the snapshot (`9d31aa3a7`)
+- **ui**: the Observatory takes every colour from the tokens and numbers no event it cannot identify (`371100487`)
+- **test**: case 401 reads the build the bounded launcher asks cargo for (`65d86ff18`)
+- **ui**: /ui/screensaver is the kiosk under its earlier name (`689fc2555`)
+- **test**: the evolve skill is named by the two tests that prove every active skill (`bd82ee4e9`)
+- **ui**: the first screen of the published UI leads only with decided figures (`0a926184a`)
+- **build**: a build never waits in silence behind another build's lock (`e7a37c636`)
+- **ci**: a record a head adds is pending, not backlog (`308857ded`)
+- **pages**: the surface name is braced in the pattern pages-check builds (`d77991a7c`)
+- **pages**: a snapshot is asked of the publication that declared it (`5fa227b68`)
+
+### Documentation
+
+- **plan**: the delivery latency of 2026-10-13 is recorded as a post-mortem and four issues (`51021b88c`)
+- **rules**: between a tag and its record nothing else lands (`48cd7a07e`)
+- **handbook**: the Czech handbook says how session records are capped and archived (`f4c90e2ee`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master ee84e49b18 (`44f3d84d2`)
+- **derive**: the derived data follows master a6b1e10328 (`e7c83bbb4`)
+- **derive**: the derived data follows master 2ee40c5aa1 (`47aaa49d4`)
+- **derive**: the projections of the session cap and 0.24.0 on the master of its landing (`507b1724d`)
+- **derive**: the projections of the session cap and 0.24.0 on the master of its landing (`e363d523d`)
+- **derive**: the projections of the session cap and 0.24.0 on the master of its landing (`0b28ece25`)
+- **derive**: the projections of the session cap and 0.24.0 on master beb60f5f96 (`8783d8371`)
+- **plan**: four delivered UI issues record their evidence and completion (`8a29993b6`)
+- **derive**: the projections of the session cap and 0.24.0 on master 5bfee30eb1 (`d3b69169c`)
+- **release**: record v0.23.0 and the metadata it publishes (`2d933d314`)
+- **release**: 0.24.0, with the projections of the session cap on master 3442ce68c5 (`100c41bbb`)
+- **derive**: the projections of the session cap on master e506c041a4 (`cbe421c38`)
+- **derive**: the derived data follows the merge of master e506c041a4 (`9c56e7124`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.24.1-aarch64-apple-darwin.tar.gz (`4e6371d0760f`)
+- `macos-x86_64` — majordomus-v0.24.1-x86_64-apple-darwin.tar.gz (`36322c978c1c`)
+- `linux-x86_64-gnu` — majordomus-v0.24.1-x86_64-unknown-linux-gnu.tar.gz (`5e6ff82feadd`)
+- `linux-x86_64-musl` — majordomus-v0.24.1-x86_64-unknown-linux-musl.tar.gz (`263ac4ef71ce`)
+- `linux-aarch64-gnu` — majordomus-v0.24.1-aarch64-unknown-linux-gnu.tar.gz (`7ab71d5c08e2`)
+- `linux-aarch64-musl` — majordomus-v0.24.1-aarch64-unknown-linux-musl.tar.gz (`45291456055f`)
+
 
 ## v0.23.0 — 2026-10-13
 

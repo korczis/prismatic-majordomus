@@ -85,6 +85,10 @@ if [ -n "${MJ_RUST_OUTPUTS:-}" ]; then
   } > "$MJ_RUST_OUTPUTS"
 fi
 cd "$CRATE"
+# Every cargo call of this script is the bounded one: a build, a test run or a lint that
+# stands behind another worktree's lock on the shared build directory says so and moves to
+# this tree's own at the bound (lib/rust_bin.sh; project.a-build-never-waits-in-silence-on-anothers-lock).
+cargo() { mj_cargo_bounded "$ROOT" "$@"; }
 # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
 RUSTFLAGS=''; export RUSTFLAGS
 # Every build of this script is handed the commit it is checking, and the rustdoc handoff

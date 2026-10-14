@@ -645,4 +645,97 @@
     color: var(--mj-fg);
     overflow-wrap: anywhere;
   }
+
+  /* the Observatory (/ui/observatory, /ui/kiosk): a stage the script draws on, sized for a wall display.
+     Every word on it is set by the script from the projection the page carries. */
+  .mj-obs {
+    @apply relative w-full overflow-hidden rounded-xl;
+    aspect-ratio: 16 / 9;
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs:fullscreen {
+    @apply rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs--kiosk {
+    @apply fixed inset-0 z-50 rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs-canvas {
+    @apply absolute inset-0 block h-full w-full;
+  }
+  .mj-obs-noscript {
+    @apply m-0 p-6 text-sm;
+  }
+  .mj-obs-head,
+  .mj-obs-foot {
+    @apply pointer-events-none absolute inset-x-0 flex items-baseline gap-4 px-[3%] font-mono uppercase;
+    font-size: clamp(0.6rem, 1.15vw, 1.6rem);
+    letter-spacing: 0.14em;
+  }
+  .mj-obs-head {
+    @apply top-[4%];
+  }
+  .mj-obs-foot {
+    @apply bottom-[4%];
+  }
+  .mj-obs-brand,
+  .mj-obs-fact {
+    color: var(--mj-muted);
+  }
+  .mj-obs-title {
+    @apply mx-auto font-semibold;
+    letter-spacing: 0.32em;
+  }
+  .mj-obs-status {
+    @apply ml-auto;
+  }
+  .mj-obs-status[data-state='live'] {
+    color: var(--mj-tone-cyan-fill);
+  }
+  .mj-obs-status[data-state='stale'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='resynced'] {
+    color: var(--mj-tone-blue-fill);
+  }
+  .mj-obs-status[data-state='replay'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='snapshot'] {
+    color: var(--mj-tone-violet-fill);
+  }
+  .mj-obs-scene {
+    @apply font-semibold;
+  }
+  .mj-obs-fact {
+    @apply ml-auto normal-case;
+    letter-spacing: 0.02em;
+  }
+  .mj-obs-legend {
+    @apply absolute inset-x-[3%] bottom-[12%] m-0 rounded-lg p-3 text-sm;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-controls {
+    @apply absolute right-[3%] top-[11%] flex gap-1 opacity-0 transition-opacity;
+  }
+  .mj-obs:hover .mj-obs-controls,
+  .mj-obs:focus-within .mj-obs-controls {
+    @apply opacity-100;
+  }
+  .mj-obs-button {
+    @apply cursor-pointer rounded-md px-2 py-1 font-mono text-xs;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-button[aria-pressed='false'] {
+    color: var(--mj-muted);
+  }
 }

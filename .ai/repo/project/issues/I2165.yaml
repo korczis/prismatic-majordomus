@@ -26,4 +26,21 @@ evidence_required:
   - "attested_release"
   - "installer_reports_verification_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T08:02:30Z
+started_at: 2026-10-14T08:02:21Z
+started_event: sha256:0690a02a2d4cbf22b57e38c5bc9b63ce06badc1bb25d393152a1496c551cf7cd
+completed_at: 2026-10-14T08:02:30Z
+completed_event: sha256:a3bd528e624e57e3703dcc94b51b2d998e247752000d2093f8d0afe2b3812e94
+evidence:
+  - covers: installer_reports_verification_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 85_installer"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:26Z
+  - covers: attested_release
+    type: ci
+    result: "release workflow for v0.24.1 concluded success 2026-10-14; each smoke job concluded success; the smoke job verifies the provenance attestation (release.yml, smoke, permissions attestations: read)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38515631840"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:28Z

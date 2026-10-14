@@ -29,4 +29,15 @@ validation:
 evidence_required:
   - "ci_critical_path_recorded"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:00:44Z
+started_at: 2026-10-14T08:00:38Z
+started_event: sha256:d323a92cd15ff17301492abcc810489d8bec729986e7aa796aecd83852cd58cc
+completed_at: 2026-10-14T08:00:44Z
+completed_event: sha256:2566a781bb38a45b0988d635e3bd99c5388d6c29946dbc4b200eec2ac13de7b6
+evidence:
+  - covers: ci_critical_path_recorded
+    type: artifact
+    result: "jq '.runs | length' prints 60; percentiles stated in docs/CI.md (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    artifact: ".ai/repo/ci/baseline-2026-10-10.json"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:00:42Z
