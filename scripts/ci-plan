@@ -84,8 +84,13 @@ for g in $gate_ids; do
 done
 [ "$(printf '%s\n' "$gate_ids" | LC_ALL=C sort | uniq -d | wc -l | tr -d ' ')" = 0 ] || { echo "ci-plan: a gate id is declared twice" >&2; bad=1; }
 class_ids="$(awk -F= '$1 ~ /^classes\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
-[ -n "$class_ids" ] || { echo "ci-plan: $MODEL declares no classes" >&2; exit 10; }
-n_classes="$(printf '%s\n' "$class_ids" | wc -l | tr -d ' ')"
+# An absent `classes` is the empty list, not a model that does not resolve: a model of gates
+# and no class is the first one anybody writes. The rules above then say what it plans, with
+# nothing added for the case: no changed path selects the always gates, and a changed path
+# is in no class, so it is unclassified and escalates like any other. The executable's
+# reader (src/gates/model.rs) reads the absence the same way, and case 3001 holds the two
+# to one selection.
+n_classes="$(printf '%s' "$class_ids" | grep -c . || true)"
 i=0; while [ "$i" -lt "$n_classes" ]; do
   c="$(mj_yget "$FLAT" "classes.$i.id")"
   [ -n "$(mj_ylist "$FLAT" "classes.$i.paths")" ] || { echo "ci-plan: class $c names no paths" >&2; bad=1; }
