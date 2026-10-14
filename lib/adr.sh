@@ -121,8 +121,12 @@ mj_adr_fields() {
 }
 mj_adr_lst()  { mj_ylist "$MJ_ADR_FLAT" "$1"; }
 
-# mj_adr_ref_valid REF — the reference is <type>:<value> with a known type, and a file:
-# or a commit: reference resolves. Prints the reason and exits 1 when it does not.
+# mj_adr_ref_valid REF — the reference is <type>:<value> with a known type, a file: or
+# test: reference names a path that exists, and a commit: reference is a commit name by the
+# one grammar (mj_commit_names_resolve, lib/common.sh): hexadecimal, never a branch or HEAD.
+# Whether the name resolves is asked where the record is written (`adr propose`), not here:
+# `adr check` runs in shallow clones, where a commit a decision cites is often not fetched.
+# Prints the reason and exits 1 when it does not hold.
 mj_adr_ref_valid() {
   local ref="$1" t="${1%%:*}" v="${1#*:}"
   case "$ref" in *:*) ;; *) printf 'reference "%s" is not <type>:<value>\n' "$ref"; return 1 ;; esac
@@ -133,6 +137,8 @@ mj_adr_ref_valid() {
   [ -n "$v" ] || { printf 'reference "%s" has an empty value\n' "$ref"; return 1; }
   case "$t" in
     file|test) [ -e "$MJ_ROOT/$v" ] || { printf 'reference "%s" names a path that does not exist\n' "$ref"; return 1; } ;;
+    commit) printf '%s' "$v" | LC_ALL=C grep -Eqx '[0-9a-f]{4,64}' \
+              || { printf 'reference "%s" %s\n' "$ref" "$(mj_commit_name_reason malformed)"; return 1; } ;;
   esac
   return 0
 }
@@ -927,8 +933,20 @@ mj_adr_propose() {
   mj_require_installed
   [ -d "$MJ_ADRS_DIR" ] || mj_die "$MJ_EX_MISSING" "no $(mj_rel "$MJ_ADRS_DIR")/ in this repository (the manifest names it)"
 
-  local r
-  for r in $refs; do mj_adr_ref_valid "$r" >/dev/null || mj_die "$MJ_EX_USAGE" "adr propose: $(mj_adr_ref_valid "$r")"; done
+  # A commit is written by its full name, whatever abbreviation named it, and a name that is
+  # ambiguous or that this history does not hold is refused here, saying which: the writer is
+  # the one place that can ask the person what they meant.
+  local r full given="$refs"
+  refs=""
+  for r in $given; do
+    mj_adr_ref_valid "$r" >/dev/null || mj_die "$MJ_EX_USAGE" "adr propose: $(mj_adr_ref_valid "$r")"
+    case "$r" in commit:*)
+      full="$(mj_commit_name_full "${r#commit:}")" \
+        || mj_die "$MJ_EX_USAGE" "adr propose: reference \"$r\" $(mj_commit_name_reason "$full")"
+      r="commit:$full" ;;
+    esac
+    refs="$refs $r"
+  done
   for r in $tags; do
     case "$r" in *[!a-z0-9-]*|[!a-z]*) mj_die "$MJ_EX_USAGE" "adr propose: tag '$r' is not lower-case letters, digits and hyphens starting with a letter" ;; esac
   done

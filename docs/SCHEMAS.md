@@ -1114,7 +1114,7 @@ provenance:
 | `superseded_by` | no | present exactly when the status is `superseded` |
 | `related` | no | what the decision put in force: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>`. Each is validated, and the knowledge graph turns it into an edge — `declares`, `supports`, `references`, `tested_by` — so the reverse direction is a query, never a second edge to maintain |
 | `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
-| `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
+| `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:`. A `commit:` reference is 4 to 64 lower-case hexadecimal digits, the full object name or an abbreviation of it; `adr propose` writes the full name (`KNOWLEDGE.md`, "A commit reference has one grammar") |
 
 Unknown keys are errors. The body carries non-empty level-two sections `## Context`,
 `## Decision` and `## Consequences`; `## Alternatives rejected` is optional.
@@ -1393,7 +1393,7 @@ Recorded as a decision under task t-20260912101512-b7c2 in episode s-20260912101
 | `date` | yes | `YYYY-MM-DD`, the day of the evidence line — deterministic, never the clock; the review age is measured from the ledger and git instead |
 | `tags` | no | `derived` and the evidence kind: `decision`, `question` or `task` |
 | `provenance.origin` | yes for `extracted` | `extracted` for a derived record; `authored` for a curated note a person wrote |
-| `provenance.derived_from` | yes for `extracted` | typed references: `session:<episode>`, then `decision:<task-id>` or `task:<task-id>`, then `commit:<sha>` for each commit of the episode that touched a rule or a decision record; a decision recorded outside a task names the session alone |
+| `provenance.derived_from` | yes for `extracted` | typed references: `session:<episode>`, then `decision:<task-id>` or `task:<task-id>`, then `commit:<sha>` for each commit of the episode that touched a rule or a decision record; a decision recorded outside a task names the session alone. `<sha>` is 4 to 64 lower-case hexadecimal digits: the deriver writes the full object name, and a record carrying an unambiguous abbreviation resolves alike in both programs (`KNOWLEDGE.md`, "A commit reference has one grammar") |
 | `relations` | no | `relates_to file:<path>` for each rule or decision record those commits touched; present only when non-empty |
 | `superseded_by` | when `superseded` | the record that replaces it, when `reject --by` named one; otherwise the body carries `# Rejected` and the reason |
 

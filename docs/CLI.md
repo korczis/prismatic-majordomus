@@ -1457,7 +1457,12 @@ changes the other.
 - `check [--json]` validates every record under `candidates/` and `curated/`: the schema, no
   unknown key, unique ids equal to the file name, provenance beside `verified`, every
   reference resolving, a reason beside `superseded`, no candidate claiming `verified`, no
-  conversation. The same check `check` and `doctor` dispatch.
+  conversation. The same check `check` and `doctor` dispatch. A `commit:` reference is read
+  by the one grammar of [`KNOWLEDGE.md`](KNOWLEDGE.md): the full object name or an
+  unambiguous abbreviation of it resolves, and a failure says whether the name is not a
+  commit name, is ambiguous, or names no commit of this history.
+- `observe ... [--evidence <ref>]...` writes a `commit:` evidence reference by its full name
+  when it resolves, and refuses one that is not a commit name or is ambiguous (exit `2`).
 
 The read side of the same store is served by the executable — `bin/majordomus-cli knowledge
 candidates`, `knowledge record <id>` and `knowledge status`, each a capability declared once
@@ -1939,7 +1944,10 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   section directory, so two worktrees proposing at the same moment get two identities.
   A `--from` reference is `<type>:<value>` with the type one of `decision`, `session`,
   `commit`, `issue`, `file`, `test`; a `file:` or `test:` path that does not exist exits
-  `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an
+  `2`. A `commit:` reference is written by its full object name whatever abbreviation was
+  given, and one that is not a commit name (a branch, `HEAD`), is ambiguous, or names no
+  commit of this history exits `2` saying which ([`KNOWLEDGE.md`](KNOWLEDGE.md) states the
+  grammar); `adr check` reads the shape alone and never asks git. Referenced evidence makes the record `provenance.origin: extracted`, and an
   extracted record with no evidence is refused as an assertion. `--supersedes` writes both
   halves of the relation, so the chain is walkable from either end.
 - `related` is the other half of a record's references, and it is authored rather than

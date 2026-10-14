@@ -302,6 +302,66 @@ mj_git() { mj_count git; git --no-pager -C "$MJ_ROOT" "$@"; }
 # which every worktree of one repository shares and no two repositories do. $1 names the
 # checkout to ask; the default is MJ_ROOT, and the value records write is that one.
 mj_git_repo_id() { local r="${1:-$MJ_ROOT}"; mj_count git; git -C "$r" rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$r" "$d" ;; esac; }; }
+# ---------------------------------------------------------------- commit references
+# One grammar for `commit:<name>`, for every writer and every checker of both programs (the
+# executable's half is `commit_name` in capability/builtin/knowledge_base.rs, and
+# docs/KNOWLEDGE.md states it): <name> is 4 to 64 lower-case hexadecimal digits — a full
+# object name or an abbreviation of one — and it resolves when git peels it to exactly one
+# commit of this history. A branch, a tag name or `HEAD` is not a name: it moves, and a
+# record that cites it cites something else tomorrow.
+#
+# mj_commit_names_resolve — names on stdin, one per line; prints `<name><TAB><verdict>` in the
+# order read, the verdict being the full object name, or `malformed`, `ambiguous` or
+# `missing`. Two git processes for any number of names (one peels every name, one asks about
+# the names that did not peel), and one more pair only per name git calls ambiguous, to tell
+# several commits from several objects of which at most one is a commit.
+mj_commit_names_resolve() {
+  local tmp name n; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.cnr.XXXXXX")"
+  cat > "$tmp/in"
+  : > "$tmp/verdicts"; : > "$tmp/failed"
+  LC_ALL=C grep -Ex '[0-9a-f]{4,64}' "$tmp/in" | LC_ALL=C sort -u > "$tmp/hex" || true
+  if [ -s "$tmp/hex" ]; then
+    sed 's/$/^{commit}/' "$tmp/hex" | mj_git cat-file --batch-check='%(objectname)' 2>/dev/null \
+      | paste "$tmp/hex" - \
+      | awk -F'\t' -v ok="$tmp/verdicts" -v no="$tmp/failed" \
+          '{ if ($2 ~ /^[0-9a-f]+$/) print $1 "\t" $2 > ok; else print $1 > no }'
+  fi
+  if [ -s "$tmp/failed" ]; then
+    mj_git cat-file --batch-check < "$tmp/failed" 2>/dev/null | paste "$tmp/failed" - \
+      | awk -F'\t' '$2 ~ / ambiguous$/ { print $1 }' > "$tmp/maybe"
+    while IFS= read -r name; do
+      n="$(mj_git rev-parse --disambiguate="$name" 2>/dev/null \
+        | mj_git cat-file --batch-check='%(objecttype)' 2>/dev/null | grep -Ecx 'commit|tag' || true)"
+      if [ "${n:-0}" -ge 2 ]; then printf '%s\tambiguous\n' "$name" >> "$tmp/verdicts"; fi
+    done < "$tmp/maybe"
+  fi
+  awk -F'\t' -v vf="$tmp/verdicts" '
+    BEGIN { while ((getline line < vf) > 0) { split(line, p, "\t"); v[p[1]] = p[2] } }
+    { if ($0 in v) r = v[$0]
+      else if ($0 ~ /^[0-9a-f]+$/ && length($0) >= 4 && length($0) <= 64) r = "missing"
+      else r = "malformed"
+      print $0 "\t" r }' "$tmp/in"
+  rm -rf "$tmp"
+}
+
+# What is wrong with a commit name, as the rest of a sentence that began with the reference.
+# Both programs say these words, so a finding reads the same whichever one judged the record.
+mj_commit_name_reason() {
+  case "$1" in
+    malformed) printf 'is not a commit name: 4 to 64 lower-case hexadecimal digits, a full object name or an abbreviation of one' ;;
+    ambiguous) printf 'is ambiguous: more than one commit of this history begins with it' ;;
+    missing)   printf 'names no commit of this history' ;;
+  esac
+}
+
+# mj_commit_name_full NAME — the full object name of the one commit NAME names, on stdout.
+# Otherwise prints the verdict (`malformed`, `ambiguous` or `missing`) and returns 1.
+mj_commit_name_full() {
+  local v; v="$(printf '%s\n' "$1" | mj_commit_names_resolve | cut -f2)"
+  printf '%s' "${v:-malformed}"
+  case "${v:-malformed}" in malformed|ambiguous|missing) return 1 ;; esac
+  return 0
+}
 # ---------------------------------------------------------------- personal
 # A personal layer (ADR 0145): the same layer a plain init makes, kept as one person's own
 # in a repository other people share. Nothing shared is changed — no tracked file, no
