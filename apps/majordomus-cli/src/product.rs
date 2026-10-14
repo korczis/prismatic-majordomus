@@ -883,6 +883,60 @@ fn nearest<'a>(value: &str, candidates: impl Iterator<Item = &'a str>) -> Option
         .map(|(_, c)| c.to_string())
 }
 
+/// Why a feature's `docs:` path is not a document of the index, in the words of whoever
+/// decided it, and the nearest document when the path itself is the mistake.
+///
+/// A path that misses the documents is one of four things, and only the last is a wrong
+/// path: the index read the file as another kind; the index was handed the file and
+/// refused it (the diagnostic says why, and the repair is in that file or in the scope);
+/// the file is there and no source class reads it; or there is no such file. Naming all of
+/// them "unknown" sends the reader to the reference when the reference is right.
+fn unresolved_document(
+    path: &str,
+    index: &Index,
+    lookups: &Lookups<'_>,
+) -> (String, Option<String>) {
+    let not_a_document = format!("document reference \"{path}\" does not resolve");
+    if let Some(o) = index.objects.iter().find(|o| o.provenance.path == path) {
+        return (
+            format!(
+                "{not_a_document}: the index reads the file as kind '{}', not as a document",
+                o.kind
+            ),
+            None,
+        );
+    }
+    let refusals: Vec<String> = index
+        .diagnostics
+        .iter()
+        .filter(|d| d.path.as_deref() == Some(path))
+        .map(|d| format!("{}: {}", d.code, d.message))
+        .collect();
+    if !refusals.is_empty() {
+        return (
+            format!(
+                "{not_a_document}: the index refused the file ({})",
+                refusals.join("; ")
+            ),
+            None,
+        );
+    }
+    let root = &index.repository.root;
+    if !root.is_empty() && std::path::Path::new(root).join(path).is_file() {
+        return (
+            format!(
+                "{not_a_document}: the file exists and no source class reads it \
+                 (it is untracked, or no pathspec of the source classes matches it)"
+            ),
+            None,
+        );
+    }
+    (
+        format!("unknown document reference: \"{path}\" (no such file)"),
+        nearest(path, lookups.docs.keys().map(String::as_str)),
+    )
+}
+
 fn meta_str(o: &Object, key: &str) -> Option<String> {
     o.metadata
         .get(key)
@@ -1648,17 +1702,25 @@ fn resolve(
     let mut findings = Vec::new();
     // the unresolved references, collected apart so the closure holds nothing the other
     // findings need, and merged once every reference has been looked at
-    let mut unknowns = Vec::new();
-    let mut unknown = |field: &str, value: &str, what: &str, candidates: Vec<&str>| {
-        unknowns.push(ProductFinding {
+    // (a cell, because a document reference words its own finding: see `unresolved_document`)
+    let unknowns = std::cell::RefCell::new(Vec::new());
+    let unresolved = |field: &str, message: String, did_you_mean: Option<String>| {
+        unknowns.borrow_mut().push(ProductFinding {
             severity: Severity::Error,
             code: "unknown_reference".into(),
             path: f.source.clone(),
             id: Some(f.id.clone()),
             field: Some(field.into()),
-            message: format!("unknown {what} reference: \"{value}\""),
-            did_you_mean: nearest(value, candidates.into_iter()),
+            message,
+            did_you_mean,
         });
+    };
+    let unknown = |field: &str, value: &str, what: &str, candidates: Vec<&str>| {
+        unresolved(
+            field,
+            format!("unknown {what} reference: \"{value}\""),
+            nearest(value, candidates.into_iter()),
+        );
     };
 
     // modules: the builtin ones of the registry, with every capability they compose
@@ -1762,12 +1824,10 @@ fn resolve(
                 path: p.clone(),
                 title: o.title.clone(),
             }),
-            None => unknown(
-                "docs",
-                p,
-                "document",
-                lookups.docs.keys().map(String::as_str).collect(),
-            ),
+            None => {
+                let (message, did_you_mean) = unresolved_document(p, index, lookups);
+                unresolved("docs", message, did_you_mean);
+            }
         }
     }
 
@@ -1894,7 +1954,7 @@ fn resolve(
             );
         }
     }
-    findings.extend(unknowns);
+    findings.extend(unknowns.into_inner());
     if RESERVED.contains(&f.id.as_str()) {
         findings.push(ProductFinding {
             severity: Severity::Error,

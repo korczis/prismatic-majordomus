@@ -163,6 +163,47 @@ expect_grep 'unknown module reference: "repositor"'
 expect_grep 'did you mean: repository'
 git rm -q .ai/repo/features/a-typo-feature.md && git commit -qm "typo removed"
 
+# A `docs:` path that is not a document says which of three things it is, because only one
+# of them is a wrong path. One feature names all three: a file the document class finds and
+# the document schema refuses (the finding carries the index's own diagnostic), a file that
+# exists where no source class reads, and a path that names nothing.
+mkdir -p docs/guides
+printf -- '---\ntitle: A runbook\nowner: someone\n---\n\n# A runbook\n' > docs/REFUSED.md
+printf '# A guide no source class reads\n' > docs/guides/UNREAD.md
+cat > .ai/repo/features/a-docs-feature.md <<'MD'
+---
+schema: feature/v1
+id: a-docs-feature
+kind: feature
+title: 'A feature whose documents do not resolve'
+headline: 'It named three documents and none of them is one.'
+summary: 'A feature whose documents are refused, unread and missing.'
+status: draft
+modules: [repository]
+docs: [docs/REFUSED.md, docs/guides/UNREAD.md, .ai/repo/workflows/task-lifecycl.md]
+---
+
+## What it does
+
+Because the case says so.
+
+## What it does not do
+
+Nothing.
+MD
+git add -A >/dev/null && git commit -qm "documents that do not resolve"
+expect_exit 10 "$RB" product validate
+expect_grep "document reference \"docs/REFUSED.md\" does not resolve: the index refused the file \(unknown_key: key\(s\) not in schema 'majordomus.document/v1': owner\)"
+expect_grep 'document reference "docs/guides/UNREAD.md" does not resolve: the file exists and no source class reads it'
+expect_grep 'unknown document reference: "\.ai/repo/workflows/task-lifecycl\.md" \(no such file\)'
+expect_grep 'did you mean: \.ai/repo/workflows/task-lifecycle\.md'
+expect_no_grep 'unknown document reference: "docs/'
+# one code for all three: a consumer that matched it still matches
+"$RB" product validate --format json > "$S/docs.json" 2>/dev/null || true
+[ "$(grep -c '"code": "unknown_reference"' "$S/docs.json")" = 3 ] \
+  || { echo "    the three document findings do not share the code unknown_reference"; cat "$S/docs.json"; exit 1; }
+git rm -q -r .ai/repo/features/a-docs-feature.md docs/REFUSED.md docs/guides && git commit -qm "documents removed"
+
 # a derived value may not be authored: the schema has no `surfaces` key and no `route`
 cat > .ai/repo/features/a-derived-feature.md <<'MD'
 ---
