@@ -3768,6 +3768,12 @@ pub enum WorktreeCommand {
         #[arg(long)]
         remove: bool,
     },
+    /// Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none
+    Uncommitted {
+        /// Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)
+        #[arg(long, value_name = "DURATION")]
+        older_than: Option<String>,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -5678,6 +5684,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "cleanup"],
             setup: &[],
             expect: Expect::StdoutContains(&["cleanup-eligible"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree uncommitted",
+        examples: &[ExampleDoc {
+            id: "worktree-uncommitted-none",
+            title: "Work no commit carries, and whether anything holds it",
+            description: "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+            argv: &["worktree", "uncommitted"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
         }],
     },
     CommandExamples {

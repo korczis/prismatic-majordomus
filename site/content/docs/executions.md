@@ -32,7 +32,10 @@ DERIVED PROJECTIONS         the live channel (WebSocket) · executions.get · ex
 ```
 
 There is no action registry, no action definition and no second implementation of anything.
-An execution is a capability call this process gave an identity to.
+An execution is a capability call a process gave an identity to — and, since
+[I1501](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/project/issues/I1501.yaml), one execution plane per checkout rather than
+one per process: [`majordomus run` reports to the server](#one-plane-per-checkout-majordomus-run-and-the-server)
+serving the checkout, so the history a surface shows is the history a person made.
 
 ## The model
 
@@ -70,7 +73,7 @@ state nothing can reach is a state every client would have to handle and never s
 
 ### What is not here
 
-An execution does not outlive the process that accepted it. There is no durable queue, no
+An execution does not outlive the server that holds it. There is no durable queue, no
 retry, no schedule and no execution that survives a restart. Every limit is typed on
 `execution::store::Limits` — how many executions are remembered, how many events each, how
 long a log line may be, how many run at once, how far a subscriber may fall behind — and
@@ -84,9 +87,11 @@ second list of what may be run: `capabilities.list` already answers it, and the 
 own `execution` policy says what running it means.
 
 ```bash
-majordomus run health.report                       # start it here and follow it to the end
+majordomus run health.report                       # run it here, follow it to the end, and
+                                                    # report it to the server serving this checkout
 majordomus run objects.verify --input '{"limit":50}' --format json
 majordomus executions list                          # what the server serving this repository ran
+                                                    # or was told about by a run
 majordomus executions show   <id>
 majordomus executions events <id> --after 42
 majordomus executions cancel <id>
@@ -102,6 +107,7 @@ POST /api/v1/executions/cancel       { "id": "x-…" }
 GET  /api/v1/executions/protocol
 GET  /api/v1/executions/demonstrate  ?steps=3&delay_ms=200
 GET  /api/v1/objects/verify          ?kind=rule&limit=50
+POST /api/v1/executions/report       { "id": "x-…", "pid": 4242, "events": [ … ], … }  what `run` sends
 ```
 
 Over MCP the same capabilities are the tools `majordomus_execution_start`,
@@ -109,11 +115,42 @@ Over MCP the same capabilities are the tools `majordomus_execution_start`,
 `majordomus_execution_cancel` and `majordomus_execution_protocol`, with
 `majordomus://executions` and `majordomus://executions/protocol` as resources. An agent
 therefore discovers, starts, follows and reads an execution without parsing anything a
-person was meant to look at.
+person was meant to look at. `executions.report` has no MCP tool and no command of its own:
+it is what a run sends to a server, not something an agent or a person asks for.
 
 `start` answers at once with the execution and the links to follow it; nothing waits for the
 handler. The state in that first answer is `queued`, which is what it is: this server
 answers `200` with the truth rather than `202` with a promise.
+
+## One plane per checkout: `majordomus run` and the server
+
+`majordomus run` executes in its own process — the cost and the failure modes of a run are
+the same with and without a server — and asks one question first: does a server already
+serve this checkout (its lease names a URL, and the server there answers for this root)?
+
+- **A server answers.** The run reports itself to it with `executions.report`: its
+  description, the pid of the process, and its events after the last sequence the server
+  took, at the latest every two seconds and soon after anything happens. The server holds
+  it in the same store as its own, so `executions list`, `/cockpit/executions`, the
+  execution's own page, `executions.events` and the live channel show it as they show
+  anything the server ran, with `actor: {"kind": "cli", "pid": …}`. Each event is applied
+  once and in order, and the answer says how far the server got (`through`), so a report
+  that was lost, cut short or sent twice is put right by the next. A stop asked of the
+  server (`executions.cancel`, the Cockpit's button) comes back in the next answer and the
+  run cancels its own execution; cancellation stays cooperative. An output or input over
+  the live channel's frame bound travels as `{"withheld": "too_large", …}` and stays in
+  the run's process, which prints it.
+- **No server answers.** The run runs as before and says so, once, on stderr: *no server
+  is serving this repository, so this execution is visible to this process only*. Nothing
+  is started for it: a run never starts a server.
+- **The server stops answering mid-run.** The first failed report, or three in a row after
+  one succeeded, make the run say on stderr that it is visible to this process only from
+  then on, and it carries on. The server, hearing nothing for 30 seconds, fails the
+  execution with `unavailable` and a message naming the process, rather than showing it
+  running for ever; a run that was killed is therefore never a phantom in the list.
+
+What this does not change: the work runs where the run is, never in the server, and the
+history is still the server's memory — it ends with that server.
 
 ## The event protocol
 
@@ -223,7 +260,8 @@ up.
 
 ## In the Cockpit
 
-`/cockpit/executions` lists what this process has run, with the counts beside it;
+`/cockpit/executions` lists what this server has run and what `majordomus run` reported to
+it, with the counts beside it;
 `/cockpit/executions/<id>` is one execution, at a stable URL a person can reload, share
 locally or open several of in tabs.
 
@@ -318,6 +356,8 @@ origin. The Cockpit's content-security policy allows connections to this origin 
 | live channels | 64 | a further connection is refused `503` with the reason |
 | one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
 | a serial capability (a command) | one at a time | a second execution of it waits for the first |
+| events in one report from a run | 500, and three quarters of the 1 MiB body bound | refused above 500; the run sends the rest in the next report |
+| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server fails it `unavailable`; the run itself is not touched |
 
 </div>
 
@@ -334,7 +374,10 @@ answers the ones this process is running with.
 | `no capability 'x'; the executable ones are listed by capabilities.list` | the id is not in the registry | check `majordomus capabilities list` |
 | `not executable: 'x' is a resource: it is read, never executed` | a declarative object was named | read it with `objects.get` |
 | `invalid input: /steps: "many" is not of type "integer"` | the input does not satisfy the capability's own schema | the schema is in the OpenAPI document and on the capability's Cockpit page |
-| `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the process that accepted it; `executions.list` says what is remembered |
+| `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the server that holds it; `executions.list` says what is remembered |
+| `majordomus run: no server is serving this repository, so this execution is visible to this process only…` | `run` found no server answering for this checkout | start `majordomus serve` before the run to see it there; a run never starts one |
+| `majordomus run: the server at … did not take this run's report (…)` | the server refused or did not answer; an older server has no `executions.report` | the run carries on; the reason in parentheses is the server's |
+| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s | the terminal that ran it has the outcome |
 | `426 … /events is a WebSocket` | it was opened with a plain `GET` | open it with a WebSocket client, or read `executions.events` |
 | `403 … a WebSocket from origin '…' is refused` | a page on another origin tried to follow this server | open the Cockpit from this server's own address |
 | `stream.lagged` | this client could not keep up | read the snapshot and the history again from the last sequence seen |
@@ -357,6 +400,8 @@ answers the ones this process is running with.
 | an existing capability observable with no second implementation | behaviourally verified (`tests/executions.rs`) |
 | an execution never answered from the cache | behaviourally verified (`tests/executions.rs`) |
 | the whole path from outside the executable | behaviourally verified (`test/cases/100_execution_plane.sh`) |
+| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter failed | behaviourally verified (`execution::store`) |
+| a run listed by the server while in flight, the same outcome after it, a stop asked of the server reaching the run, the plain line with no server | behaviourally verified, by polling the server (`test/cases/3024_a_run_is_seen_by_the_server.sh`) |
 | durability, retry, scheduling, an execution outliving its process | not implemented, and `Limits` is where a durable store would be substituted |
 | a capability backed by a process, with its output as `stdout`/`stderr` log events | not implemented; the event model carries the streams for it |
 | reading the client's frames, and therefore an immediate close | not implemented; the reason is in `http::ws` |

@@ -64,7 +64,7 @@ tags:
   - name: evidence
     description: "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
   - name: executions
-    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
+    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it."
   - name: gates
     description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
   - name: graph
@@ -4079,7 +4079,7 @@ paths:
     get:
       operationId: executions.list
       summary: List executions
-      description: "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
+      description: "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
       tags:
         - executions
       parameters:
@@ -4498,11 +4498,74 @@ paths:
           uri: majordomus://executions/protocol
           name: execution-protocol
       x-majordomus-cli: executions protocol
+  "/api/v1/executions/report":
+    post:
+      operationId: executions.report
+      summary: Report an execution another process runs
+      description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only."
+      tags:
+        - executions
+      requestBody:
+        required: true
+        description: "The input of `executions.report`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ReportInput"
+      responses:
+        "200":
+          description: "Report an execution another process runs: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReportAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.report
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
   "/api/v1/executions/start":
     post:
       operationId: executions.start
       summary: Start a capability as an execution
-      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything."
+      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
       tags:
         - executions
       requestBody:
@@ -12810,6 +12873,68 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_worktree_status
       x-majordomus-cli: worktree status
+  "/api/v1/worktrees/uncommitted":
+    get:
+      operationId: worktree.uncommitted
+      summary: "Uncommitted work in the linked worktrees, and what holds it"
+      description: "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed."
+      tags:
+        - worktree
+      parameters:
+        - name: older_than
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work."
+          examples:
+            one-hour:
+              value: 1h
+      responses:
+        "200":
+          description: "Uncommitted work in the linked worktrees, and what holds it: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UncommittedReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.uncommitted
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_worktree_uncommitted
+      x-majordomus-cli: worktree uncommitted
 components:
   schemas:
     ActiveTask:
@@ -12881,6 +13006,13 @@ components:
             - string
             - "null"
           description: "The peer id, for a call that arrived through an MCP session."
+        pid:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
       required:
         - kind
       description: "Who asked, and which peer they are when this process knows."
@@ -12894,7 +13026,7 @@ components:
           description: An MCP client attached to this process.
         - type: string
           const: cli
-          description: The command line of this process.
+          description: "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
         - type: string
           const: internal
           description: "This executable's own tests and benchmarks."
@@ -30501,6 +30633,25 @@ components:
         - prerelease
         - draft
       description: One release the forge published.
+    OpenEpisode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The episode.
+        last_sign_of_life:
+          type:
+            - string
+            - "null"
+          description: "Its newest sign of life, RFC 3339 in UTC."
+        stranded:
+          type:
+            - boolean
+            - "null"
+          description: "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing."
+      required:
+        - id
+      description: "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```"
     OpenSession:
       type: object
       properties:
@@ -36084,6 +36235,68 @@ components:
         - count
         - releases
       description: "The releases this repository recorded, and the one an unpinned installation resolves to."
+    ReportAnswer:
+      type: object
+      properties:
+        applied:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of the reported events were applied.
+        through:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing."
+        cancel_requested:
+          type: boolean
+          description: "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it."
+        execution:
+          "$ref": "#/components/schemas/ExecutionView"
+          description: The execution as this server now holds it.
+      required:
+        - applied
+        - through
+        - cancel_requested
+        - execution
+      description: "The answer of `executions.report`."
+    ReportInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: "The execution's id, as the reporting process minted it."
+        capability:
+          type: string
+          description: "The capability it runs, by its canonical id."
+        title:
+          type: string
+          description: "That capability's title."
+        input:
+          description: "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it."
+          default: null
+        cancellable:
+          type: boolean
+          description: "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report."
+          default: false
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that runs it.
+        events:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionEvent"
+          description: "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat."
+          default: []
+      required:
+        - id
+        - capability
+        - title
+        - pid
+      description: "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout."
     RepositoryEnvironment:
       type: object
       properties:
@@ -40917,6 +41130,27 @@ components:
         - storage_key
         - bootstrap
       description: The theme contract as a client reads it.
+    Threshold:
+      type: object
+      properties:
+        declared:
+          type:
+            - string
+            - "null"
+          description: "The value as written (`12h`). Absent when nothing declares one."
+        seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The same value, in seconds."
+        source:
+          type: string
+          description: "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`."
+      required:
+        - source
+      description: "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```"
     Tier:
       oneOf:
         - type: string
@@ -41887,6 +42121,149 @@ components:
         - sha
         - open
       description: A prepared head whose pull request is no link of any train.
+    UncommittedReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`UNCOMMITTED_SCHEMA`."
+        observed_at:
+          type: string
+          description: "When the reading was taken, RFC 3339 in UTC."
+        threshold:
+          "$ref": "#/components/schemas/Threshold"
+          description: The threshold it was judged against.
+        worktrees:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UncommittedWorktree"
+          description: "Every linked work tree with uncommitted work, abandoned first, then oldest first."
+        tallies:
+          "$ref": "#/components/schemas/UncommittedTallies"
+          description: The counts.
+        findings:
+          type: array
+          items:
+            type: string
+          description: "What could not be read or judged, in words."
+      required:
+        - schema
+        - observed_at
+        - threshold
+        - worktrees
+        - tallies
+        - findings
+      description: "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```"
+    UncommittedTallies:
+      type: object
+      properties:
+        measured:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Linked work trees whose status was read.
+        uncommitted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, the ones holding uncommitted work: every entry of the listing."
+        held:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by a task, an episode or a process."
+        recent:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by nothing, younger than the threshold."
+        abandoned:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Held by nothing, older than the threshold."
+      required:
+        - measured
+        - uncommitted
+        - held
+        - recent
+        - abandoned
+      description: "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```"
+    UncommittedWorktree:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Absolute, as git holds it."
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch checked out there. Absent when detached.
+        label:
+          type: string
+          description: "The branch, or `detached/<short commit>`."
+        work:
+          "$ref": "#/components/schemas/DirtyState"
+          description: "The counts, as `worktree status` gives them."
+        paths:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Every changed path: staged, unstaged, untracked and conflicted together."
+        oldest_change:
+          type:
+            - string
+            - "null"
+          description: "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339."
+        age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: Seconds since then.
+        age:
+          type:
+            - string
+            - "null"
+          description: "The same, for a person (`3d`, `5h`, `40m`)."
+        task:
+          type:
+            - string
+            - "null"
+          description: The active task recorded there.
+        episodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OpenEpisode"
+          description: The episodes open there.
+        process_inside:
+          type:
+            - boolean
+            - "null"
+          description: A process has its working directory inside it. Absent when that could not be read.
+        held_by:
+          type: array
+          items:
+            type: string
+          description: "What holds it, in words; empty when nothing does."
+        standing:
+          "$ref": "#/components/schemas/WorkStanding"
+          description: The verdict.
+        remedy:
+          type: string
+          description: "The command that would put this work on a remote ref. Suggested, never run."
+      required:
+        - path
+        - label
+        - work
+        - paths
+        - episodes
+        - held_by
+        - standing
+        - remedy
+      description: "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
     UpstreamState:
       type: object
       properties:
@@ -42227,6 +42604,18 @@ components:
           const: published_history
           description: "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
+    WorkStanding:
+      oneOf:
+        - type: string
+          const: held
+          description: "A task, an episode or a process holds it."
+        - type: string
+          const: recent
+          description: "Nothing holds it, and it is younger than the threshold."
+        - type: string
+          const: abandoned
+          description: "Nothing holds it, and it is older than the threshold — or its age cannot be read."
+      description: "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```"
     WorkflowCatalogue:
       type: object
       properties:

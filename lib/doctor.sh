@@ -53,9 +53,17 @@ MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
-    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"; return 0 ;;
+    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
+  # The one context doctor knows. Anything else is refused rather than read as unset, so a
+  # misspelt switch in a hook cannot quietly run, or quietly skip, what it meant to.
+  case "${MAJORDOMUS_DOCTOR_CONTEXT:-}" in
+    ''|commit) ;;
+    *) mj_die "$MJ_EX_USAGE" "doctor: MAJORDOMUS_DOCTOR_CONTEXT='$MAJORDOMUS_DOCTOR_CONTEXT' is not a context (commit, or unset)" ;;
+  esac
   mj_require_installed
   MJ_DOCTOR_MISSING=0
   local t_start; t_start="$(mj_ms)"
@@ -500,6 +508,62 @@ EOF
   else
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
+  mj_report_uncommitted
+}
+
+# Work that exists in one worktree's files and in no commit (I1995). On 2026-10-07 and
+# 2026-10-08 finished work sat as uncommitted and staged files in the worktrees of sessions
+# that had ended, and was found only because somebody read those directories. The reading
+# is the executable's (`worktree uncommitted`): it decides what holds the work — an active
+# task, an open episode that is not stranded, a process inside — and how old is abandoned
+# (the policy's session.stranded_after). Here it is only rendered: one WARN per abandoned
+# worktree with its path, its count and its age, and the command that would put the work on
+# a remote ref. Doctor runs none of it; the reading itself writes nothing.
+#
+# The reading takes one `git status` per linked worktree — about 15 s over the 300 of this
+# repository — and the pre-commit hook runs doctor on every commit. So the hook says where it
+# runs (MAJORDOMUS_DOCTOR_CONTEXT=commit, the one switch mj_cmd_doctor accepts) and the
+# reading is left out there, by name: a line says it was not run and which command runs it,
+# because a check that is silently absent reads exactly like one that passed.
+mj_report_uncommitted() {
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ]; then
+    mj_info clone "uncommitted" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): it takes one git status per linked worktree; run it on its own" "majordomus worktree uncommitted"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out path paths age remedy
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "uncommitted" "the executable or jq is absent, so uncommitted work in linked worktrees is not reported here (majordomus worktree uncommitted)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" worktree uncommitted --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || out=""
+  if [ -z "$out" ]; then
+    mj_info clone "uncommitted" "uncommitted work in linked worktrees could not be read (majordomus worktree uncommitted)"
+    return 0
+  fi
+  while IFS="$(printf '\t')" read -r path paths age remedy; do
+    [ -n "$path" ] || continue
+    mj_warn clone "$path" \
+      "$paths uncommitted path(s), the oldest changed $age ago, held by no active task, open episode or process — finished work on one disk" \
+      "$remedy"
+  done <<EOF
+$(printf '%s' "$out" | jq -r '.worktrees[] | select(.standing == "abandoned") | [.path, .paths, (.age // "an unknown time"), .remedy] | @tsv')
+EOF
+  if [ "$(printf '%s' "$out" | jq -r '.tallies.abandoned')" = 0 ]; then
+    mj_ok clone "uncommitted" "$(printf '%s' "$out" | jq -r '"\(.tallies.uncommitted) linked worktree(s) hold uncommitted work, none abandoned against \(.threshold.declared // "no threshold") (\(.tallies.held) held, \(.tallies.recent) recent)"')"
+  fi
+  # a here-document, not a pipe: a finding counted inside a pipeline's subshell is lost
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && mj_info clone "uncommitted" "$f"
+  done <<EOF
+$(printf '%s' "$out" | jq -r '.findings[]')
+EOF
+  return 0
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order

@@ -56,6 +56,7 @@ pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
 pub(crate) mod trace;
+pub mod uncommitted;
 
 pub use direnv::EnvrcApproval;
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
@@ -75,4 +76,8 @@ pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
 pub use trace::{
     first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
     CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
+};
+pub use uncommitted::{
+    OpenEpisode, Threshold, UncommittedReport, UncommittedTallies, UncommittedWorktree,
+    WorkStanding,
 };

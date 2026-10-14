@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 105,
+      "count": 106,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 105
+      "count": 106
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 362
+      "count": 371
     },
     {
       "kind": "knowledge",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 481
+      "count": 484
     },
     {
       "kind": "use-case",
@@ -6836,7 +6836,15 @@
           "external": true
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7008,7 +7016,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0161",
+          "kind": "adr",
+          "route": "/adrs/adr-0161/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8112,7 +8128,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0161",
+          "kind": "adr",
+          "route": "/adrs/adr-0161/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -8132,6 +8156,13 @@
       "references": [
         {
           "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/events.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/ui/observatory.rs",
           "kind": "file",
           "route": null,
@@ -8143,6 +8174,13 @@
           "kind": "file",
           "route": null,
           "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
         },
         {
           "edge": "put_in_force",
@@ -8182,6 +8220,81 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0161",
+      "identity": "adr-0161",
+      "slug": "adr-0161",
+      "cockpit": "/cockpit/objects/adr/adr-0161",
+      "title": "A mesh node follows the published release, through the one installer, forward only",
+      "status": "proposed",
+      "tags": [
+        "distribution",
+        "release",
+        "mesh",
+        "runtime"
+      ],
+      "source": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/lease.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/static/install.sh",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0131",
+          "kind": "adr",
+          "route": "/adrs/adr-0131/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0155",
+          "kind": "adr",
+          "route": "/adrs/adr-0155/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/DISTRIBUTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "safe-self-update",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/85_installer.sh",
           "kind": "test",
           "route": null,
           "external": false

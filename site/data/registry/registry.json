@@ -6,28 +6,28 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "dcd73504305fb981edaa3320c23c9994f922898e6750a89a9804ff556fc13e5b",
+    "fingerprint": "c7627b946ca2a31e7f2aef03d86fe87cebc43cb8ed2b4f01981381fef66f22f5",
     "summary": {
-      "total": 2379,
-      "builtin": 199,
-      "declarative": 2180,
+      "total": 2394,
+      "builtin": 201,
+      "declarative": 2193,
       "by_kind": {
-        "command": 30,
-        "query": 169,
-        "resource": 2180
+        "command": 31,
+        "query": 170,
+        "resource": 2193
       },
       "by_stability": {
-        "behaviorally_verified": 139,
+        "behaviorally_verified": 141,
         "experimental": 51,
-        "implemented": 2189
+        "implemented": 2202
       },
-      "mcp_tools": 190,
-      "mcp_resources": 2235,
-      "http_routes": 194,
-      "cli_commands": 107,
+      "mcp_tools": 191,
+      "mcp_resources": 2248,
+      "http_routes": 196,
+      "cli_commands": 108,
       "modules": 91,
-      "benchmark_required": 169,
-      "benchmark_waived": 30,
+      "benchmark_required": 170,
+      "benchmark_waived": 31,
       "cached": 54
     },
     "builtin": [
@@ -26701,6 +26701,15 @@
                       "null"
                     ],
                     "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
                   }
                 },
                 "required": [
@@ -26723,7 +26732,7 @@
                   {
                     "type": "string",
                     "const": "cli",
-                    "description": "The command line of this process."
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
                   },
                   {
                     "type": "string",
@@ -27986,6 +27995,15 @@
                       "null"
                     ],
                     "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
                   }
                 },
                 "required": [
@@ -28008,7 +28026,7 @@
                   {
                     "type": "string",
                     "const": "cli",
-                    "description": "The command line of this process."
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
                   },
                   {
                     "type": "string",
@@ -28124,7 +28142,7 @@
         "module": "executions",
         "kind": "query",
         "title": "List executions",
-        "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+        "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
         "input": {
           "name": "ListInput",
           "schema": {
@@ -28629,6 +28647,15 @@
                       "null"
                     ],
                     "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
                   }
                 },
                 "required": [
@@ -28651,7 +28678,7 @@
                   {
                     "type": "string",
                     "const": "cli",
-                    "description": "The command line of this process."
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
                   },
                   {
                     "type": "string",
@@ -28973,11 +29000,1093 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
       },
       {
+        "id": "executions.report",
+        "module": "executions",
+        "kind": "command",
+        "title": "Report an execution another process runs",
+        "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+        "input": {
+          "name": "ReportInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The execution's id, as the reporting process minted it."
+              },
+              "capability": {
+                "type": "string",
+                "description": "The capability it runs, by its canonical id."
+              },
+              "title": {
+                "type": "string",
+                "description": "That capability's title."
+              },
+              "input": {
+                "description": "The input it was given, as the reporting process stored it: already redacted there,\nand redacted again here by this registry's schema when this registry knows it.",
+                "default": null
+              },
+              "cancellable": {
+                "type": "boolean",
+                "description": "Whether the capability stops when asked. When it does, a cancel asked of this server\nreaches the reporter in the answer to its next report.",
+                "default": false
+              },
+              "pid": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The process that runs it."
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ExecutionEvent"
+                },
+                "description": "Its events after the last sequence this server answered `through`, in its own\nsequence, oldest first; at most 500. Empty is a heartbeat.",
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "capability",
+              "title",
+              "pid"
+            ],
+            "description": "The input of `executions.report`: what a process that runs an execution says about it to\nthe server serving the same checkout.",
+            "title": "ReportInput",
+            "$defs": {
+              "ExecutionEvent": {
+                "type": "object",
+                "properties": {
+                  "schema_version": {
+                    "type": "string",
+                    "description": "The protocol version, `PROTOCOL_VERSION`."
+                  },
+                  "event_id": {
+                    "type": "string",
+                    "description": "The identity of this event: the execution's id and the sequence, so a client that\ndeduplicates needs no composite key of its own."
+                  },
+                  "execution_id": {
+                    "$ref": "#/$defs/ExecutionId",
+                    "description": "The execution it is about."
+                  },
+                  "sequence": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its position in that execution's stream, from 1, without gaps."
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "description": "When the event was produced, RFC 3339 in UTC."
+                  }
+                },
+                "required": [
+                  "schema_version",
+                  "event_id",
+                  "execution_id",
+                  "sequence",
+                  "timestamp"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.created"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "capability": {
+                            "description": "The capability's canonical id.",
+                            "type": "string"
+                          },
+                          "title": {
+                            "description": "Its title.",
+                            "type": "string"
+                          },
+                          "input": {
+                            "description": "The input, with sensitive values already replaced."
+                          }
+                        },
+                        "required": [
+                          "capability",
+                          "title",
+                          "input"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.queued"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "ahead": {
+                            "description": "How many executions are ahead of it.",
+                            "type": "integer",
+                            "format": "uint",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "ahead"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "It is waiting for a worker."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.started"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "A worker picked it up and is about to enter the handler."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.progress"
+                      },
+                      "data": {
+                        "$ref": "#/$defs/ProgressView"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "How far along it is."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.step.started"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "The step's stable name.",
+                            "type": "string"
+                          },
+                          "title": {
+                            "description": "One line for a reader.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "title"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A named phase was entered."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.step.completed"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "The step's stable name.",
+                            "type": "string"
+                          },
+                          "ok": {
+                            "description": "Whether what it was asked to do happened.",
+                            "type": "boolean"
+                          },
+                          "detail": {
+                            "description": "What it said, when it said anything.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "ok"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A named phase finished."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.log"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "stream": {
+                            "description": "Which stream it came from.",
+                            "$ref": "#/$defs/LogStream"
+                          },
+                          "message": {
+                            "description": "The text, with control characters and terminal escapes already removed.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "stream",
+                          "message"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A line of output."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.diagnostic"
+                      },
+                      "data": {
+                        "$ref": "#/$defs/ExecutionDiagnostic"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A structured finding, distinct from the outcome."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.cancelling"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "by": {
+                            "description": "Who asked, in one word.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "by"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "Cancellation was asked for; the handler has not stopped yet."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.cancelled"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.completed"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "output": {
+                            "description": "What the handler returned."
+                          }
+                        },
+                        "required": [
+                          "output"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \"succeeded\" and find no result: the state and the value it produced\nare one fact and travel together."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.failed"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "error": {
+                            "description": "Why.",
+                            "$ref": "#/$defs/ExecutionError"
+                          }
+                        },
+                        "required": [
+                          "error"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "It finished, and it did not."
+                  }
+                ],
+                "description": "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
+              },
+              "ExecutionId": {
+                "type": "string",
+                "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+              },
+              "ProgressView": {
+                "type": "object",
+                "properties": {
+                  "current": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units done."
+                  },
+                  "total": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units in total, when the handler knows how many."
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What is being done, for a reader."
+                  }
+                },
+                "required": [
+                  "current"
+                ],
+                "description": "How far along an execution is."
+              },
+              "LogStream": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "stdout",
+                    "description": "The standard output of a child process the handler ran."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stderr",
+                    "description": "Its standard error."
+                  },
+                  {
+                    "type": "string",
+                    "const": "handler",
+                    "description": "The handler itself, saying something it wants a reader to see."
+                  }
+                ],
+                "description": "Which stream a log line came from."
+              },
+              "ExecutionDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "How bad."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "A stable machine-readable code."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line, for a person."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The rest, when there is more."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "summary"
+                ],
+                "description": "A structured finding an execution reported on its way, distinct from its outcome."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              },
+              "ExecutionError": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What went wrong, for a person."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The execution this failure belongs to, so a log line and a UI agree."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "correlation_id"
+                ],
+                "description": "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "ReportAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "applied": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of the reported events were applied."
+              },
+              "through": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The reporter's sequence this server holds everything up to: the next report sends\nthe events after it, so a lost or repeated report costs nothing."
+              },
+              "cancel_requested": {
+                "type": "boolean",
+                "description": "Whether somebody asked this server to stop the execution. The reporter runs it, so\nthe reporter cancels it."
+              },
+              "execution": {
+                "$ref": "#/$defs/ExecutionView",
+                "description": "The execution as this server now holds it."
+              }
+            },
+            "required": [
+              "applied",
+              "through",
+              "cancel_requested",
+              "execution"
+            ],
+            "description": "The answer of `executions.report`.",
+            "title": "ReportAnswer",
+            "$defs": {
+              "ExecutionView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/$defs/ExecutionId",
+                    "description": "The identity."
+                  },
+                  "capability": {
+                    "type": "string",
+                    "description": "The capability that ran, by its canonical id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "That capability's title, so a list needs no second lookup."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ExecutionState",
+                    "description": "Where it is."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "When it was accepted, RFC 3339 in UTC."
+                  },
+                  "started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the handler was entered."
+                  },
+                  "finished_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it reached a final state."
+                  },
+                  "duration_ms": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it ran, in milliseconds, once it has finished."
+                  },
+                  "input": {
+                    "description": "The input it was given, with every value the input schema marks sensitive replaced."
+                  },
+                  "output": {
+                    "description": "What the handler returned, for a succeeded execution and never before."
+                  },
+                  "error": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ExecutionError"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Why it failed, for a failed execution and never before."
+                  },
+                  "progress": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ProgressView"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last progress the handler reported."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/StepView"
+                    },
+                    "description": "The steps it entered, in order."
+                  },
+                  "diagnostics": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ExecutionDiagnostic"
+                    },
+                    "description": "The findings it reported."
+                  },
+                  "last_sequence": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The sequence number of the last event: the cursor a client subscribes from."
+                  },
+                  "event_count": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many events it has produced, including the ones no longer retained."
+                  },
+                  "events_truncated": {
+                    "type": "boolean",
+                    "description": "Whether the retained event history has lost its oldest entries to the bound."
+                  },
+                  "cancellable": {
+                    "type": "boolean",
+                    "description": "Whether asking to cancel this execution will do anything: the capability's policy."
+                  },
+                  "actor": {
+                    "$ref": "#/$defs/Actor",
+                    "description": "Who asked for it."
+                  },
+                  "repository": {
+                    "$ref": "#/$defs/RepositoryRef",
+                    "description": "Which repository it ran against."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+                  },
+                  "links": {
+                    "$ref": "#/$defs/ExecutionLinks",
+                    "description": "Where to read more."
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability",
+                  "title",
+                  "state",
+                  "created_at",
+                  "input",
+                  "last_sequence",
+                  "event_count",
+                  "events_truncated",
+                  "cancellable",
+                  "actor",
+                  "repository",
+                  "correlation_id",
+                  "links"
+                ],
+                "description": "One execution with the links to everything else about it."
+              },
+              "ExecutionId": {
+                "type": "string",
+                "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+              },
+              "ExecutionState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "queued",
+                    "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "The handler is running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelling",
+                    "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "succeeded",
+                    "description": "The handler returned an output."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The handler returned an error, or the worker could not run it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "It stopped because it was asked to."
+                  }
+                ],
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+              },
+              "ExecutionError": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What went wrong, for a person."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The execution this failure belongs to, so a log line and a UI agree."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "correlation_id"
+                ],
+                "description": "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+              },
+              "ProgressView": {
+                "type": "object",
+                "properties": {
+                  "current": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units done."
+                  },
+                  "total": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units in total, when the handler knows how many."
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What is being done, for a reader."
+                  }
+                },
+                "required": [
+                  "current"
+                ],
+                "description": "How far along an execution is."
+              },
+              "StepView": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "A stable name, unique within the execution."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line for a reader."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/StepState",
+                    "description": "Where it stands."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When it was entered, RFC 3339 in UTC."
+                  },
+                  "finished_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it finished, when it has."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it said when it finished, when it said anything."
+                  }
+                },
+                "required": [
+                  "name",
+                  "title",
+                  "state",
+                  "started_at"
+                ],
+                "description": "One named phase of an execution, as the handler reported it."
+              },
+              "StepState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "Entered and not finished."
+                  },
+                  {
+                    "type": "string",
+                    "const": "completed",
+                    "description": "Finished, and what it was asked to do happened."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "Finished, and it did not."
+                  }
+                ],
+                "description": "Where a step of an execution stands."
+              },
+              "ExecutionDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "How bad."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "A stable machine-readable code."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line, for a person."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The rest, when there is more."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "summary"
+                ],
+                "description": "A structured finding an execution reported on its way, distinct from its outcome."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              },
+              "Actor": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/ActorKind",
+                    "description": "Where the request came from."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "description": "Who asked, and which peer they are when this process knows."
+              },
+              "ActorKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "http",
+                    "description": "An HTTP client, which includes the Cockpit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mcp",
+                    "description": "An MCP client attached to this process."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cli",
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
+                  },
+                  {
+                    "type": "string",
+                    "const": "internal",
+                    "description": "This executable's own tests and benchmarks."
+                  }
+                ],
+                "description": "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
+              },
+              "RepositoryRef": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The repository's name: the last component of its root."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "The stable identity two processes over one checkout both compute."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out, when git can say."
+                  }
+                },
+                "required": [
+                  "name",
+                  "id"
+                ],
+                "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "ExecutionLinks": {
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "type": "string",
+                    "description": "The snapshot: `GET /api/v1/executions/get?id=…`."
+                  },
+                  "events": {
+                    "type": "string",
+                    "description": "The retained history: `GET /api/v1/executions/events?id=…`."
+                  },
+                  "cancel": {
+                    "type": "string",
+                    "description": "Where to ask it to stop: `POST /api/v1/executions/cancel`."
+                  },
+                  "websocket": {
+                    "type": "string",
+                    "description": "The live channel, from the beginning: `GET /events?execution=…`."
+                  },
+                  "cockpit": {
+                    "type": "string",
+                    "description": "The page a person opens."
+                  }
+                },
+                "required": [
+                  "self",
+                  "events",
+                  "cancel",
+                  "websocket",
+                  "cockpit"
+                ],
+                "description": "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::executions"
+        },
+        "exposure": {
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/executions/report"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "executions",
+          "control-plane"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
+      },
+      {
         "id": "executions.start",
         "module": "executions",
         "kind": "command",
         "title": "Start a capability as an execution",
-        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
         "input": {
           "name": "StartInput",
           "schema": {
@@ -29378,6 +30487,15 @@
                       "null"
                     ],
                     "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
                   }
                 },
                 "required": [
@@ -29400,7 +30518,7 @@
                   {
                     "type": "string",
                     "const": "cli",
-                    "description": "The command line of this process."
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
                   },
                   {
                     "type": "string",
@@ -80571,6 +81689,388 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "kind": "query",
+        "title": "Uncommitted work in the linked worktrees, and what holds it",
+        "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+        "input": {
+          "name": "UncommittedInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "older_than": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work."
+              }
+            },
+            "description": "What to judge uncommitted work against.",
+            "title": "UncommittedInput"
+          }
+        },
+        "output": {
+          "name": "UncommittedReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`UNCOMMITTED_SCHEMA`."
+              },
+              "observed_at": {
+                "type": "string",
+                "description": "When the reading was taken, RFC 3339 in UTC."
+              },
+              "threshold": {
+                "$ref": "#/$defs/Threshold",
+                "description": "The threshold it was judged against."
+              },
+              "worktrees": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/UncommittedWorktree"
+                },
+                "description": "Every linked work tree with uncommitted work, abandoned first, then oldest first."
+              },
+              "tallies": {
+                "$ref": "#/$defs/UncommittedTallies",
+                "description": "The counts."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read or judged, in words."
+              }
+            },
+            "required": [
+              "schema",
+              "observed_at",
+              "threshold",
+              "worktrees",
+              "tallies",
+              "findings"
+            ],
+            "description": "Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\"git\")\n    .args([\"init\", \"-q\"])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \"a missing threshold is said, not assumed\");\n```",
+            "title": "UncommittedReport",
+            "$defs": {
+              "Threshold": {
+                "type": "object",
+                "properties": {
+                  "declared": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The value as written (`12h`). Absent when nothing declares one."
+                  },
+                  "seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The same value, in seconds."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`."
+                  }
+                },
+                "required": [
+                  "source"
+                ],
+                "description": "The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\"12h\"), None).unwrap();\nlet wire = serde_json::to_value(&declared).unwrap();\nassert_eq!(wire[\"declared\"], \"12h\");\nassert_eq!(wire[\"seconds\"], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\"source\": \"absent\"})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \"absent is not a default\");\n```"
+              },
+              "UncommittedWorktree": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Absolute, as git holds it."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out there. Absent when detached."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The branch, or `detached/<short commit>`."
+                  },
+                  "work": {
+                    "$ref": "#/$defs/DirtyState",
+                    "description": "The counts, as `worktree status` gives them."
+                  },
+                  "paths": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Every changed path: staged, unstaged, untracked and conflicted together."
+                  },
+                  "oldest_change": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the oldest change was made: the earliest modification time among the changed\npaths, the index file's standing in for a path that no longer exists. RFC 3339."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since then."
+                  },
+                  "age": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The same, for a person (`3d`, `5h`, `40m`)."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The active task recorded there."
+                  },
+                  "episodes": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OpenEpisode"
+                    },
+                    "description": "The episodes open there."
+                  },
+                  "process_inside": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "A process has its working directory inside it. Absent when that could not be read."
+                  },
+                  "held_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What holds it, in words; empty when nothing does."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/WorkStanding",
+                    "description": "The verdict."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that would put this work on a remote ref. Suggested, never run."
+                  }
+                },
+                "required": [
+                  "path",
+                  "label",
+                  "work",
+                  "paths",
+                  "episodes",
+                  "held_by",
+                  "standing",
+                  "remedy"
+                ],
+                "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
+              },
+              "DirtyState": {
+                "type": "object",
+                "properties": {
+                  "staged": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with a change in the index."
+                  },
+                  "unstaged": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with a change in the work tree that is not in the index."
+                  },
+                  "untracked": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Untracked, not ignored, files."
+                  },
+                  "conflicted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Entries with an unresolved merge conflict."
+                  },
+                  "clean": {
+                    "type": "boolean",
+                    "description": "Nothing above is non-zero."
+                  },
+                  "in_progress": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+                  }
+                },
+                "required": [
+                  "staged",
+                  "unstaged",
+                  "untracked",
+                  "conflicted",
+                  "clean"
+                ],
+                "description": "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+              },
+              "OpenEpisode": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The episode."
+                  },
+                  "last_sign_of_life": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its newest sign of life, RFC 3339 in UTC."
+                  },
+                  "stranded": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Silent longer than the threshold. Absent when that cannot be judged — no threshold,\nor no readable sign of life — and then it holds nothing."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "description": "An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \"s-20260101000000-0a0a\".into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&unjudged).unwrap();\nassert!(wire.get(\"stranded\").is_none(), \"what could not be judged is absent, not false\");\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```"
+              },
+              "WorkStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "A task, an episode or a process holds it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "recent",
+                    "description": "Nothing holds it, and it is younger than the threshold."
+                  },
+                  {
+                    "type": "string",
+                    "const": "abandoned",
+                    "description": "Nothing holds it, and it is older than the threshold — or its age cannot be read."
+                  }
+                ],
+                "description": "What a work tree's uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \"abandoned\");\n```"
+              },
+              "UncommittedTallies": {
+                "type": "object",
+                "properties": {
+                  "measured": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Linked work trees whose status was read."
+                  },
+                  "uncommitted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, the ones holding uncommitted work: every entry of the listing."
+                  },
+                  "held": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by a task, an episode or a process."
+                  },
+                  "recent": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by nothing, younger than the threshold."
+                  },
+                  "abandoned": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Held by nothing, older than the threshold."
+                  }
+                },
+                "required": [
+                  "measured",
+                  "uncommitted",
+                  "held",
+                  "recent",
+                  "abandoned"
+                ],
+                "description": "The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\"measured\": 4, \"uncommitted\": 3, \"held\": 1, \"recent\": 1, \"abandoned\": 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&t).unwrap(), wire, \"the shape doctor's jq reads\");\nassert_eq!(UncommittedTallies::default().abandoned, 0, \"nothing read, nothing abandoned\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_uncommitted"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees/uncommitted"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "uncommitted"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "continuity",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ],
     "modules": [
@@ -80579,7 +82079,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -81028,10 +82528,10 @@
       {
         "id": "executions",
         "title": "Executions",
-        "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+        "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 7,
+        "capabilities": 8,
         "capability_ids": [
           "executions.cancel",
           "executions.demonstrate",
@@ -81039,6 +82539,7 @@
           "executions.get",
           "executions.list",
           "executions.protocol",
+          "executions.report",
           "executions.start"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
@@ -81189,7 +82690,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 371,
         "capability_ids": []
       },
       {
@@ -81760,7 +83261,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 484,
         "capability_ids": []
       },
       {
@@ -81838,19 +83339,20 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "worktree.inspect",
           "worktree.migration_plan",
           "worktree.status",
-          "worktree.topology"
+          "worktree.topology",
+          "worktree.uncommitted"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ]
   },
   "index": {
-    "fingerprint": "989c3406d092f52a3c8908b082b7356ee825e5fdd9d03625425c0523881962d0",
+    "fingerprint": "f513c9768e9634f1e549982d2b7c4c925d86e7dd17e6f93157438790cc4d26f3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81873,7 +83375,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 105,
+      "adr": 106,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -81890,7 +83392,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 362,
+      "issue": 371,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81904,7 +83406,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 484,
       "use-case": 49,
       "workspace": 1
     },
@@ -83640,12 +85142,29 @@
         "path": ".ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8667,
+        "bytes": 13067,
         "tags": [
           "ui",
           "observatory",
           "evidence",
           "mesh"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0161",
+        "kind": "adr",
+        "identity": "adr-0161",
+        "title": "A mesh node follows the published release, through the one installer, forward only",
+        "description": "A mesh node follows the published release, through the one installer, forward only",
+        "path": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9480,
+        "tags": [
+          "distribution",
+          "release",
+          "mesh",
+          "runtime"
         ]
       },
       {
@@ -87632,7 +89151,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 33390
+        "bytes": 35379
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -87722,7 +89241,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 19633
+        "bytes": 23953
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -87848,7 +89367,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 60156
+        "bytes": 60783
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -87920,7 +89439,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131889
+        "bytes": 142474
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -88100,7 +89619,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 29290
+        "bytes": 32897
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -91051,7 +92570,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 86775
+        "bytes": 90546
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -93603,7 +95122,7 @@
         "path": ".ai/repo/project/issues/I1501.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3386
+        "bytes": 4724
       },
       {
         "uri": "majordomus://issue/I1502",
@@ -93702,7 +95221,7 @@
         "path": ".ai/repo/project/issues/I1510.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2916
+        "bytes": 4240
       },
       {
         "uri": "majordomus://issue/I1511",
@@ -94208,7 +95727,7 @@
         "path": ".ai/repo/project/issues/I1995.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 4281
       },
       {
         "uri": "majordomus://issue/I1996",
@@ -94637,7 +96156,7 @@
         "path": ".ai/repo/project/issues/I2165.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3310
+        "bytes": 3300
       },
       {
         "uri": "majordomus://issue/I2282",
@@ -95344,6 +96863,105 @@
         "bytes": 2234
       },
       {
+        "uri": "majordomus://issue/I2713",
+        "kind": "issue",
+        "identity": "I2713",
+        "title": "A build never lets idle incremental sessions fill the disk",
+        "description": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+        "path": ".ai/repo/project/issues/I2713.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2052
+      },
+      {
+        "uri": "majordomus://issue/I2714",
+        "kind": "issue",
+        "identity": "I2714",
+        "title": "One build directory never serves two worktrees' jobs at once",
+        "description": "Prevent a build directory set through CARGO_BUILD_BUILD_DIR from being used by jobs of two different worktrees at the same time, so that one job's build cannot replace the artifacts another job is testing.",
+        "path": ".ai/repo/project/issues/I2714.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1900
+      },
+      {
+        "uri": "majordomus://issue/I2717",
+        "kind": "issue",
+        "identity": "I2717",
+        "title": "A release record pull request gets a verdict that can pass",
+        "description": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+        "path": ".ai/repo/project/issues/I2717.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2419
+      },
+      {
+        "uri": "majordomus://issue/I2718",
+        "kind": "issue",
+        "identity": "I2718",
+        "title": "A linked worktree runs its own hooks, never the primary checkout's",
+        "description": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+        "path": ".ai/repo/project/issues/I2718.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2444
+      },
+      {
+        "uri": "majordomus://issue/I2720",
+        "kind": "issue",
+        "identity": "I2720",
+        "title": "majordomus self update re-runs the published installer, and never reimplements it",
+        "description": "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once.",
+        "path": ".ai/repo/project/issues/I2720.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2322
+      },
+      {
+        "uri": "majordomus://issue/I2721",
+        "kind": "issue",
+        "identity": "I2721",
+        "title": "An enrolled mesh node follows the stable pointer by itself",
+        "description": "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking at server start, every 15 minutes with jitter and when the mesh announces a release, and applying through self update.",
+        "path": ".ai/repo/project/issues/I2721.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2152
+      },
+      {
+        "uri": "majordomus://issue/I2722",
+        "kind": "issue",
+        "identity": "I2722",
+        "title": "A hub activates a new version under its service manager, checks its health and rolls back by itself",
+        "description": "Make a hub that has installed a newer release restart onto it through its systemd user unit or launchd agent when no session is attached or after a bounded grace, pass a readiness and mesh verify check, and otherwise rename the launcher back, keep serving the previous version and put a rollout failed entry on the board.",
+        "path": ".ai/repo/project/issues/I2722.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2127
+      },
+      {
+        "uri": "majordomus://issue/I2723",
+        "kind": "issue",
+        "identity": "I2723",
+        "title": "The mesh shows each node's version and how far a release has rolled out",
+        "description": "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it.",
+        "path": ".ai/repo/project/issues/I2723.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1399
+      },
+      {
+        "uri": "majordomus://issue/I2724",
+        "kind": "issue",
+        "identity": "I2724",
+        "title": "A node without a route to the site takes the archive from a peer and still verifies it itself",
+        "description": "Let a following node that cannot reach github.com or majordomus.dev fetch the release archive from a linked peer over the authenticated mesh link, and install it only after checking its digest and size against release metadata it read itself or that was relayed and signed by the publishing node.",
+        "path": ".ai/repo/project/issues/I2724.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1684
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -95728,12 +97346,12 @@
         "uri": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "identity": "safe-self-update",
-        "title": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
-        "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
+        "title": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked",
+        "description": "An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
         "path": ".ai/repo/project/milestones/safe-self-update.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3948
+        "bytes": 4902
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -101903,6 +103521,14 @@
         "bytes": 8904
       },
       {
+        "uri": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "kind": "test",
+        "identity": "test/cases/194_audit_rows_are_planned.sh",
+        "path": "test/cases/194_audit_rows_are_planned.sh",
+        "source_class": "case",
+        "bytes": 6059
+      },
+      {
         "uri": "majordomus://test/test/cases/19_end_to_end.sh",
         "kind": "test",
         "identity": "test/cases/19_end_to_end.sh",
@@ -102381,6 +104007,22 @@
         "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
         "source_class": "case",
         "bytes": 5317
+      },
+      {
+        "uri": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "kind": "test",
+        "identity": "test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "path": "test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "source_class": "case",
+        "bytes": 8269
+      },
+      {
+        "uri": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "kind": "test",
+        "identity": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "path": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "source_class": "case",
+        "bytes": 12568
       },
       {
         "uri": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -105286,7 +106928,7 @@
       "identity": [
         "id"
       ],
-      "objects": 105
+      "objects": 106
     },
     {
       "name": "application",
@@ -105449,7 +107091,7 @@
       "identity": [
         "id"
       ],
-      "objects": 362
+      "objects": 371
     },
     {
       "name": "knowledge",
@@ -105601,7 +107243,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 484
     },
     {
       "name": "use-case",
@@ -117633,6 +119275,130 @@
                 "command": "majordomus worktree cleanup",
                 "setup": [],
                 "expectation": "exits 0; prints cleanup-eligible"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "uncommitted"
+            ],
+            "route": "/docs/cli/worktree/uncommitted/",
+            "executable": true,
+            "usage": "majordomus worktree uncommitted [OPTIONS]",
+            "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+            "args": [
+              {
+                "name": "older_than",
+                "long": "older-than",
+                "positional": false,
+                "help": "Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)",
+                "value_name": "DURATION",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-uncommitted-none",
+                "title": "Work no commit carries, and whether anything holds it",
+                "description": "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+                "argv": [
+                  "worktree",
+                  "uncommitted"
+                ],
+                "command": "majordomus worktree uncommitted",
+                "setup": [],
+                "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed"
               }
             ],
             "subcommands": []
@@ -138534,7 +140300,7 @@
         "name": "majordomus_executions",
         "id": "executions.list",
         "title": "List executions",
-        "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+        "description": "Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -138568,7 +140334,7 @@
         "name": "majordomus_execution_start",
         "id": "executions.start",
         "title": "Start a capability as an execution",
-        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
         "kind": "command",
         "read_only": false,
         "effect": "repository_mutation",
@@ -140688,6 +142454,23 @@
         },
         "input": "Empty",
         "output": "RepositoryTopology"
+      },
+      {
+        "name": "majordomus_worktree_uncommitted",
+        "id": "worktree.uncommitted",
+        "title": "Uncommitted work in the linked worktrees, and what holds it",
+        "description": "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "UncommittedInput",
+        "output": "UncommittedReport"
       }
     ],
     "resources": [
@@ -141473,6 +143256,12 @@
       },
       {
         "method": "POST",
+        "path": "/api/v1/executions/report",
+        "id": "executions.report",
+        "kind": "command"
+      },
+      {
+        "method": "POST",
         "path": "/api/v1/executions/start",
         "id": "executions.start",
         "kind": "command"
@@ -142243,6 +144032,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees",
         "id": "worktree.topology",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees/uncommitted",
+        "id": "worktree.uncommitted",
         "kind": "query"
       }
     ],
@@ -149163,6 +150958,64 @@
         "route": "GET /api/v1/worktrees"
       },
       {
+        "key": "worktree.uncommitted|direct|policy-threshold",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false
+      },
+      {
+        "key": "worktree.uncommitted|direct|one-hour",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false
+      },
+      {
+        "key": "worktree.uncommitted|mcp|policy-threshold",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false,
+        "tool": "majordomus_worktree_uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|mcp|one-hour",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false,
+        "tool": "majordomus_worktree_uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|http|policy-threshold",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "policy-threshold",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/uncommitted"
+      },
+      {
+        "key": "worktree.uncommitted|http|one-hour",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.uncommitted",
+        "module": "worktree",
+        "case": "one-hour",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/uncommitted"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -150935,6 +152788,22 @@
           "transport": "http",
           "state": "covered",
           "cases": 1
+        },
+        {
+          "subject": "executions.report",
+          "module": "executions",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "executions.report",
+          "module": "executions",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
         },
         {
           "subject": "executions.start",
@@ -153690,6 +155559,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.uncommitted",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "system.mcp.process_cold",
           "module": "system",
           "transport": "mcp",
@@ -153790,22 +155680,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 199,
-          "covered": 169,
+          "required": 201,
+          "covered": 170,
           "missing": 0,
-          "waived": 30,
+          "waived": 31,
           "inapplicable": 0
         },
         "http": {
-          "required": 194,
-          "covered": 169,
+          "required": 196,
+          "covered": 170,
           "missing": 0,
-          "waived": 25,
+          "waived": 26,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 190,
-          "covered": 165,
+          "required": 191,
+          "covered": 166,
           "missing": 0,
           "waived": 25,
           "inapplicable": 0
@@ -153818,10 +155708,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 597,
-          "covered": 517,
+          "required": 602,
+          "covered": 520,
           "missing": 0,
-          "waived": 80,
+          "waived": 82,
           "inapplicable": 0
         }
       }

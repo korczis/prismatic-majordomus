@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 199 | 169 | 0 | 30 |
-| http | 194 | 169 | 0 | 25 |
-| mcp | 190 | 165 | 0 | 25 |
+| direct | 201 | 170 | 0 | 31 |
+| http | 196 | 170 | 0 | 26 |
+| mcp | 191 | 166 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 597 | 517 | 0 | 80 |
+| total | 602 | 520 | 0 | 82 |
 
 ## Capabilities
 
@@ -86,6 +86,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.get` | executions | query | — | waived | waived | waived | — |
 | `executions.list` | executions | query | — | covered | covered | covered | `recent` |
 | `executions.protocol` | executions | query | — | covered | covered | covered | `default` |
+| `executions.report` | executions | command | — | waived | — | waived | — |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
@@ -218,6 +219,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |
+| `worktree.uncommitted` | worktree | query | — | covered | covered | covered | `policy-threshold`, `one-hour` |
 
 ## System targets
 

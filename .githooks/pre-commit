@@ -1,6 +1,8 @@
 #!/bin/sh
 # install once: git config core.hooksPath .githooks
-bin/majordomus doctor || exit $?
+# Doctor is told it runs in the commit hook, and leaves out the one reading that costs a
+# `git status` per linked worktree (`majordomus worktree uncommitted`), saying so in a line.
+MAJORDOMUS_DOCTOR_CONTEXT=commit bin/majordomus doctor || exit $?
 # A feature branch is committed from its canonical worktree (<repo>-wt/<branch>) and the
 # trunk from the primary checkout; the guard decides, this line only asks. The logic lives
 # in the Rust executable's worktree service, and the launcher builds it when it must.

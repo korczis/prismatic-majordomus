@@ -1,7 +1,7 @@
 +++
 title = "majordomus executions protocol"
 description = "The live channel's contract: where it is, what it writes, and the schema of each message"
-weight = 129
+weight = 130
 [extra]
 route = "/docs/cli/executions/protocol/"
 command = "majordomus executions protocol"

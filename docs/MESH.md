@@ -554,6 +554,14 @@ The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.h
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
 
+**Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
+it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
+under its service manager when no session is attached or after a bounded grace, checks its
+readiness and a live `mesh verify` round, and rolls back to the previous version by itself when
+either fails, naming node, version and failed check on the board. A typed capability writes
+the systemd unit and the launchd agent (I2722). Until that lands, the release seat upgrades the
+hubs by hand after each release and reads each version back.
+
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,
 so it is a decision of its own: case 494 refuses a disabled declaration until the decision and

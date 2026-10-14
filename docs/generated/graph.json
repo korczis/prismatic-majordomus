@@ -673,6 +673,15 @@
         "status": "query"
       },
       {
+        "id": "capability:executions.report",
+        "kind": "capability",
+        "label": "executions.report",
+        "summary": "Report an execution another process runs",
+        "route": "/cockpit/capabilities/executions.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:executions.start",
         "kind": "capability",
         "label": "executions.start",
@@ -1857,6 +1866,15 @@
         "label": "worktree.topology",
         "summary": "The whole topology",
         "route": "/cockpit/capabilities/worktree.topology",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.uncommitted",
+        "kind": "capability",
+        "label": "worktree.uncommitted",
+        "summary": "Uncommitted work in the linked worktrees, and what holds it",
+        "route": "/cockpit/capabilities/worktree.uncommitted",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "status": "query"
       },
@@ -4252,6 +4270,14 @@
         "label": "proof-carrying-documentation.md",
         "summary": "named by the layer; not an object of this index",
         "source": "site/content-src/proof-carrying-documentation.md",
+        "external": true
+      },
+      {
+        "id": "file:site/static/install.sh",
+        "kind": "file",
+        "label": "install.sh",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/static/install.sh",
         "external": true
       },
       {
@@ -7298,13 +7324,43 @@
             "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
             "file:docs/MAJORDOMUS_UI.md",
             "file:apps/majordomus-cli/src/ui/observatory.rs",
-            "file:share/ui/observatory.js"
+            "file:share/ui/observatory.js",
+            "file:apps/majordomus-cli/src/http/events.rs",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
           ],
           "tags": [
             "ui",
             "observatory",
             "evidence",
             "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0161",
+        "kind": "adr",
+        "label": "adr-0161",
+        "summary": "A mesh node follows the published release, through the one installer, forward only",
+        "route": "/cockpit/objects/adr/adr-0161",
+        "source": ".ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/project/milestones/safe-self-update.yaml",
+            "file:.ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+            "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
+            "file:docs/DISTRIBUTION.md",
+            "file:docs/MESH.md",
+            "file:site/static/install.sh",
+            "file:apps/majordomus-cli/src/lease.rs",
+            "test:test/cases/85_installer.sh"
+          ],
+          "tags": [
+            "distribution",
+            "release",
+            "mesh",
+            "runtime"
           ]
         }
       },
@@ -28783,6 +28839,8 @@
             "The claim is proved by polling the server while a run is in flight, not by reading the source",
             "No surface describes an execution history that no writer reaches"
           ],
+          "completed_at": "2026-10-14T16:47:12Z",
+          "completed_event": "sha256:2de75be2d181a8ab00c6c2bdc0851ea5ed72d899a8197d829d90c9e6405813b4",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -28805,7 +28863,9 @@
             "test/cases"
           ],
           "slug": "execution-planes-converge",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T16:47:04Z",
+          "started_event": "sha256:010948b9443b764eb34755011574199405c1a3c7f7dd2e0a8205e9415854d461",
+          "updated_at": "2026-10-14T16:47:12Z",
           "validation": [
             "bash test/run.sh 100_execution_plane",
             "bin/majordomus-cli capabilities validate"
@@ -29197,6 +29257,8 @@
             "A row naming an issue that exists passes",
             "The check runs in the repository's own suite as test case 194"
           ],
+          "completed_at": "2026-10-14T17:42:45Z",
+          "completed_event": "sha256:0f306de9e3312cb471881f0d2b7767734764eb2d70d1630adc5c81da9e716c5b",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -29217,7 +29279,9 @@
             "docs/COCKPIT_IDE_AUDIT.md"
           ],
           "slug": "audit-rows-are-checked-against-the-plan",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-14T17:42:28Z",
+          "started_event": "sha256:84d042cc0bc6f2461636cad6b7163bfa4bb4a4c538948ab2a3235ff42160c3bf",
+          "updated_at": "2026-10-14T17:42:45Z",
           "validation": [
             "bash test/run.sh 194_audit_rows_are_planned",
             "bin/majordomus doctor"
@@ -31446,6 +31510,8 @@
             "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
             "The reading writes nothing: `git status` of every worktree is the same before and after it"
           ],
+          "completed_at": "2026-10-14T17:17:04Z",
+          "completed_event": "sha256:f16e26b2e313440cea006371c32e3c6b786d4177989d5b5748d127c810fc0f1d",
           "created_at": "2026-10-08",
           "evidence_required": [
             "abandoned_index_named_case",
@@ -31462,7 +31528,9 @@
             "test/cases"
           ],
           "slug": "uncommitted-work-in-a-worktree-is-named",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-14T17:16:55Z",
+          "started_event": "sha256:d7ae87a85d350c67030156194ad7b0b61a83d7fb2ab60ab98ad2afc23553f56a",
+          "updated_at": "2026-10-14T17:17:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -33180,7 +33248,7 @@
           "milestone": "safe-self-update",
           "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
           "parallel_safe": true,
-          "priority": "p3",
+          "priority": "p1",
           "profile": "implementation",
           "scope": [
             ".github/workflows/release.yml",
@@ -33191,7 +33259,7 @@
           "slug": "releases-carry-provenance",
           "started_at": "2026-10-14T08:02:21Z",
           "started_event": "sha256:0690a02a2d4cbf22b57e38c5bc9b63ce06badc1bb25d393152a1496c551cf7cd",
-          "updated_at": "2026-10-14T08:02:30Z",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
@@ -36242,6 +36310,381 @@
         }
       },
       {
+        "id": "majordomus://issue/I2713",
+        "kind": "issue",
+        "label": "I2713",
+        "summary": "A build never lets idle incremental sessions fill the disk",
+        "route": "/cockpit/objects/issue/i2713",
+        "source": ".ai/repo/project/issues/I2713.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build prunes idle incremental sessions of its own build directory and says how much it reclaimed",
+            "A live (-working) session and other build directories are never touched",
+            "Under the floor after pruning, the refusal names the largest build directories"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "lib/rust_bin.sh's bounded build refuses below a free-space floor but never reclaims; cargo keeps every finished incremental session until a clean.",
+          "depends_on": [],
+          "evidence_required": [
+            "idle_sessions_are_pruned_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Deleting another worktree's build output or any target directory"
+          ],
+          "objective": "Make the repository's own build entry points keep a build directory's incremental cache bounded, so that concurrent sessions building on one machine cannot run the disk out.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/derive",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/policy.yaml",
+            "test/cases"
+          ],
+          "slug": "idle-incremental-sessions-are-pruned",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2714",
+        "kind": "issue",
+        "label": "I2714",
+        "summary": "One build directory never serves two worktrees' jobs at once",
+        "route": "/cockpit/objects/issue/i2714",
+        "source": ".ai/repo/project/issues/I2714.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two worktrees building with the same CARGO_BUILD_BUILD_DIR at once: the second refuses or relocates with a line naming the holder",
+            "One worktree's repeated builds in its own directory are unaffected"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "build_dir_has_one_holder_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            ".ai/repo/adrs/0139-*.md",
+            "test/cases"
+          ],
+          "slug": "a-build-dir-serves-one-worktree",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2717",
+        "kind": "issue",
+        "label": "I2717",
+        "summary": "A release record pull request gets a verdict that can pass",
+        "route": "/cockpit/objects/issue/i2717",
+        "source": ".ai/repo/project/issues/I2717.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record PR's validate concludes success when every gate its plan selects passes",
+            "The evidence job on a plan without suite and crate lanes records a planned-empty report and passes",
+            "The record PR shows that verdict as a check on its head without a person approving a run"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "record_pr_verdict_can_pass_case"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "release.yml's build and publish jobs (another worker owns them)"
+          ],
+          "objective": "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "scripts/ci/verdict",
+            "docs/RELEASE.md",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-record-pr-gets-a-passing-verdict",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2718",
+        "kind": "issue",
+        "label": "I2718",
+        "summary": "A linked worktree runs its own hooks, never the primary checkout's",
+        "route": "/cockpit/objects/issue/i2718",
+        "source": ".ai/repo/project/issues/I2718.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree made by `majordomus worktree create` answers its own .githooks to `git rev-parse --git-path hooks`",
+            "doctor in a linked worktree whose hooks resolve to another tree fails with the fixing command",
+            "The main worktree's hooks path is unchanged"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [],
+          "evidence_required": [
+            "worktree_runs_its_own_hooks_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Make every linked worktree run, and doctor judge, the hooks of its own tree, so that a stale primary checkout cannot refuse or weaken the commits of every other worktree.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "a-worktree-runs-its-own-hooks",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2720",
+        "kind": "issue",
+        "label": "I2720",
+        "summary": "majordomus self update re-runs the published installer, and never reimplements it",
+        "route": "/cockpit/objects/issue/i2720",
+        "source": ".ai/repo/project/issues/I2720.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "self update --check names the running and the stable version and whether an upgrade applies, without a network write",
+            "self update --apply installs the stable release through install.sh and the new launcher reports it",
+            "A downgrade, a pre-release and an unlisted version are refused with the reason"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "There is no self-update command; a person reruns install.sh with --version on each machine.",
+          "depends_on": [],
+          "evidence_required": [
+            "self_update_wraps_installer_test",
+            "self_update_refuses_downgrade_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "A second implementation of download, verification or swap",
+            "Activating the new version in a running server (I2722, I2163)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/release",
+            "share/commands.yaml",
+            "docs/DISTRIBUTION.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "self-update-wraps-the-installer",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2721",
+        "kind": "issue",
+        "label": "I2721",
+        "summary": "An enrolled mesh node follows the stable pointer by itself",
+        "route": "/cockpit/objects/issue/i2721",
+        "source": ".ai/repo/project/issues/I2721.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A following node whose installed version is behind the stable pointer is upgraded within one check interval with no person on it",
+            "A pinned node and a node with follow: off are left alone, and say so in mesh doctor",
+            "A mesh announcement naming a version the metadata does not list changes nothing"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "No process reads releases/latest.json except install.sh run by a person.",
+          "depends_on": [
+            "I2720"
+          ],
+          "evidence_required": [
+            "node_follows_stable_pointer_test",
+            "peer_announcement_not_trusted_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "A network fetch on entering a repository",
+            "Repositories that adopt Majordomus without enrolling machines in this mesh"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/mesh/majordomus.yaml",
+            "share/schemas",
+            "docs/MESH.md",
+            "docs/DISTRIBUTION.md",
+            "test/cases"
+          ],
+          "slug": "a-node-follows-the-stable-pointer",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. On 2026-10-14 v0.25.0 reached the five mesh nodes only after one session upgraded each by hand, and v0.26.0 sat on the stable pointer while every node ran 0.25.0."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2722",
+        "kind": "issue",
+        "label": "I2722",
+        "summary": "A hub activates a new version under its service manager, checks its health and rolls back by itself",
+        "route": "/cockpit/objects/issue/i2722",
+        "source": ".ai/repo/project/issues/I2722.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hub with a newer installed version ends serving it, with no session lost that was attached before the grace",
+            "A version whose readiness or mesh verify fails is rolled back within the grace and the board names node, version and failed check",
+            "The hub service unit is written by a capability, not by hand"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand.",
+          "depends_on": [
+            "I2720"
+          ],
+          "evidence_required": [
+            "hub_activates_new_version_test",
+            "hub_rolls_back_failed_version_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Checkout servers' hand-off, which I2163 and I2127 carry"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/lease.rs",
+            "share/install",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-hub-activates-and-rolls-back",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. Hubs run unattended (docs/MESH.md, The hubs as services); the launchd agent is the operator's to install and an installer that writes either unit is owed as a typed capability (ADR 0059)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2723",
+        "kind": "issue",
+        "label": "I2723",
+        "summary": "The mesh shows each node's version and how far a release has rolled out",
+        "route": "/cockpit/objects/issue/i2723",
+        "source": ".ai/repo/project/issues/I2723.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "mesh peers prints each runtime's version and follow setting",
+            "mesh doctor names a node more than one release behind the stable pointer"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "serve status reports an outdated server for one checkout; the mesh carries no versions.",
+          "depends_on": [],
+          "desired_state": "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release.",
+          "evidence_required": [
+            "mesh_reports_versions_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/ui",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "the-mesh-shows-the-rollout",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2724",
+        "kind": "issue",
+        "label": "I2724",
+        "summary": "A node without a route to the site takes the archive from a peer and still verifies it itself",
+        "route": "/cockpit/objects/issue/i2724",
+        "source": ".ai/repo/project/issues/I2724.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A node with no route to the site upgrades from a peer's archive and verifies it before unpacking",
+            "A peer archive whose digest differs from the metadata is refused and reported"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "A node without a route to the site is upgraded by copying an archive to it by hand.",
+          "depends_on": [
+            "I2720",
+            "I2165"
+          ],
+          "evidence_required": [
+            "relayed_archive_verified_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Trusting a digest a peer sends without metadata the node can verify"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/release",
+            "site/static/install.sh",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-relayed-archive-is-still-verified",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "ADR 0161. jetson has no route to github.com; on 2026-10-14 its v0.25.0 archive was copied over the LAN by hand."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -37838,11 +38281,13 @@
         "id": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "label": "safe-self-update",
-        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "summary": "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked",
         "route": "/cockpit/objects/milestone/safe-self-update",
         "source": ".ai/repo/project/milestones/safe-self-update.yaml",
         "facts": {
           "acceptance_criteria": [
+            "An enrolled, following node is on the version releases/latest.json names within one check interval of a release, with no person on it",
+            "A failed activation rolls back to the previous version by itself and the board names node, version and failed check",
             "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
             "A wire or lease or journal schema change without a version bump fails version-surface",
             "Each release archive carries an attestation that verifies for this repository"
@@ -37852,17 +38297,20 @@
           "evidence_required": [
             "version_hand_off_test",
             "wire_versions_gated",
+            "node_follows_stable_pointer_test",
+            "hub_rolls_back_failed_version_test",
             "release_attestation"
           ],
           "non_scope": [
-            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A second installer or updater; install.sh stays the one path (pack M11), and self update re-runs it (ADR 0161).",
             "A network fetch on entering a repository.",
             "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
           ],
           "order": 144,
-          "priority": "p2",
+          "priority": "p0",
           "risks": [
             "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Following automatically raises the cost of a bad archive; I2165 (attestation) is raised to p1 with ADR 0161.",
             "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
           ],
           "scope": [
@@ -37878,10 +38326,13 @@
             "test/fixtures",
             "test/cases",
             "docs/DISTRIBUTION.md",
-            "docs/MCP.md"
+            "docs/MCP.md",
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/mesh",
+            ".ai/repo/mesh/majordomus.yaml"
           ],
           "slug": "safe-self-update",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-14",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
@@ -52631,6 +53082,13 @@
         "source": "test/cases/192_entry_across_checkouts_and_clients.sh"
       },
       {
+        "id": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "kind": "test",
+        "label": "test/cases/194_audit_rows_are_planned.sh",
+        "route": "/cockpit/objects/test/test-cases-194-audit-rows-are-planned-sh",
+        "source": "test/cases/194_audit_rows_are_planned.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
         "kind": "test",
         "label": "test/cases/19_end_to_end.sh",
@@ -53049,6 +53507,20 @@
         "label": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
         "route": "/cockpit/objects/test/test-cases-3023-a-knowledge-record-outlives-the-file-it-cites-sh",
         "source": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "kind": "test",
+        "label": "test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "route": "/cockpit/objects/test/test-cases-3024-a-run-is-seen-by-the-server-sh",
+        "source": "test/cases/3024_a_run_is_seen_by_the_server.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-3025-abandoned-work-in-a-worktree-is-named-sh",
+        "source": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh"
       },
       {
         "id": "majordomus://test/test/cases/302_the_topology_rule_has_one_source.sh",
@@ -58754,6 +59226,16 @@
         "kind": "projects"
       },
       {
+        "source": "capability:executions.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:executions.report",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
         "source": "capability:executions.start",
         "target": "projection:cli",
         "kind": "projects"
@@ -60990,6 +61472,26 @@
       },
       {
         "source": "capability:worktree.topology",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.uncommitted",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -65220,6 +65722,11 @@
       },
       {
         "source": "majordomus://adr/adr-0158",
+        "target": "file:apps/majordomus-cli/src/http/events.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
         "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
         "kind": "put_in_force"
       },
@@ -65232,6 +65739,11 @@
         "source": "majordomus://adr/adr-0158",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0158",
@@ -65261,6 +65773,51 @@
       {
         "source": "majordomus://adr/adr-0158",
         "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "file:apps/majordomus-cli/src/lease.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "file:site/static/install.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://adr/adr-0131",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://adr/adr-0155",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0161",
+        "target": "majordomus://test/test/cases/85_installer.sh",
         "kind": "put_in_force"
       },
       {
@@ -78574,6 +79131,116 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2713",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2713",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2714",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2717",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2718",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2720",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2720",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2722",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2723",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2723",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://issue/I2165",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2724",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -82584,6 +83251,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/194_audit_rows_are_planned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/19_end_to_end.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -82880,6 +83552,16 @@
       },
       {
         "source": "majordomus://test/test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3024_a_run_is_seen_by_the_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -87530,6 +88212,11 @@
       },
       {
         "source": "module:executions",
+        "target": "capability:executions.report",
+        "kind": "composes"
+      },
+      {
+        "source": "module:executions",
         "target": "capability:executions.start",
         "kind": "composes"
       },
@@ -88187,11 +88874,16 @@
         "source": "module:worktree",
         "target": "capability:worktree.topology",
         "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.uncommitted",
+        "kind": "composes"
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2812,
+      "edges": 6173,
       "acyclic": false,
       "truncated": false
     }
