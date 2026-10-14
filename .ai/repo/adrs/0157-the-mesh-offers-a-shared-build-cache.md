@@ -25,8 +25,8 @@ provenance:
 ## Context
 
 On 2026-10-13 the cluster could not derive: both declared offload hosts were under their
-10 GiB free-space minimum (7 and 1), the owner's Mac sat at 100% disk and was cleaned by
-hand, and a derive of one documentation pull request cost thirteen minutes of compiler time
+10 GiB free-space minimum (7 and 1), the owner's Mac had no free disk and was cleaned by
+hand, and a derive of one documentation pull request took thirteen minutes of compiler time
 three times in two hours, each time from a cold cache. Every machine compiles the same
 Rust for the same commits, each into a cache of its own: ADR 0139 shares what cargo
 compiles between the worktrees of one machine and says, in terms, that `sccache` "stays
