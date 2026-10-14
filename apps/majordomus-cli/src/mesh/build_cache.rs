@@ -929,4 +929,130 @@ mod tests {
         );
         assert_eq!(s.chosen.map(|o| o.node), Some("far".into()));
     }
+    /// A loopback store that answers one request with `reply` (or closes without a word
+    /// when `reply` is empty); returns the endpoint to probe.
+    fn serve_raw(reply: &'static [u8]) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            if let Ok((mut c, _)) = listener.accept() {
+                let mut buf = [0u8; 256];
+                let _ = c.read(&mut buf);
+                let _ = c.write_all(reply);
+            }
+        });
+        format!("http://{addr}")
+    }
+
+    #[test]
+    fn a_probe_judges_only_what_the_store_answered() {
+        let ok = serve_raw(b"HTTP/1.0 200 OK\r\n\r\n");
+        assert_eq!(probe_health(&ok, "/ready", PROBE_BUDGET), Health::Healthy);
+        let down = serve_raw(b"HTTP/1.0 503 Service Unavailable\r\n\r\n");
+        assert_eq!(
+            probe_health(&down, "/ready", PROBE_BUDGET),
+            Health::Unhealthy
+        );
+        // a store that closes without a word said nothing: unknown, never healthy
+        let mute = serve_raw(b"");
+        assert_eq!(probe_health(&mute, "/ready", PROBE_BUDGET), Health::Unknown);
+        // a status line with no code is not a verdict
+        let junk = serve_raw(b"X");
+        assert_eq!(probe_health(&junk, "/ready", PROBE_BUDGET), Health::Unknown);
+    }
+
+    #[test]
+    fn a_probe_that_cannot_be_made_is_unknown_and_a_refusal_is_unhealthy() {
+        // no port, a name instead of an address, a port that is not one
+        assert_eq!(
+            probe_health("http://10.0.0.1", "/r", PROBE_BUDGET),
+            Health::Unknown
+        );
+        assert_eq!(
+            probe_health("http://store:9000", "/r", PROBE_BUDGET),
+            Health::Unknown
+        );
+        assert_eq!(
+            probe_health("http://10.0.0.1:x", "/r", PROBE_BUDGET),
+            Health::Unknown
+        );
+        // a port nothing listens on refuses
+        let port = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            l.local_addr().unwrap().port()
+        };
+        assert_eq!(
+            probe_health(&format!("http://127.0.0.1:{port}"), "/r", PROBE_BUDGET),
+            Health::Unhealthy
+        );
+        // an address that does not answer within the budget is not a refusal
+        assert_eq!(
+            probe_health("http://192.0.2.1:9000", "/r", Duration::from_millis(50)),
+            Health::Unknown
+        );
+    }
+
+    #[test]
+    fn headroom_of_a_path_that_cannot_exist_is_none() {
+        assert_eq!(headroom_gib(Path::new("a\0b")), None);
+        assert_eq!(
+            headroom_gib(Path::new("/no/such/path/for/build-cache")),
+            None
+        );
+    }
+
+    #[test]
+    fn a_degraded_offer_is_passed_over_and_the_chosen_scope_is_named() {
+        let mut degraded = offer("a");
+        degraded.health = Health::Degraded;
+        let s = select(&[degraded], &Policy::default());
+        assert_eq!(s.chosen, None);
+        assert!(s.passed_over[0].why.contains("degraded"));
+        for (scope, word) in [
+            (Scope::Host, "host"),
+            (Scope::Lan, "lan"),
+            (Scope::Mesh, "mesh"),
+        ] {
+            let mut o = offer("b");
+            o.scope = scope;
+            let s = select(&[o], &Policy::default());
+            assert!(s.reason.contains(&format!("{word} scope")), "{}", s.reason);
+        }
+    }
+
+    #[test]
+    fn a_node_file_that_cannot_be_read_says_so_and_is_not_absent() {
+        // a directory exists and cannot be read as a file
+        let dir = std::env::temp_dir();
+        match read_node_file(&dir) {
+            Err(FileError::Invalid(why)) => assert!(why.contains("cannot be read"), "{why}"),
+            other => panic!("expected an unreadable file, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_node_that_serves_a_store_offers_it_first() {
+        let endpoint = serve_raw(b"HTTP/1.0 200 OK\r\n\r\n");
+        let file = NodeFile {
+            provider: Some(LocalProvider {
+                provider: "minio".into(),
+                scope: Scope::Host,
+                endpoint: endpoint.trim_start_matches("http://").to_string(),
+                bucket: "b".into(),
+                priority: 5,
+                data_path: Some(PathBuf::from("/")),
+                ready_path: "/ready".into(),
+            }),
+            known: Vec::new(),
+        };
+        let offers = offers_of(&file, "me", PROBE_BUDGET);
+        assert_eq!(offers.len(), 1);
+        assert_eq!(offers[0].node, "me");
+        assert_eq!(offers[0].health, Health::Healthy);
+        assert!(offers[0].headroom_gib.is_some());
+        assert_eq!(
+            offers[0].rtt_ms, None,
+            "a node's own offer carries no measured round trip"
+        );
+    }
 }
