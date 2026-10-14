@@ -228,6 +228,130 @@ pub fn select(offers: &[Offer], policy: &Policy) -> Selection {
     }
 }
 
+// ---------------------------------------------------------------- what this node offers
+
+use std::io::{Read, Write};
+use std::net::{IpAddr, SocketAddr, TcpStream};
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+
+/// The longest a health probe of the local store waits, connect and answer together.
+pub const PROBE_BUDGET: Duration = Duration::from_millis(500);
+
+/// What the node says about the store it serves. Read from a file outside the repository
+/// (the provisioning writes it), never from a tracked one: an endpoint is a fact about a
+/// running node, not a property of the project (ADR 0157).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LocalProvider {
+    /// What serves the store (`minio`, ...).
+    pub provider: String,
+    /// How far the endpoint is meant to be reached.
+    pub scope: Scope,
+    /// The address clients connect to: an IP literal and a port, so that no probe can
+    /// reach DNS.
+    pub endpoint: String,
+    /// The bucket.
+    pub bucket: String,
+    /// This node's preference, higher first.
+    #[serde(default)]
+    pub priority: i32,
+    /// The path whose free space is the headroom, when it is a path on this machine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_path: Option<PathBuf>,
+    /// The readiness route of the store.
+    #[serde(default = "default_ready_path")]
+    pub ready_path: String,
+}
+
+fn default_ready_path() -> String {
+    "/minio/health/ready".to_string()
+}
+
+/// Whether the store at `endpoint` answers its readiness route with a success within
+/// `budget`. Only an IP-literal endpoint is probed. A refusal or a non-success answer is
+/// `Unhealthy`; a probe that ran out of time or could not be made is `Unknown`, never
+/// `Healthy` and never a verdict it did not earn.
+pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Health {
+    let authority = endpoint
+        .strip_prefix("http://")
+        .unwrap_or(endpoint)
+        .split('/')
+        .next()
+        .unwrap_or_default();
+    let Some((host, port)) = authority.rsplit_once(':') else {
+        return Health::Unknown;
+    };
+    let (Ok(ip), Ok(port)) = (host.parse::<IpAddr>(), port.parse::<u16>()) else {
+        return Health::Unknown;
+    };
+    let addr = SocketAddr::new(ip, port);
+    let mut stream = match TcpStream::connect_timeout(&addr, budget) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::ConnectionRefused => return Health::Unhealthy,
+        Err(_) => return Health::Unknown,
+    };
+    if stream.set_read_timeout(Some(budget)).is_err()
+        || stream.set_write_timeout(Some(budget)).is_err()
+    {
+        return Health::Unknown;
+    }
+    let request =
+        format!("GET {ready_path} HTTP/1.0\r\nHost: {authority}\r\nConnection: close\r\n\r\n");
+    if stream.write_all(request.as_bytes()).is_err() {
+        return Health::Unknown;
+    }
+    let mut head = [0u8; 32];
+    let n = match stream.read(&mut head) {
+        Ok(n) if n > 0 => n,
+        _ => return Health::Unknown,
+    };
+    let line = String::from_utf8_lossy(&head[..n]);
+    // "HTTP/1.x 200 ..."
+    match line.split_whitespace().nth(1) {
+        Some(code) if code.starts_with('2') => Health::Healthy,
+        Some(_) => Health::Unhealthy,
+        None => Health::Unknown,
+    }
+}
+
+/// Free space on the filesystem holding `path`, in whole GiB, when it can be read.
+pub fn headroom_gib(path: &Path) -> Option<u64> {
+    use std::os::unix::ffi::OsStrExt;
+    let c = std::ffi::CString::new(path.as_os_str().as_bytes()).ok()?;
+    let mut st = std::mem::MaybeUninit::<libc::statvfs>::zeroed();
+    // SAFETY: `c` is a valid NUL-terminated path and `st` is a writable statvfs the call
+    // fills in; the result is read only when the call reports success.
+    let rc = unsafe { libc::statvfs(c.as_ptr(), st.as_mut_ptr()) };
+    if rc != 0 {
+        return None;
+    }
+    // SAFETY: statvfs returned 0, so the struct is initialised.
+    let st = unsafe { st.assume_init() };
+    // f_bavail is 32 bits on macOS and 64 on Linux, f_frsize 64 on both: the conversion is
+    // a no-op on one platform and a widening on the other, which is why it is written
+    #[allow(clippy::useless_conversion)]
+    let bytes = u64::from(st.f_bavail).saturating_mul(u64::from(st.f_frsize));
+    Some(bytes / (1024 * 1024 * 1024))
+}
+
+/// This node's offer, from what it declares and what its own probes answer now. `rtt_ms`
+/// is the asking node's to measure, so a node's own offer carries none.
+pub fn local_offer(cfg: &LocalProvider, node: &str, budget: Duration) -> Offer {
+    Offer {
+        node: node.to_string(),
+        protocol: PROTOCOL_S3.to_string(),
+        provider: cfg.provider.clone(),
+        scope: cfg.scope,
+        endpoint: cfg.endpoint.clone(),
+        bucket: cfg.bucket.clone(),
+        priority: cfg.priority,
+        headroom_gib: cfg.data_path.as_deref().and_then(headroom_gib),
+        health: probe_health(&cfg.endpoint, &cfg.ready_path, budget),
+        age_seconds: 0,
+        rtt_ms: None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -384,5 +508,92 @@ mod tests {
         for forbidden in ["secret", "password", "token", "access_key", "credential"] {
             assert!(!text.contains(forbidden), "{forbidden} appears in an offer");
         }
+    }
+
+    fn serve_once(status_line: &'static str) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
+        let addr = listener.local_addr().expect("addr");
+        std::thread::spawn(move || {
+            if let Ok((mut s, _)) = listener.accept() {
+                let mut buf = [0u8; 256];
+                let _ = s.read(&mut buf);
+                let _ =
+                    s.write_all(format!("{status_line}\r\nContent-Length: 0\r\n\r\n").as_bytes());
+            }
+        });
+        format!("http://{addr}")
+    }
+
+    #[test]
+    fn a_store_that_answers_ready_is_healthy_and_one_that_refuses_is_not() {
+        let ok = serve_once("HTTP/1.1 200 OK");
+        assert_eq!(
+            probe_health(&ok, "/minio/health/ready", PROBE_BUDGET),
+            Health::Healthy
+        );
+        let bad = serve_once("HTTP/1.1 503 Service Unavailable");
+        assert_eq!(
+            probe_health(&bad, "/minio/health/ready", PROBE_BUDGET),
+            Health::Unhealthy
+        );
+    }
+
+    #[test]
+    fn a_closed_port_is_unhealthy_and_a_name_or_a_non_url_is_unknown_never_healthy() {
+        // a port nothing listens on: bind, note it, drop the listener
+        let port = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
+            l.local_addr().expect("addr").port()
+        };
+        let closed = format!("http://127.0.0.1:{port}");
+        assert_eq!(probe_health(&closed, "/x", PROBE_BUDGET), Health::Unhealthy);
+        // a name would need DNS, which a probe never does
+        assert_eq!(
+            probe_health("http://jetson-tx2:9000", "/x", PROBE_BUDGET),
+            Health::Unknown
+        );
+        assert_eq!(
+            probe_health("not an endpoint", "/x", PROBE_BUDGET),
+            Health::Unknown
+        );
+    }
+
+    #[test]
+    fn headroom_is_read_for_a_real_path_and_absent_for_a_missing_one() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        assert!(headroom_gib(dir.path()).is_some());
+        assert_eq!(headroom_gib(Path::new("/definitely/not/a/path/here")), None);
+    }
+
+    #[test]
+    fn a_local_offer_carries_the_declaration_the_probe_and_no_secret() {
+        let url = serve_once("HTTP/1.1 200 OK");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let cfg = LocalProvider {
+            provider: "minio".into(),
+            scope: Scope::Lan,
+            endpoint: url.clone(),
+            bucket: "majordomus-build-cache".into(),
+            priority: 3,
+            data_path: Some(dir.path().to_path_buf()),
+            ready_path: "/minio/health/ready".into(),
+        };
+        let o = local_offer(&cfg, "node-a", PROBE_BUDGET);
+        assert_eq!(
+            (o.node.as_str(), o.scope, o.priority),
+            ("node-a", Scope::Lan, 3)
+        );
+        assert_eq!(o.health, Health::Healthy);
+        assert_eq!(o.endpoint, url);
+        assert!(o.headroom_gib.is_some());
+        // a node's own offer is selectable as it stands
+        let s = select(
+            &[o],
+            &Policy {
+                min_headroom_gib: 0,
+                ..Policy::default()
+            },
+        );
+        assert_eq!(s.chosen.map(|c| c.node), Some("node-a".into()));
     }
 }
