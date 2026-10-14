@@ -7298,7 +7298,9 @@
             "test:test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
             "file:docs/MAJORDOMUS_UI.md",
             "file:apps/majordomus-cli/src/ui/observatory.rs",
-            "file:share/ui/observatory.js"
+            "file:share/ui/observatory.js",
+            "file:apps/majordomus-cli/src/http/events.rs",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
           ],
           "tags": [
             "ui",
@@ -65214,6 +65216,11 @@
       },
       {
         "source": "majordomus://adr/adr-0158",
+        "target": "file:apps/majordomus-cli/src/http/events.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
         "target": "file:apps/majordomus-cli/src/ui/observatory.rs",
         "kind": "put_in_force"
       },
@@ -65226,6 +65233,11 @@
         "source": "majordomus://adr/adr-0158",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0158",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0158",
@@ -88185,7 +88197,7 @@
     ],
     "metadata": {
       "nodes": 2796,
-      "edges": 6129,
+      "edges": 6131,
       "acyclic": false,
       "truncated": false
     }
