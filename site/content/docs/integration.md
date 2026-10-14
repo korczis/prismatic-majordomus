@@ -626,7 +626,17 @@ trunk's run waits for. The lander reads the failed job first, through the jobs A
 answers while the run is still going. The trunk's own run is left to finish: its other jobs
 are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
 run on a head that contains the trunk is that reading, lane by lane, and is read before it
-is cancelled. Issue I2664 is the workflow doing this by itself.
+is cancelled. On a pull request the workflow does this by itself: the last step of every gate
+job, on `failure()` of a `pull_request` event alone, cancels the run by its own id
+(`.github/workflows/validate.yml`, case 3019). A push to master, the schedule and a dispatch
+are never cancelled that way.
+
+What the merged tree owes follows what the change touches, and rule clause 4 lists it: a
+record a crate test reads (a skill, a rule, a claim, the quality baseline, a plan record) owes
+the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
+their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
+from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
+`skill-naming` gate.
 
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.
