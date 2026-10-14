@@ -49,8 +49,9 @@ not prove what the canvas paints: that each mark of an available scene is placed
 coloured from its model is the script's, and no test reads pixels. The unit tests of the
 module hold the projection itself, including that an event's body is never projected.
 
-It does not prove frame rate, a 4K composition or that a kiosk survives a day; those are
-I2680. The cursor the display follows between readings (`observatory.events`) is proven by the
+It does not prove frame rate, a 4K composition or that a kiosk keeps running; those are
+measured by `scripts/lib/ui-observatory.mjs` and recorded with their machine in
+`.ai/repo/benchmarks/observatory/`. The cursor the display follows between readings (`observatory.events`) is proven by the
 mesh cooperation test, not by this case.
 
 ## Why it exists
