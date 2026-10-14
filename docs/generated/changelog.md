@@ -7,6 +7,40 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.26.0**
 
+## v0.26.0 — 2026-10-14
+
+### Added
+
+- **adopters**: an adopter gets only what fits it, and a failed branch run ends itself (`a47c70939`)
+- **ui**: the Observatory's gates are closed with evidence, and new events interrupt its rotation (`d7a4361bc`)
+
+### Fixed
+
+- **test**: case 130 compares surfaces at a budget the seeded governance fits (`d4d23c378`)
+- **release**: a tag no longer freezes the queue, and two adopter records hold (`96cff105c`)
+- **adopters**: the catalogue drops doctor's adopter reasoning line; case 3018 asks for no pager (`d9dea083b`)
+- **runtime**: a closed live channel stops keeping its server, and eight issues are proven (`3e848ca4d`)
+- **mesh**: a node key is owner-only from the moment it is written (`37c72bbed`)
+
+### Housekeeping
+
+- **release**: 0.26.0, the contract the knowledge reference answer changed (`83d4afbff`)
+- **release**: record v0.25.0 and the metadata it publishes (`0f0c35eb7`)
+- **observatory**: the gates' production evidence is the published site at 2ca25bb9cf (`63ae8e0c2`)
+- **plan**: the Observatory's milestones are done with their evidence (`c3da677d4`)
+- **observatory**: the published replay is the mesh as recorded at 11:39Z (`753449f90`)
+- **plan**: nine issues stop requiring what they deferred, and I2137 is done (`304469c84`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.26.0-aarch64-apple-darwin.tar.gz (`b503fa119f32`)
+- `macos-x86_64` — majordomus-v0.26.0-x86_64-apple-darwin.tar.gz (`5660a987bb0a`)
+- `linux-x86_64-gnu` — majordomus-v0.26.0-x86_64-unknown-linux-gnu.tar.gz (`54f911fa0b69`)
+- `linux-x86_64-musl` — majordomus-v0.26.0-x86_64-unknown-linux-musl.tar.gz (`6de4ec37191e`)
+- `linux-aarch64-gnu` — majordomus-v0.26.0-aarch64-unknown-linux-gnu.tar.gz (`89633a013bf8`)
+- `linux-aarch64-musl` — majordomus-v0.26.0-aarch64-unknown-linux-musl.tar.gz (`1fa2dfd6b2bc`)
+
+
 ## v0.25.0 — 2026-10-14
 
 ### Added
