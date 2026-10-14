@@ -63213,6 +63213,13 @@
               "name": "limit",
               "required": false,
               "type": "integer (uint64)"
+            },
+            {
+              "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time.",
+              "examples": [],
+              "name": "newest",
+              "required": false,
+              "type": "boolean"
             }
           ],
           "path": "/api/v1/mesh/events",
